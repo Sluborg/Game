@@ -39,11 +39,17 @@ jobs:
       - name: Build debug APK
         run: ./gradlew --no-daemon assembleDebug
 
+      - name: List APK outputs
+        run: |
+          echo "==== APK outputs ===="
+          ls -R app/build/outputs || true
+
       - name: Upload debug APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
 
   build-release:
     name: Build Release APK (unsigned)
@@ -77,8 +83,14 @@ jobs:
       - name: Build release APK (unsigned)
         run: ./gradlew --no-daemon assembleRelease
 
+      - name: List APK outputs
+        run: |
+          echo "==== APK outputs ===="
+          ls -R app/build/outputs || true
+
       - name: Upload release APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release-apk
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
