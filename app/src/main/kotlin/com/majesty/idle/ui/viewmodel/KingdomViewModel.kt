@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 @HiltViewModel
@@ -80,7 +81,8 @@ class KingdomViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        viewModelScope.launch { repository.saveState(_state.value) }
+        // runBlocking ensures the save completes before the ViewModel scope is cancelled
+        runBlocking { repository.saveState(_state.value) }
         super.onCleared()
     }
 }

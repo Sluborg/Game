@@ -6,18 +6,22 @@ import com.majesty.idle.domain.model.MonsterType
 
 object MonsterSpawner {
 
-    private var nextId = 1000L
-
-    fun update(monsters: List<MonsterGroup>, tickCount: Long): List<MonsterGroup> {
+    /** Returns updated monster list + the next available ID (for persistence in KingdomState). */
+    fun update(
+        monsters: List<MonsterGroup>,
+        tickCount: Long,
+        nextMonsterId: Long
+    ): Pair<List<MonsterGroup>, Long> {
         val alive = monsters.filter { it.isAlive }
         return if (tickCount > 0 && tickCount % GameConstants.MONSTER_SPAWN_BASE_INTERVAL == 0L) {
-            alive + spawn(tickCount)
+            val (spawned, nextId) = spawn(tickCount, nextMonsterId)
+            (alive + spawned) to nextId
         } else {
-            alive
+            alive to nextMonsterId
         }
     }
 
-    private fun spawn(tickCount: Long): MonsterGroup {
+    private fun spawn(tickCount: Long, id: Long): Pair<MonsterGroup, Long> {
         val type = when {
             tickCount > 600 -> MonsterType.DRAGON
             tickCount > 300 -> MonsterType.TROLL
@@ -30,13 +34,7 @@ object MonsterSpawner {
             else -> 1
         }
         val totalHp = type.baseHp * count
-        return MonsterGroup(
-            id = nextId++,
-            type = type,
-            count = count,
-            hp = totalHp,
-            maxHp = totalHp
-        )
+        return MonsterGroup(id = id, type = type, count = count, hp = totalHp, maxHp = totalHp) to (id + 1)
     }
 
     fun applyHeroDamage(

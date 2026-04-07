@@ -36,11 +36,13 @@ class GameRepository @Inject constructor(
 
         return KingdomState(
             gold = global.gold,
+            goldAccumulator = global.goldAccumulator,
             heroes = heroes,
             buildings = buildings,
             monsterGroups = monsters,
             tickCount = global.tickCount,
-            lastSavedAt = global.lastTickTimestamp
+            lastSavedAt = global.lastTickTimestamp,
+            nextMonsterId = global.nextMonsterId
         )
     }
 
@@ -48,9 +50,11 @@ class GameRepository @Inject constructor(
         dataStore.save(
             GlobalState(
                 gold = state.gold,
+                goldAccumulator = state.goldAccumulator,
                 lastTickTimestamp = System.currentTimeMillis(),
                 kingdomLevel = 1,
-                tickCount = state.tickCount
+                tickCount = state.tickCount,
+                nextMonsterId = state.nextMonsterId
             )
         )
         heroDao.upsertAll(state.heroes.map { HeroEntity.fromDomain(it) })

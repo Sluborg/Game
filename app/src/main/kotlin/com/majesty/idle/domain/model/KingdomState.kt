@@ -2,11 +2,13 @@ package com.majesty.idle.domain.model
 
 data class KingdomState(
     val gold: Long,
+    val goldAccumulator: Double = 0.0,  // fractional carry between ticks
     val heroes: List<Hero>,
     val buildings: List<Building>,
     val monsterGroups: List<MonsterGroup>,
     val tickCount: Long,
-    val lastSavedAt: Long
+    val lastSavedAt: Long,
+    val nextMonsterId: Long = 1000L     // persisted so IDs never repeat across restarts
 ) {
     val goldPerSecond: Double
         get() = buildings.sumOf { it.goldPerSecond }
@@ -34,7 +36,8 @@ data class KingdomState(
                 buildings = listOf(palace, tavern),
                 monsterGroups = emptyList(),
                 tickCount = 0,
-                lastSavedAt = System.currentTimeMillis()
+                lastSavedAt = System.currentTimeMillis(),
+                nextMonsterId = 1000L
             )
         }
     }
