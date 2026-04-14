@@ -23,9 +23,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.majesty.idle.ui.component.BattleLog
 import com.majesty.idle.ui.component.BuildingCard
 import com.majesty.idle.ui.component.GoldBar
 import com.majesty.idle.ui.component.HeroPortrait
+import com.majesty.idle.ui.component.MilestonePanel
 import com.majesty.idle.ui.component.MonsterThreatBanner
 import com.majesty.idle.ui.theme.StoneDark
 import com.majesty.idle.ui.viewmodel.KingdomViewModel
@@ -35,6 +37,7 @@ import com.majesty.idle.ui.viewmodel.KingdomViewModel
 fun KingdomScreen(viewModel: KingdomViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
     val offlineGold by viewModel.offlineGoldEarned.collectAsState()
+    val milestones by viewModel.milestones.collectAsState()
 
     if (offlineGold > 0) {
         AlertDialog(
@@ -57,52 +60,79 @@ fun KingdomScreen(viewModel: KingdomViewModel = hiltViewModel()) {
             )
         }
     ) { padding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(padding),
+            contentPadding = PaddingValues(bottom = 16.dp)
         ) {
-            GoldBar(gold = state.gold, goldPerSecond = state.goldPerSecond)
-
-            if (state.monsterGroups.isNotEmpty()) {
-                MonsterThreatBanner(monsters = state.monsterGroups)
+            // Gold bar
+            item {
+                GoldBar(gold = state.gold, goldPerSecond = state.goldPerSecond)
             }
 
+            // Milestone chips
+            if (milestones.isNotEmpty()) {
+                item {
+                    MilestonePanel(milestones = milestones)
+                }
+            }
+
+            // Monster threat banner
+            if (state.monsterGroups.isNotEmpty()) {
+                item {
+                    MonsterThreatBanner(monsters = state.monsterGroups)
+                }
+            }
+
+            // Battle log
+            if (state.battleLog.isNotEmpty()) {
+                item {
+                    BattleLog(events = state.battleLog)
+                }
+            }
+
+            // Heroes section
             if (state.heroes.isNotEmpty()) {
-                Text(
-                    text = "Heroes",
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                )
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    items(state.heroes, key = { it.id }) { hero ->
-                        HeroPortrait(hero = hero)
+                item {
+                    Text(
+                        text = "Heroes (${state.heroes.size}/${com.majesty.idle.domain.GameConstants.MAX_HEROES})",
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                }
+                item {
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items(state.heroes, key = { it.id }) { hero ->
+                            HeroPortrait(hero = hero)
+                        }
                     }
                 }
             }
 
-            Text(
-                text = "Kingdom",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
+            // Kingdom buildings header
+            item {
+                Text(
+                    text = "Kingdom",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+            }
 
-            LazyColumn(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(state.buildings, key = { it.id }) { building ->
-                    BuildingCard(
-                        building = building,
-                        playerGold = state.gold,
-                        onUpgrade = { viewModel.upgradeBuilding(building.id) }
-                    )
-                }
+            // Building cards
+            items(state.buildings, key = { it.id }) { building ->
+                BuildingCard(
+                    building = building,
+                    playerGold = state.gold,
+                    heroCount = state.heroes.size,
+                    onUpgrade = { viewModel.upgradeBuilding(building.id) },
+                    onRecruit = { heroClass -> viewModel.recruitHero(heroClass) },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                )
             }
         }
     }

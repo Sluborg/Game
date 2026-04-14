@@ -1,5 +1,7 @@
 package com.majesty.idle.domain.model
 
+import com.majesty.idle.domain.GameConstants
+
 data class KingdomState(
     val gold: Long,
     val goldAccumulator: Double = 0.0,  // fractional carry between ticks
@@ -8,7 +10,11 @@ data class KingdomState(
     val monsterGroups: List<MonsterGroup>,
     val tickCount: Long,
     val lastSavedAt: Long,
-    val nextMonsterId: Long = 1000L     // persisted so IDs never repeat across restarts
+    val nextMonsterId: Long = 1000L,    // persisted so IDs never repeat across restarts
+    val totalMonstersKilled: Long = 0,  // persisted stat for milestones
+    val totalGoldEarned: Long = 0,      // persisted stat for milestones
+    val totalBossKills: Int = 0,        // persisted stat for milestones
+    val battleLog: List<String> = emptyList() // ephemeral — not saved to DB
 ) {
     val goldPerSecond: Double
         get() = buildings.sumOf { it.goldPerSecond }
@@ -31,7 +37,7 @@ data class KingdomState(
             val tavern = Building(id = 2, type = BuildingType.TAVERN, level = 1)
             val gunter = Hero.create(id = 1, name = "Gunter", heroClass = HeroClass.WARRIOR)
             return KingdomState(
-                gold = 100,
+                gold = GameConstants.STARTING_GOLD,
                 heroes = listOf(gunter),
                 buildings = listOf(palace, tavern),
                 monsterGroups = emptyList(),

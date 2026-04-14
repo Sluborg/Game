@@ -12,13 +12,15 @@ object HeroAI {
     fun updateAll(
         heroes: List<Hero>,
         buildings: List<Building>,
-        monsters: List<MonsterGroup>
-    ): List<Hero> = heroes.map { update(it, buildings, monsters) }
+        monsters: List<MonsterGroup>,
+        templeHealBonus: Float = 0f
+    ): List<Hero> = heroes.map { update(it, buildings, monsters, templeHealBonus) }
 
     private fun update(
         hero: Hero,
         buildings: List<Building>,
-        monsters: List<MonsterGroup>
+        monsters: List<MonsterGroup>,
+        templeHealBonus: Float
     ): Hero {
         if (!hero.isAlive) return hero
 
@@ -26,14 +28,13 @@ object HeroAI {
             HeroState.IDLE, HeroState.PATROLLING -> decideAction(hero, buildings, monsters)
             HeroState.HUNTING -> hunt(hero, buildings, monsters)
             HeroState.FLEEING -> flee(hero, buildings)
-            HeroState.RESTING -> rest(hero)
+            HeroState.RESTING -> rest(hero, templeHealBonus)
             HeroState.SHOPPING -> shop(hero, buildings)
         }
     }
 
     private fun decideAction(hero: Hero, buildings: List<Building>, monsters: List<MonsterGroup>): Hero {
         val aliveMonsters = monsters.filter { it.isAlive }
-        val hasTavern = buildings.any { it.type == BuildingType.TAVERN }
         val hasShop = buildings.any {
             it.type == BuildingType.BLACKSMITH || it.type == BuildingType.MARKET
         }
@@ -41,8 +42,13 @@ object HeroAI {
         return when {
             // Flee if low HP regardless of state
             hero.hpPercent < GameConstants.HERO_FLEE_HP_PERCENT ->
-                hero.copy(state = HeroState.FLEEING, targetMonsterId = null,
-                    targetBuildingId = buildings.firstOrNull { it.type == BuildingType.TAVERN || it.type == BuildingType.TEMPLE }?.id)
+                hero.copy(
+                    state = HeroState.FLEEING,
+                    targetMonsterId = null,
+                    targetBuildingId = buildings.firstOrNull {
+                        it.type == BuildingType.TAVERN || it.type == BuildingType.TEMPLE
+                    }?.id
+                )
 
             // Hunt nearby monsters if HP is ok
             hero.hpPercent >= GameConstants.HERO_HUNT_MIN_HP_PERCENT && aliveMonsters.isNotEmpty() ->
@@ -50,8 +56,12 @@ object HeroAI {
 
             // Go shopping if has gold and shop exists
             hero.gold >= 50 && hasShop ->
-                hero.copy(state = HeroState.SHOPPING,
-                    targetBuildingId = buildings.first { it.type == BuildingType.BLACKSMITH || it.type == BuildingType.MARKET }.id)
+                hero.copy(
+                    state = HeroState.SHOPPING,
+                    targetBuildingId = buildings.first {
+                        it.type == BuildingType.BLACKSMITH || it.type == BuildingType.MARKET
+                    }.id
+                )
 
             else -> hero.copy(state = HeroState.PATROLLING)
         }
@@ -87,8 +97,10 @@ object HeroAI {
         }
     }
 
-    private fun rest(hero: Hero): Hero {
-        val healAmount = (hero.maxHp * 0.05f).toInt().coerceAtLeast(1)
+    private fun rest(hero: Hero, templeHealBonus: Float = 0f): Hero {
+        val baseHeal = (hero.maxHp * 0.05f).toInt().coerceAtLeast(1)
+        val bonusHeal = (hero.maxHp * templeHealBonus).toInt()
+        val healAmount = baseHeal + bonusHeal
         val newHp = (hero.hp + healAmount).coerceAtMost(hero.maxHp)
         return if (newHp >= hero.maxHp) {
             hero.copy(hp = newHp, state = HeroState.IDLE, targetBuildingId = null)

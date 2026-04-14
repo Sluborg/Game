@@ -42,7 +42,10 @@ class GameRepository @Inject constructor(
             monsterGroups = monsters,
             tickCount = global.tickCount,
             lastSavedAt = global.lastTickTimestamp,
-            nextMonsterId = global.nextMonsterId
+            nextMonsterId = global.nextMonsterId,
+            totalMonstersKilled = global.totalMonstersKilled,
+            totalGoldEarned = global.totalGoldEarned,
+            totalBossKills = global.totalBossKills
         )
     }
 
@@ -54,7 +57,10 @@ class GameRepository @Inject constructor(
                 lastTickTimestamp = System.currentTimeMillis(),
                 kingdomLevel = 1,
                 tickCount = state.tickCount,
-                nextMonsterId = state.nextMonsterId
+                nextMonsterId = state.nextMonsterId,
+                totalMonstersKilled = state.totalMonstersKilled,
+                totalGoldEarned = state.totalGoldEarned,
+                totalBossKills = state.totalBossKills
             )
         )
         heroDao.upsertAll(state.heroes.map { HeroEntity.fromDomain(it) })

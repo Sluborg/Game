@@ -22,7 +22,10 @@ data class GlobalState(
     val lastTickTimestamp: Long,
     val kingdomLevel: Int,
     val tickCount: Long,
-    val nextMonsterId: Long
+    val nextMonsterId: Long,
+    val totalMonstersKilled: Long,
+    val totalGoldEarned: Long,
+    val totalBossKills: Int
 )
 
 @Singleton
@@ -36,16 +39,22 @@ class GlobalStateDataStore @Inject constructor(
         val KINGDOM_LEVEL = intPreferencesKey("kingdom_level")
         val TICK_COUNT = longPreferencesKey("tick_count")
         val NEXT_MONSTER_ID = longPreferencesKey("next_monster_id")
+        val TOTAL_MONSTERS_KILLED = longPreferencesKey("total_monsters_killed")
+        val TOTAL_GOLD_EARNED = longPreferencesKey("total_gold_earned")
+        val TOTAL_BOSS_KILLS = intPreferencesKey("total_boss_kills")
     }
 
     val globalState: Flow<GlobalState> = context.dataStore.data.map { prefs ->
         GlobalState(
-            gold = prefs[Keys.GOLD] ?: 100L,
+            gold = prefs[Keys.GOLD] ?: 200L,
             goldAccumulator = prefs[Keys.GOLD_ACCUMULATOR] ?: 0.0,
             lastTickTimestamp = prefs[Keys.LAST_TICK_TIMESTAMP] ?: System.currentTimeMillis(),
             kingdomLevel = prefs[Keys.KINGDOM_LEVEL] ?: 1,
             tickCount = prefs[Keys.TICK_COUNT] ?: 0L,
-            nextMonsterId = prefs[Keys.NEXT_MONSTER_ID] ?: 1000L
+            nextMonsterId = prefs[Keys.NEXT_MONSTER_ID] ?: 1000L,
+            totalMonstersKilled = prefs[Keys.TOTAL_MONSTERS_KILLED] ?: 0L,
+            totalGoldEarned = prefs[Keys.TOTAL_GOLD_EARNED] ?: 0L,
+            totalBossKills = prefs[Keys.TOTAL_BOSS_KILLS] ?: 0
         )
     }
 
@@ -57,6 +66,9 @@ class GlobalStateDataStore @Inject constructor(
             prefs[Keys.KINGDOM_LEVEL] = state.kingdomLevel
             prefs[Keys.TICK_COUNT] = state.tickCount
             prefs[Keys.NEXT_MONSTER_ID] = state.nextMonsterId
+            prefs[Keys.TOTAL_MONSTERS_KILLED] = state.totalMonstersKilled
+            prefs[Keys.TOTAL_GOLD_EARNED] = state.totalGoldEarned
+            prefs[Keys.TOTAL_BOSS_KILLS] = state.totalBossKills
         }
     }
 }

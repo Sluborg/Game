@@ -17,11 +17,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.majesty.idle.domain.GameConstants
 import com.majesty.idle.domain.model.Hero
 import com.majesty.idle.domain.model.HeroState
 import com.majesty.idle.ui.theme.BloodRed
 import com.majesty.idle.ui.theme.ForestGreen
 import com.majesty.idle.ui.theme.GoldCoin
+import com.majesty.idle.ui.theme.GoldDark
 import com.majesty.idle.ui.theme.RoyalPurple
 import com.majesty.idle.ui.theme.StoneDark
 
@@ -37,7 +39,7 @@ fun HeroPortrait(hero: Hero, modifier: Modifier = Modifier) {
 
     Column(
         modifier = modifier
-            .width(80.dp)
+            .width(90.dp)
             .border(2.dp, borderColor, RoundedCornerShape(8.dp))
             .background(StoneDark, RoundedCornerShape(8.dp))
             .padding(6.dp),
@@ -58,6 +60,7 @@ fun HeroPortrait(hero: Hero, modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.labelSmall,
             color = GoldCoin
         )
+        // HP bar
         LinearProgressIndicator(
             progress = { hero.hpPercent },
             modifier = Modifier
@@ -65,6 +68,25 @@ fun HeroPortrait(hero: Hero, modifier: Modifier = Modifier) {
                 .height(4.dp),
             color = if (hero.hpPercent > 0.5f) ForestGreen else BloodRed
         )
+        // XP bar (gold, thinner)
+        if (hero.level < GameConstants.MAX_HERO_LEVEL) {
+            val xpPercent = (hero.experience.toFloat() / hero.experienceToNextLevel.toFloat())
+                .coerceIn(0f, 1f)
+            LinearProgressIndicator(
+                progress = { xpPercent },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(3.dp)
+                    .padding(top = 1.dp),
+                color = GoldDark
+            )
+        } else {
+            Text(
+                text = "MAX",
+                style = MaterialTheme.typography.labelSmall,
+                color = GoldCoin
+            )
+        }
         Text(
             text = stateLabel(hero.state),
             style = MaterialTheme.typography.labelSmall,
