@@ -15,17 +15,21 @@ object GameEngine {
         val damageReduction = state.buildings.sumOf { it.guardTowerDamageReduction() }
         val templeHealBonus = state.buildings.sumOf { it.templeHealBonus().toDouble() }.toFloat()
 
-        // 3. Update monster groups (spawn new ones on interval)
+        // 3. Spawn monsters; separate bosses — they trigger grid combat, not regular combat
         val preSpawnIds = state.monsterGroups.map { it.id }.toSet()
-        val (spawnedMonsters, nextMonsterId) =
+        val (allSpawned, nextMonsterId) =
             MonsterSpawner.update(state.monsterGroups, state.tickCount, state.nextMonsterId)
 
-        // 4. Run hero AI state transitions
-        val aiHeroes = HeroAI.updateAll(state.heroes, state.buildings, spawnedMonsters, templeHealBonus)
+        val newSpawns = allSpawned.filter { it.id !in preSpawnIds }
+        val bossSpawns = newSpawns.filter { it.isBoss }
+        val monstersForCombat = allSpawned.filter { it.id in preSpawnIds } + newSpawns.filter { !it.isBoss }
 
-        // 5. Apply combat between heroes and monsters
+        // 4. Run hero AI against non-boss monsters only
+        val aiHeroes = HeroAI.updateAll(state.heroes, state.buildings, monstersForCombat, templeHealBonus)
+
+        // 5. Apply combat between heroes and non-boss monsters
         val combatResult = MonsterSpawner.applyHeroDamage(
-            spawnedMonsters, aiHeroes, damageReduction, templeHealBonus
+            monstersForCombat, aiHeroes, damageReduction, templeHealBonus
         )
 
         // 6. Compute stats deltas
@@ -34,16 +38,14 @@ object GameEngine {
         val goldFromKills = combatResult.heroes.sumOf { it.gold } - aiHeroes.sumOf { it.gold }
         val newTotalGold = state.totalGoldEarned + earnedGold + goldFromKills.coerceAtLeast(0)
 
-        // 7. Generate boss-spawn events for newly appeared bosses
+        // 7. Generate events: boss approach announcements + regular combat events
         val spawnEvents = mutableListOf<String>()
-        spawnedMonsters
-            .filter { it.id !in preSpawnIds && it.isBoss }
-            .forEach { spawnEvents.add("⚠️ A ${it.type.displayName} approaches!") }
-
-        // 8. Combine all events (spawn events first so they appear before combat events)
+        bossSpawns.forEach { boss ->
+            spawnEvents.add("⚠️ A ${boss.type.displayName} approaches — Battle Stations!")
+        }
         val allEvents = spawnEvents + combatResult.events
 
-        // 9. Update battle log (newest first, capped)
+        // 8. Update battle log (newest first, capped)
         val newLog = (allEvents + state.battleLog).take(GameConstants.BATTLE_LOG_MAX_SIZE)
 
         val newState = state.copy(
@@ -59,6 +61,11 @@ object GameEngine {
             battleLog = newLog
         )
 
-        return TickResult(newState = newState, events = allEvents)
+        // 9. Grid battle trigger if a boss spawned and heroes are present
+        val gridTrigger: GridBattleTrigger? = if (bossSpawns.isNotEmpty() && state.heroes.isNotEmpty()) {
+            GridBattleTrigger(heroes = state.heroes, monsters = bossSpawns)
+        } else null
+
+        return TickResult(newState = newState, events = allEvents, gridBattleTrigger = gridTrigger)
     }
 }

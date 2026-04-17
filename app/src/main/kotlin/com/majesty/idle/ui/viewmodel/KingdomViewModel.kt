@@ -5,13 +5,19 @@ import androidx.lifecycle.viewModelScope
 import com.majesty.idle.data.repository.GameRepository
 import com.majesty.idle.domain.GameConstants
 import com.majesty.idle.domain.engine.GameEngine
+import com.majesty.idle.domain.engine.grid.GridBattle
+import com.majesty.idle.domain.engine.grid.GridBattleResult
+import com.majesty.idle.domain.engine.grid.GridBattleState
+import com.majesty.idle.domain.engine.grid.GridEngine
 import com.majesty.idle.domain.model.BuildingType
 import com.majesty.idle.domain.model.Hero
 import com.majesty.idle.domain.model.HeroClass
 import com.majesty.idle.domain.model.KingdomState
 import com.majesty.idle.domain.model.Milestone
 import com.majesty.idle.domain.model.Milestones
+import com.majesty.idle.domain.model.MonsterGroup
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -36,6 +42,17 @@ class KingdomViewModel @Inject constructor(
     val offlineGoldEarned: StateFlow<Long> = _offlineGoldEarned.asStateFlow()
 
     private val _completedMilestones = MutableStateFlow<Set<String>>(emptySet())
+
+    // Grid battle state — null when no battle is active
+    private val _gridBattle = MutableStateFlow<GridBattleState?>(null)
+    val gridBattle: StateFlow<GridBattleState?> = _gridBattle.asStateFlow()
+
+    private val _gridOverlayVisible = MutableStateFlow(false)
+    val gridOverlayVisible: StateFlow<Boolean> = _gridOverlayVisible.asStateFlow()
+
+    private var gridBattleJob: Job? = null
+    private var gridBattleHeroes: List<Hero> = emptyList()
+    private var gridBattleMonsters: List<MonsterGroup> = emptyList()
 
     val milestones: StateFlow<List<Milestone>> = _state
         .map { Milestones.evaluate(it) }
@@ -65,6 +82,13 @@ class KingdomViewModel @Inject constructor(
 
                 // Check for newly completed milestones and award gold
                 checkMilestones(result.newState)
+
+                // Start grid battle if a boss spawned and no battle is currently in progress
+                result.gridBattleTrigger?.let { trigger ->
+                    if (_gridBattle.value == null) {
+                        startGridBattle(trigger.heroes, trigger.monsters)
+                    }
+                }
 
                 if (_state.value.tickCount % GameConstants.SAVE_EVERY_N_TICKS == 0L) {
                     repository.saveState(_state.value)
@@ -147,6 +171,48 @@ class KingdomViewModel @Inject constructor(
             )
         }
         viewModelScope.launch { repository.saveState(_state.value) }
+    }
+
+    private fun startGridBattle(heroes: List<Hero>, monsters: List<MonsterGroup>) {
+        gridBattleHeroes = heroes
+        gridBattleMonsters = monsters
+        val initial = GridBattle.initialize(heroes, monsters)
+        _gridBattle.value = initial
+        _gridOverlayVisible.value = true
+        gridBattleJob = viewModelScope.launch {
+            var state = initial
+            while (!state.isResolved) {
+                delay(800L)
+                state = GridEngine.tick(state)
+                _gridBattle.value = state
+            }
+            val result = GridBattle.toResult(state, gridBattleHeroes, gridBattleMonsters)
+            applyGridBattleResult(result)
+        }
+    }
+
+    private fun applyGridBattleResult(result: GridBattleResult) {
+        _state.update { current ->
+            val updatedHeroes = current.heroes.map { hero ->
+                result.heroesAfter.find { it.id == hero.id } ?: hero
+            }
+            val newLog = (result.events + current.battleLog).take(GameConstants.BATTLE_LOG_MAX_SIZE)
+            current.copy(
+                gold = current.gold + result.goldEarned,
+                heroes = updatedHeroes,
+                totalMonstersKilled = current.totalMonstersKilled + result.monstersKilled,
+                totalBossKills = current.totalBossKills + result.bossesKilled,
+                battleLog = newLog
+            )
+        }
+        viewModelScope.launch { repository.saveState(_state.value) }
+        _gridBattle.value = null
+        _gridOverlayVisible.value = false
+    }
+
+    fun dismissGridOverlay() {
+        // Hide overlay — battle continues running in background via gridBattleJob
+        _gridOverlayVisible.value = false
     }
 
     fun dismissOfflineNotice() {

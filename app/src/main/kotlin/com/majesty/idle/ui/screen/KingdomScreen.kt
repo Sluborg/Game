@@ -1,7 +1,7 @@
 package com.majesty.idle.ui.screen
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,6 +38,8 @@ fun KingdomScreen(viewModel: KingdomViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
     val offlineGold by viewModel.offlineGoldEarned.collectAsState()
     val milestones by viewModel.milestones.collectAsState()
+    val gridBattle by viewModel.gridBattle.collectAsState()
+    val gridOverlayVisible by viewModel.gridOverlayVisible.collectAsState()
 
     if (offlineGold > 0) {
         AlertDialog(
@@ -52,6 +54,7 @@ fun KingdomScreen(viewModel: KingdomViewModel = hiltViewModel()) {
         )
     }
 
+    Box(modifier = Modifier.fillMaxSize()) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -136,4 +139,15 @@ fun KingdomScreen(viewModel: KingdomViewModel = hiltViewModel()) {
             }
         }
     }
+
+    // Grid battle overlay — shown above everything when a boss battle is active
+    val currentBattle = gridBattle
+    if (currentBattle != null && gridOverlayVisible) {
+        GridBattleScreen(
+            state = currentBattle,
+            onDismiss = viewModel::dismissGridOverlay,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+    } // end Box
 }
