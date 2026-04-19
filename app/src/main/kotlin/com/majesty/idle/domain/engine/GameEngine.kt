@@ -34,7 +34,6 @@ object GameEngine {
 
         // 6. Compute stats deltas
         val monstersKilledThisTick = combatResult.monsters.count { !it.isAlive }
-        val bossesKilledThisTick = combatResult.monsters.count { it.isBoss && !it.isAlive }
         val goldFromKills = combatResult.heroes.sumOf { it.gold } - aiHeroes.sumOf { it.gold }
         val newTotalGold = state.totalGoldEarned + earnedGold + goldFromKills.coerceAtLeast(0)
 
@@ -57,13 +56,13 @@ object GameEngine {
             nextMonsterId = nextMonsterId,
             totalMonstersKilled = state.totalMonstersKilled + monstersKilledThisTick,
             totalGoldEarned = newTotalGold,
-            totalBossKills = state.totalBossKills + bossesKilledThisTick,
+            totalBossKills = state.totalBossKills,
             battleLog = newLog
         )
 
         // 9. Grid battle trigger if a boss spawned and heroes are present
-        val gridTrigger: GridBattleTrigger? = if (bossSpawns.isNotEmpty() && state.heroes.isNotEmpty()) {
-            GridBattleTrigger(heroes = state.heroes, monsters = bossSpawns)
+        val gridTrigger: GridBattleTrigger? = if (bossSpawns.isNotEmpty() && combatResult.heroes.isNotEmpty()) {
+            GridBattleTrigger(heroes = combatResult.heroes, monsters = bossSpawns)
         } else null
 
         return TickResult(newState = newState, events = allEvents, gridBattleTrigger = gridTrigger)
