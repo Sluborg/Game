@@ -1,75 +1,139 @@
 package com.majesty.idle.domain.engine
 
 import com.majesty.idle.domain.GameConstants
+import com.majesty.idle.domain.model.Hero
+import com.majesty.idle.domain.model.HeroClass
+import com.majesty.idle.domain.model.HeroState
 import com.majesty.idle.domain.model.MonsterGroup
 import com.majesty.idle.domain.model.MonsterType
 
+data class CombatResult(
+    val monsters: List<MonsterGroup>,
+    val heroes: List<Hero>,
+    val events: List<String>
+)
+
 object MonsterSpawner {
 
-    /** Returns updated monster list + the next available ID (for persistence in KingdomState). */
+    /** Returns updated monster list + next available ID. Handles regular, surge, and boss spawns. */
     fun update(
         monsters: List<MonsterGroup>,
         tickCount: Long,
         nextMonsterId: Long
     ): Pair<List<MonsterGroup>, Long> {
         val alive = monsters.filter { it.isAlive }
-        return if (tickCount > 0 && tickCount % GameConstants.MONSTER_SPAWN_BASE_INTERVAL == 0L) {
-            val (spawned, nextId) = spawn(tickCount, nextMonsterId)
-            (alive + spawned) to nextId
-        } else {
-            alive to nextMonsterId
+        var current = alive
+        var id = nextMonsterId
+
+        // Regular spawn every 45 ticks
+        if (tickCount > 0 && tickCount % GameConstants.MONSTER_SPAWN_BASE_INTERVAL == 0L) {
+            val (m, newId) = spawnRegular(tickCount, id)
+            current = current + m
+            id = newId
         }
+
+        // Monster surge: extra spawn every 5 minutes (only after tick 180 to avoid early overwhelm)
+        if (tickCount > 180 && tickCount % GameConstants.MONSTER_SURGE_INTERVAL == 0L) {
+            val (m, newId) = spawnRegular(tickCount, id)
+            current = current + m
+            id = newId
+        }
+
+        // Boss spawn every ~8 minutes (only after tick 240)
+        if (tickCount > 240 && tickCount % GameConstants.BOSS_SPAWN_INTERVAL == 0L) {
+            val (m, newId) = spawnBoss(tickCount, id)
+            current = current + m
+            id = newId
+        }
+
+        return current to id
     }
 
-    private fun spawn(tickCount: Long, id: Long): Pair<MonsterGroup, Long> {
+    private fun spawnRegular(tickCount: Long, id: Long): Pair<MonsterGroup, Long> {
         val type = when {
             tickCount > 600 -> MonsterType.DRAGON
+            tickCount > 400 -> if (tickCount % 3 == 0L) MonsterType.UNDEAD else MonsterType.TROLL
             tickCount > 300 -> MonsterType.TROLL
-            tickCount > 120 -> MonsterType.GOBLIN
+            tickCount > 120 -> if (tickCount % 2 == 0L) MonsterType.GOBLIN else MonsterType.UNDEAD
             else -> MonsterType.RAT
         }
         val count = when (type) {
             MonsterType.RAT -> (2..5).random()
             MonsterType.GOBLIN -> (1..3).random()
+            MonsterType.UNDEAD -> (1..3).random()
             else -> 1
         }
         val totalHp = type.baseHp * count
         return MonsterGroup(id = id, type = type, count = count, hp = totalHp, maxHp = totalHp) to (id + 1)
     }
 
+    private fun spawnBoss(tickCount: Long, id: Long): Pair<MonsterGroup, Long> {
+        val type = when {
+            tickCount > 840 -> MonsterType.BOSS_DRAGON
+            tickCount > 480 -> MonsterType.BOSS_TROLL
+            else -> MonsterType.BOSS_GOBLIN
+        }
+        val hp = type.baseHp
+        return MonsterGroup(id = id, type = type, count = 1, hp = hp, maxHp = hp) to (id + 1)
+    }
+
     fun applyHeroDamage(
         monsters: List<MonsterGroup>,
-        heroes: List<com.majesty.idle.domain.model.Hero>
-    ): Pair<List<MonsterGroup>, List<com.majesty.idle.domain.model.Hero>> {
+        heroes: List<Hero>,
+        damageReduction: Int = 0,
+        healRateBonus: Float = 0f
+    ): CombatResult {
         val updatedMonsters = monsters.toMutableList()
         val updatedHeroes = heroes.toMutableList()
+        val events = mutableListOf<String>()
 
         for (i in updatedHeroes.indices) {
             val hero = updatedHeroes[i]
-            if (hero.state != com.majesty.idle.domain.model.HeroState.HUNTING) continue
+            if (hero.state != HeroState.HUNTING) continue
             val monsterIdx = updatedMonsters.indexOfFirst { it.id == hero.targetMonsterId && it.isAlive }
             if (monsterIdx < 0) continue
 
             val monster = updatedMonsters[monsterIdx]
+
             val heroDamage = when (hero.heroClass) {
-                com.majesty.idle.domain.model.HeroClass.WARRIOR -> 10 + hero.level * 2
-                com.majesty.idle.domain.model.HeroClass.PALADIN -> 8 + hero.level * 2
-                com.majesty.idle.domain.model.HeroClass.RANGER -> 12 + hero.level
-                com.majesty.idle.domain.model.HeroClass.WIZARD -> 20 + hero.level * 3
-                com.majesty.idle.domain.model.HeroClass.ROGUE -> 15 + hero.level * 2
+                HeroClass.WARRIOR -> 10 + hero.level * 2
+                HeroClass.PALADIN -> 8 + hero.level * 2
+                HeroClass.RANGER -> 12 + hero.level
+                HeroClass.WIZARD -> 20 + hero.level * 3
+                HeroClass.ROGUE -> 15 + hero.level * 2
             }
-            val monsterDamage = monster.type.threatLevel * 3
+            val rawMonsterDamage = monster.type.threatLevel * 3
+            val effectiveDamage = (rawMonsterDamage - damageReduction).coerceAtLeast(1)
 
             val newMonsterHp = (monster.hp - heroDamage).coerceAtLeast(0)
-            val newHeroHp = (hero.hp - monsterDamage).coerceAtLeast(0)
+            val newHeroHp = (hero.hp - effectiveDamage).coerceAtLeast(0)
 
             updatedMonsters[monsterIdx] = monster.copy(hp = newMonsterHp)
 
-            // Hero gains gold when monster dies
+            // Award gold and XP on kill
             val goldGain = if (newMonsterHp == 0) monster.type.goldReward else 0L
-            updatedHeroes[i] = hero.copy(hp = newHeroHp, gold = hero.gold + goldGain)
+            val xpGain = if (newMonsterHp == 0) monster.type.xpReward else 0L
+
+            val heroAfterXp = if (xpGain > 0) hero.gainExperience(xpGain) else hero
+            val finalHero = heroAfterXp.copy(
+                hp = newHeroHp.coerceAtMost(heroAfterXp.maxHp),
+                gold = heroAfterXp.gold + goldGain
+            )
+
+            // Generate kill event
+            if (newMonsterHp == 0) {
+                val bossPrefix = if (monster.isBoss) "👑 " else ""
+                events.add("${bossPrefix}${hero.name} slew ${monster.type.displayName}! +${goldGain}g")
+            }
+
+            // Detect level-up
+            if (finalHero.level > hero.level) {
+                events.add("⬆ ${finalHero.name} reached Level ${finalHero.level}!")
+            }
+
+            updatedHeroes[i] = finalHero
         }
 
-        return updatedMonsters to updatedHeroes
+        return CombatResult(monsters = updatedMonsters, heroes = updatedHeroes, events = events)
     }
 }

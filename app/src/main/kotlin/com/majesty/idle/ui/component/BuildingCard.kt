@@ -3,6 +3,7 @@ package com.majesty.idle.ui.component
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,7 +16,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.majesty.idle.domain.GameConstants
 import com.majesty.idle.domain.model.Building
+import com.majesty.idle.domain.model.Hero
+import com.majesty.idle.domain.model.HeroClass
+import com.majesty.idle.ui.theme.BloodRed
 import com.majesty.idle.ui.theme.GoldCoin
 import com.majesty.idle.ui.theme.RoyalPurple
 import com.majesty.idle.ui.theme.StoneLight
@@ -24,7 +29,9 @@ import com.majesty.idle.ui.theme.StoneLight
 fun BuildingCard(
     building: Building,
     playerGold: Long,
+    heroCount: Int = 0,
     onUpgrade: () -> Unit,
+    onRecruit: ((HeroClass) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val canAffordUpgrade = playerGold >= building.upgradeCost
@@ -49,6 +56,14 @@ fun BuildingCard(
                     color = GoldCoin
                 )
             }
+            // Building special effect description
+            if (building.type.effectDescription.isNotEmpty()) {
+                Text(
+                    text = building.type.effectDescription,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             if (building.canUpgrade) {
                 Spacer(Modifier.height(8.dp))
                 Text(
@@ -64,6 +79,27 @@ fun BuildingCard(
                     style = MaterialTheme.typography.labelSmall,
                     color = GoldCoin
                 )
+            }
+            // Recruit buttons for guild buildings
+            if (onRecruit != null && building.isGuild && building.recruitableClasses.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                val atMax = heroCount >= GameConstants.MAX_HEROES
+                building.recruitableClasses.forEach { heroClass ->
+                    val cost = Hero.recruitCost(heroClass)
+                    val canAfford = playerGold >= cost && !atMax
+                    Row {
+                        Text(
+                            text = if (atMax) "Party full" else "Recruit ${heroClass.displayName}: ${cost}g",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = when {
+                                atMax -> MaterialTheme.colorScheme.onSurfaceVariant
+                                canAfford -> GoldCoin
+                                else -> BloodRed
+                            },
+                            modifier = if (canAfford) Modifier.clickable { onRecruit(heroClass) } else Modifier
+                        )
+                    }
+                }
             }
         }
     }
