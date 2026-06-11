@@ -23,13 +23,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import com.majesty.idle.ui.component.BattleLog
 import com.majesty.idle.ui.component.BuildingCard
+import com.majesty.idle.ui.component.CastleTapButton
 import com.majesty.idle.ui.component.GoldBar
 import com.majesty.idle.ui.component.HeroPortrait
 import com.majesty.idle.ui.component.MilestonePanel
 import com.majesty.idle.ui.component.MonsterThreatBanner
-import com.majesty.idle.ui.theme.StoneDark
+import com.majesty.idle.ui.theme.GoldCoin
+import com.majesty.idle.ui.theme.NightBlue
+import com.majesty.idle.ui.theme.NightBlueDeep
+import com.majesty.idle.ui.theme.RoyalPurpleDeep
 import com.majesty.idle.ui.viewmodel.KingdomViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,12 +61,23 @@ fun KingdomScreen(viewModel: KingdomViewModel = hiltViewModel()) {
         )
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Brush.verticalGradient(listOf(NightBlue, NightBlueDeep)))
+    ) {
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Majesty Idle", style = MaterialTheme.typography.headlineMedium) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = StoneDark)
+                title = {
+                    Text(
+                        "👑 Majesty Idle",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = GoldCoin
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = RoyalPurpleDeep)
             )
         }
     ) { padding ->
@@ -72,6 +90,14 @@ fun KingdomScreen(viewModel: KingdomViewModel = hiltViewModel()) {
             // Gold bar
             item {
                 GoldBar(gold = state.gold, goldPerSecond = state.goldPerSecond)
+            }
+
+            // Tap-to-collect castle
+            item {
+                CastleTapButton(
+                    tapReward = state.tapReward,
+                    onTap = viewModel::collectTaxes
+                )
             }
 
             // Milestone chips
@@ -99,8 +125,9 @@ fun KingdomScreen(viewModel: KingdomViewModel = hiltViewModel()) {
             if (state.heroes.isNotEmpty()) {
                 item {
                     Text(
-                        text = "Heroes (${state.heroes.size}/${com.majesty.idle.domain.GameConstants.MAX_HEROES})",
+                        text = "🛡️ Heroes (${state.heroes.size}/${com.majesty.idle.domain.GameConstants.MAX_HEROES})",
                         style = MaterialTheme.typography.titleLarge,
+                        color = GoldCoin,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     )
                 }
@@ -120,8 +147,9 @@ fun KingdomScreen(viewModel: KingdomViewModel = hiltViewModel()) {
             // Kingdom buildings header
             item {
                 Text(
-                    text = "Kingdom",
+                    text = "🏛️ Kingdom",
                     style = MaterialTheme.typography.titleLarge,
+                    color = GoldCoin,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }

@@ -19,6 +19,10 @@ data class KingdomState(
     val goldPerSecond: Double
         get() = buildings.sumOf { it.goldPerSecond }
 
+    /** Gold granted per castle tap — scales with income so tapping stays relevant. */
+    val tapReward: Long
+        get() = 1L + (goldPerSecond / 2).toLong()
+
     val activeThreat: Boolean
         get() = monsterGroups.any { it.isAlive }
 
