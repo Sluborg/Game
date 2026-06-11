@@ -6,6 +6,7 @@ import com.majesty.idle.domain.model.HeroClass
 import com.majesty.idle.domain.model.HeroState
 import com.majesty.idle.domain.model.MonsterGroup
 import com.majesty.idle.domain.model.MonsterType
+import kotlin.random.Random
 
 data class CombatResult(
     val monsters: List<MonsterGroup>,
@@ -95,13 +96,17 @@ object MonsterSpawner {
 
             val monster = updatedMonsters[monsterIdx]
 
-            val heroDamage = when (hero.heroClass) {
+            val baseDamage = when (hero.heroClass) {
                 HeroClass.WARRIOR -> 10 + hero.level * 2
                 HeroClass.PALADIN -> 8 + hero.level * 2
                 HeroClass.RANGER -> 12 + hero.level
                 HeroClass.WIZARD -> 20 + hero.level * 3
                 HeroClass.ROGUE -> 15 + hero.level * 2
             }
+            // Critical hits: 10% chance for double damage (Rogues crit 25% of the time)
+            val critChance = if (hero.heroClass == HeroClass.ROGUE) 0.25 else 0.10
+            val isCrit = Random.nextDouble() < critChance
+            val heroDamage = if (isCrit) baseDamage * 2 else baseDamage
             val rawMonsterDamage = monster.type.threatLevel * 3
             val effectiveDamage = (rawMonsterDamage - damageReduction).coerceAtLeast(1)
 
@@ -120,10 +125,16 @@ object MonsterSpawner {
                 gold = heroAfterXp.gold + goldGain
             )
 
-            // Generate kill event
+            // Generate kill / crit events
             if (newMonsterHp == 0) {
-                val bossPrefix = if (monster.isBoss) "👑 " else ""
-                events.add("${bossPrefix}${hero.name} slew ${monster.type.displayName}! +${goldGain}g")
+                val prefix = when {
+                    monster.isBoss -> "👑 "
+                    isCrit -> "💥 "
+                    else -> ""
+                }
+                events.add("${prefix}${hero.name} slew ${monster.type.displayName}! +${goldGain}g")
+            } else if (isCrit) {
+                events.add("💥 ${hero.name} crits ${monster.type.displayName} for $heroDamage!")
             }
 
             // Detect level-up

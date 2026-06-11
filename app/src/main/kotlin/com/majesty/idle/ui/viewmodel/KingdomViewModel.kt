@@ -120,6 +120,15 @@ class KingdomViewModel @Inject constructor(
         }
     }
 
+    fun collectTaxes() {
+        _state.update {
+            it.copy(
+                gold = it.gold + it.tapReward,
+                totalGoldEarned = it.totalGoldEarned + it.tapReward
+            )
+        }
+    }
+
     fun buildBuilding(type: BuildingType) {
         val cost = type.baseCost
         val current = _state.value

@@ -92,7 +92,7 @@ class GridEngineTest {
     }
 
     @Test
-    fun `bump contest: loser takes damage`() {
+    fun `bump contest - loser takes damage`() {
         val unitA = GridUnit(
             id = 1L, name = "Aldric", emoji = "⚔", isHero = true,
             hp = 100, maxHp = 100, atk = 11, def = 10, str = 14, prot = 4, mor = 12,
@@ -137,9 +137,15 @@ class GridEngineTest {
         val cowardlyMonster = GridUnit(
             id = -1L, name = "Rat", emoji = "🐀", isHero = false,
             hp = 2, maxHp = 40, atk = 6, def = 7, str = 8, prot = 0, mor = 4,  // mor=4 < 12
-            pos = GridPos(1, 2)
+            pos = GridPos(1, 0)
         )
-        val state = GridBattleState(units = listOf(cowardlyMonster))
+        // An enemy must be present, otherwise the AI just Waits and the battle resolves
+        val hero = GridUnit(
+            id = 1L, name = "Aldric", emoji = "⚔", isHero = true,
+            hp = 100, maxHp = 100, atk = 11, def = 10, str = 14, prot = 4, mor = 12,
+            pos = GridPos(1, 4)
+        )
+        val state = GridBattleState(units = listOf(cowardlyMonster, hero))
 
         // Run many ticks — with mor=4 the rat should flee eventually
         var current = state

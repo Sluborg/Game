@@ -1,8 +1,14 @@
 package com.majesty.idle.ui.component
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,8 +19,10 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.majesty.idle.domain.GameConstants
@@ -29,25 +37,48 @@ import com.majesty.idle.ui.theme.StoneDark
 
 @Composable
 fun HeroPortrait(hero: Hero, modifier: Modifier = Modifier) {
-    val borderColor = when (hero.state) {
+    val targetBorder = when (hero.state) {
         HeroState.HUNTING -> BloodRed
         HeroState.FLEEING -> Color.Yellow
         HeroState.RESTING -> ForestGreen
         HeroState.SHOPPING -> GoldCoin
         else -> RoyalPurple
     }
+    // Smooth color transition instead of an instant snap when state changes
+    val borderColor by animateColorAsState(
+        targetValue = targetBorder,
+        animationSpec = tween(durationMillis = 400),
+        label = "heroBorder"
+    )
+
+    // Heroes in combat pulse to draw the eye
+    val pulse = rememberInfiniteTransition(label = "heroPulse")
+    val combatScale by pulse.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.15f,
+        animationSpec = infiniteRepeatable(tween(450), RepeatMode.Reverse),
+        label = "combatScale"
+    )
+    val emojiScale = if (hero.state == HeroState.HUNTING) combatScale else 1f
+
+    val animatedHp by animateFloatAsState(
+        targetValue = hero.hpPercent,
+        animationSpec = tween(durationMillis = 500),
+        label = "heroHp"
+    )
 
     Column(
         modifier = modifier
             .width(90.dp)
-            .border(2.dp, borderColor, RoundedCornerShape(8.dp))
-            .background(StoneDark, RoundedCornerShape(8.dp))
+            .border(2.dp, borderColor, RoundedCornerShape(10.dp))
+            .background(StoneDark, RoundedCornerShape(10.dp))
             .padding(6.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = heroEmoji(hero),
-            style = MaterialTheme.typography.headlineMedium
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.scale(emojiScale)
         )
         Text(
             text = hero.name,
@@ -62,18 +93,23 @@ fun HeroPortrait(hero: Hero, modifier: Modifier = Modifier) {
         )
         // HP bar
         LinearProgressIndicator(
-            progress = { hero.hpPercent },
+            progress = { animatedHp },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(4.dp),
-            color = if (hero.hpPercent > 0.5f) ForestGreen else BloodRed
+            color = if (animatedHp > 0.5f) ForestGreen else BloodRed
         )
         // XP bar (gold, thinner)
         if (hero.level < GameConstants.MAX_HERO_LEVEL) {
             val xpPercent = (hero.experience.toFloat() / hero.experienceToNextLevel.toFloat())
                 .coerceIn(0f, 1f)
+            val animatedXp by animateFloatAsState(
+                targetValue = xpPercent,
+                animationSpec = tween(durationMillis = 500),
+                label = "heroXp"
+            )
             LinearProgressIndicator(
-                progress = { xpPercent },
+                progress = { animatedXp },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(3.dp)
@@ -90,7 +126,7 @@ fun HeroPortrait(hero: Hero, modifier: Modifier = Modifier) {
         Text(
             text = stateLabel(hero.state),
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = borderColor.copy(alpha = 0.9f),
             maxLines = 1
         )
     }
