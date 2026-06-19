@@ -1,0 +1,192 @@
+/* Majesty — Day by Day. Plain CSS (animations deferred per plan).
+   Colors mirror ui/theme/Color.kt. */
+
+:root {
+  --royal-purple: #6a2fbf;
+  --royal-purple-light: #9d6be8;
+  --royal-purple-deep: #2e1065;
+  --gold-coin: #ffd700;
+  --gold-light: #ffe98a;
+  --gold-dark: #b8860b;
+  --stone-dark: #222238;
+  --stone-light: #32324e;
+  --parchment-beige: #f4e4bc;
+  --parchment-dark: #c9b391;
+  --blood-red: #e05252;
+  --blood-red-deep: #7a1f2b;
+  --forest-green: #52c46b;
+  --night-blue: #12122a;
+  --night-blue-deep: #0a0a1a;
+  --ember-orange: #ff9d45;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Roboto, system-ui, sans-serif;
+  color: var(--parchment-beige);
+  background: linear-gradient(var(--night-blue), var(--night-blue-deep));
+  min-height: 100vh;
+}
+
+.app {
+  max-width: 760px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+/* Top bar */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--royal-purple-deep);
+  color: var(--gold-coin);
+  font-family: Georgia, "Times New Roman", serif;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+}
+.topbar-title { font-size: 20px; font-weight: 700; }
+
+.content { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+/* Buttons */
+.btn {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--parchment-beige);
+  background: var(--royal-purple);
+}
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn:not(:disabled):hover { filter: brightness(1.12); }
+
+.btn-reset { background: var(--stone-dark); color: var(--parchment-dark); font-size: 12px; }
+
+/* Day bar */
+.daybar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--royal-purple-deep), var(--stone-dark));
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+.daybar-info { display: flex; flex-direction: column; gap: 2px; }
+.daybar-day { font-size: 13px; color: var(--parchment-dark); }
+.daybar-gold { font-size: 24px; font-weight: 700; color: var(--gold-light); font-family: Georgia, serif; }
+.daybar-income { font-size: 12px; color: var(--gold-coin); opacity: 0.9; }
+.btn-end-day {
+  background: var(--gold-dark);
+  color: #1a1208;
+  font-size: 16px;
+  padding: 14px 20px;
+  font-family: Georgia, serif;
+}
+
+/* Milestones */
+.milestones { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.chip {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  white-space: nowrap;
+  background: var(--stone-dark);
+  color: var(--parchment-dark);
+  border: 1px solid var(--royal-purple);
+}
+.chip-done { background: var(--gold-dark); color: var(--gold-coin); border-color: var(--gold-coin); }
+
+/* Threat banner */
+.threat {
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: rgba(122, 31, 43, 0.35);
+  border: 1px solid rgba(224, 82, 82, 0.4);
+}
+.threat-title { font-size: 16px; font-weight: 700; color: var(--blood-red); margin-bottom: 6px; }
+.threat-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; padding: 2px 0; }
+
+/* Bars */
+.bar { background: var(--stone-dark); border-radius: 4px; overflow: hidden; height: 6px; }
+.bar-fill { height: 100%; background: var(--blood-red); }
+.bar-threat { flex: 1; max-width: 180px; }
+.bar-hero { height: 5px; margin-top: 4px; }
+.bar-xp { height: 4px; margin-top: 3px; }
+
+/* Battle log */
+.battlelog { border-radius: 10px; padding: 10px 12px; background: rgba(34, 34, 56, 0.85); }
+.battlelog-title { font-size: 13px; font-weight: 700; color: var(--gold-coin); margin-bottom: 6px; }
+.battlelog-line { font-size: 12px; line-height: 1.5; }
+
+/* Sections */
+.section { display: flex; flex-direction: column; gap: 10px; }
+.section-title { font-size: 18px; font-weight: 600; color: var(--gold-coin); font-family: Georgia, serif; }
+.section-title-sub { font-size: 15px; margin-top: 4px; }
+
+/* Hero cards */
+.hero-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+.hero-card {
+  flex: 0 0 92px;
+  background: var(--stone-dark);
+  border: 2px solid var(--royal-purple);
+  border-radius: 10px;
+  padding: 8px 6px;
+  text-align: center;
+}
+.hero-emoji { font-size: 26px; }
+.hero-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hero-level { font-size: 11px; color: var(--gold-coin); }
+.hero-hp-text { font-size: 10px; color: var(--parchment-dark); margin-top: 2px; }
+.hero-max { font-size: 11px; color: var(--gold-coin); font-weight: 700; margin-top: 3px; }
+.hero-state { font-size: 11px; color: var(--royal-purple-light); margin-top: 4px; }
+
+/* Building cards */
+.card {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--stone-light), var(--stone-dark));
+  border: 1px solid rgba(106, 47, 191, 0.6);
+}
+.card-icon {
+  flex: 0 0 48px;
+  height: 48px;
+  width: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  border-radius: 50%;
+  background: linear-gradient(var(--royal-purple), var(--royal-purple-deep));
+  border: 1px solid rgba(184, 134, 11, 0.7);
+}
+.card-body { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.card-head { display: flex; align-items: center; justify-content: space-between; }
+.card-name { font-size: 17px; font-weight: 600; font-family: Georgia, serif; }
+.card-sub { font-size: 12px; color: var(--parchment-dark); }
+.card-sub.gold { color: var(--gold-coin); }
+.card-max { font-size: 13px; color: var(--gold-coin); font-weight: 700; }
+
+.pips { display: inline-flex; gap: 3px; }
+.pip { width: 7px; height: 7px; border-radius: 50%; background: var(--stone-dark); border: 0.5px solid rgba(184, 134, 11, 0.5); }
+.pip-on { background: var(--gold-coin); }
+
+.btn-upgrade { background: var(--gold-dark); color: #1a1208; align-self: flex-start; }
+.recruit-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn-recruit { background: var(--royal-purple); font-size: 12px; }
+.btn-blocked:disabled { color: rgba(224, 82, 82, 0.7); }
+
+.build-menu { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn-build { background: var(--stone-light); }
