@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+      - dev
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -17,30 +19,47 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: web
     steps:
-      - name: Checkout
+      - name: Checkout main (production)
         uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main
+
+      - name: Checkout dev
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+          path: dev
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: web/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Build main -> site root (/Game/)
+        working-directory: main/web
+        run: |
+          npm ci
+          npm run build -- --base=/Game/
 
-      - name: Build
-        run: npm run build
+      - name: Build dev -> site/dev (/Game/dev/)
+        working-directory: dev/web
+        run: |
+          npm ci
+          npm run build -- --base=/Game/dev/
+
+      - name: Assemble combined site
+        run: |
+          mkdir -p site
+          cp -r main/web/dist/. site/
+          mkdir -p site/dev
+          cp -r dev/web/dist/. site/dev/
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: web/dist
+          path: site
 
   deploy:
     needs: build
