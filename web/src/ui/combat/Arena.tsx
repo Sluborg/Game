@@ -66,6 +66,7 @@ function Figure({
         layers={v.layers}
         scale={v.scale}
         lungeDir={v.lungeDir}
+        mirror={v.mirror}
         swingNonce={swing}
         hurtNonce={hurt}
         down={down}

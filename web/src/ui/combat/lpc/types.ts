@@ -5,7 +5,7 @@
 export const FRAME = 64;
 
 /** Equipment slots, drawn back-to-front by each layer's zPos (not slot order). */
-export type Slot = "body" | "legs" | "torso" | "head" | "hair" | "shield" | "weapon";
+export type Slot = "body" | "legs" | "torso" | "head" | "ears" | "hair" | "shield" | "weapon";
 
 /** Which theme-tint channel a layer belongs to (skin recolor vs gear recolor). */
 export type TintGroup = "skin" | "gear";

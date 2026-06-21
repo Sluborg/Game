@@ -22,6 +22,8 @@ export interface UnitVisual {
   scale: number;
   /** +1 lunges right (party), -1 lunges left (enemies). */
   lungeDir: 1 | -1;
+  /** Mirror horizontally so party units face right toward the enemies. */
+  mirror: boolean;
 }
 
 /** Generic presets — a named bundle of layer ids + tints. Themed presets (e.g.
@@ -34,7 +36,7 @@ export const PRESETS: Record<string, Preset> = {
   champion: {
     id: "champion",
     label: "Champion",
-    items: { ...HUMAN, torso: "torso_plate_gold", weapon: "weapon_longsword" },
+    items: { ...HUMAN, torso: "torso_plate_gold", weapon: "weapon_mace" },
     tints: { gear: TINTS.divine },
   },
 };
@@ -45,11 +47,14 @@ export const PRESETS: Record<string, Preset> = {
 const WEAPON_ITEM: Record<Appearance["weapon"], string> = {
   dagger: "weapon_dagger",
   sword: "weapon_arming",
-  greataxe: "weapon_longsword",
+  greataxe: "weapon_mace",
   cleaver: "weapon_arming",
   club: "weapon_dagger",
-  greatclub: "weapon_longsword",
+  greatclub: "weapon_mace",
 };
+
+// Goblinoids get long ears; trolls don't.
+const EARED: Partial<Record<Appearance["body"], boolean>> = { goblin: true, orc: true };
 
 const ARMOR_ITEM: Record<Appearance["armor"], string | null> = {
   none: null,
@@ -76,6 +81,7 @@ export function visualForAppearance(appearance: Appearance, divine = false): Uni
     weapon: WEAPON_ITEM[appearance.weapon],
   };
   if (isHero) items.hair = "hair_chestnut";
+  if (EARED[appearance.body]) items.ears = "ears_long";
   const torso = ARMOR_ITEM[appearance.armor];
   if (torso) items.torso = torso;
 
@@ -83,20 +89,23 @@ export function visualForAppearance(appearance: Appearance, divine = false): Uni
   if (isHero && divine) tints.gear = TINTS.divine;
   if (!isHero) tints.skin = MONSTER_SKIN[appearance.body];
 
-  return { items, tints, scale: SCALE[appearance.body], lungeDir: isHero ? 1 : -1 };
+  return { items, tints, scale: SCALE[appearance.body], lungeDir: isHero ? 1 : -1, mirror: isHero };
 }
 
 // Stable, value-keyed cache: the arena re-renders every frame, but a unit's
 // layer set only changes when its gear/tint does — so we hand back the same
 // array identity and avoid reloading images each frame.
-const visualCache = new Map<string, { layers: ResolvedLayer[]; scale: number; lungeDir: 1 | -1 }>();
+const visualCache = new Map<
+  string,
+  { layers: ResolvedLayer[]; scale: number; lungeDir: 1 | -1; mirror: boolean }
+>();
 
 export function visualFor(appearance: Appearance, divine = false) {
   const key = `${appearance.body}|${appearance.weapon}|${appearance.armor}|${divine ? "d" : ""}`;
   let cached = visualCache.get(key);
   if (!cached) {
     const v = visualForAppearance(appearance, divine);
-    cached = { layers: resolveLayers(v.items, v.tints), scale: v.scale, lungeDir: v.lungeDir };
+    cached = { layers: resolveLayers(v.items, v.tints), scale: v.scale, lungeDir: v.lungeDir, mirror: v.mirror };
     visualCache.set(key, cached);
   }
   return cached;

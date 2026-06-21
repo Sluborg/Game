@@ -33,9 +33,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 7px;
   width: 100%;
-  max-width: 120px;
+  max-width: 104px;
 }
 
 .figureWrap {
@@ -44,7 +44,8 @@
 
 .figure {
   width: 88px;
-  height: 88px;
+  height: 84px;
+  margin-bottom: 2px;
   display: grid;
   place-items: end center;
   filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.5));
