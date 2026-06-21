@@ -7,6 +7,9 @@ export const FRAME = 64;
 /** Equipment slots, drawn back-to-front by each layer's zPos (not slot order). */
 export type Slot = "body" | "legs" | "torso" | "head" | "hair" | "shield" | "weapon";
 
+/** Which theme-tint channel a layer belongs to (skin recolor vs gear recolor). */
+export type TintGroup = "skin" | "gear";
+
 /** A single LPC image layer: a spritesheet under public/sprites/lpc/. */
 export interface SpriteLayer {
   /** Directory under sprites/lpc/, e.g. "weapon/sword/arming/universal/fg/". */
@@ -15,8 +18,8 @@ export interface SpriteLayer {
   variant: string;
   /** Paint order; lower draws first (further back). Mirrors LPC zPos. */
   zPos: number;
-  /** If true, a theme tint may recolor this layer (e.g. metal -> divine gold). */
-  tintable?: boolean;
+  /** Tint channel this layer responds to (skin = body/head/hair, gear = armour/weapon). */
+  tintGroup?: TintGroup;
 }
 
 /** An equippable item = a named bundle of layers for one slot. */
@@ -27,12 +30,18 @@ export interface SpriteItem {
   layers: SpriteLayer[];
 }
 
-/** Programmatic recolor hook applied to tintable layers. */
+/** Programmatic recolor hook applied to a layer. */
 export interface Tint {
   /** CSS color painted over opaque pixels. */
   color: string;
   /** 0..1 blend strength. */
   strength: number;
+}
+
+/** Per-channel tints — e.g. green skin for a goblin, gilded gear for a champion. */
+export interface TintMap {
+  skin?: Tint;
+  gear?: Tint;
 }
 
 /** A named bundle of equipped item ids per slot, plus an optional theme tint.
@@ -42,7 +51,7 @@ export interface Preset {
   id: string;
   label: string;
   items: Partial<Record<Slot, string>>;
-  tint?: Tint;
+  tints?: TintMap;
 }
 
 /** LPC universal animation layout. `row` is the first of the 4 direction rows

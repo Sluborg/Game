@@ -1,15 +1,14 @@
 .grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
   gap: var(--sp-2);
 }
 
 .cell {
   position: relative;
-  aspect-ratio: 1 / 1;
+  min-height: 150px;
   border-radius: var(--r-md);
   background:
-    radial-gradient(120% 90% at 50% 18%, rgba(157, 107, 232, 0.12), transparent 60%),
+    radial-gradient(120% 90% at 50% 22%, rgba(157, 107, 232, 0.12), transparent 60%),
     linear-gradient(180deg, var(--surface-2), var(--surface-1));
   border: 1px solid var(--stroke-soft);
   box-shadow: inset 0 -10px 22px rgba(0, 0, 0, 0.35);
@@ -26,8 +25,8 @@
   position: absolute;
   inset: 0;
   display: grid;
-  place-items: end center;
-  padding: 8% 10% 12%;
+  place-items: center;
+  padding: 10px 8px;
 }
 
 .tile {
@@ -36,40 +35,24 @@
   align-items: center;
   gap: 5px;
   width: 100%;
+  max-width: 120px;
 }
 
-.sprite {
+.figureWrap {
   position: relative;
-  width: 72%;
-  aspect-ratio: 6 / 7;
 }
 
-/* LPC composited figures fill a square frame and use the full cell height. */
-.spriteLpc {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.45));
-}
-.down {
-  opacity: 0.4;
-  filter: grayscale(0.7);
-}
-
-/* Faux depth for a stack of identical members. */
-.stacked .sprite::before,
-.stacked .sprite::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: inherit;
-}
-.stacked .sprite {
-  filter: drop-shadow(6px 5px 0 rgba(0, 0, 0, 0.28)) drop-shadow(11px 9px 0 rgba(0, 0, 0, 0.18));
+.figure {
+  width: 88px;
+  height: 88px;
+  display: grid;
+  place-items: end center;
+  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.5));
 }
 
 .badge {
   position: absolute;
-  top: -4px;
+  top: -2px;
   right: -6px;
   padding: 1px 7px;
   border-radius: var(--r-pill);
@@ -79,6 +62,7 @@
   color: #1a1208;
   background: var(--c-gold);
   box-shadow: var(--shadow-1);
+  z-index: 2;
 }
 
 .name {
@@ -90,8 +74,8 @@
 }
 
 .clearedMark {
-  position: absolute;
-  inset: 30%;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   border: 2px dashed rgba(224, 82, 82, 0.35);
   opacity: 0.5;
