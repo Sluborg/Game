@@ -63,7 +63,7 @@ Vite dev server with hot-reload, optionally exposed from the Google VM via a Clo
 ## Open items
 - [ ] Execute PR1 then PR2 above.
 - [ ] Port Godblood design info from Coda into the repo as it gets implemented.
-- [ ] Remove committed build artifact `web/tsconfig.tsbuildinfo`; add to `.gitignore`.
+- [x] Remove committed build artifact `web/tsconfig.tsbuildinfo`; add to `.gitignore`. (done 2026-06-21)
 - [ ] Rotate the GitHub PAT used on the VM (was exposed during setup).
 
 ## Conventions
