@@ -44,6 +44,17 @@
   aspect-ratio: 6 / 7;
 }
 
+/* LPC composited figures fill a square frame and use the full cell height. */
+.spriteLpc {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.45));
+}
+.down {
+  opacity: 0.4;
+  filter: grayscale(0.7);
+}
+
 /* Faux depth for a stack of identical members. */
 .stacked .sprite::before,
 .stacked .sprite::after {

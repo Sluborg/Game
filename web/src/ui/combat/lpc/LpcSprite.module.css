@@ -1,0 +1,9 @@
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  /* Keep pixel art crisp when CSS-scaled up from the native 64px frame. */
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
