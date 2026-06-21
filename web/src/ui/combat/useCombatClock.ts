@@ -199,12 +199,13 @@ export function useCombatClock(config: FightConfig): CombatClock {
   useEffect(() => stopLoop, [stopLoop]);
 
   const start = useCallback(() => {
-    let engine = engineRef.current;
-    if (!engine || engine.isOver) engine = build();
-    stopLoop();
+    // Always begin a fresh fight. This backs "Start" (idle), "Restart" (paused)
+    // and "Fight again" (ended); continuing a paused fight is resume(). build()
+    // stops any running loop and installs a new engine in idle state.
+    build();
     setVm((prev) => ({ ...prev, status: "running" }));
     rafRef.current = requestAnimationFrame(frame);
-  }, [build, frame, stopLoop]);
+  }, [build, frame]);
 
   const pause = useCallback(() => {
     stopLoop();
