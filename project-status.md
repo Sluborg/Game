@@ -23,12 +23,21 @@ Workflow: work on `dev` (or a branch merged into `dev`) → test at `/Game/dev/`
 
 **The gap:** the data model has no attribute block, and the entire locked combat spec depends on it. Nothing combat-related can be built until heroes and monsters carry the 7 attributes.
 
-## Standalone Combat Test screen (2026-06-21)
-A start screen now offers **Campaign** (the existing day/economy game, untouched) and **Combat Test** (new), routed by hash (`#/campaign`, `#/test`). The Combat Test is a self-contained arena that implements the locked lean-1v1 math from the Coda "Combat System" page plus three tester-only feel flags (opening desync, 80–120% damage variance, Dex-scaled crits). It is fully decoupled from the day engine / economy / persistence.
-- Pure, unit-tested engine: `web/src/game/combatTester.ts` (+ `combatTester.test.ts`, formulas verified against the Coda worked example).
-- UI: `web/src/ui/CombatTest.tsx` — data-driven 2×3 grid (1 hero vs up to 3 monster stacks, authored so cell count can expand), tick sim on a shared clock, floating damage numbers, per-unit HP bars, result banner, log (newest-on-top), and controls (hero Weak/Medium/Strong, monster Goblin/Orc/Troll, stacks 1–3 × size 1–3, Start, Pause/Resume, Reset, live speed slider). Phone-first, ~460px.
-- Routing/menu: `web/src/ui/Root.tsx`, `web/src/ui/StartScreen.tsx`; `main.tsx` renders `Root`.
-- Brief: Coda "Godblood Knowledge → 20260621_combatBasics". Built per spec; only missing prototype control (Pause) is implemented. Next: real sprites/art, then phase-2 grid targeting.
+## Combat Test feature (re-architected 2026-06-21)
+A start screen offers **Campaign** (the existing day/economy game, untouched) and **Combat Test**, routed by hash (`#/campaign`, `#/test`). The Combat Test is a real, modular feature — not a port of the prototype. The brief (`CombatTester.jsx` + Coda `20260621_combatBasics`) was used as reference only; mechanics kept, architecture redone.
+
+**Engine — pure, event-emitting, unit-tested (`web/src/game/battle/`).**
+- `tuning.ts` (all constants, no magic numbers), `rng.ts` (seedable mulberry32 → deterministic fights), `attributes.ts` (canonical lean-1v1 curves + flagged tester-only variance/crit/opening), `equipment.ts` + `units.ts` (config-driven weapons/armor/heroes/monsters — gear drives BOTH stats and look), `grid.ts` (data-driven board), `events.ts` (typed `swing|hit|miss|knockout|end` stream), `engine.ts` (`CombatEngine.advance(dt) → events`, `getState()`; no React/timers).
+- `engine.test.ts` (12 tests): curves reproduce the Coda worked example (Knight 120hp/23%/1.45s, Goblin 44/20%, mail≈30%), 90% cap, no-spillover, deterministic-by-seed, coherent event stream.
+
+**Presentation (`web/src/ui/combat/` + `web/src/ui/theme/tokens.css`).**
+- Design-token system (CSS variables) + **CSS Modules** per component (no inline styling, no emoji).
+- **Layered inline-SVG sprites** (`sprites/`): body + armor + weapon composed via a data-driven anchor system and a swappable registry — **gear renders on the model**; placeholder art, structured to swap for real art.
+- `useCombatClock.ts`: rAF loop steps the engine and renders its events (floaters, per-cell lunge/hurt nonces, log); engine never lives in React state. Animation layer = CSS keyframes/transitions triggered by events (no setTimeout).
+- Components: `Arena`, `UnitSprite`, `HealthBar`, `DamageFloaters`, `Controls`, `ConfigPanel` (with live hero stat readout), `CombatLog`, `CombatTestScreen`. Start screen refreshed with the token system + SVG icons. Phone-first, ~460px.
+- Controls: hero Weak/Med/Strong, monster Goblin/Orc/Troll, stacks 1–3 × size 1–3, Start, Pause/Resume, Reset, live speed slider.
+
+Next: richer sprite art, gear/loadout selection in-UI, then phase-2 grid targeting.
 
 ## Active plan — B → A (split into testable dev PRs)
 Dependency-ordered; B is a prerequisite for A.
