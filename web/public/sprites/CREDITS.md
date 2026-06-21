@@ -122,24 +122,6 @@ Sources:
 - https://opengameart.org/content/lpc-extended-weapon-animations
 
 
-## Weapon — Longsword
-
-Files used:
-
-- `lpc/weapon/sword/longsword/longsword.png`
-- `lpc/weapon/sword/longsword/universal_behind/longsword.png`
-
-Authors:
-
-- Johannes Sjölund (wulax)
-- bluecarrot16
-
-Licenses: OGA-BY 3.0, CC-BY-SA 3.0
-
-Sources:
-- https://opengameart.org/content/lpc-medieval-fantasy-character-sprites
-- https://opengameart.org/content/lpc-extended-weapon-animations
-
 
 ## Head — human male, light
 
@@ -178,3 +160,36 @@ Licenses: CC-BY-SA 3.0, GPL 3.0
 Sources:
 - https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles
 - https://opengameart.org/content/ponytail-and-plain-hairstyles
+
+## Weapon — Mace
+
+Files used:
+
+- `lpc/weapon/blunt/mace/mace.png`
+- `lpc/weapon/blunt/mace/universal_behind/mace.png`
+
+Authors:
+
+- bluecarrot16
+
+Licenses: CC-BY-SA 3.0, GPL 3.0
+
+Sources:
+- https://opengameart.org/content/lpc-weapons-and-equipment
+- https://opengameart.org/content/lpc-medieval-fantasy-character-sprites
+
+## Ears — long (adult)
+
+Files used:
+
+- `lpc/head/ears/long/adult/light.png`
+
+Authors:
+
+- bluecarrot16
+
+Licenses: CC-BY-SA 3.0, GPL 3.0
+
+Sources:
+- https://opengameart.org/content/lpc-character-bases
+

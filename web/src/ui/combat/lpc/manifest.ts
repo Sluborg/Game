@@ -13,7 +13,15 @@ export function layerUrl(layer: SpriteLayer): string {
 // zPos conventions from LPC: weapon-behind 9, body 10, torso 60, head 100,
 // hair 120, weapon-front 140. (The LPC "thick" body base is headless; the head
 // is its own layer, which suits the slot system.)
-const Z = { weaponBehind: 9, body: 10, torso: 60, head: 100, hair: 120, weaponFront: 140 } as const;
+const Z = {
+  weaponBehind: 9,
+  body: 10,
+  torso: 60,
+  head: 100,
+  hair: 120,
+  ears: 130,
+  weaponFront: 140,
+} as const;
 
 export const ITEMS: Record<string, SpriteItem> = {
   // Bodies + heads + hair belong to the "skin" tint group (recolored for monsters).
@@ -34,6 +42,12 @@ export const ITEMS: Record<string, SpriteItem> = {
     slot: "hair",
     label: "Hair (chestnut)",
     layers: [{ path: "hair/plain/male/", variant: "chestnut", zPos: Z.hair }],
+  },
+  ears_long: {
+    id: "ears_long",
+    slot: "ears",
+    label: "Long ears",
+    layers: [{ path: "head/ears/long/adult/", variant: "light", zPos: Z.ears, tintGroup: "skin" }],
   },
 
   // Torso armour — "gear" group (gilded by a divine tint).
@@ -81,13 +95,13 @@ export const ITEMS: Record<string, SpriteItem> = {
       { path: "weapon/sword/arming/universal/fg/", variant: "steel", zPos: Z.weaponFront, tintGroup: "gear" },
     ],
   },
-  weapon_longsword: {
-    id: "weapon_longsword",
+  weapon_mace: {
+    id: "weapon_mace",
     slot: "weapon",
-    label: "Longsword",
+    label: "Mace",
     layers: [
-      { path: "weapon/sword/longsword/universal_behind/", variant: "longsword", zPos: Z.weaponBehind },
-      { path: "weapon/sword/longsword/", variant: "longsword", zPos: Z.weaponFront, tintGroup: "gear" },
+      { path: "weapon/blunt/mace/universal_behind/", variant: "mace", zPos: Z.weaponBehind },
+      { path: "weapon/blunt/mace/", variant: "mace", zPos: Z.weaponFront, tintGroup: "gear" },
     ],
   },
 };
