@@ -59,11 +59,13 @@ describe("curves reproduce the Combat System worked example", () => {
 });
 
 describe("arena layout is data-driven", () => {
-  it("stacks fill the top row left-to-right, hero centre-bottom", () => {
+  it("hero sits in the left column; enemy stacks fill the right column", () => {
     const cells = layoutArena(2);
     expect(cells).toHaveLength(6);
-    expect(cells.filter((c) => c.role === "monster").map((c) => c.stackIndex)).toEqual([0, 1]);
-    expect(cells.find((c) => c.role === "hero")).toMatchObject({ row: 1, col: 1 });
+    const monsters = cells.filter((c) => c.role === "monster");
+    expect(monsters.map((c) => c.stackIndex)).toEqual([0, 1]);
+    expect(monsters.every((c) => c.col === 1)).toBe(true);
+    expect(cells.find((c) => c.role === "hero")).toMatchObject({ row: 1, col: 0 });
   });
 });
 

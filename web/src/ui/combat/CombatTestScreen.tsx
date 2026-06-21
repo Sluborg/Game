@@ -9,7 +9,6 @@ import { Arena } from "./Arena";
 import { CombatLog } from "./CombatLog";
 import { ConfigPanel } from "./ConfigPanel";
 import { Controls } from "./Controls";
-import { TINTS } from "./lpc/presets";
 import { useCombatClock } from "./useCombatClock";
 import styles from "./CombatTestScreen.module.css";
 
@@ -53,7 +52,7 @@ export function CombatTestScreen({ onExit }: CombatTestScreenProps) {
             swingNonce={clock.swingNonce}
             hurtNonce={clock.hurtNonce}
             onFloaterDone={clock.dismissFloater}
-            heroTint={divine ? TINTS.divine : undefined}
+            divine={divine}
           />
           {clock.result && (
             <div

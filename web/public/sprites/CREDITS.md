@@ -161,3 +161,20 @@ Licenses: CC-BY-SA 3.0, GPL 3.0
 Sources:
 - https://opengameart.org/content/lpc-character-bases
 - https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles
+
+## Hair — plain (male)
+
+Files used:
+
+- `lpc/hair/plain/male/chestnut.png`
+
+Authors:
+
+- Manuel Riecke (MrBeast)
+- Joe White
+
+Licenses: CC-BY-SA 3.0, GPL 3.0
+
+Sources:
+- https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles
+- https://opengameart.org/content/ponytail-and-plain-hairstyles
