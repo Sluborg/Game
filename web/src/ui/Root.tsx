@@ -1,7 +1,7 @@
 // Top-level router. Tiny hash-based routing keeps this working on GitHub Pages
 // (and under the /Game/ and /Game/dev/ bases) with no extra dependency:
 //   #/campaign -> the existing day/economy game (App, left untouched)
-//   #/test     -> the standalone Combat Test
+//   #/test     -> the Combat Test feature
 //   anything else -> the start screen
 //
 // App.tsx is rendered as-is; the "menu" affordance for Campaign is overlaid here
@@ -10,7 +10,7 @@
 import { useEffect, useState } from "react";
 import { App } from "./App";
 import { StartScreen } from "./StartScreen";
-import { CombatTest } from "./CombatTest";
+import { CombatTestScreen } from "./combat/CombatTestScreen";
 
 type Route = "start" | "campaign" | "test";
 
@@ -34,7 +34,7 @@ export function Root() {
     window.location.hash = r === "start" ? "" : `/${r}`;
   };
 
-  if (route === "test") return <CombatTest onExit={() => go("start")} />;
+  if (route === "test") return <CombatTestScreen onExit={() => go("start")} />;
 
   if (route === "campaign") {
     return (

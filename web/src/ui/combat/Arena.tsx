@@ -1,0 +1,118 @@
+// Arena — the board. Renders the data-driven grid of neutral cells and places
+// the hero and monster stacks into them, wiring each unit's sprite to its live
+// HP and to the per-cell animation nonces. Team is shown by the sprite, not by
+// colouring the cell.
+
+import { memo } from "react";
+import {
+  layoutArena,
+  type CombatStateView,
+  type HeroView,
+  type StackView,
+} from "../../game/battle";
+import { DamageFloaters, type Floater } from "./DamageFloaters";
+import { HealthBar } from "./HealthBar";
+import { UnitSprite } from "./UnitSprite";
+import styles from "./Arena.module.css";
+
+export interface ArenaProps {
+  state: CombatStateView;
+  floaters: Floater[];
+  swingNonce: Record<string, number>;
+  hurtNonce: Record<string, number>;
+  onFloaterDone: (id: number) => void;
+}
+
+function Cell({
+  children,
+  floaters,
+  onFloaterDone,
+  variant,
+}: {
+  children?: React.ReactNode;
+  floaters: Floater[];
+  onFloaterDone: (id: number) => void;
+  variant: "unit" | "empty";
+}) {
+  return (
+    <div className={`${styles.cell} ${variant === "empty" ? styles.empty : ""}`}>
+      <div className={styles.cellInner}>{children}</div>
+      <DamageFloaters floaters={floaters} onDone={onFloaterDone} />
+    </div>
+  );
+}
+
+function HeroTile({ hero, swing, hurt }: { hero: HeroView; swing: number; hurt: number }) {
+  return (
+    <div className={styles.tile}>
+      <div className={styles.sprite}>
+        <UnitSprite
+          appearance={hero.appearance}
+          facing="up"
+          swingNonce={swing}
+          hurtNonce={hurt}
+          down={!hero.alive}
+        />
+      </div>
+      <HealthBar hp={hero.hp} maxHp={hero.maxHp} side="hero" showText />
+      <span className={styles.name}>{hero.name}</span>
+    </div>
+  );
+}
+
+function StackTile({ stack, swing, hurt }: { stack: StackView; swing: number; hurt: number }) {
+  if (stack.alive === 0) {
+    return <div className={styles.clearedMark} aria-label="cleared" />;
+  }
+  return (
+    <div className={`${styles.tile} ${stack.alive > 1 ? styles.stacked : ""}`} data-count={stack.alive}>
+      <div className={styles.sprite}>
+        <UnitSprite appearance={stack.appearance} facing="down" swingNonce={swing} hurtNonce={hurt} />
+        {stack.alive > 1 && <span className={styles.badge}>×{stack.alive}</span>}
+      </div>
+      <HealthBar hp={stack.frontHp} maxHp={stack.frontMaxHp} side="enemy" />
+      <span className={styles.name}>{stack.name}</span>
+    </div>
+  );
+}
+
+function ArenaImpl({ state, floaters, swingNonce, hurtNonce, onFloaterDone }: ArenaProps) {
+  const cells = layoutArena(state.stacks.length);
+  const floatersFor = (cellId: string) => floaters.filter((f) => f.cellId === cellId);
+
+  return (
+    <div className={styles.grid} role="grid" aria-label="Combat arena">
+      {cells.map((cell) => {
+        if (cell.role === "hero") {
+          return (
+            <Cell key={cell.id} variant="unit" floaters={floatersFor("hero")} onFloaterDone={onFloaterDone}>
+              <HeroTile
+                hero={state.hero}
+                swing={swingNonce["hero"] ?? 0}
+                hurt={hurtNonce["hero"] ?? 0}
+              />
+            </Cell>
+          );
+        }
+        if (cell.role === "monster" && cell.stackIndex !== undefined) {
+          const stack = state.stacks[cell.stackIndex];
+          const cellId = `stack-${cell.stackIndex}`;
+          return (
+            <Cell key={cell.id} variant="unit" floaters={floatersFor(cellId)} onFloaterDone={onFloaterDone}>
+              {stack && (
+                <StackTile
+                  stack={stack}
+                  swing={swingNonce[cellId] ?? 0}
+                  hurt={hurtNonce[cellId] ?? 0}
+                />
+              )}
+            </Cell>
+          );
+        }
+        return <Cell key={cell.id} variant="empty" floaters={[]} onFloaterDone={onFloaterDone} />;
+      })}
+    </div>
+  );
+}
+
+export const Arena = memo(ArenaImpl);

@@ -1,0 +1,47 @@
+.layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.floater {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  animation: floatUp 950ms var(--ease-out) forwards;
+}
+
+.normal {
+  font-size: 16px;
+  color: var(--dmg-normal);
+}
+.crit {
+  font-size: 24px;
+  color: var(--dmg-crit);
+  text-shadow: 0 0 10px rgba(255, 157, 69, 0.7), 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+.miss {
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: var(--dmg-miss);
+}
+
+@keyframes floatUp {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -40%) scale(0.6);
+  }
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -64%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -150%) scale(1);
+  }
+}

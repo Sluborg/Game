@@ -1,0 +1,77 @@
+/* Design tokens — the single source of truth for combat colours, type, spacing,
+   radii and motion. Components reference these via var(--token); no component
+   hardcodes a hex value. Sprite colours live here too so art is re-themeable. */
+
+:root {
+  /* Brand palette */
+  --c-royal: #6a2fbf;
+  --c-royal-light: #9d6be8;
+  --c-royal-deep: #2e1065;
+  --c-gold: #ffd700;
+  --c-gold-light: #ffe98a;
+  --c-gold-dark: #b8860b;
+  --c-parchment: #f4e4bc;
+  --c-parchment-dim: #c9b391;
+  --c-blood: #e05252;
+  --c-blood-deep: #7a1f2b;
+  --c-emerald: #52c46b;
+  --c-sky: #87ceeb;
+  --c-ember: #ff9d45;
+
+  /* Surfaces */
+  --surface-0: #0a0a18;
+  --surface-1: #14142a;
+  --surface-2: #1d1d38;
+  --surface-3: #29294a;
+  --stroke-soft: rgba(157, 107, 232, 0.28);
+  --stroke-gold: rgba(255, 215, 0, 0.32);
+
+  /* Text */
+  --text-strong: var(--c-parchment);
+  --text-dim: var(--c-parchment-dim);
+  --text-gold: var(--c-gold);
+
+  /* Combat semantics */
+  --hp-hero: var(--c-emerald);
+  --hp-enemy: var(--c-blood);
+  --hp-track: rgba(0, 0, 0, 0.5);
+  --dmg-normal: #ffffff;
+  --dmg-crit: var(--c-ember);
+  --dmg-miss: var(--c-sky);
+
+  /* Sprite base palette (overridden per species via sprite classes) */
+  --sprite-skin: #cdbfa6;
+  --sprite-skin-shade: #a99a7e;
+  --sprite-armor: #9aa6b8;
+  --sprite-armor-shade: #5f6b80;
+  --sprite-metal: #d9dee8;
+  --sprite-cloth: var(--c-royal);
+  --sprite-eye: #1a1a1a;
+  --sprite-outline: rgba(0, 0, 0, 0.45);
+
+  /* Spacing scale */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+
+  /* Radii */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-pill: 999px;
+
+  /* Elevation */
+  --shadow-1: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 6px 20px rgba(0, 0, 0, 0.5);
+
+  /* Type */
+  --font-display: Georgia, "Times New Roman", serif;
+  --font-ui: "Segoe UI", Roboto, system-ui, sans-serif;
+
+  /* Motion */
+  --t-fast: 120ms;
+  --t-med: 220ms;
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
