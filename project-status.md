@@ -1,6 +1,6 @@
 # Project Status
 
-_Last updated: 2026-06-20_
+_Last updated: 2026-06-21_
 
 ## What this repo is
 - `app/` — original idle game, Kotlin + Jetpack Compose (Gradle). Legacy, untouched.
@@ -22,6 +22,13 @@ Workflow: work on `dev` (or a branch merged into `dev`) → test at `/Game/dev/`
 **Target (Coda):** Godbloods with 7 uncapped attributes (Str/Dex/Sta/Cha/Per/Int/Wp), tick-based auto-battle with saturating curves, design-complete lean 1v1 (hp = Sta·8 + Str·4, dmg = Str, dodge/armor%/attack-speed/first-strike, knockout default + boss-only permadeath), three-slot builds, Rift-style skill trees, pantheons (Aesir/Greek/Egyptian). Phased: 1v1 → 7×4 grid → adventures.
 
 **The gap:** the data model has no attribute block, and the entire locked combat spec depends on it. Nothing combat-related can be built until heroes and monsters carry the 7 attributes.
+
+## Standalone Combat Test screen (2026-06-21)
+A start screen now offers **Campaign** (the existing day/economy game, untouched) and **Combat Test** (new), routed by hash (`#/campaign`, `#/test`). The Combat Test is a self-contained arena that implements the locked lean-1v1 math from the Coda "Combat System" page plus three tester-only feel flags (opening desync, 80–120% damage variance, Dex-scaled crits). It is fully decoupled from the day engine / economy / persistence.
+- Pure, unit-tested engine: `web/src/game/combatTester.ts` (+ `combatTester.test.ts`, formulas verified against the Coda worked example).
+- UI: `web/src/ui/CombatTest.tsx` — data-driven 2×3 grid (1 hero vs up to 3 monster stacks, authored so cell count can expand), tick sim on a shared clock, floating damage numbers, per-unit HP bars, result banner, log (newest-on-top), and controls (hero Weak/Medium/Strong, monster Goblin/Orc/Troll, stacks 1–3 × size 1–3, Start, Pause/Resume, Reset, live speed slider). Phone-first, ~460px.
+- Routing/menu: `web/src/ui/Root.tsx`, `web/src/ui/StartScreen.tsx`; `main.tsx` renders `Root`.
+- Brief: Coda "Godblood Knowledge → 20260621_combatBasics". Built per spec; only missing prototype control (Pause) is implemented. Next: real sprites/art, then phase-2 grid targeting.
 
 ## Active plan — B → A (split into testable dev PRs)
 Dependency-ordered; B is a prerequisite for A.
