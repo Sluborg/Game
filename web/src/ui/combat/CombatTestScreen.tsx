@@ -9,6 +9,7 @@ import { Arena } from "./Arena";
 import { CombatLog } from "./CombatLog";
 import { ConfigPanel } from "./ConfigPanel";
 import { Controls } from "./Controls";
+import { TINTS } from "./lpc/presets";
 import { useCombatClock } from "./useCombatClock";
 import styles from "./CombatTestScreen.module.css";
 
@@ -21,6 +22,7 @@ export function CombatTestScreen({ onExit }: CombatTestScreenProps) {
   const [monster, setMonster] = useState<MonsterSpecies>("goblin");
   const [stackCount, setStackCount] = useState(2);
   const [stackSize, setStackSize] = useState(2);
+  const [divine, setDivine] = useState(false);
 
   const config = useMemo<FightConfig>(
     () => ({
@@ -51,6 +53,7 @@ export function CombatTestScreen({ onExit }: CombatTestScreenProps) {
             swingNonce={clock.swingNonce}
             hurtNonce={clock.hurtNonce}
             onFloaterDone={clock.dismissFloater}
+            heroTint={divine ? TINTS.divine : undefined}
           />
           {clock.result && (
             <div
@@ -61,6 +64,11 @@ export function CombatTestScreen({ onExit }: CombatTestScreenProps) {
             </div>
           )}
         </section>
+
+        <label className={styles.appearance}>
+          <input type="checkbox" checked={divine} onChange={(e) => setDivine(e.target.checked)} />
+          <span>✨ Divine tint (recolor hook preview — gilds the hero's gear)</span>
+        </label>
 
         <section className={styles.card}>
           <Controls

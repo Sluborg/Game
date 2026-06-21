@@ -39,6 +39,14 @@ A start screen offers **Campaign** (the existing day/economy game, untouched) an
 
 Next: richer sprite art, gear/loadout selection in-UI, then phase-2 grid targeting.
 
+### LPC sprite system — Phase A (2026-06-21)
+Replacing the placeholder SVG figures with a **Liberated Pixel Cup (LPC)** layered sprite system (presentation + assets only; the sim engine is untouched).
+- **Assets:** real LPC art (64×64 universal frames) sourced from the Universal LPC Spritesheet Character Generator, committed under `web/public/sprites/lpc/` (body, head, leather/plate torso incl. gilt + violet variants, dagger/arming/longsword weapons with behind+front layers). Full attribution in `web/public/sprites/CREDITS.md` (CC-BY-SA 3.0 / GPL 3.0). Note: the LPC "thick" body base is headless, so the head is its own layer.
+- **System (`web/src/ui/combat/lpc/`):** data-driven — `types` (slots, layers, tints, animation layout), `manifest` (item catalogue → z-ordered layers), `presets` (named bundles + theme tints + engine-appearance→item mapping), `loader` (cached image decode), `LpcSprite` (canvas compositor: crops the frame per layer, applies optional tint, draws z-ordered at native 64px, CSS-scaled pixelated → uniform scale for all units).
+- **Phase A wired:** the hero is now composited from base body + head + armour + weapon; switching tier (Squire/Knight/Champion) visibly swaps the weapon and torso layers; a "Divine tint" toggle gilds the hero's gear (proves the programmatic recolor hook). Monsters stay on the SVG renderer until Phase B.
+- **Theme-ready (no rework):** per-layer tint hook + the preset concept (a named bundle of layer ids + tint) are built now; future Norse/Greek/Egyptian "divine" presets are just data.
+- **Phase B (next, paused for review):** full unit set (incl. monster bodies) on LPC, frame-driven idle/walk/slash/thrust/hurt animations via rAF, expanded recolor/preset system, hair, and broader gear.
+
 ## Active plan — B → A (split into testable dev PRs)
 Dependency-ordered; B is a prerequisite for A.
 

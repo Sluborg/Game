@@ -13,6 +13,9 @@ import {
 import { DamageFloaters, type Floater } from "./DamageFloaters";
 import { HealthBar } from "./HealthBar";
 import { UnitSprite } from "./UnitSprite";
+import { LpcSprite } from "./lpc/LpcSprite";
+import { itemsForAppearance, resolveLayers } from "./lpc/presets";
+import type { Tint } from "./lpc/types";
 import styles from "./Arena.module.css";
 
 export interface ArenaProps {
@@ -21,6 +24,8 @@ export interface ArenaProps {
   swingNonce: Record<string, number>;
   hurtNonce: Record<string, number>;
   onFloaterDone: (id: number) => void;
+  /** Optional theme tint applied to the hero's tintable layers (recolor hook). */
+  heroTint?: Tint;
 }
 
 function Cell({
@@ -42,17 +47,14 @@ function Cell({
   );
 }
 
-function HeroTile({ hero, swing, hurt }: { hero: HeroView; swing: number; hurt: number }) {
+function HeroTile({ hero, tint }: { hero: HeroView; tint?: Tint }) {
+  // Phase A: the hero is composited from LPC layers (base body + armour + weapon),
+  // so equipped gear shows on the model. Static idle frame for now.
+  const layers = resolveLayers(itemsForAppearance(hero.appearance), tint);
   return (
     <div className={styles.tile}>
-      <div className={styles.sprite}>
-        <UnitSprite
-          appearance={hero.appearance}
-          facing="up"
-          swingNonce={swing}
-          hurtNonce={hurt}
-          down={!hero.alive}
-        />
+      <div className={`${styles.sprite} ${styles.spriteLpc} ${!hero.alive ? styles.down : ""}`}>
+        <LpcSprite layers={layers} animation="idle" direction="down" />
       </div>
       <HealthBar hp={hero.hp} maxHp={hero.maxHp} side="hero" showText />
       <span className={styles.name}>{hero.name}</span>
@@ -76,7 +78,7 @@ function StackTile({ stack, swing, hurt }: { stack: StackView; swing: number; hu
   );
 }
 
-function ArenaImpl({ state, floaters, swingNonce, hurtNonce, onFloaterDone }: ArenaProps) {
+function ArenaImpl({ state, floaters, swingNonce, hurtNonce, onFloaterDone, heroTint }: ArenaProps) {
   const cells = layoutArena(state.stacks.length);
   const floatersFor = (cellId: string) => floaters.filter((f) => f.cellId === cellId);
 
@@ -86,11 +88,7 @@ function ArenaImpl({ state, floaters, swingNonce, hurtNonce, onFloaterDone }: Ar
         if (cell.role === "hero") {
           return (
             <Cell key={cell.id} variant="unit" floaters={floatersFor("hero")} onFloaterDone={onFloaterDone}>
-              <HeroTile
-                hero={state.hero}
-                swing={swingNonce["hero"] ?? 0}
-                hurt={hurtNonce["hero"] ?? 0}
-              />
+              <HeroTile hero={state.hero} tint={heroTint} />
             </Cell>
           );
         }
