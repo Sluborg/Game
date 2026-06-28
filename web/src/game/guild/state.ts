@@ -71,8 +71,20 @@ export function createInitialGuildState(seed = 0x5eed): GuildState {
   };
 }
 
-/** True if the hero is not currently out on an active (traveling) dispatch. */
+/** True if the hero has been lost in the field (a dispatch ended `lost`). */
+export function isHeroLost(state: GuildState, heroId: string): boolean {
+  return state.dispatches.some((d) => d.heroId === heroId && d.status === "lost");
+}
+
+/**
+ * True if the hero can be dispatched: alive (HP > 0), not lost in the field,
+ * and not already out on an active (traveling) dispatch. A hero who "did not
+ * return" or was wiped (HP 0) must NOT read as idle.
+ */
 export function isHeroAvailable(state: GuildState, heroId: string): boolean {
+  const hero = state.heroes.find((h) => h.id === heroId);
+  if (!hero || hero.stats.hp <= 0) return false;
+  if (isHeroLost(state, heroId)) return false;
   return !state.dispatches.some(
     (d) => d.heroId === heroId && d.status === "traveling",
   );

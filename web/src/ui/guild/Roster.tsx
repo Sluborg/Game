@@ -1,7 +1,11 @@
 // Roster screen — heroes (with trust + HP) and field agents (with quality).
 
 import { HERO_CLASS_DEFS } from "../../game/heroes";
-import { isAgentAvailable, isHeroAvailable, type GuildState } from "../../game/guild/state";
+import {
+  isAgentAvailable,
+  isHeroLost,
+  type GuildState,
+} from "../../game/guild/state";
 
 function pct(n: number, of: number): string {
   return `${Math.max(0, Math.min(100, Math.round((n / of) * 100)))}%`;
@@ -13,14 +17,20 @@ export function Roster({ state }: { state: GuildState }) {
       <div className="guild-section-title">Heroes</div>
       {state.heroes.map((h) => {
         const def = HERO_CLASS_DEFS[h.stats.heroClass];
-        const busy = !isHeroAvailable(state, h.id);
+        const lost = isHeroLost(state, h.id);
+        const down = !lost && h.stats.hp <= 0;
+        const traveling = state.dispatches.some(
+          (d) => d.heroId === h.id && d.status === "traveling",
+        );
         return (
           <div className="roster-card" key={h.id}>
-            <span className="roster-emoji">{def.icon}</span>
+            <span className="roster-emoji">{lost ? "⚰️" : def.icon}</span>
             <div className="roster-main">
-              <div className="roster-name">
+              <div className={`roster-name ${lost ? "roster-dead" : ""}`}>
                 {h.name} <span className="roster-sub">· {def.displayName} L{h.stats.level}</span>
-                {busy && <span className="roster-sub roster-busy"> · on assignment</span>}
+                {lost && <span className="roster-sub roster-dead"> · did not return</span>}
+                {down && <span className="roster-sub roster-busy"> · down</span>}
+                {traveling && <span className="roster-sub roster-busy"> · on assignment</span>}
               </div>
               <div className="meter-label">
                 HP {h.stats.hp}/{h.stats.maxHp}

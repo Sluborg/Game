@@ -4,6 +4,7 @@ import {
   createInitialGuildState,
   createGuildHero,
   dispatchHero,
+  isHeroAvailable,
   type GuildState,
 } from "./state";
 import { makeRng, deriveSeed } from "./rng";
@@ -121,6 +122,36 @@ describe("turnEngine: determinism / replay", () => {
     s = runTurns(s, 12);
     const after = s.heroes.find((h) => h.id === "h3")!.stats.hp;
     expect(after).toBeLessThanOrEqual(before);
+  });
+
+  it("a hero lost in the field is not available and cannot be re-dispatched", () => {
+    let s = createInitialGuildState(1);
+    // Mark h1's dispatch as lost (e.g. corruption 'did not return').
+    s = dispatchHero(s, "h1", "ford", null);
+    s = {
+      ...s,
+      dispatches: s.dispatches.map((d) =>
+        d.heroId === "h1" ? { ...d, status: "lost" as const } : d,
+      ),
+    };
+    expect(isHeroAvailable(s, "h1")).toBe(false);
+    const before = s.dispatches.length;
+    s = dispatchHero(s, "h1", "mire", null); // should be a no-op
+    expect(s.dispatches.length).toBe(before);
+  });
+
+  it("a wiped hero (hp 0) is not available", () => {
+    let s = createInitialGuildState(1);
+    s = {
+      ...s,
+      heroes: s.heroes.map((h) =>
+        h.id === "h2" ? { ...h, stats: { ...h.stats, hp: 0 } } : h,
+      ),
+    };
+    expect(isHeroAvailable(s, "h2")).toBe(false);
+    const before = s.dispatches.length;
+    s = dispatchHero(s, "h2", "ford", null);
+    expect(s.dispatches.length).toBe(before);
   });
 
   it("createGuildHero clamps trust to 0..100", () => {
