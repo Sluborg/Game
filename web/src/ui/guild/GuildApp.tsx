@@ -10,7 +10,7 @@ import { HERO_CLASS_DEFS } from "../../game/heroes";
 import { activeDispatches, currentNode, nodeById, remainingTurns } from "../../game/guild/selectors";
 import "./guild.css";
 
-/** Navigate back to the main game (clears the hash route). */
+/** Navigate back to the start menu (clears the hash route). */
 function goHome() {
   window.location.hash = "";
 }
@@ -30,7 +30,7 @@ export function GuildApp() {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end" }}>
           <button className="guild-link" onClick={goHome}>
-            ← Kingdom
+            ← Menu
           </button>
           <button className="btn btn-reset" onClick={guild.reset} title="Wipe the guild ledger">
             ⟳ Reset

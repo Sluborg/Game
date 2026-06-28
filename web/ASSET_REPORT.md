@@ -7,7 +7,7 @@ map, and **never watch the fights**. Fallible field **agents** send back combat
 truth**; what you read is a distorted view of it — and a corrupt or distrusted
 asset may lie to your face.
 
-Reachable from the start screen via **⚖️ Asset Report** → route `#/guild`.
+Reachable from the start screen as a third card, **Asset Report** → route `#/guild`.
 
 ---
 
@@ -146,9 +146,8 @@ web/src/ui/guild/           (UI)
 
 ## How combat is consumed (Step 0 finding)
 
-The brief assumed a `combatTester.ts`, a `CombatTest.tsx` route, and a start
-screen with Campaign/Combat Test entries. **None of those exist in the repo.**
-The actual combat entry point is:
+The brief assumed a `combatTester.ts` and a `CombatTest.tsx` route. At the time
+this layer was first built, the actual combat entry point was — and remains:
 
 ```ts
 // web/src/game/combat.ts
@@ -159,18 +158,22 @@ It is a deterministic placeholder. `combatAdapter.ts` builds a throwaway
 `GameState` (the single dispatched hero, no buildings) and a `MonsterGroup`
 (via the existing `monsterDef` baseHp × count), calls `resolve`, and normalizes
 the result, writing HP/XP/level back to the guild hero. **No combat/engine file
-is modified.** Because there was no start screen, the single required entry was
-added as one button in `App.tsx` plus a tiny hash router in `main.tsx`
-(both additive).
+is modified.**
+
+> Note: `dev` later grew a richer tick-based battle engine under
+> `web/src/game/battle/` (the Combat Test feature). The guild layer still
+> consumes the simple `defaultResolver` via the adapter; swapping to the new
+> engine is a future change isolated to `combatAdapter.ts`.
 
 ---
 
 ## Scope fence — confirmation
 
 New code lives under `web/src/game/guild/` and `web/src/ui/guild/`. The only
-edits to pre-existing files are the two additive integration points:
-- `web/src/main.tsx` — hash route to `GuildApp` (no router existed).
-- `web/src/ui/App.tsx` — one "Asset Report" button (the single start-screen entry).
+edits to pre-existing files are additive integration points into dev's start
+screen / router:
+- `web/src/ui/Root.tsx` — one new `#/guild` route → `GuildApp`.
+- `web/src/ui/StartScreen.tsx` (+ `.module.css`) — one new "Asset Report" card.
 
 The day engine, economy, persistence (`majesty-day:v1`), the combat resolver,
 and its math are untouched. The guild uses its own `assetReport.v1` save key.

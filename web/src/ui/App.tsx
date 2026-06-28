@@ -15,20 +15,9 @@ export function App() {
     <div className="app">
       <header className="topbar">
         <span className="topbar-title">👑 Majesty — Day by Day</span>
-        <span style={{ display: "flex", gap: 8 }}>
-          <button
-            className="btn"
-            onClick={() => {
-              window.location.hash = "#/guild";
-            }}
-            title="Open the Asset Report guild sim"
-          >
-            ⚖️ Asset Report
-          </button>
-          <button className="btn btn-reset" onClick={game.reset} title="Start over">
-            ⟳ Reset
-          </button>
-        </span>
+        <button className="btn btn-reset" onClick={game.reset} title="Start over">
+          ⟳ Reset
+        </button>
       </header>
 
       <main className="content">
