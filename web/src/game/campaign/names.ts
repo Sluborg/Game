@@ -56,17 +56,16 @@ export function pickPortrait(seed: number): string {
   return `portrait-${String(n + 1).padStart(2, "0")}.svg`;
 }
 
-/** Three flavor skills with ratings 1..5, deterministic by seed. */
+/** Three distinct flavor skills with ratings 1..5, deterministic by seed. */
 export function rollSkills(seed: number): AgentSkill[] {
+  const len = SKILL_NAMES.length;
   const skills: AgentSkill[] = [];
-  const used = new Set<string>();
-  let s = seed;
-  while (skills.length < 3) {
-    const name = pick(SKILL_NAMES, s);
-    s = s * 7 + 13;
-    if (used.has(name)) continue;
-    used.add(name);
-    skills.push({ name, rating: 1 + (Math.abs(s) % 5) });
+  // Bounded walk over the array (at most `len` steps) so it always terminates;
+  // the dedupe guard keeps it correct even if the step shares a factor with len.
+  for (let i = 0; skills.length < 3 && i < len; i++) {
+    const name = SKILL_NAMES[(Math.abs(seed) + i * 3) % len];
+    if (skills.some((sk) => sk.name === name)) continue;
+    skills.push({ name, rating: 1 + (Math.abs(seed * 31 + i * 17) % 5) });
   }
   return skills;
 }

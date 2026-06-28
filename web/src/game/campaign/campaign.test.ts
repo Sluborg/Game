@@ -204,4 +204,14 @@ describe("name/portrait generation", () => {
     expect(skills.every((sk) => sk.rating >= 1 && sk.rating <= 5)).toBe(true);
     expect(new Set(skills.map((sk) => sk.name)).size).toBe(3); // distinct
   });
+
+  it("rollSkills terminates with 3 distinct skills for every seed (regression)", () => {
+    // Seeds congruent to 2 or 7 (mod 10) previously hung the old recurrence.
+    for (let seed = 0; seed <= 20; seed++) {
+      const skills = rollSkills(seed);
+      expect(skills).toHaveLength(3);
+      expect(new Set(skills.map((sk) => sk.name)).size).toBe(3);
+      expect(skills.every((sk) => sk.rating >= 1 && sk.rating <= 5)).toBe(true);
+    }
+  });
 });
