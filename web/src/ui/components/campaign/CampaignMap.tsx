@@ -5,7 +5,7 @@
 // Coordinate model: the SVG viewBox is 100 x 70 and the container is locked to that
 // aspect ratio, so an (x, y) in viewBox units maps to (x%, y/70*100%) of the box.
 
-import { edgesFrom, findNode } from "../../../game/campaign/data";
+import { edgesFrom, findNode, otherEnd } from "../../../game/campaign/data";
 import type {
   Agent,
   CampaignState,
@@ -50,9 +50,15 @@ function agentPoint(state: CampaignState, agent: Agent, indexAtNode: number, cou
     return { x: o.x + (d.x - o.x) * p, y: o.y + (d.y - o.y) * p };
   }
   const n = findNode(state, agent.location.nodeId)!;
-  const spread = 7;
+  const spread = 10; // wider so the larger tokens don't overlap at a node
   const dx = (indexAtNode - (countAtNode - 1) / 2) * spread;
-  return { x: n.x + dx, y: n.y + 9 };
+  return { x: n.x + dx, y: n.y + 10 };
+}
+
+// A point a fraction `t` along A→B (used to place a direction arrow toward the
+// destination on a selectable path).
+function lerp(a: Pt, b: Pt, t: number): Pt {
+  return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
 }
 
 function costOf(state: CampaignState, edgeId: string): number {
@@ -101,8 +107,10 @@ export function CampaignMap({ state, selectedAgentId, onSelectAgent, onMove }: P
   const selected = state.agents.find((a) => a.id === selectedAgentId) ?? null;
   const selectedNode: NodeId | null =
     selected && selected.location.kind === "node" ? selected.location.nodeId : null;
-  const selectableEdgeIds = new Set(
-    selectedNode ? edgesFrom(state, selectedNode).map((e) => e.id) : [],
+  const reachableEdges = selectedNode ? edgesFrom(state, selectedNode) : [];
+  const selectableEdgeIds = new Set(reachableEdges.map((e) => e.id));
+  const reachableNodeIds = new Set(
+    selectedNode ? reachableEdges.map((e) => otherEnd(e, selectedNode)) : [],
   );
 
   // Order agents per node so multiple tokens at one node don't overlap.
@@ -163,19 +171,39 @@ export function CampaignMap({ state, selectedAgentId, onSelectAgent, onMove }: P
               >
                 <title>{dangerLabel(danger)}</title>
               </line>
-              {selectable && (
-                <line
-                  x1={a.x}
-                  y1={a.y}
-                  x2={b.x}
-                  y2={b.y}
-                  className="map-edge-hit"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (selected) onMove(selected.id, edge.id);
-                  }}
-                />
-              )}
+              {selectable &&
+                (() => {
+                  // Arrow points from the selected agent's node toward the
+                  // reachable neighbour, so it's obvious where it can go.
+                  const here = selectedNode === edge.from ? a : b;
+                  const there = selectedNode === edge.from ? b : a;
+                  const tail = lerp(here, there, 0.52);
+                  const head = lerp(here, there, 0.66);
+                  return (
+                    <>
+                      <line
+                        x1={tail.x}
+                        y1={tail.y}
+                        x2={head.x}
+                        y2={head.y}
+                        className="map-dir-arrow"
+                        stroke={DANGER_COLOR[danger]}
+                        markerEnd="url(#cm-arrow)"
+                      />
+                      <line
+                        x1={a.x}
+                        y1={a.y}
+                        x2={b.x}
+                        y2={b.y}
+                        className="map-edge-hit"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (selected) onMove(selected.id, edge.id);
+                        }}
+                      />
+                    </>
+                  );
+                })()}
               <rect
                 className="map-edge-plate"
                 x={mid.x - plateW / 2}
@@ -218,7 +246,9 @@ export function CampaignMap({ state, selectedAgentId, onSelectAgent, onMove }: P
       {state.nodes.map((node: MapNode) => (
         <div
           key={node.id}
-          className={`map-node${selectedNode === node.id ? " current" : ""}`}
+          className={`map-node${selectedNode === node.id ? " current" : ""}${
+            reachableNodeIds.has(node.id) ? " reachable" : ""
+          }`}
           style={{ left: `${leftPct(node.x)}%`, top: `${topPct(node.y)}%` }}
         >
           <span className="map-node-medallion">

@@ -247,9 +247,10 @@ body {
 .campaign-map svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 
 .map-edge { stroke-width: 1.1; stroke-linecap: round; fill: none; opacity: 0.85; }
-.map-edge.selectable { opacity: 1; stroke-width: 1.6; }
-.map-edge-hit { stroke: transparent; stroke-width: 5; cursor: pointer; }
-.map-edge-hit:hover { stroke: rgba(255, 255, 255, 0.18); }
+.map-edge.selectable { opacity: 1; stroke-width: 1.8; }
+.map-edge-hit { stroke: transparent; stroke-width: 12; cursor: pointer; }
+.map-edge-hit:hover { stroke: rgba(255, 255, 255, 0.16); }
+.map-dir-arrow { stroke-width: 1.8; opacity: 0.95; pointer-events: none; }
 .map-edge-plate { opacity: 0.92; stroke: rgba(40, 25, 8, 0.35); stroke-width: 0.3; }
 .map-edge-label {
   font-size: 2.9px;
@@ -283,6 +284,14 @@ body {
   box-shadow: 0 2px 6px rgba(40, 25, 8, 0.5);
 }
 .map-node.current .map-node-medallion { border-color: var(--gold-coin); box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.5); }
+.map-node.reachable .map-node-medallion {
+  border-color: var(--gold-light);
+  animation: reach-pulse 1.4s ease-in-out infinite;
+}
+@keyframes reach-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(255, 233, 138, 0.45), 0 0 8px rgba(255, 215, 0, 0.4); }
+  50% { box-shadow: 0 0 0 4px rgba(255, 233, 138, 0.75), 0 0 14px rgba(255, 215, 0, 0.7); }
+}
 .map-node-label {
   font-size: 11px;
   font-weight: 600;
@@ -302,11 +311,16 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 0;
+  padding: 7px; /* enlarges the touch target around the token */
   border: none;
   background: none;
   cursor: pointer;
   z-index: 2;
+}
+.agent-piece:focus-visible { outline: none; }
+.agent-piece:focus-visible .agent-square {
+  border-color: var(--gold-light);
+  box-shadow: 0 0 0 2px var(--gold-light), 0 0 0 4px rgba(255, 215, 0, 0.4);
 }
 .agent-status {
   font-size: 9px;
@@ -318,14 +332,14 @@ body {
   white-space: nowrap;
 }
 .agent-square {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
   overflow: hidden;
   display: block;
   background: var(--stone-light);
-  border: 1px solid var(--royal-purple-deep);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  border: 2px solid var(--royal-purple-deep);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
 }
 .agent-square img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; display: block; }
 .agent-piece.selected .agent-square { border-color: var(--gold-coin); box-shadow: 0 0 0 2px var(--gold-coin); }
@@ -357,6 +371,27 @@ body {
 }
 .btn-action.active { background: var(--gold-dark); color: #1a1208; }
 .btn-action .soon { font-size: 9px; opacity: 0.7; text-transform: uppercase; }
+
+/* Inspector: Travel section (accessible, mobile-friendly movement) */
+.inspector-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--parchment-dark);
+  margin-top: 6px;
+}
+.travel-menu { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn-travel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--royal-purple-deep);
+  color: var(--parchment-beige);
+}
+.travel-dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; border: 1px solid rgba(0, 0, 0, 0.35); }
+.travel-dest { font-weight: 600; }
+.travel-meta { font-size: 11px; color: var(--parchment-dark); }
 
 /* Asset report (reuses the battlelog look) */
 .report { border-radius: 10px; padding: 10px 12px; background: rgba(34, 34, 56, 0.85); }

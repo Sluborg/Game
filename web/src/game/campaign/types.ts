@@ -2,7 +2,21 @@
 // agents around a node map. All structures are plain & serializable (no functions,
 // no Maps) so the localStorage snapshot pattern in persistence.ts works verbatim.
 
-import type { IconKey } from "../../ui/components/campaign/icons";
+// Heraldic emblem keys owned by the game layer (the UI's icons.tsx maps each key
+// to an SVG). Kept here so game/ stays free of any ui/ dependency.
+export type IconKey =
+  | "village"
+  | "mine"
+  | "ruins"
+  | "forest"
+  | "quests"
+  | "rumors"
+  | "relations"
+  | "business"
+  | "recruit"
+  | "follow"
+  | "guildHall"
+  | "train";
 
 // Fixed node set for the starter map; string ids so edges/agents reference them
 // stably across saves.

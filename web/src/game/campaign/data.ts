@@ -1,10 +1,10 @@
 // Static campaign data: the action catalog and the initial-state factory.
 // Analogous to economy.createInitialState for the kingdom game.
 
-import type { IconKey } from "../../ui/components/campaign/icons";
 import type {
   AgentActionType,
   CampaignState,
+  IconKey,
   MapEdge,
   MapNode,
   NodeId,
@@ -51,11 +51,13 @@ const NODES: MapNode[] = [
 ];
 
 // Stored once; treated as undirected by edgesFrom so agents can return home.
+// Danger spans the scale (1 Safe .. 5 Deadly); the two Village paths are safe
+// (1 turn), the two paths to the Ruins are unsafe (2 turns).
 const EDGES: MapEdge[] = [
   { id: "VILLAGE->FOREST", from: "VILLAGE", to: "FOREST", danger: 1, turnCost: 1 },
-  { id: "VILLAGE->MINES", from: "VILLAGE", to: "MINES", danger: 1, turnCost: 1 },
+  { id: "VILLAGE->MINES", from: "VILLAGE", to: "MINES", danger: 2, turnCost: 1 },
   { id: "FOREST->RUINS", from: "FOREST", to: "RUINS", danger: 4, turnCost: 2 },
-  { id: "MINES->RUINS", from: "MINES", to: "RUINS", danger: 4, turnCost: 2 },
+  { id: "MINES->RUINS", from: "MINES", to: "RUINS", danger: 5, turnCost: 2 },
 ];
 
 export function createInitialCampaignState(): CampaignState {

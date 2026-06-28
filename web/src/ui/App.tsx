@@ -26,6 +26,7 @@ export function App() {
           agent={c.selectedAgent}
           state={c.state}
           onAction={c.act}
+          onMove={c.move}
           onDeselect={() => c.selectAgent(null)}
         />
         <AssetReport state={c.state} />

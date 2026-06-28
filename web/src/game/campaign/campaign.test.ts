@@ -22,6 +22,16 @@ describe("initial state", () => {
     expect(s.agents.every((a) => a.currentAction === "IDLE")).toBe(true);
   });
 
+  it("spreads danger across the scale so multiple levels are represented", () => {
+    const s = createInitialCampaignState();
+    const levels = new Set(s.edges.map((e) => e.danger));
+    expect(levels.size).toBeGreaterThanOrEqual(3);
+    // Safe paths cost 1 turn, unsafe (danger >= 4) cost 2.
+    for (const e of s.edges) {
+      expect(e.turnCost).toBe(e.danger >= 4 ? 2 : 1);
+    }
+  });
+
   it("treats edges as undirected so agents can return home", () => {
     const s = createInitialCampaignState();
     // From RUINS you can reach both FOREST and MINES even though edges are stored

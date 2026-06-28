@@ -1,13 +1,15 @@
 // Detail card for the selected agent: portrait, name, flavor skills (as pips),
-// current activity, and — when standing at a node — the NodeActionMenu. Hidden when
-// nothing is selected. Movement is done by clicking paths on the map, not here.
+// current activity, a keyboard/touch-accessible "Travel to…" list, and — when
+// standing at a node — the NodeActionMenu. Hidden when nothing is selected.
 
-import { ACTION_DEFS, findNode } from "../../../game/campaign/data";
+import { ACTION_DEFS, edgesFrom, findNode, nodeName, otherEnd } from "../../../game/campaign/data";
 import type {
   Agent,
   AgentActionType,
   CampaignState,
+  DangerLevel,
 } from "../../../game/campaign/types";
+import { DANGER_COLOR, dangerWord } from "./danger";
 import { NodeActionMenu } from "./NodeActionMenu";
 
 const BASE = import.meta.env.BASE_URL;
@@ -16,6 +18,7 @@ interface Props {
   agent: Agent | null;
   state: CampaignState;
   onAction: (agentId: number, action: AgentActionType) => void;
+  onMove: (agentId: number, edgeId: string) => void;
   onDeselect: () => void;
 }
 
@@ -39,9 +42,10 @@ function activityText(state: CampaignState, agent: Agent): string {
   return ACTION_DEFS[agent.currentAction].label;
 }
 
-export function AgentInspector({ agent, state, onAction, onDeselect }: Props) {
+export function AgentInspector({ agent, state, onAction, onMove, onDeselect }: Props) {
   if (!agent) return null;
   const atNode = agent.location.kind === "node" ? findNode(state, agent.location.nodeId) : undefined;
+  const travelEdges = atNode ? edgesFrom(state, atNode.id) : [];
 
   return (
     <div className="inspector card">
@@ -65,7 +69,31 @@ export function AgentInspector({ agent, state, onAction, onDeselect }: Props) {
         </div>
 
         {atNode ? (
-          <NodeActionMenu agent={agent} node={atNode} onAction={onAction} />
+          <>
+            <div className="inspector-section-title">Travel</div>
+            <div className="travel-menu">
+              {travelEdges.map((edge) => {
+                const dest = otherEnd(edge, atNode.id);
+                const danger = edge.danger as DangerLevel;
+                return (
+                  <button
+                    key={edge.id}
+                    className="btn btn-travel"
+                    onClick={() => onMove(agent.id, edge.id)}
+                    title={`Travel to the ${nodeName(state, dest)} — ${dangerWord(danger)} path, ${edge.turnCost} turn${edge.turnCost === 1 ? "" : "s"}`}
+                  >
+                    <span className="travel-dot" style={{ background: DANGER_COLOR[danger] }} />
+                    <span className="travel-dest">→ {nodeName(state, dest)}</span>
+                    <span className="travel-meta">
+                      {dangerWord(danger)} · {edge.turnCost}t
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="inspector-section-title">Act here</div>
+            <NodeActionMenu agent={agent} node={atNode} onAction={onAction} />
+          </>
         ) : (
           <div className="card-sub">On the road — give new orders when it arrives.</div>
         )}

@@ -5,21 +5,24 @@
 import { colors } from "../../theme";
 import type { DangerLevel, ResultKind } from "../../../game/campaign/types";
 
+// Five distinct steps separated by both hue AND brightness, so they read apart
+// even for colour-blind players (and the word label is a third, non-colour cue).
 export const DANGER_COLOR: Record<DangerLevel, string> = {
-  1: colors.forestGreen, // SAFE
-  2: "#A8C64A", // yellow-green
-  3: colors.goldDark, // caution
-  4: colors.emberOrange, // UNSAFE
-  5: colors.bloodRed, // deadly
+  1: colors.forestGreen, // Safe   — green   #52C46B
+  2: "#C9CC3A", //           Calm   — chartreuse
+  3: "#E0A21E", //           Risky  — amber
+  4: "#E8702A", //           Unsafe — orange
+  5: "#C92A2A", //           Deadly — deep red
 };
 
-// Dashes lengthen / tighten as danger rises (solid when safe).
+// Each level gets its own dash signature (solid → long → medium → short → dotted),
+// giving danger a redundant, non-colour encoding.
 export const DANGER_DASH: Record<DangerLevel, string | undefined> = {
-  1: undefined,
-  2: undefined,
-  3: "10 6",
-  4: "10 6",
-  5: "6 6",
+  1: undefined, // solid
+  2: "6 4",
+  3: "4 3",
+  4: "2.6 2.4",
+  5: "0.4 2.6", // dotted (with round caps)
 };
 
 const DANGER_WORD: Record<DangerLevel, string> = {
