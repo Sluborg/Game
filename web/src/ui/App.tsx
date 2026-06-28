@@ -1,37 +1,34 @@
-// Root screen. Port of KingdomScreen.kt, restructured for the turn-based day
-// loop. Single scrollable column; no grid-battle overlay (combat is a stub).
+// Root screen. Campaign Mode: a guild-master map game. The earlier kingdom/economy
+// mode is retired — its game/ + components/ files remain in the tree (unused) for a
+// follow-up cleanup PR, but are no longer rendered here.
 
-import { useGame } from "./useGame";
-import { DayBar } from "./components/DayBar";
-import { Milestones } from "./components/Milestones";
-import { ThreatBanner } from "./components/ThreatBanner";
-import { BattleLog } from "./components/BattleLog";
-import { Heroes } from "./components/Heroes";
-import { Buildings } from "./components/Buildings";
+import { useCampaign } from "./useCampaign";
+import { GuildBanner } from "./components/campaign/GuildBanner";
+import { TurnBar } from "./components/campaign/TurnBar";
+import { AssetReport } from "./components/campaign/AssetReport";
+import { CampaignMap } from "./components/campaign/CampaignMap";
+import { AgentInspector } from "./components/campaign/AgentInspector";
 
 export function App() {
-  const game = useGame();
+  const c = useCampaign();
   return (
     <div className="app">
-      <header className="topbar">
-        <span className="topbar-title">👑 Majesty — Day by Day</span>
-        <button className="btn btn-reset" onClick={game.reset} title="Start over">
-          ⟳ Reset
-        </button>
-      </header>
-
+      <GuildBanner onReset={c.reset} />
       <main className="content">
-        <DayBar state={game.state} onEndDay={game.endDay} />
-        <Milestones state={game.state} />
-        <ThreatBanner state={game.state} />
-        <BattleLog state={game.state} />
-        <Heroes state={game.state} />
-        <Buildings
-          state={game.state}
-          onBuild={game.build}
-          onUpgrade={game.upgrade}
-          onRecruit={game.recruit}
+        <TurnBar state={c.state} onEndTurn={c.endTurn} />
+        <CampaignMap
+          state={c.state}
+          selectedAgentId={c.selectedAgentId}
+          onSelectAgent={c.selectAgent}
+          onMove={c.move}
         />
+        <AgentInspector
+          agent={c.selectedAgent}
+          state={c.state}
+          onAction={c.act}
+          onDeselect={() => c.selectAgent(null)}
+        />
+        <AssetReport state={c.state} />
       </main>
     </div>
   );

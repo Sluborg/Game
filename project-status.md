@@ -1,6 +1,26 @@
 # Project Status
 
-_Last updated: 2026-06-20_
+_Last updated: 2026-06-28_
+
+## Pivot in progress — Campaign Mode (Asset Report)
+Per the 2026-06-27 design decision (Coda "Session Log"), the game is pivoting from the
+kingdom/economy shell to a **Majesty-style guild-master sim**. First slice landed on branch
+`claude/campaign-mode-start-ppamd6`:
+- New **Campaign Mode** is now the app's only screen (`web/src/ui/App.tsx`). You are the
+  Village Guild Master; you select agents (click) and send them along map paths (click a
+  path) or have them act at a node.
+- Map: Village (home) · Forest · Mines · Ruins, with safe (1-turn) and unsafe (2-turn)
+  paths on a 1–5 danger scale (color + dash + label).
+- Agents are 16px portrait tokens with flavor-only skills; node actions (Look for Quests,
+  Gather Rumors, Build Relations, Investigate Business, Recruit, + home-only Guild Hall /
+  Train) set the agent's activity and produce lines in the **Asset Report** (grouped by
+  action type, toggle to area/agent). Actions have no mechanical effect yet.
+- **Art:** no emoji — heraldic SVG emblems from game-icons.net (CC BY, recolored) for
+  nodes/actions + DiceBear pixel-art portraits (CC0) for agents. See `web/public/CREDITS.md`.
+- Pure logic in `web/src/game/campaign/` (Vitest-covered); the old kingdom files remain in
+  the tree but are no longer rendered (follow-up PR to delete them).
+- Next: wire actions to real effects, recruitment, agent skills mattering, and (later)
+  connect to the Combat Test / grid combat as the "ground truth" behind agent reports.
 
 ## What this repo is
 - `app/` — original idle game, Kotlin + Jetpack Compose (Gradle). Legacy, untouched.
