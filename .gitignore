@@ -10,3 +10,8 @@
 *.keystore
 !debug.keystore
 app/build/
+
+# Node / web build
+node_modules
+.vite
+web/dist

@@ -53,6 +53,9 @@
 .test {
   background: linear-gradient(100deg, var(--c-blood-deep), var(--surface-2));
 }
+.guild {
+  background: linear-gradient(100deg, #4a3a12, var(--surface-2));
+}
 
 .icon {
   width: 46px;

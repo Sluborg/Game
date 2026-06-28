@@ -6,6 +6,7 @@ import styles from "./StartScreen.module.css";
 interface Props {
   onPlayCampaign: () => void;
   onCombatTest: () => void;
+  onAssetReport: () => void;
 }
 
 function CastleIcon() {
@@ -29,7 +30,20 @@ function SwordsIcon() {
   );
 }
 
-export function StartScreen({ onPlayCampaign, onCombatTest }: Props) {
+function ScalesIcon() {
+  return (
+    <svg viewBox="0 0 48 48" className={styles.icon} aria-hidden>
+      <rect x={23} y={8} width={2} height={30} fill="var(--c-gold)" />
+      <rect x={14} y={36} width={20} height={3} rx={1} fill="var(--c-gold)" />
+      <path d="M10 12h28" stroke="var(--c-gold)" strokeWidth={2} />
+      <path d="M10 12l-5 11h10Z" fill="var(--c-royal-light)" />
+      <path d="M38 12l-5 11h10Z" fill="var(--c-royal-light)" />
+      <circle cx={24} cy={9} r={3} fill="var(--c-gold)" />
+    </svg>
+  );
+}
+
+export function StartScreen({ onPlayCampaign, onCombatTest, onAssetReport }: Props) {
   return (
     <div className={styles.screen}>
       <div className={styles.inner}>
@@ -49,6 +63,14 @@ export function StartScreen({ onPlayCampaign, onCombatTest }: Props) {
           <span className={styles.text}>
             <span className={styles.name}>Combat Test</span>
             <span className={styles.desc}>Watch the tick-based battle engine resolve a fight.</span>
+          </span>
+        </button>
+
+        <button className={`${styles.card} ${styles.guild}`} onClick={onAssetReport}>
+          <ScalesIcon />
+          <span className={styles.text}>
+            <span className={styles.name}>Asset Report</span>
+            <span className={styles.desc}>Run a guild. Dispatch heroes. Read the reports — trust them if you dare.</span>
           </span>
         </button>
       </div>
