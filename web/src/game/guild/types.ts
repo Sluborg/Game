@@ -65,11 +65,17 @@ export interface PathResult {
 
 // --- Actors -----------------------------------------------------------------
 
-/** A hero's combat-relevant stats, enough to build an engine Hero in the adapter. */
+/**
+ * A hero's combat-relevant stats — enough to build an engine Hero in the
+ * adapter and to chain HP/XP across encounters on a single journey.
+ */
 export interface HeroStats {
   level: number;
   heroClass: HeroClass;
   maxHp: number;
+  /** Current HP. Threaded between encounters; healed between dispatches. */
+  hp: number;
+  experience: number;
 }
 
 /** A guild hero. `trust` (0..100) gates the fidelity of the reports you get back. */
