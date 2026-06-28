@@ -1,6 +1,19 @@
 # Project Status
 
-_Last updated: 2026-06-20_
+_Last updated: 2026-06-28_
+
+## Asset Report pivot (branch `claude/asset-report-guild-layer-l7apuf`, → dev)
+A new **additive** layer: a guild-master turn sim where you dispatch heroes to
+quests and only ever read fallible field-agent **reports** of the fights, not
+the fights themselves. The existing combat result is ground truth; the report
+you read is a distorted view (fidelity tiers 0–4, driven by agent quality and
+hero trust, with corruption-driven lies). Reachable from the start screen via
+**⚖️ Asset Report** → `#/guild`. Self-contained under `web/src/game/guild/` +
+`web/src/ui/guild/`; own save key `assetReport.v1`; nothing in the day engine /
+economy / combat resolver touched. 50 tests green. Full design + data shapes in
+`web/ASSET_REPORT.md`. Combat is consumed through the existing (placeholder)
+`defaultResolver` via an adapter, so the real Godblood resolver will drop in
+with no guild changes.
 
 ## What this repo is
 - `app/` — original idle game, Kotlin + Jetpack Compose (Gradle). Legacy, untouched.
