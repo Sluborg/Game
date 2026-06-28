@@ -1,0 +1,152 @@
+/* Asset Report — ledger / paperwork aesthetic, phone-first. Reuses the global
+   theme variables from styles.css. Scoped under .guild. */
+
+.guild {
+  max-width: 460px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+.guild-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--stone-dark);
+  border-bottom: 2px solid var(--gold-dark);
+}
+.guild-brand { display: flex; flex-direction: column; }
+.guild-title {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--gold-coin);
+}
+.guild-tagline { font-size: 11px; font-style: italic; color: var(--parchment-dark); }
+
+.guild-content { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+
+/* The turn / treasury ledger strip */
+.guild-ledger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--parchment-beige), var(--parchment-dark));
+  color: #2a2012;
+  border: 1px solid var(--gold-dark);
+}
+.guild-ledger-turn { font-size: 12px; font-weight: 600; }
+.guild-ledger-gold { font-family: Georgia, serif; font-size: 22px; font-weight: 700; }
+.btn-end-turn {
+  background: var(--gold-dark);
+  color: #1a1208;
+  font-size: 15px;
+  padding: 12px 18px;
+  font-family: Georgia, serif;
+}
+
+.guild-section-title {
+  font-family: Georgia, serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gold-coin);
+  border-bottom: 1px solid rgba(255, 215, 0, 0.25);
+  padding-bottom: 4px;
+}
+.guild-hint { font-size: 11px; color: var(--parchment-dark); }
+
+/* Roster */
+.guild-roster { display: flex; flex-direction: column; gap: 8px; }
+.roster-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--stone-dark);
+  border: 1px solid rgba(106, 47, 191, 0.5);
+}
+.roster-emoji { font-size: 22px; }
+.roster-main { flex: 1; min-width: 0; }
+.roster-name { font-size: 13px; font-weight: 600; }
+.roster-sub { font-size: 11px; color: var(--parchment-dark); }
+.roster-busy { color: var(--ember-orange); }
+.roster-dead { color: var(--blood-red); text-decoration: line-through; }
+
+.meter { height: 6px; border-radius: 4px; background: var(--night-blue); overflow: hidden; margin-top: 4px; }
+.meter-fill { height: 100%; }
+.meter-trust { background: var(--forest-green); }
+.meter-hp { background: var(--blood-red); }
+.meter-quality { background: var(--royal-purple-light); }
+.meter-label { font-size: 10px; color: var(--parchment-dark); }
+
+/* Dispatch form */
+.guild-form { display: flex; flex-direction: column; gap: 8px; }
+.guild-form label { font-size: 11px; color: var(--parchment-dark); }
+.guild-select {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  background: var(--stone-light);
+  color: var(--parchment-beige);
+  border: 1px solid var(--royal-purple);
+  font-size: 13px;
+}
+.btn-dispatch { background: var(--royal-purple); align-self: flex-start; }
+
+/* Active dispatches */
+.dispatch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(34, 34, 56, 0.7);
+  border: 1px dashed rgba(255, 215, 0, 0.3);
+  font-size: 12px;
+}
+
+/* Reports — rendered like filed paperwork */
+.report {
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--parchment-beige);
+  color: #241b0e;
+  border-left: 5px solid var(--gold-dark);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+.report-silent { background: #2a2a38; color: var(--parchment-dark); border-left-color: #555; font-style: italic; }
+.report-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.report-headline { font-family: Georgia, serif; font-size: 14px; font-weight: 700; }
+.report-who { font-size: 10px; opacity: 0.7; }
+.report-lines { margin: 6px 0 0; padding-left: 16px; font-size: 12px; line-height: 1.5; }
+.report-claim { font-size: 11px; margin-top: 6px; font-weight: 600; }
+
+/* tier markers — only meaningful with reveal on */
+.report-tier { font-size: 10px; padding: 1px 6px; border-radius: 10px; background: #00000022; }
+
+/* The dev-only ground-truth panel */
+.truth {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #10261a;
+  color: #b7f5cf;
+  border: 1px dashed var(--forest-green);
+  font-size: 11px;
+}
+.truth-stamp { font-weight: 700; letter-spacing: 1px; color: var(--forest-green); }
+.truth-mismatch { color: var(--blood-red); font-weight: 700; }
+
+.reveal-toggle { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--parchment-dark); }
+
+.guild-empty { font-size: 12px; color: var(--parchment-dark); font-style: italic; }
+.guild-link { background: none; border: none; color: var(--royal-purple-light); cursor: pointer; font-size: 12px; text-decoration: underline; padding: 0; }
