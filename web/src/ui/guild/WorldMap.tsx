@@ -195,11 +195,28 @@ export function WorldMap({ state, selectedDest, onPickDestination }: Props) {
             <span className="wm-medallion">
               <Icon name={isOrigin ? "origin" : KIND_ICON[node.kind ?? "wild"]} size={24} />
             </span>
-            <span className="wm-node-label">{node.name}</span>
-            {isReachableQuest && eta != null && <span className="wm-node-eta">~{eta}t</span>}
           </button>
         );
       })}
+
+      {/* Node captions — a separate top layer so a neighbour's medallion can never
+          paint over a label. pointer-events: none keeps the medallions clickable. */}
+      <div className="wm-labels">
+        {state.graph.nodes.map((node) => {
+          const p = nodePt(node);
+          const eta = etaByNode.get(node.id);
+          return (
+            <div
+              key={`lbl-${node.id}`}
+              className="wm-node-caption"
+              style={{ left: `${leftPct(p.x)}%`, top: `${topPct(p.y)}%` }}
+            >
+              <span className="wm-node-label">{node.name}</span>
+              {eta != null && <span className="wm-node-eta">~{eta}t</span>}
+            </div>
+          );
+        })}
+      </div>
 
       {/* Hero tokens travelling their routes */}
       {dispatches.map((d) => {
