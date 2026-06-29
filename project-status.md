@@ -15,6 +15,18 @@ guild suites. Full design + data shapes in `web/ASSET_REPORT.md`. Combat is
 consumed through the existing (placeholder) `defaultResolver` via an adapter, so
 the real Godblood resolver will drop in with no guild changes.
 
+**World Map (branch `claude/guild-world-map-ppamd6`, → dev).** Added a visual,
+clickable world map to the `#/guild` screen (it previously only had a destination
+dropdown). Medallion nodes with heraldic game-icons emblems by `kind`, roads
+coloured/dashed by a 1–5 danger scale derived from each edge's `encounterChance`,
+ETA badges on reachable quest sites, the guild seat marked as origin, and hero
+tokens that travel their dispatch routes with a direction arrow. Clicking a glowing
+quest node picks it as the destination (synced with the form dropdown). Pure guild
+logic (graph/dispatch/selectors) untouched; only additive node `x/y` coords. New
+`web/src/ui/guild/{WorldMap,icons,danger}.tsx`; game-icons attribution in
+`web/public/CREDITS.md`. This supersedes the parallel Campaign-Mode prototype that
+was built off stale `main` (PR #13, closed) — consolidating on the dev line.
+
 ## What this repo is
 - `app/` — original idle game, Kotlin + Jetpack Compose (Gradle). Legacy, untouched.
 - `web/` — active target: turn-based web port "Majesty — Day by Day" → being reframed as the Godblood game. Vite 5 + React 18 + TypeScript.

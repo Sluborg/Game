@@ -6,8 +6,10 @@ import { useGuild } from "./useGuild";
 import { Roster } from "./Roster";
 import { DispatchForm } from "./DispatchForm";
 import { TurnReport } from "./TurnReport";
+import { WorldMap } from "./WorldMap";
 import { HERO_CLASS_DEFS } from "../../game/heroes";
 import { activeDispatches, currentNode, nodeById, remainingTurns } from "../../game/guild/selectors";
+import type { NodeId } from "../../game/guild/types";
 import "./guild.css";
 
 /** Navigate back to the start menu (clears the hash route). */
@@ -18,8 +20,19 @@ function goHome() {
 export function GuildApp() {
   const guild = useGuild();
   const [reveal, setReveal] = useState(false);
+  // Dispatch selection lifted here so the World Map and the form share the dest.
+  const [heroId, setHeroId] = useState("");
+  const [destId, setDestId] = useState<NodeId | "">("");
+  const [agentId, setAgentId] = useState("");
   const { state } = guild;
   const active = activeDispatches(state);
+
+  const onDispatch = (h: string, dest: NodeId, a: string | null) => {
+    guild.dispatch(h, dest, a);
+    setHeroId("");
+    setDestId("");
+    setAgentId("");
+  };
 
   return (
     <div className="guild">
@@ -51,6 +64,8 @@ export function GuildApp() {
 
         <TurnReport state={state} reveal={reveal} onToggleReveal={setReveal} />
 
+        <WorldMap state={state} selectedDest={destId} onPickDestination={setDestId} />
+
         <section className="guild-roster">
           <div className="guild-section-title">On Assignment</div>
           {active.length === 0 ? (
@@ -75,7 +90,16 @@ export function GuildApp() {
           )}
         </section>
 
-        <DispatchForm state={state} onDispatch={guild.dispatch} />
+        <DispatchForm
+          state={state}
+          heroId={heroId}
+          destId={destId}
+          agentId={agentId}
+          onHero={setHeroId}
+          onDest={setDestId}
+          onAgent={setAgentId}
+          onDispatch={onDispatch}
+        />
 
         <Roster state={state} />
       </main>
