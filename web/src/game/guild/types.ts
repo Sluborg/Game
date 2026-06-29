@@ -22,6 +22,10 @@ export interface MapNode {
   name: string;
   /** Optional flavour kind, purely cosmetic. */
   kind?: "town" | "wild" | "dungeon" | "ruin";
+  /** Optional layout coordinates for the World Map (viewBox 0..100 × 0..70).
+   *  Purely presentational — the graph algorithms ignore these. */
+  x?: number;
+  y?: number;
   /**
    * If set, arriving here resolves a quest fight against this monster type.
    * (Consumed via the combat adapter; the engine's MonsterType.)

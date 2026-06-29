@@ -15,17 +15,19 @@ import type { WorldGraph } from "./types";
 export const ORIGIN_NODE = "stonegate";
 
 export const TEST_WORLD: WorldGraph = {
+  // x/y are World Map layout coords (viewBox 0..100 × 0..70), matching the ASCII
+  // sketch above. The graph algorithms ignore them.
   nodes: [
-    { id: "stonegate", name: "Stonegate", kind: "town" },
-    { id: "watch", name: "Watchpost", kind: "town" },
-    { id: "ford", name: "Bramble Ford", kind: "wild", questMonster: "GOBLIN", questCount: 2 },
-    { id: "mire", name: "Sallow Mire", kind: "wild", questMonster: "UNDEAD", questCount: 2 },
-    { id: "crags", name: "Howling Crags", kind: "wild", questMonster: "TROLL", questCount: 1 },
-    { id: "hollow", name: "Grey Hollow", kind: "ruin", questMonster: "RAT", questCount: 4 },
-    { id: "barrow", name: "Kingsbarrow", kind: "dungeon", questMonster: "BOSS_GOBLIN", questCount: 1 },
-    { id: "drakespire", name: "Drakespire", kind: "dungeon", questMonster: "BOSS_DRAGON", questCount: 1 },
+    { id: "stonegate", name: "Stonegate", kind: "town", x: 13, y: 60 },
+    { id: "watch", name: "Watchpost", kind: "town", x: 15, y: 37 },
+    { id: "ford", name: "Bramble Ford", kind: "wild", questMonster: "GOBLIN", questCount: 2, x: 40, y: 40 },
+    { id: "mire", name: "Sallow Mire", kind: "wild", questMonster: "UNDEAD", questCount: 2, x: 62, y: 41 },
+    { id: "crags", name: "Howling Crags", kind: "wild", questMonster: "TROLL", questCount: 1, x: 50, y: 16 },
+    { id: "hollow", name: "Grey Hollow", kind: "ruin", questMonster: "RAT", questCount: 4, x: 25, y: 15 },
+    { id: "barrow", name: "Kingsbarrow", kind: "dungeon", questMonster: "BOSS_GOBLIN", questCount: 1, x: 86, y: 41 },
+    { id: "drakespire", name: "Drakespire", kind: "dungeon", questMonster: "BOSS_DRAGON", questCount: 1, x: 82, y: 15 },
     // Deliberately roadless — unreachable for pathfinding tests.
-    { id: "anvil", name: "The Anvil", kind: "ruin", questMonster: "DRAGON", questCount: 1 },
+    { id: "anvil", name: "The Anvil", kind: "ruin", questMonster: "DRAGON", questCount: 1, x: 90, y: 63 },
   ],
   edges: [
     { from: "stonegate", to: "watch", travelTurns: 1, encounterChance: 0.15, encounterMonster: "RAT", encounterCount: 2 },
