@@ -15,6 +15,7 @@ Never skip a step. Never fold plan into build. Never claim done mid-loop.
 
 ## 10. Branch and scope
 - Target `dev`. Every PR targets `dev`, never `main`. If a PR opens on `main`, stop and recreate it against `dev`.
+- **Exception — production promotion:** the `dev` -> `main` promotion PR is the ONE PR that may target `main`. It exists to ship a tested `dev` build to production (Pages builds `main` -> `/Game/`, `dev` -> `/Game/dev/`). Open it only after `dev` is confirmed working and on Stefan's explicit go; never close or recreate it against `dev`. This is the sole exception to the "never `main`" rule and the "no commits to `main`" hard stop.
 - Additive only. Guild work lives in guild-specific dirs behind the `/guild` route. Never modify the combat core; consume it.
 - Declare first: the first reply states branch name and file/dir scope, before any code.
 
