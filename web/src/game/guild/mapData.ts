@@ -20,14 +20,14 @@ export const TEST_WORLD: WorldGraph = {
   nodes: [
     { id: "stonegate", name: "Stonegate", kind: "town", x: 13, y: 60 },
     { id: "watch", name: "Watchpost", kind: "town", x: 15, y: 37 },
-    { id: "ford", name: "Bramble Ford", kind: "wild", questMonster: "GOBLIN", questCount: 2, x: 40, y: 40 },
-    { id: "mire", name: "Sallow Mire", kind: "wild", questMonster: "UNDEAD", questCount: 2, x: 62, y: 41 },
-    { id: "crags", name: "Howling Crags", kind: "wild", questMonster: "TROLL", questCount: 1, x: 50, y: 16 },
-    { id: "hollow", name: "Grey Hollow", kind: "ruin", questMonster: "RAT", questCount: 4, x: 25, y: 15 },
-    { id: "barrow", name: "Kingsbarrow", kind: "dungeon", questMonster: "BOSS_GOBLIN", questCount: 1, x: 86, y: 41 },
-    { id: "drakespire", name: "Drakespire", kind: "dungeon", questMonster: "BOSS_DRAGON", questCount: 1, x: 82, y: 15 },
+    { id: "ford", name: "Bramble Ford", kind: "wild", questMonster: "GOBLIN", questCount: 2, x: 39, y: 43 },
+    { id: "mire", name: "Sallow Mire", kind: "wild", questMonster: "UNDEAD", questCount: 2, x: 61, y: 43 },
+    { id: "crags", name: "Howling Crags", kind: "wild", questMonster: "TROLL", questCount: 1, x: 49, y: 13 },
+    { id: "hollow", name: "Grey Hollow", kind: "ruin", questMonster: "RAT", questCount: 4, x: 24, y: 13 },
+    { id: "barrow", name: "Kingsbarrow", kind: "dungeon", questMonster: "BOSS_GOBLIN", questCount: 1, x: 86, y: 43 },
+    { id: "drakespire", name: "Drakespire", kind: "dungeon", questMonster: "BOSS_DRAGON", questCount: 1, x: 83, y: 13 },
     // Deliberately roadless — unreachable for pathfinding tests.
-    { id: "anvil", name: "The Anvil", kind: "ruin", questMonster: "DRAGON", questCount: 1, x: 90, y: 63 },
+    { id: "anvil", name: "The Anvil", kind: "ruin", questMonster: "DRAGON", questCount: 1, x: 90, y: 60 },
   ],
   edges: [
     { from: "stonegate", to: "watch", travelTurns: 1, encounterChance: 0.15, encounterMonster: "RAT", encounterCount: 2 },

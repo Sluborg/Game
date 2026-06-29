@@ -8,7 +8,7 @@ Licensed **CC BY 3.0** (https://creativecommons.org/licenses/by/3.0/).
 | In-app emblem | Source icon | Author |
 |---|---|---|
 | town    | village      | Delapouite |
-| wild    | forest       | Delapouite |
+| wild    | pine-tree    | Lorc |
 | ruin    | broken-wall  | Delapouite |
 | dungeon | dungeon-gate | Delapouite |
 | origin  | castle       | Delapouite |
