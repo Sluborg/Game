@@ -1,22 +1,11 @@
-// Landing screen: pick Campaign (the existing day/economy game) or the Combat
-// Test feature. Styled via the shared token system; icons are inline SVG.
+// Landing screen: pick the Combat Test feature or the minimal Node Test.
+// Styled via the shared token system; icons are inline SVG.
 
 import styles from "./StartScreen.module.css";
 
 interface Props {
-  onPlayCampaign: () => void;
   onCombatTest: () => void;
-  onAssetReport: () => void;
-}
-
-function CastleIcon() {
-  return (
-    <svg viewBox="0 0 48 48" className={styles.icon} aria-hidden>
-      <path d="M8 44V20l5 3 5-5 6 5 6-5 5 5 5-3v24Z" fill="var(--c-royal-light)" />
-      <path d="M8 20V12h4v4h6v-4h4v4h6v-4h4v4h6v8l-5-3-5 5-6-5-6 5-5-5Z" fill="var(--c-gold)" />
-      <rect x={20} y={30} width={8} height={14} rx={1} fill="var(--surface-0)" />
-    </svg>
-  );
+  onNodeTest: () => void;
 }
 
 function SwordsIcon() {
@@ -30,33 +19,25 @@ function SwordsIcon() {
   );
 }
 
-function ScalesIcon() {
+function NodeIcon() {
   return (
     <svg viewBox="0 0 48 48" className={styles.icon} aria-hidden>
-      <rect x={23} y={8} width={2} height={30} fill="var(--c-gold)" />
-      <rect x={14} y={36} width={20} height={3} rx={1} fill="var(--c-gold)" />
-      <path d="M10 12h28" stroke="var(--c-gold)" strokeWidth={2} />
-      <path d="M10 12l-5 11h10Z" fill="var(--c-royal-light)" />
-      <path d="M38 12l-5 11h10Z" fill="var(--c-royal-light)" />
-      <circle cx={24} cy={9} r={3} fill="var(--c-gold)" />
+      <path d="M6 16l18-8 18 8-18 8Z" fill="var(--c-royal-light)" />
+      <path d="M6 16v16l18 8V24Z" fill="var(--c-royal-deep)" />
+      <path d="M42 16v16l-18 8V24Z" fill="var(--c-royal)" />
+      <circle cx={24} cy={15} r={4} fill="var(--c-gold)" />
+      <circle cx={14} cy={28} r={3} fill="var(--c-gold-light)" />
+      <circle cx={34} cy={29} r={3} fill="var(--c-gold-light)" />
     </svg>
   );
 }
 
-export function StartScreen({ onPlayCampaign, onCombatTest, onAssetReport }: Props) {
+export function StartScreen({ onCombatTest, onNodeTest }: Props) {
   return (
     <div className={styles.screen}>
       <div className={styles.inner}>
         <h1 className={styles.title}>Godblood</h1>
         <p className={styles.subtitle}>A demigod kingdom, day by day.</p>
-
-        <button className={`${styles.card} ${styles.campaign}`} onClick={onPlayCampaign}>
-          <CastleIcon />
-          <span className={styles.text}>
-            <span className={styles.name}>Campaign</span>
-            <span className={styles.desc}>Build your kingdom, recruit heroes, survive each day.</span>
-          </span>
-        </button>
 
         <button className={`${styles.card} ${styles.test}`} onClick={onCombatTest}>
           <SwordsIcon />
@@ -66,11 +47,11 @@ export function StartScreen({ onPlayCampaign, onCombatTest, onAssetReport }: Pro
           </span>
         </button>
 
-        <button className={`${styles.card} ${styles.guild}`} onClick={onAssetReport}>
-          <ScalesIcon />
+        <button className={`${styles.card} ${styles.node}`} onClick={onNodeTest}>
+          <NodeIcon />
           <span className={styles.text}>
-            <span className={styles.name}>Asset Report</span>
-            <span className={styles.desc}>Run a guild. Dispatch heroes. Read the reports — trust them if you dare.</span>
+            <span className={styles.name}>Node Test</span>
+            <span className={styles.desc}>Preview the world map and building nodes rendered from the Art Library.</span>
           </span>
         </button>
       </div>

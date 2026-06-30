@@ -1,38 +1,42 @@
 # Project Status
 
-_Last updated: 2026-06-28_
+_Last updated: 2026-06-30_
 
-## Asset Report pivot (branch `claude/asset-report-guild-layer-l7apuf`, → dev)
-A new **additive** layer: a guild-master turn sim where you dispatch heroes to
-quests and only ever read fallible field-agent **reports** of the fights, not
-the fights themselves. The existing combat result is ground truth; the report
-you read is a distorted view (fidelity tiers 0–4, driven by agent quality and
-hero trust, with corruption-driven lies). Reachable from the start screen as a
-third card (**Asset Report**) → `#/guild`. Self-contained under
-`web/src/game/guild/` + `web/src/ui/guild/`; own save key `assetReport.v1`;
-nothing in the day engine / economy / combat resolver touched. 52 tests in the
-guild suites. Full design + data shapes in `web/ASSET_REPORT.md`. Combat is
-consumed through the existing (placeholder) `defaultResolver` via an adapter, so
-the real Godblood resolver will drop in with no guild changes.
+## Start-screen reset + Art Library integration (branch `claude/start-screen-artlibrary-gxail2`, → dev)
+The start screen was reset to a minimal, working foundation and the codebase now
+consumes its art from the separate **Sluborg/ArtLibrary** DAM (referenced by URL,
+never vendored).
 
-**World Map (branch `claude/guild-world-map-ppamd6`, → dev).** Added a visual,
-clickable world map to the `#/guild` screen (it previously only had a destination
-dropdown). Medallion nodes with heraldic game-icons emblems by `kind`, roads
-coloured/dashed by a 1–5 danger scale derived from each edge's `encounterChance`,
-ETA badges on reachable quest sites, the guild seat marked as origin, and hero
-tokens that travel their dispatch routes with a direction arrow. Clicking a glowing
-quest node picks it as the destination (synced with the form dropdown). Pure guild
-logic (graph/dispatch/selectors) untouched; only additive node `x/y` coords. New
-`web/src/ui/guild/{WorldMap,icons,danger}.tsx`; game-icons attribution in
-`web/public/CREDITS.md`. This supersedes the parallel Campaign-Mode prototype that
-was built off stale `main` (PR #13, closed) — consolidating on the dev line.
+- **Removed:** the **Campaign** day/economy idle game (`ui/App.tsx`, `useGame`,
+  `ui/components/*`, and `game/{economy,dayEngine,buildings,milestones,persistence}`),
+  and the **Asset Report / guild** sim that was the old "first node build"
+  (`game/guild/*` + `ui/guild/*`). The shared `game/{heroes,monsters,types,
+  constants,combat}.ts` and `ui/{theme,format}.ts` orphaned by those removals were
+  deleted too. (No dedicated "intro screen" existed to remove.)
+- **Kept untouched:** the **Combat Test** feature (`ui/combat/*` + `game/battle/*`),
+  verified self-contained.
+- **Added — ArtCatalog (`web/src/art/`):** fetches ArtLibrary's `asset-index.json`,
+  filters `collection == "AssetReport"`, derives a stable slug per visual, and
+  resolves `raw_url` by slug / kind / tag / `NodeType` / `ResourceType`. Missing
+  slugs return a graceful placeholder. Source ref is a single `ART_REF` constant
+  (`main` for dev, pin a SHA for release). Enums match ArtLibrary's GameArtBible
+  exactly (no vocabulary mismatch). Manifest cached in-memory + `localStorage`
+  (1h TTL); `web/.artcache/` gitignored. Tests: `art/{slug,catalog}.test.ts`
+  (pure) + `art/catalog.live.test.ts` (gated `ART_LIVE=1`). Docs: `web/docs/ART.md`.
+- **Added — Node Test (`web/src/ui/node/`, `#/node`):** the vertical slice proving
+  the bridge — loads the overworld map (`map-overworld-v2`) through ArtCatalog as
+  the backdrop and places building nodes on top that degrade to labelled
+  placeholders (no `node-*` art produced yet). No mechanics, no idle systems.
+- **Start screen now has exactly two cards:** Combat Test (`#/test`) and Node
+  Test (`#/node`).
 
 ## What this repo is
 - `app/` — original idle game, Kotlin + Jetpack Compose (Gradle). Legacy, untouched.
-- `web/` — active target: turn-based web port "Majesty — Day by Day" → being reframed as the Godblood game. Vite 5 + React 18 + TypeScript.
-  - `web/src/game/` — pure, unit-tested game logic (state, economy, day engine, combat placeholder, persistence).
-  - `web/src/ui/` — React DOM components.
-  - See `web/MIGRATION.md` and `web/COMBAT_DESIGN_PROMPT.md`. Design/lore lives in the Coda doc "Godblood Knowledge".
+- `web/` — active target, Vite 5 + React 18 + TypeScript, reframed as the Godblood game.
+  - `web/src/game/battle/` — pure, unit-tested tick-based combat engine.
+  - `web/src/ui/combat/` — the Combat Test feature; `web/src/ui/node/` — the Node Test slice.
+  - `web/src/art/` — ArtCatalog (visual library client; art referenced from Sluborg/ArtLibrary). See `web/docs/ART.md`.
+  - See `web/MIGRATION.md` and `web/COMBAT_DESIGN_PROMPT.md` (historical). Design/lore lives in the Coda doc "Godblood Knowledge".
 
 ## How testing / deployment works
 GitHub Pages auto-deploys on every push via `.github/workflows/deploy.yml`. One site, two branches:
@@ -49,7 +53,7 @@ Workflow: work on `dev` (or a branch merged into `dev`) → test at `/Game/dev/`
 **The gap:** the data model has no attribute block, and the entire locked combat spec depends on it. Nothing combat-related can be built until heroes and monsters carry the 7 attributes.
 
 ## Combat Test feature (re-architected 2026-06-21)
-A start screen offers **Campaign** (the existing day/economy game, untouched) and **Combat Test**, routed by hash (`#/campaign`, `#/test`). The Combat Test is a real, modular feature — not a port of the prototype. The brief (`CombatTester.jsx` + Coda `20260621_combatBasics`) was used as reference only; mechanics kept, architecture redone.
+The start screen routes to **Combat Test** by hash (`#/test`). (It originally sat beside a Campaign card, removed in the 2026-06-30 start-screen reset above.) The Combat Test is a real, modular feature — not a port of the prototype. The brief (`CombatTester.jsx` + Coda `20260621_combatBasics`) was used as reference only; mechanics kept, architecture redone.
 
 **Engine — pure, event-emitting, unit-tested (`web/src/game/battle/`).**
 - `tuning.ts` (all constants, no magic numbers), `rng.ts` (seedable mulberry32 → deterministic fights), `attributes.ts` (canonical lean-1v1 curves + flagged tester-only variance/crit/opening), `equipment.ts` + `units.ts` (config-driven weapons/armor/heroes/monsters — gear drives BOTH stats and look), `grid.ts` (data-driven board), `events.ts` (typed `swing|hit|miss|knockout|end` stream), `engine.ts` (`CombatEngine.advance(dt) → events`, `getState()`; no React/timers).
