@@ -1,26 +1,20 @@
 // Top-level router. Tiny hash-based routing keeps this working on GitHub Pages
 // (and under the /Game/ and /Game/dev/ bases) with no extra dependency:
-//   #/campaign -> the existing day/economy game (App, left untouched)
-//   #/test     -> the Combat Test feature
-//   #/guild    -> the Asset Report guild sim (self-contained)
+//   #/test -> the Combat Test feature
+//   #/node -> the minimal Node Test (built on ArtCatalog)
 //   anything else -> the start screen
-//
-// App.tsx is rendered as-is; the "menu" affordance for Campaign is overlaid here
-// so the existing screen stays unchanged.
 
 import { useEffect, useState } from "react";
-import { App } from "./App";
 import { StartScreen } from "./StartScreen";
 import { CombatTestScreen } from "./combat/CombatTestScreen";
-import { GuildApp } from "./guild/GuildApp";
+import { NodeTestScreen } from "./node/NodeTestScreen";
 
-type Route = "start" | "campaign" | "test" | "guild";
+type Route = "start" | "test" | "node";
 
 function readRoute(): Route {
   const h = window.location.hash.replace(/^#\/?/, "");
-  if (h === "campaign") return "campaign";
   if (h === "test") return "test";
-  if (h === "guild") return "guild";
+  if (h === "node") return "node";
   return "start";
 }
 
@@ -39,24 +33,9 @@ export function Root() {
 
   if (route === "test") return <CombatTestScreen onExit={() => go("start")} />;
 
-  if (route === "guild") return <GuildApp />;
-
-  if (route === "campaign") {
-    return (
-      <>
-        <App />
-        <button className="menu-fab" onClick={() => go("start")} title="Back to menu">
-          ☰
-        </button>
-      </>
-    );
-  }
+  if (route === "node") return <NodeTestScreen onExit={() => go("start")} />;
 
   return (
-    <StartScreen
-      onPlayCampaign={() => go("campaign")}
-      onCombatTest={() => go("test")}
-      onAssetReport={() => go("guild")}
-    />
+    <StartScreen onCombatTest={() => go("test")} onNodeTest={() => go("node")} />
   );
 }

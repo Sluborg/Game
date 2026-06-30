@@ -3,3 +3,6 @@ dist
 *.local
 .vite
 *.tsbuildinfo
+
+# Disposable local art cache (ArtLibrary visuals are referenced by URL, never vendored).
+.artcache/
