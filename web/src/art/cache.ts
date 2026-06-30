@@ -6,12 +6,19 @@
 // snapshots a developer wants to keep locally).
 
 import type { ArtManifest } from "./types";
+import { ART_REF, MANIFEST_URL } from "./config";
 
-const LS_KEY = "artcatalog.manifest.v1";
+// Key the cache by the configured ref so builds on the same origin (a floating
+// `main` build vs a pinned release) never share a manifest — otherwise a stale
+// `main` manifest could be reused for a pinned build and pinRawUrl() would rewrite
+// rows to a SHA where they may not exist.
+const LS_KEY = `artcatalog.manifest.v1.${ART_REF}`;
 const TTL_MS = 60 * 60 * 1000; // 1 hour
 
 interface Envelope {
   at: number;
+  /** Manifest source URL, guarded on read in case the ref/repo config changes. */
+  url: string;
   manifest: ArtManifest;
 }
 
@@ -34,6 +41,7 @@ function readEnvelope(): Envelope | null {
     if (!raw) return null;
     const env = JSON.parse(raw) as Envelope;
     if (!env || typeof env.at !== "number" || !env.manifest) return null;
+    if (env.url !== MANIFEST_URL) return null; // config changed since this was cached
     mem = env;
     return env;
   } catch {
@@ -54,7 +62,7 @@ export function readAnyManifest(): ArtManifest | null {
 }
 
 export function writeManifest(manifest: ArtManifest): void {
-  const env: Envelope = { at: Date.now(), manifest };
+  const env: Envelope = { at: Date.now(), url: MANIFEST_URL, manifest };
   mem = env;
   const ls = localStore();
   if (!ls) return;

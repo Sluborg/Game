@@ -16,7 +16,13 @@ describe("deriveSlug", () => {
     expect(deriveSlug("title-screen.jpg")).toBe("title-screen");
     expect(deriveSlug("map-overworld-v2.png")).toBe("map-overworld-v2");
     expect(deriveSlug("map-overworld.png")).toBe("map-overworld");
-    expect(deriveSlug("node-design-sheet.png")).toBe("design-sheet");
+  });
+
+  it("only strips a prefix when the remainder is a known type", () => {
+    // node-design-sheet is a reference visual, not a building node -> keep full stem
+    expect(deriveSlug("node-design-sheet.png")).toBe("node-design-sheet");
+    // icon-resource-foo is not a ResourceType -> keep full stem
+    expect(deriveSlug("icon-resource-mana.png")).toBe("icon-resource-mana");
   });
 
   it("does not strip non-matching prefixes", () => {

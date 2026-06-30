@@ -73,6 +73,11 @@ describe("buildCatalog", () => {
     expect(catalog.has("thing")).toBe(false);
   });
 
+  it("keeps a non-building node- visual addressable by its real slug", () => {
+    expect(catalog.has("node-design-sheet")).toBe(true);
+    expect(catalog.bySlug("node-design-sheet").isPlaceholder).toBe(false);
+  });
+
   it("resolves a real visual by slug with dimensions, sha and raw_url", () => {
     const map = catalog.bySlug("map-overworld-v2");
     expect(map.isPlaceholder).toBe(false);

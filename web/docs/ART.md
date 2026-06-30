@@ -20,9 +20,9 @@ In this game, **"asset" is a reserved gameplay concept** (quests, ledger line-it
 
 1. Fetches `asset-index.json` and filters to `collection == "AssetReport"`.
 2. Derives a **stable slug** per entry — the kebab-case join key shared by art + code:
-   - `node-<x>.png` → `<x>` (e.g. `node-home-keep.png` → `home-keep`)
-   - `icon-resource-<x>.png` → `<x>` (e.g. `icon-resource-wood.png` → `wood`)
-   - otherwise the filename stem (`title-screen.jpg` → `title-screen`, `map-overworld-v2.png` → `map-overworld-v2`)
+   - `node-<x>.png` → `<x>` **when `<x>` is a known `NodeType`** (e.g. `node-home-keep.png` → `home-keep`)
+   - `icon-resource-<x>.png` → `<x>` **when `<x>` is a known `ResourceType`** (e.g. `icon-resource-wood.png` → `wood`)
+   - otherwise the filename stem (`title-screen.jpg` → `title-screen`, `map-overworld-v2.png` → `map-overworld-v2`, and reference visuals like `node-design-sheet.png` → `node-design-sheet`)
 3. Indexes by slug / kind / tag, and exposes typed lookups:
    ```ts
    const catalog = await loadArtCatalog();
