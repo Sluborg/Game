@@ -1,6 +1,23 @@
 # Project Status
 
-_Last updated: 2026-06-30_
+_Last updated: 2026-07-01_
+
+## Planning hub + art needs↔done reconcile (branch `claude/game-art-reconciliation-d0y6kn`, → dev)
+This repo now also **plans features and declares the art each needs**, and reconciles those
+declared needs against ArtLibrary's live manifest so the two repos stay in sync. Built on the
+existing `web/src/art/` ArtCatalog + enums — additive, no game behavior changed.
+- **Added (repo root):** `docs/ROADMAP.md` (features/milestones, each listing required art slugs);
+  `art-needs.json` (machine-readable NEEDED list — every node/resource/UI slug + its feature);
+  `scripts/reconcile-art.mjs` + a minimal root `package.json` (`npm run reconcile`); `docs/ART.md`
+  (documents the needs→produce→consume loop; links to `web/docs/ART.md` for consumption).
+- **reconcile** loads NEEDED (`art-needs.json`), fetches ArtLibrary `asset-index.json` filtered to
+  `collection == "AssetReport"` (DONE), and prints per-slug `NEEDED?·DONE?·status`
+  (`ok`/`missing-art`/`orphan-art`), exiting non-zero on drift (CI-gateable). Optional non-fatal
+  Buildings.md roster-drift warning; `asset-index.json` stays authoritative.
+- **Current reconcile:** 4 `ok` (overworld map ×2, node-design-sheet, title-screen), 25
+  `missing-art` (node/resource art + `ui-nameplate` not produced yet), 0 `orphan-art` → exits 1.
+- **Sync guard:** `web/src/art/art-needs.test.ts` asserts every `NodeType`/`ResourceType` appears in
+  `art-needs.json`. Not wired into CI as a blocking gate yet (art still being produced).
 
 ## Start-screen reset + Art Library integration (branch `claude/start-screen-artlibrary-gxail2`, → dev)
 The start screen was reset to a minimal, working foundation and the codebase now
