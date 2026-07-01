@@ -37,6 +37,17 @@ settlement, and the guild office. Establishes the node visual language (see the 
 ¹ `guild-office` is a planned map node that is **not yet in the `NodeType` roster/enum**, so it's
 declared as `kind: ui` for now (promote it to a `node` once ArtLibrary's GameArtBible adds it).
 
+## Milestone: `quest-sites` — Quest sites
+
+Dispatchable quest locations on the overworld — the seats of the core loop (send a party, read
+back a report). The first is the **Ruins**, introduced on the `/node` "Map" screen as a labelled,
+selectable placeholder node (no mechanics yet). This is the first `NodeType` declared ahead of
+ArtLibrary's GameArtBible (see the `TODO(art-bible)` notes in `web/src/art/enums.ts`).
+
+| Slug | Kind | Status |
+| --- | --- | --- |
+| `ruins` | node | ⛔ needed |
+
 ## Milestone: `resource-economy` — Resource nodes & economy
 
 Gatherable resource nodes and the market, plus the resource icons the HUD needs.
