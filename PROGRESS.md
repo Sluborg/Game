@@ -10,6 +10,12 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-01 - Map screen: PR opened
+- Gate: PR
+- Branch: `claude/map-nodes-selection-p5y5g1` → **PR #20 into `dev`**
+- Note: no PR-level CI on this repo (deploy.yml + android-apk.yml trigger on push to `main`/`dev`
+  only, so Pages builds `dev` → `/Game/dev/` after merge). No review comments yet. Awaiting Codex.
+
 ## 2026-07-01 - Map screen: first three clickable, selectable nodes
 - Gate: build (PR next)
 - Branch: `claude/map-nodes-selection-p5y5g1` → PR into `dev`
