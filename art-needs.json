@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "description": "The game's declared art demand list (NEEDED). Each entry is a slug the game expects to exist as a visual in Sluborg/ArtLibrary (collection AssetReport). Every kind:node / kind:resource slug must be a NodeType / ResourceType value in web/src/art/enums.ts (enforced by web/src/art/art-needs.test.ts); kind:ui covers screens, map backdrops, reference sheets, and not-yet-formalized needs. Run `npm run reconcile` to compare this NEEDED list against ArtLibrary's live asset-index.json (DONE). See docs/ART.md, docs/ROADMAP.md, and web/docs/ART.md.",
+  "needs": [
+    { "slug": "home-keep", "kind": "node", "description": "Player's home base keep node.", "feature": "overworld-map-nodes" },
+    { "slug": "grand-citadel", "kind": "node", "description": "Landmark citadel node.", "feature": "overworld-map-nodes" },
+    { "slug": "settlement", "kind": "node", "description": "Civic settlement node.", "feature": "overworld-map-nodes" },
+    { "slug": "lumber-camp", "kind": "node", "description": "Wood-producing resource node.", "feature": "resource-economy" },
+    { "slug": "quarry", "kind": "node", "description": "Stone-producing resource node.", "feature": "resource-economy" },
+    { "slug": "farmland", "kind": "node", "description": "Food-producing resource node.", "feature": "resource-economy" },
+    { "slug": "iron-mine", "kind": "node", "description": "Iron-producing resource node.", "feature": "resource-economy" },
+    { "slug": "gold-mine", "kind": "node", "description": "Gold-producing resource node.", "feature": "resource-economy" },
+    { "slug": "market", "kind": "node", "description": "Economy / trade market node.", "feature": "resource-economy" },
+    { "slug": "academy", "kind": "node", "description": "Research academy node.", "feature": "research-crafting-divine" },
+    { "slug": "forge", "kind": "node", "description": "Crafting forge node.", "feature": "research-crafting-divine" },
+    { "slug": "temple", "kind": "node", "description": "Divine temple node.", "feature": "research-crafting-divine" },
+    { "slug": "barracks", "kind": "node", "description": "Military barracks node.", "feature": "military-defense" },
+    { "slug": "archer-tower", "kind": "node", "description": "Defensive archer tower node.", "feature": "military-defense" },
+    { "slug": "wall", "kind": "node", "description": "Defensive wall node.", "feature": "military-defense" },
+
+    { "slug": "wood", "kind": "resource", "description": "Wood resource icon.", "feature": "resource-economy" },
+    { "slug": "stone", "kind": "resource", "description": "Stone resource icon.", "feature": "resource-economy" },
+    { "slug": "food", "kind": "resource", "description": "Food resource icon.", "feature": "resource-economy" },
+    { "slug": "iron", "kind": "resource", "description": "Iron resource icon.", "feature": "resource-economy" },
+    { "slug": "gold", "kind": "resource", "description": "Gold resource icon.", "feature": "resource-economy" },
+    { "slug": "knowledge", "kind": "resource", "description": "Knowledge resource icon.", "feature": "research-crafting-divine" },
+    { "slug": "faith", "kind": "resource", "description": "Faith resource icon.", "feature": "research-crafting-divine" },
+    { "slug": "approval", "kind": "resource", "description": "Approval / civic-sentiment resource icon.", "feature": "resource-economy" },
+
+    { "slug": "guild-office", "kind": "ui", "description": "Adventurer guild office (Fighter/Ranger/Mage guilds). Planned map node not yet in the NodeType roster; kept as ui until promoted to a formal node.", "feature": "overworld-map-nodes" },
+    { "slug": "map-overworld", "kind": "ui", "description": "Overworld map backdrop (candidate).", "feature": "ui-branding" },
+    { "slug": "map-overworld-v2", "kind": "ui", "description": "Overworld map backdrop (candidate v2).", "feature": "ui-branding" },
+    { "slug": "node-design-sheet", "kind": "ui", "description": "Reference sheet for building-node visual style.", "feature": "overworld-map-nodes" },
+    { "slug": "title-screen", "kind": "ui", "description": "Title / key-art splash screen.", "feature": "ui-branding" },
+    { "slug": "ui-nameplate", "kind": "ui", "description": "UI nameplate / label frame placeholder used across panels.", "feature": "ui-branding" }
+  ]
+}

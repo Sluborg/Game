@@ -1,5 +1,10 @@
 # Art / Visual Library (ArtCatalog)
 
+> This page covers how the game **consumes** art at runtime. For the planning side — how the game
+> **declares** the art it needs and reconciles that against ArtLibrary — see the repo-root
+> [`docs/ART.md`](../../docs/ART.md), [`docs/ROADMAP.md`](../../docs/ROADMAP.md), and
+> [`art-needs.json`](../../art-needs.json) (`npm run reconcile`).
+
 ## Where art lives
 
 All game visuals live in the external repo **[Sluborg/ArtLibrary](https://github.com/Sluborg/ArtLibrary)**, a Git-native DAM — **not** in this repo. The game references them at runtime by `raw_url` from the manifest. **No image bytes are committed here.**
