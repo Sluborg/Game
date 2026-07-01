@@ -56,6 +56,11 @@ It prints a row per slug — `SLUG` · `KIND` · `NEEDED?` · `DONE?` · **statu
 fetch/parse error. Because art is still being produced, reconcile intentionally exits non-zero today —
 so it is **not** wired into CI as a blocking gate yet; enable it once the backlog is cleared.
 
+**Which ref it checks:** the script reads `ART_REPO` / `ART_REF` / `ART_COLLECTION` from
+`web/src/art/config.ts`, so the gate always validates the *same* manifest the game consumes — including
+a release build that pins `ART_REF` to a commit SHA. Override for a one-off check with
+`ART_REF=<sha> npm run reconcile`.
+
 ## Consuming art at runtime
 
 How the game actually loads and displays a visual (the `ArtCatalog` client, caching, placeholders,

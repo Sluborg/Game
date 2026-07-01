@@ -10,6 +10,18 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-01 - Planning hub — Codex fix (art ref)
+- Gate: codex-fixed
+- Branch: `claude/game-art-reconciliation-d0y6kn` → PR #18 into `dev`
+- Codex finding (P2): reconcile hardcoded `ART_REF="main"`, so a release build that pins config.ts
+  to a SHA would have the gate validate the wrong manifest. Fixed: `scripts/reconcile-art.mjs` now
+  reads `ART_REPO`/`ART_REF`/`ART_COLLECTION` from `web/src/art/config.ts` (with an `ART_REF` env
+  override and safe fallbacks), so it always checks the ref the game consumes. Verified: default reads
+  `main` (identical output, exit 1); `ART_REF=<sha>` retargets the fetch. Doc note added to
+  `docs/ART.md`. Re-ran Review #2 on the delta (self, small scope): no new blockers. Build + 36 tests
+  green.
+- Next: awaiting merge decision (no self-merge).
+
 ## 2026-07-01 - Planning hub + art needs↔done reconcile
 - Gate: build
 - Branch: `claude/game-art-reconciliation-d0y6kn` (re-based onto `dev`) → PR into `dev`

@@ -8,12 +8,12 @@
 //   npm run reconcile                    (from the repo root)
 //   node scripts/reconcile-art.mjs
 //
-// Dependency-free Node ESM (global fetch, Node 18+). It mirrors three primitives
-// from web/src/art/ — MANIFEST_URL / the AssetReport filter / slug derivation —
-// which stay authoritative in TypeScript (web/src/art/config.ts, slug.ts,
-// enums.ts). The parity test web/src/art/art-needs.test.ts imports this module and
-// asserts KNOWN_NODE_SLUGS / KNOWN_RESOURCE_SLUGS match the enums and that
-// deriveSlug() here matches the game's slug.ts, so the two can never disagree.
+// Dependency-free Node ESM (global fetch, Node 18+). The art SOURCE (repo / ref /
+// collection) is read straight from web/src/art/config.ts so this gate validates
+// the SAME manifest the game consumes — including when a release build pins
+// ART_REF to a commit SHA. The slug vocabulary (KNOWN_*_SLUGS) and derivation
+// mirror web/src/art/{enums,slug}.ts; the parity test web/src/art/art-needs.test.ts
+// imports this module and asserts they never drift from the TS source.
 // ArtLibrary is read-only from here — we only fetch.
 
 import { readFileSync } from "node:fs";
@@ -22,12 +22,36 @@ import { dirname, resolve } from "node:path";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
-// --- Mirror of web/src/art/config.ts (keep in sync) --------------------------
-const ART_REPO = "Sluborg/ArtLibrary";
-const ART_REF = "main";
-const MANIFEST_URL = `https://raw.githubusercontent.com/${ART_REPO}/${ART_REF}/asset-index.json`;
-const BUILDINGS_MD_URL = `https://raw.githubusercontent.com/${ART_REPO}/${ART_REF}/Games/AssetReport/Buildings.md`;
-const ART_COLLECTION = "AssetReport";
+// --- Art source config, read from web/src/art/config.ts ----------------------
+// A release build may pin ART_REF to a commit SHA (see config.ts / web/docs/ART.md).
+// Parsing repo/ref/collection from config.ts (rather than hardcoding them) keeps
+// this gate pointed at whatever manifest the game actually ships. `ART_REF` in the
+// environment overrides, and everything falls back to the current defaults if
+// config.ts can't be read or parsed.
+function readArtConfig() {
+  const defaults = { repo: "Sluborg/ArtLibrary", ref: "main", collection: "AssetReport" };
+  let cfg = "";
+  try {
+    cfg = readFileSync(resolve(HERE, "..", "web", "src", "art", "config.ts"), "utf8");
+  } catch {
+    cfg = "";
+  }
+  const pick = (name, fallback) => {
+    const m = cfg.match(new RegExp(`export const ${name}\\s*=\\s*["'\`]([^"'\`]+)["'\`]`));
+    return m ? m[1] : fallback;
+  };
+  const repo = pick("ART_REPO", defaults.repo);
+  const ref = process.env.ART_REF || pick("ART_REF", defaults.ref);
+  const collection = pick("ART_COLLECTION", defaults.collection);
+  const rawBase = `https://raw.githubusercontent.com/${repo}/${ref}`;
+  return {
+    repo,
+    ref,
+    collection,
+    manifestUrl: `${rawBase}/asset-index.json`,
+    buildingsMdUrl: `${rawBase}/Games/AssetReport/Buildings.md`,
+  };
+}
 
 // --- Mirror of web/src/art/enums.ts (keep in sync; guarded by the parity test) ---
 // The string values ARE the slugs. A prefix is stripped only when the remainder is
@@ -66,9 +90,9 @@ function loadNeeds() {
 }
 
 // --- Fetch DONE (ArtLibrary manifest, AssetReport collection w/ raw_url) ------
-async function fetchDoneSlugs() {
-  const res = await fetch(MANIFEST_URL);
-  if (!res.ok) throw new Error(`fetch manifest failed (HTTP ${res.status}) — ${MANIFEST_URL}`);
+async function fetchDoneSlugs(cfg) {
+  const res = await fetch(cfg.manifestUrl);
+  if (!res.ok) throw new Error(`fetch manifest failed (HTTP ${res.status}) — ${cfg.manifestUrl}`);
   const manifest = await res.json();
   // A missing/renamed assets[] is a broken manifest, not "everything is drift".
   if (!Array.isArray(manifest.assets)) {
@@ -76,7 +100,7 @@ async function fetchDoneSlugs() {
   }
   const done = new Map(); // slug -> { rawUrl, filename }
   for (const a of manifest.assets) {
-    if (a.collection !== ART_COLLECTION) continue;
+    if (a.collection !== cfg.collection) continue;
     if (!a.raw_url) continue; // DONE requires downloadable bytes
     if (!a.original_filename) continue; // can't derive a slug without a filename
     const slug = deriveSlug(a.original_filename);
@@ -90,9 +114,9 @@ async function fetchDoneSlugs() {
 }
 
 // --- Optional, non-fatal: roster drift vs Buildings.md -----------------------
-async function warnRosterDrift(needSlugs) {
+async function warnRosterDrift(needSlugs, cfg) {
   try {
-    const res = await fetch(BUILDINGS_MD_URL);
+    const res = await fetch(cfg.buildingsMdUrl);
     if (!res.ok) return; // silent — asset-index.json is the authoritative DONE source
     const md = await res.text();
     // Roster rows look like: | `home-keep` | Home Keep | `PLAYER_BASE` | needed |
@@ -120,15 +144,16 @@ function pad(s, n) {
 }
 
 async function main() {
+  const cfg = readArtConfig();
   const needs = loadNeeds();
   const needBySlug = new Map(needs.map((n) => [n.slug, n]));
   const needSlugs = new Set(needBySlug.keys());
 
-  const done = await fetchDoneSlugs();
+  const done = await fetchDoneSlugs(cfg);
 
   const allSlugs = [...new Set([...needSlugs, ...done.keys()])].sort();
 
-  console.log(`\nArt reconcile — NEEDED (art-needs.json) vs DONE (${ART_REPO}@${ART_REF}, collection ${ART_COLLECTION})\n`);
+  console.log(`\nArt reconcile — NEEDED (art-needs.json) vs DONE (${cfg.repo}@${cfg.ref}, collection ${cfg.collection})\n`);
   console.log(`${pad("SLUG", 20)}${pad("KIND", 10)}${pad("NEEDED?", 9)}${pad("DONE?", 7)}STATUS`);
   console.log("-".repeat(64));
 
@@ -152,7 +177,7 @@ async function main() {
     `Total ${allSlugs.length} · ok ${counts.ok} · missing-art ${counts["missing-art"]} · orphan-art ${counts["orphan-art"]}`,
   );
 
-  await warnRosterDrift(needSlugs);
+  await warnRosterDrift(needSlugs, cfg);
 
   const drift = counts["missing-art"] + counts["orphan-art"];
   if (drift > 0) {
