@@ -10,6 +10,36 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-01 - Engagement review of the game plans: build done (PR next)
+- Gate: build (plan + both reviews cleared)
+- Branch: `claude/game-engagement-analysis-uu5lx8` → PR into `dev`
+- Scope: analysis only — a report on how to make the planned guild-master game fun and engaging,
+  covering `docs/DESIGN.md` (planning branch `claude/game-design-planning-ojk3lt`) and the `dev`
+  plan-of-record vs what actually runs. No game code touched; combat core consumed read-only for
+  fact-checking.
+- Files touched: `docs/ENGAGEMENT_REVIEW.md` (new), this file.
+- Review #1 (4-persona, on the analysis PLAN): 4 blockers, all adopted — two-baseline analysis
+  (concept vs build-order reality, incl. a first-playable walkthrough); recommendations grounded
+  in the real engine API (`FightConfig`/`HERO_TEMPLATES`); structural-vs-tuning tags + falsifiable
+  kill-tests per risk; pivot-constraint compatibility declared per fix.
+- Review #2 (4-persona, on the DIFF): Engineer verified every technical claim against `origin/dev`
+  (no blockers). 8 distinct blockers from the other three, all fixed in the same commit: bottom
+  line moved first + sources compressed; build-order table → mobile-friendly list; slice 2 now
+  prices fidelity tiers from the slice-1 cash clock (the report had reproduced the very sequencing
+  hole it condemns); two-zoom map restored to slice 5; R6 tier-numbering miscite; R12 flagged as a
+  DESIGN.md §5 text change and added to the fold list; R9 kill-test made falsifiable; appendix
+  attribution + review-status wording corrected ("AskStefan" jargon removed). Non-blocking folded
+  in: seed ownership note (engine default RNG is random), `swing` in the event list, contracts
+  framed inside the money lever, named terminal loss state after the debt event, envelope events
+  seed-derived, R2-vs-R3/R5 tension guard, retags (R5/R7/R12 structural, R6 concept), quest-selection
+  weights placed in slice 4.
+- Key output: 12 ranked risks with fixes + kill-tests; one decision needed from Stefan (D1: engine
+  seam for per-hero attributes — recommended D1a, a ~5-line additive `FightConfig` widening,
+  requires explicit sign-off since it touches the frozen core); a re-sliced 8-step build order that
+  closes the loop in the first gameplay PR; 6 quick-win candidate sessions.
+- Open questions: D1 (awaits Stefan). Whether to fold the report's design commitments into
+  DESIGN.md on the planning branch (quick win #1) — separate session.
+
 ## 2026-07-01 - Map screen: PR opened
 - Gate: PR
 - Branch: `claude/map-nodes-selection-p5y5g1` → **PR #20 into `dev`**
