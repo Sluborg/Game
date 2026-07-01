@@ -21,6 +21,10 @@ export enum NodeType {
   Wall = "wall",
   Temple = "temple",
   Market = "market",
+  // TODO(art-bible): `ruins` is declared here ahead of ArtLibrary's GameArtBible —
+  // the first quest-site node for the /node "Map" slice. Reconcile it into the
+  // manifest roster (and remove this note) once the bible adds a quest-site entry.
+  Ruins = "ruins",
 }
 
 export enum Category {
@@ -34,6 +38,9 @@ export enum Category {
   DEFENSE = "DEFENSE",
   DIVINE = "DIVINE",
   ECONOMY = "ECONOMY",
+  // TODO(art-bible): quest sites (the Ruins node) — game-declared ahead of the
+  // GameArtBible manifest; fold in when the bible formalizes the category.
+  QUEST_SITE = "QUEST_SITE",
 }
 
 export enum ResourceType {
@@ -64,4 +71,5 @@ export const NODE_CATEGORY: Record<NodeType, Category> = {
   [NodeType.Wall]: Category.DEFENSE,
   [NodeType.Temple]: Category.DIVINE,
   [NodeType.Market]: Category.ECONOMY,
+  [NodeType.Ruins]: Category.QUEST_SITE,
 };

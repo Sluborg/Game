@@ -33,6 +33,16 @@
 .spacer {
   flex: 1;
 }
+.selection {
+  font-size: 13px;
+  color: var(--c-gold-light);
+  font-family: var(--font-display);
+  white-space: nowrap;
+  padding: 4px 10px;
+  border: 1px solid var(--stroke-gold);
+  border-radius: var(--r-md);
+  background: var(--surface-0);
+}
 
 .map {
   position: relative;
@@ -55,23 +65,56 @@
   font-size: 13px;
 }
 
+/* Nodes are real buttons: keyboard-focusable, tappable, ≥44px touch target. */
 .node {
   position: absolute;
   margin: 0;
+  padding: 6px;
+  min-width: 44px;
+  min-height: 44px;
   transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--r-md);
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
+  transition: transform 120ms ease;
 }
+/* Resting chrome so every node reads as tappable before any interaction. */
 .node img {
   display: block;
   border-radius: var(--r-md);
+  border: 2px solid var(--stroke-gold);
+  transition: box-shadow 120ms ease, border-color 120ms ease;
+}
+.node:hover {
+  transform: translate(-50%, -50%) scale(1.06);
+}
+.node:focus-visible {
+  outline: none;
+}
+.node:focus-visible img {
+  box-shadow: 0 0 0 3px var(--c-gold-light);
+}
+/* Selected: unmistakable ring + glow + scale (the header name is the second cue). */
+.node.selected {
+  transform: translate(-50%, -50%) scale(1.1);
+}
+.node.selected img {
+  border-color: var(--c-gold-light);
+  box-shadow: 0 0 0 3px var(--c-gold-light), 0 0 16px 4px rgba(201, 162, 74, 0.7);
+}
+.node.selected .caption {
+  color: var(--surface-0);
+  background: var(--c-gold);
 }
 .caption {
   font-size: 11px;
-  font-family: monospace;
+  font-family: var(--font-display);
   color: var(--c-gold-light);
   background: rgba(0, 0, 0, 0.55);
   padding: 2px 6px;

@@ -18,6 +18,8 @@
     { "slug": "archer-tower", "kind": "node", "description": "Defensive archer tower node.", "feature": "military-defense" },
     { "slug": "wall", "kind": "node", "description": "Defensive wall node.", "feature": "military-defense" },
 
+    { "slug": "ruins", "kind": "node", "description": "Ruins quest-site node — the first dispatchable quest location on the overworld map.", "feature": "quest-sites" },
+
     { "slug": "wood", "kind": "resource", "description": "Wood resource icon.", "feature": "resource-economy" },
     { "slug": "stone", "kind": "resource", "description": "Stone resource icon.", "feature": "resource-economy" },
     { "slug": "food", "kind": "resource", "description": "Food resource icon.", "feature": "resource-economy" },

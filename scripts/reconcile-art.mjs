@@ -59,7 +59,7 @@ function readArtConfig() {
 export const KNOWN_NODE_SLUGS = [
   "home-keep", "grand-citadel", "settlement", "lumber-camp", "quarry", "farmland",
   "iron-mine", "gold-mine", "academy", "forge", "barracks", "archer-tower", "wall",
-  "temple", "market",
+  "temple", "market", "ruins",
 ];
 export const KNOWN_RESOURCE_SLUGS = [
   "wood", "stone", "food", "iron", "gold", "knowledge", "faith", "approval",
