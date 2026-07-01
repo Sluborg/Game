@@ -126,14 +126,37 @@ Two zoom tiers, so the map is never bloated:
 **Node types** (a node earns its place only if it offers a decision or info you can't get elsewhere):
 
 - **Quest site** — heroes fight here. Your verbs: raise a bounty, buy influence to see it better.
-- **Economy node** (market, lumber-camp) — feeds the guild's money/services; verb: invest to upgrade.
+  **Temporary — quest nodes pop up anywhere on the map and expire.** They also *reactivate as
+  faucets, not cups* (see below), with a state arc rather than a respawn timer.
+- **Fixed nodes** — the home Area's permanent buildings (guild hall, village).
 - **Foreign / uncontrolled** — invest influence to peel back its fog and unlock its quests.
 
-**Grantador (home city)** = one small Area with 3–4 fixed nodes (guild hall where you sit, tavern
-where heroes recruit/form parties, market). Not a sprawling many-node city — that density is earned
-later, not front-loaded.
+**Quest-node behaviours (locked: depth + escalation; prestige parked):**
+- **Depth** (e.g. the Ruins) — clear the entrance, deeper/harder/better-paying quests unlock;
+  eventually "fully excavated" and goes quiet. The progression ladder heroes level up on.
+- **Escalation** (e.g. the Graveyard) — ignore it and the threat grows on its own, spills into
+  neighbouring Areas, feeds the **doom clock**. Tend it or it worsens.
+
+**Economy — gold only (v1).** No multi-resource system; a guild master thinks in gold. Income is
+your cut of hero rewards. Multi-resource gathering is parked (see "Ideas parked").
+
+**The first playable map** = the home Area with three nodes: **Guild Hall** (`home-keep`, your seat),
+**Village** (`settlement`, civic hub), and a **Ruins** quest node (new). Not a sprawling many-node
+city — density is earned later, not front-loaded.
 
 ---
+
+## Ideas parked for later
+
+Good ideas we've deliberately deferred to keep v1 small — recorded so they're not lost:
+
+- **Influence → a cut of gear upgrades.** Holding influence somewhere earns you a slice when heroes
+  upgrade their gear there. Mechanism TBD.
+- **Prestige / boss quest node** (the Lava Dungeon) — a marquee, repeatable high-tier threat.
+- **Multi-resource economy** (wood/stone/food/iron, gather nodes) — the `resource-economy` ROADMAP
+  milestone. Parked, not deleted.
+- **Named specialist agents** — a tiny roster of dispatchable fixers, only if the faceless-influence
+  model ever feels mechanical.
 
 ## How we build
 
@@ -141,7 +164,12 @@ Planning stays in the design chat. Each feature ships as its **own Claude Code s
 with a prompt drafted in that chat, following the repo loop (plan → review → build → review → PR into
 `dev` → codex → merge). This doc is the shared source of truth those sessions read from.
 
-Likely build order (to be refined):
+**Next up (small step):** put **Guild Hall, Village, Ruins** on the map as real, *clickable* nodes
+with a visible selection state — replacing the three placeholder boxes on the Node Test screen.
+Two independent prompts: one game session (add the `ruins` node + click-to-select) and one Lubot
+brief (produce the three node visuals).
+
+Likely build order after that (to be refined):
 
 1. Heroes as data — stats, trait icons, certainty, the exaggerated-CV model.
 2. The battle system (the core + truth oracle).
