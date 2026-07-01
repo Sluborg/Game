@@ -158,6 +158,10 @@ Good ideas we've deliberately deferred to keep v1 small — recorded so they're 
 - **Named specialist agents** — a tiny roster of dispatchable fixers, only if the faceless-influence
   model ever feels mechanical.
 
+### Polish backlog
+- **Node selection effect.** The current highlight is functional but plain — replace with a prettier
+  selection treatment (soft glow / animated ring / gentle pulse) that matches the painterly map.
+
 ## How we build
 
 Planning stays in the design chat. Each feature ships as its **own Claude Code session**, kicked off
