@@ -188,9 +188,15 @@ loot are generated flavor outside the core. Specify each fidelity tier as an exa
 filter/aggregation over the envelope *before* writing a generator (tier 0: outcome + casualties;
 tier 1: envelope beats + combat aggregates; tier 2: raw events). Exploit determinism: store
 `{seed, config}` per quest, not event arrays — reconstruct the engine with the stored seed and
-re-drive it on demand. Two implementation notes: the engine's default RNG is *random* — the quest
-resolver must generate and persist the seed itself; and the envelope events must derive from the
-same stored seed, or the tier-2 replay won't match the report the player already read. That makes
+re-drive it on demand. Three implementation notes: the engine's default RNG is *random* — the
+quest resolver must generate and persist the seed itself; the envelope events must derive from the
+same stored seed; and a **sim version** (a version stamp or hash of tuning + unit templates) must
+be persisted alongside, because `config` stores tier/species identifiers whose stats live in code
+— after any tuning or template change, a seed-only regeneration would silently produce a
+*different* fight than the report the player already read. Replays are valid only within the same
+sim version; on mismatch, keep the persisted report text and outcome as the truth and degrade the
+replay gracefully (disable it diegetically, or snapshot the event array at quest completion for
+fights worth keeping). That makes
 the tier-2 "watch the replay" show (reusing the existing Combat Test renderer, which consumes a
 live engine) essentially free, and keeps saves small.
 **Kill-test:** write 5 tier-1 summaries from a real event stream. If they're all "X won, Y took

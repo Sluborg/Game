@@ -10,6 +10,22 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-02 - Engagement review: Codex fix (replay sim-version)
+- Gate: codex-fixed
+- Branch: `claude/game-engagement-analysis-uu5lx8` → PR #21 into `dev`
+- Codex finding (P2, the only one): seed-only replays (`{seed, config}`) silently diverge from the
+  report the player already read if combat tuning or `HERO_TEMPLATES`/`MONSTER_TEMPLATES` change,
+  since `config` stores identifiers whose stats live in code. Fixed in R6's implementation notes:
+  persist a sim version (stamp/hash of tuning + templates) with the seed; replays valid only
+  within the same version; on mismatch the persisted report text/outcome stays authoritative and
+  the replay degrades gracefully (diegetic disable, or snapshot events at completion). Earlier the
+  same day: two Copilot wording nits fixed (`FightConfig` phrasing, "seedable" vs "seeded") and the
+  DESIGN.md citation made merge-order-proof (via PR #19).
+- Review verdict: Review #2 re-run on the delta (self, small scope — doc lines verified against
+  `tuning.ts`/`units.ts`/`engine.ts` behavior): no new blockers.
+- Open questions: none. Next: awaiting merge decision (no self-merge). Recommended order: merge
+  PR #19 (DESIGN.md) first, then this.
+
 ## 2026-07-01 - Engagement review of the game plans: build done (PR next)
 - Gate: build (plan + both reviews cleared)
 - Branch: `claude/game-engagement-analysis-uu5lx8` → PR into `dev`
