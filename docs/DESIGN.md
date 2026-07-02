@@ -205,7 +205,7 @@ Bankruptcy is the spine; the other two funnel into it.
   That's the whole of "bankruptcy" here: one warning stage, not an instant wipe. The home Area's
   free fidelity floor (§4) and a small guaranteed Guild Hall passive cut mean zero-cash is always
   "poor and squinting," never "blind and starving."
-- **Roster in detail.** Before the rival exists in the build (pre-slice 7), neglected heroes
+- **Roster in detail.** Before the rival exists in the build (pre-slice 6), neglected heroes
   simply quit the region — same pressure, no rival dependency.
 - **Doom in detail.** Refugees arriving at the Village, an Area's silhouette visibly darkening,
   quest pay spiking nearby, scripted threshold events with a stated runway ("spills into the
@@ -346,27 +346,27 @@ with a prompt drafted in that chat, following the repo loop (plan → review →
 **Shipped:** Guild Hall, Village, Ruins on the map as real, clickable, selectable nodes (PR #20,
 2026-07-01) — the placeholder boxes are gone.
 
-**Next up — Slice 1, Foundations:** engine seams are decided (§11); add a versioned, serializable
-world-state module + a discrete "end day" tick.
+**Next up — Slice 1, Thin closed loop:** Ruins + 3 pre-made heroes (CVs with certainty chips) + a
+bounty at a fixed/simple price (full gold/stats pricing logic waits for slice 4's quest-choice
+work) + one summary-tier report (§4/§10's minimal envelope) + a minimal cash clock (§8). Playable
+in one PR: priced decision → consequence → readable outcome → money pressure. Carries its own
+foundations — engine seams decided (§11), a versioned serializable world-state module, a discrete
+"end day" tick — as scaffolding inside this same PR, not a standalone prerequisite session.
 
 Then, in order:
 
-2. **Thin closed loop** — Ruins + 3 pre-made heroes (CVs with certainty chips) + a bounty at a
-   fixed/simple price (full gold/stats pricing logic waits for slice 5's quest-choice work) + one
-   summary-tier report (§4/§10's minimal envelope) + a minimal cash clock (§8). Playable in one
-   PR: priced decision → consequence → readable outcome → money pressure.
-3. **Fidelity ladder** — rumor/summary/log tiers as envelope filters + the free home floor (§4) +
+2. **Fidelity ladder** — rumor/summary/log tiers as envelope filters + the free home floor (§4) +
    a seed-replay viewer (reusing the Combat Test renderer). Tiers cost gold from day one, drawn
-   from slice 2's cash clock — upkeep/decay wait for slice 6.
-4. **Hero arcs** — CV correction stamps, trait sockets & reveals (§4/§5), contracts (§3),
+   from slice 1's cash clock — upkeep/decay wait for slice 5.
+3. **Hero arcs** — CV correction stamps, trait sockets & reveals (§4/§5), contracts (§3),
    pre-rival roster pressure (§8).
-5. **Parties & quest choice** — introductions (§3/§6), the boss's weighted vote, the full
+4. **Parties & quest choice** — introductions (§3/§6), the boss's weighted vote, the full
    gold/stats bounty pricing (§3/§5) and quest-choice factor list, composed-duel party combat
    (§10/§11).
-6. **Influence as upkeep** — per-Area influence with upkeep/decay + a second Area + the map's two
+5. **Influence as upkeep** — per-Area influence with upkeep/decay + a second Area + the map's two
    zoom tiers (silhouettes first exist here) + a pinned ledger strip.
-7. **Rival** — scripted budget bidder (§7), fog-bound invariant, loss explanations.
-8. **Doom** — escalation node + coarse broadcast + runway events (§8).
+6. **Rival** — scripted budget bidder (§7), fog-bound invariant, loss explanations.
+7. **Doom** — escalation node + coarse broadcast + runway events (§8).
 
 Guild management spends (§3) and the multi-step quest beat model (§10) grow incrementally inside
 whichever slice touches them first — they're not a separate step.
