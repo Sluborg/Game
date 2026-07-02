@@ -10,6 +10,20 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-02 - DESIGN.md fold: Codex fix (build-order slicing)
+- Gate: codex-fixed
+- Branch: `claude/design-doc-fold-t3k9m2` → PR #22 into `dev`
+- Codex finding (P2, the only one): "How we build" had split "Foundations" out as its own
+  standalone next-up slice, contradicting the engagement report it claims to adopt (foundations
+  are scaffolding "carried by the first gameplay PR, not its own session" per
+  `docs/ENGAGEMENT_REVIEW.md`) and the "every slice ends playable" promise stated two paragraphs
+  above. Fixed: folded Foundations into slice 1 (the thin closed loop) as in-PR scaffolding,
+  renumbered slices 2-7, and updated internal cross-references (pre-rival roster dependency now
+  "pre-slice 6", upkeep/decay now "slice 5").
+- Review verdict: self-reviewed the delta (small, mechanical renumbering + one structural fold) —
+  no new blockers; verified no other stale slice-number references remained via full-file grep.
+- Open questions: none. Next: awaiting merge decision (no self-merge).
+
 ## 2026-07-02 - DESIGN.md: interview decisions folded, PR opened
 - Gate: PR
 - Branch: `claude/design-doc-fold-t3k9m2` (new branch off `dev`, since #19/#21 already merged) →
