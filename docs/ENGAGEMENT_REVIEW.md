@@ -32,8 +32,8 @@ build order, one seam decision, and a handful of design commitments (a fidelity 
 rule, a contracts verb, doom visibility rules) that can be folded into DESIGN.md before build
 step 1.
 
-**Sources.** The concept: `docs/DESIGN.md` on branch `claude/game-design-planning-ojk3lt` (not yet
-on `dev`; all bare `§n` cites below refer to it). The plan-of-record on `dev`: `docs/ROADMAP.md`,
+**Sources.** The concept: `docs/DESIGN.md`, authored on branch `claude/game-design-planning-ojk3lt`
+(PR #19 into `dev`; all bare `§n` cites below refer to it). The plan-of-record on `dev`: `docs/ROADMAP.md`,
 `project-status.md`, `PROGRESS.md`. What actually runs today on `dev` (`/Game/dev/`): a **Combat
 Test** screen (deterministic tick 1v1, LPC sprites, combat log) and a **Map** screen (3 clickable
 placeholder nodes). Nothing else of the concept exists in code.
