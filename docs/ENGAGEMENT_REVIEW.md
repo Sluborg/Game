@@ -9,7 +9,8 @@ both logged in `PROGRESS.md`.
 The concept is genuinely strong: **information as the core resource** is a real, underexplored
 design space, and the closed loop (battle → corrected CVs → better pricing → income → influence →
 better reports → battle) is coherent on paper. The engine you already have is a near-perfect
-substrate for it — seeded, deterministic, event-emitting (`web/src/game/battle/events.ts`), which
+substrate for it — seedable (deterministic when the caller injects the seed; the default RNG is
+random), event-emitting (`web/src/game/battle/events.ts`), which
 makes reports, replays, and fidelity tiers cheap.
 
 Three things most threaten the fun, in order:
@@ -273,9 +274,9 @@ DESIGN.md text change, not a tuning fix; it's on the quick-win #1 fold list.**
 
 ## D1 — One decision needed before build step 1 (engine seam)
 
-`FightConfig` (`web/src/game/battle/engine.ts`) accepts only
-`heroTier: "weak" | "medium" | "strong"`; heroes are three hardcoded templates in
-`web/src/game/battle/units.ts`. **Per-hero attributes — the substrate of the entire CV mechanic —
+`FightConfig` (`web/src/game/battle/engine.ts`) configures the hero solely via
+`heroTier: "weak" | "medium" | "strong"` (the rest of the config is monster stacks and an optional
+grid); heroes are three hardcoded templates in `web/src/game/battle/units.ts`. **Per-hero attributes — the substrate of the entire CV mechanic —
 have no injection point.** Under "consume, never modify," build steps 1, 4 and 5 are unbuildable
 as designed. Parties are likewise out of reach (the engine is structurally one hero vs stacks).
 
