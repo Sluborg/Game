@@ -10,10 +10,6 @@ import { useEffect, useState } from "react";
 import { buildCatalog, loadArtCatalog, NodeType, type ArtCatalog } from "../../art";
 import styles from "./NodeTestScreen.module.css";
 
-interface Props {
-  onExit: () => void;
-}
-
 // The first three real map nodes, positioned as % of the backdrop. `label` is the
 // player-facing name, deliberately distinct from the internal slug (NodeType value)
 // — the seam where "what the player knows" will later diverge from ground truth.
@@ -37,7 +33,7 @@ const NODE_SIZE = 76;
 // or an offline/blocked fetch.
 const EMPTY_CATALOG = buildCatalog({ assets: [] });
 
-export function NodeTestScreen({ onExit }: Props) {
+export function NodeTestScreen() {
   const [catalog, setCatalog] = useState<ArtCatalog>(EMPTY_CATALOG);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [selected, setSelected] = useState<NodeType | null>(null);
@@ -70,9 +66,6 @@ export function NodeTestScreen({ onExit }: Props) {
   return (
     <div className={styles.screen}>
       <header className={styles.bar}>
-        <button className={styles.back} onClick={onExit}>
-          ← Menu
-        </button>
         <span className={styles.heading}>Map</span>
         <span className={styles.spacer} />
         <span className={styles.selection} aria-live="polite">

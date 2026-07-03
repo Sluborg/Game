@@ -12,11 +12,7 @@ import { Controls } from "./Controls";
 import { useCombatClock } from "./useCombatClock";
 import styles from "./CombatTestScreen.module.css";
 
-export interface CombatTestScreenProps {
-  onExit: () => void;
-}
-
-export function CombatTestScreen({ onExit }: CombatTestScreenProps) {
+export function CombatTestScreen() {
   const [heroTier, setHeroTier] = useState<HeroTier>("medium");
   const [monster, setMonster] = useState<MonsterSpecies>("goblin");
   const [stackCount, setStackCount] = useState(2);
@@ -37,11 +33,7 @@ export function CombatTestScreen({ onExit }: CombatTestScreenProps) {
   return (
     <div className={styles.screen}>
       <header className={styles.topbar}>
-        <button className={styles.back} onClick={onExit} aria-label="Back to menu">
-          ‹ Menu
-        </button>
         <h1 className={styles.title}>Combat Test</h1>
-        <span className={styles.spacer} />
       </header>
 
       <main className={styles.main}>

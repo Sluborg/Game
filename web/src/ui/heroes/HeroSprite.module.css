@@ -1,0 +1,23 @@
+.frame {
+  position: relative;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--r-md);
+  background: linear-gradient(160deg, var(--surface-3), var(--surface-1));
+  border: 1px solid var(--stroke-soft);
+}
+
+.fallback {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--c-gold-light);
+  line-height: 1;
+  user-select: none;
+}
+
+.sprite {
+  position: absolute;
+  inset: 0;
+}

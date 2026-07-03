@@ -10,6 +10,87 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-03 - UI foundations (guild kit + Heroes): Codex fix (trait-row overflow)
+- Gate: codex-fixed
+- Branch: `claude/ui-foundations-guild-master-x9v3l4` → PR #23 into `dev`
+- Codex finding (P2, the only one): the hero-sheet trait row set each of its 3 slots to
+  `width: 33%` while the flex parent also added two `var(--sp-4)` gaps (32px), so `99% + 32px`
+  overflowed the sheet body on narrow phones — the third trait name/socket could spill or force
+  sideways scrolling. Fixed: slots are now `flex: 1; min-width: 0` (share the row *after* the
+  gaps), and the trait name/socket labels got `max-width:100%` + `overflow-wrap:anywhere` so a
+  long name wraps instead of pushing the row wide.
+- Review #2 on the delta (self, CSS-only mechanical fix): no §5 impact (still exactly 3 slots,
+  token-vs-socket unchanged); correct flexbox idiom; no new blockers.
+- Verified: `tsc -b && vite build` green; 36 tests pass; headless Chromium at **390px** confirms
+  the trait row's scrollWidth == clientWidth (no overflow) for all three cases — 3 filled (Ysolt),
+  3 empty sockets (Mira), mixed (Brok) — and zero document horizontal overflow. Screenshot
+  `docs/screenshots/hero-detail-traits.png`.
+- Open questions: none. Next: awaiting merge decision (no self-merge).
+
+## 2026-07-03 - UI foundations (guild kit + Heroes): PR opened
+- Gate: PR
+- Branch: `claude/ui-foundations-guild-master-x9v3l4` (new branch off `dev` tip PR #22) → PR into `dev`
+- Scope: additive UI-only scaffolding ahead of Slice 1 — a reusable UI kit + the first
+  hero-facing screens. No mechanics, no persistence, mock hero data. Combat core
+  (`web/src/game/battle/`) and the art pipeline (`art/enums.ts`, catalog, `art-needs.json`,
+  `docs/ROADMAP.md`) untouched — verified by name-only diff.
+- Files touched: `web/src/ui/kit/` (new: Button, Sheet, NavBar + index + CSS),
+  `web/src/ui/heroes/` (new: HeroesScreen, HeroCard, HeroSprite, mockHeroes + CSS),
+  `web/src/ui/Root.tsx` (add `#/heroes` + persistent bottom-nav shell over the 3 feature
+  routes), `web/src/ui/node/NodeTestScreen.tsx`+css & `web/src/ui/combat/CombatTestScreen.tsx`+css
+  (drop the "← Menu" back button; reserve nav height), `web/src/ui/StartScreen.tsx` (rename
+  "Node Test" card → "World Map"), `web/src/ui/theme/tokens.css` (+`--nav-h`),
+  `docs/screenshots/` (4 phone-viewport PNGs).
+- Built to DESIGN.md §5 for the hero stat page: 3–4 headline stats + equipment; certainty
+  encoded IN the stat-chip fill (solid=verified / hatched=claimed / plain-"?"=rumor), no second
+  glyph; exactly 3 trait slots (filled hexagon token vs **dashed-hexagon** "?" socket — a
+  deliberately different shape from the rounded-pill rumor "?"); relationships as a line of chips.
+  Roster adds a colour-coded status dot (guild/quest/idle) so whereabouts read at a glance.
+  Placeholder art reuses the LPC compositor at 64×64 (roster) / 256×256 (portrait) with an
+  accessible initials fallback; trait socket is a 32×32 inline SVG; nav icons are 24×24 inline SVG.
+- Review #1 (4-persona, on the PLAN): 4 blockers, all folded into the build — (B1) LPC canvas
+  goes blank + aria-hidden on a fresh/blocked clone → added `HeroSprite` with `role="img"` +
+  initials fallback; (B2) certainty/socket were fill/shape-only → added a visible micro-label +
+  `aria-label` per chip/socket; (B3) the rumor "?" and empty-trait "?" would collide → pinned to
+  pill-vs-dashed-hexagon; (B4) roster status was text-only → added a colour-coded status dot.
+  Non-blocking folded: equipment section (§5), stable precomputed sprite layers, nav-height
+  reservation for the map's %-placed nodes, sheet drag-handle + scroll padding + z-order.
+- Review #2 (4-persona, on the DIFF): **zero blockers** from all four. Scope confirmed clean
+  (combat core + art pipeline untouched); all 4 Review-#1 fixes verified landed; Sheet focus-trap/
+  scroll-lock/restore-focus correct across ×/backdrop/Escape and StrictMode; no trait off-by-one
+  (heroes carry 0/1/2/3 traits, always 3 slots render); sheet z-100 always above nav z-40.
+  Non-blocking items folded post-review: the Combat Test nav icon read as a plain "×" → redrawn
+  with pommels/crossguards; the `Button` primitive was unused → wired as a full-width bottom
+  "Close" in the sheet (better one-handed reach). Recorded, not fixed (out of scope): `loadImage`
+  caches rejected promises (shared combat-core loader); traits beyond 3 truncate silently (note
+  for Slice 3 when reveals become real); a map-node caption clips its box (pre-existing, `#/node`).
+- Decision (StartScreen): kept as the `#/` title screen; renamed its map card to "World Map" and
+  did **not** add a Heroes card (would duplicate the nav tab). Entering any card lands you in the
+  nav-equipped app, so Heroes is always one tap away — no dead-end.
+- Verified: `tsc -b && vite build` green (88 modules); 36 vitest tests pass (parity intact);
+  headless Chromium at 430px confirms the 5-hero roster with status dots, the sheet opening with a
+  focus trap, all three certainty fills + the "?" rumor value, exactly-3 trait slots with the
+  distinct socket, the 256×256 portrait, the kit Button "Close", nav routing across all 3 tabs,
+  and no console errors. Screenshots in `docs/screenshots/`.
+- Open questions: none blocking. Next: **awaiting Codex review**, then the merge gate (no self-merge).
+
+## 2026-07-03 - UI foundations (guild kit + Heroes): build done
+- Gate: build (plan + both reviews cleared)
+- Branch: `claude/ui-foundations-guild-master-x9v3l4` → PR into `dev`
+- Built the UI kit (Button/Sheet/NavBar) and the Heroes roster + §5 stat page; wired the
+  `#/heroes` route and the persistent bottom nav; dropped the per-screen "← Menu" back buttons.
+  All Review #1 blockers were fixed in this build (see the PR entry above for the itemised list).
+- Verified before claiming: build green, 36 tests pass, headless 430px walkthrough of every
+  Review-#1 fix. Then ran Review #2 on the diff (zero blockers).
+
+## 2026-07-03 - UI foundations (guild kit + Heroes): plan done
+- Gate: plan
+- Branch: `claude/ui-foundations-guild-master-x9v3l4` (declared first, off `dev`)
+- Scope declared: `web/src/ui/kit/` (Button, Sheet, NavBar), `web/src/ui/heroes/` (roster + §5
+  stat page + mock data), `Root.tsx` route/nav shell; additive, combat core + art pipeline
+  off-limits. Plan ran through Review #1 (4-persona); 4 blockers adopted before any code (B1–B4
+  above). No human checkpoint at this gate per the loop; proceeded to build autonomously.
+
 ## 2026-07-02 - DESIGN.md fold: Codex fix (build-order slicing)
 - Gate: codex-fixed
 - Branch: `claude/design-doc-fold-t3k9m2` → PR #22 into `dev`
