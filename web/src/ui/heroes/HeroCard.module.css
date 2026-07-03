@@ -1,20 +1,18 @@
 .card {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-5);
 }
 
-/* --- Portrait + identity ------------------------------------------------- */
-.hero {
+/* --- Compact header (name lives in the Sheet title, not repeated here) ---- */
+.head {
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: var(--sp-3);
+  padding-bottom: var(--sp-3);
 }
-.ident {
+.headText {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: var(--sp-1);
 }
 .archetype {
@@ -35,32 +33,142 @@
   border-radius: 50%;
   flex: 0 0 auto;
 }
-.status[data-kind="guild"] .dot {
-  background: var(--c-emerald);
-}
-.status[data-kind="quest"] .dot {
-  background: var(--c-ember);
-}
-.status[data-kind="idle"] .dot {
-  background: var(--c-parchment-dim);
-}
+.status[data-kind="guild"] .dot { background: var(--c-emerald); }
+.status[data-kind="quest"] .dot { background: var(--c-ember); }
+.status[data-kind="idle"] .dot { background: var(--c-parchment-dim); }
 
-/* --- Sections ------------------------------------------------------------ */
-.section {
+/* --- Sticky tab strip ----------------------------------------------------- */
+.tabs {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  margin: 0 calc(-1 * var(--sp-4)); /* bleed to the sheet-body edges */
+  padding: 0 var(--sp-2);
+  background: var(--surface-2);
+  border-top: 1px solid var(--stroke-soft);
+  border-bottom: 1px solid var(--stroke-soft);
+}
+.tab {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 2px;
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-dim);
+  font-family: var(--font-ui);
+  font-size: 10.5px;
 }
-.sectionTitle {
-  margin: 0;
+.tab:hover { color: var(--c-gold-light); }
+.tab:active { color: var(--c-gold); }
+.tab:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--c-gold-light); border-radius: var(--r-sm); }
+.tabIcon { width: 20px; height: 20px; display: block; }
+.tabLabel { line-height: 1; }
+.tabActive {
+  color: var(--c-gold);
+}
+.tabActive::after {
+  content: "";
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: -1px;
+  height: 2px;
+  background: var(--c-gold);
+  border-radius: 2px;
+}
+.soon {
+  position: absolute;
+  top: 3px;
+  right: 6px;
+  font-size: 7.5px;
+  line-height: 1;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--surface-0);
+  background: var(--c-gold-dark);
+  padding: 2px 3px;
+  border-radius: 3px;
+}
+
+/* --- Panel + shared bits -------------------------------------------------- */
+.panel {
+  padding-top: var(--sp-4);
+}
+.panel:focus-visible { outline: none; }
+.hint {
+  margin: 0 0 var(--sp-3);
+  font-size: 11.5px;
+  color: var(--text-dim);
+  font-style: italic;
+}
+.groupTitle {
+  margin: var(--sp-4) 0 var(--sp-2);
   font-family: var(--font-display);
-  font-size: 14px;
+  font-size: 13px;
   letter-spacing: 0.6px;
   text-transform: uppercase;
   color: var(--c-gold);
 }
 
-/* --- Stat chips: certainty lives in the fill (DESIGN.md §5) --------------- */
+/* --- Inspectable chips + inline detail ------------------------------------ */
+/* Base button reset; each shape class (.stat/.trait/.gearCell/.bondChip) is
+   applied ALONGSIDE this and, being defined later, provides its own box. */
+.inspectable {
+  font: inherit;
+  color: inherit;
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: filter var(--t-fast) var(--ease-out);
+}
+.inspectable:hover { filter: brightness(1.12); }
+.inspectable:active { filter: brightness(0.95); }
+.inspectOpen { box-shadow: 0 0 0 2px var(--c-gold-light); }
+/* Declared after .inspectOpen so a focused chip keeps its 3px focus ring even when open. */
+.inspectable:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--c-gold-light); }
+
+.inspectDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: var(--sp-2) 0 var(--sp-1);
+  padding: var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--surface-3);
+  border: 1px solid var(--stroke-gold);
+  animation: inspectIn var(--t-fast) var(--ease-out);
+}
+.inspectTitle {
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--c-gold-light);
+}
+.inspectEffect {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--text-strong);
+}
+@keyframes inspectIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .inspectDetail { animation: none; }
+}
+
+/* --- Attribute (stat) chips: certainty in the fill (DESIGN.md §5) ---------- */
 .stats {
   display: flex;
   flex-wrap: wrap;
@@ -71,170 +179,114 @@
   align-items: baseline;
   gap: var(--sp-2);
   padding: 6px 12px;
-  border-radius: var(--r-pill); /* rounded PILL — the shape that sets a rumor "?" apart from the hexagon trait socket */
+  border-radius: var(--r-pill); /* rounded PILL — sets the rumor "?" apart from the hexagon socket */
   border: 1px solid var(--stroke-soft);
   min-height: 34px;
 }
-.statLabel {
-  font-size: 11px;
-  letter-spacing: 0.5px;
-  color: var(--text-dim);
-}
-.statValue {
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-strong);
-}
-.statTag {
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  opacity: 0.8;
-}
-/* Verified = SOLID fill. */
-.stat[data-certainty="verified"] {
-  background: var(--c-royal);
-  border-color: var(--c-gold);
-}
-/* Claimed = HATCHED fill. */
+.statLabel { font-size: 11px; letter-spacing: 0.5px; color: var(--text-dim); }
+.statValue { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--text-strong); }
+.statTag { font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; opacity: 0.8; }
+.stat[data-certainty="verified"] { background: var(--c-royal); border-color: var(--c-gold); }
 .stat[data-certainty="claimed"] {
-  background: repeating-linear-gradient(
-    45deg,
-    rgba(157, 107, 232, 0.55) 0 6px,
-    rgba(157, 107, 232, 0.12) 6px 12px
-  );
+  background: repeating-linear-gradient(45deg, rgba(157, 107, 232, 0.55) 0 6px, rgba(157, 107, 232, 0.12) 6px 12px);
   border-color: var(--stroke-gold);
 }
-/* Rumor = PLAIN, no fill; the value renders as "?". */
-.stat[data-certainty="rumor"] {
-  background: transparent;
-  border-style: dashed;
-  border-color: var(--stroke-soft);
-}
-.stat[data-certainty="rumor"] .statValue {
-  color: var(--text-dim);
-}
+.stat[data-certainty="rumor"] { background: transparent; border-style: dashed; border-color: var(--stroke-soft); }
+.stat[data-certainty="rumor"] .statValue { color: var(--text-dim); }
 
 .legend {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  margin: 0;
+  margin: var(--sp-3) 0 0;
   font-size: 11px;
   color: var(--text-dim);
 }
-.legend span[data-swatch] {
-  width: 16px;
-  height: 12px;
-  border-radius: 3px;
-  border: 1px solid var(--stroke-soft);
-  margin-left: 8px;
-}
-.legend span[data-swatch]:first-child {
-  margin-left: 0;
-}
-.legend span[data-swatch="verified"] {
-  background: var(--c-royal);
-  border-color: var(--c-gold);
-}
-.legend span[data-swatch="claimed"] {
-  background: repeating-linear-gradient(
-    45deg,
-    rgba(157, 107, 232, 0.55) 0 4px,
-    rgba(157, 107, 232, 0.12) 4px 8px
-  );
-}
-.legend span[data-swatch="rumor"] {
-  background: transparent;
-  border-style: dashed;
-}
+.legend span[data-swatch] { width: 16px; height: 12px; border-radius: 3px; border: 1px solid var(--stroke-soft); margin-left: 8px; }
+.legend span[data-swatch]:first-child { margin-left: 0; }
+.legend span[data-swatch="verified"] { background: var(--c-royal); border-color: var(--c-gold); }
+.legend span[data-swatch="claimed"] { background: repeating-linear-gradient(45deg, rgba(157, 107, 232, 0.55) 0 4px, rgba(157, 107, 232, 0.12) 4px 8px); }
+.legend span[data-swatch="rumor"] { background: transparent; border-style: dashed; }
 
-/* --- Equipment ----------------------------------------------------------- */
-.equip {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-}
-.equipRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  border-radius: var(--r-sm);
-  background: var(--surface-2);
-  border: 1px solid var(--stroke-soft);
-}
-.equipSlot {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-dim);
-}
-.equipVal {
-  font-size: 14px;
-  color: var(--text-strong);
-}
-
-/* --- Traits: exactly 3 slots; filled token vs dashed-hexagon socket ------- */
+/* --- Traits: filled hexagon token vs dashed-hexagon socket ----------------- */
 .traits {
   display: flex;
-  gap: var(--sp-4);
+  gap: var(--sp-3);
 }
 .trait {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  /* Share the row evenly AFTER the two gaps (not 3×33% + gaps, which overflows
-     the sheet body on narrow phones); min-width:0 lets long names wrap. */
   flex: 1;
   min-width: 0;
+  padding: var(--sp-2);
+  border-radius: var(--r-sm);
 }
-.traitGlyph {
-  width: 32px;
-  height: 32px;
-  display: block;
-}
-.traitName {
-  font-size: 12px;
-  color: var(--text-strong);
-  text-align: center;
-  max-width: 100%;
-  overflow-wrap: anywhere;
-}
-.traitNameDim {
-  font-size: 12px;
-  color: var(--text-dim);
-  text-align: center;
-  max-width: 100%;
-  overflow-wrap: anywhere;
-}
+.traitGlyph { width: 32px; height: 32px; display: block; }
+.traitName { font-size: 12px; color: var(--text-strong); text-align: center; max-width: 100%; overflow-wrap: anywhere; }
+.traitNameDim { font-size: 12px; color: var(--text-dim); text-align: center; max-width: 100%; overflow-wrap: anywhere; }
 
-/* --- Relationships: a line of chips, never a graph ----------------------- */
-.relations {
+/* --- Gear: 6 slots -------------------------------------------------------- */
+.gearGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+}
+.gearWrap { display: flex; flex-direction: column; }
+.gearCell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--stroke-soft);
+  min-height: 48px;
+  justify-content: center;
+}
+.gearEmpty { opacity: 0.55; border-style: dashed; }
+.gearSlot { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim); }
+.gearVal { font-size: 13px; color: var(--text-strong); }
+.gearEmpty .gearVal { color: var(--text-dim); }
+
+/* --- Bonds: named-feeling chips, valence by colour, score dim ------------- */
+.bondGroup { margin-bottom: var(--sp-2); }
+.bonds {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2);
 }
-.relChip {
-  padding: 5px 12px;
+.bondChip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 6px 12px;
   border-radius: var(--r-pill);
-  font-size: 12.5px;
   border: 1px solid var(--stroke-soft);
+  background: var(--surface-2);
 }
-.likes {
-  background: rgba(82, 196, 107, 0.16);
-  border-color: rgba(82, 196, 107, 0.4);
-  color: var(--c-emerald);
-}
-.hates {
-  background: rgba(224, 82, 82, 0.16);
-  border-color: rgba(224, 82, 82, 0.4);
-  color: var(--c-blood);
-}
-.relNone {
-  font-size: 12.5px;
+.bondName { font-size: 13px; color: var(--text-strong); }
+.bondFeeling { font-size: 12.5px; font-weight: 600; }
+.bondScore { font-size: 11px; color: var(--text-dim); }
+.bondChip[data-valence="positive"] { background: rgba(82, 196, 107, 0.15); border-color: rgba(82, 196, 107, 0.4); }
+.bondChip[data-valence="positive"] .bondFeeling { color: var(--c-emerald); }
+.bondChip[data-valence="negative"] { background: rgba(224, 82, 82, 0.15); border-color: rgba(224, 82, 82, 0.4); }
+.bondChip[data-valence="negative"] .bondFeeling { color: var(--c-blood); }
+.bondChip[data-valence="neutral"] .bondFeeling { color: var(--text-dim); }
+.relNone { font-size: 12.5px; color: var(--text-dim); }
+
+/* --- Coming-soon stub panes ---------------------------------------------- */
+.soonPane {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  text-align: center;
+  padding: var(--sp-5) var(--sp-4);
   color: var(--text-dim);
 }
+.soonTitle { font-family: var(--font-display); font-size: 17px; color: var(--c-gold-light); }
+.soonLine { font-size: 12.5px; line-height: 1.5; max-width: 34ch; }

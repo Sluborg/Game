@@ -10,6 +10,44 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-03 - Hero sheet → tabs (Character/Gear/Bonds/Career/Skills): PR opened
+- Gate: PR
+- Branch: `claude/ui-foundations-guild-master-x9v3l4` (restarted off `dev` after #25 merged) → new PR into `dev`
+- Scope: additive UI-only — reorganise the hero detail sheet into tabs, from Stefan's feedback +
+  the agreed IA. Mock data only. Combat core (`web/src/game/battle/`) + art pipeline untouched
+  (verified name-only diff); `battle/attributes.ts` read for its real attribute names only (prose,
+  no import). Also a small DESIGN.md fold of the locked decisions.
+- Files: `web/src/ui/heroes/HeroCard.tsx` (5 tabs + WAI-ARIA keyboard + inline inspect),
+  `heroes/inspect.tsx` (new — inline accordion "tap a chip for its effect"; no portal/Escape),
+  `heroes/relationships.ts` (new — −100..100 → named feeling band, exact cutoffs),
+  `heroes/mockHeroes.ts` (new model: 4 real attributes str/dex/sta/per + effects, 6 gear slots,
+  traits w/ effects, scored bonds), `heroes/HeroCard.module.css`, `heroes/HeroesScreen.tsx`
+  (`key={hero.id}`), `docs/DESIGN.md` (§5 tabbed-sheet + relationship-band note), screenshots.
+- Tabs: **Character** (the 4 real sim attributes as certainty chips + 3 trait slots, each
+  tap-to-inspect for its real combat effect) · **Gear** (6 slots head/armor/mainhand/offhand/
+  trinket×2) · **Bonds** (relationships as named-feeling chips over a −100..100 score, valence by
+  colour, grouped To Guild / Party / Heroes) · **Career** & **Skills** (honest "coming" stubs +
+  soon badge). Compact header (88px static portrait + archetype/status; name stays the Sheet title).
+- Review #1 (4-persona, PLAN): blockers folded — inline-accordion inspect (Engineer: a popover
+  would clip/detach in the scroll container + fight the focus trap); no Escape in inspect (Sheet
+  owns Escape); short one-word tabs, no h-scroll; portrait collapsed to a compact header; honest
+  stub empty states + soon badge; inspect discoverability hint; **dropped the `~` bond-uncertainty**
+  (Designer: invents an unlocked relationship-fidelity mechanic) → plain named-band chips; Character
+  capped at the 4 real attributes; exact band cutoffs; Tabs kept local (YAGNI); `key={hero.id}`.
+- Review #2 (4-persona, DIFF): **zero blockers** from all four. Engineer confirmed combat core
+  untouched + typecheck green + no id collisions; Adversary broke all 7 vectors (empty/sparse
+  heroes, inspect lifecycle, focus-trap vs roving tabindex, band boundaries, keyboard, no layout
+  shift) — all sound; Designer confirmed §5 fidelity (certainty fill-only, 4-attr lean, chips-not-
+  a-web, pill-vs-hexagon "?"); Player-exp confirmed the phone read. Folded two cosmetics
+  (focus-ring vs open-ring order; a comment). Noted for later: per-group vs per-cell detail
+  placement on wrap rows; empty-state fixtures; valence rgba→token; fixed-3-trait frame (Slice 3).
+- Verified: build green (90 modules), 36 tests pass; headless 430px walks all 5 tabs — real
+  attributes with certainty fills + "?", inspect opens/toggles, 6 gear slots + Empty, bonds with
+  named feelings/valence/score grouped by target, career stub, tab arrow-key nav, no dialog
+  h-overflow, no console errors. Screenshots `docs/screenshots/hero-{character,gear,bonds,career}.png`.
+- Open questions: relationship band names/cutoffs are a tunable default (say the word). Next: the
+  Parties-primary mock view (PR-B). Awaiting Codex review, then merge gate.
+
 ## 2026-07-03 - UI polish (map selection / bars / portrait): PR opened
 - Gate: PR
 - Branch: `claude/ui-foundations-guild-master-x9v3l4` (restarted off `dev` after #23 merged) → new PR into `dev`

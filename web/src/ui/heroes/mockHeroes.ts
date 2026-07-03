@@ -1,52 +1,66 @@
-// Mock roster data for the Heroes scaffolding. There is no real hero /
-// location / quest-state system yet (that arrives in Slice 1+), so this is a
-// small static array — UI only, no persistence, no web/src/game/ dependency
-// beyond reusing the LPC presenter for placeholder portraits.
+// Mock roster data for the Heroes scaffolding. No real hero / location / quest /
+// contract system exists yet (those arrive in Slice 1+), so this is a small
+// static array — UI only, no persistence, no web/src/game/ dependency beyond
+// reusing the LPC presenter for placeholder portraits and DISPLAYING the sim's
+// real attribute names (str/dex/sta/per — read-only, see battle/attributes.ts).
 //
-// Each hero's LPC layer set is resolved ONCE here at module load, so the array
+// Each hero's LPC layer set is resolved ONCE here at module load so the array
 // identity is stable across renders (LpcSprite reloads its images whenever its
-// `layers` prop identity changes — see LpcSprite.tsx:48 — and we don't want a
-// reload/flash every time the roster re-renders or a sheet opens).
+// `layers` prop identity changes).
+//
+// Everything below is illustrative placeholder data. The Bonds score, Gear, and
+// Career/Skills systems are not built yet; the sheet presents them as mock, never
+// as functional mechanics.
 
 import { PRESETS, resolveLayers } from "../combat/lpc/presets";
 import type { ResolvedLayer } from "../combat/lpc/types";
 
-/** Certainty of a surfaced stat — DESIGN.md §5's keystone: it is encoded IN the
- * stat chip's own fill (solid = verified, hatched = claimed, plain "?" = rumor),
- * never as a separate glyph. */
+/** Certainty of a surfaced value — DESIGN.md §5's keystone, encoded IN the chip's
+ * own fill (solid = verified, hatched = claimed, plain "?" = rumor). */
 export type Certainty = "verified" | "claimed" | "rumor";
 
-export interface HeroStat {
-  /** Short display label, e.g. "MIG". */
+/** The four attributes the lean fight actually uses (battle/attributes.ts). The
+ * sim has a fuller planned spread (Int/Cha…) that drives non-combat beats, but
+ * per §5 the sheet stays UI-lean — we surface only these four here. */
+export type AttrKey = "STR" | "DEX" | "STA" | "PER";
+export interface HeroAttr {
+  key: AttrKey;
   label: string;
   value: number;
   certainty: Certainty;
+  /** What it does — shown by the inline inspect. Grounded in attributes.ts. */
+  effect: string;
 }
 
-/** Where a hero is right now — the roster's whole reason to exist. `kind` drives
- * a colour-coded status dot so the roster reads at a glance, not by reading. */
 export type StatusKind = "guild" | "quest" | "idle";
 export interface HeroStatus {
   kind: StatusKind;
   text: string;
 }
 
-/** A discovered trait. Undiscovered slots are rendered as empty sockets by the
- * stat page, not stored here. */
 export interface HeroTrait {
   name: string;
-  /** The sentence that revealed it (flavour; Slice 3 will make these real). */
-  blurb: string;
+  /** The effect / the sentence that revealed it — shown by the inspect. */
+  effect: string;
 }
 
-export interface HeroRelation {
-  verb: "likes" | "hates";
+/** Six equipment slots (illustrative). A missing slot renders as an empty socket. */
+export type GearSlot = "head" | "armor" | "mainhand" | "offhand" | "trinket1" | "trinket2";
+export interface GearItem {
   name: string;
+  effect: string;
 }
+export type Equipment = Partial<Record<GearSlot, GearItem>>;
 
-export interface HeroEquipment {
-  weapon: string;
-  armor: string;
+/** A relationship. `scope` groups it (to the guild / to their party / to another
+ * hero); `score` is a −100..100 rating mapped to a named feeling band by
+ * relationships.ts. Illustrative — the bond sim doesn't exist until Slice 4. */
+export type BondScope = "guild" | "party" | "hero";
+export interface Bond {
+  scope: BondScope;
+  name: string;
+  score: number;
+  note: string;
 }
 
 export interface Hero {
@@ -54,21 +68,41 @@ export interface Hero {
   name: string;
   archetype: string;
   presetKey: keyof typeof PRESETS;
-  /** Stable, resolved LPC layers for this hero's placeholder portrait. */
   layers: ResolvedLayer[];
   status: HeroStatus;
-  /** 3–4 headline stats only — "sim-full, UI-lean" (DESIGN.md §5). */
-  stats: HeroStat[];
-  equipment: HeroEquipment;
-  /** 0–3 discovered traits; the stat page always shows exactly 3 slots, filling
-   * the remainder with empty "?" sockets. */
+  /** Exactly the 4 real attributes (§5 UI-lean). */
+  attributes: HeroAttr[];
+  equipment: Equipment;
+  /** 0–3 discovered traits; the Character tab always shows 3 slots. */
   traits: HeroTrait[];
-  relations: HeroRelation[];
+  bonds: Bond[];
 }
 
 function layersFor(presetKey: keyof typeof PRESETS): ResolvedLayer[] {
   const preset = PRESETS[presetKey];
   return resolveLayers(preset.items, preset.tints ?? {});
+}
+
+// Shared effect copy for the four attributes (what each does in the lean fight).
+const EFFECT = {
+  STR: "Raises hit damage and max HP.",
+  DEX: "Speeds attacks; improves dodge, initiative, and crits.",
+  STA: "Raises max HP.",
+  PER: "Sharpens dodge and initiative — acts sooner.",
+} as const;
+
+function attrs(
+  str: [number, Certainty],
+  dex: [number, Certainty],
+  sta: [number, Certainty],
+  per: [number, Certainty],
+): HeroAttr[] {
+  return [
+    { key: "STR", label: "Strength", value: str[0], certainty: str[1], effect: EFFECT.STR },
+    { key: "DEX", label: "Dexterity", value: dex[0], certainty: dex[1], effect: EFFECT.DEX },
+    { key: "STA", label: "Stamina", value: sta[0], certainty: sta[1], effect: EFFECT.STA },
+    { key: "PER", label: "Perception", value: per[0], certainty: per[1], effect: EFFECT.PER },
+  ];
 }
 
 export const HEROES: Hero[] = [
@@ -79,20 +113,20 @@ export const HEROES: Hero[] = [
     presetKey: "knight",
     layers: layersFor("knight"),
     status: { kind: "quest", text: "On quest: Ruins" },
-    stats: [
-      { label: "MIG", value: 14, certainty: "verified" },
-      { label: "GRT", value: 12, certainty: "verified" },
-      { label: "AGI", value: 9, certainty: "claimed" },
-      { label: "WIT", value: 7, certainty: "rumor" },
-    ],
-    equipment: { weapon: "Arming sword", armor: "Steel plate" },
+    attributes: attrs([15, "verified"], [9, "claimed"], [13, "verified"], [7, "rumor"]),
+    equipment: {
+      armor: { name: "Steel Plate", effect: "Heavy mitigation; the sim's best armour tier." },
+      mainhand: { name: "Arming Sword", effect: "Balanced one-hander." },
+      offhand: { name: "Kite Shield", effect: "Adds block; frees no hand for a second weapon." },
+    },
     traits: [
-      { name: "Brave", blurb: "Held the line when the wall fell." },
-      { name: "Greedy", blurb: "First to the loot, every time." },
+      { name: "Brave", effect: "Holds the line under stress; won't flee a losing fight." },
+      { name: "Greedy", effect: "Chases the richest bounty; cheap to pull with gold." },
     ],
-    relations: [
-      { verb: "likes", name: "Pell" },
-      { verb: "hates", name: "Ysolt" },
+    bonds: [
+      { scope: "guild", name: "The Guild", score: 45, note: "Renewed without a fuss last cycle." },
+      { scope: "hero", name: "Ysolt", score: -72, note: "Blames her for the crypt rout." },
+      { scope: "hero", name: "Pell", score: 58, note: "Drinks with him after every job." },
     ],
   },
   {
@@ -102,21 +136,23 @@ export const HEROES: Hero[] = [
     presetKey: "champion",
     layers: layersFor("champion"),
     status: { kind: "guild", text: "At Guild Hall" },
-    stats: [
-      { label: "MIG", value: 16, certainty: "verified" },
-      { label: "GRT", value: 13, certainty: "verified" },
-      { label: "AGI", value: 11, certainty: "verified" },
-      { label: "WIT", value: 10, certainty: "claimed" },
-    ],
-    equipment: { weapon: "Longsword", armor: "Gilded plate" },
+    attributes: attrs([16, "verified"], [12, "verified"], [14, "verified"], [11, "claimed"]),
+    equipment: {
+      head: { name: "Gilded Helm", effect: "Ornate; a proud hero's statement piece." },
+      armor: { name: "Gilded Plate", effect: "Top-tier mitigation, at a top-tier price." },
+      mainhand: { name: "Longsword", effect: "Two-handed reach and damage." },
+      trinket1: { name: "Signet of Vane", effect: "Family seal; raises her asking price." },
+    },
     traits: [
-      { name: "Proud", blurb: "Refuses quests she deems beneath her." },
-      { name: "Disciplined", blurb: "Never breaks formation." },
-      { name: "Vengeful", blurb: "Remembers every slight." },
+      { name: "Proud", effect: "Refuses quests she deems beneath her." },
+      { name: "Disciplined", effect: "Never breaks formation; steadies a party." },
+      { name: "Vengeful", effect: "Remembers every slight; hard to reconcile." },
     ],
-    relations: [
-      { verb: "hates", name: "Brok" },
-      { verb: "likes", name: "Doran" },
+    bonds: [
+      { scope: "guild", name: "The Guild", score: 20, note: "Loyal while the pay flatters her." },
+      { scope: "party", name: "The Iron Vigil", score: 40, note: "Leads them; expects deference." },
+      { scope: "hero", name: "Brok", score: -68, note: "Thinks him a reckless brute." },
+      { scope: "hero", name: "Doran", score: 35, note: "Respects his steadiness." },
     ],
   },
   {
@@ -126,15 +162,17 @@ export const HEROES: Hero[] = [
     presetKey: "squire",
     layers: layersFor("squire"),
     status: { kind: "idle", text: "Idle" },
-    stats: [
-      { label: "MIG", value: 6, certainty: "rumor" },
-      { label: "AGI", value: 11, certainty: "claimed" },
-      { label: "WIT", value: 8, certainty: "rumor" },
-    ],
-    equipment: { weapon: "Dagger", armor: "Leather" },
-    // No traits discovered yet — the stat page shows three empty "?" sockets.
+    attributes: attrs([6, "rumor"], [11, "claimed"], [8, "rumor"], [10, "claimed"]),
+    equipment: {
+      mainhand: { name: "Dagger", effect: "Fast, low damage; a beginner's blade." },
+      armor: { name: "Leather Jerkin", effect: "Light mitigation; keeps her quick." },
+    },
+    // No traits discovered yet — the Character tab shows three empty "?" sockets.
     traits: [],
-    relations: [{ verb: "likes", name: "Pell" }],
+    bonds: [
+      { scope: "guild", name: "The Guild", score: 12, note: "New; still proving herself." },
+      { scope: "hero", name: "Pell", score: 30, note: "He's been showing her the ropes." },
+    ],
   },
   {
     id: "doran",
@@ -143,17 +181,18 @@ export const HEROES: Hero[] = [
     presetKey: "knight",
     layers: layersFor("knight"),
     status: { kind: "quest", text: "On quest: Ruins" },
-    stats: [
-      { label: "MIG", value: 12, certainty: "claimed" },
-      { label: "GRT", value: 10, certainty: "verified" },
-      { label: "AGI", value: 8, certainty: "claimed" },
-      { label: "WIT", value: 9, certainty: "rumor" },
-    ],
-    equipment: { weapon: "Arming sword", armor: "Mail" },
-    traits: [{ name: "Loyal", blurb: "Turned down a rival's richer offer." }],
-    relations: [
-      { verb: "likes", name: "Ysolt" },
-      { verb: "hates", name: "Mira" },
+    attributes: attrs([12, "claimed"], [8, "claimed"], [10, "verified"], [9, "rumor"]),
+    equipment: {
+      armor: { name: "Mail Hauberk", effect: "Mid-tier mitigation." },
+      mainhand: { name: "Arming Sword", effect: "Balanced one-hander." },
+      offhand: { name: "Round Shield", effect: "Light block; keeps him mobile." },
+    },
+    traits: [{ name: "Loyal", effect: "Turned down a rival's richer offer; slow to defect." }],
+    bonds: [
+      { scope: "guild", name: "The Guild", score: 66, note: "The steadiest hire on the books." },
+      { scope: "party", name: "The Iron Vigil", score: 38, note: "The dependable second." },
+      { scope: "hero", name: "Ysolt", score: 35, note: "Follows her lead." },
+      { scope: "hero", name: "Mira", score: -22, note: "Finds her carelessness grating." },
     ],
   },
   {
@@ -163,19 +202,21 @@ export const HEROES: Hero[] = [
     presetKey: "squire",
     layers: layersFor("squire"),
     status: { kind: "guild", text: "At Guild Hall" },
-    stats: [
-      { label: "AGI", value: 15, certainty: "claimed" },
-      { label: "WIT", value: 12, certainty: "claimed" },
-      { label: "MIG", value: 5, certainty: "verified" },
-    ],
-    equipment: { weapon: "Dagger", armor: "Leather" },
+    attributes: attrs([5, "verified"], [15, "claimed"], [7, "claimed"], [12, "claimed"]),
+    equipment: {
+      mainhand: { name: "Dagger", effect: "Fast, low damage; his weapon of choice." },
+      offhand: { name: "Parrying Dagger", effect: "A second blade instead of a shield." },
+      armor: { name: "Leather Jerkin", effect: "Light mitigation; keeps him quick." },
+      trinket1: { name: "Loaded Dice", effect: "Lucky charm; pure flavour for now." },
+    },
     traits: [
-      { name: "Nimble", blurb: "Slipped every trap in the crypt." },
-      { name: "Coward", blurb: "Fled the moment the ogre turned." },
+      { name: "Nimble", effect: "Slips traps; strong on sneaking beats." },
+      { name: "Coward", effect: "Flees when the fight turns; drags party morale." },
     ],
-    relations: [
-      { verb: "likes", name: "Brok" },
-      { verb: "likes", name: "Mira" },
+    bonds: [
+      { scope: "guild", name: "The Guild", score: 8, note: "Here for the coin, nothing more." },
+      { scope: "hero", name: "Brok", score: 60, note: "His favourite drinking partner." },
+      { scope: "hero", name: "Mira", score: 28, note: "Taken her under his wing." },
     ],
   },
 ];
