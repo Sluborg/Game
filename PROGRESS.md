@@ -10,6 +10,20 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-03 - Hero sheet tabs: Codex fix (tabpanel focus ring)
+- Gate: codex-fixed
+- Branch: `claude/ui-foundations-guild-master-x9v3l4` → PR #26 into `dev`
+- Codex finding (P3, the only one): `.panel:focus-visible { outline: none }` stripped the focus
+  indicator from the tabpanel, which is a tab stop (`tabIndex=0`), so keyboard focus visually
+  vanished when landing on it — worst on the Career/Skills stubs where the panel is the only
+  focusable content before Close. Fixed: keep the panel a tab stop (so empty stub tabs stay
+  reachable, per WAI-ARIA) but give it a visible inset gold focus ring instead of removing it.
+- Review #2 on the delta (self, one-line a11y CSS): no new blockers.
+- Verified: build green; headless keyboard-Tab to the tabpanel confirms it now matches
+  `:focus-visible` with a visible ring (programmatic .focus() doesn't trigger :focus-visible, so
+  the check drives real keyboard focus).
+- Open questions: none. Next: awaiting merge decision (no self-merge).
+
 ## 2026-07-03 - Hero sheet → tabs (Character/Gear/Bonds/Career/Skills): PR opened
 - Gate: PR
 - Branch: `claude/ui-foundations-guild-master-x9v3l4` (restarted off `dev` after #25 merged) → new PR into `dev`

@@ -103,7 +103,13 @@
 .panel {
   padding-top: var(--sp-4);
 }
-.panel:focus-visible { outline: none; }
+/* The panel is a tab stop (tabIndex=0) so empty stub tabs are still reachable;
+   keep a visible focus ring here rather than removing it (Codex P3). */
+.panel:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--c-gold-light);
+  border-radius: var(--r-sm);
+}
 .hint {
   margin: 0 0 var(--sp-3);
   font-size: 11.5px;
