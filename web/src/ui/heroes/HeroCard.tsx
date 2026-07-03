@@ -75,7 +75,9 @@ export function HeroCard({ hero }: { hero: Hero }) {
   return (
     <div className={styles.card}>
       <div className={styles.hero}>
-        <HeroSprite layers={hero.layers} name={hero.name} size={256} />
+        {/* Displayed at 192; the portrait ART TARGET stays 256×256 (native LPC
+            upscaled 3×) for the future art pass — display size ≠ asset size. */}
+        <HeroSprite layers={hero.layers} name={hero.name} size={192} />
         <div className={styles.ident}>
           <span className={styles.archetype}>{hero.archetype}</span>
           <span className={styles.status} data-kind={hero.status.kind}>

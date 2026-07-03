@@ -9,7 +9,7 @@
   height: calc(var(--nav-h) + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   display: flex;
-  background: linear-gradient(180deg, rgba(46, 16, 101, 0.92), var(--c-royal-deep));
+  background: linear-gradient(180deg, var(--bar-1), var(--bar-2));
   border-top: 1px solid var(--stroke-gold);
   backdrop-filter: blur(6px);
 }
@@ -31,6 +31,10 @@
 }
 .tab:hover {
   color: var(--c-gold-light);
+}
+.tab:active {
+  color: var(--c-gold);
+  background: rgba(255, 255, 255, 0.06);
 }
 .tab:focus-visible {
   outline: none;

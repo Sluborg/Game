@@ -22,6 +22,10 @@
 
 * { box-sizing: border-box; }
 
+/* Kill the default blue tap-highlight rectangle on mobile; interactive elements
+   carry their own :active / selected cues instead. */
+button, a { -webkit-tap-highlight-color: transparent; }
+
 body {
   margin: 0;
   font-family: "Segoe UI", Roboto, system-ui, sans-serif;

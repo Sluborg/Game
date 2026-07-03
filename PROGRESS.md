@@ -10,6 +10,40 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-03 - UI polish (map selection / bars / portrait): PR opened
+- Gate: PR
+- Branch: `claude/ui-foundations-guild-master-x9v3l4` (restarted off `dev` after #23 merged) → new PR into `dev`
+- Scope: visual polish only, additive, `web/src/ui/` — from Stefan's feedback. Combat core
+  (`web/src/game/battle/`) and art pipeline untouched (verified name-only diff). `LpcSprite` is the
+  UI compositor, not the frozen core.
+- Changes: (1) **Map selection** — killed the blue mobile tap-highlight (global `button,a`
+  `-webkit-tap-highlight-color: transparent`) + `:active` press cues on every live tappable; the
+  selected node now *lights up* (soft gold bloom + brightness + scale 1.14) instead of a hard
+  rectangular ring (matches the DESIGN.md "soft glow" polish backlog). (2) **Bars** — new
+  `--bar-1/--bar-2` tokens (wine/aubergine, less "blue" but still royal-purple brand) drive ALL
+  chrome bars (nav + all 3 top bars); content surfaces keep `--c-royal-deep`. (3) **Hero portrait**
+  — display 256→192 (art target stays 256), and made static via an additive `animate?: boolean`
+  (default true) on `LpcSprite` so combat is byte-identical; `HeroSprite` passes `animate={false}`.
+- Review #1 (4-persona, on the PLAN): 4 blockers folded before build — static-draw would blank
+  the canvas (resolved by suppressing the bob, NOT stopping the rAF loop); freeze both roster +
+  portrait (consistent); global tap-highlight needs paired `:active` cues; bar must stay
+  purple-leaning (wine/aubergine, not brown). Plus: repoint ALL chrome bars; keep glow gold; bump
+  selected scale; keep 256 as the documented asset target.
+- Review #2 (4-persona, on the DIFF): 1 blocker — StartScreen's two landing cards lost their tap
+  flash with no `:active` (phone-only user) → added `.card:active` (and `.close:active` on the
+  sheet ×). Engineer confirmed combat core untouched + combat byte-identical; Designer confirmed
+  wine hue + gold glow + single-source bars; all fixes verified landed.
+- Verified: build green (88 modules), 36 tests pass; headless 430px confirms portrait 192×192 with
+  a frame-stable transform (no float), the selected node renders a soft gold glow (no 3px ring),
+  and every chrome bar uses the new gradient; no console errors. Screenshots refreshed in
+  `docs/screenshots/`.
+- Deferred (out of this scope, pre-existing — flagged for a follow-up): map node *labels* clip
+  their placeholder tiles ("Guild Hall" cut off); node caption pills sit low / low-contrast; the
+  selected node's dashed-box vs rounded-glow double-outline; static sprites keep a no-op rAF loop
+  (a micro-opt). None introduced by this diff.
+- Open questions: bar shade + node-selection intensity are subjective — easy one-token retune if
+  Stefan wants a different direction. Next: awaiting Codex review, then merge gate.
+
 ## 2026-07-03 - UI foundations (guild kit + Heroes): Codex fix (trait-row overflow)
 - Gate: codex-fixed
 - Branch: `claude/ui-foundations-guild-master-x9v3l4` → PR #23 into `dev`

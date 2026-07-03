@@ -74,6 +74,9 @@
 .close:hover {
   filter: brightness(1.2);
 }
+.close:active {
+  background: rgba(255, 255, 255, 0.08);
+}
 .close:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px var(--c-gold-light);

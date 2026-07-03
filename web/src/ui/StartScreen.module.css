@@ -50,6 +50,11 @@
   transform: translateY(-2px);
   filter: brightness(1.12);
 }
+/* Instant press feedback on touch (the default tap-highlight is disabled). */
+.card:active {
+  transform: translateY(0);
+  filter: brightness(1.05);
+}
 .test {
   background: linear-gradient(100deg, var(--c-blood-deep), var(--surface-2));
 }

@@ -26,6 +26,13 @@
   --stroke-soft: rgba(157, 107, 232, 0.28);
   --stroke-gold: rgba(255, 215, 0, 0.32);
 
+  /* Shell chrome bars (header/footer). A warmer, wine/aubergine deep-purple —
+     hue-shifted off --c-royal-deep so it reads less "blue" while staying on the
+     Godblood royal-purple brand. Single source of truth for every chrome bar
+     (NavBar + the screen top bars); content surfaces keep --c-royal-deep. */
+  --bar-1: #3a1536;
+  --bar-2: #24102a;
+
   /* Text */
   --text-strong: var(--c-parchment);
   --text-dim: var(--c-parchment-dim);
