@@ -3,7 +3,20 @@
   flex-direction: column;
 }
 
-/* --- Compact header (name lives in the Sheet title, not repeated here) ---- */
+/* Visually hidden but available to screen readers (the in-modal inspect live region). */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --- Compact header ------------------------------------------------------- */
 .head {
   display: flex;
   align-items: center;
@@ -43,7 +56,7 @@
   top: 0;
   z-index: 2;
   display: flex;
-  margin: 0 calc(-1 * var(--sp-4)); /* bleed to the sheet-body edges */
+  margin: 0 calc(-1 * var(--sp-4));
   padding: 0 var(--sp-2);
   background: var(--surface-2);
   border-top: 1px solid var(--stroke-soft);
@@ -72,9 +85,7 @@
 .tab:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--c-gold-light); border-radius: var(--r-sm); }
 .tabIcon { width: 20px; height: 20px; display: block; }
 .tabLabel { line-height: 1; }
-.tabActive {
-  color: var(--c-gold);
-}
+.tabActive { color: var(--c-gold); }
 .tabActive::after {
   content: "";
   position: absolute;
@@ -100,11 +111,7 @@
 }
 
 /* --- Panel + shared bits -------------------------------------------------- */
-.panel {
-  padding-top: var(--sp-4);
-}
-/* The panel is a tab stop (tabIndex=0) so empty stub tabs are still reachable;
-   keep a visible focus ring here rather than removing it (Codex P3). */
+.panel { padding-top: var(--sp-4); }
 .panel:focus-visible {
   outline: none;
   box-shadow: inset 0 0 0 2px var(--c-gold-light);
@@ -125,9 +132,7 @@
   color: var(--c-gold);
 }
 
-/* --- Inspectable chips + inline detail ------------------------------------ */
-/* Base button reset; each shape class (.stat/.trait/.gearCell/.bondChip) is
-   applied ALONGSIDE this and, being defined later, provides its own box. */
+/* --- Inspectable chips (button reset; shape classes applied alongside) ----- */
 .inspectable {
   font: inherit;
   color: inherit;
@@ -142,56 +147,85 @@
 .inspectable:hover { filter: brightness(1.12); }
 .inspectable:active { filter: brightness(0.95); }
 .inspectOpen { box-shadow: 0 0 0 2px var(--c-gold-light); }
-/* Declared after .inspectOpen so a focused chip keeps its 3px focus ring even when open. */
 .inspectable:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--c-gold-light); }
 
-.inspectDetail {
+/* --- Floating parchment popover (portalled to body, fixed) ---------------- */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: transparent;
+}
+.popover {
+  position: fixed;
+  z-index: 201;
+  max-width: min(280px, calc(100vw - 16px));
   display: flex;
   flex-direction: column;
   gap: 3px;
-  margin: var(--sp-2) 0 var(--sp-1);
-  padding: var(--sp-3);
+  padding: 10px 12px;
   border-radius: var(--r-sm);
-  background: var(--surface-3);
-  border: 1px solid var(--stroke-gold);
-  animation: inspectIn var(--t-fast) var(--ease-out);
+  background: var(--c-parchment);
+  color: var(--ink-parchment);
+  border: 1px solid var(--c-gold-dark);
+  box-shadow: var(--shadow-2);
+  animation: popIn var(--t-fast) var(--ease-out);
 }
-.inspectTitle {
+.popCaret {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--c-parchment);
+  transform: translateX(-50%) rotate(45deg);
+}
+.popCaret[data-place="above"] {
+  bottom: -6px;
+  border-right: 1px solid var(--c-gold-dark);
+  border-bottom: 1px solid var(--c-gold-dark);
+}
+.popCaret[data-place="below"] {
+  top: -6px;
+  border-left: 1px solid var(--c-gold-dark);
+  border-top: 1px solid var(--c-gold-dark);
+}
+.popTitle {
   font-family: var(--font-display);
-  font-size: 13px;
-  color: var(--c-gold-light);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--c-royal-deep);
 }
-.inspectEffect {
+.popEffect {
   font-size: 12.5px;
   line-height: 1.4;
-  color: var(--text-strong);
+  color: var(--ink-parchment-dim);
 }
-@keyframes inspectIn {
-  from { opacity: 0; transform: translateY(-3px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .inspectDetail { animation: none; }
+  .popover { animation: none; }
 }
 
-/* --- Attribute (stat) chips: certainty in the fill (DESIGN.md §5) ---------- */
+/* --- Attribute chips: WIDER, 2-col grid; certainty in the fill ------------- */
 .stats {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: var(--sp-2);
 }
 .stat {
-  display: inline-flex;
+  display: flex;
   align-items: baseline;
   gap: var(--sp-2);
-  padding: 6px 12px;
-  border-radius: var(--r-pill); /* rounded PILL — sets the rumor "?" apart from the hexagon socket */
+  width: 100%;
+  padding: 10px 14px;
+  min-height: 46px;
+  border-radius: var(--r-md); /* rounded rect — clearly not the hexagon trait socket */
   border: 1px solid var(--stroke-soft);
-  min-height: 34px;
 }
-.statLabel { font-size: 11px; letter-spacing: 0.5px; color: var(--text-dim); }
-.statValue { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--text-strong); }
-.statTag { font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; opacity: 0.8; }
+.statLabel { font-size: 12px; letter-spacing: 0.5px; color: var(--text-dim); }
+.statValue { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--text-strong); }
+.statTag { margin-left: auto; font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; opacity: 0.8; }
 .stat[data-certainty="verified"] { background: var(--c-royal); border-color: var(--c-gold); }
 .stat[data-certainty="claimed"] {
   background: repeating-linear-gradient(45deg, rgba(157, 107, 232, 0.55) 0 6px, rgba(157, 107, 232, 0.12) 6px 12px);
@@ -215,11 +249,8 @@
 .legend span[data-swatch="claimed"] { background: repeating-linear-gradient(45deg, rgba(157, 107, 232, 0.55) 0 4px, rgba(157, 107, 232, 0.12) 4px 8px); }
 .legend span[data-swatch="rumor"] { background: transparent; border-style: dashed; }
 
-/* --- Traits: filled hexagon token vs dashed-hexagon socket ----------------- */
-.traits {
-  display: flex;
-  gap: var(--sp-3);
-}
+/* --- Traits --------------------------------------------------------------- */
+.traits { display: flex; gap: var(--sp-3); }
 .trait {
   display: flex;
   flex-direction: column;
@@ -235,12 +266,7 @@
 .traitNameDim { font-size: 12px; color: var(--text-dim); text-align: center; max-width: 100%; overflow-wrap: anywhere; }
 
 /* --- Gear: 6 slots -------------------------------------------------------- */
-.gearGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sp-2);
-}
-.gearWrap { display: flex; flex-direction: column; }
+.gearGrid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2); }
 .gearCell {
   display: flex;
   flex-direction: column;
@@ -258,30 +284,98 @@
 .gearVal { font-size: 13px; color: var(--text-strong); }
 .gearEmpty .gearVal { color: var(--text-dim); }
 
-/* --- Bonds: named-feeling chips, valence by colour, score dim ------------- */
-.bondGroup { margin-bottom: var(--sp-2); }
-.bonds {
+/* --- Bonds: distinct Guild card + Party + Relations ----------------------- */
+.guildCard {
+  margin-bottom: var(--sp-4);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  border: 1px solid var(--stroke-gold);
+  background: linear-gradient(160deg, rgba(106, 47, 191, 0.28), var(--surface-2));
+}
+.guildHead {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--c-gold);
 }
-.bondChip {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 7px;
-  padding: 6px 12px;
-  border-radius: var(--r-pill);
+.bondCard { margin-bottom: var(--sp-4); }
+
+.bondLine {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: var(--r-sm);
   border: 1px solid var(--stroke-soft);
-  background: var(--surface-2);
+  background: var(--surface-1);
 }
-.bondName { font-size: 13px; color: var(--text-strong); }
-.bondFeeling { font-size: 12.5px; font-weight: 600; }
-.bondScore { font-size: 11px; color: var(--text-dim); }
-.bondChip[data-valence="positive"] { background: rgba(82, 196, 107, 0.15); border-color: rgba(82, 196, 107, 0.4); }
-.bondChip[data-valence="positive"] .bondFeeling { color: var(--c-emerald); }
-.bondChip[data-valence="negative"] { background: rgba(224, 82, 82, 0.15); border-color: rgba(224, 82, 82, 0.4); }
-.bondChip[data-valence="negative"] .bondFeeling { color: var(--c-blood); }
-.bondChip[data-valence="neutral"] .bondFeeling { color: var(--text-dim); }
+.bondLabel { font-size: 14px; font-weight: 600; }
+.bondScore { font-size: 12px; color: var(--text-dim); flex: 0 0 auto; }
+.bondLine[data-valence="positive"] .bondLabel { color: var(--c-emerald); }
+.bondLine[data-valence="negative"] .bondLabel { color: var(--c-blood); }
+.bondLine[data-valence="neutral"] .bondLabel { color: var(--text-strong); }
+
+.relList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+.relRow {
+  display: flex;
+  align-items: stretch;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--stroke-soft);
+  border-left: 3px solid var(--stroke-soft);
+  background: var(--surface-1);
+  overflow: hidden;
+}
+.relRow[data-valence="positive"] { border-left-color: var(--c-emerald); }
+.relRow[data-valence="negative"] { border-left-color: var(--c-blood); }
+.relMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 12px;
+}
+.relLine1 { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-2); }
+.relName {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.relScore { font-size: 12px; color: var(--text-dim); flex: 0 0 auto; }
+.relLine2 { font-size: 12px; color: var(--text-dim); }
+.relVariant { color: var(--text-strong); }
+.relRow[data-valence="positive"] .relVariant { color: var(--c-emerald); }
+.relRow[data-valence="negative"] .relVariant { color: var(--c-blood); }
+.relGo {
+  flex: 0 0 auto;
+  min-width: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--sp-3);
+  background: rgba(255, 215, 0, 0.1);
+  border: none;
+  border-left: 1px solid var(--stroke-soft);
+  color: var(--c-gold-light);
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.relGo:hover { background: rgba(255, 215, 0, 0.18); }
+.relGo:active { filter: brightness(0.9); }
+.relGo:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--c-gold-light); }
 .relNone { font-size: 12.5px; color: var(--text-dim); }
 
 /* --- Coming-soon stub panes ---------------------------------------------- */

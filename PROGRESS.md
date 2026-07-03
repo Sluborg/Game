@@ -10,6 +10,55 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-03 - Hero sheet refinement: Codex fix (in-modal inspect a11y)
+- Gate: codex-fixed
+- Branch: `claude/ui-foundations-guild-master-x9v3l4` → PR #27 into `dev`
+- Codex finding (P2, the only one): the inspect popover is portalled to `document.body`, OUTSIDE
+  the `aria-modal` Sheet subtree, so a screen reader inside the modal can't reach the effect text —
+  the `aria-live` I'd added to the portalled box doesn't help across the modal boundary. Fixed:
+  keep the visual popover portalled (for layout) but mark it `aria-hidden`, and mirror its
+  title+effect in an IN-modal visually-hidden `aria-live="polite"` region (`.srOnly`) rendered
+  inside HeroCard, so activating a chip announces the effect within the modal without a double read.
+- Note: Codex DID run this time on a bot-triggered `@codex review` (after an initial "create an
+  environment" reply) — so the CLAUDE.md §30 self-trigger rule works; Stefan can still set up a
+  Codex environment if he wants it more reliable.
+- Review #2 on the delta (self, a11y markup + one CSS class): no new blockers.
+- Verified: build green; headless confirms the in-modal live region holds "Strength. Raises hit
+  damage and max HP." inside the dialog while the portalled popover is aria-hidden.
+- Open questions: none. Next: awaiting merge decision (no self-merge).
+
+## 2026-07-03 - Hero sheet refinement (popover / bonds / go-to): PR opened
+- Gate: PR
+- Branch: `claude/ui-foundations-guild-master-x9v3l4` (restarted off `dev` after #26 merged) → new PR into `dev`
+- Scope: additive UI-only refinement of the hero sheet, from Stefan's screenshot feedback.
+  `web/src/ui/heroes/` + tokens.css + docs. Combat core + art pipeline untouched. Also adds a
+  CLAUDE.md §30 rule (trigger Codex yourself — API-opened PRs don't auto-review).
+- Changes: (1) inspect detail is now a **floating parchment popover ABOVE** the tapped chip
+  (portalled, position:fixed, scrim catches the dismiss tap, flip-below + viewport clamp,
+  capture scroll/resize dismiss) replacing the inline-below card. (2) Attribute chips **wider** —
+  2-col grid. (3) Portrait **vertically centred** (sprite nudged up; LPC frames carry extra
+  headroom). (4) Bonds → **distinct Guild card** + Party card + **Other-Heroes rows** (one two-line
+  row each: full name + score + **Go ›** jump to that hero; archetype · variant; valence accent).
+  (5) **Relation variants** (Old grudge / Drinking buddy …) layered on the band, valence-respecting,
+  folded into DESIGN.md §5. Bond model gains optional `targetId` + `type`; `onGoto` guarded.
+- Review #1 (4-persona, PLAN): blockers folded — space-based popover flip + two-line relation row
+  (Player-exp); thread guarded `onGoto`, capture-scroll dismiss, `targetId` guard, `useLayoutEffect`
+  positioning (Engineer/Adversary); keep the party scope + write variants into DESIGN.md §5 +
+  parchment popover (Designer). The Adversary's popover "blockers" dissolved: popover is text-only
+  (Go-to is an inline in-panel button), so the focus trap/Escape objections don't apply.
+- Review #2 (4-persona, DIFF): **zero blockers**. Engineer (combat untouched, stacking/flip/clamp
+  sound), Adversary (7 edge vectors — party/guild card guards, remount-on-hop, self-ref no-op all
+  hold), Designer (§5 fidelity, valence-consistent mock, parchment on-brand), Player-exp (phone
+  read). Folded: hoist `currentTarget` before the deferred updater; popover `aria-live`; ink-on-
+  parchment tokens + `--c-royal-deep` for the pop title; legend↔Traits spacing; §5 pool marked
+  illustrative. Noted (later): valence guard when the bond sim lands; alpha-of-brand rgba.
+- Verified: build green (90 modules), 36 tests pass; headless 430px — wide attr cells, popover
+  appears ABOVE the chip (portalled, parchment, aria-live), scrim closes popover only, Guild+Party+
+  Other-Heroes cards, Go-to navigates + resets to Character, no dialog h-overflow, no console
+  errors. Screenshots `docs/screenshots/hero-{popover,bonds}.png`.
+- Open questions: relation-variant pool + band names/cutoffs still tunable. Next: Parties-primary
+  mock view (PR-B). Awaiting Codex review, then merge gate.
+
 ## 2026-07-03 - Hero sheet tabs: Codex fix (tabpanel focus ring)
 - Gate: codex-fixed
 - Branch: `claude/ui-foundations-guild-master-x9v3l4` → PR #26 into `dev`

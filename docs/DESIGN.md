@@ -142,9 +142,14 @@ reason to *want* a better seat.
   their relation, visible on the hero sheet as relation chips (not a web — unrenderable on
   phone). Each tie is a **−100…+100 score surfaced as a named feeling band** (Adoration ·
   Fondness · Friendly · Cordial · Indifferent · Cool · Wary · Resentment · Loathing), coloured by
-  valence and grouped by target — **to the guild** (retention, §8), **to their party** (cohesion,
-  §6), and **to other heroes**. The map becomes spatially social — *where* heroes loiter matters.
-  Formation is also actively brokered — see §3's **introductions** and §6.
+  valence and grouped by target — **to the guild** (retention, §8, shown as its own distinct
+  card), **to their party** (cohesion, §6), and **to other heroes** (one row each, with a jump to
+  that hero's sheet). On top of the band a tie may carry a **variant flavour** — a named
+  relationship *kind* from a per-tier pool (e.g. positive: comrade · drinking buddy · mentor ·
+  gossip partner; negative: rival · feud · grudge — an illustrative, expandable set). The **score/band is the intensity; the variant is
+  flavour** and always respects valence (a "rival" only sits in a negative band); a tie with no
+  variant falls back to its band feeling. The map becomes spatially social — *where* heroes loiter
+  matters. Formation is also actively brokered — see §3's **introductions** and §6.
 
 ## 6. Parties — formed organically, not assigned
 
