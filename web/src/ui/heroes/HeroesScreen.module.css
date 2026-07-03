@@ -115,3 +115,8 @@
   color: var(--text-dim);
   padding: 0 var(--sp-1);
 }
+
+.sheetClose {
+  width: 100%;
+  margin-top: var(--sp-5);
+}

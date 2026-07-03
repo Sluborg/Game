@@ -37,12 +37,17 @@ function HeroesIcon() {
 }
 
 function SwordsIcon() {
-  // Crossed swords, echoing StartScreen's Combat Test icon at 24×24.
+  // Crossed swords — blades cross in the upper half, with distinct pommels and
+  // crossguards at the lower hilts so it reads as combat, not a plain "×"/close.
   return (
     <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden>
-      <path d="M4 4l9 11M20 4l-9 11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M4 4l2 .5M20 4l-2 .5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M8 18l3-3M16 18l-3-3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      {/* blades */}
+      <path d="M4 4l11 11M20 4L9 15" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      {/* crossguards near the hilts */}
+      <path d="M13 16l3-3M11 16l-3-3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      {/* pommels */}
+      <circle cx="16.5" cy="16.5" r="1.5" fill="currentColor" />
+      <circle cx="7.5" cy="16.5" r="1.5" fill="currentColor" />
     </svg>
   );
 }

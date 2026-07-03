@@ -7,12 +7,13 @@ import { useState } from "react";
 import { HEROES } from "./mockHeroes";
 import { HeroSprite } from "./HeroSprite";
 import { HeroCard } from "./HeroCard";
-import { Sheet } from "../kit";
+import { Button, Sheet } from "../kit";
 import styles from "./HeroesScreen.module.css";
 
 export function HeroesScreen() {
   const [openId, setOpenId] = useState<string | null>(null);
   const openHero = HEROES.find((h) => h.id === openId) ?? null;
+  const close = () => setOpenId(null);
 
   return (
     <div className={styles.screen}>
@@ -49,8 +50,17 @@ export function HeroesScreen() {
         ))}
       </ul>
 
-      <Sheet open={!!openHero} onClose={() => setOpenId(null)} title={openHero?.name}>
-        {openHero && <HeroCard hero={openHero} />}
+      <Sheet open={!!openHero} onClose={close} title={openHero?.name}>
+        {openHero && (
+          <>
+            <HeroCard hero={openHero} />
+            {/* A full-width secondary close at the bottom of the sheet — easier
+                one-handed reach than the top-right ×, and the kit Button in use. */}
+            <Button variant="secondary" className={styles.sheetClose} onClick={close}>
+              Close
+            </Button>
+          </>
+        )}
       </Sheet>
     </div>
   );
