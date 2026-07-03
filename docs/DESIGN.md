@@ -109,7 +109,11 @@ reason to *want* a better seat.
 - **Autonomous.** They decide, prepare, and go. You influence, never order.
 - **Attribute depth: sim-full, UI-lean.** The full attribute spread drives the simulation — combat
   and the non-combat beats of §10 alike. CVs and hero sheets surface only 3–4 headline stats plus
-  equipment; the rest exists in the sim but never clutters the card.
+  equipment; the rest exists in the sim but never clutters the card. The hero sheet is **tabbed**
+  (Character — the lean headline attributes + trait sockets; Gear; Bonds; and later Career and
+  Skills), so the front stays lean while detail lives behind tabs; any chip is **tap-to-inspect**
+  for its effect. The Character tab surfaces only the attributes the sim actually uses today
+  (str/dex/sta/per), never a full attribute table.
 - **Traits as icons (CK-style),** revealed one at a time — more surface the longer a hero's around
   and the more presence you have. New ones appear under stress: *"Coward — revealed after he fled the
   crypt."* Undiscovered traits render as dim **"?" sockets** (visually distinct from a CV's rumor
@@ -136,8 +140,11 @@ reason to *want* a better seat.
   cheap substitute for an earned veteran.
 - **Relationships.** Heroes meet and interact whenever they share a space; each meeting shifts
   their relation, visible on the hero sheet as relation chips (not a web — unrenderable on
-  phone). The map becomes spatially social — *where* heroes loiter matters. Formation is also
-  actively brokered — see §3's **introductions** and §6.
+  phone). Each tie is a **−100…+100 score surfaced as a named feeling band** (Adoration ·
+  Fondness · Friendly · Cordial · Indifferent · Cool · Wary · Resentment · Loathing), coloured by
+  valence and grouped by target — **to the guild** (retention, §8), **to their party** (cohesion,
+  §6), and **to other heroes**. The map becomes spatially social — *where* heroes loiter matters.
+  Formation is also actively brokered — see §3's **introductions** and §6.
 
 ## 6. Parties — formed organically, not assigned
 

@@ -53,7 +53,8 @@ export function HeroesScreen() {
       <Sheet open={!!openHero} onClose={close} title={openHero?.name}>
         {openHero && (
           <>
-            <HeroCard hero={openHero} />
+            {/* key resets tab/inspector state if the sheet ever swaps heroes without closing. */}
+            <HeroCard key={openHero.id} hero={openHero} />
             {/* A full-width secondary close at the bottom of the sheet — easier
                 one-handed reach than the top-right ×, and the kit Button in use. */}
             <Button variant="secondary" className={styles.sheetClose} onClick={close}>
