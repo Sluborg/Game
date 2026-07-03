@@ -10,6 +10,23 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-03 - UI foundations (guild kit + Heroes): Codex fix (trait-row overflow)
+- Gate: codex-fixed
+- Branch: `claude/ui-foundations-guild-master-x9v3l4` → PR #23 into `dev`
+- Codex finding (P2, the only one): the hero-sheet trait row set each of its 3 slots to
+  `width: 33%` while the flex parent also added two `var(--sp-4)` gaps (32px), so `99% + 32px`
+  overflowed the sheet body on narrow phones — the third trait name/socket could spill or force
+  sideways scrolling. Fixed: slots are now `flex: 1; min-width: 0` (share the row *after* the
+  gaps), and the trait name/socket labels got `max-width:100%` + `overflow-wrap:anywhere` so a
+  long name wraps instead of pushing the row wide.
+- Review #2 on the delta (self, CSS-only mechanical fix): no §5 impact (still exactly 3 slots,
+  token-vs-socket unchanged); correct flexbox idiom; no new blockers.
+- Verified: `tsc -b && vite build` green; 36 tests pass; headless Chromium at **390px** confirms
+  the trait row's scrollWidth == clientWidth (no overflow) for all three cases — 3 filled (Ysolt),
+  3 empty sockets (Mira), mixed (Brok) — and zero document horizontal overflow. Screenshot
+  `docs/screenshots/hero-detail-traits.png`.
+- Open questions: none. Next: awaiting merge decision (no self-merge).
+
 ## 2026-07-03 - UI foundations (guild kit + Heroes): PR opened
 - Gate: PR
 - Branch: `claude/ui-foundations-guild-master-x9v3l4` (new branch off `dev` tip PR #22) → PR into `dev`
