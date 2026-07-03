@@ -17,7 +17,7 @@
   align-items: baseline;
   justify-content: space-between;
   padding: var(--sp-3) var(--sp-4);
-  background: linear-gradient(180deg, var(--c-royal-deep), rgba(46, 16, 101, 0.6));
+  background: linear-gradient(180deg, var(--bar-1), var(--bar-2));
   border-bottom: 1px solid var(--stroke-gold);
   backdrop-filter: blur(6px);
 }
@@ -59,6 +59,10 @@
 .row:hover {
   transform: translateY(-1px);
   filter: brightness(1.1);
+}
+.row:active {
+  transform: translateY(0);
+  filter: brightness(0.94);
 }
 .row:focus-visible {
   outline: none;

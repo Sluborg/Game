@@ -14,7 +14,7 @@
   gap: var(--sp-3);
   padding: var(--sp-3) var(--sp-4);
   border-bottom: 1px solid var(--stroke-gold);
-  background: var(--surface-1);
+  background: linear-gradient(180deg, var(--bar-1), var(--bar-2));
 }
 .heading {
   font-family: var(--font-display);
@@ -85,19 +85,30 @@
 .node:hover {
   transform: translate(-50%, -50%) scale(1.06);
 }
+/* Instant press feedback on touch (no hover on phones), replacing the removed
+   default tap-highlight rectangle. */
+.node:active {
+  transform: translate(-50%, -50%) scale(1.03);
+}
+.node:active img {
+  filter: brightness(1.15);
+}
 .node:focus-visible {
   outline: none;
 }
 .node:focus-visible img {
   box-shadow: 0 0 0 3px var(--c-gold-light);
 }
-/* Selected: unmistakable ring + glow + scale (the header name is the second cue). */
+/* Selected: the node itself lights up — a soft gold bloom + brightness + a
+   bigger scale, NOT a hard rectangular ring (per the DESIGN.md polish backlog:
+   "soft glow / gentle pulse"). The header name is the second cue. */
 .node.selected {
-  transform: translate(-50%, -50%) scale(1.1);
+  transform: translate(-50%, -50%) scale(1.14);
 }
 .node.selected img {
   border-color: var(--c-gold-light);
-  box-shadow: 0 0 0 3px var(--c-gold-light), 0 0 16px 4px rgba(201, 162, 74, 0.7);
+  box-shadow: 0 0 22px 6px rgba(201, 162, 74, 0.8);
+  filter: brightness(1.12);
 }
 .node.selected .caption {
   color: var(--surface-0);
