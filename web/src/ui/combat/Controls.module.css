@@ -1,0 +1,66 @@
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.row {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.btn {
+  flex: 1;
+  padding: 11px 10px;
+  border: 1px solid var(--stroke-soft);
+  border-radius: var(--r-sm);
+  background: var(--surface-3);
+  color: var(--text-strong);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter var(--t-fast) var(--ease-out), transform var(--t-fast) var(--ease-out);
+}
+.btn:not(:disabled):hover {
+  filter: brightness(1.14);
+}
+.btn:not(:disabled):active {
+  transform: translateY(1px);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.primary {
+  background: linear-gradient(180deg, var(--c-gold), var(--c-gold-dark));
+  border-color: var(--stroke-gold);
+  color: #1a1208;
+}
+.ghost {
+  background: transparent;
+}
+
+.speed {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.speedLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-gold);
+  min-width: 44px;
+}
+.slider {
+  flex: 1;
+  accent-color: var(--c-royal-light);
+}
+.speedValue {
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--text-dim);
+  min-width: 40px;
+  text-align: right;
+}

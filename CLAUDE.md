@@ -1,37 +1,54 @@
-# CLAUDE.md — instructions for Claude (Code and Cowork)
+# Asset Report, Claude Code Operating Standard
 
-## Read first
-At the start of a session, read `project-status.md` for current state, active plan, and open items. It is the canonical snapshot — a new chat should become productive from `project-status.md` + this file + the Coda doc alone.
+Auto-loaded as CLAUDE.md at repo root. Task-agnostic: this applies to EVERY task in this repo, whatever Stefan asks for. Stefan works phone-only.
 
-## Keeping docs in sync (do this AUTOMATICALLY, without being asked)
-Stefan should never have to ask for a status update. Treat documentation as part of the work, not a separate chore.
+## The Loop (always, never collapsed)
+plan -> review -> build -> review -> PR -> codex -> merge
+1. PLAN the approach. No code yet.
+2. REVIEW #1: multi-persona on the PLAN, fix blockers, then proceed autonomously (no human checkpoint here).
+3. BUILD the change.
+4. REVIEW #2: multi-persona on the DIFF, before any PR, fix blockers.
+5. Open the PR against `dev`.
+6. STOP for Codex. Print "awaiting Codex review" and wait for Stefan to paste it.
+7. STOP for merge. Print "awaiting merge decision" and wait for Stefan's explicit go.
+Never skip a step. Never fold plan into build. Never claim done mid-loop.
 
-Whenever a decision is made, a plan changes, a feature ships, or any progress happens — update the relevant document in the same session, inline, and again before ending:
+## 10. Branch and scope
+- Target `dev`. Every PR targets `dev`, never `main`. If a PR opens on `main`, stop and recreate it against `dev`.
+- **Exception — production promotion:** the `dev` -> `main` promotion PR is the ONE PR that may target `main`. It exists to ship a tested `dev` build to production (Pages builds `main` -> `/Game/`, `dev` -> `/Game/dev/`). Open it only after `dev` is confirmed working and on Stefan's explicit go; never close or recreate it against `dev`. This is the sole exception to the "never `main`" rule and the "no commits to `main`" hard stop.
+- Additive only. Guild work lives in guild-specific dirs behind the `/guild` route. Never modify the combat core; consume it.
+- Declare first: the first reply states branch name and file/dir scope, before any code.
 
-- **`project-status.md` (on `main`)** — single source of truth for current state, the Active plan, and Open items. `main` is the default branch every new chat reads first, so keep the snapshot here current even while work happens on `dev`. Update the `_Last updated_` date.
-- **Coda doc "Godblood Knowledge"** — design, lore, combat spec, pantheons, the VM runbook, and the FAQ. Put design/balance decisions here.
-- **This `CLAUDE.md`** — stable rules and workflow. Update only when the process itself changes (rare).
+## 20. Multi-persona review (both rounds, impartial, scoped)
+Spawn 4 real reviewer subagents, each reviewing ONLY the current scope (the plan in Review #1, the diff in Review #2). No self-congratulation.
+- Designer: serves the core fun (autonomous hero parties, information asymmetry) and respects the pivot constraints?
+- Engineer: architecture and code quality; did it touch anything forbidden (the combat core)?
+- Adversary / QA: edge cases, failure modes; does it run on a fresh clone?
+- Player-experience: is the on-screen loop legible and fun; does the report-fidelity UI read clearly at each tier?
+Output: per-persona top issues, merged into a blocking / non-blocking list. Fix every blocker before continuing.
 
-Goal: close-to-seamless transitions between chats. If you finish a step and the docs no longer match reality, you are not done.
+## 30. Codex gate
+- After opening the PR, STOP. Print "awaiting Codex review". Do not say done.
+- Stefan pastes the Codex findings. Address each. Re-run Review #2 on the delta only, then go to the merge gate.
 
-## Branch + deploy workflow (guide the user on this)
-GitHub Pages deploys from two branches into one site:
-- `main` → **production**, https://sluborg.github.io/Game/
-- `dev` → **work in progress**, https://sluborg.github.io/Game/dev/
+## 40. Merge gate
+- After Codex fixes clear, STOP. Print "awaiting merge decision". Stefan decides. Never self-merge.
 
-1. **All new work starts from `dev`.** Create the branch from `dev`, target `dev` in the PR. Never base feature work on `main` unless it is a hotfix.
-2. **Never push broken or untested code to `main`.** It must always be the stable URL.
-3. **Test loop:** after merging into `dev`, tell the user to test at https://sluborg.github.io/Game/dev/ (live ~1-3 min; hard-refresh for cache).
-4. **Promote:** when `dev` is confirmed working, open a `dev` → `main` PR. Merging updates production.
-5. **No drift:** if `main` gets a direct hotfix, merge `main` back into `dev` afterward.
-6. **Prefer small, testable PRs** over one large merge, so each step is verifiable on the dev URL.
+## 50. Logging (so Claude.ai can follow on phone)
+- Append a dated entry to /PROGRESS.md at each gate (plan done, build done, PR opened, codex-fixed, merged). Each entry: scope, branch, files touched, review verdicts, open questions.
 
-When the user asks for a feature without naming a branch, default to `dev` and say so. After finishing, remind the user of the test URL and the promote step.
+## 60. Phone visibility
+- Make output viewable without a desktop: push screenshots to the branch, or use the Pages preview (/Game/dev/). Never rely on local-only PNGs.
+- One scope per PR. Small commits, conventional messages, pushed so GitHub mobile renders the diff.
+- Summaries: bottom-line first, tight bullets, reference files by path, do not paste full code unless Stefan says "full file".
 
-## Conventions
-- All outward-facing content (docs, UI strings, commit messages, prompts) in English.
-- Active development is the web port in `web/` (Vite + React + TS). The Kotlin app in `app/` is legacy and untouched unless explicitly asked.
-- Versioned files: two-digit version (v01..v10); multiple same-day releases use a letter suffix (v06a, v06b).
+## 70. Verify before claiming
+- No done until plan, both reviews, build, and Codex have all cleared.
+- Confirm every change via git status / an actual run / a build before reporting it. Never claim an unverified change.
+- Only use APIs and functions that genuinely exist. If unsure, say so.
 
-## Deploy mechanics
-`.github/workflows/deploy.yml` builds `main` (base `/Game/`) and `dev` (base `/Game/dev/`) on every push to either branch, combines them, and publishes to GitHub Pages. Pages Source = GitHub Actions (already configured).
+## 80. Hard stops
+- No commits to `main` or `dev` without a PR.
+- No modifying the combat core.
+- No silent overwrite or delete; state structural changes before executing.
+- No done before the full loop clears.

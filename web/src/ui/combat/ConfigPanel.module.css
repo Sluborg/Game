@@ -1,0 +1,122 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.label {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-gold);
+}
+
+.segment {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.seg {
+  flex: 1;
+  padding: 9px 6px;
+  border: 1px solid var(--stroke-soft);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text-strong);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-out), border-color var(--t-fast) var(--ease-out);
+}
+.seg:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.segOn {
+  background: linear-gradient(180deg, var(--c-royal), var(--c-royal-deep));
+  border-color: var(--stroke-gold);
+  color: #fff;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-2);
+  margin: 2px 0 0;
+}
+.stats > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 2px;
+  border-radius: var(--r-sm);
+  background: var(--surface-1);
+  border: 1px solid var(--stroke-soft);
+}
+.stats dt {
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.stats dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--c-gold-light);
+  font-variant-numeric: tabular-nums;
+}
+
+.gear {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.steppers {
+  display: flex;
+  gap: var(--sp-5);
+}
+.stepField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.stepBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--stroke-soft);
+  background: var(--surface-2);
+  color: var(--text-strong);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.stepBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.stepVal {
+  min-width: 16px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--c-gold-light);
+}

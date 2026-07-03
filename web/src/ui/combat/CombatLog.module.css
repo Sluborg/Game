@@ -1,0 +1,47 @@
+.log {
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+  border: 1px solid var(--stroke-soft);
+}
+
+.title {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-gold);
+  margin-bottom: var(--sp-2);
+}
+
+.lines {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.line {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-strong);
+}
+
+.hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.normal { color: var(--text-strong); }
+.crit { color: var(--c-ember); font-weight: 700; }
+.kill { color: var(--c-gold); }
+.death { color: var(--c-blood); font-weight: 700; }
+.miss { color: var(--c-sky); }
+.victory { color: var(--c-emerald); font-weight: 800; }
+.defeat { color: var(--c-blood); font-weight: 800; }

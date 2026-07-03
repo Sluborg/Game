@@ -1,0 +1,110 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100; /* above the NavBar (z-index 40) so the sheet covers it */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 4, 12, 0.62);
+  animation: fade var(--t-med) var(--ease-out);
+}
+
+.panel {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, var(--surface-2), var(--surface-1));
+  border: 1px solid var(--stroke-gold);
+  border-bottom: none;
+  border-top-left-radius: var(--r-lg);
+  border-top-right-radius: var(--r-lg);
+  box-shadow: var(--shadow-2);
+  animation: slideUp var(--t-med) var(--ease-out);
+}
+
+.header {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-4) var(--sp-3) var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--stroke-soft);
+}
+/* A grab-handle affordance, the discoverable "this is a dismissible sheet" cue. */
+.handle {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--stroke-gold);
+}
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--c-gold);
+}
+.close {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--text-strong);
+  background: transparent;
+  border: none;
+  border-radius: var(--r-md);
+  cursor: pointer;
+}
+.close:hover {
+  filter: brightness(1.2);
+}
+.close:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--c-gold-light);
+}
+
+.body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: var(--sp-4);
+  padding-bottom: calc(var(--sp-5) + env(safe-area-inset-bottom));
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .panel,
+  .backdrop {
+    animation: none;
+  }
+}

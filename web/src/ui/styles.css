@@ -190,3 +190,22 @@ body {
 
 .build-menu { display: flex; flex-wrap: wrap; gap: 8px; }
 .btn-build { background: var(--stone-light); }
+
+/* Floating "back to menu" button shown over the campaign screen */
+.menu-fab {
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  z-index: 50;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  background: var(--royal-purple-deep);
+  color: var(--gold-coin);
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+}
+.menu-fab:hover { filter: brightness(1.15); }
+

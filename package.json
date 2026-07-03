@@ -1,0 +1,10 @@
+{
+  "name": "game-planning-hub",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Planning hub for Sluborg/game: feature roadmap, declared art needs, and the reconcile gate against Sluborg/ArtLibrary. The web app lives in web/.",
+  "scripts": {
+    "reconcile": "node scripts/reconcile-art.mjs"
+  }
+}
