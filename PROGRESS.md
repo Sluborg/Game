@@ -10,6 +10,39 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-03 - Part A: hero-sheet interaction fixes
+- Gate: build (Review #1 + Review #2 cleared; PR next)
+- Branch: `claude/parties-primary-heroes-view-glyo4q` (off `dev`)
+- Scope (additive): `web/src/ui/heroes/inspect.tsx`, `HeroCard.tsx`, `HeroCard.module.css`,
+  `docs/DESIGN.md` (one UI-principle note). No combat core / art pipeline touched.
+- What changed:
+  1. Inspect dismiss reworked. Root cause: the transparent scrim ate the tap on pointerdown, then
+     the same gesture's click reopened the chip → same-chip re-tap never hid. Dropped the scrim;
+     chips carry `data-inspect-chip` so the new next-frame document pointerdown(capture) listener
+     ignores chip taps (chip owns same-id toggle / in-place re-anchor) and closes only on true
+     outside taps. A backdrop tap arms a target-scoped, self-disarming capture click-swallow so it
+     closes the popover WITHOUT closing the Sheet (a 2nd backdrop tap closes the Sheet).
+  2. Dropped the persistent gold "open" ring on chips (popover + caret is the feedback now);
+     kept `aria-expanded`. Established the selection-state principle in DESIGN.md §5.
+  3. Bonds relation-row button "Go ›" → "View ›" (aria-label "View {name}'s sheet").
+- Review #1 (4-persona on the PLAN): 2 blockers, both fixed before build — (Designer) ring removal
+  needs an anchor cue → the popover's existing caret is that cue; (Player-exp) chip→chip move must
+  be a single re-anchor, not destroy/recreate → `data-inspect-chip` keeps one box mounted.
+  Engineer + Adversary each raised the swallow-lifecycle blocker (rAF-removal races the click /
+  once:true leaks on a no-click drag) → redesigned to a self-disarming, target-scoped swallow that
+  lives outside the effect cleanup + a next-pointerdown disarm.
+- Review #2 (4-persona on the DIFF): 1 blocker fixed — (Designer) DESIGN.md carve-out was
+  self-undercutting → reworded to "control's own surface (expander) vs a separate transient
+  element". Engineer + Adversary: no blockers (all 8 / all failure-mode checks pass). Non-blocking
+  fixed: stale "Go to" comments, `[role=dialog]` coupling guard comment.
+- Verified: `tsc -b && vite build` green; 36 vitest pass; headless Chromium @430px confirmed
+  tap=peek, re-tap=hide, different-chip=1 popover moved, backdrop=popover-closes+sheet-stays,
+  2nd backdrop=sheet-closes, Bonds shows "View ›". Screenshots in `docs/screenshots/partA-*`.
+- Open questions: two reviewers (non-blocking) note "View" can read as "view this bond" vs the
+  chip's own peek; kept "View ›" per the task's explicit rename — flag for Codex/merge if a
+  clearer verb (Go/Open/Sheet) is preferred. Move-in-place doesn't replay popIn for adjacent chips
+  (deferred polish; keeping the box mounted was the round-1 requirement).
+
 ## 2026-07-03 - Hero sheet refinement: Codex fix (in-modal inspect a11y)
 - Gate: codex-fixed
 - Branch: `claude/ui-foundations-guild-master-x9v3l4` → PR #27 into `dev`

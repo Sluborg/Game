@@ -6,11 +6,11 @@
 // popover ABOVE the chip with its effect (see inspect.tsx). Bonds are grouped
 // into distinct cards — the Guild tie (its own thing, tied to retention §8), the
 // Party (cohesion §6), and other Heroes — the last as one two-line row each with
-// a "Go to" jump to that hero's sheet. DESIGN.md §5 fidelity: the 4 real sim
+// a "View" jump to that hero's sheet. DESIGN.md §5 fidelity: the 4 real sim
 // attributes only (UI-lean), certainty in the chip fill, trait sockets vs the
 // rumor pill "?", relationships as chips/rows (never a web).
 
-import { useState, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
+import { useCallback, useState, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import type { Bond, Hero, HeroAttr } from "./mockHeroes";
 import type { GearSlot } from "./mockHeroes";
 import { HEROES } from "./mockHeroes";
@@ -79,11 +79,15 @@ export function HeroCard({ hero, onGoto }: { hero: Hero; onGoto: (id: string) =>
 
   const openInspect: OpenInspect = (e, id, title, effect) => {
     const anchor = e.currentTarget; // capture before the deferred updater (React nulls currentTarget after dispatch)
+    // Same chip toggles closed; a different chip re-anchors the SAME mounted
+    // popover in place (no null between → no unmount/re-measure blink).
     setPop((cur) => (cur?.id === id ? null : { id, anchor, title, effect }));
   };
+  // Stable identity so the popover's outside-dismiss effect keys on `pop` alone.
+  const closePop = useCallback(() => setPop(null), []);
   const selectTab = (k: TabKey) => {
     setTab(k);
-    setPop(null); // close any popover when switching tabs
+    closePop(); // close any popover when switching tabs
   };
 
   const onTabKey = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -152,7 +156,7 @@ export function HeroCard({ hero, onGoto }: { hero: Hero; onGoto: (id: string) =>
       <span className={styles.srOnly} aria-live="polite">
         {pop ? `${pop.title}. ${pop.effect}` : ""}
       </span>
-      <InspectPopover data={pop} onClose={() => setPop(null)} />
+      <InspectPopover data={pop} onClose={closePop} />
     </div>
   );
 }
@@ -366,11 +370,11 @@ function RelationRow({
           <span className={styles.relVariant}>{variant}</span>
         </span>
       </InspectChip>
-      {/* "Go to" only when the target resolves to a real hero — a bad id must
-          not silently close the sheet. */}
+      {/* "View" jump only when the target resolves to a real hero — a bad id
+          must not silently close the sheet. */}
       {target && (
-        <button type="button" className={styles.relGo} onClick={() => onGoto(target.id)} aria-label={`Go to ${fullName}`}>
-          Go ›
+        <button type="button" className={styles.relGo} onClick={() => onGoto(target.id)} aria-label={`View ${fullName}'s sheet`}>
+          View ›
         </button>
       )}
     </li>
