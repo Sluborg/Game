@@ -74,4 +74,8 @@
   --t-fast: 120ms;
   --t-med: 220ms;
   --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  /* Layout — height of the persistent bottom nav; feature screens reserve this
+     much bottom space so their content never hides under the fixed NavBar. */
+  --nav-h: 60px;
 }

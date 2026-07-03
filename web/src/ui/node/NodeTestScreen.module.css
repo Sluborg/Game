@@ -3,6 +3,9 @@
   display: flex;
   flex-direction: column;
   background: var(--surface-0);
+  /* Reserve the fixed NavBar's height: the map is a flex child, so this shrinks
+     its positioning box and keeps %-placed nodes clear of the nav. */
+  padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
 }
 
 .bar {
@@ -12,18 +15,6 @@
   padding: var(--sp-3) var(--sp-4);
   border-bottom: 1px solid var(--stroke-gold);
   background: var(--surface-1);
-}
-.back {
-  cursor: pointer;
-  color: var(--c-gold-light);
-  background: transparent;
-  border: 1px solid var(--stroke-gold);
-  border-radius: var(--r-md);
-  padding: 6px 12px;
-  font-size: 13px;
-}
-.back:hover {
-  filter: brightness(1.15);
 }
 .heading {
   font-family: var(--font-display);

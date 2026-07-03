@@ -1,0 +1,233 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+/* --- Portrait + identity ------------------------------------------------- */
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.ident {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+}
+.archetype {
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--text-dim);
+}
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 13px;
+  color: var(--text-strong);
+}
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+.status[data-kind="guild"] .dot {
+  background: var(--c-emerald);
+}
+.status[data-kind="quest"] .dot {
+  background: var(--c-ember);
+}
+.status[data-kind="idle"] .dot {
+  background: var(--c-parchment-dim);
+}
+
+/* --- Sections ------------------------------------------------------------ */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.sectionTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--c-gold);
+}
+
+/* --- Stat chips: certainty lives in the fill (DESIGN.md §5) --------------- */
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: 6px 12px;
+  border-radius: var(--r-pill); /* rounded PILL — the shape that sets a rumor "?" apart from the hexagon trait socket */
+  border: 1px solid var(--stroke-soft);
+  min-height: 34px;
+}
+.statLabel {
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+}
+.statValue {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+.statTag {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  opacity: 0.8;
+}
+/* Verified = SOLID fill. */
+.stat[data-certainty="verified"] {
+  background: var(--c-royal);
+  border-color: var(--c-gold);
+}
+/* Claimed = HATCHED fill. */
+.stat[data-certainty="claimed"] {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(157, 107, 232, 0.55) 0 6px,
+    rgba(157, 107, 232, 0.12) 6px 12px
+  );
+  border-color: var(--stroke-gold);
+}
+/* Rumor = PLAIN, no fill; the value renders as "?". */
+.stat[data-certainty="rumor"] {
+  background: transparent;
+  border-style: dashed;
+  border-color: var(--stroke-soft);
+}
+.stat[data-certainty="rumor"] .statValue {
+  color: var(--text-dim);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.legend span[data-swatch] {
+  width: 16px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid var(--stroke-soft);
+  margin-left: 8px;
+}
+.legend span[data-swatch]:first-child {
+  margin-left: 0;
+}
+.legend span[data-swatch="verified"] {
+  background: var(--c-royal);
+  border-color: var(--c-gold);
+}
+.legend span[data-swatch="claimed"] {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(157, 107, 232, 0.55) 0 4px,
+    rgba(157, 107, 232, 0.12) 4px 8px
+  );
+}
+.legend span[data-swatch="rumor"] {
+  background: transparent;
+  border-style: dashed;
+}
+
+/* --- Equipment ----------------------------------------------------------- */
+.equip {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.equipRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--stroke-soft);
+}
+.equipSlot {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+}
+.equipVal {
+  font-size: 14px;
+  color: var(--text-strong);
+}
+
+/* --- Traits: exactly 3 slots; filled token vs dashed-hexagon socket ------- */
+.traits {
+  display: flex;
+  gap: var(--sp-4);
+}
+.trait {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 33%;
+}
+.traitGlyph {
+  width: 32px;
+  height: 32px;
+  display: block;
+}
+.traitName {
+  font-size: 12px;
+  color: var(--text-strong);
+  text-align: center;
+}
+.traitNameDim {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+/* --- Relationships: a line of chips, never a graph ----------------------- */
+.relations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.relChip {
+  padding: 5px 12px;
+  border-radius: var(--r-pill);
+  font-size: 12.5px;
+  border: 1px solid var(--stroke-soft);
+}
+.likes {
+  background: rgba(82, 196, 107, 0.16);
+  border-color: rgba(82, 196, 107, 0.4);
+  color: var(--c-emerald);
+}
+.hates {
+  background: rgba(224, 82, 82, 0.16);
+  border-color: rgba(224, 82, 82, 0.4);
+  color: var(--c-blood);
+}
+.relNone {
+  font-size: 12.5px;
+  color: var(--text-dim);
+}

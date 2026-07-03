@@ -50,8 +50,8 @@ export function StartScreen({ onCombatTest, onNodeTest }: Props) {
         <button className={`${styles.card} ${styles.node}`} onClick={onNodeTest}>
           <NodeIcon />
           <span className={styles.text}>
-            <span className={styles.name}>Node Test</span>
-            <span className={styles.desc}>Preview the world map and building nodes rendered from the Art Library.</span>
+            <span className={styles.name}>World Map</span>
+            <span className={styles.desc}>Preview the world map and building nodes; the bottom nav takes you to Heroes and Combat Test from there.</span>
           </span>
         </button>
       </div>
