@@ -151,6 +151,13 @@ reason to *want* a better seat.
   variant falls back to its band feeling. The map becomes spatially social — *where* heroes loiter
   matters. Formation is also actively brokered — see §3's **introductions** and §6.
 
+> **UI principle — selection state earns its keep.** Only show a persistent selected/open state on
+> a control when an *action* needs that selection held, or when the control's **own surface** holds
+> the revealed detail inline (an expander/accordion). When a *separate, transient* element carries
+> the detail — as the inspect popover does, anchored by its caret to the tapped chip — the response
+> itself is the feedback; the chip keeps no sticky ring. A highlight that outlives the moment it
+> explains is noise.
+
 ## 6. Parties — formed organically, not assigned
 
 - Heroes **form their own parties** out of the relationships they've built. Lone wolves exist —

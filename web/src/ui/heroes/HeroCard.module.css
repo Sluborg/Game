@@ -144,18 +144,14 @@
   -webkit-tap-highlight-color: transparent;
   transition: filter var(--t-fast) var(--ease-out);
 }
+/* Transient press/hover only — no persistent "open" ring. The open state lives
+   in aria-expanded + the popover's own caret, per the selection-state principle
+   in DESIGN.md §5 (only persist a selected state when an action needs it). */
 .inspectable:hover { filter: brightness(1.12); }
 .inspectable:active { filter: brightness(0.95); }
-.inspectOpen { box-shadow: 0 0 0 2px var(--c-gold-light); }
 .inspectable:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--c-gold-light); }
 
 /* --- Floating parchment popover (portalled to body, fixed) ---------------- */
-.scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  background: transparent;
-}
 .popover {
   position: fixed;
   z-index: 201;
