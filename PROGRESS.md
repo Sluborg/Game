@@ -10,6 +10,62 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-02 - DESIGN.md fold: Codex fix (build-order slicing)
+- Gate: codex-fixed
+- Branch: `claude/design-doc-fold-t3k9m2` → PR #22 into `dev`
+- Codex finding (P2, the only one): "How we build" had split "Foundations" out as its own
+  standalone next-up slice, contradicting the engagement report it claims to adopt (foundations
+  are scaffolding "carried by the first gameplay PR, not its own session" per
+  `docs/ENGAGEMENT_REVIEW.md`) and the "every slice ends playable" promise stated two paragraphs
+  above. Fixed: folded Foundations into slice 1 (the thin closed loop) as in-PR scaffolding,
+  renumbered slices 2-7, and updated internal cross-references (pre-rival roster dependency now
+  "pre-slice 6", upkeep/decay now "slice 5").
+- Review verdict: self-reviewed the delta (small, mechanical renumbering + one structural fold) —
+  no new blockers; verified no other stale slice-number references remained via full-file grep.
+- Open questions: none. Next: awaiting merge decision (no self-merge).
+
+## 2026-07-02 - DESIGN.md: interview decisions folded, PR opened
+- Gate: PR
+- Branch: `claude/design-doc-fold-t3k9m2` (new branch off `dev`, since #19/#21 already merged) →
+  PR into `dev`
+- Scope: fold Stefan's 15 answers from the post-engagement-review design interview into
+  `docs/DESIGN.md`. Docs only; no game code touched.
+- Files touched: `docs/DESIGN.md` (§3 contracts/introductions/guild-management,
+  §4 fidelity-as-interpretation + mail/stamp/socket reveals, §5 sim-full/UI-lean attributes +
+  gold/stats pricing + proven-made-not-bought, §6 introductions + unstick path, §7 fog-bound rival
+  + scripted v1 bidder, §8 debt→charter-revoked cash clock + coarse doom broadcast, §9 one-node's-
+  arc cross-ref, new §10 multi-step quest beats, new §11 the D1a engine-seam sign-off, "How we
+  build" re-sliced 8-step order), this file.
+- Review #1 (4-persona, on the PLAN): Designer + Adversary both caught the same core gap — §3's
+  old "recommend" line left uncontradicted by §6's new "introductions," and §5's certainty-icon
+  sentence needing replacement not addition. Adversary also flagged: R2 pricing could collapse to
+  a dominant strategy with no real downside; paid+refusable introductions could stack into a
+  formation-bottleneck softlock; beat-type dispatch left "planning" and escalation transitions
+  ambiguous; the CV-inflation tutorial cap could manufacture cheap quasi-proven heroes,
+  undermining "proven = made not bought"; multi-location quests weren't reconciled with §9's
+  single-node arc model. Engineer flagged party combat has no home in the frozen single-hero
+  engine (needed an explicit composed-sequential-duels mapping) and that D1a's file scope +
+  precedence rule (`hero` vs `heroTier`) was unstated. All adopted before writing.
+- Review #2 (4-persona, on the DIFF): Adversary caught 2 blockers that survived the first pass —
+  the new "Intel" guild-management spend was unbounded and could itself collapse the CV-pricing
+  tension it was meant to protect (fixed: caps at one certainty step, rumor→claimed only, priced
+  to scale with the hire, can't reach verified); the CV-inflation cap was worded per-hero
+  ("a hero's first handful") instead of per-player-run, so it would have recurred forever instead
+  of being a one-time tutorial window (fixed: rescoped to the player's first few recruits overall).
+  Player-experience caught 3 blockers: the §8 Cash/Doom table cells and §10's Combat row had
+  bloated into multi-sentence paragraphs — phone-hostile; all three trimmed to one clause with
+  detail moved to bullets below their tables. Designer and Engineer found no blockers (verified:
+  zero leftover "recommend" mentions; every technical claim in §11 checked against the real
+  `engine.ts`/`useCombatClock.ts`/`ConfigPanel.tsx` code). Non-blocking items folded in too: §10's
+  "report" wording scoped to the log tier so it doesn't read as contradicting §4's honest-rumor
+  framing; "frozen" qualified against §11's one exception; §11 marked approved-but-unimplemented;
+  the seed-reuse mechanism pinned to the engine's `rng` constructor param, not a new `FightConfig`
+  field; §7's mirror/scripted-bidder tension softened with a forward reference; §6 given an
+  explicit unstick-path sentence; §3's header parenthetical; §9 trimmed to a pointer; the old
+  greedy/proud bounty-pricing flavor line restored.
+- Open questions: none blocking. Next build session can start at Slice 1 (Foundations) per the
+  revised "How we build" order.
+
 ## 2026-07-02 - Engagement review: Codex fix (replay sim-version)
 - Gate: codex-fixed
 - Branch: `claude/game-engagement-analysis-uu5lx8` → PR #21 into `dev`
