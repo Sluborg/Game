@@ -37,6 +37,9 @@
   --text-strong: var(--c-parchment);
   --text-dim: var(--c-parchment-dim);
   --text-gold: var(--c-gold);
+  /* Ink on a parchment surface (e.g. the inspect popover) — dark on warm paper. */
+  --ink-parchment: #241a10;
+  --ink-parchment-dim: #3a2c18;
 
   /* Combat semantics */
   --hp-hero: var(--c-emerald);

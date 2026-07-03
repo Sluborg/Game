@@ -28,8 +28,12 @@ Spawn 4 real reviewer subagents, each reviewing ONLY the current scope (the plan
 Output: per-persona top issues, merged into a blocking / non-blocking list. Fix every blocker before continuing.
 
 ## 30. Codex gate
-- After opening the PR, STOP. Print "awaiting Codex review". Do not say done.
-- Stefan pastes the Codex findings. Address each. Re-run Review #2 on the delta only, then go to the merge gate.
+- **Trigger Codex yourself.** Codex only auto-reviews PRs opened by a human (or a draft marked
+  ready); a PR Claude opens via the API sits on a branch that never fires the auto-review. So
+  immediately after opening the PR, post a `@codex review` comment on it yourself to trigger the
+  review — do not wait for Stefan to do it.
+- After opening the PR (and posting `@codex review`), STOP. Print "awaiting Codex review". Do not say done.
+- Codex posts its findings (Stefan may also paste them). Address each. Re-run Review #2 on the delta only, then go to the merge gate.
 
 ## 40. Merge gate
 - After Codex fixes clear, STOP. Print "awaiting merge decision". Stefan decides. Never self-merge.

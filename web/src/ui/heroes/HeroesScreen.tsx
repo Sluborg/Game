@@ -14,6 +14,11 @@ export function HeroesScreen() {
   const [openId, setOpenId] = useState<string | null>(null);
   const openHero = HEROES.find((h) => h.id === openId) ?? null;
   const close = () => setOpenId(null);
+  // Cross-hero "Go to" from a relation row — guarded so a bad id can't set a
+  // non-existent openId (which would silently close the sheet).
+  const goTo = (id: string) => {
+    if (HEROES.some((h) => h.id === id)) setOpenId(id);
+  };
 
   return (
     <div className={styles.screen}>
@@ -53,8 +58,8 @@ export function HeroesScreen() {
       <Sheet open={!!openHero} onClose={close} title={openHero?.name}>
         {openHero && (
           <>
-            {/* key resets tab/inspector state if the sheet ever swaps heroes without closing. */}
-            <HeroCard key={openHero.id} hero={openHero} />
+            {/* key resets tab/inspector state when the sheet swaps heroes (incl. via Go-to). */}
+            <HeroCard key={openHero.id} hero={openHero} onGoto={goTo} />
             {/* A full-width secondary close at the bottom of the sheet — easier
                 one-handed reach than the top-right ×, and the kit Button in use. */}
             <Button variant="secondary" className={styles.sheetClose} onClick={close}>

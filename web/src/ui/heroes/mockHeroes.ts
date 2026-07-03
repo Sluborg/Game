@@ -54,13 +54,19 @@ export type Equipment = Partial<Record<GearSlot, GearItem>>;
 
 /** A relationship. `scope` groups it (to the guild / to their party / to another
  * hero); `score` is a −100..100 rating mapped to a named feeling band by
- * relationships.ts. Illustrative — the bond sim doesn't exist until Slice 4. */
+ * relationships.ts. `type` is an optional flavour variant layered on the band —
+ * the band/score is the INTENSITY, the variant is FLAVOUR and always respects
+ * valence (a "rival" stays negative). Falls back to the band feeling when
+ * absent. `targetId` links a hero-scope bond to another hero (for "Go to").
+ * Illustrative — the bond sim doesn't exist until a later slice. */
 export type BondScope = "guild" | "party" | "hero";
 export interface Bond {
   scope: BondScope;
   name: string;
   score: number;
   note: string;
+  type?: string;
+  targetId?: string;
 }
 
 export interface Hero {
@@ -125,8 +131,8 @@ export const HEROES: Hero[] = [
     ],
     bonds: [
       { scope: "guild", name: "The Guild", score: 45, note: "Renewed without a fuss last cycle." },
-      { scope: "hero", name: "Ysolt", score: -72, note: "Blames her for the crypt rout." },
-      { scope: "hero", name: "Pell", score: 58, note: "Drinks with him after every job." },
+      { scope: "hero", name: "Ysolt", targetId: "ysolt", type: "Old grudge", score: -72, note: "Blames her for the crypt rout." },
+      { scope: "hero", name: "Pell", targetId: "pell", type: "Drinking buddy", score: 58, note: "Drinks with him after every job." },
     ],
   },
   {
@@ -151,8 +157,8 @@ export const HEROES: Hero[] = [
     bonds: [
       { scope: "guild", name: "The Guild", score: 20, note: "Loyal while the pay flatters her." },
       { scope: "party", name: "The Iron Vigil", score: 40, note: "Leads them; expects deference." },
-      { scope: "hero", name: "Brok", score: -68, note: "Thinks him a reckless brute." },
-      { scope: "hero", name: "Doran", score: 35, note: "Respects his steadiness." },
+      { scope: "hero", name: "Brok", targetId: "brok", type: "Bitter rival", score: -68, note: "Thinks him a reckless brute." },
+      { scope: "hero", name: "Doran", targetId: "doran", type: "Trusted second", score: 35, note: "Respects his steadiness." },
     ],
   },
   {
@@ -171,7 +177,7 @@ export const HEROES: Hero[] = [
     traits: [],
     bonds: [
       { scope: "guild", name: "The Guild", score: 12, note: "New; still proving herself." },
-      { scope: "hero", name: "Pell", score: 30, note: "He's been showing her the ropes." },
+      { scope: "hero", name: "Pell", targetId: "pell", type: "Mentor", score: 30, note: "He's been showing her the ropes." },
     ],
   },
   {
@@ -191,8 +197,8 @@ export const HEROES: Hero[] = [
     bonds: [
       { scope: "guild", name: "The Guild", score: 66, note: "The steadiest hire on the books." },
       { scope: "party", name: "The Iron Vigil", score: 38, note: "The dependable second." },
-      { scope: "hero", name: "Ysolt", score: 35, note: "Follows her lead." },
-      { scope: "hero", name: "Mira", score: -22, note: "Finds her carelessness grating." },
+      { scope: "hero", name: "Ysolt", targetId: "ysolt", type: "Follows her lead", score: 35, note: "Takes her orders without complaint." },
+      { scope: "hero", name: "Mira", targetId: "mira", type: "Exasperated by", score: -22, note: "Finds her carelessness grating." },
     ],
   },
   {
@@ -215,8 +221,8 @@ export const HEROES: Hero[] = [
     ],
     bonds: [
       { scope: "guild", name: "The Guild", score: 8, note: "Here for the coin, nothing more." },
-      { scope: "hero", name: "Brok", score: 60, note: "His favourite drinking partner." },
-      { scope: "hero", name: "Mira", score: 28, note: "Taken her under his wing." },
+      { scope: "hero", name: "Brok", targetId: "brok", type: "Drinking buddy", score: 60, note: "His favourite drinking partner." },
+      { scope: "hero", name: "Mira", targetId: "mira", type: "Protégé", score: 28, note: "Taken her under his wing." },
     ],
   },
 ];

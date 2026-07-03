@@ -1,33 +1,29 @@
-// HeroCard — the hero detail sheet, reorganised into tabs. A compact header
-// (small static portrait + archetype + status; the hero NAME is the Sheet's own
-// title, not repeated here) sits above a sticky tab strip:
-//   Character · Gear · Bonds · Career · Skills
+// HeroCard — the tabbed hero detail sheet. Compact header (small static portrait
+// + archetype + status; the hero NAME is the Sheet's title) over a sticky tab
+// strip: Character · Gear · Bonds · Career · Skills.
 //
-// Built to the locked DESIGN.md §5 spec:
-//   * Character shows ONLY the 4 real sim attributes (str/dex/sta/per) — "UI-lean"
-//     — as certainty chips (solid = verified, hatched = claimed, plain "?" = rumor;
-//     one visual treatment, no second glyph) plus exactly 3 trait slots. The stat
-//     chip's rounded-PILL "?" stays visually distinct from a trait's DASHED-HEXAGON
-//     "?" socket, even though both now share this tab.
-//   * Bonds render as named-feeling chips over a −100..100 score (relationships.ts),
-//     grouped by target — never a graph/web.
-//   * Career (contracts + ledger) and Skills are honest "coming" stubs — future
-//     slices; they never present unbuilt mechanics as functional.
-//   * Any chip is inspectable: tapping it reveals its effect inline (see inspect.tsx).
+// Interaction: any chip is inspectable — tapping it opens a floating parchment
+// popover ABOVE the chip with its effect (see inspect.tsx). Bonds are grouped
+// into distinct cards — the Guild tie (its own thing, tied to retention §8), the
+// Party (cohesion §6), and other Heroes — the last as one two-line row each with
+// a "Go to" jump to that hero's sheet. DESIGN.md §5 fidelity: the 4 real sim
+// attributes only (UI-lean), certainty in the chip fill, trait sockets vs the
+// rumor pill "?", relationships as chips/rows (never a web).
 
-import { useState, type KeyboardEvent, type ReactNode } from "react";
+import { useState, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import type { Bond, Hero, HeroAttr } from "./mockHeroes";
 import type { GearSlot } from "./mockHeroes";
+import { HEROES } from "./mockHeroes";
 import { HeroSprite } from "./HeroSprite";
 import { bandFor, signedScore } from "./relationships";
-import { InspectChip, InspectDetail } from "./inspect";
+import { InspectChip, InspectPopover, type InspectData } from "./inspect";
 import styles from "./HeroCard.module.css";
 
 type TabKey = "character" | "gear" | "bonds" | "career" | "skills";
+type OpenInspect = (e: MouseEvent<HTMLButtonElement>, id: string, title: string, effect: string) => void;
 
 const CERTAINTY_TAG = { verified: "verified", claimed: "claimed", rumor: "rumor" } as const;
 
-// --- tab strip icons (24×24 inline SVG, currentColor) --------------------------
 const ICONS: Record<TabKey, ReactNode> = {
   character: (
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden>
@@ -77,23 +73,19 @@ const GEAR_SLOTS: { key: GearSlot; label: string }[] = [
   { key: "trinket2", label: "Trinket" },
 ];
 
-const BOND_GROUPS: { scope: Bond["scope"]; heading: string }[] = [
-  { scope: "guild", heading: "To the Guild" },
-  { scope: "party", heading: "To their Party" },
-  { scope: "hero", heading: "To other Heroes" },
-];
-
-export function HeroCard({ hero }: { hero: Hero }) {
+export function HeroCard({ hero, onGoto }: { hero: Hero; onGoto: (id: string) => void }) {
   const [tab, setTab] = useState<TabKey>("character");
-  // One inspector open at a time across the whole sheet; reset on tab change.
-  const [openId, setOpenId] = useState<string | null>(null);
-  const toggle = (id: string) => setOpenId((cur) => (cur === id ? null : id));
+  const [pop, setPop] = useState<InspectData | null>(null);
+
+  const openInspect: OpenInspect = (e, id, title, effect) => {
+    const anchor = e.currentTarget; // capture before the deferred updater (React nulls currentTarget after dispatch)
+    setPop((cur) => (cur?.id === id ? null : { id, anchor, title, effect }));
+  };
   const selectTab = (k: TabKey) => {
     setTab(k);
-    setOpenId(null);
+    setPop(null); // close any popover when switching tabs
   };
 
-  // WAI-ARIA tabs: roving focus with arrow keys / Home / End.
   const onTabKey = (e: KeyboardEvent<HTMLDivElement>) => {
     const i = TABS.findIndex((t) => t.key === tab);
     let next = i;
@@ -144,32 +136,31 @@ export function HeroCard({ hero }: { hero: Hero }) {
       </div>
 
       <div className={styles.panel} role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} tabIndex={0}>
-        {tab === "character" && <CharacterTab hero={hero} openId={openId} toggle={toggle} />}
-        {tab === "gear" && <GearTab hero={hero} openId={openId} toggle={toggle} />}
-        {tab === "bonds" && <BondsTab hero={hero} openId={openId} toggle={toggle} />}
+        {tab === "character" && <CharacterTab hero={hero} pop={pop} openInspect={openInspect} />}
+        {tab === "gear" && <GearTab hero={hero} pop={pop} openInspect={openInspect} />}
+        {tab === "bonds" && <BondsTab hero={hero} pop={pop} openInspect={openInspect} onGoto={onGoto} />}
         {tab === "career" && (
           <ComingSoon title="Contracts &amp; pay" line="Renewal terms, your cut, and the gold ledger arrive with the contracts slice." />
         )}
         {tab === "skills" && <ComingSoon title="Skills" line="Learned skills and specialities are still on the drawing board." />}
       </div>
+
+      <InspectPopover data={pop} onClose={() => setPop(null)} />
     </div>
   );
 }
 
 // --- Character: the 4 real attributes + 3 trait slots --------------------------
-function CharacterTab({ hero, openId, toggle }: TabProps) {
-  const openAttr = hero.attributes.find((a) => openId === `attr:${a.key}`);
-  const openTrait = hero.traits.find((_, i) => openId === `trait:${i}`);
+function CharacterTab({ hero, pop, openInspect }: TabProps) {
   return (
     <>
       <p className={styles.hint}>Tap a chip to see what it does.</p>
 
       <div className={styles.stats}>
         {hero.attributes.map((a) => (
-          <AttrChip key={a.key} attr={a} open={openId === `attr:${a.key}`} onToggle={() => toggle(`attr:${a.key}`)} />
+          <AttrChip key={a.key} attr={a} pop={pop} openInspect={openInspect} />
         ))}
       </div>
-      {openAttr && <InspectDetail title={openAttr.label} effect={openAttr.effect} />}
 
       <p className={styles.legend}>
         <span data-swatch="verified" /> verified
@@ -182,12 +173,13 @@ function CharacterTab({ hero, openId, toggle }: TabProps) {
         {[0, 1, 2].map((i) => {
           const trait = hero.traits[i];
           if (trait) {
+            const id = `trait:${i}`;
             return (
               <InspectChip
                 key={i}
                 className={styles.trait}
-                open={openId === `trait:${i}`}
-                onToggle={() => toggle(`trait:${i}`)}
+                active={pop?.id === id}
+                onClick={(e) => openInspect(e, id, trait.name, trait.effect)}
                 aria-label={`Trait ${trait.name}`}
               >
                 <TraitToken initial={trait.name[0]} />
@@ -195,8 +187,8 @@ function CharacterTab({ hero, openId, toggle }: TabProps) {
               </InspectChip>
             );
           }
-          // Empty trait socket — a DASHED hexagon, deliberately a different shape
-          // from the rounded-pill rumor "?" above (DESIGN.md §4/§5).
+          // Empty trait socket — a DASHED hexagon, a different shape from the
+          // rounded-pill rumor "?" above (DESIGN.md §4/§5).
           return (
             <div key={i} className={styles.trait} role="img" aria-label="Undiscovered trait">
               <TraitSocket />
@@ -205,20 +197,20 @@ function CharacterTab({ hero, openId, toggle }: TabProps) {
           );
         })}
       </div>
-      {openTrait && <InspectDetail title={openTrait.name} effect={openTrait.effect} />}
     </>
   );
 }
 
-function AttrChip({ attr, open, onToggle }: { attr: HeroAttr; open: boolean; onToggle: () => void }) {
+function AttrChip({ attr, pop, openInspect }: { attr: HeroAttr; pop: InspectData | null; openInspect: OpenInspect }) {
+  const id = `attr:${attr.key}`;
   const shown = attr.certainty === "rumor" ? "?" : String(attr.value);
   const spoken = attr.certainty === "rumor" ? "unknown" : String(attr.value);
   return (
     <InspectChip
       className={styles.stat}
       data-certainty={attr.certainty}
-      open={open}
-      onToggle={onToggle}
+      active={pop?.id === id}
+      onClick={(e) => openInspect(e, id, attr.label, attr.effect)}
       aria-label={`${attr.label} ${spoken}, ${CERTAINTY_TAG[attr.certainty]}`}
     >
       <span className={styles.statLabel}>{attr.key}</span>
@@ -231,7 +223,7 @@ function AttrChip({ attr, open, onToggle }: { attr: HeroAttr; open: boolean; onT
 }
 
 // --- Gear: 6 slots -------------------------------------------------------------
-function GearTab({ hero, openId, toggle }: TabProps) {
+function GearTab({ hero, pop, openInspect }: TabProps) {
   return (
     <>
       <p className={styles.hint}>Tap a slot to see what it does.</p>
@@ -248,18 +240,16 @@ function GearTab({ hero, openId, toggle }: TabProps) {
           }
           const id = `gear:${slot.key}`;
           return (
-            <div key={slot.key} className={styles.gearWrap}>
-              <InspectChip
-                className={styles.gearCell}
-                open={openId === id}
-                onToggle={() => toggle(id)}
-                aria-label={`${slot.label}: ${item.name}`}
-              >
-                <span className={styles.gearSlot}>{slot.label}</span>
-                <span className={styles.gearVal}>{item.name}</span>
-              </InspectChip>
-              {openId === id && <InspectDetail title={item.name} effect={item.effect} />}
-            </div>
+            <InspectChip
+              key={slot.key}
+              className={styles.gearCell}
+              active={pop?.id === id}
+              onClick={(e) => openInspect(e, id, item.name, item.effect)}
+              aria-label={`${slot.label}: ${item.name}`}
+            >
+              <span className={styles.gearSlot}>{slot.label}</span>
+              <span className={styles.gearVal}>{item.name}</span>
+            </InspectChip>
           );
         })}
       </div>
@@ -267,52 +257,116 @@ function GearTab({ hero, openId, toggle }: TabProps) {
   );
 }
 
-// --- Bonds: named-feeling chips over a −100..100 score, grouped by target ------
-function BondsTab({ hero, openId, toggle }: TabProps) {
+// --- Bonds: distinct Guild card + Party card + Relations rows ------------------
+function BondsTab({ hero, pop, openInspect, onGoto }: TabProps & { onGoto: (id: string) => void }) {
+  const indexed = hero.bonds.map((b, i) => ({ b, i }));
+  const guild = indexed.find(({ b }) => b.scope === "guild");
+  const party = indexed.filter(({ b }) => b.scope === "party");
+  const heroes = indexed.filter(({ b }) => b.scope === "hero");
+
   return (
     <>
       <p className={styles.hint}>Tap a bond to see the story behind it.</p>
-      {hero.bonds.length === 0 && <p className={styles.relNone}>No known ties yet.</p>}
-      {BOND_GROUPS.map((group) => {
-        const bonds = hero.bonds
-          .map((b, i) => ({ b, i }))
-          .filter(({ b }) => b.scope === group.scope);
-        if (bonds.length === 0) return null;
-        return (
-          <div key={group.scope} className={styles.bondGroup}>
-            <h4 className={styles.groupTitle}>{group.heading}</h4>
-            <div className={styles.bonds}>
-              {bonds.map(({ b, i }) => (
-                <BondChip key={i} bond={b} open={openId === `bond:${i}`} onToggle={() => toggle(`bond:${i}`)} />
-              ))}
-            </div>
-            {bonds.map(
-              ({ b, i }) =>
-                openId === `bond:${i}` && <InspectDetail key={`d${i}`} title={`${b.name} · ${bandFor(b.score).feeling}`} effect={b.note} />,
-            )}
+
+      {guild && (
+        <section className={styles.guildCard}>
+          <div className={styles.guildHead}>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden>
+              <path d="M12 3l7 3v6c0 4-3 6.6-7 8-4-1.4-7-4-7-8V6l7-3Z" stroke="var(--c-gold)" strokeWidth="1.5" strokeLinejoin="round" />
+            </svg>
+            To the Guild
           </div>
-        );
-      })}
+          <BondLine bond={guild.b} id={`bond:${guild.i}`} pop={pop} openInspect={openInspect} />
+        </section>
+      )}
+
+      {party.length > 0 && (
+        <section className={styles.bondCard}>
+          <h4 className={styles.groupTitle}>Their Party</h4>
+          {party.map(({ b, i }) => (
+            <BondLine key={i} bond={b} id={`bond:${i}`} pop={pop} openInspect={openInspect} />
+          ))}
+        </section>
+      )}
+
+      <section className={styles.bondCard}>
+        <h4 className={styles.groupTitle}>Other Heroes</h4>
+        {heroes.length === 0 && <p className={styles.relNone}>No known ties to other heroes yet.</p>}
+        <ul className={styles.relList}>
+          {heroes.map(({ b, i }) => (
+            <RelationRow key={i} bond={b} id={`bond:${i}`} pop={pop} openInspect={openInspect} onGoto={onGoto} />
+          ))}
+        </ul>
+      </section>
     </>
   );
 }
 
-function BondChip({ bond, open, onToggle }: { bond: Bond; open: boolean; onToggle: () => void }) {
+/** A single-line bond (guild / party): feeling + score, tap for the note. */
+function BondLine({ bond, id, pop, openInspect }: { bond: Bond; id: string; pop: InspectData | null; openInspect: OpenInspect }) {
   const band = bandFor(bond.score);
+  const label = bond.type ?? band.feeling;
   return (
     <InspectChip
-      className={styles.bondChip}
+      className={styles.bondLine}
       data-valence={band.valence}
-      open={open}
-      onToggle={onToggle}
-      aria-label={`${bond.name}: ${band.feeling}, ${signedScore(bond.score)}`}
+      active={pop?.id === id}
+      onClick={(e) => openInspect(e, id, `${bond.name} · ${band.feeling}`, bond.note)}
+      aria-label={`${bond.name}: ${label}, ${signedScore(bond.score)}`}
     >
-      <span className={styles.bondName}>{bond.name}</span>
-      <span className={styles.bondFeeling}>{band.feeling}</span>
+      <span className={styles.bondLabel}>{label}</span>
       <span className={styles.bondScore} aria-hidden>
         {signedScore(bond.score)}
       </span>
     </InspectChip>
+  );
+}
+
+/** A hero↔hero relation as a two-line row: name + score + Go-to; archetype · variant. */
+function RelationRow({
+  bond,
+  id,
+  pop,
+  openInspect,
+  onGoto,
+}: {
+  bond: Bond;
+  id: string;
+  pop: InspectData | null;
+  openInspect: OpenInspect;
+  onGoto: (id: string) => void;
+}) {
+  const band = bandFor(bond.score);
+  const target = bond.targetId ? HEROES.find((h) => h.id === bond.targetId) : undefined;
+  const fullName = target?.name ?? bond.name;
+  const archetype = target?.archetype;
+  const variant = bond.type ?? band.feeling;
+  return (
+    <li className={styles.relRow} data-valence={band.valence}>
+      <InspectChip
+        className={styles.relMain}
+        active={pop?.id === id}
+        onClick={(e) => openInspect(e, id, `${fullName} · ${band.feeling}`, bond.note)}
+        aria-label={`${fullName}, ${variant}, ${signedScore(bond.score)}. Story.`}
+      >
+        <span className={styles.relLine1}>
+          <span className={styles.relName}>{fullName}</span>
+          <span className={styles.relScore}>{signedScore(bond.score)}</span>
+        </span>
+        <span className={styles.relLine2}>
+          {archetype && <span className={styles.relArch}>{archetype}</span>}
+          {archetype && " · "}
+          <span className={styles.relVariant}>{variant}</span>
+        </span>
+      </InspectChip>
+      {/* "Go to" only when the target resolves to a real hero — a bad id must
+          not silently close the sheet. */}
+      {target && (
+        <button type="button" className={styles.relGo} onClick={() => onGoto(target.id)} aria-label={`Go to ${fullName}`}>
+          Go ›
+        </button>
+      )}
+    </li>
   );
 }
 
@@ -355,6 +409,6 @@ function TraitSocket() {
 
 interface TabProps {
   hero: Hero;
-  openId: string | null;
-  toggle: (id: string) => void;
+  pop: InspectData | null;
+  openInspect: OpenInspect;
 }

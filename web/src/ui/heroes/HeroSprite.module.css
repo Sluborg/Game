@@ -20,4 +20,7 @@
 .sprite {
   position: absolute;
   inset: 0;
+  /* LPC frames carry more empty headroom than legroom, so the figure sits low;
+     nudge it up to sit vertically centered within the frame (the frame clips). */
+  transform: translateY(-7%);
 }
