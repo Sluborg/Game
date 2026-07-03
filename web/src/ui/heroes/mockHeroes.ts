@@ -118,7 +118,8 @@ export const HEROES: Hero[] = [
     archetype: "Sellsword",
     presetKey: "knight",
     layers: layersFor("knight"),
-    status: { kind: "quest", text: "On quest: Ruins" },
+    // Leads The Free Blades; between contracts at the hall (matches mockParties.ts).
+    status: { kind: "guild", text: "At Guild Hall" },
     attributes: attrs([15, "verified"], [9, "claimed"], [13, "verified"], [7, "rumor"]),
     equipment: {
       armor: { name: "Steel Plate", effect: "Heavy mitigation; the sim's best armour tier." },
@@ -141,7 +142,9 @@ export const HEROES: Hero[] = [
     archetype: "Champion",
     presetKey: "champion",
     layers: layersFor("champion"),
-    status: { kind: "guild", text: "At Guild Hall" },
+    // Leads The Iron Vigil into the Sunken Ruins — status matches the party's
+    // reported location (mockParties.ts) so the sheet never contradicts the card.
+    status: { kind: "quest", text: "On quest: Sunken Ruins" },
     attributes: attrs([16, "verified"], [12, "verified"], [14, "verified"], [11, "claimed"]),
     equipment: {
       head: { name: "Gilded Helm", effect: "Ornate; a proud hero's statement piece." },
@@ -186,7 +189,8 @@ export const HEROES: Hero[] = [
     archetype: "Hedge Knight",
     presetKey: "knight",
     layers: layersFor("knight"),
-    status: { kind: "quest", text: "On quest: Ruins" },
+    // The Iron Vigil's dependable second — same quest/location as Ysolt.
+    status: { kind: "quest", text: "On quest: Sunken Ruins" },
     attributes: attrs([12, "claimed"], [8, "claimed"], [10, "verified"], [9, "rumor"]),
     equipment: {
       armor: { name: "Mail Hauberk", effect: "Mid-tier mitigation." },

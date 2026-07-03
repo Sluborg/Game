@@ -182,6 +182,18 @@ reason to *want* a better seat.
 - **Quest choice factors:** type, personal preference, pay (bounty), difficulty, and the boss's
   weighted vote.
 
+> **UI note — the Parties-primary Heroes view (scaffolding).** The roster leads with parties (each
+> a bordered card wrapping its members, boss marked), then heroes not yet in one. Card values are
+> the guild-master's **estimate**, not ground truth (§4/§5), and map thus: **Fame** → a hero's
+> battle-verified public track record (§5) that the rival bids against (§7); **Cohesion** → the §6
+> gets-along modifier; **Morale** → §8 retention, also surfaced *per member* (a mood cue from the
+> to-guild bond) so one at-risk hero isn't hidden by the party average; **Rating** → a §5
+> **certainty-weighted** aggregate of members' CVs (verified counts fully, claimed is discounted,
+> rumor is excluded), shown as an estimate. The location/activity line is an observed report and the plan is
+> the party's own **intent** (you observe, you don't command). The disabled **"Sway the boss"**
+> affordance stands in for the Slice 4–5 party lever (influence a party *through its boss*) without
+> a live mechanic. Values, party membership, and the 0–5 rating cap are tunable mock defaults.
+
 ## 7. The rival guild(s) — a mirror of you
 
 Start with **one rival, visible early a few nodes away**; more come with later maps/levels. The
