@@ -10,6 +10,23 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-03 - Hero sheet refinement: Codex fix (in-modal inspect a11y)
+- Gate: codex-fixed
+- Branch: `claude/ui-foundations-guild-master-x9v3l4` → PR #27 into `dev`
+- Codex finding (P2, the only one): the inspect popover is portalled to `document.body`, OUTSIDE
+  the `aria-modal` Sheet subtree, so a screen reader inside the modal can't reach the effect text —
+  the `aria-live` I'd added to the portalled box doesn't help across the modal boundary. Fixed:
+  keep the visual popover portalled (for layout) but mark it `aria-hidden`, and mirror its
+  title+effect in an IN-modal visually-hidden `aria-live="polite"` region (`.srOnly`) rendered
+  inside HeroCard, so activating a chip announces the effect within the modal without a double read.
+- Note: Codex DID run this time on a bot-triggered `@codex review` (after an initial "create an
+  environment" reply) — so the CLAUDE.md §30 self-trigger rule works; Stefan can still set up a
+  Codex environment if he wants it more reliable.
+- Review #2 on the delta (self, a11y markup + one CSS class): no new blockers.
+- Verified: build green; headless confirms the in-modal live region holds "Strength. Raises hit
+  damage and max HP." inside the dialog while the portalled popover is aria-hidden.
+- Open questions: none. Next: awaiting merge decision (no self-merge).
+
 ## 2026-07-03 - Hero sheet refinement (popover / bonds / go-to): PR opened
 - Gate: PR
 - Branch: `claude/ui-foundations-guild-master-x9v3l4` (restarted off `dev` after #26 merged) → new PR into `dev`

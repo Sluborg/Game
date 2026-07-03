@@ -145,6 +145,13 @@ export function HeroCard({ hero, onGoto }: { hero: Hero; onGoto: (id: string) =>
         {tab === "skills" && <ComingSoon title="Skills" line="Learned skills and specialities are still on the drawing board." />}
       </div>
 
+      {/* The visual popover is portalled to <body>, OUTSIDE this aria-modal sheet —
+          so it's invisible to a screen reader inside the modal. Mirror its text in
+          an IN-modal polite live region so activating a chip announces the effect
+          (Codex P2). The portalled box itself is aria-hidden to avoid a double read. */}
+      <span className={styles.srOnly} aria-live="polite">
+        {pop ? `${pop.title}. ${pop.effect}` : ""}
+      </span>
       <InspectPopover data={pop} onClose={() => setPop(null)} />
     </div>
   );

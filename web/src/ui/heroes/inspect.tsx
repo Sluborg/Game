@@ -102,7 +102,7 @@ function PopoverBox({ anchor, title, effect }: { anchor: HTMLElement; title: str
   }, [anchor]);
 
   return (
-    <div ref={ref} className={styles.popover} data-place={pos.place} style={{ top: pos.top, left: pos.left }} role="note" aria-live="polite">
+    <div ref={ref} className={styles.popover} data-place={pos.place} style={{ top: pos.top, left: pos.left }} role="note" aria-hidden>
       <span className={styles.popCaret} data-place={pos.place} style={{ left: pos.caretX }} aria-hidden />
       <span className={styles.popTitle}>{title}</span>
       <span className={styles.popEffect}>{effect}</span>
