@@ -11,7 +11,14 @@ Format per entry:
 - Open questions:
 
 ## 2026-07-03 - Part B: Parties-primary Heroes view
-- Gate: build (Review #1 + Review #2 cleared; PR next)
+- Gate: codex-fixed → awaiting merge decision. PR #29 into `dev`.
+- Codex (P2 on `7b64daf`, the only finding): Brok & Pell render inside "The Free Blades" but had no
+  `scope:"party"` bond, so `BondsTab` (which builds the "Their Party" card from party-scope bonds)
+  showed no party card when you tapped them — inconsistent with Iron Vigil. Fixed by adding matching
+  party bonds in `mockHeroes.ts` (Brok +42 boss, Pell +26), mirroring Ysolt/Doran — NOT by coupling
+  the untouched HeroCard to PARTIES. Re-reviewed the 2-line delta (self, proportionate): valid Bond
+  shape, in-range valence-positive scores, no double party membership; no new blockers. Verified
+  headless @430px: Brok's Bonds tab now shows the "Their Party" card. Build + 42 tests green.
 - Branch: `claude/parties-primary-heroes-view-glyo4q` (restarted off `dev` after Part A / #28 merged)
 - Scope (additive): NEW `web/src/ui/heroes/mockParties.ts`, `PartyCard.tsx`, `PartyCard.module.css`,
   `mockParties.test.ts`; MODIFIED `HeroesScreen.tsx`, `HeroesScreen.module.css`, `mockHeroes.ts`

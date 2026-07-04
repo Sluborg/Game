@@ -132,6 +132,7 @@ export const HEROES: Hero[] = [
     ],
     bonds: [
       { scope: "guild", name: "The Guild", score: 45, note: "Renewed without a fuss last cycle." },
+      { scope: "party", name: "The Free Blades", score: 42, note: "Leads the pair; content while the coin's easy." },
       { scope: "hero", name: "Ysolt", targetId: "ysolt", type: "Old grudge", score: -72, note: "Blames her for the crypt rout." },
       { scope: "hero", name: "Pell", targetId: "pell", type: "Drinking buddy", score: 58, note: "Drinks with him after every job." },
     ],
@@ -225,6 +226,7 @@ export const HEROES: Hero[] = [
     ],
     bonds: [
       { scope: "guild", name: "The Guild", score: 8, note: "Here for the coin, nothing more." },
+      { scope: "party", name: "The Free Blades", score: 26, note: "Tags along for Brok's company and an even split." },
       { scope: "hero", name: "Brok", targetId: "brok", type: "Drinking buddy", score: 60, note: "His favourite drinking partner." },
       { scope: "hero", name: "Mira", targetId: "mira", type: "Protégé", score: 28, note: "Taken her under his wing." },
     ],
