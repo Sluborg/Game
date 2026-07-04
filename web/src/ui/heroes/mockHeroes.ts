@@ -118,7 +118,8 @@ export const HEROES: Hero[] = [
     archetype: "Sellsword",
     presetKey: "knight",
     layers: layersFor("knight"),
-    status: { kind: "quest", text: "On quest: Ruins" },
+    // Leads The Free Blades; between contracts at the hall (matches mockParties.ts).
+    status: { kind: "guild", text: "At Guild Hall" },
     attributes: attrs([15, "verified"], [9, "claimed"], [13, "verified"], [7, "rumor"]),
     equipment: {
       armor: { name: "Steel Plate", effect: "Heavy mitigation; the sim's best armour tier." },
@@ -131,6 +132,7 @@ export const HEROES: Hero[] = [
     ],
     bonds: [
       { scope: "guild", name: "The Guild", score: 45, note: "Renewed without a fuss last cycle." },
+      { scope: "party", name: "The Free Blades", score: 42, note: "Leads the pair; content while the coin's easy." },
       { scope: "hero", name: "Ysolt", targetId: "ysolt", type: "Old grudge", score: -72, note: "Blames her for the crypt rout." },
       { scope: "hero", name: "Pell", targetId: "pell", type: "Drinking buddy", score: 58, note: "Drinks with him after every job." },
     ],
@@ -141,7 +143,9 @@ export const HEROES: Hero[] = [
     archetype: "Champion",
     presetKey: "champion",
     layers: layersFor("champion"),
-    status: { kind: "guild", text: "At Guild Hall" },
+    // Leads The Iron Vigil into the Sunken Ruins — status matches the party's
+    // reported location (mockParties.ts) so the sheet never contradicts the card.
+    status: { kind: "quest", text: "On quest: Sunken Ruins" },
     attributes: attrs([16, "verified"], [12, "verified"], [14, "verified"], [11, "claimed"]),
     equipment: {
       head: { name: "Gilded Helm", effect: "Ornate; a proud hero's statement piece." },
@@ -186,7 +190,8 @@ export const HEROES: Hero[] = [
     archetype: "Hedge Knight",
     presetKey: "knight",
     layers: layersFor("knight"),
-    status: { kind: "quest", text: "On quest: Ruins" },
+    // The Iron Vigil's dependable second — same quest/location as Ysolt.
+    status: { kind: "quest", text: "On quest: Sunken Ruins" },
     attributes: attrs([12, "claimed"], [8, "claimed"], [10, "verified"], [9, "rumor"]),
     equipment: {
       armor: { name: "Mail Hauberk", effect: "Mid-tier mitigation." },
@@ -221,6 +226,7 @@ export const HEROES: Hero[] = [
     ],
     bonds: [
       { scope: "guild", name: "The Guild", score: 8, note: "Here for the coin, nothing more." },
+      { scope: "party", name: "The Free Blades", score: 26, note: "Tags along for Brok's company and an even split." },
       { scope: "hero", name: "Brok", targetId: "brok", type: "Drinking buddy", score: 60, note: "His favourite drinking partner." },
       { scope: "hero", name: "Mira", targetId: "mira", type: "Protégé", score: 28, note: "Taken her under his wing." },
     ],

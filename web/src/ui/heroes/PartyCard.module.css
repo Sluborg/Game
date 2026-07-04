@@ -1,0 +1,256 @@
+/* A party card: the roster's bordered "row" treatment expanded to WRAP the whole
+   party. Gold-tinted border so it reads as the primary unit; members sit inside. */
+.party {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  border: 1px solid var(--stroke-gold);
+  background: linear-gradient(160deg, rgba(106, 47, 191, 0.18), var(--surface-1));
+}
+
+/* --- Header: name + observed where/what ----------------------------------- */
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--c-gold);
+}
+.where {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-strong);
+}
+.where span {
+  min-width: 0;
+}
+.lineIcon {
+  flex: 0 0 auto;
+  color: var(--text-dim);
+  transform: translateY(1px);
+}
+
+/* --- 2×2 value grid: Fame · Cohesion · Morale · Rating -------------------- */
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--stroke-soft);
+}
+.statTop {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-dim);
+}
+.statIcon {
+  flex: 0 0 auto;
+  color: var(--c-gold-light);
+}
+.statLabel {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.statVal {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text-strong);
+  line-height: 1;
+}
+.ratingMax {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-dim);
+}
+.ratingHint {
+  font-size: 9.5px;
+  color: var(--text-dim);
+  font-style: italic;
+}
+.meter {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--hp-track);
+  overflow: hidden;
+}
+.meterFill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--c-gold-dark), var(--c-gold));
+}
+.estimate {
+  margin: -2px 0 0;
+  font-size: 10.5px;
+  font-style: italic;
+  color: var(--text-dim);
+}
+
+/* --- Plan: the party's own next-turn intent ------------------------------- */
+.plan {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  border: 1px dashed var(--stroke-soft);
+  font-size: 12.5px;
+  color: var(--text-strong);
+}
+.plan span {
+  min-width: 0;
+}
+.planLead {
+  color: var(--c-gold-light);
+  font-family: var(--font-display);
+}
+
+/* --- Members inside the card ---------------------------------------------- */
+.members {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.member {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 6px var(--sp-2);
+  border-radius: var(--r-sm);
+  background: var(--surface-1);
+  border: 1px solid var(--stroke-soft);
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--t-fast) var(--ease-out), filter var(--t-fast) var(--ease-out);
+}
+.member:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+.member:active {
+  transform: translateY(0);
+  filter: brightness(0.94);
+}
+.member:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--c-gold-light);
+}
+.memberText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.memberName {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.crown {
+  flex: 0 0 auto;
+}
+.memberArch {
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+.memberMeta {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.memberRating {
+  font-size: 12px;
+  color: var(--c-gold-light);
+  white-space: nowrap;
+}
+/* A dark ring separates the dot (esp. the amber/unsettled state) from the gold
+   rating star beside it. State is also spoken in the row's accessible name. */
+.mood {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  box-shadow: 0 0 0 1.5px var(--surface-1);
+  outline: 1px solid rgba(0, 0, 0, 0.35);
+}
+.mood[data-valence="positive"] {
+  background: var(--c-emerald);
+}
+.mood[data-valence="neutral"] {
+  background: var(--c-ember);
+}
+.mood[data-valence="negative"] {
+  background: var(--c-blood);
+}
+.chev {
+  flex: 0 0 auto;
+  font-size: 22px;
+  color: var(--text-dim);
+  padding: 0 2px;
+}
+
+/* --- Disabled "coming" lever ---------------------------------------------- */
+.actions {
+  display: flex;
+}
+.sway {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: var(--r-pill);
+  border: 1px dashed var(--stroke-soft);
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  cursor: not-allowed;
+}
+.soon {
+  font-size: 8px;
+  line-height: 1;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--surface-0);
+  background: var(--c-gold-dark);
+  padding: 2px 4px;
+  border-radius: 3px;
+}

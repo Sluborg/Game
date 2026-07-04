@@ -10,8 +10,53 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-03 - Part B: Parties-primary Heroes view
+- Gate: codex-fixed → awaiting merge decision. PR #29 into `dev`.
+- Codex (P2 on `7b64daf`, the only finding): Brok & Pell render inside "The Free Blades" but had no
+  `scope:"party"` bond, so `BondsTab` (which builds the "Their Party" card from party-scope bonds)
+  showed no party card when you tapped them — inconsistent with Iron Vigil. Fixed by adding matching
+  party bonds in `mockHeroes.ts` (Brok +42 boss, Pell +26), mirroring Ysolt/Doran — NOT by coupling
+  the untouched HeroCard to PARTIES. Re-reviewed the 2-line delta (self, proportionate): valid Bond
+  shape, in-range valence-positive scores, no double party membership; no new blockers. Verified
+  headless @430px: Brok's Bonds tab now shows the "Their Party" card. Build + 42 tests green.
+- Branch: `claude/parties-primary-heroes-view-glyo4q` (restarted off `dev` after Part A / #28 merged)
+- Scope (additive): NEW `web/src/ui/heroes/mockParties.ts`, `PartyCard.tsx`, `PartyCard.module.css`,
+  `mockParties.test.ts`; MODIFIED `HeroesScreen.tsx`, `HeroesScreen.module.css`, `mockHeroes.ts`
+  (status reconcile only), `docs/DESIGN.md` (§6 note). Combat core + art pipeline + HeroCard/inspect
+  untouched (the existing hero Sheet is reused as-is).
+- What it does: the roster now leads with PARTIES (§6) — 2 mock parties, each a bordered card that
+  WRAPS its members: name, an observed "In {location} · {activity}" line, a 2×2 value grid
+  (Fame/Cohesion/Morale 0–100 meters + a Rating), a "Guild estimate" caption, a "Plans to {…}"
+  intent line, members inside (boss-first + crown, ★rating, per-member mood dot), and a DISABLED
+  "Sway the boss" (soon) lever. Then a "Without a party" section (Mira, solo). Tapping any hero
+  opens the existing tabbed Sheet. Mock: Iron Vigil = Ysolt(boss)+Doran; Free Blades = Brok+Pell;
+  solo Mira. (5 heroes → 2×2-person parties + 1 solo; "a couple of solo" approximated to one to
+  reuse all five bond-consistently — tunable.)
+- DESIGN mapping: Fame→§5/§7 track record, Cohesion→§6, Morale→§8 (also per-member so an at-risk
+  hero like Pell isn't hidden by the average), Rating→§5 certainty-WEIGHTED CV aggregate.
+- Review #1 (4-persona, PLAN): many blockers, all folded before build — certainty laundering of the
+  rating (exclude rumor + estimate framing), per-hero retention hidden by a party mean (per-member
+  mood dot), omniscient "plan"/location (reframed as the party's own intent + observed report),
+  wrong "Influence" lever (→ "Sway the boss", §6), SOLO must subtract boss∪members + NaN/id guards,
+  4-value legibility + label confusion + boss★ collision (2×2 + icons + crown, renamed
+  Cohesion/Morale). Reconciled mock hero statuses so members agree with the party line.
+- Review #2 (4-persona, DIFF): 1 blocker fixed — (Designer) the rating excluded rumor but folded
+  CLAIMED stats at full weight and called them "trusted", contradicting §5 → made it a certainty-
+  WEIGHTED mean (verified ×1, claimed ×0.5, rumor excluded), clamped 0–5, relabelled
+  "certainty-weighted CVs", and corrected the §6 note + §5/§7 citations. Engineer/Adversary/
+  Player-exp: no blockers. Folded non-blockers: meter value clamp, amber mood-dot ring/gap vs the
+  star, cohesion-comment scope. Documented (non-blocking): mood colour cue is also in the accessible
+  name (colourblind text-cue = future polish), boss∈members enforced by test not runtime.
+- Verified: `tsc -b && vite build` green (93 modules); 42 vitest pass (6 new mockParties guards incl.
+  the §5-weighting test); headless Chromium @430px — 2 party cards, header "2 parties · 5 heroes",
+  boss crown, weighted ratings (Ysolt 3.8 / Doran 2.8 / Brok 3.6 / Pell 2.4), Pell amber "unsettled"
+  dot, disabled "Sway the boss", Mira in "Without a party", NO h-overflow, member+solo taps open the
+  correct Sheet, no page errors. Screenshots `docs/screenshots/partB-*`.
+- Open questions: solo count (1 vs "a couple") is the 5-hero-reuse constraint; party values are
+  tunable mock defaults. Next: PR into `dev` → @codex → merge gate.
+
 ## 2026-07-03 - Part A: hero-sheet interaction fixes
-- Gate: build (Review #1 + Review #2 cleared; PR next)
+- Gate: merged — PR #28 into `dev` (Codex reviewed `ffedb3c`, no issues).
 - Branch: `claude/parties-primary-heroes-view-glyo4q` (off `dev`)
 - Scope (additive): `web/src/ui/heroes/inspect.tsx`, `HeroCard.tsx`, `HeroCard.module.css`,
   `docs/DESIGN.md` (one UI-principle note). No combat core / art pipeline touched.
