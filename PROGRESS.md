@@ -11,7 +11,8 @@ Format per entry:
 - Open questions:
 
 ## 2026-07-06 - §50 merged-gate backfill rule
-- Gate: PR opened — **PR #31 into `dev`**, `@codex review` posted; awaiting Codex
+- Gate: codex-fixed → awaiting merge decision. **PR #31 into `dev`** (Codex on `28884e4`: no
+  findings — nothing to fix)
 - Branch: `claude/economy-quest-fees-jto58v` (designated session branch, restarted from
   `origin/dev` at `d70b6ee` after PR #30 merged) → PR #31 into `dev` (docs-only; no PR-level CI
   on this repo)
