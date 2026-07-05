@@ -10,6 +10,57 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-05 - Economy: the board, the cut, the clock — plan + build
+- Gate: codex-fixed → awaiting merge decision. **PR #30 into `dev`**.
+- Codex (P1 on `2001a87`, the only finding): quest-cycle downtime broke the road floor — with
+  acceptance at end-day N, payout at N+1, and replacement letters only after *completion*, a
+  cycle took 2 days, halving throughput (+6g/day floor was really ~−16g/day). Fixed as Codex
+  suggested: a quest's replacement letter now triggers when the quest is **taken** (leaves the
+  board), so a replacement is postable while the party is out and — payouts preceding acceptance
+  rolls in the tick order — the returning party re-takes the same night. Back-to-back workdays;
+  the stated EVs hold. Re-ran Review #2 on the one-bullet delta (self, proportionate): tick
+  order, take-beat timing, failure identity all consistent; letter buildup bounded by the
+  two-failure withdrawal; no new blockers.
+- Note: no PR-level CI on this repo (deploy.yml + android-apk.yml trigger on push to `main`/`dev`
+  only); docs-only diff, nothing to build.
+- Branch: `claude/economy-quest-fees-jto58v` → PR into `dev` (docs-only)
+- Scope: fold the Slice 1 economy decided in the design chat into `docs/DESIGN.md`. Decisions
+  (Stefan, 2026-07-05): **posting fee is dead** — quests come to the guild as letters, the board
+  is free, and the **player-set cut** (base 30%, −10/−5/+5/+10 → 20–40%) is the priced decision;
+  gold scale 1,000g start; two quests (road job 200g = survival, Ruins 600g = growth); failure
+  consequences phased (Slice 1: story-based quest reaction; slice 3: fame/relation; slice 5:
+  influence; boss-tier: permadeath — locked note); givers-come-to-guild framing.
+- Files touched: `docs/DESIGN.md` (new §12 economy section; reconciling edits to §3 lever 1, §5
+  asking-price line, §8 cash-in-detail, §9 economy para, Ideas parked ×2, Next-up Slice 1),
+  `PROGRESS.md`.
+- Review #1 (4-persona, on the PLAN): 7 merged blockers, all fixed in the spec before building —
+  (1) acceptance model pinned (hidden per-party ask + daily noise, one roll per end-day, anchors
+  at 20/30/40% so no cut dominates blind); (2) §3/§5 "ask is known" reconciled (hiring ask public,
+  quest-split appetite hidden); (3) Slice 1 knowledge source named (observation brackets + free
+  report lines — no dependency on slice 2/5); (4) quest refresh cadence defined (next-morning
+  letter, road-tier always on offer = unstick floor at base cut); (5) resolution model specced
+  (one fixed party of 3, 1-day quests, better-share stub); (6) loan de-ratcheted (flat 5%/day on
+  principal, one per run, worked comeback math); (7) visibility mandated (itemized end-day ledger
+  + runway line; rot/no-takers days always produce mail). Non-blocking folded: tick order,
+  Ruins-specific squeeze label, failure pay-bump bounds, cut revisable once/end-day, curation
+  honestly labeled a Slice 1 no-decision.
+- Review #2 (4-persona, on the DIFF): 6 blockers, all fixed — (1) road job success ~85% now in
+  the number sheet (3 personas caught the omission); (2) end-day tick order completed (cut
+  revisions → payouts → acceptance rolls → trickle → upkeep → interest → force-repay → loan →
+  insolvency check) and take/resolve/payout timing pinned (accept night N, out day N+1, payout
+  night N+1 — a take is its own mail beat); (3) appetite chip reworded eager/might-pass/won't-bite
+  (QA-UX: "risky" collided with quest danger; no third "?" marker); (4) "no setting dominates
+  blind" claim was false on our own anchors — reworded to "blind play is base-optimal by design;
+  deviation pays only with knowledge" (that IS the R2 shape); (5) failed-quest identity pinned
+  (same letter returns, failure count + pay bump persist, expiry resets); (6) ask band ±5
+  cut-points per run + ±2 daily noise straw numbers added. Non-blocking folded: squeeze labeled
+  per-completed-Ruins-day gross, "roughly two" successes clear debt, §6 unstick → §12 pointer,
+  contract cut = hero default/floor with posting buttons surviving, free report lines capped
+  occasional, slice-2 residual ~4-point band to sell, strict <0 boundary + force-repay wording,
+  Slice 1 treasury chip (gold + runway) pinned on header, rot day = idle net not a fee, positive
+  runway wording.
+- Open questions: none blocking; all numbers are straw defaults (ratios are the design).
+
 ## 2026-07-03 - Part B: Parties-primary Heroes view
 - Gate: codex-fixed → awaiting merge decision. PR #29 into `dev`.
 - Codex (P2 on `7b64daf`, the only finding): Brok & Pell render inside "The Free Blades" but had no
