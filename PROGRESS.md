@@ -11,7 +11,16 @@ Format per entry:
 - Open questions:
 
 ## 2026-07-05 - Economy: the board, the cut, the clock — plan + build
-- Gate: PR opened — **PR #30 into `dev`**, `@codex review` posted; awaiting Codex
+- Gate: codex-fixed → awaiting merge decision. **PR #30 into `dev`**.
+- Codex (P1 on `2001a87`, the only finding): quest-cycle downtime broke the road floor — with
+  acceptance at end-day N, payout at N+1, and replacement letters only after *completion*, a
+  cycle took 2 days, halving throughput (+6g/day floor was really ~−16g/day). Fixed as Codex
+  suggested: a quest's replacement letter now triggers when the quest is **taken** (leaves the
+  board), so a replacement is postable while the party is out and — payouts preceding acceptance
+  rolls in the tick order — the returning party re-takes the same night. Back-to-back workdays;
+  the stated EVs hold. Re-ran Review #2 on the one-bullet delta (self, proportionate): tick
+  order, take-beat timing, failure identity all consistent; letter buildup bounded by the
+  two-failure withdrawal; no new blockers.
 - Note: no PR-level CI on this repo (deploy.yml + android-apk.yml trigger on push to `main`/`dev`
   only); docs-only diff, nothing to build.
 - Branch: `claude/economy-quest-fees-jto58v` → PR into `dev` (docs-only)

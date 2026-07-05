@@ -435,11 +435,15 @@ sell.
   is the party's own, computed on its hidden ask and odds, never shown on the board (in practice
   it prefers the Ruins whenever it accepts both; a stub for slice 4's quest-choice factors).
 - A posting **expires after ~3 days** untaken (the giver withdraws it).
-- **Refresh.** A **done or rotted** quest is replaced by a fresh letter the next morning. A
-  **failed** quest returns next morning as the *same* letter — its failure count and any pay
-  bump persist; only the ~3-day expiry clock resets. A **road-tier job is always on offer**;
-  that guarantee, at the **base 30% cut**, is the §6 unstick floor — dropping the road job to
-  20% runs negative and is a choice, not the safety net.
+- **Refresh.** A quest leaves the board the moment it is **taken** (or when it **rots**), and a
+  fresh letter of the same tier arrives the next morning — so a replacement is postable while
+  the party is still out, and because payouts precede acceptance rolls in the tick order below,
+  a returning party can take the new job that same night: back-to-back workdays, no forced idle
+  day (the road-only floor's +6g/day depends on this). A **failed** quest's letter also returns
+  the next morning as the *same* quest — its failure count and any pay bump persist; only the
+  ~3-day expiry clock resets. A **road-tier job is always on offer**; that guarantee, at the
+  **base 30% cut**, is the §6 unstick floor — dropping the road job to 20% runs negative and is
+  a choice, not the safety net.
 - **End-day tick order:** cut revisions apply → outcomes & payouts for the party that was out →
   acceptance rolls for board postings → passive trickle → upkeep → loan interest → forced
   auto-repay → loan disbursement (a fresh loan clears that day's insolvency) → insolvency check.
