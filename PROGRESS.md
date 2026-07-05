@@ -11,7 +11,7 @@ Format per entry:
 - Open questions:
 
 ## 2026-07-05 - Economy: the board, the cut, the clock — plan + build
-- Gate: plan done → Review #1 done → build done (Review #2 on the diff next, then PR)
+- Gate: plan done → Review #1 done → build done → Review #2 done (PR next)
 - Branch: `claude/economy-quest-fees-jto58v` → PR into `dev` (docs-only)
 - Scope: fold the Slice 1 economy decided in the design chat into `docs/DESIGN.md`. Decisions
   (Stefan, 2026-07-05): **posting fee is dead** — quests come to the guild as letters, the board
@@ -33,6 +33,21 @@ Format per entry:
   + runway line; rot/no-takers days always produce mail). Non-blocking folded: tick order,
   Ruins-specific squeeze label, failure pay-bump bounds, cut revisable once/end-day, curation
   honestly labeled a Slice 1 no-decision.
+- Review #2 (4-persona, on the DIFF): 6 blockers, all fixed — (1) road job success ~85% now in
+  the number sheet (3 personas caught the omission); (2) end-day tick order completed (cut
+  revisions → payouts → acceptance rolls → trickle → upkeep → interest → force-repay → loan →
+  insolvency check) and take/resolve/payout timing pinned (accept night N, out day N+1, payout
+  night N+1 — a take is its own mail beat); (3) appetite chip reworded eager/might-pass/won't-bite
+  (QA-UX: "risky" collided with quest danger; no third "?" marker); (4) "no setting dominates
+  blind" claim was false on our own anchors — reworded to "blind play is base-optimal by design;
+  deviation pays only with knowledge" (that IS the R2 shape); (5) failed-quest identity pinned
+  (same letter returns, failure count + pay bump persist, expiry resets); (6) ask band ±5
+  cut-points per run + ±2 daily noise straw numbers added. Non-blocking folded: squeeze labeled
+  per-completed-Ruins-day gross, "roughly two" successes clear debt, §6 unstick → §12 pointer,
+  contract cut = hero default/floor with posting buttons surviving, free report lines capped
+  occasional, slice-2 residual ~4-point band to sell, strict <0 boundary + force-repay wording,
+  Slice 1 treasury chip (gold + runway) pinned on header, rot day = idle net not a fee, positive
+  runway wording.
 - Open questions: none blocking; all numbers are straw defaults (ratios are the design).
 
 ## 2026-07-03 - Part B: Parties-primary Heroes view

@@ -175,7 +175,8 @@ reason to *want* a better seat.
   invisible and can stall, so the player has a direct tool: pay to host a meeting. Refusal (for
   trait reasons not yet discovered) is a CV correction in disguise, not a dead end.
 - **The unstick path.** A broke early guild is never stuck: the solo-quest upkeep floor above
-  keeps gold trickling in even with zero hires, which is eventually enough to afford an
+  (in Slice 1, concretely §12's always-offered road-tier job at the base cut) keeps gold
+  trickling in even with zero hires, which is eventually enough to afford an
   introduction — and relationships also build for free from simple co-location, so paid
   introductions accelerate formation, they're not the only route to it.
 - **Cohesion modifier.** A party that gets along gets a bonus to performance; two members who hate
@@ -381,25 +382,29 @@ Hero wallets are not tracked in v1 — the report says "Bryn pocketed 140g" as f
 ### The cut — Slice 1's priced decision
 
 - Base **30%**, adjusted per posting with four buttons **−10 / −5 / +5 / +10** → a **20–40%**
-  range. A live posting's cut can be revised **once per end-day** — a mispriced posting costs at
-  least a day, never the whole rot window.
+  range. A live posting's cut can be revised **once per day**; a revision made during a day
+  applies to that night's acceptance roll — a mispriced posting costs at least a day, never the
+  whole rot window.
 - **Acceptance model.** Each party carries a **hidden ask** per quest tier — the smallest share
-  it will take — drawn from a band around the anchors below, with small day-to-day noise. While
-  a quest sits on the board, acceptance is checked **once per end-day**: the party bites if its
-  share clears its ask. The anchors are design-intent *per-day* averages across the roster band,
-  pinned at three cut levels so **no single setting dominates blind play**:
+  it will take — fixed per run within **±5 cut-points** of its tier anchor, plus **±2 cut-points**
+  of day-to-day mood noise. While a quest sits on the board, acceptance is checked **once per
+  end-day**: the party bites if its share clears its ask. The anchors are design-intent *per-day*
+  averages across the roster band:
 
   | Quest | accepts @20% | @30% | @40% |
   | --- | --- | --- | --- |
   | Road job | ~95% | ~90% | ~65% |
   | Ruins | ~90% | ~75% | ~45% |
 
+  **Blind play is base-optimal by design** — on these anchors, 30% has the best expected value
+  on both quests when you know nothing. Deviating only pays once knowledge brackets a party's
+  ask; that asymmetry *is* the R2 payoff (`ENGAGEMENT_REVIEW.md`).
 - **The hidden ask is not §3/§5's known asking price.** A hero's *hiring* ask (the posted price
   to join your guild) is public; the per-quest *split tolerance* is a hidden appetite you learn
   (below). Two numbers, one hero — "ask is known" in this doc always means the hiring price.
 - **Squeeze payoff (Ruins-specific).** Knowing a party bites at 40% instead of 30% is worth
-  **~+60g/day on the Ruins** (only ~+20g on the road job) — knowledge as literal gold; the R2
-  kill-test in one line.
+  **~+60g per completed Ruins day** (a gross cut delta — only ~+20g on the road job) — knowledge
+  as literal gold; the R2 kill-test in one line.
 
 ### What you know, per slice
 
@@ -408,32 +413,43 @@ on later slices' systems. Its knowledge sources are free-tier native:
 
 - **Observation brackets.** Every accept/decline at a known cut brackets that party's ask
   ("declined at 35% → they want more than a 65% share"). The board shows the learned bracket as
-  a qualitative chip: *unknown appetite* → *likely / risky / unlikely*.
-- **Report lines.** The end-day summary can volunteer the other side of the bracket — "they'd
-  have taken less" / "Bryn grumbled the split was thin" — the free tier's coarse cousin of R2's
-  "overpaid by ~40g" feedback.
+  a qualitative **appetite chip**: *unknown appetite* → *eager / might pass / won't bite*. Always
+  worded around *taking the job* — never "risky", which would read as quest danger next to the
+  Ruins — and never a bare "?" (§4/§5 already police two other unknown-markers).
+- **Report lines.** The end-day summary *occasionally* volunteers the other side of the bracket —
+  "they'd have taken less" / "Bryn grumbled the split was thin" — the free tier's coarse cousin
+  of R2's "overpaid by ~40g" feedback. Occasional, not every day: free knowledge stays coarse
+  and slow.
 
-Slice 2 (fidelity tiers) sharpens the precision of both; slice 5 (presence) gates how far from
-home you get them at all.
+Slice 2 (fidelity tiers) sharpens the precision and speed of both; slice 5 (presence) gates how
+far from home you get them at all. The ±2-point daily noise means free brackets never converge
+past a ~4-point band — that residual band, and how fast it tightens, is what the paid tiers
+sell.
 
 ### Slice 1 resolution model (so the build session invents nothing)
 
 - The 3 pre-made heroes are **one fixed party**; parties-as-a-system is slice 4.
-- Quests resolve in **one day**. The board holds both quests; if the party would accept both on
-  the same day it takes the **better expected share** (a stub for slice 4's quest-choice
-  factors).
+- **A take is its own beat.** Acceptance at end-day N is a line in that night's mail; the party
+  is out during day N+1; the outcome and payout land in end-day N+1's ledger. If the party would
+  accept both quests on the same night it takes the **better expected share** — the expectation
+  is the party's own, computed on its hidden ask and odds, never shown on the board (in practice
+  it prefers the Ruins whenever it accepts both; a stub for slice 4's quest-choice factors).
 - A posting **expires after ~3 days** untaken (the giver withdraws it).
-- **Refresh.** A quest that leaves the board (done, failed, or rotted) is replaced by a fresh
-  letter the next morning, and a **road-tier job is always on offer**. That guarantee, at the
-  **base 30% cut**, is the §6 unstick floor — dropping the road job to 20% runs negative and is
-  a choice, not the safety net.
-- **End-day tick order:** quest payouts → passive trickle → upkeep → loan interest → insolvency
-  check.
-- **Every gold movement is visible, from Slice 1.** The end-day report mail carries an itemized
-  ledger block (one line per movement) and a runway line ("gold lasts ~N days at this burn"). A
-  no-takers day is never silent — it produces its own line with a knowledge-gated cause ("no
-  takers" → "no takers — the split looks thin to them"), and expiry arrives as a letter. §8's
-  pressure only exists if it is *seen*.
+- **Refresh.** A **done or rotted** quest is replaced by a fresh letter the next morning. A
+  **failed** quest returns next morning as the *same* letter — its failure count and any pay
+  bump persist; only the ~3-day expiry clock resets. A **road-tier job is always on offer**;
+  that guarantee, at the **base 30% cut**, is the §6 unstick floor — dropping the road job to
+  20% runs negative and is a choice, not the safety net.
+- **End-day tick order:** cut revisions apply → outcomes & payouts for the party that was out →
+  acceptance rolls for board postings → passive trickle → upkeep → loan interest → forced
+  auto-repay → loan disbursement (a fresh loan clears that day's insolvency) → insolvency check.
+- **Every gold movement is visible, from Slice 1.** A minimal **treasury chip** (gold + runway)
+  sits pinned on the map/board header — the slice 5 ledger strip's little sibling. The end-day
+  report mail carries an itemized ledger block (one line per movement) and a runway line ("gold
+  lasts ~N days at this burn"; when net is positive, "treasury growing +Xg/day"). A no-takers
+  day is never silent — it produces its own line with a knowledge-gated cause ("no takers" →
+  "no takers — the split looks thin to them"), and expiry arrives as a letter. §8's pressure
+  only exists if it is *seen*.
 
 ### The number sheet
 
@@ -442,9 +458,9 @@ home you get them at all.
 | Starting gold | 1,000g | |
 | Daily upkeep | −60g/day | The clock |
 | Guild Hall passive | +20g/day | Idle net −40g/day ≈ 25-day runway |
-| Road job | reward 200g → cut 40–80g | **Survival** — at 30% ≈ +6g/day net expected |
+| Road job | reward 200g → cut 40–80g | **Survival** — success ~85%; at 30% ≈ +6g/day net expected |
 | Ruins | reward 600g → cut 120–240g | **Growth** — success 50–75% by party quality; a good day is +140g net |
-| Rot / fail day | −40g | The sting of greed or a bad read |
+| Rot / fail day | −40g | = the idle net, not a separate ledger line; the sting of greed or a bad read |
 
 Safe ≈ survival, risky ≈ growth: the road job keeps you alive but must never fund influence
 tiers; the Ruins is where reading CVs pays. **Margins are deliberately fat** — slice 2 (fidelity
@@ -453,13 +469,15 @@ them. Do not tune Slice 1 razor-thin.
 
 ### Debt — the rescue window (§8's one warning stage)
 
-Gold < 0 at end-day → a forced **600g loan**, delivered as a creditor's letter. Interest is a
-**flat 5%/day (30g/day) on principal, never compounding**; one loan per run. **Insolvent** =
-gold < 0 at end-day *after* interest; **5 consecutive insolvent end-days → charter revoked.**
-The loan auto-repays (a single 600g ledger line) at the first end-day you can pay it and still
-hold 200g. Worked comeback: post-loan idle burn is −70g/day and road-only is ~−24g/day — both
-losing, just slower — while one Ruins success is **+110g/day net of interest**; one breaks the
-fall, two clear the debt. The loan is a last gamble a competent read of the roster can win — a
+Gold strictly below 0 at end-day (ending at exactly 0g is survivable and loan-free) → a forced
+**600g loan**, delivered as a creditor's letter. Interest is a **flat 5%/day (30g/day) on
+principal, never compounding**; one loan per run. **Insolvent** = gold < 0 at end-day *after*
+interest; **5 consecutive insolvent end-days → charter revoked.** The loan **force-repays** (a
+single 600g ledger line — you cannot hold a larger buffer instead) at the first end-day you can
+pay it and still keep 200g. Worked comeback: post-loan idle burn is −70g/day and road-only is
+~−24g/day — both losing, just slower — while one Ruins success is **+110g/day net of interest**;
+one breaks the fall, roughly two clear the debt (best case: a small trigger deficit and
+back-to-back successes). The loan is a last gamble a competent read of the roster can win — a
 rescue *window*, not a comfort.
 
 ### When a quest fails — phased consequences
@@ -477,9 +495,10 @@ The full-game vision, phased so each piece lands with the slice that can represe
 
 ### Continuity (nothing here gets ripped out later)
 
-The cut % becomes the per-hero **negotiable contract term** at slice 3's renewals. Slice 4's
-**bounty is a top-up to the reward pool** — it sweetens the heroes' share to move a stubborn
-ask; it never replaces the cut. Board curation is honestly a **no-decision in Slice 1** (posting
+The cut % becomes the per-hero **negotiable contract term** at slice 3's renewals — the
+contract sets that hero's *default and floor*, and the per-posting buttons survive, adjusting
+around it. Slice 4's **bounty is a top-up to the reward pool** — it sweetens the heroes' share
+to move a stubborn ask; it never replaces the cut. Board curation is honestly a **no-decision in Slice 1** (posting
 is free, both quests always go up); it becomes live when heroes can stumble onto unposted quests
 (parked, slice 4+).
 
