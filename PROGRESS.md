@@ -11,7 +11,8 @@ Format per entry:
 - Open questions:
 
 ## 2026-07-05 - Economy: the board, the cut, the clock — plan + build
-- Gate: codex-fixed → awaiting merge decision. **PR #30 into `dev`**.
+- Gate: **merged 2026-07-06 00:41 +0200** (merge commit `d70b6ee`; backfilled 2026-07-06).
+  **PR #30 into `dev`**.
 - Codex (P1 on `2001a87`, the only finding): quest-cycle downtime broke the road floor — with
   acceptance at end-day N, payout at N+1, and replacement letters only after *completion*, a
   cycle took 2 days, halving throughput (+6g/day floor was really ~−16g/day). Fixed as Codex
@@ -62,7 +63,7 @@ Format per entry:
 - Open questions: none blocking; all numbers are straw defaults (ratios are the design).
 
 ## 2026-07-03 - Part B: Parties-primary Heroes view
-- Gate: codex-fixed → awaiting merge decision. PR #29 into `dev`.
+- Gate: **merged 2026-07-04** (merge commit `382e09b`; backfilled 2026-07-06). PR #29 into `dev`.
 - Codex (P2 on `7b64daf`, the only finding): Brok & Pell render inside "The Free Blades" but had no
   `scope:"party"` bond, so `BondsTab` (which builds the "Their Party" card from party-scope bonds)
   showed no party card when you tapped them — inconsistent with Iron Vigil. Fixed by adding matching
