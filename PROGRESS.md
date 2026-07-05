@@ -11,7 +11,9 @@ Format per entry:
 - Open questions:
 
 ## 2026-07-05 - Economy: the board, the cut, the clock — plan + build
-- Gate: plan done → Review #1 done → build done → Review #2 done (PR next)
+- Gate: PR opened — **PR #30 into `dev`**, `@codex review` posted; awaiting Codex
+- Note: no PR-level CI on this repo (deploy.yml + android-apk.yml trigger on push to `main`/`dev`
+  only); docs-only diff, nothing to build.
 - Branch: `claude/economy-quest-fees-jto58v` → PR into `dev` (docs-only)
 - Scope: fold the Slice 1 economy decided in the design chat into `docs/DESIGN.md`. Decisions
   (Stefan, 2026-07-05): **posting fee is dead** — quests come to the guild as letters, the board
