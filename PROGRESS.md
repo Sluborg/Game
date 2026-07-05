@@ -11,9 +11,10 @@ Format per entry:
 - Open questions:
 
 ## 2026-07-06 - §50 merged-gate backfill rule
-- Gate: plan done → Review #1 done → build done → Review #2 done (PR next)
+- Gate: PR opened — **PR #31 into `dev`**, `@codex review` posted; awaiting Codex
 - Branch: `claude/economy-quest-fees-jto58v` (designated session branch, restarted from
-  `origin/dev` at `d70b6ee` after PR #30 merged) → PR into `dev` (docs-only)
+  `origin/dev` at `d70b6ee` after PR #30 merged) → PR #31 into `dev` (docs-only; no PR-level CI
+  on this repo)
 - Scope: **§50 now defines the merged gate as a backfill** — GitHub PR state is authoritative;
   every new branch starts with `git fetch origin`, then idempotently backfills all missing merged
   gates (PR #29 and later; older history grandfathered) as a separate `chore(progress)` first
