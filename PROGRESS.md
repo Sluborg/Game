@@ -10,6 +10,31 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-05 - Economy: the board, the cut, the clock — plan + build
+- Gate: plan done → Review #1 done → build done (Review #2 on the diff next, then PR)
+- Branch: `claude/economy-quest-fees-jto58v` → PR into `dev` (docs-only)
+- Scope: fold the Slice 1 economy decided in the design chat into `docs/DESIGN.md`. Decisions
+  (Stefan, 2026-07-05): **posting fee is dead** — quests come to the guild as letters, the board
+  is free, and the **player-set cut** (base 30%, −10/−5/+5/+10 → 20–40%) is the priced decision;
+  gold scale 1,000g start; two quests (road job 200g = survival, Ruins 600g = growth); failure
+  consequences phased (Slice 1: story-based quest reaction; slice 3: fame/relation; slice 5:
+  influence; boss-tier: permadeath — locked note); givers-come-to-guild framing.
+- Files touched: `docs/DESIGN.md` (new §12 economy section; reconciling edits to §3 lever 1, §5
+  asking-price line, §8 cash-in-detail, §9 economy para, Ideas parked ×2, Next-up Slice 1),
+  `PROGRESS.md`.
+- Review #1 (4-persona, on the PLAN): 7 merged blockers, all fixed in the spec before building —
+  (1) acceptance model pinned (hidden per-party ask + daily noise, one roll per end-day, anchors
+  at 20/30/40% so no cut dominates blind); (2) §3/§5 "ask is known" reconciled (hiring ask public,
+  quest-split appetite hidden); (3) Slice 1 knowledge source named (observation brackets + free
+  report lines — no dependency on slice 2/5); (4) quest refresh cadence defined (next-morning
+  letter, road-tier always on offer = unstick floor at base cut); (5) resolution model specced
+  (one fixed party of 3, 1-day quests, better-share stub); (6) loan de-ratcheted (flat 5%/day on
+  principal, one per run, worked comeback math); (7) visibility mandated (itemized end-day ledger
+  + runway line; rot/no-takers days always produce mail). Non-blocking folded: tick order,
+  Ruins-specific squeeze label, failure pay-bump bounds, cut revisable once/end-day, curation
+  honestly labeled a Slice 1 no-decision.
+- Open questions: none blocking; all numbers are straw defaults (ratios are the design).
+
 ## 2026-07-03 - Part B: Parties-primary Heroes view
 - Gate: codex-fixed → awaiting merge decision. PR #29 into `dev`.
 - Codex (P2 on `7b64daf`, the only finding): Brok & Pell render inside "The Free Blades" but had no
