@@ -15,6 +15,7 @@ import type { Hero } from "./mockHeroes";
 import type { PartyView } from "./mockParties";
 import { heroMood } from "./mockParties";
 import { HeroSprite } from "./HeroSprite";
+import { Panel } from "../kit";
 import styles from "./PartyCard.module.css";
 
 export function PartyCard({ view, onOpen }: { view: PartyView; onOpen: (id: string) => void }) {
@@ -22,7 +23,7 @@ export function PartyCard({ view, onOpen }: { view: PartyView; onOpen: (id: stri
   const titleId = `party-${party.id}`;
 
   return (
-    <section className={styles.party} aria-labelledby={titleId}>
+    <Panel as="section" className={styles.party} aria-labelledby={titleId}>
       <header className={styles.head}>
         <h3 className={styles.name} id={titleId}>
           {party.name}
@@ -67,7 +68,7 @@ export function PartyCard({ view, onOpen }: { view: PartyView; onOpen: (id: stri
           </span>
         </button>
       </div>
-    </section>
+    </Panel>
   );
 }
 

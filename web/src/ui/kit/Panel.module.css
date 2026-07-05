@@ -1,0 +1,21 @@
+/* Kenney "Fantasy UI Borders" 9-slice frame (CC0 — credited in public/CREDITS.md).
+   The source is a 48×48 white corner-frame tile, recoloured to a muted guild gold
+   at author time and committed under src/assets (import-bundled, so only this one
+   sprite ships).
+
+   Graceful fallback: the `border` shorthand paints a real translucent-gold hairline
+   FIRST; `border-image` then overlays the decorative frame. If the sprite 404s
+   (renamed/missing asset, case mismatch on CI) the element keeps the plain gold
+   border instead of losing all definition.
+
+   No `fill`: only the 16px frame ring is sliced, so the card keeps its own dark
+   token background rather than Kenney's parchment centre — it stays on-theme in the
+   dark-only palette. Frame width is kept to 8px so it costs ≤16px of content width
+   at ~430px. */
+.panel {
+  border: var(--panel-frame-w, 8px) solid var(--stroke-gold);
+  border-image-source: url("../../assets/kenney/fantasy-ui-borders/panel-gold.png");
+  border-image-slice: 16;
+  border-image-width: var(--panel-frame-w, 8px);
+  border-image-repeat: stretch;
+}

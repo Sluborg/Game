@@ -1,12 +1,12 @@
 /* A party card: the roster's bordered "row" treatment expanded to WRAP the whole
-   party. Gold-tinted border so it reads as the primary unit; members sit inside. */
+   party. The gold frame now comes from the Kenney <Panel> wrapper (a decorative
+   9-slice border), so this element drops its own border/radius and just carries
+   the layout + surface — one framed level, no frame-in-frame (Review #1). */
 .party {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
   padding: var(--sp-3);
-  border-radius: var(--r-md);
-  border: 1px solid var(--stroke-gold);
   background: linear-gradient(160deg, rgba(106, 47, 191, 0.18), var(--surface-1));
 }
 

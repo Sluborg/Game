@@ -1,5 +1,16 @@
 # Asset credits
 
+## Fantasy UI frame — Kenney "Fantasy UI Borders" (CC0 1.0)
+
+The gold party-card frame is Kenney's *Fantasy UI Borders* pack (`panel-002`,
+recoloured to guild gold at author time). **CC0 1.0** (public domain) — no
+attribution required; credited here by preference. Source: https://kenney.nl/assets/fantasy-ui-borders
+
+The recoloured sprite + its license live at
+`src/ui/kit` → `src/assets/kenney/fantasy-ui-borders/` (import-bundled, so only
+the one used frame ships). This is a deliberate *second* asset convention
+(import-bundled) alongside the URL-referenced `public/sprites` LPC set — see `docs/kenney.md`.
+
 ## World Map emblems — game-icons.net (CC BY 3.0)
 
 Inlined as single-colour SVGs in `src/ui/guild/icons.tsx` and recoloured via CSS.
