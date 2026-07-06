@@ -5,7 +5,7 @@
   /* Reserve room for the fixed bottom NavBar so the last row never hides under it. */
   padding-bottom: calc(var(--nav-h) + var(--sp-4) + env(safe-area-inset-bottom));
   background:
-    radial-gradient(140% 60% at 50% 0%, rgba(106, 47, 191, 0.22), transparent 55%),
+    radial-gradient(140% 60% at 50% 0%, rgba(255, 198, 92, 0.1), transparent 55%),
     linear-gradient(180deg, var(--surface-1), var(--surface-0));
 }
 

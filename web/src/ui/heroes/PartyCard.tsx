@@ -15,6 +15,7 @@ import type { Hero } from "./mockHeroes";
 import type { PartyView } from "./mockParties";
 import { heroMood } from "./mockParties";
 import { HeroSprite } from "./HeroSprite";
+import { Panel, Button } from "../kit";
 import styles from "./PartyCard.module.css";
 
 export function PartyCard({ view, onOpen }: { view: PartyView; onOpen: (id: string) => void }) {
@@ -22,7 +23,7 @@ export function PartyCard({ view, onOpen }: { view: PartyView; onOpen: (id: stri
   const titleId = `party-${party.id}`;
 
   return (
-    <section className={styles.party} aria-labelledby={titleId}>
+    <Panel as="section" className={styles.party} aria-labelledby={titleId}>
       <header className={styles.head}>
         <h3 className={styles.name} id={titleId}>
           {party.name}
@@ -60,14 +61,14 @@ export function PartyCard({ view, onOpen }: { view: PartyView; onOpen: (id: stri
           (§6). A real disabled control (out of the tab order, announced disabled),
           styled subdued so it never reads as a live action. */}
       <div className={styles.actions}>
-        <button type="button" className={styles.sway} disabled aria-label="Sway the boss — coming soon">
+        <Button variant="secondary" className={styles.sway} disabled aria-label="Sway the boss — coming soon">
           Sway the boss
           <span className={styles.soon} aria-hidden>
             soon
           </span>
-        </button>
+        </Button>
       </div>
-    </section>
+    </Panel>
   );
 }
 

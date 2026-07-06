@@ -399,7 +399,7 @@ function ComingSoon({ title, line }: { title: string; line: string }) {
 function TraitToken({ initial }: { initial: string }) {
   return (
     <svg className={styles.traitGlyph} viewBox="0 0 32 32" width="32" height="32" aria-hidden>
-      <polygon points="16,3 28,10 28,22 16,29 4,22 4,10" fill="var(--c-royal)" stroke="var(--c-gold)" strokeWidth="1.5" />
+      <polygon points="16,3 28,10 28,22 16,29 4,22 4,10" fill="var(--cv-accent)" stroke="var(--c-gold)" strokeWidth="1.5" />
       <text x="16" y="17" textAnchor="middle" dominantBaseline="central" fill="var(--c-gold-light)" fontFamily="var(--font-display)" fontSize="13" fontWeight="700">
         {initial}
       </text>
