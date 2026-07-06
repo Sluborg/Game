@@ -188,7 +188,7 @@
   font-family: var(--font-display);
   font-size: 14px;
   font-weight: 700;
-  color: var(--c-royal-deep);
+  color: var(--cv-accent-deep);
 }
 .popEffect {
   font-size: 12.5px;
@@ -222,9 +222,9 @@
 .statLabel { font-size: 12px; letter-spacing: 0.5px; color: var(--text-dim); }
 .statValue { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--text-strong); }
 .statTag { margin-left: auto; font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; opacity: 0.8; }
-.stat[data-certainty="verified"] { background: var(--c-royal); border-color: var(--c-gold); }
+.stat[data-certainty="verified"] { background: var(--cv-accent); border-color: var(--c-gold); }
 .stat[data-certainty="claimed"] {
-  background: repeating-linear-gradient(45deg, rgba(157, 107, 232, 0.55) 0 6px, rgba(157, 107, 232, 0.12) 6px 12px);
+  background: repeating-linear-gradient(45deg, var(--cv-hatch) 0 6px, var(--cv-hatch-dim) 6px 12px);
   border-color: var(--stroke-gold);
 }
 .stat[data-certainty="rumor"] { background: transparent; border-style: dashed; border-color: var(--stroke-soft); }
@@ -241,8 +241,8 @@
 }
 .legend span[data-swatch] { width: 16px; height: 12px; border-radius: 3px; border: 1px solid var(--stroke-soft); margin-left: 8px; }
 .legend span[data-swatch]:first-child { margin-left: 0; }
-.legend span[data-swatch="verified"] { background: var(--c-royal); border-color: var(--c-gold); }
-.legend span[data-swatch="claimed"] { background: repeating-linear-gradient(45deg, rgba(157, 107, 232, 0.55) 0 4px, rgba(157, 107, 232, 0.12) 4px 8px); }
+.legend span[data-swatch="verified"] { background: var(--cv-accent); border-color: var(--c-gold); }
+.legend span[data-swatch="claimed"] { background: repeating-linear-gradient(45deg, var(--cv-hatch) 0 4px, var(--cv-hatch-dim) 4px 8px); }
 .legend span[data-swatch="rumor"] { background: transparent; border-style: dashed; }
 
 /* --- Traits --------------------------------------------------------------- */
@@ -286,7 +286,7 @@
   padding: var(--sp-3);
   border-radius: var(--r-md);
   border: 1px solid var(--stroke-gold);
-  background: linear-gradient(160deg, rgba(106, 47, 191, 0.28), var(--surface-2));
+  background: linear-gradient(160deg, rgba(214, 164, 62, 0.16), var(--surface-2));
 }
 .guildHead {
   display: flex;

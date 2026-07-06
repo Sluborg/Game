@@ -27,6 +27,15 @@
   --bronze: #5f4527;
   --ink-gold: #2a1d0c;
 
+  /* Certainty / trait accent — a cool teal-blue (echoing the key art's gem &
+     magic), replacing royal-purple for the §5 verified/claimed chips and trait
+     badges so they de-purple onto the warm theme while staying distinct. Solid =
+     verified, hatched = claimed, dashed = rumor is preserved by the chip styles. */
+  --cv-accent: #2d7593;
+  --cv-accent-deep: #163f52;
+  --cv-hatch: rgba(96, 176, 206, 0.55);
+  --cv-hatch-dim: rgba(96, 176, 206, 0.12);
+
   /* Surfaces — warm charcoal/brown, aligned to the "Asset Report" key art
      (gold-on-dark, no royal-purple). Sprite + combat-semantic tokens below are
      left unchanged, so hero sprites and HP colours are untouched. */

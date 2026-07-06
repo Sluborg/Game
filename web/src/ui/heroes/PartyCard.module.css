@@ -231,18 +231,11 @@
 .actions {
   display: flex;
 }
+/* The disabled coming-soon lever now uses the kit <Button> (secondary); this
+   only tweaks it to sit inline with its "soon" badge. */
 .sway {
-  display: inline-flex;
-  align-items: center;
   gap: 6px;
-  padding: 7px 12px;
-  border-radius: var(--r-pill);
-  border: 1px dashed var(--stroke-soft);
-  background: transparent;
-  color: var(--text-dim);
-  font-family: var(--font-ui);
-  font-size: 12px;
-  cursor: not-allowed;
+  font-size: 13px;
 }
 .soon {
   font-size: 8px;
