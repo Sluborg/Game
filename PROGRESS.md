@@ -10,6 +10,33 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-06 - Kenney frame + Asset Report palette/button foundation
+- Gate: codex-cleared → awaiting merge decision. **PR #32 into `dev`**.
+- Codex (on head `b85cdf3`): "Didn't find any major issues." No fixes needed.
+  No PR-level CI on this repo (deploy triggers on push to main/dev only); UI-only.
+- Branch: `claude/kenney-ui-foundation` → PR into `dev`.
+- Scope: visual foundation aligning the guild UI to the "Asset Report" key art.
+  Additive/UI-only; combat core, LPC pipeline, and art pipeline untouched.
+- Files touched: new `web/src/ui/kit/Panel.{tsx,module.css}` (Kenney 9-slice frame)
+  + `kit/index.ts`; `web/src/assets/kenney/fantasy-ui-borders/` (CC0 sprite+license)
+  and `web/src/assets/brand/asset-report-key-art.jpg`; `theme/tokens.css` (warm
+  surfaces/strokes/bars, soft-gold button tokens, teal `--cv-*` certainty accent);
+  `StartScreen.{tsx,module.css}` (key-art bg + kit-Button menu); `kit/Button.module.css`
+  (soft-gold default); `combat/Controls.module.css` (.primary retint only);
+  `heroes/{PartyCard,HeroCard,HeroesScreen}.*` (frame, de-purple, Sway→Button);
+  `node/NodeTestScreen.module.css` (map contrast); `styles.css` (body bg);
+  `public/CREDITS.md`; `docs/kenney.md`; `docs/screenshots/*`.
+- Review #1 (4-persona, on the plan): blockers fixed pre-build — scope excludes the
+  certainty sheet from the skin, assets committed (no build-time fetch), Panel
+  graceful fallback, one framed level per view, dark-only tokens, assembled panel
+  PNG pinned for border-image.
+- Review #2 (4-persona, on the diff): **no blockers.** Keystone survives the teal;
+  build/tsc/42 tests green; forbidden dirs untouched; offline build + colorblind-safe.
+  Non-blocking polish applied: Start button hierarchy, map node contrast, certainty
+  label a11y + single-hue hatch, dropped an unused token, compressed screenshots.
+- Open questions: none blocking. Combat Test's selected-chip purple (`--c-royal`)
+  left intentionally (sprites + verified chip); optional full de-purple is a follow-up.
+
 ## 2026-07-06 - §50 merged-gate backfill rule
 - Gate: codex-fixed → awaiting merge decision. **PR #31 into `dev`** (Codex on `28884e4`: no
   findings — nothing to fix)
