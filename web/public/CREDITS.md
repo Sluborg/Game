@@ -1,5 +1,11 @@
 # Asset credits
 
+## Title key art — project original
+
+`src/assets/brand/asset-report-key-art.jpg` is the project's own "Asset Report"
+key art (provided by the project owner), used as the Start-screen background.
+Not third-party; no external license.
+
 ## Fantasy UI frame — Kenney "Fantasy UI Borders" (CC0 1.0)
 
 The gold party-card frame is Kenney's *Fantasy UI Borders* pack (`panel-002`,

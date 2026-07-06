@@ -22,9 +22,9 @@ function SwordsIcon() {
 function NodeIcon() {
   return (
     <svg viewBox="0 0 48 48" className={styles.icon} aria-hidden>
-      <path d="M6 16l18-8 18 8-18 8Z" fill="var(--c-royal-light)" />
-      <path d="M6 16v16l18 8V24Z" fill="var(--c-royal-deep)" />
-      <path d="M42 16v16l-18 8V24Z" fill="var(--c-royal)" />
+      <path d="M6 16l18-8 18 8-18 8Z" fill="#c9a24a" />
+      <path d="M6 16v16l18 8V24Z" fill="#3a2c10" />
+      <path d="M42 16v16l-18 8V24Z" fill="#7a5e1c" />
       <circle cx={24} cy={15} r={4} fill="var(--c-gold)" />
       <circle cx={14} cy={28} r={3} fill="var(--c-gold-light)" />
       <circle cx={34} cy={29} r={3} fill="var(--c-gold-light)" />
@@ -36,8 +36,7 @@ export function StartScreen({ onCombatTest, onNodeTest }: Props) {
   return (
     <div className={styles.screen}>
       <div className={styles.inner}>
-        <h1 className={styles.title}>Godblood</h1>
-        <p className={styles.subtitle}>A demigod kingdom, day by day.</p>
+        <h1 className={styles.srOnly}>Asset Report</h1>
 
         <button className={`${styles.card} ${styles.test}`} onClick={onCombatTest}>
           <SwordsIcon />
