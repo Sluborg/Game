@@ -1,6 +1,6 @@
 /* The "Asset Report" key art is the title screen: it fills the view and carries
    its own title, so the menu anchors to the bottom over a scrim that fades the
-   art into the warm surface for card legibility. */
+   art into the warm surface for legibility. */
 .screen {
   min-height: 100vh;
   display: flex;
@@ -30,79 +30,15 @@
   border: 0;
 }
 
-.inner {
+/* Compact menu of entry points — the shared kit <Button> (uniform gold), label
+   only, stacked full-width in a narrow column so it never dominates the art. */
+.menu {
   width: 100%;
-  max-width: 460px;
+  max-width: 300px;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
 }
-
-.title {
-  margin: 0;
-  text-align: center;
-  font-family: var(--font-display);
-  font-size: 44px;
-  letter-spacing: 1px;
-  color: var(--c-gold);
-  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.55);
-}
-.subtitle {
-  margin: 0 0 var(--sp-3);
-  text-align: center;
-  color: var(--text-dim);
-  font-size: 14px;
-}
-
-.card {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-4);
-  text-align: left;
-  padding: var(--sp-4);
-  border-radius: var(--r-lg);
-  border: 1px solid var(--stroke-gold);
-  cursor: pointer;
-  color: var(--text-strong);
-  background: linear-gradient(100deg, var(--surface-3), var(--surface-2));
-  box-shadow: var(--shadow-1);
-  transition: transform var(--t-fast) var(--ease-out), filter var(--t-fast) var(--ease-out);
-}
-.card:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.12);
-}
-/* Instant press feedback on touch (the default tap-highlight is disabled). */
-.card:active {
-  transform: translateY(0);
-  filter: brightness(1.05);
-}
-.test {
-  background: linear-gradient(100deg, var(--c-blood-deep), var(--surface-2));
-}
-.node {
-  background: linear-gradient(100deg, #4a3a12, var(--surface-2));
-}
-
-.icon {
-  width: 46px;
-  height: 46px;
-  flex: 0 0 auto;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
-}
-
-.text {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.name {
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--c-gold-light);
-}
-.desc {
-  font-size: 12.5px;
-  color: var(--text-dim);
+.menuBtn {
+  width: 100%;
 }
