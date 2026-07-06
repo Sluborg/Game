@@ -38,7 +38,9 @@
 .map {
   position: relative;
   flex: 1;
-  background-color: var(--surface-2);
+  /* Darkest surface so the gold-bordered nodes read as distinct tappable regions
+     against the warm field (they blended on the lighter --surface-2). */
+  background-color: var(--surface-0);
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;

@@ -3,10 +3,10 @@
    at author time and committed under src/assets (import-bundled, so only this one
    sprite ships).
 
-   Graceful fallback: the `border` shorthand paints a real translucent-gold hairline
-   FIRST; `border-image` then overlays the decorative frame. If the sprite 404s
-   (renamed/missing asset, case mismatch on CI) the element keeps the plain gold
-   border instead of losing all definition.
+   Fallback: the `border` shorthand paints a real translucent-gold hairline under the
+   `border-image`, so the element keeps definition if the frame ever fails to paint.
+   (The sprite inlines as a data URI under Vite's 4 KB limit, so a 404 can't actually
+   occur while it stays sub-4 KB — the border is belt-and-braces.)
 
    No `fill`: only the 16px frame ring is sliced, so the card keeps its own dark
    token background rather than Kenney's parchment centre — it stays on-theme in the

@@ -15,11 +15,11 @@ export function StartScreen({ onCombatTest, onNodeTest }: Props) {
     <div className={styles.screen}>
       <h1 className={styles.srOnly}>Asset Report</h1>
       <nav className={styles.menu} aria-label="Main menu">
-        <Button className={styles.menuBtn} onClick={onCombatTest}>
-          Combat Test
-        </Button>
         <Button className={styles.menuBtn} onClick={onNodeTest}>
           World Map
+        </Button>
+        <Button variant="secondary" className={styles.menuBtn} onClick={onCombatTest}>
+          Combat Test
         </Button>
       </nav>
     </div>

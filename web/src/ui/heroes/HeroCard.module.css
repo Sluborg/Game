@@ -229,6 +229,12 @@
 }
 .stat[data-certainty="rumor"] { background: transparent; border-style: dashed; border-color: var(--stroke-soft); }
 .stat[data-certainty="rumor"] .statValue { color: var(--text-dim); }
+/* On the colour-filled chips, lift the secondary label/tag off --text-dim so they
+   clear contrast on the teal fill (a11y); rumor chips (dark/transparent) keep dim. */
+.stat[data-certainty="verified"] .statLabel,
+.stat[data-certainty="claimed"] .statLabel,
+.stat[data-certainty="verified"] .statTag,
+.stat[data-certainty="claimed"] .statTag { color: var(--text-strong); }
 
 .legend {
   display: flex;
