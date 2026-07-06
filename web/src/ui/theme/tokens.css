@@ -18,6 +18,15 @@
   --c-sky: #87ceeb;
   --c-ember: #ff9d45;
 
+  /* Soft metallic gold — sampled from the "Asset Report" title art (warm and
+     desaturated). This is the DEFAULT BUTTON fill, not the neon --c-gold used
+     for bright text/accents. Reproduced by the kit <Button> everywhere. */
+  --gold-soft-hi: #e6c078;
+  --gold-soft: #c69f57;
+  --gold-soft-lo: #a2793a;
+  --bronze: #5f4527;
+  --ink-gold: #2a1d0c;
+
   /* Surfaces — warm charcoal/brown, aligned to the "Asset Report" key art
      (gold-on-dark, no royal-purple). Sprite + combat-semantic tokens below are
      left unchanged, so hero sprites and HP colours are untouched. */
