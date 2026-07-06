@@ -18,20 +18,21 @@
   --c-sky: #87ceeb;
   --c-ember: #ff9d45;
 
-  /* Surfaces */
-  --surface-0: #0a0a18;
-  --surface-1: #14142a;
-  --surface-2: #1d1d38;
-  --surface-3: #29294a;
-  --stroke-soft: rgba(157, 107, 232, 0.28);
+  /* Surfaces — warm charcoal/brown, aligned to the "Asset Report" key art
+     (gold-on-dark, no royal-purple). Sprite + combat-semantic tokens below are
+     left unchanged, so hero sprites and HP colours are untouched. */
+  --surface-0: #100c07;
+  --surface-1: #1c1711;
+  --surface-2: #292014;
+  --surface-3: #382e1e;
+  --stroke-soft: rgba(216, 178, 112, 0.24);
   --stroke-gold: rgba(255, 215, 0, 0.32);
 
-  /* Shell chrome bars (header/footer). A warmer, wine/aubergine deep-purple —
-     hue-shifted off --c-royal-deep so it reads less "blue" while staying on the
-     Godblood royal-purple brand. Single source of truth for every chrome bar
-     (NavBar + the screen top bars); content surfaces keep --c-royal-deep. */
-  --bar-1: #3a1536;
-  --bar-2: #24102a;
+  /* Shell chrome bars (header/footer). Deep warm brown-charcoal, aligned to the
+     "Asset Report" key art (the dark title plaque). Single source of truth for
+     every chrome bar (NavBar + the screen top bars). */
+  --bar-1: #2c2114;
+  --bar-2: #181007;
 
   /* Text */
   --text-strong: var(--c-parchment);

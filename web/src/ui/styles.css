@@ -30,7 +30,7 @@ body {
   margin: 0;
   font-family: "Segoe UI", Roboto, system-ui, sans-serif;
   color: var(--parchment-beige);
-  background: linear-gradient(var(--night-blue), var(--night-blue-deep));
+  background: linear-gradient(var(--surface-1), var(--surface-0));
   min-height: 100vh;
 }
 

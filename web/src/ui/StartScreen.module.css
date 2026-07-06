@@ -4,7 +4,7 @@
   place-items: center;
   padding: var(--sp-5) var(--sp-4);
   background:
-    radial-gradient(120% 60% at 50% 0%, rgba(106, 47, 191, 0.28), transparent 55%),
+    radial-gradient(120% 60% at 50% 0%, rgba(255, 198, 92, 0.12), transparent 55%),
     linear-gradient(180deg, var(--surface-1), var(--surface-0));
 }
 
@@ -42,7 +42,7 @@
   border: 1px solid var(--stroke-gold);
   cursor: pointer;
   color: var(--text-strong);
-  background: linear-gradient(100deg, var(--c-royal-deep), var(--surface-2));
+  background: linear-gradient(100deg, var(--surface-3), var(--surface-2));
   box-shadow: var(--shadow-1);
   transition: transform var(--t-fast) var(--ease-out), filter var(--t-fast) var(--ease-out);
 }

@@ -7,7 +7,7 @@
   flex-direction: column;
   gap: var(--sp-3);
   padding: var(--sp-3);
-  background: linear-gradient(160deg, rgba(106, 47, 191, 0.18), var(--surface-1));
+  background: linear-gradient(160deg, rgba(214, 164, 62, 0.12), var(--surface-1));
 }
 
 /* --- Header: name + observed where/what ----------------------------------- */
