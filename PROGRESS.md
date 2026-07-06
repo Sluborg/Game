@@ -10,8 +10,43 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-06 - §50 merged-gate backfill rule
+- Gate: codex-fixed → awaiting merge decision. **PR #31 into `dev`** (Codex on `28884e4`: no
+  findings — nothing to fix)
+- Branch: `claude/economy-quest-fees-jto58v` (designated session branch, restarted from
+  `origin/dev` at `d70b6ee` after PR #30 merged) → PR #31 into `dev` (docs-only; no PR-level CI
+  on this repo)
+- Scope: **§50 now defines the merged gate as a backfill** — GitHub PR state is authoritative;
+  every new branch starts with `git fetch origin`, then idempotently backfills all missing merged
+  gates (PR #29 and later; older history grandfathered) as a separate `chore(progress)` first
+  commit, updating the existing entry's Gate line in place with merge data read from the fetched
+  history; read-only sessions defer their entries the same way. Why: §50 demanded a merged entry
+  at merge time while §80 forbids commits to `dev` without a PR — and the session was in plan
+  mode when PR #30 merged; the standard demanded a commit it also forbids. Exercised immediately:
+  PR #29 and #30 both backfilled in this PR.
+- Files touched: `CLAUDE.md` (§50 + four sub-bullets), `PROGRESS.md` (PR #30 backfill + this entry).
+- Review #1 (4-persona, on the plan): 5 blockers, all fixed in the rule text — (1) idempotent
+  backfill-all-missing procedure (kills duplicate races and the who-logs-the-logger regress);
+  (2) update Gate line in place, not a new dated entry (preserves phone chronology); (3) backfill
+  data verified on GitHub/`origin/dev`, never memory, with an explicit "(backfilled)" marker;
+  (4) §60 exemption by name + separate conventional commit + promotion-PR exclusion; (5) stale
+  local `origin/dev` caught — fetch + verify merge commit added as verification step zero.
+  Non-blocking folded: authoritative-record sentence, eventual-consistency wording, this PR's own
+  merged gate deliberately left as the demonstrating one-entry lag.
+- Review #2 (4-persona, on the DIFF): 3 blockers, fixed — (1) rule text now mandates `git fetch
+  origin` before verifying (the PROGRESS entry claimed it; the doc didn't say it); (2) the rule's
+  own first run violated the rule: PR #29 is merged but its Gate line still said "awaiting merge
+  decision" — now backfilled alongside #30; (3) "all missing merged gates" gained a cutoff (PR
+  #29+; older multi-entry history grandfathered) so the next branch's first commit can't balloon
+  into a 28-PR archaeology dig. Non-blocking folded: first bullet says "merged is backfilled — see
+  below", plural commit-message form, always-in-scope covers §10's declared scope too, backfill's
+  place relative to The Loop stated, §50 rationale trimmed to imperatives, "becomes" instead of
+  nested arrows, time+offset on midnight-straddling merges, this entry re-led bottom-line-first.
+- Open questions: none.
+
 ## 2026-07-05 - Economy: the board, the cut, the clock — plan + build
-- Gate: codex-fixed → awaiting merge decision. **PR #30 into `dev`**.
+- Gate: **merged 2026-07-06 00:41 +0200** (merge commit `d70b6ee`; backfilled 2026-07-06).
+  **PR #30 into `dev`**.
 - Codex (P1 on `2001a87`, the only finding): quest-cycle downtime broke the road floor — with
   acceptance at end-day N, payout at N+1, and replacement letters only after *completion*, a
   cycle took 2 days, halving throughput (+6g/day floor was really ~−16g/day). Fixed as Codex
@@ -62,7 +97,7 @@ Format per entry:
 - Open questions: none blocking; all numbers are straw defaults (ratios are the design).
 
 ## 2026-07-03 - Part B: Parties-primary Heroes view
-- Gate: codex-fixed → awaiting merge decision. PR #29 into `dev`.
+- Gate: **merged 2026-07-04** (merge commit `382e09b`; backfilled 2026-07-06). PR #29 into `dev`.
 - Codex (P2 on `7b64daf`, the only finding): Brok & Pell render inside "The Free Blades" but had no
   `scope:"party"` bond, so `BondsTab` (which builds the "Their Party" card from party-scope bonds)
   showed no party card when you tapped them — inconsistent with Iron Vigil. Fixed by adding matching

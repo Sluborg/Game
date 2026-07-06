@@ -39,7 +39,29 @@ Output: per-persona top issues, merged into a blocking / non-blocking list. Fix 
 - After Codex fixes clear, STOP. Print "awaiting merge decision". Stefan decides. Never self-merge.
 
 ## 50. Logging (so Claude.ai can follow on phone)
-- Append a dated entry to /PROGRESS.md at each gate (plan done, build done, PR opened, codex-fixed, merged). Each entry: scope, branch, files touched, review verdicts, open questions.
+- Append a dated entry to /PROGRESS.md at each gate (plan done, build done, PR opened, codex-fixed;
+  merged is backfilled — see below). Each entry: scope, branch, files touched, review verdicts,
+  open questions.
+- **The merged gate is backfilled, never committed at merge time** (merge lands on `dev`; §80
+  forbids direct commits there, and the session may be read-only by then). The GitHub PR's merged
+  state is the **authoritative record**; PROGRESS.md mirrors it with a lag:
+  - At the start of every new working branch — before The Loop's step 1 — `git fetch origin`,
+    compare PROGRESS.md against merged PRs, and backfill **all** missing merged gates, skipping any
+    already present (idempotent; re-runs and concurrent branches are no-ops). Applies to **PR #29
+    and later**; older multi-entry history is grandfathered as-is.
+  - A backfill **updates the existing PR entry's Gate line in place** — "codex-fixed → awaiting
+    merge decision" becomes "**merged YYYY-MM-DD** (merge commit `<sha>`; backfilled YYYY-MM-DD)" —
+    with date and sha read from the merge commit on the freshly fetched `origin/dev`, **never from
+    memory** (include time + offset when a merge straddles midnight). Only if no entry exists does
+    it get a new dated entry, headed by the merge date.
+  - The backfill is a **separate first commit**, one commit covering all PRs backfilled that day
+    (`chore(progress): backfill merged gate for PR #N, #M`). It is always in scope — exempt by name
+    from §60's one-scope rule and §10's declared scope — is reviewed with the diff in Review #2,
+    and rides only on working branches targeting `dev`, never the promotion PR (which may ship with
+    a pending backfill).
+  - The log is **eventually-consistent**: a missing merged gate is a pending backfill, not a
+    violation. A read-only session (e.g. plan mode) defers any gate entry to the next writable
+    session the same way.
 
 ## 60. Phone visibility
 - Make output viewable without a desktop: push screenshots to the branch, or use the Pages preview (/Game/dev/). Never rely on local-only PNGs.
