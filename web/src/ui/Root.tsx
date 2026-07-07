@@ -15,15 +15,17 @@ import { StartScreen } from "./StartScreen";
 import { CombatTestScreen } from "./combat/CombatTestScreen";
 import { NodeTestScreen } from "./node/NodeTestScreen";
 import { HeroesScreen } from "./heroes/HeroesScreen";
+import { GuildScreen } from "./guild/GuildScreen";
 import { NavBar, type NavKey } from "./kit";
 
-type Route = "start" | "test" | "node" | "heroes";
+type Route = "start" | "test" | "node" | "heroes" | "guild";
 
 function readRoute(): Route {
   const h = window.location.hash.replace(/^#\/?/, "");
   if (h === "test") return "test";
   if (h === "node") return "node";
   if (h === "heroes") return "heroes";
+  if (h === "guild") return "guild";
   return "start";
 }
 
@@ -49,6 +51,8 @@ export function Root() {
       <CombatTestScreen />
     ) : route === "node" ? (
       <NodeTestScreen />
+    ) : route === "guild" ? (
+      <GuildScreen />
     ) : (
       <HeroesScreen />
     );

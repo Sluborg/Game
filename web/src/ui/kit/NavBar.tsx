@@ -8,11 +8,21 @@
 import type { ReactNode } from "react";
 import styles from "./NavBar.module.css";
 
-export type NavKey = "node" | "heroes" | "test";
+export type NavKey = "guild" | "node" | "heroes" | "test";
 
 export interface NavBarProps {
   active: NavKey;
   onNavigate: (key: NavKey) => void;
+}
+
+function GuildIcon() {
+  // A banner/standard on a pole — the guild hall.
+  return (
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden>
+      <path d="M7 3v18" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M7 4h12l-3 3.5L19 11H7z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+    </svg>
+  );
 }
 
 function MapIcon() {
@@ -59,9 +69,10 @@ interface Tab {
 }
 
 const TABS: Tab[] = [
+  { key: "guild", label: "Guild", icon: <GuildIcon /> },
   { key: "node", label: "Map", icon: <MapIcon /> },
   { key: "heroes", label: "Heroes", icon: <HeroesIcon /> },
-  { key: "test", label: "Combat Test", icon: <SwordsIcon /> },
+  { key: "test", label: "Combat", icon: <SwordsIcon /> },
 ];
 
 export function NavBar({ active, onNavigate }: NavBarProps) {

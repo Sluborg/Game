@@ -543,13 +543,16 @@ with a prompt drafted in that chat, following the repo loop (plan → review →
 **Shipped:** Guild Hall, Village, Ruins on the map as real, clickable, selectable nodes (PR #20,
 2026-07-01) — the placeholder boxes are gone.
 
-**Next up — Slice 1, Thin closed loop:** two board quests (road job + Ruins) + 3 pre-made heroes
-as one fixed party (CVs with certainty chips) + the **player-set cut** as the priced decision
-(§12 — the bounty top-up and full gold/stats pricing wait for slice 4) + one summary-tier report
-carrying §12's itemized ledger (§4/§10's minimal envelope) + the §8/§12 cash clock. Playable in
-one PR: priced decision → consequence → readable outcome → money pressure. Carries its own
-foundations — engine seams decided (§11), a versioned serializable world-state module, a discrete
-"end day" tick — as scaffolding inside this same PR, not a standalone prerequisite session.
+**Shipped — Slice 1, Thin closed loop** (behind the `/guild` route): two board quests (road job +
+Ruins) + 3 pre-made heroes as one fixed party (CVs with §5 certainty chips) + the **player-set
+cut** as the priced decision (§12) + a summary-tier report mail carrying §12's itemized ledger,
+gold-delta headline and runway line + the §8/§12 cash clock (upkeep, passive floor, the debt
+rescue window, charter revocation). The loop runs: priced decision → accept/decline consequence →
+readable outcome → money pressure. Carries its foundations — a versioned serializable world-state
+module (`web/src/game/world/`) with a discrete pure `endDay` tick and a persisted RNG cursor
+(save→reload-deterministic). The §11 D1a engine seam is **deferred to Slice 2** (its real consumer:
+Slice 1 resolves by a seeded probability roll reading party CV quality, so it runs no battle and
+needs no combat-core change — combat-core touch stays at zero).
 
 Then, in order:
 
