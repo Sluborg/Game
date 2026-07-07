@@ -3,7 +3,7 @@
 // (gold delta, runway, why-no-takers) as the §8/§12 cash clock bites. All rules
 // live in game/world/; this screen only renders state and dispatches actions.
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button, Panel } from "../kit";
 import {
   APPETITE_LABEL,
@@ -25,6 +25,14 @@ const takeOf = (q: Quest) => Math.round((q.reward * q.cut) / 100);
 
 export function GuildScreen() {
   const { state, adjustCut, endDay, startNewRun } = useGuildState();
+  // Bring the report into view when a new one lands — otherwise the End Day
+  // payoff (gold delta headline) is below the fold and reads as "nothing happened".
+  const reportRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (state.lastReport && reportRef.current) {
+      reportRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [state.lastReport]);
   return (
     <div className={styles.screen}>
       <header className={styles.bar}>
@@ -60,7 +68,11 @@ export function GuildScreen() {
           </>
         )}
 
-        {state.lastReport && <Report report={state.lastReport} />}
+        {state.lastReport && (
+          <div ref={reportRef}>
+            <Report report={state.lastReport} />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -79,9 +91,9 @@ function Treasury({ state }: { state: WorldState }) {
     <div className={styles.treasury} aria-label={`Treasury ${state.gold} gold`}>
       <span className={styles.gold}>{state.gold}g</span>
       <span className={styles.burn}>{burnLine}</span>
-      {state.loan.active && (
+      {(state.loan.active || state.insolventStreak > 0) && (
         <span className={styles.debt} title="Consecutive insolvent days; 5 revokes the charter">
-          loan owed · insolvent {state.insolventStreak}/{ECONOMY.insolvencyLimit}
+          {state.loan.active ? "loan owed · " : ""}insolvent {state.insolventStreak}/{ECONOMY.insolvencyLimit}
         </span>
       )}
     </div>
@@ -179,7 +191,7 @@ function Posting({
             <div className={styles.cutBlock}>
               <span className={styles.cutLabel}>Your cut</span>
               <span className={styles.cutValue}>{quest.cut}%</span>
-              <span className={styles.cutTake}>you take {takeOf(quest)}g · heroes get {100 - quest.cut}%</span>
+              <span className={styles.cutTake}>you take {takeOf(quest)}g · heroes get {quest.reward - takeOf(quest)}g</span>
             </div>
             <div className={styles.cutButtons} role="group" aria-label={`Adjust cut for ${quest.title}`}>
               {[-10, -5, 5, 10].map((d) => {
@@ -201,13 +213,13 @@ function Posting({
             </div>
           </div>
 
-          <div className={styles.appetiteRow} title={APPETITE_HINT[appetite]}>
-            <span className={styles.appetiteLabel}>Their take:</span>
+          <div className={styles.appetiteRow}>
+            <span className={styles.appetiteLabel}>Their take on this split:</span>
             <span className={styles.appetite} data-appetite={appetite}>
-              {appetite === "unknown" ? "—" : APPETITE_LABEL[appetite]}
+              {APPETITE_LABEL[appetite]}
             </span>
-            <span className={styles.appetiteNote}>(will they take this split?)</span>
           </div>
+          <p className={styles.appetiteHint}>{APPETITE_HINT[appetite]}</p>
           <p className={styles.cutHint}>Applies to tonight — adjustable until you End Day.</p>
         </>
       )}

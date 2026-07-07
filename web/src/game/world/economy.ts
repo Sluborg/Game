@@ -30,9 +30,11 @@ export const QUESTS = {
     title: "Clear the Ashford road",
     reward: 200, // → cut 40–80g. Survival: success ~85%; at 30% ≈ +6g/day net.
     // Acceptance is a MAX-CUT threshold in cut-points: the party bites if the
-    // posted cut ≤ (askAnchor + run offset + daily noise). Road sits high, so it
-    // is almost always taken — the §6 unstick floor.
-    askAnchor: 42,
+    // posted cut ≤ (askAnchor + run offset + daily noise). Seated so the road is
+    // always taken at the base 30% cut (the §6 unstick floor) BUT the acceptance
+    // cliff begins by 35% — so blind 30% is EV-optimal here too (§12), and raising
+    // the cut is a knowledge play, not free money.
+    askAnchor: 37,
     failPayBump: 40, // one-time reward bump on failure (bounded; difficulty rises with pay)
   },
   ruins: {

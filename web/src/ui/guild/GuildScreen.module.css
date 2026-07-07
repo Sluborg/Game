@@ -257,7 +257,7 @@
 }
 .cutBtn {
   min-width: 46px;
-  min-height: 40px;
+  min-height: 44px;
   border-radius: var(--r-md);
   border: 1px solid var(--stroke-gold);
   background: var(--surface-2);
@@ -305,8 +305,10 @@
   color: var(--c-blood);
   border-color: var(--c-blood);
 }
-.appetiteNote {
-  font-size: 10px;
+.appetiteHint {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.35;
   color: var(--text-dim);
 }
 .cutHint {
@@ -377,7 +379,7 @@
 .mailLine {
   font-size: 12px;
   line-height: 1.4;
-  color: var(--text-dim);
+  color: var(--text-strong);
   padding-left: 10px;
   border-left: 2px solid var(--stroke-soft);
 }

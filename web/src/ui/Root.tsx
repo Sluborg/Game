@@ -43,7 +43,13 @@ export function Root() {
   };
 
   if (route === "start") {
-    return <StartScreen onCombatTest={() => go("test")} onNodeTest={() => go("node")} />;
+    return (
+      <StartScreen
+        onGuild={() => go("guild")}
+        onCombatTest={() => go("test")}
+        onNodeTest={() => go("node")}
+      />
+    );
   }
 
   const screen =

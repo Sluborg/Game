@@ -60,13 +60,11 @@ export function endDay(prev: WorldState): WorldState {
   const quality = partyQuality(s.heroes);
   const byId = (id: string) => s.quests.find((q) => q.id === id)!;
 
-  // Operating net (drives the runway line) excludes financing (loan in/out).
-  let operatingNet = 0;
-  const gain = (label: string, amount: number, operating = true) => {
+  const gain = (label: string, amount: number) => {
     s.gold += amount;
     ledger.push({ label, amount });
-    if (operating) operatingNet += amount;
   };
+  let interestCharged = false;
 
   // 1. Cut revisions already live in each quest.cut (set during the day). No-op.
 
@@ -107,7 +105,9 @@ export function endDay(prev: WorldState): WorldState {
         });
         toFreshLetter(q); // giver gone → a new giver's fresh letter
       } else {
-        // Same quest returns: failCount + payBump persist; only the board clock resets.
+        // Same quest returns (failCount + payBump persist), but re-posts as a fresh
+        // letter: the board clock AND the cut reset to base 30% (§12's replacement-
+        // letter rule), so a prior misprice doesn't silently carry forward.
         q.reward = base.reward + q.payBump;
         q.onBoard = true;
         q.cut = ECONOMY.cutBase;
@@ -161,9 +161,15 @@ export function endDay(prev: WorldState): WorldState {
           text: `No takers for ${e.q.title} — the ${e.q.cut}% cut looks thin to them.`,
         });
       }
-      // Occasionally volunteer the other side of the bracket (coarse free knowledge).
+      // Occasionally volunteer the other side of the bracket (coarse free knowledge)
+      // — while the appetite band is still WIDE (>~4 pts, per §12's residual band),
+      // not only before the first observed accept. Once it tightens, the hints stop.
       for (const e of evals) {
-        if (e.q.learnedMaxAccepted === null && nextFloat(cur) < 0.3) {
+        const gap =
+          e.q.learnedMaxAccepted === null
+            ? Infinity
+            : (e.q.learnedMinDeclined ?? Infinity) - e.q.learnedMaxAccepted;
+        if (gap > ACCEPT.dailyNoiseMax * 2 && nextFloat(cur) < 0.3) {
           mail.push({
             kind: "reveal",
             quest: e.q.id,
@@ -180,18 +186,21 @@ export function endDay(prev: WorldState): WorldState {
   gain("Daily upkeep", -ECONOMY.dailyUpkeep);
 
   // 6. Loan interest (flat, non-compounding).
-  if (s.loan.active) gain("Loan interest (5%/day)", -ECONOMY.loanInterestPerDay);
+  if (s.loan.active) {
+    gain("Loan interest (5%/day)", -ECONOMY.loanInterestPerDay);
+    interestCharged = true;
+  }
 
   // 7. Forced auto-repay — the moment you can pay 600g and still keep 200g.
   if (s.loan.active && s.gold - ECONOMY.loanPrincipal >= ECONOMY.repayKeepBuffer) {
-    gain("Loan repaid", -ECONOMY.loanPrincipal, false); // financing, not operating
+    gain("Loan repaid", -ECONOMY.loanPrincipal);
     s.loan.active = false;
     mail.push({ kind: "repaid", text: `You cleared the ${ECONOMY.loanPrincipal}g loan and kept a working buffer.` });
   }
 
   // 8. Loan disbursement — a fresh loan clears THIS day's insolvency (one per run).
   if (s.gold < 0 && !s.loan.taken) {
-    gain("Emergency loan", ECONOMY.loanPrincipal, false); // financing, not operating
+    gain("Emergency loan", ECONOMY.loanPrincipal);
     s.loan.active = true;
     s.loan.taken = true;
     mail.push({
@@ -215,10 +224,16 @@ export function endDay(prev: WorldState): WorldState {
   }
 
   // ---- Report figures ----
+  // The runway reflects the RECURRING burn (passive − upkeep − interest), NOT
+  // one-off quest income — otherwise a payday would mask the §8 clock and read as
+  // false runway. The headline gold delta (rendered separately) celebrates a good
+  // day; this line is the honest sustained-burn pressure.
+  const structuralBurn =
+    ECONOMY.passiveIncome - ECONOMY.dailyUpkeep - (interestCharged ? ECONOMY.loanInterestPerDay : 0);
   report.goldAfter = s.gold;
-  report.netPerDay = operatingNet;
+  report.netPerDay = structuralBurn;
   report.runwayDaysAfter =
-    operatingNet >= 0 ? null : Math.max(0, Math.floor(Math.max(0, s.gold) / -operatingNet));
+    structuralBurn >= 0 ? null : Math.max(0, Math.floor(Math.max(0, s.gold) / -structuralBurn));
 
   // ---- Next morning: board refresh (revision unlocks; expiry withdraws) ----
   if (s.status === "playing") {

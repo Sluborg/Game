@@ -26,7 +26,25 @@ Format per entry:
   growing 140g/day"), ledger itemized, back-to-back workdays, no h-overflow, 4 tabs fit; injected
   revoked state renders "Charter revoked" + insolvent 5/5 debt chip + working "Start a new guild".
   Combat core / LPC / art pipeline untouched (verified). Screenshots: `docs/screenshots/guild-*.jpg`.
-- Then ran Review #2 on the diff (below the plan entry once complete).
+- Review #2 (4-persona, on the DIFF): 4 blockers, all fixed — (1) Designer: `road.askAnchor=42` let
+  35% strictly dominate 30% blind (EV 61 vs 52), breaking §12's "30 base-optimal on both" — my
+  blind-optimal test only checked {20,30,40} and missed the reachable 25/35; lowered to 37 and
+  widened the test to every reachable cut {20,25,30,35,40}; (2) Adversary+Engineer: the insolvency
+  N/5 counter was gated on `loan.active`, so the *lethal* post-repay spiral (loan spent, streak
+  1→5) showed no countdown — now gated on `insolventStreak>0 || loan.active`; (3) Player-exp: the
+  End Day report rendered below the fold ("nothing happened") — now scrolls into view; (4)
+  Player-exp: cut buttons were 40px (<44px tap target) — now 44. Non-blocking folded: reveal line
+  fires while the appetite band is still wide (was: dead after first accept); "unknown" shows the
+  word (was a bare "—"); runway now reflects the recurring burn not a spiky payday; a
+  rngState-advances test; visible appetite hint (was title-only, dead on touch); gold/gold split
+  units ("you take 60g · heroes get 140g"); mail lines lifted off `--text-dim`; a Guild entry added
+  to StartScreen (the loop was only reachable via the nav on another screen); cut-reset comment
+  aligned. Engineer confirmed forbidden paths untouched + reducer/determinism sound; Adversary
+  confirmed the domain otherwise unbreakable (loan clock, softlock self-heal, identity bounds, no
+  ask leak). Re-verified: `tsc -b` clean, `vite build` green, **76 vitest pass**, headless @430px
+  confirmed all four fixes live (Guild button, visible hint, 44px, report-in-view, 5/5 chip w/o
+  active loan, gold/gold units, no console errors).
+- Open questions: none blocking. Next: PR into `dev` → self-post `@codex review` → merge gate.
 
 ## 2026-07-07 - Slice 1 (Thin closed loop): plan done
 - Gate: plan (Review #1 cleared; proceeding to build autonomously per the loop — no human checkpoint here)

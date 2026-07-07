@@ -52,6 +52,16 @@ describe("determinism", () => {
     endDay(s);
     expect(s).toEqual(snapshot);
   });
+
+  it("advances the RNG cursor each day (not a frozen stream)", () => {
+    const s0 = newRun(9);
+    const s1 = endDay(s0);
+    const s2 = endDay(s1);
+    // If the cursor weren't written back, rngState would never change and every
+    // day would replay the identical noise/outcome draws.
+    expect(s1.rngState).not.toBe(s0.rngState);
+    expect(s2.rngState).not.toBe(s1.rngState);
+  });
 });
 
 describe("cash clock (§12 number sheet)", () => {
@@ -303,10 +313,13 @@ describe("blind play is base-optimal (§12 R2 property)", () => {
   const ev = (tier: "road" | "ruins", cut: number) =>
     acceptProb(tier, cut) * ((QUESTS[tier].reward * cut) / 100) * successChance(tier, quality);
 
-  it("cut = 30 maximises blind EV on both tiers", () => {
+  it("cut = 30 maximises blind EV on both tiers, across EVERY reachable cut", () => {
+    // Must check 25 and 35 too — the −5/+5 buttons reach them, and an anchor set
+    // too high once let 35% strictly dominate 30% blind (Review #2 blocker).
     for (const tier of ["road", "ruins"] as const) {
-      expect(ev(tier, 30)).toBeGreaterThanOrEqual(ev(tier, 20));
-      expect(ev(tier, 30)).toBeGreaterThanOrEqual(ev(tier, 40));
+      for (const cut of [20, 25, 35, 40]) {
+        expect(ev(tier, 30)).toBeGreaterThan(ev(tier, cut));
+      }
     }
   });
 
