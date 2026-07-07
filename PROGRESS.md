@@ -10,8 +10,78 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-07 - Slice 1 (Thin closed loop): build done
+- Gate: build (plan + Review #1 cleared; Review #2 on the diff next, before any PR)
+- Branch: `claude/parties-primary-heroes-view-glyo4q`
+- Built the pure domain `web/src/game/world/` (rng cursor, economy/quests/heroes constants, newRun,
+  the `endDay` §12-tick reducer, seeded probability `resolve`, `appetite` derivation, `persist` with
+  shape+version guard, `actions` cut control) + UI `web/src/ui/guild/` (GuildScreen board + report
+  mail + revoked end state, `useGuildState` hook) + `#/guild` route and a 4th NavBar "Guild" tab
+  (icon-only <380px). All 9 Review #1 blockers folded in (see plan entry below).
+- Verified before claiming: `tsc -b` clean; `vite build` green (109 modules); **74 vitest pass**
+  (32 new world guards incl. reload-determinism, tick order, loan/insolvency/revoke, appetite
+  provenance, blind-30-optimal EV, failed-quest identity, expiry, persistence). Headless Chromium
+  @430px drove the live loop: fresh 1000g board (day-1 appetite "unknown"), cut nudge → appetite
+  recomputes to "eager", End Day → report mail leads with the gold delta + runway ("960g → 1100g,
+  growing 140g/day"), ledger itemized, back-to-back workdays, no h-overflow, 4 tabs fit; injected
+  revoked state renders "Charter revoked" + insolvent 5/5 debt chip + working "Start a new guild".
+  Combat core / LPC / art pipeline untouched (verified). Screenshots: `docs/screenshots/guild-*.jpg`.
+- Review #2 (4-persona, on the DIFF): 4 blockers, all fixed — (1) Designer: `road.askAnchor=42` let
+  35% strictly dominate 30% blind (EV 61 vs 52), breaking §12's "30 base-optimal on both" — my
+  blind-optimal test only checked {20,30,40} and missed the reachable 25/35; lowered to 37 and
+  widened the test to every reachable cut {20,25,30,35,40}; (2) Adversary+Engineer: the insolvency
+  N/5 counter was gated on `loan.active`, so the *lethal* post-repay spiral (loan spent, streak
+  1→5) showed no countdown — now gated on `insolventStreak>0 || loan.active`; (3) Player-exp: the
+  End Day report rendered below the fold ("nothing happened") — now scrolls into view; (4)
+  Player-exp: cut buttons were 40px (<44px tap target) — now 44. Non-blocking folded: reveal line
+  fires while the appetite band is still wide (was: dead after first accept); "unknown" shows the
+  word (was a bare "—"); runway now reflects the recurring burn not a spiky payday; a
+  rngState-advances test; visible appetite hint (was title-only, dead on touch); gold/gold split
+  units ("you take 60g · heroes get 140g"); mail lines lifted off `--text-dim`; a Guild entry added
+  to StartScreen (the loop was only reachable via the nav on another screen); cut-reset comment
+  aligned. Engineer confirmed forbidden paths untouched + reducer/determinism sound; Adversary
+  confirmed the domain otherwise unbreakable (loan clock, softlock self-heal, identity bounds, no
+  ask leak). Re-verified: `tsc -b` clean, `vite build` green, **76 vitest pass**, headless @430px
+  confirmed all four fixes live (Guild button, visible hint, 44px, report-in-view, 5/5 chip w/o
+  active loan, gold/gold units, no console errors).
+- Open questions: none blocking. Next: PR into `dev` → self-post `@codex review` → merge gate.
+
+## 2026-07-07 - Slice 1 (Thin closed loop): plan done
+- Gate: plan (Review #1 cleared; proceeding to build autonomously per the loop — no human checkpoint here)
+- Branch: `claude/parties-primary-heroes-view-glyo4q` (restarted off `origin/dev` after PR #29 merged;
+  §50 backfill of PR #31/#32 gates was this branch's separate first commit)
+- Scope declared (additive; guild work behind the `/guild` route): NEW pure domain
+  `web/src/game/world/` (versioned serializable `WorldState`, seeded rng cursor, 3-hero fixed party
+  with §5 CVs, road+Ruins quest templates, §12 `economy` constants, `newRun`, the `endDay` reducer =
+  §12 tick order, `persist` = localStorage w/ shape+version guard, seeded probability `resolve`,
+  tests); NEW UI `web/src/ui/guild/` (GuildScreen board: treasury chip, two postings, the cut
+  control, appetite chips, the fixed party as CV certainty chips, End Day, report-mail ledger, debt +
+  charter-revoked end state + New run); MODIFY `Root.tsx` (+`#/guild`), `kit/NavBar.tsx` (+Guild tab,
+  icon-only <400px), `docs/DESIGN.md` (Shipped note). Combat core / LPC / art pipeline untouched.
+- Scope decisions ratified in review: (C) resolution is a seeded probability roll reading party CV
+  quality, clamped to §12 bands — no per-hit combat sim; (D) **§11 D1a is NOT implemented this PR** —
+  deferred to Slice 2, its real consumer (Slice 1 runs no battle, so wiring `hero` into the frozen
+  `FightConfig` would be unused widening of the combat core). Both endorsed by Designer + Engineer.
+- Review #1 (4-persona, on the PLAN): 9 blockers, all folded before build — (1) appetite chip is
+  cut-relative and derived ONLY from observation brackets, recomputing live, never reading the hidden
+  ask (day-1 "unknown"); (2) persisted rng = live cursor threaded through `endDay` + reload-determinism
+  test; (3) `save()` swallows write failures + loader validates shape not just version; (4) priced
+  decision reads reversible ("revisable today / locked till tomorrow", morning reset); (5) report mail
+  leads with the gold delta + runway change; (6) appetite chip money-noun label so it never reads as
+  quest danger; (7) `insolventStreak` fully specified (reset on solvent end-day, trigger day 0,
+  re-insolvency = fresh 5-day clock, no second loan); (8) failed-quest identity persists across refresh
+  (stable id + failCount + payBump, only expiry resets); (9) road always re-offered at base 30% on
+  withdrawal/expiry. Non-blocking folded: party rendered once not per-posting; rumor CV = §5 "?";
+  StartScreen change dropped to shrink the diff; Ruins ask seated near a cut boundary; gold<0 trigger +
+  keep-200g repay encoded; deterministic draw order (road→Ruins); blind-optimal test = EV over many
+  seeds; runway NaN guard; replacement letter resets cut to 30% (surfaced); insolvency 3/5 on the
+  treasury chip; no-takers its own mail line; charter-revoked pairs loss + New-run; a note on the two
+  hero rosters (world-state vs UI mock) drifting until Slice 3.
+- Open questions: none blocking.
+
 ## 2026-07-06 - Kenney frame + Asset Report palette/button foundation
-- Gate: codex-cleared → awaiting merge decision. **PR #32 into `dev`**.
+- Gate: **merged 2026-07-06 22:40 +0200** (merge commit `fc488b2`; backfilled 2026-07-07).
+  **PR #32 into `dev`**.
 - Codex (on head `b85cdf3`): "Didn't find any major issues." No fixes needed.
   No PR-level CI on this repo (deploy triggers on push to main/dev only); UI-only.
 - Branch: `claude/kenney-ui-foundation` → PR into `dev`.
@@ -38,8 +108,8 @@ Format per entry:
   left intentionally (sprites + verified chip); optional full de-purple is a follow-up.
 
 ## 2026-07-06 - §50 merged-gate backfill rule
-- Gate: codex-fixed → awaiting merge decision. **PR #31 into `dev`** (Codex on `28884e4`: no
-  findings — nothing to fix)
+- Gate: **merged 2026-07-06 02:09 +0200** (merge commit `2eb2be3`; backfilled 2026-07-07).
+  **PR #31 into `dev`** (Codex on `28884e4`: no findings — nothing to fix)
 - Branch: `claude/economy-quest-fees-jto58v` (designated session branch, restarted from
   `origin/dev` at `d70b6ee` after PR #30 merged) → PR #31 into `dev` (docs-only; no PR-level CI
   on this repo)

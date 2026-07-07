@@ -53,3 +53,11 @@
 .active .label {
   font-weight: 700;
 }
+
+/* Four tabs get tight on the narrowest phones — drop to icon-only so nothing
+   truncates or overflows (the active tab still reads via aria-current). */
+@media (max-width: 380px) {
+  .label {
+    display: none;
+  }
+}
