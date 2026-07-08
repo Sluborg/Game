@@ -185,6 +185,32 @@ export const HEROES: Hero[] = [
     ],
   },
   {
+    id: "wren",
+    name: "Wren Ashdown",
+    archetype: "Pathfinder",
+    presetKey: "squire",
+    layers: layersFor("squire"),
+    // The Iron Vigil's scout — her Perception/Dexterity are what let the party
+    // clear the Ruins' non-combat beats (sigils, the flooded descent). Attribute
+    // VALUES mirror the sim ground truth (game/guild/roster.ts) — enforced by test.
+    status: { kind: "quest", text: "On quest: Sunken Ruins" },
+    attributes: attrs([7, "rumor"], [13, "claimed"], [9, "rumor"], [15, "verified"]),
+    equipment: {
+      mainhand: { name: "Hunting Bow", effect: "Reach without closing; sets up the party's opener." },
+      armor: { name: "Ranger's Leathers", effect: "Light mitigation; keeps her quick and quiet." },
+      trinket1: { name: "Brass Spyglass", effect: "Reads a room or a ruin before the party commits." },
+    },
+    traits: [
+      { name: "Sharp-eyed", effect: "Spots the detail others miss; strong on investigation beats." },
+      { name: "Wayfarer", effect: "Knows the paths; eases the party's travel beats." },
+    ],
+    bonds: [
+      { scope: "guild", name: "The Guild", score: 38, note: "Signed on for the Ruins contract; steady so far." },
+      { scope: "party", name: "The Iron Vigil", score: 30, note: "The newest of the three; earning her place." },
+      { scope: "hero", name: "Ysolt", targetId: "ysolt", type: "Reads her lead", score: 24, note: "Wary of the Champion's pride, but follows the plan." },
+    ],
+  },
+  {
     id: "doran",
     name: "Doran Blackfen",
     archetype: "Hedge Knight",
@@ -192,13 +218,14 @@ export const HEROES: Hero[] = [
     layers: layersFor("knight"),
     // The Iron Vigil's dependable second — same quest/location as Ysolt.
     status: { kind: "quest", text: "On quest: Sunken Ruins" },
-    attributes: attrs([12, "claimed"], [8, "claimed"], [10, "verified"], [9, "rumor"]),
+    attributes: attrs([12, "claimed"], [8, "claimed"], [12, "verified"], [9, "rumor"]),
     equipment: {
       armor: { name: "Mail Hauberk", effect: "Mid-tier mitigation." },
       mainhand: { name: "Arming Sword", effect: "Balanced one-hander." },
       offhand: { name: "Round Shield", effect: "Light block; keeps him mobile." },
     },
     traits: [{ name: "Loyal", effect: "Turned down a rival's richer offer; slow to defect." }],
+    // (attribute values below mirror the sim ground truth — see game/guild/roster.ts)
     bonds: [
       { scope: "guild", name: "The Guild", score: 66, note: "The steadiest hire on the books." },
       { scope: "party", name: "The Iron Vigil", score: 38, note: "The dependable second." },

@@ -6,8 +6,22 @@
 import { describe, expect, it } from "vitest";
 import { HEROES } from "./mockHeroes";
 import { PARTIES, PARTY_VIEWS, SOLO, heroRating } from "./mockParties";
+import { HERO_BY_ID } from "../../game/guild";
 
 const KNOWN = new Set(HEROES.map((h) => h.id));
+
+describe("UI roster ↔ sim ground truth", () => {
+  it("every UI hero's attribute values match the sim's ground truth (no divergence)", () => {
+    for (const h of HEROES) {
+      const truth = HERO_BY_ID[h.id];
+      expect(truth, `sim hero ${h.id}`).toBeTruthy();
+      for (const a of h.attributes) {
+        const key = a.key.toLowerCase() as "str" | "dex" | "sta" | "per";
+        expect(a.value, `${h.id}.${a.key}`).toBe(truth.attrs[key]);
+      }
+    }
+  });
+});
 
 describe("mockParties", () => {
   it("every party references only real heroes, and the boss is a member", () => {

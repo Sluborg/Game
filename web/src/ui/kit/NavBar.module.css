@@ -45,6 +45,25 @@
   width: 24px;
   height: 24px;
   display: block;
+  position: relative;
+}
+
+/* Unread-envelope badge on the Report tab. */
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--c-blood);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .active {

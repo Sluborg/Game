@@ -42,3 +42,26 @@
 .menuBtn {
   width: 100%;
 }
+
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: rgba(16, 12, 7, 0.85);
+  border: 1px solid var(--stroke-soft);
+}
+.confirmText {
+  font-size: 0.85rem;
+  color: var(--text-strong);
+  text-align: center;
+  font-family: var(--font-ui);
+}
+.confirmRow {
+  display: flex;
+  gap: var(--sp-2);
+}
+.confirmBtn {
+  flex: 1;
+}

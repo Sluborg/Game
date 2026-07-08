@@ -1,0 +1,102 @@
+/* Report screen — nightly summary of sealed envelopes. Phone-first, no h-scroll. */
+
+.screen {
+  min-height: 100vh;
+  padding: 0 0 calc(var(--nav-h) + var(--sp-5));
+  background: var(--surface-0);
+  color: var(--text-strong);
+  font-family: var(--font-ui);
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: var(--sp-3) var(--sp-4);
+  background: linear-gradient(180deg, var(--bar-1), var(--bar-2));
+  border-bottom: 1px solid var(--stroke-soft);
+}
+.title { margin: 0; font-family: var(--font-display); font-size: 1.15rem; color: var(--text-gold); }
+.day { font-size: 0.8rem; color: var(--text-dim); }
+
+.empty { padding: var(--sp-5) var(--sp-4); color: var(--text-dim); font-size: 0.9rem; line-height: 1.5; }
+
+.night { padding: var(--sp-4) var(--sp-4) 0; }
+.nightHead {
+  margin: 0 0 var(--sp-2);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+
+/* Sealed outcome envelope */
+.envelope {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  text-align: left;
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  border: 1px solid var(--stroke-gold);
+  background: var(--surface-2);
+  color: var(--text-strong);
+  cursor: pointer;
+}
+.envelope:active { transform: scale(0.99); }
+.envelope[data-sealed="true"] { background: linear-gradient(180deg, var(--surface-3), var(--surface-2)); }
+.seal {
+  flex: none;
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: var(--c-blood-deep);
+  color: var(--c-parchment);
+  font-size: 1rem;
+}
+.envelope[data-sealed="false"] .seal { background: var(--surface-1); color: var(--text-dim); }
+.envText { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.envTeaser { font-size: 0.9rem; }
+.envCta { font-size: 0.75rem; color: var(--text-gold); }
+
+/* Ledger */
+.ledger { border-radius: var(--r-md); border: 1px solid var(--stroke-soft); background: var(--surface-1); overflow: hidden; }
+.ledgerHead {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  background: none;
+  border: none;
+  color: var(--text-strong);
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+.ledgerBody { list-style: none; margin: 0; padding: 0 var(--sp-3) var(--sp-3); display: flex; flex-direction: column; gap: 4px; }
+.ledgerBody li { display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; color: var(--text-dim); }
+.amt { font-variant-numeric: tabular-nums; font-weight: 700; }
+.amt[data-pos="true"] { color: var(--c-emerald); }
+.amt[data-pos="false"] { color: var(--c-blood); }
+.runwayLine { padding-top: 4px; border-top: 1px dashed var(--stroke-soft); color: var(--text-strong) !important; font-style: italic; }
+
+/* Info lines */
+.info {
+  padding: var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--surface-1);
+  border-left: 3px solid var(--stroke-soft);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+.info[data-kind="acceptance"] { border-left-color: var(--c-emerald); color: var(--text-strong); }
+.info[data-kind="coach"] { border-left-color: var(--gold-soft-hi); background: var(--c-parchment); color: var(--ink-parchment); }
+.info[data-kind="notice"] { border-left-color: var(--c-ember); }
