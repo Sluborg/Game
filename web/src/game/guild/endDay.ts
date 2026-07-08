@@ -157,13 +157,17 @@ export function endDay(state: GuildState): GuildState {
       : next.gold <= 0
         ? `Treasury is in the red (${next.gold}g).`
         : `Gold lasts ~${Math.max(1, Math.floor(next.gold / -net))} days at this burn.`;
+  // The teaser stays neutral; net/treasury/runway are carried as data and revealed
+  // by the Report only once the night's sealed returns are opened (Codex R#34).
   nightMail.push({
     id: id("mail"),
     day: newDay,
     kind: "ledger",
-    teaser: `Day ${newDay} ledger — net ${net >= 0 ? "+" : ""}${net}g · ${next.gold}g in the treasury.`,
+    teaser: `Day ${newDay} ledger`,
     ledger,
     runwayNote,
+    net,
+    endGold: next.gold,
     read: false,
   });
 

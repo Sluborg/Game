@@ -156,6 +156,11 @@ export interface Mail {
   /** Ledger body (kind==="ledger"): the itemized movements + runway line. */
   ledger?: LedgerEntry[];
   runwayNote?: string;
+  /** The night's net and end-of-day gold. Stored raw so the Report can WITHHOLD
+   * them while any sealed return is unopened (they include the sealed payout, which
+   * would otherwise let the player back out a hidden outcome — Codex R#34). */
+  net?: number;
+  endGold?: number;
   /** Outcome body (kind==="outcome"): the adventure to replay + who ran it. */
   log?: AdventureLog;
   partyName?: string;

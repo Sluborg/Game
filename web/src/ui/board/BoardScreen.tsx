@@ -110,12 +110,18 @@ export function BoardScreen() {
 }
 
 function Treasury({ state }: { state: GuildState }) {
-  // Runway mirrors the last ledger's note when present; otherwise a neutral read.
+  // The gold balance is always shown (§12). The runway note is derived from the
+  // night's net, which includes any still-sealed payout — so hold it neutral until
+  // the outcome reports are opened, else it leaks the hidden result (Codex R#34).
   const lastLedger = state.mail.find((m) => m.kind === "ledger");
+  const pendingReports = state.mail.some((m) => m.kind === "outcome" && !m.read);
+  const runway = pendingReports
+    ? "Open your reports for the day's tally."
+    : (lastLedger?.runwayNote ?? "A fresh ledger opens.");
   return (
     <div className={styles.treasury} aria-label={`Treasury ${state.gold} gold`}>
       <span className={styles.gold}>{state.gold}g</span>
-      <span className={styles.runway}>{lastLedger?.runwayNote ?? "A fresh ledger opens."}</span>
+      <span className={styles.runway}>{runway}</span>
     </div>
   );
 }

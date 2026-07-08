@@ -87,10 +87,18 @@ function MailRow({ mail, readIds, onOpen, onRead }: { mail: Mail; readIds: Set<s
   }
 
   if (mail.kind === "ledger") {
+    // While any of this night's returning-quest cuts are still sealed, withhold the
+    // net/treasury/runway tally too — otherwise it can be back-solved to reveal the
+    // hidden payout before its story is opened (Codex R#34).
+    const pending = (mail.ledger ?? []).some((e) => e.sealedMailId !== undefined && !readIds.has(e.sealedMailId));
+    const net = mail.net ?? 0;
+    const head = pending
+      ? `${mail.teaser} — open your reports to tally the night`
+      : `${mail.teaser} — net ${net >= 0 ? "+" : ""}${net}g · ${mail.endGold ?? 0}g treasury`;
     return (
       <div className={styles.ledger}>
         <button type="button" className={styles.ledgerHead} onClick={() => { setOpen((v) => !v); if (!mail.read) onRead(); }} aria-expanded={open}>
-          <span>{mail.teaser}</span>
+          <span>{head}</span>
           <span aria-hidden>{open ? "▾" : "▸"}</span>
         </button>
         {open && mail.ledger && (
@@ -110,7 +118,9 @@ function MailRow({ mail, readIds, onOpen, onRead }: { mail: Mail; readIds: Set<s
                 </li>
               );
             })}
-            {mail.runwayNote && <li className={styles.runwayLine}><span>{mail.runwayNote}</span></li>}
+            <li className={styles.runwayLine}>
+              <span>{pending ? "Net & runway hidden until your reports are opened." : mail.runwayNote}</span>
+            </li>
           </ul>
         )}
       </div>

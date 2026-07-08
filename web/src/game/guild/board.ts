@@ -41,7 +41,11 @@ export function appetiteFor(knowledge: AskKnowledge | undefined, cutPct: number)
   if (!knowledge || (knowledge.maxAcceptedCut === null && knowledge.minRejectedCut === null)) {
     return "unknown";
   }
-  if (knowledge.minRejectedCut !== null && cutPct >= knowledge.minRejectedCut) return "won't bite";
+  // Symmetric to "eager": an observed reject at C only proves K < C + NOISE (it may
+  // have landed on a −NOISE day), so a future +NOISE day can still accept inside a
+  // 2·NOISE band above the reject. Only call "won't bite" beyond that band, else the
+  // chip would lie the other way (Codex R#34).
+  if (knowledge.minRejectedCut !== null && cutPct >= knowledge.minRejectedCut + 2 * NOISE) return "won't bite";
   if (knowledge.maxAcceptedCut !== null && cutPct <= knowledge.maxAcceptedCut - 2 * NOISE) return "eager";
   return "might pass";
 }

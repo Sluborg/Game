@@ -152,9 +152,10 @@ describe("appetite projection (never lies past the noise band)", () => {
     expect(appetiteFor(k, 26)).toBe("eager"); // boundary: safe
     expect(appetiteFor(k, 27)).toBe("might pass"); // inside the band a future roll could still decline
     expect(appetiteFor(k, 30)).toBe("might pass");
-    k = learn(k, 38, false); // declined at 38
-    expect(appetiteFor(k, 38)).toBe("won't bite");
-    expect(appetiteFor(k, 40)).toBe("won't bite");
+    k = learn(k, 38, false); // declined at 38 → guaranteed-reject region is ≥ 38 + 2·NOISE = 42
+    expect(appetiteFor(k, 38)).toBe("might pass"); // inside the band a good-mood day could still accept
+    expect(appetiteFor(k, 41)).toBe("might pass");
+    expect(appetiteFor(k, 42)).toBe("won't bite"); // beyond the band: confidently no
   });
 });
 
