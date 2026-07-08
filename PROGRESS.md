@@ -11,7 +11,7 @@ Format per entry:
 - Open questions:
 
 ## 2026-07-06 - Kenney frame + Asset Report palette/button foundation
-- Gate: codex-cleared → awaiting merge decision. **PR #32 into `dev`**.
+- Gate: **merged 2026-07-06 22:40 +0200** (merge commit `fc488b2`; backfilled 2026-07-08). **PR #32 into `dev`**.
 - Codex (on head `b85cdf3`): "Didn't find any major issues." No fixes needed.
   No PR-level CI on this repo (deploy triggers on push to main/dev only); UI-only.
 - Branch: `claude/kenney-ui-foundation` → PR into `dev`.
@@ -38,7 +38,7 @@ Format per entry:
   left intentionally (sprites + verified chip); optional full de-purple is a follow-up.
 
 ## 2026-07-06 - §50 merged-gate backfill rule
-- Gate: codex-fixed → awaiting merge decision. **PR #31 into `dev`** (Codex on `28884e4`: no
+- Gate: **merged 2026-07-06 02:09 +0200** (merge commit `2eb2be3`; backfilled 2026-07-08). **PR #31 into `dev`** (Codex on `28884e4`: no
   findings — nothing to fix)
 - Branch: `claude/economy-quest-fees-jto58v` (designated session branch, restarted from
   `origin/dev` at `d70b6ee` after PR #30 merged) → PR #31 into `dev` (docs-only; no PR-level CI
