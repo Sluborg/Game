@@ -182,10 +182,11 @@ reason to *want* a better seat.
   invisible and can stall, so the player has a direct tool: pay to host a meeting. Refusal (for
   trait reasons not yet discovered) is a CV correction in disguise, not a dead end.
 - **The unstick path.** A broke early guild is never stuck: the solo-quest upkeep floor above
-  (in Slice 1, concretely §12's always-offered road-tier job at the base cut) keeps gold
-  trickling in even with zero hires, which is eventually enough to afford an
-  introduction — and relationships also build for free from simple co-location, so paid
-  introductions accelerate formation, they're not the only route to it.
+  (in Slice 1 as built, concretely the always-available **standing jobs** — guard the hall / help
+  the city watch, §9/§12 — that any idle party takes) keeps gold trickling in even with zero
+  hires, which is eventually enough to afford an introduction — and relationships also build for
+  free from simple co-location, so paid introductions accelerate formation, they're not the only
+  route to it.
 - **Cohesion modifier.** A party that gets along gets a bonus to performance; two members who hate
   each other drag the party's relation score (and its odds) down.
 - **The boss.** Each party has a leader whose preferences carry **stronger weight** in decisions.
@@ -474,9 +475,9 @@ sell.
   a returning party can take the new job that same night: back-to-back workdays, no forced idle
   day (the road-only floor's +6g/day depends on this). A **failed** quest's letter also returns
   the next morning as the *same* quest — its failure count and any pay bump persist; only the
-  ~3-day expiry clock resets. A **road-tier job is always on offer**; that guarantee, at the
-  **base 30% cut**, is the §6 unstick floor — dropping the road job to 20% runs negative and is
-  a choice, not the safety net.
+  ~3-day expiry clock resets. A road-tier job is always postable. *(Slice 1 as built: the road
+  job is a **scarce, decline-able** posting, so the concrete §6 unstick floor is the always-
+  available **standing jobs**, not the road job — see "Slice 1 as built" below and §9.)*
 - **End-day tick order:** cut revisions apply → outcomes & payouts for the party that was out →
   acceptance rolls for board postings → passive trickle → upkeep → loan interest → forced
   auto-repay → loan disbursement (a fresh loan clears that day's insolvency) → insolvency check.
@@ -562,8 +563,11 @@ What shipped:
   parked).
 - **Standing jobs** (guard the hall / help the city watch) — always-up, non-exclusive,
   low-pay survival work any idle party takes; this replaces the abstract "road job
-  always on offer" floor (see §9). Total standing income sits *below* the idle burn:
-  it slows the cash clock, never reverses it.
+  always on offer" floor (see §9). Guild take ≈ +8g/day each, so a roster grinding
+  only standing work nets ≈ −16g/day (upkeep −60 + passive +20 + 3×8 standing) — the
+  number sheet's "idle net −40g" is the *no-work-taken* case; in practice standing
+  jobs raise the effective floor to ≈ −16g/day. It **slows** the cash clock, never
+  reverses it (a floor, not a faucet) — the Ruins is still where you climb.
 - **Rich multi-beat quests** resolve as graded skill-vs-difficulty rolls (§10), with
   inter-beat modifiers, forced branches on failure, trait cut-ins, and an optional
   bonus beat — no combat engine is called this slice.

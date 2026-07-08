@@ -83,6 +83,7 @@
 .ledgerBody { list-style: none; margin: 0; padding: 0 var(--sp-3) var(--sp-3); display: flex; flex-direction: column; gap: 4px; }
 .ledgerBody li { display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; color: var(--text-dim); }
 .amt { font-variant-numeric: tabular-nums; font-weight: 700; }
+.sealed { font-size: 0.75rem; color: var(--text-gold); font-style: italic; }
 .amt[data-pos="true"] { color: var(--c-emerald); }
 .amt[data-pos="false"] { color: var(--c-blood); }
 .runwayLine { padding-top: 4px; border-top: 1px dashed var(--stroke-soft); color: var(--text-strong) !important; font-style: italic; }

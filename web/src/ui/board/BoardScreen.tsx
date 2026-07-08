@@ -7,7 +7,7 @@
 // reward + cut stepper are primary; dots are a compact tap-to-inspect row; per-party
 // appetite is collapsed behind one line.
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Panel } from "../kit";
 import { useGuild } from "../guild/GuildContext";
 import {
@@ -34,11 +34,21 @@ const DOT_META: { key: BeatType; label: string }[] = [
 export function BoardScreen() {
   const { state, revise, end, unread } = useGuild();
   const [night, setNight] = useState(false);
+  const timerRef = useRef<number | null>(null);
+
+  // Cancel a pending night beat if the screen unmounts (e.g. the player taps a nav
+  // tab mid-veil) — otherwise the timer would fire end()/redirect on an unmounted
+  // component, and a return visit could queue a second tick (Engineer/Adversary R#2).
+  useEffect(() => () => {
+    if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+  }, []);
 
   const runNight = () => {
+    if (night) return;
     setNight(true);
     // A short night beat, then run the pure tick and land in the Report.
-    window.setTimeout(() => {
+    timerRef.current = window.setTimeout(() => {
+      timerRef.current = null;
       end();
       setNight(false);
       window.location.hash = "/report";
@@ -123,6 +133,7 @@ function QuestCard({
   const [showWho, setShowWho] = useState(false);
   const quest = QUEST_BY_ID[posting.tier];
   const dots = challengeDots(quest);
+  const primary = DOT_META.reduce((a, b) => (dots[b.key] > dots[a.key] ? b : a));
   const perDay = Math.round((quest.dailyRate * posting.cutPct) / 100);
   const revisable = canRevise(posting, state.day);
 
@@ -172,7 +183,7 @@ function QuestCard({
             ))}
           </span>
         ))}
-        <span className={styles.dotHint} aria-hidden>{showDots ? "▾" : "challenge ›"}</span>
+        <span className={styles.dotPrimary}>{showDots ? "▾" : `${primary.label}-heavy`}</span>
       </button>
       {showDots && (
         <ul className={styles.dotLegend}>

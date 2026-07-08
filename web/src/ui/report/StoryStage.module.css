@@ -33,12 +33,28 @@
 .stage {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: var(--sp-4);
-  overflow: hidden;
+  /* Top-aligned (not dead-centre) so a short beat anchors near the top instead of
+     floating in a void that reads as half-loaded on a tall phone (PX Review #2). */
+  justify-content: flex-start;
+  padding: 8vh var(--sp-4) var(--sp-4);
+  overflow-y: auto;
   cursor: pointer;
+  position: relative;
 }
+.tapHint {
+  position: absolute;
+  bottom: var(--sp-4);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  opacity: 0.8;
+  animation: hintpulse 1.6s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes hintpulse { 0%,100% { opacity: 0.35; } 50% { opacity: 0.85; } }
 
 .beat {
   width: 100%;

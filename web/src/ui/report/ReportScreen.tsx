@@ -31,6 +31,10 @@ export function ReportScreen() {
     return [...map.entries()].sort((a, b) => b[0] - a[0]);
   }, [state.mail]);
 
+  // Which mail envelopes have been opened — used to keep a sealed quest's ledger
+  // cut masked until its story has been watched (don't spoil the reveal, §4).
+  const readIds = useMemo(() => new Set(state.mail.filter((m) => m.read).map((m) => m.id)), [state.mail]);
+
   const openStory = (m: Mail) => {
     if (!m.log) return;
     readMail(m.id);
@@ -52,7 +56,7 @@ export function ReportScreen() {
           <ul className={styles.list}>
             {items.map((m) => (
               <li key={m.id}>
-                <MailRow mail={m} onOpen={() => openStory(m)} onRead={() => readMail(m.id)} />
+                <MailRow mail={m} readIds={readIds} onOpen={() => openStory(m)} onRead={() => readMail(m.id)} />
               </li>
             ))}
           </ul>
@@ -66,7 +70,7 @@ export function ReportScreen() {
   );
 }
 
-function MailRow({ mail, onOpen, onRead }: { mail: Mail; onOpen: () => void; onRead: () => void }) {
+function MailRow({ mail, readIds, onOpen, onRead }: { mail: Mail; readIds: Set<string>; onOpen: () => void; onRead: () => void }) {
   const [open, setOpen] = useState(false);
 
   if (mail.kind === "outcome") {
@@ -91,12 +95,21 @@ function MailRow({ mail, onOpen, onRead }: { mail: Mail; onOpen: () => void; onR
         </button>
         {open && mail.ledger && (
           <ul className={styles.ledgerBody}>
-            {mail.ledger.map((e, i) => (
-              <li key={i}>
-                <span>{e.label}</span>
-                <span className={styles.amt} data-pos={e.amount >= 0}>{e.amount >= 0 ? "+" : ""}{e.amount}g</span>
-              </li>
-            ))}
+            {mail.ledger.map((e, i) => {
+              // A returning quest's cut stays masked until its sealed story is opened,
+              // so the ledger can't spoil the reveal (§4).
+              const masked = e.sealedMailId !== undefined && !readIds.has(e.sealedMailId);
+              return (
+                <li key={i}>
+                  <span>{e.label}</span>
+                  {masked ? (
+                    <span className={styles.sealed}>see report ›</span>
+                  ) : (
+                    <span className={styles.amt} data-pos={e.amount >= 0}>{e.amount >= 0 ? "+" : ""}{e.amount}g</span>
+                  )}
+                </li>
+              );
+            })}
             {mail.runwayNote && <li className={styles.runwayLine}><span>{mail.runwayNote}</span></li>}
           </ul>
         )}

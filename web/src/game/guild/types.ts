@@ -138,6 +138,10 @@ export type AppetiteLabel = "unknown" | "eager" | "might pass" | "won't bite";
 export interface LedgerEntry {
   label: string;
   amount: number;
+  /** If set, this line is a returning quest's cut whose amount must stay masked in
+   * the Report until the linked outcome envelope is opened (§4 — don't spoil the
+   * sealed story's payoff). */
+  sealedMailId?: string;
 }
 
 /** A mail envelope (§4 — reveals delivered as mail, opened one at a time). */

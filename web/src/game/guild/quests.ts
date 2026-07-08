@@ -75,6 +75,8 @@ export const ROAD_JOB: QuestDef = {
       attr: "str",
       difficulty: 11,
       critical: true,
+      // A strong showing at the ford earns the merchant's gratitude (the bonus beat).
+      unlocksBonus: true,
       narration: n(
         "Bandits spring the ford — and are broken before the merchant even ducks.",
         "A scuffle at the ford; the escort drives the bandits off.",
@@ -89,7 +91,6 @@ export const ROAD_JOB: QuestDef = {
     type: "social",
     location: "the waystation",
     attr: "per",
-    unlocksBonus: false,
     difficulty: 8,
     narration: n(
       "A grateful ally slips them a rumor worth real coin.",

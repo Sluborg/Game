@@ -14,6 +14,7 @@ import {
   bestFit,
   partyEligible,
   partyQuality,
+  partyAccepts,
   effectiveMaxCut,
   DAILY_UPKEEP,
   PASSIVE_INCOME,
@@ -115,19 +116,29 @@ describe("multi-party read: anti-correlated ask ⟂ quality", () => {
     expect(bestFit(["free-blades", "iron-vigil"])).toBe("iron-vigil");
   });
 
-  it("a low Ruins cut can seat the strong party; a high cut cannot", () => {
-    // Zero the run offset so we isolate the anchor+noise; the Iron Vigil anchor is
-    // 24, the Free Blades 42, so at cut 20 the Vigil clears on every seed, at 40 it
-    // never does.
+  it("the strong party is ALWAYS lurable at the cut floor and NEVER bites the blind default", () => {
+    // With anchor 24, run band ±2, daily noise ±2, the Iron Vigil's Ruins threshold
+    // is 22..26 at offset 0 — so cut 20 always seats it, cut 30 (blind default) and
+    // cut 40 never do. The read is always available; the lever is crisp.
     const s = createInitialState(SEED);
     s.askRunOffset["iron-vigil:ruins"] = 0;
-    s.askRunOffset["free-blades:ruins"] = 0;
-    for (let day = 2; day < 40; day++) {
-      const vigilLow = effectiveMaxCut(s, "iron-vigil", "ruins", day)!;
-      const vigilHigh = vigilLow; // same-day value
-      expect(vigilLow).toBeGreaterThanOrEqual(20 - 0); // sanity: a number
-      expect(vigilHigh).toBeLessThan(40); // proud: never tolerates a 40% cut
+    for (let day = 2; day < 60; day++) {
+      const eff = effectiveMaxCut(s, "iron-vigil", "ruins", day)!;
+      expect(eff).toBeLessThan(30); // never bites at the blind 30% default
+      expect(partyAccepts(s, "iron-vigil", "ruins", 20, day)).toBe(true); // always lurable at the floor
+      expect(partyAccepts(s, "iron-vigil", "ruins", 40, day)).toBe(false); // proud: never at 40%
     }
+    // Even at the WORST run offset (−RUN_ASK_BAND), cut 20 still seats the strong party.
+    s.askRunOffset["iron-vigil:ruins"] = -2;
+    for (let day = 2; day < 60; day++) {
+      expect(partyAccepts(s, "iron-vigil", "ruins", 20, day)).toBe(true);
+    }
+  });
+
+  it("a lone hero can't bid the Ruins or the Road (standing jobs only)", () => {
+    expect(partyEligible("lone-mira", "ruins")).toBe(false);
+    expect(partyEligible("lone-mira", "road")).toBe(false);
+    expect(partyEligible("lone-mira", "standing")).toBe(true);
   });
 });
 
@@ -136,10 +147,11 @@ describe("appetite projection (never lies past the noise band)", () => {
     expect(appetiteFor(undefined, 30)).toBe("unknown");
   });
 
-  it("brackets tighten from observed accept/decline", () => {
-    let k = learn(undefined, 30, true); // accepted at 30
-    expect(appetiteFor(k, 24)).toBe("eager"); // 24 <= 30-2
-    expect(appetiteFor(k, 30)).toBe("might pass"); // within the noise band
+  it("brackets tighten from observed accept/decline; eager never lies past the noise band", () => {
+    let k = learn(undefined, 30, true); // accepted at 30 → guaranteed-accept region is ≤ 30 − 2·NOISE = 26
+    expect(appetiteFor(k, 26)).toBe("eager"); // boundary: safe
+    expect(appetiteFor(k, 27)).toBe("might pass"); // inside the band a future roll could still decline
+    expect(appetiteFor(k, 30)).toBe("might pass");
     k = learn(k, 38, false); // declined at 38
     expect(appetiteFor(k, 38)).toBe("won't bite");
     expect(appetiteFor(k, 40)).toBe("won't bite");

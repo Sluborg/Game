@@ -4,7 +4,7 @@
 // change. freshSeed() (wall-clock entropy) is read ONLY here, at the UI boundary —
 // never inside a reducer — so the sim stays deterministic/replayable.
 
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   loadState,
   saveState,
@@ -37,24 +37,23 @@ export function GuildProvider({ children }: { children: ReactNode }) {
   // Lazy init: load an existing run or start fresh. One localStorage read.
   const [state, setState] = useState<GuildState>(() => loadState(freshSeed()));
 
+  // Persistence is a side effect of state, NOT part of the reducer/updater (which
+  // must stay pure — dev StrictMode double-invokes updaters). Autosave whenever the
+  // run changes.
+  useEffect(() => {
+    saveState(state);
+  }, [state]);
+
   // All mutations go through the pure reducers via functional updates (no stale
-  // closures), then persist the resulting state.
-  const commit = useCallback((fn: (s: GuildState) => GuildState) => {
-    setState((prev) => {
-      const next = fn(prev);
-      if (next !== prev) saveState(next);
-      return next;
-    });
-  }, []);
+  // closures). The effect above persists the result.
+  const commit = useCallback((fn: (s: GuildState) => GuildState) => setState((prev) => fn(prev)), []);
 
   const revise = useCallback((postingId: string, cutPct: number) => commit((s) => reviseCut(s, postingId, cutPct)), [commit]);
   const end = useCallback(() => commit((s) => endDay(s)), [commit]);
   const readMail = useCallback((mailId: string) => commit((s) => markMailRead(s, mailId)), [commit]);
   const reset = useCallback(() => {
     clearSave();
-    const s = createInitialState(freshSeed());
-    saveState(s);
-    setState(s);
+    setState(createInitialState(freshSeed()));
   }, []);
 
   const unread = useMemo(() => state.mail.filter((m) => !m.read).length, [state.mail]);

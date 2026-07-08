@@ -2,7 +2,9 @@
 
 .screen {
   min-height: 100vh;
-  padding: 0 0 calc(var(--nav-h) + var(--sp-5) + 56px);
+  /* Reserve room for the fixed End Day bar (~68px) + nav so no card content ever
+     sits under the bar, even with a card's detail rows expanded. */
+  padding: 0 0 calc(var(--nav-h) + 96px);
   background: var(--surface-0);
   color: var(--text-strong);
   font-family: var(--font-ui);
@@ -114,7 +116,7 @@
 .dotGroup[data-type="travel"] .dot[data-on="true"] { background: var(--c-emerald); border-color: var(--c-emerald); }
 .dotGroup[data-type="social"] .dot[data-on="true"] { background: var(--gold-soft-hi); border-color: var(--gold-soft-hi); }
 .dotGroup[data-type="combat"] .dot[data-on="true"] { background: var(--c-blood); border-color: var(--c-blood); }
-.dotHint { font-size: 0.7rem; color: var(--text-dim); margin-left: auto; }
+.dotPrimary { font-size: 0.72rem; color: var(--text-gold); margin-left: auto; }
 
 .dotLegend { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .dotLegend li { display: flex; align-items: center; gap: var(--sp-2); font-size: 0.78rem; color: var(--text-dim); }

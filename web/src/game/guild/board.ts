@@ -32,14 +32,17 @@ export function partyAccepts(state: GuildState, partyId: string, tier: QuestTier
 }
 
 /** The appetite chip the board shows for a candidate cut, projected purely from
- * the player's learned bracket (never from the hidden truth). "eager" must clear
- * the known-accept bound BEYOND the noise band so the instant projection can't lie. */
+ * the player's learned bracket (never from the hidden truth). "eager" must NEVER
+ * lie: an observed accept at cut C only proves the true threshold K ≥ C − NOISE
+ * (the accept may have landed on a +NOISE day), and a future roll can subtract
+ * another NOISE, so the guaranteed-accept region is cut ≤ maxAcceptedCut − 2·NOISE.
+ * (A tighter bound than the naïve − NOISE — see the Adversary Review #2 finding.) */
 export function appetiteFor(knowledge: AskKnowledge | undefined, cutPct: number): AppetiteLabel {
   if (!knowledge || (knowledge.maxAcceptedCut === null && knowledge.minRejectedCut === null)) {
     return "unknown";
   }
   if (knowledge.minRejectedCut !== null && cutPct >= knowledge.minRejectedCut) return "won't bite";
-  if (knowledge.maxAcceptedCut !== null && cutPct <= knowledge.maxAcceptedCut - NOISE) return "eager";
+  if (knowledge.maxAcceptedCut !== null && cutPct <= knowledge.maxAcceptedCut - 2 * NOISE) return "eager";
   return "might pass";
 }
 

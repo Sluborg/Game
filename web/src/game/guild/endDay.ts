@@ -48,9 +48,13 @@ export function endDay(state: GuildState): GuildState {
     if (!a || a.returnDay !== newDay) continue;
     next.gold += a.log.guildCut;
     if (a.tier !== "standing") {
-      ledger.push({ label: `${a.questTitle} — ${partyName(party.id)}`, amount: a.log.guildCut });
+      // The outcome is a SEALED story — its cut must NOT be spelled out in the
+      // ledger before the envelope is opened (§4 reveal). Link the ledger line to
+      // the outcome mail so the Report masks the amount until that mail is read.
+      const mailId = id("mail");
+      ledger.push({ label: `${a.questTitle} — ${partyName(party.id)}`, amount: a.log.guildCut, sealedMailId: mailId });
       nightMail.push({
-        id: id("mail"),
+        id: mailId,
         day: newDay,
         kind: "outcome",
         teaser: `${partyName(party.id)} are back from ${a.questTitle}.`,
@@ -59,13 +63,9 @@ export function endDay(state: GuildState): GuildState {
         questTitle: a.questTitle,
         read: false,
       });
-      // A failed scarce quest returns as the same quest (failCount persists, §12);
-      // after a 2nd failure the giver withdraws (board refill re-posts fresh).
-      if (a.log.outcome === "failure") {
-        // The same quest returns next morning as a fresh letter (failCount would
-        // carry in a later slice; board refill guarantees the tier stays offered).
-        // Removal + refill below handle re-posting, so nothing extra here.
-      }
+      // A failed scarce quest simply leaves the roster free; the board refill below
+      // guarantees a fresh letter of the tier next morning (failCount carry is a
+      // later slice — §12).
     } else {
       // Standing job: quiet income, folded into the ledger only.
       ledger.push({ label: `${a.questTitle} — ${partyName(party.id)}`, amount: a.log.guildCut });
@@ -85,6 +85,10 @@ export function endDay(state: GuildState): GuildState {
 
   for (const posting of scarce) {
     const eligibleIdle = [...idle].filter((pid) => partyEligible(pid, posting.tier));
+    // If no eligible party is even AVAILABLE (all are out on multi-day quests), the
+    // posting simply waits — it must not age toward "no takers", which would blame
+    // the player's pricing for what was really a busy roster (Adversary R#2).
+    if (eligibleIdle.length === 0) continue;
     const candidates: string[] = [];
     for (const pid of eligibleIdle) {
       const accepts = partyAccepts(next, pid, posting.tier, posting.cutPct, newDay);
@@ -177,7 +181,10 @@ function makePosting(quest: QuestDef, seq: number, day: number): Posting {
     giver: quest.giver,
     cutPct: 30,
     daysLeft: 3,
-    lastRevisedDay: day, // a fresh letter can't be re-cut the same night it arrives
+    // Revisable on its FIRST full day (day == the new current day). Using `day`
+    // here would read as "already revised today" and lock the fresh letter at 30%
+    // for its first acceptance roll — gutting the priced decision (Adversary R#2).
+    lastRevisedDay: day - 1,
     failCount: 0,
   };
 }

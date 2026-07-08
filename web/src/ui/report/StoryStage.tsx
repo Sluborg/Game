@@ -60,7 +60,10 @@ export function StoryStage({
 
       <div className={styles.stage} onClick={atEnd ? undefined : advance}>
         {!atEnd ? (
-          <BeatCard key={index} beat={log.beats[index]} />
+          <>
+            <BeatCard key={index} beat={log.beats[index]} />
+            {index === 0 && <span className={styles.tapHint} aria-hidden>tap to continue</span>}
+          </>
         ) : (
           <div className={styles.outcome} data-outcome={log.outcome}>
             <div className={styles.outcomeTag}>{log.outcome === "success" ? "Quest complete" : "Quest failed"}</div>

@@ -31,7 +31,18 @@ export function loadState(seed: number): GuildState {
       return createInitialState(seed);
     }
     // Minimal shape sanity — anything off → reinit rather than render a broken run.
-    if (!Array.isArray(parsed.parties) || !Array.isArray(parsed.board) || !Array.isArray(parsed.mail)) {
+    // Guards the arrays AND the two objects the tick/render hard-dereference
+    // (knowledge in BoardScreen, askRunOffset in endDay) — a truncated blob missing
+    // either would otherwise TypeError into a white screen (Adversary R#2).
+    if (
+      !Array.isArray(parsed.parties) ||
+      !Array.isArray(parsed.board) ||
+      !Array.isArray(parsed.mail) ||
+      typeof parsed.knowledge !== "object" ||
+      parsed.knowledge === null ||
+      typeof parsed.askRunOffset !== "object" ||
+      parsed.askRunOffset === null
+    ) {
       return createInitialState(seed);
     }
     return parsed;

@@ -13,7 +13,13 @@ export const SAVE_VERSION = 1;
 export const STARTING_GOLD = 1000;
 export const DAILY_UPKEEP = 60;
 export const PASSIVE_INCOME = 20;
-export const RUN_ASK_BAND = 5; // ±5 cut-points fixed per run (§12)
+// ±2 cut-points fixed per run. Tightened from the §12 straw ±5 so the ask⟂quality
+// invariant is robust against its own noise: with the Iron Vigil Ruins anchor at
+// 24, band ±2 and daily noise ±2, its worst-case threshold is 24−2−2 = 20 = the cut
+// floor, so the strong party is ALWAYS lurable at cut 20 on every run (Designer
+// Review #2), while never biting at the blind 30% default — a crisp, always-present
+// read. A smaller run band still leaves a learnable per-run personality.
+export const RUN_ASK_BAND = 2;
 
 /** A deep, pure clone for a mutable reducer draft. State is JSON-serializable. */
 export function draft(state: GuildState): GuildState {
