@@ -10,6 +10,43 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-09 - Slice: the living canvas (clock · daily-life · Hall Feed · tavern) — plan done
+- Gate: plan
+- Branch: `claude/slice-living-canvas-843hho` (first commit: §50 backfill of PR #35's merged gate).
+- Scope declared: restructure `web/src/game/guild/` — new `clock.ts` (event-queue on integer
+  sim-ticks, pure handlers) + `life.ts` (autonomous rest/train/quest daily-life + hero wallets);
+  `endDay.ts` deleted (its economics move into the `night` handler); SAVE_VERSION 2. New
+  `web/src/ui/hall/` living-canvas screen replaces `ui/board/` at `#/guild` (BoardScreen + the
+  player-set cut retire per the pivot). Kit `Icon` + Kenney icon assets (CC0), GuildContext
+  rewrite, ReportScreen minor, HeroesScreen mock activity/intent lines neutralized, DESIGN.md /
+  kenney.md / CREDITS.md. Combat core untouched (D1a stays dormant); resolver/seed/persist/
+  StoryStage/Assignment seal-reveal reused.
+- Review #1 (4-persona, on the PLAN): 16 merged blockers, ALL folded into the plan before build —
+  (1) live treasury/wallets would leak the sealed outcome at the return tick → sim credits at
+  return but a pure `displayedGold()` masks every always-on gold surface until the envelope opens,
+  and ambient lines never print amounts; (2) standing-job returns are ambient+ledger only (no
+  sealed mail / auto-pause — Mira must not spam decisions); (3) spend clamp
+  `min(wallet, max(min, pct·wallet))`; (4) per-handler precondition guards (stale events no-op,
+  queue never starves); (5) quest comparator pinned (dailyRate desc, id asc) + fame roll picks any
+  eligible posting (road never rots); (6) `advanceUntilStop()` is a pure sim export (one
+  commit/autosave per Advance; the 50-event cap is sim-testable); (7) within-tick order pinned
+  (tick, type-rank with night LAST, ord); (8) MAIL_CAP trimming read mail only; (9) GuildContext
+  added to declared scope; (10) DESIGN §12 amended — appetite machinery dormant this slice,
+  returns with slice-4 variable terms; (11) staggered starting wallets (90/45/20) so minute one
+  shows the full behavioral vocabulary + tavern proposal gated on day≥2 and visible village-sink
+  lines; (12) read-only postings card in the Hall; (13, folded into 11); (14) Hall firstDay coach
+  line; (15) current day's feed expanded + streaming, past days collapse; (16) the return decision
+  item opens StoryStage directly over the Hall (Report stays the archive).
+- Non-blocking folded: finish-only narration, "Auto" naming (not a second "Play"), tavern
+  "Not yet" dismiss + consequence line ("leaves Xg ≈ N days' upkeep"), party-strip change pulse,
+  registers as row treatment + icon budget on activities/tavern/gold, outcome-agnostic return
+  wording, persisted dayTakings, visibilitychange pause, full-day-under-cap test, faded-expander
+  note, guardrail #5 explicitly deferred + post-tavern overcorrection noted as slice 2's hook.
+- Open questions: none blocking. Straw numbers (ratios are the design): TICKS_PER_DAY 4,
+  BROKERAGE 10%, NEED_GOLD 60, rest 15%/min 5g, train 20%/min 8g, TAVERN 400g, FEED_CAP 150,
+  MAIL_CAP 120. Design Q1 (wallet/spend model) and Q2 (R2-successor kill-test written now, live at
+  slice 2; this slice's tavern is knowledge-free by design) resolved in the plan.
+
 ## 2026-07-09 - Redesign: pivot the core to the living-guild vision (DESIGN.md)
 - Gate: **merged 2026-07-09 20:26 +0200** (merge commit `7b2def2`; backfilled 2026-07-09).
   **PR #35 into `dev`** (branch `claude/slice-1-planning-2qni0b`, restarted off `origin/dev`
