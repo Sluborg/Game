@@ -130,6 +130,9 @@ export interface PartyRuntime {
 export interface Posting {
   /** Stable per-letter id (changes when a fresh letter replaces a taken one). */
   id: string;
+  /** The QuestDef this letter posts (QUEST_BY_ID key — never derived from tier,
+   * which only matches the id by coincidence today). */
+  questId: string;
   tier: QuestTier;
   title: string;
   giver: string;
@@ -145,6 +148,10 @@ export interface LedgerEntry {
    * masked in the Report until the linked outcome envelope is opened (§4 — don't
    * spoil the sealed story's payoff). */
   sealedMailId?: string;
+  /** One-off movements (construction) are excluded from the runway's burn math —
+   * "gold lasts ~N days" must project the RECURRING trend, not panic the night
+   * of the player's one big buy (Review #2 Player-experience). */
+  oneOff?: boolean;
 }
 
 /** A mail envelope (§4 — reveals delivered as mail). v2 keeps two kinds: sealed

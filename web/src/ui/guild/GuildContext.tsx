@@ -72,7 +72,9 @@ export function GuildProvider({ children }: { children: ReactNode }) {
     setState(createInitialState(freshSeed()));
   }, []);
 
-  const unread = useMemo(() => state.mail.filter((m) => !m.read).length, [state.mail]);
+  // The badge means "unwatched stories" — nightly ledgers don't nag (a Hall-only
+  // player who watches every story would otherwise accrue +1/day forever).
+  const unread = useMemo(() => state.mail.filter((m) => m.kind === "outcome" && !m.read).length, [state.mail]);
   const shownGold = useMemo(() => displayedGold(state), [state]);
 
   const api = useMemo<GuildApi>(

@@ -66,6 +66,10 @@ export function HallScreen() {
     [state.feed],
   );
 
+  // Auto stalls (without turning off) while anything needs the player — the
+  // button says so, closing the "lit but frozen" confusion (Review #2 PX).
+  const autoPaused = auto > 0 && (story !== null || pendingDecisions.length > 0);
+
   // Auto mode: a UI interval stepping single sim events. The SIM never touches
   // the wall clock — this pacing is pure presentation. Auto pauses itself on any
   // open decision, while a story is open, and when the tab is hidden.
@@ -135,16 +139,16 @@ export function HallScreen() {
       <div className={styles.controls}>
         <button type="button" className={styles.advance} onClick={advance}>
           <span className={styles.advanceMain}>▷ Advance</span>
-          <span className={styles.advanceSub}>to the next event</span>
+          <span className={styles.advanceSub}>until something needs you</span>
         </button>
         <button
           type="button"
           className={styles.autoBtn}
           data-on={auto > 0}
           onClick={() => setAuto((a) => (a === 0 ? 1 : a === 1 ? 3 : 0))}
-          aria-label={auto === 0 ? "Auto advance off" : `Auto advance ${auto}x`}
+          aria-label={auto === 0 ? "Auto advance off" : autoPaused ? "Auto advance paused, needs you" : `Auto advance ${auto}x`}
         >
-          {auto === 0 ? "Auto" : `Auto ${auto}×`}
+          {auto === 0 ? "Auto" : autoPaused ? "Paused" : `Auto ${auto}×`}
         </button>
       </div>
 

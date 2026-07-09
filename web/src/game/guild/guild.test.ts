@@ -219,22 +219,32 @@ describe("daily life: choices, quests over days, decompress", () => {
 });
 
 describe("economy: wallets, brokerage, conservation, spends", () => {
-  it("gold is conserved: only quest rewards + passive add; only upkeep removes", () => {
-    let s = createInitialState(SEED);
-    const start = totalGold(s);
-    let rewards = 0;
-    let nights = 0;
-    for (let i = 0; i < 300 && nights < 6; i++) {
-      const up = peekNext(s);
-      if (up?.type === "return") {
-        const party = s.parties.find((p) => p.id === up.partyId);
-        if (party?.assignment && party.assignment.returnTick === up.tick) rewards += party.assignment.log.reward;
+  it("gold is conserved: only quest rewards + passive add; only upkeep + construction remove", () => {
+    // Runs the identity twice — without and WITH the tavern bought mid-run, so
+    // the −400 construction burn is inside the accounting (Review #2 Adversary).
+    for (const buyAtNight of [Infinity, 2]) {
+      let s = createInitialState(SEED);
+      const start = totalGold(s);
+      let rewards = 0;
+      let nights = 0;
+      let construction = 0;
+      for (let i = 0; i < 300 && nights < 6; i++) {
+        const up = peekNext(s);
+        if (up?.type === "return") {
+          const party = s.parties.find((p) => p.id === up.partyId);
+          if (party?.assignment && party.assignment.returnTick === up.tick) rewards += party.assignment.log.reward;
+        }
+        if (up?.type === "night") nights++;
+        s = step(s);
+        if (nights === buyAtNight && !s.buildings.tavern && s.gold >= TAVERN_PRICE) {
+          s = buyTavern(s);
+          construction = TAVERN_PRICE;
+        }
       }
-      if (up?.type === "night") nights++;
-      s = step(s);
+      const expected = start + rewards + nights * (PASSIVE_INCOME - DAILY_UPKEEP) - construction;
+      expect(totalGold(s)).toBe(expected);
+      if (buyAtNight !== Infinity) expect(construction).toBe(TAVERN_PRICE);
     }
-    const expected = start + rewards + nights * (PASSIVE_INCOME - DAILY_UPKEEP);
-    expect(totalGold(s)).toBe(expected);
   });
 
   it("the heroes' share splits evenly with the remainder to the boss; brokerage is the flat 10%", () => {
@@ -363,6 +373,35 @@ describe("the tavern: the slice's one investment", () => {
     expect(bought.buildings.tavern).toBe(true);
     expect(bought.gold).toBe(STARTING_GOLD - TAVERN_PRICE);
     expect(buyTavern(bought)).toBe(bought);
+  });
+
+  it("the proposal never fires on gold the player can't yet see (sealed credit)", () => {
+    // Raw gold crosses the price ONLY because of an unopened sealed brokerage;
+    // the proposal popping would leak the outcome (Review #2 Engineer). Gate is
+    // displayedGold.
+    const base = createInitialState(SEED);
+    const mod: GuildState = JSON.parse(JSON.stringify(base));
+    mod.tick = TICKS_PER_DAY + 1; // day 2
+    mod.sinkSeen = 5;
+    mod.gold = TAVERN_PRICE + 50;
+    mod.mail.unshift({
+      id: "sealed-1",
+      day: 2,
+      kind: "outcome",
+      teaser: "They are back.",
+      log: { beats: [], outcome: "success", reward: 1000, guildCut: 100, cutPct: BROKERAGE, durationDays: 2 },
+      partyName: "x",
+      questTitle: "y",
+      read: false,
+    });
+    expect(displayedGold(mod)).toBeLessThan(TAVERN_PRICE);
+    mod.queue = [{ id: "d1", tick: mod.tick, ord: 1, type: "decide", partyId: "iron-vigil" }];
+    const stepped = step(mod);
+    expect(stepped.feed.some((f) => f.action === "tavern")).toBe(false);
+    // Open the envelope → the gold is really yours → the proposal may fire.
+    const opened = markMailRead(stepped, "sealed-1");
+    const after = step(opened);
+    expect(after.feed.some((f) => f.action === "tavern")).toBe(true);
   });
 
   it("the proposal fires once, gated on day 2+ AND visible village sinks", () => {

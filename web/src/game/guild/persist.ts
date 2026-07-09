@@ -46,6 +46,15 @@ export function loadState(seed: number): GuildState {
       !Array.isArray(parsed.feed) ||
       !Array.isArray(parsed.dayLedger) ||
       typeof parsed.tick !== "number" ||
+      // The id/ord counters and gold fields must be real numbers — a blob
+      // missing seq would mint ev-NaN/mail-NaN ids and silently break the
+      // sealedMailId linking (Review #2 Engineer).
+      typeof parsed.seq !== "number" ||
+      typeof parsed.rngSeed !== "number" ||
+      typeof parsed.gold !== "number" ||
+      typeof parsed.dayTakings !== "number" ||
+      typeof parsed.villageSink !== "number" ||
+      typeof parsed.sinkSeen !== "number" ||
       typeof parsed.wallets !== "object" ||
       parsed.wallets === null ||
       typeof parsed.buildings !== "object" ||

@@ -99,7 +99,7 @@ export function buyTavern(state: GuildState): GuildState {
   const next = draft(state);
   next.gold -= TAVERN_PRICE;
   next.buildings.tavern = true;
-  next.dayLedger.push({ label: "Tavern construction", amount: -TAVERN_PRICE });
+  next.dayLedger.push({ label: "Tavern construction", amount: -TAVERN_PRICE, oneOff: true });
   next.feed.unshift({
     id: `feed-${++next.seq}`,
     tick: next.tick,

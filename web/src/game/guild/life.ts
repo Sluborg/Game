@@ -56,7 +56,7 @@ export function chooseActivity(state: GuildState, partyId: string, tick: number,
     // Fame beckons: a seeded pick across ALL eligible postings (road included).
     const eligible = state.board
       .filter((p) => partyEligible(partyId, p.tier))
-      .sort((a, b) => a.id.localeCompare(b.id));
+      .sort((a, b) => (a.id < b.id ? -1 : 1)); // codepoint order — locale-proof
     if (eligible.length > 0) {
       const pick = rngFor(state.rngSeed, "fame", tick, partyId).next();
       return { kind: "quest", posting: eligible[Math.floor(pick * eligible.length) % eligible.length] };

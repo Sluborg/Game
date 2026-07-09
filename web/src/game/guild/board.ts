@@ -13,6 +13,7 @@ import type { Posting, QuestTier } from "./types";
 export function makePosting(quest: { id: string; tier: QuestTier; title: string; giver: string }, seq: number): Posting {
   return {
     id: `${quest.id}-${seq}`,
+    questId: quest.id,
     tier: quest.tier,
     title: quest.title,
     giver: quest.giver,
@@ -33,7 +34,9 @@ export function bestPosting(board: Posting[], partyId: string): Posting | null {
   const eligible = board.filter((p) => partyEligible(partyId, p.tier));
   if (eligible.length === 0) return null;
   return [...eligible].sort((a, b) => {
-    const rate = (QUEST_BY_ID[b.tier]?.dailyRate ?? 0) - (QUEST_BY_ID[a.tier]?.dailyRate ?? 0);
-    return rate !== 0 ? rate : a.id.localeCompare(b.id);
+    const rate = (QUEST_BY_ID[b.questId]?.dailyRate ?? 0) - (QUEST_BY_ID[a.questId]?.dailyRate ?? 0);
+    // Plain codepoint compare — localeCompare is locale-sensitive, and this
+    // ordering must replay identically on any runtime (determinism).
+    return rate !== 0 ? rate : a.id < b.id ? -1 : 1;
   })[0];
 }

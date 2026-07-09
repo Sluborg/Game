@@ -507,9 +507,14 @@ No other combat-core changes are authorized by this doc.
 > *Pivot note (2026-07-09): the player-set cut and its number sheet below are **superseded** as the
 > core model. New economy (see "The living guild"): income = **hero spending at your fixed-price
 > facilities** (main) + a flat **~10% brokerage cut** + **building passive**; upkeep is the burn;
-> the player grows income by **investing in upgrades**, never by tuning rates. The acceptance /
-> appetite / observation-bracket machinery here survives (it's how autonomous parties choose
-> quests); the cut-as-priced-decision does not.*
+> the player grows income by **investing in upgrades**, never by tuning rates. The
+> cut-as-priced-decision does not survive. *(Amended in the living-canvas build: the acceptance /
+> appetite / observation-bracket machinery is **dormant** this slice, not live — with a flat 10%
+> brokerage every share is 90%, so ask-vs-share acceptance is degenerate; quest choice is
+> motivation-driven (wallet need + a seeded fame urge, `life.ts`). The ask data survives in
+> roster.ts, where its null entries still gate structural eligibility, and the appetite/
+> observation machinery returns when postings carry variable terms again — slice-4 bounty
+> top-ups.)*
 
 The concrete money model and Slice 1 number sheet, decided 2026-07-05. §3's lever sequencing,
 §8's cash clock, and §9's gold-only rule read from here. All absolutes are straw defaults tuned
@@ -811,7 +816,12 @@ Every slice still ends playable; the canvas comes first, then the player's hand,
    always-on treasury via `displayedGold()` (gold minus unopened sealed credits), amount-free
    activity lines, and tavern takings that accrue to a day counter and only hit the treasury at
    night. The one investment is the **Tavern, 400g fixed** — proposal auto-pauses once grounded
-   (day ≥ 2 + watched village sinks); once built, rest-spend lands in the till nightly.
+   (day ≥ 2 + watched village sinks + affordable at *displayed* gold, so a sealed payout can
+   never announce itself through the proposal); once built, rest-spend lands in the till
+   nightly. *A stated behavioral tell:* after the one forced decompress rest, a failed party is
+   broke and marches straight back out while a successful one lazes — the strip telegraphing
+   "they came home empty" before the envelope opens is diegetic texture we keep, not a leak
+   (amounts stay hidden; the story still owns the reveal).
    *Known/dormant by design:* train is flavour+spend (no growth yet); loss stays unwired;
    posting `failCount` texture dropped (returns with hero arcs); **guardrail #5 is deferred** —
    one sink means allocation isn't a tradeoff yet, and post-tavern income overcorrects to

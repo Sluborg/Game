@@ -19,7 +19,7 @@ import { QUEST_BY_ID, ROAD_JOB, RUINS, type QuestDef } from "./quests";
 import { resolveQuest } from "./resolver";
 import { PARTY_BY_ID } from "./roster";
 import { deriveSeed, rngFor, rollInt } from "./seed";
-import { draft } from "./state";
+import { displayedGold, draft } from "./state";
 import {
   ADVANCE_CAP,
   BROKERAGE,
@@ -161,7 +161,7 @@ function onDecide(next: GuildState, ev: SimEvent): void {
     const posting = next.board.find((p) => p.id === choice.posting.id);
     if (posting && partyEligible(party.id, posting.tier)) {
       next.board = next.board.filter((p) => p.id !== posting.id);
-      const quest = QUEST_BY_ID[posting.tier];
+      const quest = QUEST_BY_ID[posting.questId];
       party.assignment = dispatch(next, party.id, quest, next.tick);
       schedule(next, party.assignment.returnTick, "return", { partyId: party.id });
       const days = party.assignment.durationDays;
@@ -172,14 +172,15 @@ function onDecide(next: GuildState, ev: SimEvent): void {
       });
       return;
     }
-    // Gone — fall back to a standing shift so the broke party still earns.
+    // Gone (taken this same tick, or expired last night) — fall back to a
+    // standing shift so the broke party still earns.
     const standing = QUEST_BY_ID["guard-hall"];
     party.assignment = dispatch(next, party.id, standing, next.tick);
     schedule(next, party.assignment.returnTick, "return", { partyId: party.id });
     pushFeed(next, {
       register: "ambient",
       icon: "watch",
-      text: `${partyName(party.id)} found the board bare and took a watch shift instead.`,
+      text: `${partyName(party.id)} missed the posting they wanted and took a watch shift instead.`,
     });
     return;
   }
@@ -207,7 +208,7 @@ function onFinish(next: GuildState, ev: SimEvent): void {
   if (!party || party.assignment) return;
   if (!party.activity || party.activity.kind !== ev.activity) {
     // Still make sure the party keeps living.
-    schedule(next, next.tick + 1, "decide", { partyId: party?.id ?? ev.partyId });
+    schedule(next, next.tick + 1, "decide", { partyId: party.id });
     return;
   }
   party.activity = null;
@@ -353,12 +354,16 @@ function onNight(next: GuildState): void {
   }
 
   const net = next.dayLedger.reduce((s, e) => s + e.amount, 0);
+  // Runway projects the RECURRING trend — one-off movements (construction) are
+  // excluded, else the night of the player's one big buy reads "gold lasts ~2
+  // days" and the signature move looks like a bug (Review #2 Player-experience).
+  const recurring = next.dayLedger.reduce((s, e) => s + (e.oneOff ? 0 : e.amount), 0);
   const runwayNote =
-    net >= 0
-      ? `Treasury growing +${net}g/day.`
+    recurring >= 0
+      ? `Treasury growing +${recurring}g/day.`
       : next.gold <= 0
         ? `Treasury is in the red (${next.gold}g).`
-        : `Gold lasts ~${Math.max(1, Math.floor(next.gold / -net))} days at this burn.`;
+        : `Gold lasts ~${Math.max(1, Math.floor(next.gold / -recurring))} days at this burn.`;
   next.mail.unshift({
     id: `mail-${++next.seq}`,
     day,
@@ -387,10 +392,19 @@ function onNight(next: GuildState): void {
     }
   }
   if (next.feed.length > FEED_CAP) {
-    for (const register of ["ambient", "notable"] as const) {
+    // Trim order: ambient, then RESOLVED decisions, then notable — an undone
+    // decision is never dropped (it still asks for the player), but a done one
+    // must be trimmable or decision stubs alone eventually exceed the cap and
+    // growth goes unbounded (Review #2 Adversary).
+    const trimmable = [
+      (f: FeedItem) => f.register === "ambient",
+      (f: FeedItem) => f.register === "decision" && !!f.done,
+      (f: FeedItem) => f.register === "notable",
+    ];
+    for (const match of trimmable) {
       let excess = next.feed.length - FEED_CAP;
       for (let i = next.feed.length - 1; i >= 0 && excess > 0; i--) {
-        if (next.feed[i].register === register) {
+        if (match(next.feed[i])) {
           next.feed.splice(i, 1);
           next.feedTrimmed = true;
           excess--;
@@ -405,14 +419,18 @@ function onNight(next: GuildState): void {
 
 // ── The engine ──────────────────────────────────────────────────────────────────
 /** After every event: surface the tavern proposal once it's grounded (day ≥ 2,
- * the player has WATCHED coin drain to the village, and it's affordable). */
+ * the player has WATCHED coin drain to the village, and it's affordable). The
+ * affordability gate reads displayedGold, NOT raw gold — raw gold contains
+ * unopened sealed brokerage, and a proposal popping "because you can afford it
+ * now" would leak the hidden outcome (Review #2/Engineer; same discipline as
+ * the Hall chip and the Build buttons). */
 function postCheck(next: GuildState): void {
   if (
     !next.buildings.tavern &&
     !next.tavernProposed &&
     dayOf(next.tick) >= PROPOSAL_MIN_DAY &&
     next.sinkSeen >= SINK_LINES_BEFORE_PROPOSAL &&
-    next.gold >= TAVERN_PRICE
+    displayedGold(next) >= TAVERN_PRICE
   ) {
     next.tavernProposed = true;
     pushFeed(next, {
@@ -431,7 +449,20 @@ export function step(state: GuildState): GuildState {
   const next = draft(state);
   const i = nextEventIndex(next.queue);
   if (i === -1) {
-    schedule(next, next.tick + (TICKS_PER_DAY - (next.tick % TICKS_PER_DAY)) - 1, "night");
+    // Corrupt-but-versioned save with an empty queue: re-seed the clock AND the
+    // parties. The night lands on the next night tick strictly in the future;
+    // every at-home party gets a decide so the world can't become an
+    // alive-looking softlock that drains upkeep forever (Review #2 Adversary).
+    const untilNight = TICKS_PER_DAY - 1 - (next.tick % TICKS_PER_DAY);
+    schedule(next, next.tick + (untilNight > 0 ? untilNight : TICKS_PER_DAY), "night");
+    for (const p of next.parties) {
+      if (!p.assignment) {
+        p.activity = null;
+        schedule(next, next.tick + 1, "decide", { partyId: p.id });
+      } else {
+        schedule(next, Math.max(p.assignment.returnTick, next.tick + 1), "return", { partyId: p.id });
+      }
+    }
     return next;
   }
   const [ev] = next.queue.splice(i, 1);

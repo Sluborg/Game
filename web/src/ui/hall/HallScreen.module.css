@@ -132,7 +132,7 @@
   justify-content: space-between;
   gap: var(--sp-2);
   width: 100%;
-  min-height: 40px;
+  min-height: 44px;
   padding: 6px 10px;
   border: 1px solid var(--stroke-soft);
   border-radius: var(--r-sm);
@@ -177,7 +177,7 @@
 .decisionBtns { display: flex; gap: var(--sp-2); }
 .decisionBtn {
   align-self: flex-start;
-  min-height: 40px;
+  min-height: 44px;
   padding: 8px 14px;
   border-radius: var(--r-md);
   border: 1px solid var(--stroke-gold);
@@ -189,7 +189,7 @@
 .decisionBtn:disabled { opacity: 0.45; }
 .decisionBtn:active { filter: brightness(0.92); }
 .decisionBtnGhost {
-  min-height: 40px;
+  min-height: 44px;
   padding: 8px 14px;
   border-radius: var(--r-md);
   border: 1px solid var(--stroke-soft);
