@@ -3,14 +3,118 @@
 Living design notes for the game. This is the **vision & mechanics** doc; `docs/ROADMAP.md`
 tracks the art each feature needs. Written in the planning chat, refined feature-by-feature.
 
-> Status: **concept locked; engagement-reviewed and decisions confirmed 2026-07-02** (see
-> [`docs/ENGAGEMENT_REVIEW.md`](./ENGAGEMENT_REVIEW.md)). The map-nodes screen has shipped
-> (PR #20); the guild sim itself is still unbuilt. Each section becomes a separate build session
-> (see "How we build" at the bottom).
+> Status: **core pivoted 2026-07-09 — see "The living guild" below.** Slice 1 (the per-quest
+> **cut** loop) shipped and merged (PR #33/#34); on playing it the core was redesigned. The section
+> immediately below is the **live vision**; the older numbered sections predate the pivot and are
+> the **mechanics library** it reuses (reconciled as each slice lands). Engagement review:
+> [`docs/ENGAGEMENT_REVIEW.md`](./ENGAGEMENT_REVIEW.md).
+
+---
+
+## The living guild — current vision (2026-07-09, supersedes the cut-loop core)
+
+> **This section is the live top-of-doc vision and wins wherever an older numbered section still
+> describes the per-quest cut as the primary lever.** The merged Slice 1 built a cut loop; on
+> playing it, Stefan pivoted. The board, the seeded multi-beat resolver, and the animated report
+> all **survive** as the scaffolding the new core reuses. Pressure-tested from four perspectives
+> (Designer, Phone-UX, Engineer, Adversary) on 2026-07-09.
+
+**The fantasy (sharpened).** You are the **businessman / bureaucrat** running a guild — the
+"spreadsheet guy" who wants **fame, influence, and wealth**. You never command; you **invest and
+shape conditions**. Reference: **Football Manager** (run the club, don't play; advance time, watch
+the key moments) × **Majesty** (heroes are autonomous; you never order them) × a cozy business-sim
+(Kairosoft) texture.
+
+**The world is alive (the canvas — built first).** Heroes are **autonomous free agents who live
+their lives** — rest, carouse, shop, train, heal — and go questing when they want fame or coin. A
+party **gathers → reads the board → researches a quest to learn more → preps (shops, reads) →
+applies → departs → quests over several days (branching; a failure can spawn more investigation) →
+returns → decompresses**, then does it again. You watch, and you invest.
+
+> *Resolution note (reuse vs. reactive):* near-term, a quest still resolves as a **sealed, seeded
+> envelope** computed when the party departs (**reusing the shipped `resolveQuest`**) and revealed
+> as the animated story on return — the "branching / spawns more investigation" is the party's own
+> autonomous extension *inside that envelope*, narrated, not a mid-quest prompt. The clock's
+> **auto-pause events are party-lifecycle and player-investment moments** (a party returns / wants
+> backing; an upgrade you might buy) — **not** mid-quest player intervention. A genuinely *reactive*
+> in-flight choice (you steering a party while it's out) is a **later, explicitly-flagged
+> evolution** that would restructure the resolver into lazy per-beat events — deferred, not claimed
+> as reuse.
+
+**The player's hand — Majesty-style upgrades at fixed prices.** The recurring money decision is
+**what to build/upgrade and who to equip** — buildings and gear, at **fixed prices (no
+price-fiddling)**. It's a *read-driven bet*: gear the hero you've judged undervalued and
+high-ceiling; raise the facility your roster actually needs. (This replaces Slice 1's per-quest
+cut %, which "felt odd" — the odd part was the tuning knob, not the idea of a money-valued read.)
+*(Who you can equip: gear is funded for **guild-affiliated** heroes, not any stranger; it's a
+retention bet — a neglected geared hero can still **drift to a rival and take the investment with
+them** (§8 roster clock / guardrail #4), so equipping doubles as loyalty-building. Whether the
+older §3 hire/contract/release model survives is a slice-3 reconciliation.)*
+
+**The economy — the flywheel.** Heroes keep their quest gold and **spend it at your fixed-price
+facilities** (shop, tavern, training, healing, library) — that's your **main income** — plus a
+small flat **~10% brokerage cut** on completed quests and **building passive**. Upkeep is the burn.
+*(This means hero earn/spend is now **tracked** — superseding §12's "hero wallets are not tracked in
+v1"; a hero holds coin, spends a slice of it at whichever of your facilities exists and serves the
+need, and that spend lands in the treasury. The exact wallet/spend model is a build-slice detail.)*
+The loop: **wealth → upgrades (buildings + gear) & influence → better heroes & outcomes → more
+prosperity & spending → more wealth.** Prices are fixed; you grow income by growing the ecosystem,
+not by tuning rates.
+
+**Time — a skip-primary living clock.** An **"Advance / ▷ to next event"** control is the spine
+(the thing you *need*); a running clock with **speed + auto-pause on events** is an *optional*
+lean-in overlay. Simulated time is **fully decoupled from real time** — you control the clock, it
+never controls you; backgrounding the app is safe, and reopening does a **lazy catch-up** to a
+single digest. Engineering: an **event-queue on integer sim-ticks**. Its *seed* already exists — the
+precompute-at-dispatch / reveal-at-return `Assignment`, the seeded RNG, and the pure-reducer +
+persistence discipline (verified against `endDay.ts`/`seed.ts`/`persist.ts`). The **daily-batch
+loop itself is restructured** into per-event handlers — a real refactor, not a free generalization,
+but the determinism/persistence backbone carries over unchanged.
+
+**The living-world surface — a Hall Feed, not an animated map.** The world's life shows as a
+**collapsible feed** in three registers — **ambient** (flavour: "Wren and Doran drank again";
+collapsed by default), **notable** (a reveal / relationship shift; tappable), **decision** (an
+event that auto-pauses and asks for you). Reveals still arrive as **mail**; quest outcomes still
+replay through the animated **story stage** (§4/§10). The map stays a *state* view
+(fog / influence / nodes), never a life-animation.
+
+**UI — clarity via Kenney icons.** Legibility uses a **Kenney icon set**, not ambiguous abstract
+marks. *(PR #32 shipped only Kenney's border **frame**; the icon set — Board Game Icons / Game
+Icons / Cartography, see `docs/kenney.md` — is still to be adopted.)* Concretely: challenge types
+(investigation / travel / social / combat), buildings & gear, resource/stat glyphs, and the feed's
+three registers each get a **recognisable icon + short label**, replacing Slice 1's hard-to-read
+coloured-dot rows. Icons carry meaning; text confirms it; a tap expands the detail.
+
+**How you lose (layered after the canvas).** The canvas is a *foundation*, not a void — it already
+responds to your upgrade investments. Tension is added next: **neglect → your heroes drift to a
+rival** (pre-rival: they quit the region, §8) and **over-investing → bankruptcy** (the cash clock /
+charter that Slice 1 built but left unwired). "Canvas first, then arm the loss" is the deliberate
+order.
+
+**Design guardrails (the four kill-tests every later slice must pass):**
+1. **Not a spectator** — each session has a legible moment where *your* read/investment changed an
+   outcome (the report says *why* your call mattered).
+2. **No decision vacuum** — a money-valued, knowledge-priced decision is always live (the upgrade
+   bets); reading heroes always has something to buy.
+3. **Not a screensaver** — the world visibly responds to the player, and a run is eventually
+   *losable*.
+4. **No snowball / stall** — the flywheel has governors (your best heroes are the rival's poaching
+   targets; escalation / doom raises the floor faster than passive income).
+5. **Allocation stays a tradeoff** — there is always more worth buying (upgrades, gear, backing)
+   than the treasury can afford *this cycle*, so the one live lever never degrades from a tense
+   choice into a shopping checklist once income compounds.
+
+Build the **canvas first**, then the **businessman's hand**, then **tension** — see the re-sliced
+"How we build" order at the bottom. Everything below this section predates the pivot; treat it as
+the mechanics library the new core draws from, reconciled as each slice lands.
 
 ---
 
 ## 1. The fantasy
+
+> *Pivot note (2026-07-09): "taking a cut" below is superseded — the guild's business is now
+> running the ecosystem heroes base out of (facilities + brokerage + a flat ~10% cut), not skimming
+> each reward. See "The living guild" above.*
 
 You are a **guild master — a bureaucrat and businessman**, not a hero and not a general. You run a
 guild whose business is placing adventuring parties on quests and taking a cut of the reward and loot.
@@ -23,6 +127,11 @@ Reference point: **Majesty (2000)** — you can't order heroes, you post bountie
 the pay is worth the risk.
 
 ## 2. The core loop
+
+> *Pivot note (2026-07-09): the loop diagram below is the original battle-centric framing. Under
+> "The living guild," the economy leg is now **hero spending + your upgrade investments**, not
+> "price bounties & hires"; and battle stays the truth oracle but isn't watchable until the
+> fidelity/replay slice.*
 
 The **battle system is the core** — it's both the show the player watches *and* the truth oracle
 everything else depends on. One closed loop:
@@ -39,6 +148,10 @@ The player's joy is watching heroes level up and follow their journeys — at wh
 presence has earned.
 
 ## 3. The player's levers (only two, plus soft spends below)
+
+> *Pivot note (2026-07-09): the primary lever is now **Majesty-style building & gear upgrades at
+> fixed prices** (see "The living guild"). The bounty/cut described here retires to a flat ~10%
+> brokerage constant; introductions, guild-management spends, and intel remain the soft nudges.*
 
 1. **Bounties** — post/raise a reward on a quest to attract a party. A hero's **desired pay is
    known** (their posted ask); what's uncertain is whether they're *worth* it — see §5's
@@ -239,7 +352,7 @@ state. This must be a testable property, not a promise, or the rival reads as a 
 
 | Clock | Speed | Threat |
 | --- | --- | --- |
-| **Cash** | Fast (every turn) | Influence upkeep vs. your cut of rewards. Over-extend → debt → charter revoked. |
+| **Cash** | Fast (every turn) | Upkeep + your **upgrade/gear investments** vs. hero spending + the flat brokerage cut + passive. **Over-invest → debt → charter revoked** (the primary bankruptcy path under the pivot). |
 | **Roster** | Medium | Angry/neglected heroes defect to a rival (or quit the region, pre-rival). Self-inflicted. |
 | **Doom** | Slow (campaign) | A big-bad event spreads across Areas, broadcast coarsely regardless of influence. The finish line the rival also races toward. |
 
@@ -290,8 +403,10 @@ Two zoom tiers, so the map is never bloated:
   kills idle dead-time. Because it isn't scarce, "multiple parties do the same job" carries no
   conflict.
 
-**Economy — gold only (v1).** No multi-resource system; a guild master thinks in gold. Income is
-your cut of hero rewards. The full money model — the free quest board, the player-set cut, and
+**Economy — gold only (v1).** No multi-resource system; a guild master thinks in gold. ~~Income is
+your cut of hero rewards.~~ *(Pivot 2026-07-09: income is now **hero spending at your facilities**
+(main) + a flat ~10% brokerage + building passive — see "The living guild".)* The full money model —
+the free quest board, the player-set cut, and
 the Slice 1 number sheet — is **§12**. Multi-resource gathering is parked (see "Ideas parked").
 
 **The first playable map** = the home Area with three nodes: **Guild Hall** (`home-keep`, your seat),
@@ -382,6 +497,13 @@ No other combat-core changes are authorized by this doc.
 
 ## 12. The economy — gold, the board, and your cut (v1 numbers)
 
+> *Pivot note (2026-07-09): the player-set cut and its number sheet below are **superseded** as the
+> core model. New economy (see "The living guild"): income = **hero spending at your fixed-price
+> facilities** (main) + a flat **~10% brokerage cut** + **building passive**; upkeep is the burn;
+> the player grows income by **investing in upgrades**, never by tuning rates. The acceptance /
+> appetite / observation-bracket machinery here survives (it's how autonomous parties choose
+> quests); the cut-as-priced-decision does not.*
+
 The concrete money model and Slice 1 number sheet, decided 2026-07-05. §3's lever sequencing,
 §8's cash clock, and §9's gold-only rule read from here. All absolutes are straw defaults tuned
 for feel; the **ratios are the design** — retuning a number is free, breaking a ratio is a
@@ -404,6 +526,10 @@ TREASURY
 ```
 
 Hero wallets are not tracked in v1 — the report says "Bryn pocketed 140g" as flavor only.
+*(Superseded by the pivot: hero wallets/spending **are** now tracked, since hero spending is the
+main income — see "The living guild.")* The "Where gold flows" diagram above shows only the old
+`YOUR CUT` + passive inflows; under the pivot the main treasury inflow is **hero spending**, and the
+diagram is superseded.
 
 ### The cut — Slice 1's priced decision
 
@@ -430,7 +556,10 @@ Hero wallets are not tracked in v1 — the report says "Bryn pocketed 140g" as f
   (below). Two numbers, one hero — "ask is known" in this doc always means the hiring price.
 - **Squeeze payoff (Ruins-specific).** Knowing a party bites at 40% instead of 30% is worth
   **~+60g per completed Ruins day** (a gross cut delta — only ~+20g on the road job) — knowledge
-  as literal gold; the R2 kill-test in one line.
+  as literal gold; the R2 kill-test in one line. *(Pivot caveat: this R2 payoff is **cut-based** and
+  retires with the cut. `ENGAGEMENT_REVIEW.md` predates the pivot; guardrail #2 asserts the
+  **upgrade bet** carries the same knowledge→gold payoff, but that hasn't been re-validated with a
+  kill-test yet — it's an explicit to-prove for the "businessman's hand" slice.)*
 
 ### What you know, per slice
 
@@ -597,7 +726,9 @@ Good ideas we've deliberately deferred to keep v1 small — recorded so they're 
   ships award-to-one and this lands alongside the rival.
 - **Investigate-the-quest lever (slice 2–3).** Spend to learn a posted quest's beats/difficulty
   before it's taken, so heroes (and you) decide better — a second priced lever, so it waits (§12:
-  one priced decision per slice; Slice 1's is the cut).
+  one priced decision per slice). *(Distinct from the pivot's "a party **researches** a quest": that
+  is the hero's **autonomous** prep behaviour surfaced in the Hall Feed as free information; this
+  parked item is a **player** spend to buy that information directly.)*
 - **Hero downtime (slice 3–4).** Between quests heroes rest, heal, train, carouse, and shop; a
   visible **plan of 2–3 candidate missions** they're weighing that you can **nudge** (the
   "recommend a quest" verb). Needs quest-choice factors (§6) and hero condition, both later.
@@ -645,20 +776,30 @@ consequence → readable outcome → money pressure. Carries its own foundations
 (§11, left unused), a versioned serializable world-state module (`web/src/game/guild/`), a discrete
 "end day" tick — as scaffolding inside this same PR.
 
-Then, in order:
+**Re-sliced 2026-07-09 for the living-guild pivot** (supersedes the fidelity-first order below).
+Every slice still ends playable; the canvas comes first, then the player's hand, then tension:
 
-2. **Fidelity ladder** — rumor/summary/log tiers as envelope filters + the free home floor (§4) +
-   a seed-replay viewer (reusing the Combat Test renderer). Tiers cost gold from day one, drawn
-   from slice 1's cash clock — upkeep/decay wait for slice 5.
-3. **Hero arcs** — CV correction stamps, trait sockets & reveals (§4/§5), contracts (§3),
-   pre-rival roster pressure (§8).
-4. **Parties & quest choice** — introductions (§3/§6), the boss's weighted vote, the full
-   gold/stats bounty pricing (§3/§5) and quest-choice factor list, composed-duel party combat
-   (§10/§11).
-5. **Influence as upkeep** — per-Area influence with upkeep/decay + a second Area + the map's two
-   zoom tiers (silhouettes first exist here) + a pinned ledger strip.
-6. **Rival** — scripted budget bidder (§7), fog-bound invariant, loss explanations.
-7. **Doom** — escalation node + coarse broadcast + runway events (§8).
+1. **Living canvas** — the **event-queue clock** + skip-primary driver (Advance / play / speed /
+   skip-to-next-event / auto-pause) + **autonomous party daily-life** (rest / train / take-quest,
+   minimal) + the **Hall Feed** + reuse of the board / resolver / animated story. Economy mostly
+   stubbed **but not decision-less: ships at least one fixed-price investment** (e.g. a single
+   building or a gear buy) that visibly shapes the canvas — so the first slice already responds to
+   the player's hand and clears guardrails #1/#3 (not a spectator, not a screensaver). Fun shipped:
+   parties visibly live, quest over days, and return on a living clock *that you already nudge*.
+2. **The businessman's hand** — the full **Majesty building + gear upgrades at fixed prices** +
+   the hero-spending economy + the flat 10% cut + building passive + upkeep. **The read the bet is
+   priced against: the dormant CV certainty chips (already built in Slice 1) go LIVE here** — so
+   "gear the undervalued hero" is a real knowledge→gold decision, not a coin flip (guardrail #2).
+   Fun shipped: you invest, the flywheel turns, and reading heroes prices the upgrade bets.
+3. **Tension** — arm the loss (**neglect → drift**, **over-invest → bankruptcy**) + a rival stub +
+   one escalation thread, so hour 2 differs from minute 5 and the run is losable (guardrails #3/#4).
 
-Guild management spends (§3) and the multi-step quest beat model (§10) grow incrementally inside
+Then the earlier slices, **re-homed on the new core** (they still hold as mechanics, just not as
+the primary lever): **Hero arcs** (CV correction, trait reveals, contracts — §4/§5); **Fidelity
+ladder + seed-replay** so combat finally becomes *watchable* (§4, reusing the Combat Test renderer);
+**Influence / areas** with upkeep + the map's two zoom tiers (§9); **Rival** proper (§7); **Doom**
+(§8). This supersedes the previous fidelity-first numbering (fidelity → hero arcs → parties →
+influence → rival → doom), which the re-slice above replaces.
+
+Guild-management spends (§3) and the multi-step quest beat model (§10) grow incrementally inside
 whichever slice touches them first — they're not a separate step.
