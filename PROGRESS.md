@@ -10,6 +10,31 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-09 - Slice: the living canvas — build done (Review #2 next)
+- Gate: build (plan + Review #1 cleared; Review #2 on the diff runs next)
+- Branch: `claude/slice-living-canvas-843hho`
+- Built: `web/src/game/guild/` restructured — new `clock.ts` (event queue on integer sim-ticks,
+  4/day, pinned order night-last, pure handlers decide/finish/return/night, `advanceUntilStop`),
+  `life.ts` (wallet-motivated rest/train/quest + forced decompress), `tuning.ts` (all knobs);
+  `endDay.ts` deleted (economics moved into `night`); SAVE_VERSION 2. New `web/src/ui/hall/`
+  (clock header + masked treasury, party strip, read-only board card, invest card, 3-register
+  feed with pinned "Needs you", Advance + Auto 1×/3×, StoryStage overlay); `ui/board/` deleted;
+  kit `Icon` (Kenney Board Game Icons, CC0, mask-tinted — committed in their own commit);
+  GuildContext rewritten; Report/StoryStage lightly adapted (archive role, brokerage wording);
+  PartyCard mock location/plan lines neutralized. All 16 Review #1 blockers landed as specced
+  (displayedGold masking, standing-quiet, spend clamp, handler guards, pinned comparator,
+  night-flushed takings, staggered wallets 90/45/20, gated proposal, feed streaming, one-tap
+  story from the Hall).
+- Verified: `tsc -b` + `vite build` green; **74 vitest pass** (31 guild tests incl. purity,
+  determinism, night-last ordering, conservation identity, sealed-display masking,
+  standing-quiet, proposal gating, stale-event guards, caps, full-day-under-cap, persistence
+  reinit). Headless Chromium @430px: fresh hall → Advance → return decision auto-pause → sealed
+  story → outcome → tavern proposal → build → capture lines → refresh resumes → Report archive;
+  no h-overflow; only the known art-CDN 404. Screenshots `docs/screenshots/canvas-*`.
+- DESIGN.md reconciled: §12 appetite-dormancy amendment, slice-1 as-built block, the slice-2
+  R2-successor kill-test (≥ +40g/day informed-vs-blind) written into guardrail #2, Kenney
+  adoption note; docs/kenney.md + CREDITS.md updated.
+
 ## 2026-07-09 - Slice: the living canvas (clock · daily-life · Hall Feed · tavern) — plan done
 - Gate: plan
 - Branch: `claude/slice-living-canvas-843hho` (first commit: §50 backfill of PR #35's merged gate).
