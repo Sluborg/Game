@@ -108,6 +108,13 @@ directly — they need to read as events, not text.
 This makes information asymmetry the **reward** for spending on influence, and gives the player a
 reason to *want* a better seat.
 
+> **Sequencing note (Slice 1, PR #33).** §2's thesis stands — the battle system is the core and
+> the truth oracle. But Slice 1 ships with **no watchable/engine combat**; its reveals are carried
+> entirely by the **report as an animated story** (the summary-tier envelope opened one beat at a
+> time), so the report — not a live fight — is Slice 1's drama channel. The live show (seed-replay
+> through the Combat Test renderer) is slice 2. This is a *sequencing* choice, not a demotion of
+> the battle core.
+
 ## 5. Heroes — autonomous, trait-driven
 
 - **Autonomous.** They decide, prepare, and go. You influence, never order.
@@ -175,10 +182,11 @@ reason to *want* a better seat.
   invisible and can stall, so the player has a direct tool: pay to host a meeting. Refusal (for
   trait reasons not yet discovered) is a CV correction in disguise, not a dead end.
 - **The unstick path.** A broke early guild is never stuck: the solo-quest upkeep floor above
-  (in Slice 1, concretely §12's always-offered road-tier job at the base cut) keeps gold
-  trickling in even with zero hires, which is eventually enough to afford an
-  introduction — and relationships also build for free from simple co-location, so paid
-  introductions accelerate formation, they're not the only route to it.
+  (in Slice 1 as built, concretely the always-available **standing jobs** — guard the hall / help
+  the city watch, §9/§12 — that any idle party takes) keeps gold trickling in even with zero
+  hires, which is eventually enough to afford an introduction — and relationships also build for
+  free from simple co-location, so paid introductions accelerate formation, they're not the only
+  route to it.
 - **Cohesion modifier.** A party that gets along gets a bonus to performance; two members who hate
   each other drag the party's relation score (and its odds) down.
 - **The boss.** Each party has a leader whose preferences carry **stronger weight** in decisions.
@@ -275,6 +283,12 @@ Two zoom tiers, so the map is never bloated:
   eventually "fully excavated" and goes quiet. The progression ladder heroes level up on.
 - **Escalation** (e.g. the Graveyard) — ignore it and the threat grows on its own, spills into
   neighbouring Areas, feeds the **doom clock**. Tend it or it worsens.
+- **Standing jobs** (Slice 1, PR #33) — always-available, **non-exclusive** civic work tied to
+  the home fixed nodes: *guard the Guild Hall*, *help the city watch*. Low, near-guaranteed pay;
+  any idle party (including a lone hero) can take one each day. This is the concrete **survival
+  floor** (§12) — it replaces the abstract "a road-tier job is always on offer" guarantee and
+  kills idle dead-time. Because it isn't scarce, "multiple parties do the same job" carries no
+  conflict.
 
 **Economy — gold only (v1).** No multi-resource system; a guild master thinks in gold. Income is
 your cut of hero rewards. The full money model — the free quest board, the player-set cut, and
@@ -305,6 +319,18 @@ locations**, not just the node where it was posted. This is what gives the full 
 
   Any beat type not yet in this table defaults to resolver-layer (never silently routed to the
   combat engine) until it's explicitly added here.
+
+  - **Slice 1 as built (PR #33):** *every* beat — combat included — resolves at the resolver
+    layer as a **graded skill-vs-difficulty roll** (crit/good/ok/poor/fail against one of the
+    four real attributes str/dex/sta/per), with **inter-beat modifiers** (a strong result eases
+    the next beat), **forced branches** (a critical fail triggers a harder recovery beat; failing
+    *that* fails the quest), **trait cut-ins** (Pell's Coward balks at combat, Wren's Wayfarer
+    eases travel), and **one optional bonus beat** unlocked by a strong mid-quest result. **No
+    `CombatEngine` instance is created in Slice 1** — the D1a seam (§11) stays approved-but-unused.
+    The uniform graded-roll model is what lets every beat emit a comparable outcome the next beat
+    can read. **The combat beat gains real engine fidelity at slice 2** (the seed-replay viewer),
+    where it deep-resolves through `CombatEngine` while still emitting a graded outcome for
+    composition — a deliberate slice-2 upgrade, not a contradiction of the Slice 1 story.
   - **Combat beats:** the resolver runs one engine instance per party member, stack allocation
     and send-in order set by cohesion + the boss's preference (§6), interleaving results into one
     adventure log — never extends the engine's single-hero model (§11).
@@ -428,7 +454,15 @@ sell.
 
 ### Slice 1 resolution model (so the build session invents nothing)
 
+> **Reshaped in the Slice 1 build (PR #33).** The interview replaced the
+> single-fixed-party model below with a **3-party board** (see "Slice 1 as built"
+> at the end of §12). The tick order, refresh cadence, and visibility rules here
+> all still hold; what changed is that *three* fixed parties bid and the cut dials
+> *which* one takes a scarce quest. Read the two together.
+
 - The 3 pre-made heroes are **one fixed party**; parties-as-a-system is slice 4.
+  *(Superseded — Slice 1 ships 3 fixed parties; party* dynamics *— formation,
+  cohesion, boss vote — remain slice 4.)*
 - **A take is its own beat.** Acceptance at end-day N is a line in that night's mail; the party
   is out during day N+1; the outcome and payout land in end-day N+1's ledger. If the party would
   accept both quests on the same night it takes the **better expected share** — the expectation
@@ -441,9 +475,9 @@ sell.
   a returning party can take the new job that same night: back-to-back workdays, no forced idle
   day (the road-only floor's +6g/day depends on this). A **failed** quest's letter also returns
   the next morning as the *same* quest — its failure count and any pay bump persist; only the
-  ~3-day expiry clock resets. A **road-tier job is always on offer**; that guarantee, at the
-  **base 30% cut**, is the §6 unstick floor — dropping the road job to 20% runs negative and is
-  a choice, not the safety net.
+  ~3-day expiry clock resets. A road-tier job is always postable. *(Slice 1 as built: the road
+  job is a **scarce, decline-able** posting, so the concrete §6 unstick floor is the always-
+  available **standing jobs**, not the road job — see "Slice 1 as built" below and §9.)*
 - **End-day tick order:** cut revisions apply → outcomes & payouts for the party that was out →
   acceptance rolls for board postings → passive trickle → upkeep → loan interest → forced
   auto-repay → loan disbursement (a fresh loan clears that day's insolvency) → insolvency check.
@@ -506,12 +540,69 @@ to move a stubborn ask; it never replaces the cut. Board curation is honestly a 
 is free, both quests always go up); it becomes live when heroes can stumble onto unposted quests
 (parked, slice 4+).
 
+### Slice 1 as built (PR #33) — the multi-party board
+
+The single-fixed-party model above was the biggest thing the Slice 1 interview
+changed, because with one party a cut is a shrug (the engagement review's R1/R2).
+What shipped:
+
+- **Three fixed parties bid** — a 3-hero (**The Iron Vigil**: Ysolt, Doran, Wren),
+  a 2-hero (**The Free Blades**: Brok, Pell), and a lone hero (**Mira**). Fixed
+  rosters; party *dynamics* stay slice 4.
+- **Ask ⟂ quality (the tuning invariant).** A party's hidden ask is a *max tolerated
+  cut*, anti-correlated with its quality: the strong, proud Iron Vigil bites the
+  Ruins only at a low cut (≤ ~24%); the greedy Free Blades bite across the whole
+  20–40% range but resolve weaker; lone Mira takes standing jobs only. So **the cut
+  dials *which* party takes the Ruins** — a low cut lures the strong party for a
+  thinner share, a high cut keeps more but sends the weaker one (higher fail risk).
+  Reading appetite is now a gold decision (R2). Blind 30% is a fine default; learning
+  a party's bracket is the payoff.
+- **Scarce quests are awarded to one best-fit bidder** (highest quality that cleared
+  its ask). Multiple parties *racing* the same scarce quest — and **exclusivity as a
+  guild research upgrade** — is banked as a later pillar (see "the Scramble", Ideas
+  parked).
+- **Standing jobs** (guard the hall / help the city watch) — always-up, non-exclusive,
+  low-pay survival work any idle party takes; this replaces the abstract "road job
+  always on offer" floor (see §9). Guild take ≈ +8g/day each, so a roster grinding
+  only standing work nets ≈ −16g/day (upkeep −60 + passive +20 + 3×8 standing) — the
+  number sheet's "idle net −40g" is the *no-work-taken* case; in practice standing
+  jobs raise the effective floor to ≈ −16g/day. It **slows** the cash clock, never
+  reverses it (a floor, not a faucet) — the Ruins is still where you climb.
+- **Rich multi-beat quests** resolve as graded skill-vs-difficulty rolls (§10), with
+  inter-beat modifiers, forced branches on failure, trait cut-ins, and an optional
+  bonus beat — no combat engine is called this slice.
+- **Quest duration 1–3 days** (reward = daily_rate × duration, so per-day EV is
+  stable); the party is out that long and the outcome lands atomically on return.
+- **Loss is visible but unwired.** The cash clock, itemized ledger, and runway line
+  all show (the §8 pressure is *seen*), but the debt event and charter revocation are
+  defined and **not triggered** in Slice 1 — no game-over yet (it returns in a later
+  slice). Number sheet as §12 (1,000g start, −60 upkeep, +20 passive); a good Ruins
+  day still nets ~+140g.
+- **The report is the drama channel** (§2/§4): a returning quest is a *sealed*
+  mail envelope whose result is withheld until opened as an **animated story** (one
+  beat per tap, tinted rolls, forced-branch + trait cut-ins). Live/engine combat and
+  the seed-replay viewer arrive at slice 2.
+
 ---
 
 ## Ideas parked for later
 
 Good ideas we've deliberately deferred to keep v1 small — recorded so they're not lost:
 
+- **The Scramble + exclusivity research (slice 4/5).** Let **multiple parties (and the rival)
+  race the same scarce quest** — first/best to the prize wins, the losers split or come away
+  empty — instead of Slice 1's award-to-one-bidder. The signature case is three groups racing to
+  the **lich's tomb**. You'd then **research *exclusivity*** as a guild upgrade to lock a chosen
+  quest to your chosen party. The parallel-race + partial-reward machinery is real work, so Slice 1
+  ships award-to-one and this lands alongside the rival.
+- **Investigate-the-quest lever (slice 2–3).** Spend to learn a posted quest's beats/difficulty
+  before it's taken, so heroes (and you) decide better — a second priced lever, so it waits (§12:
+  one priced decision per slice; Slice 1's is the cut).
+- **Hero downtime (slice 3–4).** Between quests heroes rest, heal, train, carouse, and shop; a
+  visible **plan of 2–3 candidate missions** they're weighing that you can **nudge** (the
+  "recommend a quest" verb). Needs quest-choice factors (§6) and hero condition, both later.
+- **Recruitment as party-driven + influenced (slice 3–4).** Parties recruit on their own; you can
+  affect it; an external hire becomes a **contract negotiation** (§3 contracts).
 - **Influence → a cut of gear upgrades.** Holding influence somewhere earns you a slice when heroes
   upgrade their gear there. Mechanism TBD.
 - **Prestige / boss quest node** (the Lava Dungeon) — a marquee, repeatable high-tier threat.
@@ -543,13 +634,16 @@ with a prompt drafted in that chat, following the repo loop (plan → review →
 **Shipped:** Guild Hall, Village, Ruins on the map as real, clickable, selectable nodes (PR #20,
 2026-07-01) — the placeholder boxes are gone.
 
-**Next up — Slice 1, Thin closed loop:** two board quests (road job + Ruins) + 3 pre-made heroes
-as one fixed party (CVs with certainty chips) + the **player-set cut** as the priced decision
-(§12 — the bounty top-up and full gold/stats pricing wait for slice 4) + one summary-tier report
-carrying §12's itemized ledger (§4/§10's minimal envelope) + the §8/§12 cash clock. Playable in
-one PR: priced decision → consequence → readable outcome → money pressure. Carries its own
-foundations — engine seams decided (§11), a versioned serializable world-state module, a discrete
-"end day" tick — as scaffolding inside this same PR, not a standalone prerequisite session.
+**Shipped — Slice 1, Thin closed loop (PR #33):** the board (road job + Ruins as scarce postings +
+always-up standing jobs) + **3 fixed parties** who bid (CVs with certainty chips, dormant this
+slice) + the **player-set cut** as the priced decision that dials *which* party takes a scarce quest
+(§12 "Slice 1 as built" — bounty top-up and full gold/stats pricing wait for slice 4) + rich
+multi-beat quests resolved as graded skill-vs-difficulty rolls (§10) + the report as an **animated
+story** with §12's itemized ledger (§4/§10 envelope) + the §8/§12 cash clock (visible; charter
+revocation defined but unwired) + localStorage persistence. Playable in one PR: priced decision →
+consequence → readable outcome → money pressure. Carries its own foundations — engine seams decided
+(§11, left unused), a versioned serializable world-state module (`web/src/game/guild/`), a discrete
+"end day" tick — as scaffolding inside this same PR.
 
 Then, in order:
 

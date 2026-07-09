@@ -46,14 +46,14 @@ export const PARTIES: Party[] = [
   {
     id: "iron-vigil",
     name: "The Iron Vigil",
-    memberIds: ["ysolt", "doran"],
+    memberIds: ["ysolt", "doran", "wren"],
     bossId: "ysolt",
     location: "the Sunken Ruins",
     activity: "clearing the lower vault",
     plan: "press toward the sealed vault door",
     fame: 62, // Ysolt is a battle-verified public-record Champion (§5/§7)
-    cohesion: 70, // illustrative — a party that gets along (§6); their Ysolt↔Doran respect fits
-    morale: 64, // Doran very loyal (+66), Ysolt loyal-while-flattered (+20)
+    cohesion: 66, // a party that gets along (§6); Wren is still earning her place
+    morale: 60, // Doran very loyal (+66), Ysolt loyal-while-flattered (+20), Wren new (+38)
   },
   {
     id: "free-blades",

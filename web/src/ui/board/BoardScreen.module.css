@@ -1,0 +1,186 @@
+/* Board (Guild) screen — phone-first, no horizontal body scroll. Tokens only. */
+
+.screen {
+  min-height: 100vh;
+  /* Reserve room for the fixed End Day bar (~68px) + nav so no card content ever
+     sits under the bar, even with a card's detail rows expanded. */
+  padding: 0 0 calc(var(--nav-h) + 96px);
+  background: var(--surface-0);
+  color: var(--text-strong);
+  font-family: var(--font-ui);
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: linear-gradient(180deg, var(--bar-1), var(--bar-2));
+  border-bottom: 1px solid var(--stroke-soft);
+}
+.dayblock { display: flex; flex-direction: column; }
+.title { margin: 0; font-family: var(--font-display); font-size: 1.15rem; color: var(--text-gold); }
+.day { font-size: 0.8rem; color: var(--text-dim); }
+
+.treasury { display: flex; flex-direction: column; align-items: flex-end; text-align: right; min-width: 0; }
+.gold { font-size: 1.1rem; font-weight: 700; color: var(--gold-soft-hi); }
+.runway { font-size: 0.7rem; color: var(--text-dim); max-width: 46vw; }
+
+.coach {
+  margin: var(--sp-3) var(--sp-4) 0;
+  padding: var(--sp-3);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--ink-parchment);
+  background: var(--c-parchment);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-1);
+}
+.coach strong { color: var(--c-blood-deep); }
+
+.outStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4) 0;
+}
+.outChip {
+  font-size: 0.72rem;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  border: 1px solid var(--stroke-soft);
+  color: var(--text-dim);
+}
+.outChip strong { color: var(--text-strong); }
+
+.board { display: flex; flex-direction: column; gap: var(--sp-4); padding: var(--sp-4); }
+
+.card { display: flex; flex-direction: column; gap: var(--sp-3); }
+.cardHead { display: flex; flex-direction: column; }
+.qtitle { margin: 0; font-family: var(--font-display); font-size: 1.05rem; color: var(--text-strong); }
+.giver { font-size: 0.75rem; color: var(--text-dim); font-style: italic; }
+
+.reward { display: flex; flex-direction: column; }
+.rewardMain { font-size: 1.25rem; font-weight: 700; color: var(--gold-soft-hi); }
+.rewardSub { font-size: 0.75rem; color: var(--text-dim); }
+
+.cut { display: flex; flex-direction: column; gap: var(--sp-1); }
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.stepper button {
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--stroke-gold);
+  background: var(--surface-2);
+  color: var(--text-gold);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.stepper button:active { transform: scale(0.94); }
+.stepper button:disabled { opacity: 0.35; cursor: default; }
+.cutVal {
+  flex: 1;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-strong);
+}
+.cutNote { font-size: 0.7rem; color: var(--text-dim); }
+
+.dotRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  background: none;
+  border: none;
+  padding: var(--sp-1) 0;
+  cursor: pointer;
+}
+.dotGroup { display: inline-flex; gap: 3px; align-items: center; }
+.dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--surface-3);
+  border: 1px solid var(--stroke-soft);
+}
+.dotGroup[data-type="investigation"] .dot[data-on="true"] { background: var(--c-sky); border-color: var(--c-sky); }
+.dotGroup[data-type="travel"] .dot[data-on="true"] { background: var(--c-emerald); border-color: var(--c-emerald); }
+.dotGroup[data-type="social"] .dot[data-on="true"] { background: var(--gold-soft-hi); border-color: var(--gold-soft-hi); }
+.dotGroup[data-type="combat"] .dot[data-on="true"] { background: var(--c-blood); border-color: var(--c-blood); }
+.dotPrimary { font-size: 0.72rem; color: var(--text-gold); margin-left: auto; }
+
+.dotLegend { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.dotLegend li { display: flex; align-items: center; gap: var(--sp-2); font-size: 0.78rem; color: var(--text-dim); }
+
+.whoLine {
+  align-self: flex-start;
+  background: none; border: none;
+  color: var(--text-gold);
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: var(--sp-1) 0;
+}
+.who { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.who li { display: flex; align-items: center; justify-content: space-between; font-size: 0.82rem; }
+.appetite {
+  font-size: 0.72rem;
+  padding: 2px 10px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--stroke-soft);
+  text-transform: capitalize;
+}
+.appetite[data-appetite="eager"] { color: var(--c-emerald); border-color: var(--c-emerald); }
+.appetite[data-appetite="might pass"] { color: var(--gold-soft-hi); border-color: var(--gold-soft-hi); }
+.appetite[data-appetite="won't bite"] { color: var(--c-blood); border-color: var(--c-blood); }
+.appetite[data-appetite="unknown"] { color: var(--text-dim); }
+
+.endBar {
+  position: fixed;
+  left: 0; right: 0;
+  bottom: var(--nav-h);
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-4);
+  background: linear-gradient(0deg, var(--surface-0) 70%, transparent);
+}
+.endBtn {
+  width: 100%;
+  max-width: 520px;
+  min-height: 52px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--gold-soft-lo);
+  background: linear-gradient(180deg, var(--gold-soft-hi), var(--gold-soft-lo));
+  color: var(--ink-gold);
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.endBtn:active { transform: scale(0.98); }
+.endBtn:disabled { opacity: 0.7; cursor: default; }
+.unread { font-size: 0.7rem; color: var(--text-dim); }
+
+.nightVeil {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: radial-gradient(circle at 50% 40%, rgba(20, 16, 40, 0.2), rgba(0, 0, 0, 0.92));
+  animation: nightfade 750ms var(--ease-out);
+  pointer-events: none;
+}
+@keyframes nightfade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

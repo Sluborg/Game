@@ -10,8 +10,54 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-08 - Slice 1: the thin closed loop (board · cut · quests · report)
+- Gate: PR — **PR into `dev`** (feature branch `claude/slice-1-planning-2qni0b`). Plan + both
+  reviews cleared; awaiting Codex.
+- Scope: the first playable guild loop (§12 reshaped in this planning interview). New pure sim
+  `web/src/game/guild/` (types, seed, roster, quests, resolver, board, state, endDay, persist) +
+  new UI `web/src/ui/{guild,board,report}/` + nav/roster edits. Combat core (`web/src/game/battle/`)
+  and art pipeline untouched (consumed read-only; D1a seam left unused).
+- What it does: 3 fixed parties bid on a board of 2 scarce postings (road + Ruins) plus always-up
+  standing jobs. The **cut dials WHICH party** takes a scarce quest via anti-correlated ask⟂quality,
+  awarded to the best-fit bidder — 30% → Free Blades take the Ruins (medium, ~67% success); drop to
+  ≤~24% → the strong Iron Vigil (verified 300/300 @20, 0/300 @30 — a crisp, always-available read).
+  Rich multi-beat quests resolve as graded skill-vs-diff rolls (inter-beat modifiers, forced-branch
+  recovery, trait cut-ins, optional bonus beat; no engine call). End Day runs the §12 tick behind a
+  night beat → Report of **sealed** outcome envelopes that withhold the result until opened as an
+  animated story stage. Cash clock visible (treasury, itemized ledger, runway); debt/charter defined
+  but unwired. localStorage persist with corrupt/version → reinit. New hero Wren Ashdown; 6 heroes /
+  3 parties.
+- First commit: §50 backfill of PR #31/#32 merged gates (separate `chore(progress)` commit).
+- Review #1 (4-persona, on the PLAN): 7 blockers folded pre-build — economy re-derivation
+  (anti-correlated asks, reward×duration, standing pay < idle burn), endDay assignment order,
+  module-boundary inversion, deterministic seed derivation, persistence guard, story-stage vs
+  horizontal scroll, teaser-envelope + card hierarchy. Non-blocking adopted (locked-CV framing,
+  §2/§4 sequencing-only, unknown-appetite + noise-thresholded eager, first-run coach + out-party
+  progress chip, declared nav scope, 4-attr beat map).
+- Review #2 (4-persona, on the DIFF): 7 blockers, all fixed — (1) ledger spoiled the sealed story
+  → returning-quest cut masked until the envelope is opened; (2) refilled postings were locked at
+  30% (`makePosting` lastRevisedDay) → revisable on arrival day; (3) "eager" chip could lie →
+  threshold tightened to maxAcceptedCut − 2·NOISE; (4) Iron Vigil anchor too near the cut floor on
+  low-offset runs → RUN_ASK_BAND ±5→±2 so the strong party is always lurable at cut 20 and never
+  bites at 30; (5) story beat floated in dead space → top-aligned + tap hint; (6) DESIGN §6/§12
+  still named the road job as the floor + stale idle-net → reconciled to standing jobs; (7)
+  no-blocker from Engineer (combat core untouched, sim pure/deterministic — verified). Non-blocking
+  folded: unmount-safe night timer, save-out-of-updater, road-bonus dead code, persist
+  knowledge/askRunOffset guard, no-takers-when-busy mislabel, dots primary-type label, board
+  bottom padding, strengthened tests.
+- Verified: `tsc -b` + `vite build` green; **68 vitest pass** (26 new incl. endDay purity/determinism,
+  assignment order, anti-correlated award, appetite-never-lies, persistence corrupt/version → reinit,
+  UI↔sim attribute parity). Headless Chromium @430px walks board → cut → End Day → sealed Report →
+  masked ledger → animated story → outcome payoff; refresh resumes; no horizontal scroll; only the
+  known art-CDN 404. Screenshots `docs/screenshots/slice1-*`.
+- DESIGN.md: §12 "Slice 1 as built", §9 standing jobs, §10 Slice-1 beat vocabulary, §2/§4 sequencing
+  note, new "Scramble" parked pillar (+ the lich's-tomb race, exclusivity research), other parked
+  ideas (investigate lever, hero downtime/nudge, recruitment).
+- Open questions: all tuning numbers are straw defaults (ratios are the design). Next: `@codex review`
+  → codex gate → merge gate.
+
 ## 2026-07-06 - Kenney frame + Asset Report palette/button foundation
-- Gate: codex-cleared → awaiting merge decision. **PR #32 into `dev`**.
+- Gate: **merged 2026-07-06 22:40 +0200** (merge commit `fc488b2`; backfilled 2026-07-08). **PR #32 into `dev`**.
 - Codex (on head `b85cdf3`): "Didn't find any major issues." No fixes needed.
   No PR-level CI on this repo (deploy triggers on push to main/dev only); UI-only.
 - Branch: `claude/kenney-ui-foundation` → PR into `dev`.
@@ -38,7 +84,7 @@ Format per entry:
   left intentionally (sprites + verified chip); optional full de-purple is a follow-up.
 
 ## 2026-07-06 - §50 merged-gate backfill rule
-- Gate: codex-fixed → awaiting merge decision. **PR #31 into `dev`** (Codex on `28884e4`: no
+- Gate: **merged 2026-07-06 02:09 +0200** (merge commit `2eb2be3`; backfilled 2026-07-08). **PR #31 into `dev`** (Codex on `28884e4`: no
   findings — nothing to fix)
 - Branch: `claude/economy-quest-fees-jto58v` (designated session branch, restarted from
   `origin/dev` at `d70b6ee` after PR #30 merged) → PR #31 into `dev` (docs-only; no PR-level CI

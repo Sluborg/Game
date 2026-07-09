@@ -1,22 +1,22 @@
-// NavBar — the persistent bottom navigation for the guild app. Three tabs
-// (Map / Heroes / Combat Test), each a ≥44px tap target with a 24×24 inline-SVG
-// icon (currentColor, same pattern as StartScreen's icons — no raster art) plus
-// a label. This replaces every screen's old "← Menu" back-to-start button, so
-// navigation no longer dead-ends at the start screen. The active tab is
-// highlighted and marked aria-current. Keys match Root's hash routes.
+// NavBar — the persistent bottom navigation for the guild app. Four tabs
+// (Map / Guild / Heroes / Report), each a ≥44px tap target with a 24×24 inline-SVG
+// icon (currentColor, same pattern as StartScreen's icons — no raster art) plus a
+// label. The Report tab carries an unread-envelope badge. Combat Test is a dev
+// tool and is NOT in the nav (it's reached from the Start screen). The active tab
+// is highlighted and marked aria-current. Keys match Root's hash routes.
 
 import type { ReactNode } from "react";
 import styles from "./NavBar.module.css";
 
-export type NavKey = "node" | "heroes" | "test";
+export type NavKey = "node" | "guild" | "heroes" | "report";
 
 export interface NavBarProps {
-  active: NavKey;
+  active?: NavKey;
+  unread?: number;
   onNavigate: (key: NavKey) => void;
 }
 
 function MapIcon() {
-  // Folded map with a marker pin.
   return (
     <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden>
       <path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
@@ -25,8 +25,18 @@ function MapIcon() {
   );
 }
 
+function GuildIcon() {
+  // A guild-hall / notice-board: a framed board on posts.
+  return (
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden>
+      <rect x="4" y="4" width="16" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M7 8h10M7 11h6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M8 16v4M16 16v4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function HeroesIcon() {
-  // Two figures = the roster.
   return (
     <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden>
       <circle cx="9" cy="7.5" r="3.2" stroke="currentColor" strokeWidth="1.6" />
@@ -36,18 +46,12 @@ function HeroesIcon() {
   );
 }
 
-function SwordsIcon() {
-  // Crossed swords — blades cross in the upper half, with distinct pommels and
-  // crossguards at the lower hilts so it reads as combat, not a plain "×"/close.
+function ReportIcon() {
+  // A sealed letter.
   return (
     <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden>
-      {/* blades */}
-      <path d="M4 4l11 11M20 4L9 15" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      {/* crossguards near the hilts */}
-      <path d="M13 16l3-3M11 16l-3-3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      {/* pommels */}
-      <circle cx="16.5" cy="16.5" r="1.5" fill="currentColor" />
-      <circle cx="7.5" cy="16.5" r="1.5" fill="currentColor" />
+      <rect x="3" y="5" width="18" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M3.5 6.5 12 13l8.5-6.5" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -60,15 +64,17 @@ interface Tab {
 
 const TABS: Tab[] = [
   { key: "node", label: "Map", icon: <MapIcon /> },
+  { key: "guild", label: "Guild", icon: <GuildIcon /> },
   { key: "heroes", label: "Heroes", icon: <HeroesIcon /> },
-  { key: "test", label: "Combat Test", icon: <SwordsIcon /> },
+  { key: "report", label: "Report", icon: <ReportIcon /> },
 ];
 
-export function NavBar({ active, onNavigate }: NavBarProps) {
+export function NavBar({ active, unread = 0, onNavigate }: NavBarProps) {
   return (
     <nav className={styles.nav} aria-label="Primary">
       {TABS.map((tab) => {
         const isActive = tab.key === active;
+        const showBadge = tab.key === "report" && unread > 0;
         return (
           <button
             key={tab.key}
@@ -77,7 +83,10 @@ export function NavBar({ active, onNavigate }: NavBarProps) {
             aria-current={isActive ? "page" : undefined}
             onClick={() => onNavigate(tab.key)}
           >
-            <span className={styles.icon}>{tab.icon}</span>
+            <span className={styles.icon}>
+              {tab.icon}
+              {showBadge && <span className={styles.badge} aria-label={`${unread} unread`}>{unread}</span>}
+            </span>
             <span className={styles.label}>{tab.label}</span>
           </button>
         );
