@@ -10,29 +10,55 @@ export type {
   AdventureLog,
   Assignment,
   PartyRuntime,
+  PartyActivity,
   Posting,
-  AskKnowledge,
-  AppetiteLabel,
   LedgerEntry,
   Mail,
   MailKind,
+  SimEvent,
+  SimEventType,
+  FeedItem,
+  FeedRegister,
+  IconName,
   GuildState,
 } from "./types";
 
 export { HERO_DATA, PARTY_DATA, HERO_BY_ID, PARTY_BY_ID, partyAttr, partyQuality, partyTraitMod } from "./roster";
 export { ROAD_JOB, RUINS, STANDING_JOBS, POSTABLE_QUESTS, QUEST_BY_ID, challengeDots, type QuestDef, type BeatDef } from "./quests";
 export { resolveQuest } from "./resolver";
-export { appetiteFor, effectiveMaxCut, partyAccepts, partyEligible, bestFit, offsetKey, NOISE } from "./board";
-export { endDay } from "./endDay";
+export { makePosting, partyEligible, bestPosting } from "./board";
+export { chooseActivity, avgWallet, type LifeChoice } from "./life";
+export {
+  step,
+  advanceUntilStop,
+  peekNext,
+  dayOf,
+  phaseOf,
+  type AdvanceStop,
+} from "./clock";
 export {
   SAVE_VERSION,
+  createInitialState,
+  displayedGold,
+  markMailRead,
+  buyTavern,
+  dismissTavern,
+  lastLedger,
+  draft,
+} from "./state";
+export {
+  TICKS_PER_DAY,
+  PHASES,
+  type Phase,
   STARTING_GOLD,
   DAILY_UPKEEP,
   PASSIVE_INCOME,
-  createInitialState,
-  reviseCut,
-  canRevise,
-  markMailRead,
-} from "./state";
+  BROKERAGE,
+  NEED_GOLD,
+  TAVERN_PRICE,
+  FEED_CAP,
+  MAIL_CAP,
+  ADVANCE_CAP,
+} from "./tuning";
 export { loadState, saveState, clearSave, freshSeed } from "./persist";
 export { deriveSeed } from "./seed";

@@ -1,10 +1,13 @@
-// Persistence (§12 versioned serializable state) — localStorage save/load with a
+// Persistence (versioned serializable state) — localStorage save/load with a
 // hard guard: ANY parse error or version mismatch discards the blob and reinits,
 // and load NEVER throws into render (a corrupt/old save must not white-screen the
-// app, and Reset must stay reachable). No migration function this slice — the
-// policy is simply discard-and-reinit on mismatch.
+// app, and Reset must stay reachable). No migration function — the policy is
+// simply discard-and-reinit on mismatch (v1 cut-era saves die on the version
+// check). The storage key is unchanged on purpose so old blobs are overwritten,
+// not orphaned.
 
-import { SAVE_VERSION, createInitialState } from "./state";
+import { createInitialState } from "./state";
+import { SAVE_VERSION } from "./tuning";
 import type { GuildState } from "./types";
 
 const KEY = "guild.slice1.v1";
@@ -30,18 +33,23 @@ export function loadState(seed: number): GuildState {
     if (!parsed || typeof parsed !== "object" || parsed.version !== SAVE_VERSION) {
       return createInitialState(seed);
     }
-    // Minimal shape sanity — anything off → reinit rather than render a broken run.
-    // Guards the arrays AND the two objects the tick/render hard-dereference
-    // (knowledge in BoardScreen, askRunOffset in endDay) — a truncated blob missing
-    // either would otherwise TypeError into a white screen (Adversary R#2).
+    // Minimal shape sanity — anything off → reinit rather than render a broken
+    // run. Guards every array/object the engine or Hall hard-dereferences
+    // (queue/feed for the clock, wallets/buildings for life + the invest card,
+    // dayLedger for night) — a truncated blob missing any would TypeError into
+    // a white screen.
     if (
       !Array.isArray(parsed.parties) ||
       !Array.isArray(parsed.board) ||
       !Array.isArray(parsed.mail) ||
-      typeof parsed.knowledge !== "object" ||
-      parsed.knowledge === null ||
-      typeof parsed.askRunOffset !== "object" ||
-      parsed.askRunOffset === null
+      !Array.isArray(parsed.queue) ||
+      !Array.isArray(parsed.feed) ||
+      !Array.isArray(parsed.dayLedger) ||
+      typeof parsed.tick !== "number" ||
+      typeof parsed.wallets !== "object" ||
+      parsed.wallets === null ||
+      typeof parsed.buildings !== "object" ||
+      parsed.buildings === null
     ) {
       return createInitialState(seed);
     }

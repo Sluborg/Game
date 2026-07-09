@@ -1,8 +1,13 @@
-// GuildContext — the single owner of the live GuildState for the Board + Report
+// GuildContext — the single owner of the live GuildState for the Hall + Report
 // screens. It holds the run in React state, drives every change through the PURE
 // sim reducers (web/src/game/guild), and autosaves to localStorage after each
 // change. freshSeed() (wall-clock entropy) is read ONLY here, at the UI boundary —
 // never inside a reducer — so the sim stays deterministic/replayable.
+//
+// The Advance spine is ONE commit: advanceUntilStop() is a pure sim function
+// (Review #1 B6), so a whole Advance press costs one setState + one autosave.
+// The Auto overlay steps single events (stepOnce) on a UI interval — the pacing
+// is presentation; the sim never touches the wall clock.
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
@@ -11,20 +16,29 @@ import {
   clearSave,
   freshSeed,
   createInitialState,
-  reviseCut,
-  endDay,
+  advanceUntilStop,
+  step,
   markMailRead,
+  buyTavern,
+  dismissTavern,
+  displayedGold,
   type GuildState,
 } from "../../game/guild";
 
 interface GuildApi {
   state: GuildState;
-  /** Revise a posting's cut (once/day; the reducer enforces it). */
-  revise: (postingId: string, cutPct: number) => void;
-  /** Run the end-day tick. */
-  end: () => void;
-  /** Mark a mail envelope read. */
+  /** The treasury the UI shows — real gold minus unopened sealed credits (B1). */
+  shownGold: number;
+  /** ▷ Advance: run to the next decision or nightfall (one commit/autosave). */
+  advance: () => void;
+  /** Auto mode: process exactly one sim event (called on a UI interval). */
+  stepOnce: () => void;
+  /** Open a sealed outcome / mark any mail read (settles shownGold). */
   readMail: (mailId: string) => void;
+  /** The slice's one fixed-price investment. */
+  build: () => void;
+  /** "Not yet" on the tavern proposal (the invest card stays). */
+  dismissProposal: () => void;
   /** Wipe the save and start a fresh run. */
   reset: () => void;
   /** Count of unread envelopes (drives the Report tab badge). */
@@ -48,17 +62,23 @@ export function GuildProvider({ children }: { children: ReactNode }) {
   // closures). The effect above persists the result.
   const commit = useCallback((fn: (s: GuildState) => GuildState) => setState((prev) => fn(prev)), []);
 
-  const revise = useCallback((postingId: string, cutPct: number) => commit((s) => reviseCut(s, postingId, cutPct)), [commit]);
-  const end = useCallback(() => commit((s) => endDay(s)), [commit]);
+  const advance = useCallback(() => commit((s) => advanceUntilStop(s).state), [commit]);
+  const stepOnce = useCallback(() => commit((s) => step(s)), [commit]);
   const readMail = useCallback((mailId: string) => commit((s) => markMailRead(s, mailId)), [commit]);
+  const build = useCallback(() => commit((s) => buyTavern(s)), [commit]);
+  const dismissProposal = useCallback(() => commit((s) => dismissTavern(s)), [commit]);
   const reset = useCallback(() => {
     clearSave();
     setState(createInitialState(freshSeed()));
   }, []);
 
   const unread = useMemo(() => state.mail.filter((m) => !m.read).length, [state.mail]);
+  const shownGold = useMemo(() => displayedGold(state), [state]);
 
-  const api = useMemo<GuildApi>(() => ({ state, revise, end, readMail, reset, unread }), [state, revise, end, readMail, reset, unread]);
+  const api = useMemo<GuildApi>(
+    () => ({ state, shownGold, advance, stepOnce, readMail, build, dismissProposal, reset, unread }),
+    [state, shownGold, advance, stepOnce, readMail, build, dismissProposal, reset, unread],
+  );
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
 }
 

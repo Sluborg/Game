@@ -1,13 +1,14 @@
-// ReportScreen — the Report tab: a Dominions-style nightly summary, newest night
-// on top. A returning-quest outcome is a SEALED envelope whose teaser withholds
-// the result until you open it in the StoryStage (so the summary can't spoil the
-// drama, §4). The end-day ledger is the one fully-spelled entry (itemized + runway).
-// Acceptance/notice/coach envelopes are plain info lines.
+// ReportScreen — the Report tab: the ARCHIVE of reveals, newest night on top.
+// Under the pivot the Hall Feed is the living surface and sealed stories open
+// there too; this tab keeps every envelope replayable. A returning-quest outcome
+// is a SEALED envelope whose teaser withholds the result until opened in the
+// StoryStage (so the summary can't spoil the drama, §4). The nightly ledger is
+// the one fully-spelled entry (itemized + runway).
 
 import { useMemo, useState } from "react";
 import { useGuild } from "../guild/GuildContext";
 import { StoryStage } from "./StoryStage";
-import type { AdventureLog, Mail } from "../../game/guild";
+import { dayOf, type AdventureLog, type Mail } from "../../game/guild";
 import styles from "./ReportScreen.module.css";
 
 interface OpenStory {
@@ -45,10 +46,10 @@ export function ReportScreen() {
     <div className={styles.screen}>
       <header className={styles.topbar}>
         <h1 className={styles.title}>Report</h1>
-        <span className={styles.day}>Day {state.day}</span>
+        <span className={styles.day}>Day {dayOf(state.tick)}</span>
       </header>
 
-      {byDay.length === 0 && <p className={styles.empty}>No mail yet. End a day on the Board to see what your parties get up to.</p>}
+      {byDay.length === 0 && <p className={styles.empty}>No mail yet. Advance the day in the Hall — reports and ledgers land here.</p>}
 
       {byDay.map(([day, items]) => (
         <section key={day} className={styles.night} aria-label={`Day ${day}`}>
@@ -127,7 +128,7 @@ function MailRow({ mail, readIds, onOpen, onRead }: { mail: Mail; readIds: Set<s
     );
   }
 
-  // acceptance / notice / coach — plain info line.
+  // Any other kind (none today — departures/notices live in the Hall Feed now).
   return (
     <div className={styles.info} data-kind={mail.kind} onPointerDown={() => { if (!mail.read) onRead(); }}>
       {mail.teaser}

@@ -79,8 +79,10 @@ replay through the animated **story stage** (§4/§10). The map stays a *state* 
 (fog / influence / nodes), never a life-animation.
 
 **UI — clarity via Kenney icons.** Legibility uses a **Kenney icon set**, not ambiguous abstract
-marks. *(PR #32 shipped only Kenney's border **frame**; the icon set — Board Game Icons / Game
-Icons / Cartography, see `docs/kenney.md` — is still to be adopted.)* Concretely: challenge types
+marks. *(PR #32 shipped Kenney's border **frame**; the living-canvas slice adopted **Board Game
+Icons** (11 glyphs, CC0, mask-tinted via the kit `Icon`) for activities / buildings / gold /
+letters; feed registers read as row treatment (dim / normal / gold-boxed), not icons — see
+`docs/kenney.md`.)* Concretely: challenge types
 (investigation / travel / social / combat), buildings & gear, resource/stat glyphs, and the feed's
 three registers each get a **recognisable icon + short label**, replacing Slice 1's hard-to-read
 coloured-dot rows. Icons carry meaning; text confirms it; a tap expands the detail.
@@ -95,7 +97,12 @@ order.
 1. **Not a spectator** — each session has a legible moment where *your* read/investment changed an
    outcome (the report says *why* your call mattered).
 2. **No decision vacuum** — a money-valued, knowledge-priced decision is always live (the upgrade
-   bets); reading heroes always has something to buy.
+   bets); reading heroes always has something to buy. *(The R2-successor kill-test, to run when
+   slice 2's CV-priced upgrades land: simulate 20 days, an informed investor (ground-truth hero
+   reads) vs a blind investor at equal spend — informed must lead by **≥ +40g/day equivalent**
+   (the cut's old Ruins squeeze was ~+60g/day gross), and the report must say WHY the call paid.
+   If the delta is ~0, slice 2 must not ship. The living-canvas tavern is deliberately
+   knowledge-FREE — its test is guardrails #1/#3, not this one.)*
 3. **Not a screensaver** — the world visibly responds to the player, and a run is eventually
    *losable*.
 4. **No snowball / stall** — the flywheel has governors (your best heroes are the rival's poaching
@@ -786,6 +793,30 @@ Every slice still ends playable; the canvas comes first, then the player's hand,
    building or a gear buy) that visibly shapes the canvas — so the first slice already responds to
    the player's hand and clears guardrails #1/#3 (not a spectator, not a screensaver). Fun shipped:
    parties visibly live, quest over days, and return on a living clock *that you already nudge*.
+
+   **As built (the living-canvas PR).** An event queue on integer sim-ticks (4/day:
+   dawn/midday/dusk/night), pinned within-tick order `(tick, type-rank night-last, ord)`; pure
+   handlers `decide / finish / return / night` in `web/src/game/guild/clock.ts` restructure the
+   old endDay economics; `advanceUntilStop()` (to the next **decision** or nightfall) is the
+   skip-primary spine, with an optional Auto 1×/3× overlay that is pure presentation. **Hero
+   wallets** (the design question resolved): per-hero gold; earn = reward − the flat 10%
+   brokerage, split evenly, remainder to the boss; spend on rest ~15%/min 5g and train ~20%/min
+   8g of wallet (always clamped to the wallet), routed to your facility if built, else lost to
+   the village (a tracked sink the feed advertises); motivation = avg wallet < 60g → best-paying
+   eligible posting (pinned comparator: dailyRate desc, id asc) or a standing shift, else
+   lifestyle with a ~15% seeded fame-quest urge across ALL eligible postings; every return
+   forces one decompress rest. The **Hall Feed** ships its three registers (ambient dim /
+   notable / decision gold-boxed, undone decisions pinned under "Needs you"); standing-job
+   returns are ambient-only (no sealed mail, no auto-pause). The **sealed reveal** holds on the
+   always-on treasury via `displayedGold()` (gold minus unopened sealed credits), amount-free
+   activity lines, and tavern takings that accrue to a day counter and only hit the treasury at
+   night. The one investment is the **Tavern, 400g fixed** — proposal auto-pauses once grounded
+   (day ≥ 2 + watched village sinks); once built, rest-spend lands in the till nightly.
+   *Known/dormant by design:* train is flavour+spend (no growth yet); loss stays unwired;
+   posting `failCount` texture dropped (returns with hero arcs); **guardrail #5 is deferred** —
+   one sink means allocation isn't a tradeoff yet, and post-tavern income overcorrects to
+   roughly +70g/day with nothing left to buy: that surplus is deliberately the appetite slice 2's
+   building/gear menu walks into.
 2. **The businessman's hand** — the full **Majesty building + gear upgrades at fixed prices** +
    the hero-spending economy + the flat 10% cut + building passive + upkeep. **The read the bet is
    priced against: the dormant CV certainty chips (already built in Slice 1) go LIVE here** — so

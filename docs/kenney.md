@@ -20,6 +20,14 @@ the repo, zero legal friction.
 
 ## Foundation kit (adopt now)
 
+> **Adopted so far:** Fantasy UI Borders (PR #32, the panel frame) and **Board Game
+> Icons** (living-canvas PR: 11 glyphs — campfire, sword, flag, book, house, pouch,
+> token, notepad, shield, hourglass, pawns — committed under
+> `web/src/assets/kenney/board-game-icons/` and tinted via the kit `Icon`'s CSS
+> mask, so one white sprite follows `currentColor` everywhere). Feed registers are
+> row *treatment* (dim / normal / gold-boxed), not icons — glyphs are spent where
+> they carry meaning (activities, buildings, gold), each beside a text label.
+
 The small foundation PR skins the guild UI with a tight, coherent set:
 
 | Pack | Role |
