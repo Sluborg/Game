@@ -64,7 +64,7 @@ interface Tab {
 
 const TABS: Tab[] = [
   { key: "node", label: "Map", icon: <MapIcon /> },
-  { key: "guild", label: "Guild", icon: <GuildIcon /> },
+  { key: "guild", label: "Hall", icon: <GuildIcon /> },
   { key: "heroes", label: "Heroes", icon: <HeroesIcon /> },
   { key: "report", label: "Report", icon: <ReportIcon /> },
 ];

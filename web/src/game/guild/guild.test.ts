@@ -1,231 +1,510 @@
-// Guild sim tests — the invariants Review #1 demanded be provable, not asserted:
-// endDay purity + determinism, pinned assignment order (no double-book, no Ruins
-// starvation, out-parties excluded), anti-correlated award, appetite projection vs
-// the noise band, standing income below the idle burn, and persistence round-trip
-// + corrupt/version → reinit.
+// Guild sim tests (living-canvas slice) — the invariants Review #1 demanded be
+// provable, not asserted: step()/advanceUntilStop() purity + determinism, the
+// pinned within-tick ordering (night LAST), quest-over-days return timing, the
+// forced decompress, gold conservation, spend clamping, sealed-outcome display
+// masking, standing returns never auto-pausing, tavern routing + buy-once, the
+// tavern proposal gating, feed/mail caps, handler stale-event guards, a full day
+// fitting under the advance cap, and persistence round-trip + corrupt/version →
+// reinit.
 
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   createInitialState,
-  endDay,
-  reviseCut,
-  resolveQuest,
-  appetiteFor,
-  bestFit,
+  step,
+  advanceUntilStop,
+  peekNext,
+  dayOf,
+  phaseOf,
+  displayedGold,
+  markMailRead,
+  buyTavern,
+  dismissTavern,
+  chooseActivity,
+  avgWallet,
+  bestPosting,
   partyEligible,
-  partyQuality,
-  partyAccepts,
-  effectiveMaxCut,
+  PARTY_DATA,
+  HERO_DATA,
+  BROKERAGE,
+  NEED_GOLD,
+  TAVERN_PRICE,
+  TICKS_PER_DAY,
   DAILY_UPKEEP,
   PASSIVE_INCOME,
+  STARTING_GOLD,
+  ADVANCE_CAP,
+  FEED_CAP,
+  MAIL_CAP,
   loadState,
   saveState,
   clearSave,
   SAVE_VERSION,
 } from "./index";
-import { learn } from "./board";
-import { RUINS } from "./quests";
-import type { GuildState } from "./types";
+import type { GuildState, SimEvent } from "./types";
 
 const SEED = 12345;
 
-function run(state: GuildState, days: number): GuildState {
+function stepN(state: GuildState, n: number): GuildState {
   let s = state;
-  for (let i = 0; i < days; i++) s = endDay(s);
+  for (let i = 0; i < n; i++) s = step(s);
   return s;
 }
 
-describe("initial state", () => {
-  it("starts at 1000g, day 1, with a road + ruins posting and a coach note", () => {
-    const s = createInitialState(SEED);
-    expect(s.gold).toBe(1000);
-    expect(s.day).toBe(1);
-    expect(s.board.filter((p) => p.tier === "road")).toHaveLength(1);
-    expect(s.board.filter((p) => p.tier === "ruins")).toHaveLength(1);
-    expect(s.mail.some((m) => m.kind === "coach")).toBe(true);
-    expect(s.firstDay).toBe(true);
-  });
-});
+/** Advance whole days (each stop is decision or night; decisions auto-opened so
+ * the run keeps flowing like a player tapping through). */
+function playDays(state: GuildState, days: number): GuildState {
+  let s = state;
+  const target = dayOf(s.tick) + days;
+  let guard = 0;
+  while (dayOf(s.tick) < target && guard++ < 500) {
+    const r = advanceUntilStop(s);
+    s = r.state;
+    // Open every fresh sealed decision so the display settles and play continues.
+    for (const f of s.feed) {
+      if (f.register === "decision" && !f.done && f.mailId) s = markMailRead(s, f.mailId);
+      if (f.register === "decision" && !f.done && f.action === "tavern") s = dismissTavern(s);
+    }
+  }
+  return s;
+}
 
-describe("endDay purity & determinism", () => {
-  it("does not mutate its input", () => {
-    const s = createInitialState(SEED);
-    const snapshot = JSON.stringify(s);
-    endDay(s);
-    expect(JSON.stringify(s)).toBe(snapshot);
-  });
+/** Total gold in the whole economy (treasury + wallets + village sink + tavern
+ * day-accrual). Conservation: only quests/passive add, only upkeep/construction
+ * remove. */
+function totalGold(s: GuildState): number {
+  const wallets = Object.values(s.wallets).reduce((a, b) => a + b, 0);
+  return s.gold + wallets + s.villageSink + s.dayTakings;
+}
 
-  it("is a pure function of state (run twice → deep-equal)", () => {
-    const s = createInitialState(SEED);
-    expect(endDay(s)).toEqual(endDay(s));
-  });
-
-  it("is deterministic across identical runs (no Date.now / Math.random inside)", () => {
-    const a = run(createInitialState(SEED), 8);
-    const b = run(createInitialState(SEED), 8);
+describe("clock: determinism & purity", () => {
+  it("step() is pure — same input twice gives deep-equal output and never mutates its input", () => {
+    const s0 = createInitialState(SEED);
+    const frozen = JSON.stringify(s0);
+    const a = stepN(s0, 40);
+    const b = stepN(s0, 40);
+    expect(JSON.stringify(s0)).toBe(frozen);
     expect(a).toEqual(b);
   });
 
-  it("different seeds diverge", () => {
-    const a = run(createInitialState(1), 8);
-    const b = run(createInitialState(2), 8);
-    expect(a).not.toEqual(b);
+  it("advanceUntilStop is deterministic and equals its own replay", () => {
+    const s0 = createInitialState(SEED);
+    const a = advanceUntilStop(s0);
+    const b = advanceUntilStop(s0);
+    expect(a.stop).toBe(b.stop);
+    expect(a.state).toEqual(b.state);
+  });
+
+  it("a JSON round-trip mid-run resumes identically (mid-quest refresh)", () => {
+    const s = stepN(createInitialState(SEED), 25);
+    const revived = JSON.parse(JSON.stringify(s)) as GuildState;
+    expect(step(revived)).toEqual(step(s));
   });
 });
 
-describe("assignment order & invariants", () => {
-  it("never double-books a party and keeps out-parties out until their return day", () => {
+describe("clock: queue & time invariants", () => {
+  it("the queue is never empty and always holds a future night", () => {
     let s = createInitialState(SEED);
-    for (let i = 0; i < 15; i++) {
-      s = endDay(s);
-      const out = s.parties.filter((p) => p.assignment);
-      for (const p of out) {
-        // returnDay is always strictly in the future — a freshly dispatched party
-        // is never resolved in the same tick (no instant resolve / double-book).
-        expect(p.assignment!.returnDay).toBeGreaterThan(s.day);
-        expect(p.assignment!.durationDays).toBeGreaterThanOrEqual(1);
+    for (let i = 0; i < 80; i++) {
+      s = step(s);
+      expect(s.queue.length).toBeGreaterThan(0);
+      expect(s.queue.some((e) => e.type === "night")).toBe(true);
+    }
+  });
+
+  it("night fires exactly once per day, on the day's last tick", () => {
+    let s = createInitialState(SEED);
+    let nights = 0;
+    for (let i = 0; i < 200 && nights < 5; i++) {
+      const up = peekNext(s);
+      if (up?.type === "night") {
+        expect(up.tick % TICKS_PER_DAY).toBe(TICKS_PER_DAY - 1);
+        nights++;
       }
-      // Each party appears once (structural — the array is keyed by id).
-      expect(new Set(s.parties.map((p) => p.id)).size).toBe(s.parties.length);
+      s = step(s);
+    }
+    expect(nights).toBe(5);
+    expect(dayOf(s.tick)).toBeGreaterThanOrEqual(5);
+  });
+
+  it("ticks never move backwards", () => {
+    let s = createInitialState(SEED);
+    let last = s.tick;
+    for (let i = 0; i < 120; i++) {
+      s = step(s);
+      expect(s.tick).toBeGreaterThanOrEqual(last);
+      last = s.tick;
     }
   });
 
-  it("the lone hero can never be awarded the Ruins", () => {
-    expect(partyEligible("lone-mira", "ruins")).toBe(false);
+  it("within a tick, night runs AFTER party events (a dusk finish lands in that night's ledger)", () => {
+    // Construct: finishes scheduled on the night tick, tavern built so the rest
+    // spends accrue to dayTakings; the night's ledger must contain them even
+    // though the night event was enqueued FIRST (lower ord).
     let s = createInitialState(SEED);
-    for (let i = 0; i < 20; i++) {
-      s = endDay(s);
-      const mira = s.parties.find((p) => p.id === "lone-mira")!;
-      if (mira.assignment) expect(mira.assignment.tier).not.toBe("ruins");
-    }
+    s = buyTavern(s);
+    const rich: GuildState = JSON.parse(JSON.stringify(s));
+    rich.parties = rich.parties.map((p) => ({ ...p, assignment: null, activity: { kind: "rest" as const, untilTick: 3 } }));
+    rich.queue = [
+      { id: "t1", tick: 3, ord: 1, type: "night" },
+      ...rich.parties.map<SimEvent>((p, i) => ({ id: `t${i + 2}`, tick: 3, ord: i + 2, type: "finish", partyId: p.id, activity: "rest" })),
+    ];
+    let out = rich;
+    for (let i = 0; i < 4; i++) out = step(out);
+    const ledger = out.mail.find((m) => m.kind === "ledger");
+    expect(ledger).toBeTruthy();
+    expect(ledger!.ledger!.some((e) => e.label === "Tavern takings" && e.amount > 0)).toBe(true);
+    expect(out.dayTakings).toBe(0);
   });
 
-  it("keeps a road and a ruins posting always available (no starvation of the board)", () => {
+  it("a full simulated day fits under the advance cap", () => {
     let s = createInitialState(SEED);
-    for (let i = 0; i < 20; i++) {
-      s = endDay(s);
-      expect(s.board.some((p) => p.tier === "road")).toBe(true);
-      expect(s.board.some((p) => p.tier === "ruins")).toBe(true);
+    for (let d = 0; d < 5; d++) {
+      let events = 0;
+      const startDay = dayOf(s.tick);
+      while (dayOf(s.tick) === startDay && events < ADVANCE_CAP) {
+        s = step(s);
+        events++;
+        for (const f of s.feed) if (f.register === "decision" && !f.done && f.mailId) s = markMailRead(s, f.mailId);
+      }
+      expect(events).toBeLessThan(ADVANCE_CAP);
     }
   });
 });
 
-describe("multi-party read: anti-correlated ask ⟂ quality", () => {
-  it("the Iron Vigil is the higher-quality party (best-fit winner at a low cut)", () => {
-    expect(partyQuality("iron-vigil")).toBeGreaterThan(partyQuality("free-blades"));
-    expect(bestFit(["free-blades", "iron-vigil"])).toBe("iron-vigil");
-  });
-
-  it("the strong party is ALWAYS lurable at the cut floor and NEVER bites the blind default", () => {
-    // With anchor 24, run band ±2, daily noise ±2, the Iron Vigil's Ruins threshold
-    // is 22..26 at offset 0 — so cut 20 always seats it, cut 30 (blind default) and
-    // cut 40 never do. The read is always available; the lever is crisp.
+describe("daily life: choices, quests over days, decompress", () => {
+  it("a broke party takes the best-paying eligible posting (pinned comparator)", () => {
     const s = createInitialState(SEED);
-    s.askRunOffset["iron-vigil:ruins"] = 0;
-    for (let day = 2; day < 60; day++) {
-      const eff = effectiveMaxCut(s, "iron-vigil", "ruins", day)!;
-      expect(eff).toBeLessThan(30); // never bites at the blind 30% default
-      expect(partyAccepts(s, "iron-vigil", "ruins", 20, day)).toBe(true); // always lurable at the floor
-      expect(partyAccepts(s, "iron-vigil", "ruins", 40, day)).toBe(false); // proud: never at 40%
-    }
-    // Even at the WORST run offset (−RUN_ASK_BAND), cut 20 still seats the strong party.
-    s.askRunOffset["iron-vigil:ruins"] = -2;
-    for (let day = 2; day < 60; day++) {
-      expect(partyAccepts(s, "iron-vigil", "ruins", 20, day)).toBe(true);
-    }
+    // Free Blades start at 45 < NEED_GOLD and can take both tiers → Ruins (300g/day).
+    expect(avgWallet(s, "free-blades")).toBeLessThan(NEED_GOLD);
+    const choice = chooseActivity(s, "free-blades", 0);
+    expect(choice.kind).toBe("quest");
+    if (choice.kind === "quest") expect(choice.posting.tier).toBe("ruins");
   });
 
-  it("a lone hero can't bid the Ruins or the Road (standing jobs only)", () => {
-    expect(partyEligible("lone-mira", "ruins")).toBe(false);
-    expect(partyEligible("lone-mira", "road")).toBe(false);
+  it("bestPosting is dailyRate desc with id-asc tiebreak; ineligible tiers filtered", () => {
+    const s = createInitialState(SEED);
+    expect(bestPosting(s.board, "free-blades")?.tier).toBe("ruins");
+    expect(bestPosting(s.board, "lone-mira")).toBeNull();
     expect(partyEligible("lone-mira", "standing")).toBe(true);
   });
-});
 
-describe("appetite projection (never lies past the noise band)", () => {
-  it("is unknown with no observations", () => {
-    expect(appetiteFor(undefined, 30)).toBe("unknown");
+  it("a comfortable party lives its life (rest AND train both occur)", () => {
+    const s = createInitialState(SEED);
+    const kinds = new Set<string>();
+    for (let t = 0; t < 40; t++) kinds.add(chooseActivity(s, "iron-vigil", t).kind);
+    expect(kinds.has("rest")).toBe(true);
+    expect(kinds.has("train")).toBe(true);
   });
 
-  it("brackets tighten from observed accept/decline; eager never lies past the noise band", () => {
-    let k = learn(undefined, 30, true); // accepted at 30 → guaranteed-accept region is ≤ 30 − 2·NOISE = 26
-    expect(appetiteFor(k, 26)).toBe("eager"); // boundary: safe
-    expect(appetiteFor(k, 27)).toBe("might pass"); // inside the band a future roll could still decline
-    expect(appetiteFor(k, 30)).toBe("might pass");
-    k = learn(k, 38, false); // declined at 38 → guaranteed-reject region is ≥ 38 + 2·NOISE = 42
-    expect(appetiteFor(k, 38)).toBe("might pass"); // inside the band a good-mood day could still accept
-    expect(appetiteFor(k, 41)).toBe("might pass");
-    expect(appetiteFor(k, 42)).toBe("won't bite"); // beyond the band: confidently no
-  });
-});
-
-describe("economy shape", () => {
-  it("three standing jobs sum below the idle burn (a floor, not a faucet)", () => {
-    // Standing guild take ≈ 8g/day each; idle burn = upkeep − passive = 40g/day.
-    const standingGuildTake = Math.round((27 * 30) / 100); // reward × cut
-    expect(standingGuildTake * 3).toBeLessThan(DAILY_UPKEEP - PASSIVE_INCOME + 1 + 24);
-    expect(standingGuildTake * 3).toBeLessThan(DAILY_UPKEEP);
+  it("forced decompress: chooseActivity(forced) rests regardless of wallet", () => {
+    const s = createInitialState(SEED);
+    expect(chooseActivity(s, "free-blades", 0, "rest")).toEqual({ kind: "rest" });
   });
 
-  it("every end-day produces a visible ledger envelope with a runway note", () => {
-    const s = endDay(createInitialState(SEED));
-    const ledger = s.mail.find((m) => m.kind === "ledger");
-    expect(ledger).toBeTruthy();
-    expect(ledger!.ledger!.length).toBeGreaterThan(0);
-    expect(ledger!.runwayNote).toBeTruthy();
+  it("a dispatched party is out for durationDays and returns exactly on schedule", () => {
+    let s = createInitialState(SEED);
+    let guard = 0;
+    while (!s.parties.some((p) => p.assignment && p.assignment.tier !== "standing") && guard++ < 60) s = step(s);
+    const out = s.parties.find((p) => p.assignment && p.assignment.tier !== "standing")!;
+    const a = out.assignment!;
+    expect(a.returnTick).toBe(a.dispatchedTick + a.durationDays * TICKS_PER_DAY);
+    while (s.tick < a.returnTick - 1) s = step(s);
+    expect(s.parties.find((p) => p.id === out.id)!.assignment).not.toBeNull();
+    let guard2 = 0;
+    while (s.parties.find((p) => p.id === out.id)!.assignment && guard2++ < 20) s = step(s);
+    expect(s.mail.some((m) => m.kind === "outcome" && !m.read)).toBe(true);
+    const decide = s.queue.find((e) => e.type === "decide" && e.partyId === out.id);
+    expect(decide?.forced).toBe("rest");
   });
 });
 
-describe("resolver", () => {
-  it("is deterministic for a given seed", () => {
-    const input = { quest: RUINS, partyId: "iron-vigil", cutPct: 30, durationDays: 2, seed: 999 } as const;
-    expect(resolveQuest(input)).toEqual(resolveQuest(input));
-  });
-
-  it("a stronger party clears the Ruins more often than a weaker one", () => {
-    const successes = (partyId: string) => {
-      let wins = 0;
-      for (let seed = 0; seed < 200; seed++) {
-        if (resolveQuest({ quest: RUINS, partyId, cutPct: 30, durationDays: 2, seed }).outcome === "success") wins++;
+describe("economy: wallets, brokerage, conservation, spends", () => {
+  it("gold is conserved: only quest rewards + passive add; only upkeep + construction remove", () => {
+    // Runs the identity twice — without and WITH the tavern bought mid-run, so
+    // the −400 construction burn is inside the accounting (Review #2 Adversary).
+    for (const buyAtNight of [Infinity, 2]) {
+      let s = createInitialState(SEED);
+      const start = totalGold(s);
+      let rewards = 0;
+      let nights = 0;
+      let construction = 0;
+      for (let i = 0; i < 300 && nights < 6; i++) {
+        const up = peekNext(s);
+        if (up?.type === "return") {
+          const party = s.parties.find((p) => p.id === up.partyId);
+          if (party?.assignment && party.assignment.returnTick === up.tick) rewards += party.assignment.log.reward;
+        }
+        if (up?.type === "night") nights++;
+        s = step(s);
+        if (nights === buyAtNight && !s.buildings.tavern && s.gold >= TAVERN_PRICE) {
+          s = buyTavern(s);
+          construction = TAVERN_PRICE;
+        }
       }
-      return wins;
-    };
-    expect(successes("iron-vigil")).toBeGreaterThan(successes("free-blades"));
+      const expected = start + rewards + nights * (PASSIVE_INCOME - DAILY_UPKEEP) - construction;
+      expect(totalGold(s)).toBe(expected);
+      if (buyAtNight !== Infinity) expect(construction).toBe(TAVERN_PRICE);
+    }
   });
 
-  it("guild cut is zero on a failed quest", () => {
-    // Find a seed that fails for the weak solo party on the (party-gated) Ruins math.
-    let sawFailure = false;
-    for (let seed = 0; seed < 100 && !sawFailure; seed++) {
-      const log = resolveQuest({ quest: RUINS, partyId: "free-blades", cutPct: 40, durationDays: 1, seed });
-      if (log.outcome === "failure") {
-        expect(log.guildCut).toBe(0);
-        sawFailure = true;
+  it("the heroes' share splits evenly with the remainder to the boss; brokerage is the flat 10%", () => {
+    let s = createInitialState(SEED);
+    let guard = 0;
+    while (guard++ < 200) {
+      const up = peekNext(s);
+      if (up?.type === "return") {
+        const party = s.parties.find((p) => p.id === up.partyId)!;
+        const a = party.assignment;
+        if (a && a.tier !== "standing" && a.log.reward > 0) {
+          const partyData = PARTY_DATA.find((p) => p.id === party.id)!;
+          const before = partyData.memberIds.map((id) => s.wallets[id]);
+          const share = a.log.reward - a.log.guildCut;
+          const per = Math.floor(share / partyData.memberIds.length);
+          const rem = share - per * partyData.memberIds.length;
+          s = step(s);
+          partyData.memberIds.forEach((id, i) => {
+            const expected = before[i] + per + (id === partyData.bossId ? rem : 0);
+            expect(s.wallets[id]).toBe(expected);
+          });
+          expect(a.log.guildCut).toBe(Math.round((a.log.reward * BROKERAGE) / 100));
+          expect(a.log.cutPct).toBe(BROKERAGE);
+          return;
+        }
+      }
+      s = step(s);
+    }
+    throw new Error("no scarce success return found");
+  });
+
+  it("spends are clamped to the wallet — never negative, even below the minimum", () => {
+    const s = createInitialState(SEED);
+    const mod: GuildState = JSON.parse(JSON.stringify(s));
+    for (const h of HERO_DATA) mod.wallets[h.id] = h.id === "ysolt" ? 3 : 0;
+    mod.parties = mod.parties.map((p) => ({ ...p, assignment: null, activity: { kind: "train" as const, untilTick: 1 } }));
+    mod.queue = mod.parties.map<SimEvent>((p, i) => ({ id: `f${i}`, tick: 1, ord: i + 1, type: "finish", partyId: p.id, activity: "train" }));
+    let out = mod;
+    for (let i = 0; i < 3; i++) out = step(out);
+    for (const h of HERO_DATA) expect(out.wallets[h.id]).toBeGreaterThanOrEqual(0);
+    expect(out.wallets["ysolt"]).toBe(0); // spent all 3 (min 8 clamped to wallet)
+  });
+
+  it("rest spends route to the village without a tavern, and takings appear with one", () => {
+    const base = createInitialState(SEED);
+    const without = playDays(base, 4);
+    const withTavern = playDays(buyTavern(base), 4);
+    expect(without.villageSink).toBeGreaterThan(0);
+    const anyTakings = withTavern.mail.some(
+      (m) => m.kind === "ledger" && m.ledger?.some((e) => e.label === "Tavern takings" && e.amount > 0),
+    );
+    expect(anyTakings).toBe(true);
+  });
+});
+
+describe("the sealed reveal: display masking & standing quiet", () => {
+  it("displayedGold hides a sealed return's brokerage until the envelope opens", () => {
+    let s = createInitialState(SEED);
+    let guard = 0;
+    while (guard++ < 300) {
+      const up = peekNext(s);
+      if (up?.type === "return") {
+        const party = s.parties.find((p) => p.id === up.partyId)!;
+        const a = party.assignment;
+        if (a && a.tier !== "standing" && a.log.guildCut > 0) {
+          const shownBefore = displayedGold(s);
+          s = step(s);
+          // Real gold moved; the DISPLAY did not.
+          expect(displayedGold(s)).toBe(shownBefore);
+          const mail = s.mail.find((m) => m.kind === "outcome" && !m.read)!;
+          const opened = markMailRead(s, mail.id);
+          expect(displayedGold(opened)).toBe(shownBefore + a.log.guildCut);
+          return;
+        }
+      }
+      s = step(s);
+    }
+    throw new Error("no sealed scarce return found");
+  });
+
+  it("activity/spend feed lines never print gold amounts (letters may — board info is public)", () => {
+    // A post-return spend sized in gold would leak the sealed reward (B1); the
+    // rule covers every activity line. Quest letters restate the POSTED rate,
+    // which is already public on the board card — exempt.
+    const s = playDays(createInitialState(SEED), 6);
+    for (const f of s.feed) {
+      if (f.register === "ambient" && f.icon !== "letter") expect(f.text).not.toMatch(/\d+\s*g\b/);
+    }
+  });
+
+  it("standing returns are quiet: no sealed mail, no decision item, but ledger income exists", () => {
+    const s = playDays(createInitialState(SEED), 4);
+    for (const m of s.mail) {
+      if (m.kind === "outcome") expect(m.questTitle).not.toMatch(/Guard the Guild Hall|Help the City Watch/);
+    }
+    for (const f of s.feed) {
+      if (f.register === "decision") expect(f.text).not.toMatch(/shift|watch/i);
+    }
+    const standingLine = s.mail.some(
+      (m) => m.kind === "ledger" && m.ledger?.some((e) => /Guard the Guild Hall|Help the City Watch/.test(e.label)),
+    );
+    expect(standingLine).toBe(true);
+  });
+
+  it("advance stops on the decision a scarce return emits", () => {
+    let s = createInitialState(SEED);
+    let guard = 0;
+    while (guard++ < 50) {
+      const r = advanceUntilStop(s);
+      s = r.state;
+      if (r.stop === "decision") {
+        expect(s.feed.some((f) => f.register === "decision" && !f.done)).toBe(true);
+        return;
       }
     }
-    expect(sawFailure).toBe(true);
+    throw new Error("advance never stopped on a decision");
   });
 });
 
-describe("cut revision (once per day)", () => {
-  it("applies once and then locks for the day", () => {
+describe("the tavern: the slice's one investment", () => {
+  it("buyTavern is guarded: once, and only when affordable", () => {
     const s = createInitialState(SEED);
-    const road = s.board.find((p) => p.tier === "road")!;
-    const s1 = reviseCut(s, road.id, 20);
-    expect(s1.board.find((p) => p.id === road.id)!.cutPct).toBe(20);
-    const s2 = reviseCut(s1, road.id, 40);
-    expect(s2.board.find((p) => p.id === road.id)!.cutPct).toBe(20); // locked today
+    const poor: GuildState = { ...(JSON.parse(JSON.stringify(s)) as GuildState), gold: TAVERN_PRICE - 1 };
+    expect(buyTavern(poor)).toBe(poor); // no-op reference return
+    const bought = buyTavern(s);
+    expect(bought.buildings.tavern).toBe(true);
+    expect(bought.gold).toBe(STARTING_GOLD - TAVERN_PRICE);
+    expect(buyTavern(bought)).toBe(bought);
   });
 
-  it("clamps to the 20–40 range", () => {
+  it("the proposal never fires on gold the player can't yet see (sealed credit)", () => {
+    // Raw gold crosses the price ONLY because of an unopened sealed brokerage;
+    // the proposal popping would leak the outcome (Review #2 Engineer). Gate is
+    // displayedGold.
+    const base = createInitialState(SEED);
+    const mod: GuildState = JSON.parse(JSON.stringify(base));
+    mod.tick = TICKS_PER_DAY + 1; // day 2
+    mod.sinkSeen = 5;
+    mod.gold = TAVERN_PRICE + 50;
+    mod.mail.unshift({
+      id: "sealed-1",
+      day: 2,
+      kind: "outcome",
+      teaser: "They are back.",
+      log: { beats: [], outcome: "success", reward: 1000, guildCut: 100, cutPct: BROKERAGE, durationDays: 2 },
+      partyName: "x",
+      questTitle: "y",
+      read: false,
+    });
+    expect(displayedGold(mod)).toBeLessThan(TAVERN_PRICE);
+    mod.queue = [{ id: "d1", tick: mod.tick, ord: 1, type: "decide", partyId: "iron-vigil" }];
+    const stepped = step(mod);
+    expect(stepped.feed.some((f) => f.action === "tavern")).toBe(false);
+    // Open the envelope → the gold is really yours → the proposal may fire.
+    const opened = markMailRead(stepped, "sealed-1");
+    const after = step(opened);
+    expect(after.feed.some((f) => f.action === "tavern")).toBe(true);
+  });
+
+  it("the proposal fires once, gated on day 2+ AND visible village sinks", () => {
+    let s = createInitialState(SEED);
+    s = playDays(s, 1);
+    expect(s.feed.some((f) => f.action === "tavern")).toBe(false);
+    s = playDays(s, 4);
+    expect(s.sinkSeen).toBeGreaterThanOrEqual(2);
+    const proposals = s.feed.filter((f) => f.action === "tavern");
+    expect(proposals.length).toBe(1);
+    expect(s.tavernProposed).toBe(true);
+  });
+
+  it("dismissing the proposal resolves the decision without building", () => {
+    let s = createInitialState(SEED);
+    let guard = 0;
+    while (!s.feed.some((f) => f.action === "tavern" && !f.done) && guard++ < 400) s = step(s);
+    expect(s.feed.some((f) => f.action === "tavern" && !f.done)).toBe(true);
+    const dismissed = dismissTavern(s);
+    expect(dismissed.feed.every((f) => f.action !== "tavern" || f.done)).toBe(true);
+    expect(dismissed.buildings.tavern).toBe(false);
+  });
+});
+
+describe("stale events & caps (handler guards)", () => {
+  it("a return for a party that isn't out no-ops safely", () => {
     const s = createInitialState(SEED);
-    const road = s.board.find((p) => p.tier === "road")!;
-    expect(reviseCut(s, road.id, 99).board.find((p) => p.id === road.id)!.cutPct).toBe(40);
+    const mod: GuildState = JSON.parse(JSON.stringify(s));
+    mod.queue = [{ id: "x", tick: 1, ord: 1, type: "return", partyId: "iron-vigil" }];
+    const out = step(mod);
+    expect(out.gold).toBe(mod.gold);
+    expect(out.mail.length).toBe(mod.mail.length);
+    const out2 = step(out); // empty queue → the clock re-seeds a night, no stall
+    expect(out2.queue.some((e) => e.type === "night")).toBe(true);
+  });
+
+  it("a decide for an out party no-ops (no double-booking)", () => {
+    let s = createInitialState(SEED);
+    let guard = 0;
+    while (!s.parties.some((p) => p.assignment && p.assignment.tier !== "standing") && guard++ < 60) s = step(s);
+    const out = s.parties.find((p) => p.assignment && p.assignment.tier !== "standing")!;
+    const mod: GuildState = JSON.parse(JSON.stringify(s));
+    mod.queue.push({ id: "dup", tick: mod.tick, ord: mod.seq + 999, type: "decide", partyId: out.id });
+    const stepped = step(mod);
+    const runtime = stepped.parties.find((p) => p.id === out.id)!;
+    expect(runtime.assignment?.questId).toBe(out.assignment!.questId);
+  });
+
+  it("a mismatched finish reschedules the party's decide (queue never starves a party)", () => {
+    const s = createInitialState(SEED);
+    const mod: GuildState = JSON.parse(JSON.stringify(s));
+    mod.parties = mod.parties.map((p) => ({ ...p, activity: null }));
+    mod.queue = [{ id: "x", tick: 1, ord: 1, type: "finish", partyId: "iron-vigil", activity: "rest" }];
+    const out = step(mod);
+    expect(out.queue.some((e) => e.type === "decide" && e.partyId === "iron-vigil")).toBe(true);
+  });
+
+  it("feed and mail stay bounded over a long run", () => {
+    const s = playDays(createInitialState(SEED), 30);
+    expect(s.feed.length).toBeLessThanOrEqual(FEED_CAP + 30); // trims run nightly
+    expect(s.mail.length).toBeLessThanOrEqual(MAIL_CAP + 10);
+  });
+
+  it("UNREAD nightly ledgers are trim-eligible; unread sealed outcomes never are (Codex P2)", () => {
+    // A Hall-only player never expands ledger rows — the cap must still hold.
+    const s = createInitialState(SEED);
+    const mod: GuildState = JSON.parse(JSON.stringify(s));
+    for (let d = 0; d < MAIL_CAP + 40; d++) {
+      mod.mail.push({ id: `led-${d}`, day: d + 1, kind: "ledger", teaser: `Day ${d + 1} ledger`, ledger: [], read: false });
+    }
+    mod.mail.push({
+      id: "sealed-keep",
+      day: 1,
+      kind: "outcome",
+      teaser: "back",
+      log: { beats: [], outcome: "success", reward: 100, guildCut: 10, cutPct: BROKERAGE, durationDays: 1 },
+      read: false,
+    });
+    mod.queue = [{ id: "n", tick: 3, ord: 1, type: "night" }];
+    const out = step(mod);
+    expect(out.mail.length).toBeLessThanOrEqual(MAIL_CAP);
+    expect(out.mail.some((m) => m.id === "sealed-keep")).toBe(true);
+  });
+
+  it("Advance refuses to move the clock while a decision is already pending (Codex P2)", () => {
+    let s = createInitialState(SEED);
+    let guard = 0;
+    while (guard++ < 50) {
+      const r = advanceUntilStop(s);
+      s = r.state;
+      if (r.stop === "decision") break;
+    }
+    expect(s.feed.some((f) => f.register === "decision" && !f.done)).toBe(true);
+    // Pressing Advance again: same state back (===), no events processed.
+    const again = advanceUntilStop(s);
+    expect(again.stop).toBe("decision");
+    expect(again.state).toBe(s);
   });
 });
 
 describe("persistence", () => {
   beforeEach(() => {
+    // Node test env has no localStorage — stub it (same pattern as Slice 1).
     const store = new Map<string, string>();
     (globalThis as unknown as { localStorage: Storage }).localStorage = {
       getItem: (k: string) => store.get(k) ?? null,
@@ -235,29 +514,32 @@ describe("persistence", () => {
       key: () => null,
       length: 0,
     } as Storage;
-  });
-
-  it("round-trips a run through save/load", () => {
-    const s = run(createInitialState(SEED), 5);
-    saveState(s);
-    expect(loadState(0)).toEqual(s);
-  });
-
-  it("reinits (never throws) on a corrupt blob", () => {
-    localStorage.setItem("guild.slice1.v1", "{not json");
-    const s = loadState(SEED);
-    expect(s.version).toBe(SAVE_VERSION);
-    expect(s.day).toBe(1);
-  });
-
-  it("reinits on a version mismatch", () => {
-    localStorage.setItem("guild.slice1.v1", JSON.stringify({ version: 999, day: 50 }));
-    expect(loadState(SEED).day).toBe(1);
-  });
-
-  it("clearSave wipes the slot", () => {
-    saveState(createInitialState(SEED));
     clearSave();
-    expect(loadState(SEED).day).toBe(1);
+  });
+
+  it("round-trips a live run", () => {
+    const s = stepN(createInitialState(SEED), 30);
+    saveState(s);
+    expect(loadState(999)).toEqual(s);
+  });
+
+  it("reinits on version mismatch and on corrupt/truncated blobs", () => {
+    const s = createInitialState(SEED);
+    saveState({ ...s, version: SAVE_VERSION - 1 });
+    expect(loadState(42).version).toBe(SAVE_VERSION);
+    localStorage.setItem("guild.slice1.v1", "{not json");
+    expect(loadState(42).version).toBe(SAVE_VERSION);
+    localStorage.setItem("guild.slice1.v1", JSON.stringify({ version: SAVE_VERSION, tick: 1 }));
+    const re = loadState(42);
+    expect(Array.isArray(re.queue)).toBe(true);
+    expect(re.queue.length).toBeGreaterThan(0);
+  });
+
+  it("phaseOf/dayOf agree with tick arithmetic", () => {
+    expect(dayOf(0)).toBe(1);
+    expect(dayOf(TICKS_PER_DAY - 1)).toBe(1);
+    expect(dayOf(TICKS_PER_DAY)).toBe(2);
+    expect(phaseOf(0)).toBe("dawn");
+    expect(phaseOf(TICKS_PER_DAY - 1)).toBe("night");
   });
 });

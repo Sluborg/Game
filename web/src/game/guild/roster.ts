@@ -4,11 +4,11 @@
 // mockParties.ts) imports FROM here so presentation and simulation never diverge —
 // and so game/ never depends on ui/ (LPC sprites, etc.).
 //
-// The Slice-1 tuning invariant (§12 rewrite): ASK ⟂ QUALITY. The strong, proud
-// Iron Vigil demands a low cut (bites the Ruins only ≤ ~24%); the greedy Free
-// Blades bite across the whole 20–40% range but resolve weaker; lone Mira can't
-// touch the Ruins. So the cut dials WHICH party takes the Ruins — reading appetite
-// becomes a gold decision (R2). Straw numbers; the ratios are the design.
+// The Slice-1 ask⟂quality invariant is DORMANT under the pivot (the player-set
+// cut retired for a flat brokerage; asks return with slice-4 variable terms) —
+// the askMaxCut data survives because its null entries still gate structural
+// eligibility (lone Mira can't take the Ruins). Straw numbers; ratios are the
+// design.
 
 import type { HeroData, PartyData } from "./types";
 
@@ -43,6 +43,9 @@ export const PARTY_DATA: PartyData[] = [
     bossId: "ysolt",
     // High quality → low tolerated cut (proud). Only bite the Ruins at a low cut.
     askMaxCut: { road: 30, ruins: 24, standing: 60 },
+    // Comfortable at run start: the Vigil opens in LIFESTYLE mode (rest/train on
+    // screen from minute one — the canvas must show life, not an empty hall).
+    startWallet: 90,
   },
   {
     id: "free-blades",
@@ -51,6 +54,8 @@ export const PARTY_DATA: PartyData[] = [
     bossId: "brok",
     // Medium quality, greedy for work → bite across the whole 20–40 range.
     askMaxCut: { road: 55, ruins: 42, standing: 60 },
+    // Middling coin: the Blades want work within the first day or two.
+    startWallet: 45,
   },
   {
     id: "lone-mira",
@@ -61,6 +66,8 @@ export const PARTY_DATA: PartyData[] = [
     // maul a solo recruit) or the Ruins — she guards the hall / walks the watch
     // until she has a party. Both scarce tiers null; standing is her floor.
     askMaxCut: { road: null, ruins: null, standing: 60 },
+    // Broke: Mira takes watch shifts from the start (the survival floor, visible).
+    startWallet: 20,
   },
 ];
 

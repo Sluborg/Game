@@ -1,14 +1,18 @@
 // Guild sim — shared types. This module is the serializable heart of the guild
-// game (Slice 1): a single GuildState plus the value types the pure reducers in
-// endDay.ts / board.ts / resolver.ts operate on. NO React, NO DOM, NO presentation
-// here — the UI layer (web/src/ui/board, web/src/ui/report) imports FROM this,
-// never the reverse (keeps game/ below ui/ in the dependency graph).
+// game: a single GuildState plus the value types the pure reducers in clock.ts /
+// life.ts / state.ts operate on. NO React, NO DOM, NO presentation here — the UI
+// layer (web/src/ui/hall, web/src/ui/report) imports FROM this, never the reverse
+// (keeps game/ below ui/ in the dependency graph).
 //
-// Everything here is JSON-serializable so the whole run round-trips through
-// localStorage (persist.ts). Ground-truth roster data lives in roster.ts.
+// v2 (the living-canvas slice): the daily-batch endDay loop is restructured into
+// an EVENT QUEUE on integer sim-ticks (DESIGN.md "The living guild"). The
+// player-set cut retires (flat brokerage); heroes carry wallets and live
+// autonomous daily lives. Everything here is JSON-serializable so the whole run
+// round-trips through localStorage (persist.ts). Ground-truth roster data lives
+// in roster.ts.
 
 /** The four attributes the sim actually uses (mirrors battle/attributes.ts —
- * str/dex/sta/per; no Int/Cha invented for Slice 1). */
+ * str/dex/sta/per; no Int/Cha invented yet). */
 export type AttrKey = "str" | "dex" | "sta" | "per";
 
 /** The quest tiers that resolve on the board this slice. */
@@ -16,8 +20,7 @@ export type QuestTier = "road" | "ruins" | "standing";
 
 /** A beat's challenge kind (§10 minimal vocabulary). Every beat resolves at the
  * quest-resolver layer as a graded skill-vs-difficulty roll — NO combat engine is
- * invoked in Slice 1 (the combat beat is a roll too; it gains real engine fidelity
- * only at slice 2). */
+ * invoked (the combat beat gains real engine fidelity at the fidelity slice). */
 export type BeatType = "investigation" | "travel" | "social" | "combat";
 
 /** Graded outcome of a single beat (never a bare pass/fail — §10). */
@@ -48,12 +51,14 @@ export interface PartyData {
   name: string;
   memberIds: string[];
   bossId: string;
-  /** Anchor ask per tier = the MAX cut-% the party tolerates (accepts if the
-   * posted cut ≤ this). Anti-correlated with quality (§12 rewrite): a strong,
-   * proud party demands a low cut. A run offset (±5) is added at init; ±2 daily
-   * noise is added at the acceptance roll. `null` = the party can't take this
-   * tier at all (e.g. a lone hero on the Ruins). */
+  /** Per-tier ask ceilings from Slice 1. DORMANT this slice: with the player-set
+   * cut retired for a flat brokerage, ask-vs-share acceptance is degenerate; the
+   * null entries still gate structural eligibility (a lone hero can't take the
+   * Ruins). Asks return live with variable terms (slice-4 bounty top-ups). */
   askMaxCut: Partial<Record<QuestTier, number | null>>;
+  /** Starting wallet per member (staggered so minute one shows the full
+   * behavioral vocabulary: one party in lifestyle, one heading out, one broke). */
+  startWallet: number;
 }
 
 /** One resolved beat in an adventure (§10 envelope element). */
@@ -74,78 +79,84 @@ export interface Beat {
 }
 
 /** The quest's real structure (§10): a sequence of beats + the aggregate outcome.
- * Report fidelity tiers (slice 2) will be exact filters over this. */
+ * Report fidelity tiers (a later slice) will be exact filters over this. */
 export interface AdventureLog {
   beats: Beat[];
   outcome: "success" | "failure";
-  /** Total reward pool for the run (daily_rate × duration). */
+  /** Total reward pool for the run (daily_rate × duration; 0 on failure). */
   reward: number;
-  /** The guild's gold from it = reward × cut (0 on failure). */
+  /** The guild's gold from it = reward × cut (0 on failure). Under the pivot the
+   * cut is the flat ~10% brokerage, not a player-set number. */
   guildCut: number;
-  /** The cut-% the quest was posted at when taken. */
+  /** The cut-% in force when dispatched (the flat BROKERAGE this slice). */
   cutPct: number;
   durationDays: number;
 }
 
 /** A party currently out on a quest. The log is computed deterministically AT
- * DISPATCH (seed + returnDay fixed then) so a mid-quest refresh replays identically. */
+ * DISPATCH (seed + returnTick fixed then) so a mid-quest refresh replays
+ * identically — the sealed envelope the pivot reuses. */
 export interface Assignment {
   questId: string;
   tier: QuestTier;
   questTitle: string;
   seed: number;
-  dispatchedDay: number;
-  returnDay: number;
+  dispatchedTick: number;
+  returnTick: number;
   durationDays: number;
   /** Precomputed, revealed to the player only when the party returns. */
   log: AdventureLog;
 }
 
+/** A party's current at-home activity (rest/train/standing shift), for the party
+ * strip. Out-on-a-quest is `assignment` instead; both null = between activities. */
+export interface PartyActivity {
+  kind: "rest" | "train";
+  untilTick: number;
+}
+
 /** Live runtime state of a party (membership/quality come from PartyData). */
 export interface PartyRuntime {
   id: string;
-  /** null = idle/available; set = out on a quest until returnDay. */
+  /** null = at home; set = out on a quest until returnTick. */
   assignment: Assignment | null;
+  /** null = idle/deciding; set = resting/training until untilTick. */
+  activity: PartyActivity | null;
 }
 
 /** A scarce posting on the board (road / ruins). Standing jobs are not postings —
- * they're an always-available fallback generated at assignment time. */
+ * they're an always-available fallback chosen at decide time. The player no
+ * longer sets a cut; the board is what the HEROES read. */
 export interface Posting {
   /** Stable per-letter id (changes when a fresh letter replaces a taken one). */
   id: string;
+  /** The QuestDef this letter posts (QUEST_BY_ID key — never derived from tier,
+   * which only matches the id by coincidence today). */
+  questId: string;
   tier: QuestTier;
   title: string;
   giver: string;
-  cutPct: number;
   /** Days remaining before the giver withdraws it untaken (~3). */
   daysLeft: number;
-  /** The day the player last revised this posting's cut (once-per-day guard). */
-  lastRevisedDay: number;
-  /** Failure count persists across re-attempts (§12). */
-  failCount: number;
 }
-
-/** What the player has learned about a party's ask for a tier, from observing
- * accept/decline at known cuts (§12 observation brackets). */
-export interface AskKnowledge {
-  maxAcceptedCut: number | null;
-  minRejectedCut: number | null;
-}
-
-export type AppetiteLabel = "unknown" | "eager" | "might pass" | "won't bite";
 
 /** One line in the end-day ledger (§12 — every gold movement is visible). */
 export interface LedgerEntry {
   label: string;
   amount: number;
-  /** If set, this line is a returning quest's cut whose amount must stay masked in
-   * the Report until the linked outcome envelope is opened (§4 — don't spoil the
-   * sealed story's payoff). */
+  /** If set, this line is a returning quest's brokerage whose amount must stay
+   * masked in the Report until the linked outcome envelope is opened (§4 — don't
+   * spoil the sealed story's payoff). */
   sealedMailId?: string;
+  /** One-off movements (construction) are excluded from the runway's burn math —
+   * "gold lasts ~N days" must project the RECURRING trend, not panic the night
+   * of the player's one big buy (Review #2 Player-experience). */
+  oneOff?: boolean;
 }
 
-/** A mail envelope (§4 — reveals delivered as mail, opened one at a time). */
-export type MailKind = "outcome" | "acceptance" | "letter" | "ledger" | "notice" | "coach";
+/** A mail envelope (§4 — reveals delivered as mail). v2 keeps two kinds: sealed
+ * quest outcomes and the nightly ledger. Everything else lives in the Hall Feed. */
+export type MailKind = "outcome" | "ledger";
 export interface Mail {
   id: string;
   day: number;
@@ -168,22 +179,93 @@ export interface Mail {
   read?: boolean;
 }
 
+/** The sim's event types. Handlers live in clock.ts; each is pure. */
+export type SimEventType = "decide" | "finish" | "return" | "night";
+
+/** A queued sim event. Ordering is pinned: (tick, TYPE_RANK with night LAST, ord)
+ * so a finish landing on the night tick contributes to THAT night's ledger, and
+ * ordering never depends on array insertion accidents. `ord` is a monotonic
+ * enqueue counter drawn from state.seq (distinct from mail/feed ids only in role —
+ * same counter, so id generation stays pure). */
+export interface SimEvent {
+  id: string;
+  tick: number;
+  ord: number;
+  type: SimEventType;
+  partyId?: string;
+  /** finish: which activity ended. */
+  activity?: "rest" | "train";
+  /** decide: the post-return decompress forces one rest (§ "returns → decompresses"). */
+  forced?: "rest";
+}
+
+/** The Hall Feed's three registers (DESIGN "The living-world surface"). */
+export type FeedRegister = "ambient" | "notable" | "decision";
+
+/** Kenney icon keys the feed/UI use (ui/kit/Icon maps them to sprites). */
+export type IconName =
+  | "rest"
+  | "train"
+  | "depart"
+  | "report"
+  | "tavern"
+  | "gold"
+  | "spend"
+  | "letter"
+  | "watch"
+  | "night"
+  | "party";
+
+/** One line of the living world. Ambient collapses; notable reads; decision
+ * auto-pauses and asks for the player. */
+export interface FeedItem {
+  id: string;
+  tick: number;
+  day: number;
+  register: FeedRegister;
+  icon: IconName;
+  text: string;
+  /** decision items: the sealed outcome mail this decision opens. */
+  mailId?: string;
+  /** decision items: what tapping it does. */
+  action?: "open-report" | "tavern";
+  /** decision items: resolved (opened / bought / dismissed). */
+  done?: boolean;
+}
+
 /** The one serializable object that IS the run. Bump SAVE_VERSION on any breaking
  * shape change (persist.ts discards + reinits on mismatch). */
 export interface GuildState {
   version: number;
-  day: number;
+  /** Integer sim-tick; day/phase derive from it (clock.ts). Sim-time is FULLY
+   * decoupled from real time — nothing schedules against the wall clock. */
+  tick: number;
   gold: number;
-  /** Fixed-at-init per-party/per-tier ask offset (±5), so a run has a stable
-   * personality the player learns; keyed "partyId:tier". */
-  askRunOffset: Record<string, number>;
+  /** Per-hero wallets (the pivot's economy: heroes keep quest gold and spend it
+   * at your facilities — that spend is your main income once captured). */
+  wallets: Record<string, number>;
+  buildings: { tavern: boolean };
+  /** The tavern proposal decision item fires once (gated on visible sink lines). */
+  tavernProposed: boolean;
+  /** Count of rest-spends lost to the village (gates + grounds the proposal). */
+  sinkSeen: number;
+  /** Lifetime gold lost to the village (conservation tests + flavour). */
+  villageSink: number;
+  /** Tavern captures accrued since the last night (flushed to gold + a ledger
+   * line at night, so the live treasury only moves at returns and nightfall). */
+  dayTakings: number;
+  /** Ledger lines accrued during the day, composed into the nightly ledger mail. */
+  dayLedger: LedgerEntry[];
   parties: PartyRuntime[];
   board: Posting[];
-  knowledge: Record<string, AskKnowledge>; // keyed "partyId:tier"
+  queue: SimEvent[];
+  feed: FeedItem[];
+  /** True once feed trimming has dropped old ambient lines (UI shows a faded note). */
+  feedTrimmed: boolean;
   mail: Mail[];
   /** Monotonic counter for unique ids (kept in state so id generation is pure). */
   seq: number;
   rngSeed: number;
-  /** True until the player ends their first day (drives the first-run coach). */
+  /** True until the first nightfall (drives the Hall's first-run coach line). */
   firstDay: boolean;
 }

@@ -72,8 +72,8 @@ export function StoryStage({
             </div>
             <div className={styles.outcomeCut}>
               {log.outcome === "success"
-                ? `Your ${log.cutPct}% cut: +${log.guildCut}g`
-                : `Your cut: +0g`}
+                ? `Your ${log.cutPct}% brokerage: +${log.guildCut}g — the heroes pocket the rest.`
+                : `Your brokerage: +0g`}
             </div>
           </div>
         )}

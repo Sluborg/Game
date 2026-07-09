@@ -10,9 +10,117 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-09 - Slice: the living canvas — PR opened (awaiting Codex)
+- Gate: codex-fixed — **PR #36 into `dev`** (branch `claude/slice-living-canvas-843hho`). Plan +
+  both reviews cleared; `@codex review` posted per §30.
+- Codex (on `2d4c2ac`, two P2s, both fixed): (1) **unread nightly ledgers were exempt from
+  MAIL_CAP** — a Hall-only player who never expands ledger rows accrued one untrimmable mail per
+  night (300 @300 days) → the cap now trims read mail first, then unread LEDGERS oldest-first;
+  an unread sealed outcome is never dropped (+ regression test). (2) **Advance rolled past
+  already-pending decisions** — it only stopped on NEW ones, so nightfalls could pile up behind
+  an unresolved "Needs you" → `advanceUntilStop` returns immediately (same state reference, so
+  React bails and nothing autosaves) when any undone decision exists, and the Hall disables the
+  button with "answer what needs you first" (+ regression test: pressing Advance while pending
+  is a strict no-op). Re-ran Review #2 on the delta (self, proportionate): trim order preserves
+  the newest ledger (Hall runway) and every sealed story; the early-return preserves purity;
+  Auto's effect guard already held — no new blockers. 77 vitest pass; build green; headless
+  walkthrough re-run end-to-end (the guarded Advance doesn't wedge the loop).
+- Review #2 (4-persona, on the DIFF): **5 blockers, all fixed** — (1, Designer+Adversary) the
+  sealed payout was back-solvable through LATER nights' ledgers (day-4 endGold + visible day-5/6
+  lines − day-6 endGold = the hidden cut) → every ledger from the earliest sealed day on withholds
+  its tally, and the Tavern-takings amount masks while pending (the decompress spend sizes the
+  reward); (2, Engineer) the tavern proposal gated on RAW gold, so "it's affordable now" could
+  announce a sealed success → gates on `displayedGold` + a regression test; (3, Designer) the §12
+  dormancy amendment claimed in the build entry had silently not applied (replace-miss) → applied
+  for real (§70 lesson: grep the doc, don't trust the script's exit); (4, PX) the runway note
+  counted one-off construction as daily burn ("gold lasts ~2 days" the night of the big buy) →
+  runway projects recurring movements only (`oneOff` ledger flag); (5, PX) a stale screenshot
+  showed the pre-fix decision double-nag → retaken from the fixed build.
+- Non-blocking folded: done decisions become feed-trimmable (Adversary's 300-day probe showed
+  decision stubs alone exceeding the cap ~day 350); conservation test now covers construction;
+  empty-queue reseed also revives idle parties (corrupt-save "alive-looking softlock");
+  `Posting.questId` (tier==id was a coincidence); locale-proof comparators; persist guards for
+  seq/rngSeed/gold counters (NaN-id class); honest missed-posting wording; Report badge counts
+  unwatched stories only (was +1/day ledger creep); Auto shows "Paused" while something needs
+  you; 44px tap targets; Advance sub-label "until something needs you"; behavioral outcome-tell
+  (a broke failed party marches straight back out) owned in DESIGN.md as diegetic texture.
+- Adversary long-run probes (4 seeds, 60/200/300 days): unbought ≈ −17g/day (~50-day runway, the
+  tavern is the visible lever); post-tavern ≈ +100g/day and unbounded (accepted — slice 2's
+  building/gear menu is the counter-sink); world alive at day 60 (queue bounded at 4, road job
+  taken on every seed, wallets oscillate 893–2,225 total); save blob ≤ ~173KB (quota-safe).
+  Accepted/noted: unread mail is never trimmed (never-open player grows the archive slowly);
+  deep-negative shownGold messaging for a never-open player.
+- Verified after fixes: `tsc -b` + `vite build` green; **75 vitest pass**; headless walkthrough
+  re-run on the fixed build (screenshots refreshed).
+- Open questions: none blocking. Next: Codex gate → merge gate.
+
+## 2026-07-09 - Slice: the living canvas — build done (Review #2 done, see PR entry)
+- Gate: build (plan + Review #1 cleared; Review #2 on the diff ran after — verdicts in the PR
+  entry above)
+- Branch: `claude/slice-living-canvas-843hho`
+- Built: `web/src/game/guild/` restructured — new `clock.ts` (event queue on integer sim-ticks,
+  4/day, pinned order night-last, pure handlers decide/finish/return/night, `advanceUntilStop`),
+  `life.ts` (wallet-motivated rest/train/quest + forced decompress), `tuning.ts` (all knobs);
+  `endDay.ts` deleted (economics moved into `night`); SAVE_VERSION 2. New `web/src/ui/hall/`
+  (clock header + masked treasury, party strip, read-only board card, invest card, 3-register
+  feed with pinned "Needs you", Advance + Auto 1×/3×, StoryStage overlay); `ui/board/` deleted;
+  kit `Icon` (Kenney Board Game Icons, CC0, mask-tinted — committed in their own commit);
+  GuildContext rewritten; Report/StoryStage lightly adapted (archive role, brokerage wording);
+  PartyCard mock location/plan lines neutralized. All 16 Review #1 blockers landed as specced
+  (displayedGold masking, standing-quiet, spend clamp, handler guards, pinned comparator,
+  night-flushed takings, staggered wallets 90/45/20, gated proposal, feed streaming, one-tap
+  story from the Hall).
+- Verified: `tsc -b` + `vite build` green; **74 vitest pass** (31 guild tests incl. purity,
+  determinism, night-last ordering, conservation identity, sealed-display masking,
+  standing-quiet, proposal gating, stale-event guards, caps, full-day-under-cap, persistence
+  reinit). Headless Chromium @430px: fresh hall → Advance → return decision auto-pause → sealed
+  story → outcome → tavern proposal → build → capture lines → refresh resumes → Report archive;
+  no h-overflow; only the known art-CDN 404. Screenshots `docs/screenshots/canvas-*`.
+- DESIGN.md reconciled: §12 appetite-dormancy amendment, slice-1 as-built block, the slice-2
+  R2-successor kill-test (≥ +40g/day informed-vs-blind) written into guardrail #2, Kenney
+  adoption note; docs/kenney.md + CREDITS.md updated.
+
+## 2026-07-09 - Slice: the living canvas (clock · daily-life · Hall Feed · tavern) — plan done
+- Gate: plan
+- Branch: `claude/slice-living-canvas-843hho` (first commit: §50 backfill of PR #35's merged gate).
+- Scope declared: restructure `web/src/game/guild/` — new `clock.ts` (event-queue on integer
+  sim-ticks, pure handlers) + `life.ts` (autonomous rest/train/quest daily-life + hero wallets);
+  `endDay.ts` deleted (its economics move into the `night` handler); SAVE_VERSION 2. New
+  `web/src/ui/hall/` living-canvas screen replaces `ui/board/` at `#/guild` (BoardScreen + the
+  player-set cut retire per the pivot). Kit `Icon` + Kenney icon assets (CC0), GuildContext
+  rewrite, ReportScreen minor, HeroesScreen mock activity/intent lines neutralized, DESIGN.md /
+  kenney.md / CREDITS.md. Combat core untouched (D1a stays dormant); resolver/seed/persist/
+  StoryStage/Assignment seal-reveal reused.
+- Review #1 (4-persona, on the PLAN): 16 merged blockers, ALL folded into the plan before build —
+  (1) live treasury/wallets would leak the sealed outcome at the return tick → sim credits at
+  return but a pure `displayedGold()` masks every always-on gold surface until the envelope opens,
+  and ambient lines never print amounts; (2) standing-job returns are ambient+ledger only (no
+  sealed mail / auto-pause — Mira must not spam decisions); (3) spend clamp
+  `min(wallet, max(min, pct·wallet))`; (4) per-handler precondition guards (stale events no-op,
+  queue never starves); (5) quest comparator pinned (dailyRate desc, id asc) + fame roll picks any
+  eligible posting (road never rots); (6) `advanceUntilStop()` is a pure sim export (one
+  commit/autosave per Advance; the 50-event cap is sim-testable); (7) within-tick order pinned
+  (tick, type-rank with night LAST, ord); (8) MAIL_CAP trimming read mail only; (9) GuildContext
+  added to declared scope; (10) DESIGN §12 amended — appetite machinery dormant this slice,
+  returns with slice-4 variable terms; (11) staggered starting wallets (90/45/20) so minute one
+  shows the full behavioral vocabulary + tavern proposal gated on day≥2 and visible village-sink
+  lines; (12) read-only postings card in the Hall; (13, folded into 11); (14) Hall firstDay coach
+  line; (15) current day's feed expanded + streaming, past days collapse; (16) the return decision
+  item opens StoryStage directly over the Hall (Report stays the archive).
+- Non-blocking folded: finish-only narration, "Auto" naming (not a second "Play"), tavern
+  "Not yet" dismiss + consequence line ("leaves Xg ≈ N days' upkeep"), party-strip change pulse,
+  registers as row treatment + icon budget on activities/tavern/gold, outcome-agnostic return
+  wording, persisted dayTakings, visibilitychange pause, full-day-under-cap test, faded-expander
+  note, guardrail #5 explicitly deferred + post-tavern overcorrection noted as slice 2's hook.
+- Open questions: none blocking. Straw numbers (ratios are the design): TICKS_PER_DAY 4,
+  BROKERAGE 10%, NEED_GOLD 60, rest 15%/min 5g, train 20%/min 8g, TAVERN 400g, FEED_CAP 150,
+  MAIL_CAP 120. Design Q1 (wallet/spend model) and Q2 (R2-successor kill-test written now, live at
+  slice 2; this slice's tavern is knowledge-free by design) resolved in the plan.
+
 ## 2026-07-09 - Redesign: pivot the core to the living-guild vision (DESIGN.md)
-- Gate: PR — **new PR into `dev`** (branch `claude/slice-1-planning-2qni0b`, restarted off
-  `origin/dev` after PR #34 merged). Docs-only. Plan + both reviews cleared; awaiting Codex.
+- Gate: **merged 2026-07-09 20:26 +0200** (merge commit `7b2def2`; backfilled 2026-07-09).
+  **PR #35 into `dev`** (branch `claude/slice-1-planning-2qni0b`, restarted off `origin/dev`
+  after PR #34 merged). Docs-only. Plan + both reviews + Codex (P3 fixed) cleared.
 - Why: on playing merged Slice 1, Stefan found the per-quest **cut** decision "felt odd" and
   clarified a bigger pivot. New core (DESIGN.md "The living guild" section, now leading the doc):
   player = a **businessman** (fame/influence/wealth) running a **living world** of autonomous

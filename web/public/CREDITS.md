@@ -17,6 +17,15 @@ The recoloured sprite + its license live at
 the one used frame ships). This is a deliberate *second* asset convention
 (import-bundled) alongside the URL-referenced `public/sprites` LPC set — see `docs/kenney.md`.
 
+## Hall icons — Kenney "Board Game Icons" (CC0 1.0)
+
+The Hall/feed glyphs (campfire, sword, flag, book, house, pouch, token, notepad,
+shield, hourglass, pawns) are Kenney's *Board Game Icons* pack, **CC0 1.0**
+(public domain) — no attribution required; credited here by preference.
+Source: https://kenney.nl/assets/board-game-icons — committed with the pack's
+`License.txt` at `src/assets/kenney/board-game-icons/` (import-bundled and
+recoloured at runtime via CSS mask).
+
 ## World Map emblems — game-icons.net (CC BY 3.0)
 
 Inlined as single-colour SVGs in `src/ui/guild/icons.tsx` and recoloured via CSS.

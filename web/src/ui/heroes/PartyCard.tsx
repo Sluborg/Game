@@ -30,9 +30,9 @@ export function PartyCard({ view, onOpen }: { view: PartyView; onOpen: (id: stri
         </h3>
         <p className={styles.where}>
           <PinIcon />
-          <span>
-            In {party.location} · {party.activity}
-          </span>
+          {/* Live whereabouts belong to the Hall's party strip now — a mock
+              location here would contradict the living canvas. */}
+          <span>See the Hall for where they are now</span>
         </p>
       </header>
 
@@ -43,13 +43,6 @@ export function PartyCard({ view, onOpen }: { view: PartyView; onOpen: (id: stri
         <Rating value={avgRating} />
       </div>
       <p className={styles.estimate}>Guild estimate — sharpens with report fidelity.</p>
-
-      <p className={styles.plan}>
-        <PlanIcon />
-        <span>
-          <span className={styles.planLead}>Plans to</span> {party.plan}
-        </span>
-      </p>
 
       <ul className={styles.members}>
         {members.map((hero) => (
@@ -149,14 +142,6 @@ function PinIcon() {
     <svg className={styles.lineIcon} viewBox="0 0 24 24" width="13" height="13" fill="none" aria-hidden>
       <path d="M12 21c4-4.5 6.5-7.8 6.5-11a6.5 6.5 0 1 0-13 0c0 3.2 2.5 6.5 6.5 11Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
       <circle cx="12" cy="10" r="2.2" stroke="currentColor" strokeWidth="1.6" />
-    </svg>
-  );
-}
-function PlanIcon() {
-  return (
-    <svg className={styles.lineIcon} viewBox="0 0 24 24" width="13" height="13" fill="none" aria-hidden>
-      <path d="M6 4v16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M6 5h9l-1.6 3L15 11H6" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
     </svg>
   );
 }
