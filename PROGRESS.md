@@ -10,6 +10,42 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
+## 2026-07-09 - Redesign: pivot the core to the living-guild vision (DESIGN.md)
+- Gate: PR — **new PR into `dev`** (branch `claude/slice-1-planning-2qni0b`, restarted off
+  `origin/dev` after PR #34 merged). Docs-only. Plan + both reviews cleared; awaiting Codex.
+- Why: on playing merged Slice 1, Stefan found the per-quest **cut** decision "felt odd" and
+  clarified a bigger pivot. New core (DESIGN.md "The living guild" section, now leading the doc):
+  player = a **businessman** (fame/influence/wealth) running a **living world** of autonomous
+  heroes who live their lives and quest; he never commands, he **invests in Majesty-style building
+  & gear upgrades at fixed prices** (no cut-%, no price-fiddling); income = **hero spending** (main)
+  + flat ~10% brokerage + building passive; a **skip-primary living clock** (event-queue that reuses
+  the seal/reveal + seeded-RNG + persistence backbone, restructures the daily loop); a collapsible
+  **Hall Feed**; **Kenney icons** for clarity; loss layered after the canvas; **five kill-test
+  guardrails**. Board/resolver/report survive as scaffolding; combat core untouched.
+- Files: `docs/DESIGN.md` (new vision section + pivot notes on §1/§2/§3/§8/§9/§12 + re-sliced
+  "How we build": canvas → businessman's hand → tension), `PROGRESS.md`. First commit this branch
+  was the §50 backfill of **PR #34's** merged gate.
+- Design pass = a **four-perspective** divergent analysis (Designer, Phone-UX, Engineer, Adversary)
+  on the pivot; its synthesis (reframe-don't-delete the priced decision; entangle life+economy;
+  skip-primary clock; Hall Feed not animated map; keep governors) is the plan, approved by Stefan.
+- Review #2 (2-lens on the DIFF — consistency + accuracy-vs-code; proportionate to a docs diff the
+  4-perspective pass already deeply shaped): **7 blockers, all fixed** — (1) hero-spending main
+  income was undefined + contradicted §12 "wallets not tracked" → defined + superseded; (2) §2/§8/§9
+  still asserted the cut as income core → pivot notes added, §8 Cash row rewritten to the
+  upgrade-vs-spending clock + the over-invest→bankruptcy path; (3) Slice 1 was decision-less
+  ("economy stubbed") → now ships one fixed-price investment so the canvas responds to the player
+  (guardrails #1/#3); (4) the upgrade "read-driven bet" had no read system → Slice 2 activates the
+  dormant CV certainty chips so it's knowledge-priced (guardrail #2); (5) "Kenney icons already
+  ship" overstated (only the border frame shipped) → corrected; (6) "resolver reuse" vs a reactive
+  mid-quest clock contradicted → resolution note: near-term = sealed-at-dispatch (resolver reused),
+  reactive in-flight steering is a later flagged resolver change; (7) "generalizes not rewrites"
+  flattered a real restructure → softened. Non-blocking folded: a **5th guardrail** (allocation
+  stays a tradeoff), the equip target defined + tied to retention/poaching, and the R2-payoff caveat
+  (cut-based, retires — the upgrade bet's knowledge→gold is a to-prove). Accuracy lens **confirmed**
+  the Assignment/seed/persist reuse claims against the code.
+- Open questions: none blocking. Next: `@codex review` → codex gate → merge gate. Then build
+  sessions start at the **living canvas** slice.
+
 ## 2026-07-08 - Slice 1: the thin closed loop (board · cut · quests · report)
 - Gate: **merged 2026-07-09 09:55 +0200** (merge commit `0d5c831`; backfilled 2026-07-09).
   **PR #34 into `dev`** (feature branch `claude/slice-1-planning-2qni0b`). Plan + both reviews +
