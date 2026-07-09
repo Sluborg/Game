@@ -10,8 +10,41 @@ Format per entry:
 - Review verdict: blockers found / fixed
 - Open questions:
 
-## 2026-07-09 - Slice: the living canvas — build done (Review #2 next)
-- Gate: build (plan + Review #1 cleared; Review #2 on the diff runs next)
+## 2026-07-09 - Slice: the living canvas — PR opened (awaiting Codex)
+- Gate: PR — **PR #36 into `dev`** (branch `claude/slice-living-canvas-843hho`). Plan + both
+  reviews cleared; `@codex review` posted per §30. Awaiting Codex.
+- Review #2 (4-persona, on the DIFF): **5 blockers, all fixed** — (1, Designer+Adversary) the
+  sealed payout was back-solvable through LATER nights' ledgers (day-4 endGold + visible day-5/6
+  lines − day-6 endGold = the hidden cut) → every ledger from the earliest sealed day on withholds
+  its tally, and the Tavern-takings amount masks while pending (the decompress spend sizes the
+  reward); (2, Engineer) the tavern proposal gated on RAW gold, so "it's affordable now" could
+  announce a sealed success → gates on `displayedGold` + a regression test; (3, Designer) the §12
+  dormancy amendment claimed in the build entry had silently not applied (replace-miss) → applied
+  for real (§70 lesson: grep the doc, don't trust the script's exit); (4, PX) the runway note
+  counted one-off construction as daily burn ("gold lasts ~2 days" the night of the big buy) →
+  runway projects recurring movements only (`oneOff` ledger flag); (5, PX) a stale screenshot
+  showed the pre-fix decision double-nag → retaken from the fixed build.
+- Non-blocking folded: done decisions become feed-trimmable (Adversary's 300-day probe showed
+  decision stubs alone exceeding the cap ~day 350); conservation test now covers construction;
+  empty-queue reseed also revives idle parties (corrupt-save "alive-looking softlock");
+  `Posting.questId` (tier==id was a coincidence); locale-proof comparators; persist guards for
+  seq/rngSeed/gold counters (NaN-id class); honest missed-posting wording; Report badge counts
+  unwatched stories only (was +1/day ledger creep); Auto shows "Paused" while something needs
+  you; 44px tap targets; Advance sub-label "until something needs you"; behavioral outcome-tell
+  (a broke failed party marches straight back out) owned in DESIGN.md as diegetic texture.
+- Adversary long-run probes (4 seeds, 60/200/300 days): unbought ≈ −17g/day (~50-day runway, the
+  tavern is the visible lever); post-tavern ≈ +100g/day and unbounded (accepted — slice 2's
+  building/gear menu is the counter-sink); world alive at day 60 (queue bounded at 4, road job
+  taken on every seed, wallets oscillate 893–2,225 total); save blob ≤ ~173KB (quota-safe).
+  Accepted/noted: unread mail is never trimmed (never-open player grows the archive slowly);
+  deep-negative shownGold messaging for a never-open player.
+- Verified after fixes: `tsc -b` + `vite build` green; **75 vitest pass**; headless walkthrough
+  re-run on the fixed build (screenshots refreshed).
+- Open questions: none blocking. Next: Codex gate → merge gate.
+
+## 2026-07-09 - Slice: the living canvas — build done (Review #2 done, see PR entry)
+- Gate: build (plan + Review #1 cleared; Review #2 on the diff ran after — verdicts in the PR
+  entry above)
 - Branch: `claude/slice-living-canvas-843hho`
 - Built: `web/src/game/guild/` restructured — new `clock.ts` (event queue on integer sim-ticks,
   4/day, pinned order night-last, pure handlers decide/finish/return/night, `advanceUntilStop`),
