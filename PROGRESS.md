@@ -11,8 +11,9 @@ Format per entry:
 - Open questions:
 
 ## 2026-07-08 - Slice 1: the thin closed loop (board · cut · quests · report)
-- Gate: PR — **PR into `dev`** (feature branch `claude/slice-1-planning-2qni0b`). Plan + both
-  reviews cleared; awaiting Codex.
+- Gate: **merged 2026-07-09 09:55 +0200** (merge commit `0d5c831`; backfilled 2026-07-09).
+  **PR #34 into `dev`** (feature branch `claude/slice-1-planning-2qni0b`). Plan + both reviews +
+  Codex (two P2s fixed) cleared.
 - Scope: the first playable guild loop (§12 reshaped in this planning interview). New pure sim
   `web/src/game/guild/` (types, seed, roster, quests, resolver, board, state, endDay, persist) +
   new UI `web/src/ui/{guild,board,report}/` + nav/roster edits. Combat core (`web/src/game/battle/`)
