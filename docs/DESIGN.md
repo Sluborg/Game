@@ -798,8 +798,8 @@ Then the earlier slices, **re-homed on the new core** (they still hold as mechan
 the primary lever): **Hero arcs** (CV correction, trait reveals, contracts — §4/§5); **Fidelity
 ladder + seed-replay** so combat finally becomes *watchable* (§4, reusing the Combat Test renderer);
 **Influence / areas** with upkeep + the map's two zoom tiers (§9); **Rival** proper (§7); **Doom**
-(§8). The old fidelity-first numbering (fidelity → hero arcs → parties → influence → rival → doom)
-is kept below for reference but is superseded by the three-step canvas order above.
+(§8). This supersedes the previous fidelity-first numbering (fidelity → hero arcs → parties →
+influence → rival → doom), which the re-slice above replaces.
 
 Guild-management spends (§3) and the multi-step quest beat model (§10) grow incrementally inside
 whichever slice touches them first — they're not a separate step.
