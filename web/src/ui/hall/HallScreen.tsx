@@ -137,9 +137,16 @@ export function HallScreen() {
       />
 
       <div className={styles.controls}>
-        <button type="button" className={styles.advance} onClick={advance}>
+        <button
+          type="button"
+          className={styles.advance}
+          onClick={advance}
+          disabled={pendingDecisions.length > 0}
+        >
           <span className={styles.advanceMain}>▷ Advance</span>
-          <span className={styles.advanceSub}>until something needs you</span>
+          <span className={styles.advanceSub}>
+            {pendingDecisions.length > 0 ? "answer what needs you first" : "until something needs you"}
+          </span>
         </button>
         <button
           type="button"

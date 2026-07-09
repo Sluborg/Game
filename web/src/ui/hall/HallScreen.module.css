@@ -230,6 +230,7 @@
   box-shadow: var(--shadow-2);
 }
 .advance:active { filter: brightness(0.92); }
+.advance:disabled { opacity: 0.55; filter: saturate(0.6); }
 .advanceMain { font-size: 1rem; font-weight: 800; }
 .advanceSub { font-size: 0.68rem; opacity: 0.85; }
 .autoBtn {

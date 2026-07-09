@@ -464,6 +464,42 @@ describe("stale events & caps (handler guards)", () => {
     expect(s.feed.length).toBeLessThanOrEqual(FEED_CAP + 30); // trims run nightly
     expect(s.mail.length).toBeLessThanOrEqual(MAIL_CAP + 10);
   });
+
+  it("UNREAD nightly ledgers are trim-eligible; unread sealed outcomes never are (Codex P2)", () => {
+    // A Hall-only player never expands ledger rows — the cap must still hold.
+    const s = createInitialState(SEED);
+    const mod: GuildState = JSON.parse(JSON.stringify(s));
+    for (let d = 0; d < MAIL_CAP + 40; d++) {
+      mod.mail.push({ id: `led-${d}`, day: d + 1, kind: "ledger", teaser: `Day ${d + 1} ledger`, ledger: [], read: false });
+    }
+    mod.mail.push({
+      id: "sealed-keep",
+      day: 1,
+      kind: "outcome",
+      teaser: "back",
+      log: { beats: [], outcome: "success", reward: 100, guildCut: 10, cutPct: BROKERAGE, durationDays: 1 },
+      read: false,
+    });
+    mod.queue = [{ id: "n", tick: 3, ord: 1, type: "night" }];
+    const out = step(mod);
+    expect(out.mail.length).toBeLessThanOrEqual(MAIL_CAP);
+    expect(out.mail.some((m) => m.id === "sealed-keep")).toBe(true);
+  });
+
+  it("Advance refuses to move the clock while a decision is already pending (Codex P2)", () => {
+    let s = createInitialState(SEED);
+    let guard = 0;
+    while (guard++ < 50) {
+      const r = advanceUntilStop(s);
+      s = r.state;
+      if (r.stop === "decision") break;
+    }
+    expect(s.feed.some((f) => f.register === "decision" && !f.done)).toBe(true);
+    // Pressing Advance again: same state back (===), no events processed.
+    const again = advanceUntilStop(s);
+    expect(again.stop).toBe("decision");
+    expect(again.state).toBe(s);
+  });
 });
 
 describe("persistence", () => {

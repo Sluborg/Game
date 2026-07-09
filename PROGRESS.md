@@ -11,8 +11,20 @@ Format per entry:
 - Open questions:
 
 ## 2026-07-09 - Slice: the living canvas — PR opened (awaiting Codex)
-- Gate: PR — **PR #36 into `dev`** (branch `claude/slice-living-canvas-843hho`). Plan + both
-  reviews cleared; `@codex review` posted per §30. Awaiting Codex.
+- Gate: codex-fixed — **PR #36 into `dev`** (branch `claude/slice-living-canvas-843hho`). Plan +
+  both reviews cleared; `@codex review` posted per §30.
+- Codex (on `2d4c2ac`, two P2s, both fixed): (1) **unread nightly ledgers were exempt from
+  MAIL_CAP** — a Hall-only player who never expands ledger rows accrued one untrimmable mail per
+  night (300 @300 days) → the cap now trims read mail first, then unread LEDGERS oldest-first;
+  an unread sealed outcome is never dropped (+ regression test). (2) **Advance rolled past
+  already-pending decisions** — it only stopped on NEW ones, so nightfalls could pile up behind
+  an unresolved "Needs you" → `advanceUntilStop` returns immediately (same state reference, so
+  React bails and nothing autosaves) when any undone decision exists, and the Hall disables the
+  button with "answer what needs you first" (+ regression test: pressing Advance while pending
+  is a strict no-op). Re-ran Review #2 on the delta (self, proportionate): trim order preserves
+  the newest ledger (Hall runway) and every sealed story; the early-return preserves purity;
+  Auto's effect guard already held — no new blockers. 77 vitest pass; build green; headless
+  walkthrough re-run end-to-end (the guarded Advance doesn't wedge the loop).
 - Review #2 (4-persona, on the DIFF): **5 blockers, all fixed** — (1, Designer+Adversary) the
   sealed payout was back-solvable through LATER nights' ledgers (day-4 endGold + visible day-5/6
   lines − day-6 endGold = the hidden cut) → every ledger from the earliest sealed day on withholds

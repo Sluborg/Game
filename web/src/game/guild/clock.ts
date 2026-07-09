@@ -45,6 +45,7 @@ import type {
   Assignment,
   FeedItem,
   GuildState,
+  Mail,
   PartyRuntime,
   SimEvent,
   SimEventType,
@@ -380,15 +381,21 @@ function onNight(next: GuildState): void {
   pushFeed(next, { register: "ambient", icon: "night", text: `Night falls on day ${day}.` });
   next.firstDay = false;
 
-  // Caps (checked nightly, the cheap place): mail trims oldest READ only;
-  // feed trims oldest ambient first, then notable — never decisions.
+  // Caps (checked nightly, the cheap place): mail trims oldest READ first, then
+  // oldest unread LEDGERS — a Hall-only player never expands ledger rows, and
+  // exempting them grew the archive one mail per night forever (Codex P2 on
+  // PR #36). An unread OUTCOME — a sealed story — is never dropped.
   if (next.mail.length > MAIL_CAP) {
-    let excess = next.mail.length - MAIL_CAP;
-    for (let i = next.mail.length - 1; i >= 0 && excess > 0; i--) {
-      if (next.mail[i].read) {
-        next.mail.splice(i, 1);
-        excess--;
+    const trimmable = [(m: Mail) => !!m.read, (m: Mail) => m.kind === "ledger"];
+    for (const match of trimmable) {
+      let excess = next.mail.length - MAIL_CAP;
+      for (let i = next.mail.length - 1; i >= 0 && excess > 0; i--) {
+        if (match(next.mail[i])) {
+          next.mail.splice(i, 1);
+          excess--;
+        }
       }
+      if (next.mail.length <= MAIL_CAP) break;
     }
   }
   if (next.feed.length > FEED_CAP) {
@@ -490,8 +497,14 @@ export type AdvanceStop = "decision" | "night" | "cap";
 /** The skip-primary spine: run events until the first DECISION feed item is
  * emitted or a night has been processed (day boundary), capped at ADVANCE_CAP
  * as a runaway guard (a full day fits well under it — tested). Pure; the UI
- * commits the returned state once (one autosave per Advance — Review #1 B6). */
+ * commits the returned state once (one autosave per Advance — Review #1 B6).
+ * If something ALREADY needs the player, it refuses to move the clock at all —
+ * decisions are auto-pauses, not scenery to roll past (Codex P2 on PR #36; the
+ * Hall disables the button too, but the sim must hold either way). */
 export function advanceUntilStop(state: GuildState): { state: GuildState; stop: AdvanceStop } {
+  if (state.feed.some((f) => f.register === "decision" && !f.done)) {
+    return { state, stop: "decision" };
+  }
   let current = state;
   for (let n = 0; n < ADVANCE_CAP; n++) {
     const upcoming = peekNext(current);
