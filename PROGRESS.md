@@ -11,8 +11,9 @@ Format per entry:
 - Open questions:
 
 ## 2026-07-09 - Redesign: pivot the core to the living-guild vision (DESIGN.md)
-- Gate: PR — **new PR into `dev`** (branch `claude/slice-1-planning-2qni0b`, restarted off
-  `origin/dev` after PR #34 merged). Docs-only. Plan + both reviews cleared; awaiting Codex.
+- Gate: **merged 2026-07-09 20:26 +0200** (merge commit `7b2def2`; backfilled 2026-07-09).
+  **PR #35 into `dev`** (branch `claude/slice-1-planning-2qni0b`, restarted off `origin/dev`
+  after PR #34 merged). Docs-only. Plan + both reviews + Codex (P3 fixed) cleared.
 - Why: on playing merged Slice 1, Stefan found the per-quest **cut** decision "felt odd" and
   clarified a bigger pivot. New core (DESIGN.md "The living guild" section, now leading the doc):
   player = a **businessman** (fame/influence/wealth) running a **living world** of autonomous
