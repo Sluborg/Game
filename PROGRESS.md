@@ -11,8 +11,9 @@ Format per entry:
 - Open questions:
 
 ## 2026-07-09 - Slice: the living canvas — PR opened (awaiting Codex)
-- Gate: codex-fixed — **PR #36 into `dev`** (branch `claude/slice-living-canvas-843hho`). Plan +
-  both reviews cleared; `@codex review` posted per §30.
+- Gate: **merged 2026-07-09 21:42 +0200** (merge commit `7c4c135`; backfilled 2026-07-09).
+  **PR #36 into `dev`** (branch `claude/slice-living-canvas-843hho`). Plan + both reviews +
+  Codex (two P2s fixed) cleared.
 - Codex (on `2d4c2ac`, two P2s, both fixed): (1) **unread nightly ledgers were exempt from
   MAIL_CAP** — a Hall-only player who never expands ledger rows accrued one untrimmable mail per
   night (300 @300 days) → the cap now trims read mail first, then unread LEDGERS oldest-first;
