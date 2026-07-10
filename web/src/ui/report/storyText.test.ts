@@ -4,7 +4,8 @@
 // (the resolver still carries −1 after a recovery).
 
 import { describe, it, expect } from "vitest";
-import { effectNote } from "./storyText";
+import { effectNote, gradeAt } from "./storyText";
+import { GRADE_ZONES } from "../../game/guild";
 import type { Beat, Grade } from "../../game/guild";
 
 function beat(grade: Grade, branch?: Beat["branch"]): Beat {
@@ -43,5 +44,33 @@ describe("effectNote", () => {
     const note = effectNote(beat("fail"), true) ?? "";
     expect(note).toBe("It goes wrong.");
     expect(effectNote(beat("fail"), false)).toBe("It goes wrong.");
+  });
+});
+
+// The live meter ticker's zone lookup must match GRADE_ZONES exactly — a
+// boundary mismatch would flash the wrong grade word mid-rise (Review #1/#2
+// Adversary). Boundaries are derived from the zones, never restated.
+describe("gradeAt", () => {
+  it("maps every zone's own bounds to that zone (crit inclusive at its floor)", () => {
+    for (const [g, [lo, hi]] of Object.entries(GRADE_ZONES) as [Grade, [number, number]][]) {
+      expect(gradeAt(lo)).toBe(g); // every lower bound is inclusive
+      // Just below the upper bound stays in-zone; crit's 100 is inclusive too.
+      expect(gradeAt(g === "crit" ? hi : hi - 0.01)).toBe(g);
+    }
+  });
+
+  it("is monotonic — a rising fill can never tick DOWN a grade", () => {
+    const order: Grade[] = ["fail", "poor", "ok", "good", "crit"];
+    let last = 0;
+    for (let pct = 0; pct <= 100; pct += 0.5) {
+      const idx = order.indexOf(gradeAt(pct));
+      expect(idx).toBeGreaterThanOrEqual(last);
+      last = idx;
+    }
+  });
+
+  it("clamps sanely outside [0,100]", () => {
+    expect(gradeAt(-1)).toBe("fail");
+    expect(gradeAt(101)).toBe("crit");
   });
 });

@@ -15,12 +15,14 @@ import { Icon, PauseGlyph, PlayGlyph, SpeedChip } from "../kit";
 import {
   GRADE_LABEL,
   effectNote,
+  gradeAt,
   FILL_BASE_MS,
   FILL_DELAY_MS,
   HOLD_MS,
   readStorySpeed,
   saveStorySpeed,
   SPEED_ORDER,
+  ZONE_ORDER,
   type StorySpeed,
 } from "./storyText";
 import styles from "./StoryStage.module.css";
@@ -31,8 +33,6 @@ const TYPE_LABEL: Record<BeatType, string> = {
   social: "Social",
   combat: "Combat",
 };
-
-const ZONE_ORDER: Grade[] = ["fail", "poor", "ok", "good", "crit"];
 
 /* Grade marks above the meter (Stefan: dashed lines at the limits, with
  * symbols per level). Broken hearts carry the bad end, award rosettes the
@@ -47,16 +47,6 @@ const ZONE_MARK: Record<Grade, { icon: "heartBroken" | "award"; n: number }> = {
   crit: { icon: "award", n: 3 },
 };
 const MARK_SIZE: Record<number, number> = { 1: 12, 2: 11, 3: 9 };
-
-/** Zone lookup for the live ticker — derived from GRADE_ZONES (no restated
- * magic numbers) with crit's lower bound INCLUSIVE, matching scoreFor's clamp
- * (a crit beat can land at exactly 90 — Review #1 Adversary). */
-function gradeAt(pct: number): Grade {
-  for (let i = ZONE_ORDER.length - 1; i > 0; i--) {
-    if (pct >= GRADE_ZONES[ZONE_ORDER[i]][0]) return ZONE_ORDER[i];
-  }
-  return ZONE_ORDER[0];
-}
 
 export function StoryStage({
   log,
@@ -125,10 +115,7 @@ export function StoryStage({
             <button
               type="button"
               className={styles.skip}
-              onClick={() => {
-                setLanded(false);
-                setIndex(log.beats.length);
-              }}
+              onClick={() => setIndex(log.beats.length)}
             >
               Skip to result »
             </button>
@@ -348,10 +335,11 @@ function BeatCard({
 }
 
 /** A trait cut-in line. The blurb's shape is "Hero Name does the thing —
- * TraitName" (roster.ts); the trait name gets the char page's bordered-pill
- * treatment (Stefan) so it reads as a TRAIT, not a stray adjective. A blurb
- * without the separator renders plain — content from future drops must never
- * crash the stage. */
+ * TraitName" (roster.ts); the trait name renders as a bordered pill (Stefan's
+ * ask) so it reads as a TRAIT, not a stray adjective. NOTE: the char page's
+ * trait sockets are hex tokens, not pills — unifying trait visuals app-wide
+ * is a logged follow-up (R#2 PX). A blurb without the separator renders
+ * plain — content from future drops must never crash the stage. */
 function TraitLine({ blurb }: { blurb: string }) {
   const cut = blurb.lastIndexOf(" — ");
   if (cut < 0) return <p className={styles.trait}>{blurb}</p>;

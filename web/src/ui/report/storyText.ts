@@ -4,7 +4,7 @@
 // the final or bonus beat, and a good recovery still carries a penalty).
 
 import { readPref, savePref } from "../kit";
-import type { Beat, Grade } from "../../game/guild";
+import { GRADE_ZONES, type Beat, type Grade } from "../../game/guild";
 
 // Display ladder (Stefan's benchmark words). The Grade UNION literals are
 // persisted + fixture-pinned — labels only, never the keys.
@@ -47,6 +47,21 @@ export function effectNote(beat: Beat, hasNext: boolean): string | null {
       // a "Quest complete" outcome — this line must survive both.
       return "It goes wrong.";
   }
+}
+
+/** Zone display order, worst → best (mirrors GRADE_ZONES' layout). */
+export const ZONE_ORDER: Grade[] = ["fail", "poor", "ok", "good", "crit"];
+
+/** Zone lookup for the meter's live grade ticker — derived from GRADE_ZONES
+ * (no restated magic numbers) with crit's lower bound INCLUSIVE, matching
+ * scoreFor's clamp (a crit beat can land at exactly 90 — Review #1
+ * Adversary). Monotonic in pct, so a monotonic fill can never flash a grade
+ * above its landing. */
+export function gradeAt(pct: number): Grade {
+  for (let i = ZONE_ORDER.length - 1; i > 0; i--) {
+    if (pct >= GRADE_ZONES[ZONE_ORDER[i]][0]) return ZONE_ORDER[i];
+  }
+  return ZONE_ORDER[0];
 }
 
 /** Story pacing prefs (UI-only; never in GuildState). */

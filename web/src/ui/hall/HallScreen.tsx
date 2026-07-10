@@ -66,6 +66,11 @@ const BEAT_LABEL: Record<BeatType, string> = {
 
 const HALL_SPEED_MS: Record<TimeSpeed, number> = { slow: 900, normal: 450, fast: 220 };
 const HALL_SPEED_KEY = "guild.ui.hallSpeed";
+/** Persisted first-press flag: the toggle invites with "Play" only before the
+ * very first press EVER — a ref regressed to "Play" on every remount (nav
+ * away/back), and sim-side derivations lie (several events share tick 0), so
+ * this is a UI pref like the speed (R#2 Adversary B1). */
+const EVER_PLAYED_KEY = "guild.ui.hallEverPlayed";
 /** Feed render cap — today + the last two collapsed days. */
 const FEED_RENDER_DAYS = 3;
 
@@ -82,10 +87,7 @@ export function HallScreen() {
   // tab-hide HARD-disarms (no surprise resume). Speed is a UI-only pref.
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<TimeSpeed>(() => readPref(HALL_SPEED_KEY, TIME_SPEED_ORDER, "normal"));
-  // Session-local: the toggle says "Play" (an invitation) only before the very
-  // first press on a fresh save; after that, stopped = "Paused" (a STATE —
-  // Stefan: the action-labeled button "feels reversed").
-  const everPlayed = useRef(false);
+  const [everPlayed, setEverPlayed] = useState(() => readPref(EVER_PLAYED_KEY, ["yes", "no"], "no") === "yes");
   const [story, setStory] = useState<OpenStory | null>(null);
   // ONE popover for the whole Hall (the HeroCard pattern the kit assumes) —
   // per-card state let two parchment boxes stack (Review #2 Designer B1).
@@ -101,6 +103,18 @@ export function HallScreen() {
 
   // Blocked = latched but gated (decision pending or story open).
   const blocked = playing && (story !== null || pendingDecisions.length > 0);
+
+  // Runway detail is computed EVERY render and patched into the open popover
+  // below — a click-time snapshot goes stale while the sim keeps running and
+  // visibly contradicts the live header gold (R#2 Adversary B2). Masks while
+  // any sealed outcome is pending; shownGold only, never raw gold.
+  const ledgerMail = lastLedger(state);
+  const sealedPending = state.mail.some((m) => m.kind === "outcome" && !m.read);
+  const runwayDetail = sealedPending
+    ? "The tally hides until tonight's reports are opened."
+    : ledgerMail
+      ? `The recurring trend is ${runwayRecurring(ledgerMail) >= 0 ? "+" : ""}${runwayRecurring(ledgerMail)}g a night (one-off works excluded). Treasury ${shownGold}g.`
+      : "No ledger yet — the first closes tonight.";
 
   useEffect(() => {
     if (!playing || story || pendingDecisions.length > 0) return;
@@ -137,7 +151,10 @@ export function HallScreen() {
       return;
     }
     setPlaying(true);
-    everPlayed.current = true;
+    if (!everPlayed) {
+      setEverPlayed(true);
+      savePref(EVER_PLAYED_KEY, "yes");
+    }
     // Latching with decisions already pending: show the player WHY it won't run.
     if (pendingDecisions.length > 0) {
       needsYouRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -180,7 +197,10 @@ export function HallScreen() {
                 <>
                   <PlayGlyph /> Playing
                 </>
-              ) : state.firstDay && !everPlayed.current ? (
+              ) : !everPlayed ? (
+                // Before the first press EVER (persisted pref — survives
+                // remounts and reloads: R#2 Adversary B1) the toggle invites;
+                // after that, stopped is a STATE: "Paused".
                 <>
                   <PlayGlyph /> Play
                 </>
@@ -201,7 +221,7 @@ export function HallScreen() {
             </span>
           </div>
         </div>
-        <Runway state={state} shownGold={shownGold} setInfo={setInfo} active={info?.id === "runway"} />
+        <Runway state={state} setInfo={setInfo} active={info?.id === "runway"} detail={runwayDetail} />
       </header>
 
       {/* The first-day coach paragraph is GONE (Stefan: "remove the start text
@@ -228,7 +248,12 @@ export function HallScreen() {
         shownGold={shownGold}
       />
 
-      <InspectPopover data={info} onClose={() => setInfo(null)} />
+      {/* The runway popover gets LIVE content (recomputed each render); every
+          other explainer is static text, safe as a snapshot. */}
+      <InspectPopover
+        data={info?.id === "runway" ? { ...info, effect: runwayDetail } : info}
+        onClose={() => setInfo(null)}
+      />
 
       {story && (
         <StoryStage
@@ -242,16 +267,21 @@ export function HallScreen() {
   );
 }
 
+/** Recurring nightly trend from a ledger mail (one-off works excluded). */
+function runwayRecurring(mail: Mail): number {
+  return mail.ledger?.reduce((s, e) => s + (e.oneOff ? 0 : e.amount), 0) ?? 0;
+}
+
 function Runway({
   state,
-  shownGold,
   setInfo,
   active,
+  detail,
 }: {
   state: GuildState;
-  shownGold: number;
   setInfo: React.Dispatch<React.SetStateAction<InspectData | null>>;
   active: boolean;
+  detail: string;
 }) {
   // Runway comes from the last nightly ledger; while any sealed return is
   // unopened its tally stays hidden (the sim stores it raw — Codex R#34).
@@ -261,12 +291,6 @@ function Runway({
   const ledger = lastLedger(state);
   const pending = state.mail.some((m) => m.kind === "outcome" && !m.read);
   const runway = pending ? "Open your reports for the tally." : (ledger?.runwayNote ?? "The books open fresh.");
-  const recurring = ledger?.ledger?.reduce((s, e) => s + (e.oneOff ? 0 : e.amount), 0) ?? 0;
-  const detail = pending
-    ? "The tally hides until tonight's reports are opened."
-    : ledger
-      ? `The recurring trend is ${recurring >= 0 ? "+" : ""}${recurring}g a night (one-off works excluded). Treasury ${shownGold}g.`
-      : "No ledger yet — the first closes tonight.";
   return (
     <InspectChip
       className={styles.runwayBtn}
@@ -594,7 +618,10 @@ function Feed({
         <FeedDay key={d} day={d} items={items} today={d === today} onOpen={onOpen} onBuild={onBuild} onDismiss={onDismiss} shownGold={shownGold} />
       ))}
 
-      {(capped || state.feedTrimmed) && <p className={styles.faded}>(older days rest in the ledgers)</p>}
+      {/* Honest for BOTH cases: render-capped days still exist off-screen,
+          sim-trimmed ones are gone for good — "folded away" covers each
+          without claiming the ledgers keep narrative lines (R#2 Adversary N1). */}
+      {(capped || state.feedTrimmed) && <p className={styles.faded}>(older days have folded away)</p>}
     </section>
   );
 }

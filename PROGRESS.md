@@ -2,6 +2,51 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-07-10 - Feedback round 3 (state toggle · meter marks · skip · narration · feed cap) — build done, PR opened
+- Gate: build + PR (plan + Review #1 + Review #2 cleared; awaiting Codex)
+- Branch: `claude/slice-living-canvas-843hho` (restarted off `origin/dev` after PR #39 merged;
+  first commit = §50 backfill of #39). Scope: `web/src/ui/hall/*`, `web/src/ui/report/*`,
+  `web/src/ui/kit/` (new TimeControls + Icon additions), COPY-ONLY strings in
+  `web/src/game/guild/clock.ts`, docs. Combat core untouched.
+- Stefan's asks, delivered: toggle shows STATE (▶ Playing lit gold / ⏸ Paused dim / first-ever
+  ▶ Play via persisted pref / Needs you ember) — he confirmed state-labels via question; buttons
+  lowered to 38px visual with ≥44px invisible hit extenders; speed chip → shared kit
+  (play-glyph 1×, fast-forward 2×/3×, fixed width), consumed by BOTH the Hall and the StoryStage
+  ("reuse symbolism, sizes") with separate prefs + distinct aria wording; meter grade marks
+  (broken hearts bad / award rosettes good — skulls stay difficulty-only, his icon list) with
+  dashed limit lines derived from GRADE_ZONES; live grade word under the rising bar (reads the
+  RENDERED width per frame — can't desync or spoil); "Skip to result »" corner-placed, lands on
+  the full outcome card; type chip larger + CAPS; trait names as bordered pills; first-day coach
+  REMOVED (player-directed; Designer's cold-start objection logged as accepted); building +
+  steward copy de-design-speak'd; runway narrated with the per-night number behind a tap popover
+  that masks while reports are sealed; feed renders only the last 3 day groups (slices the
+  GROUPED list — pinned Needs-you strip still filters the full feed) with an honest
+  "(older days have folded away)" cut line.
+- Review #1 (plan; 4 personas + a 4-persona addendum pass for Stefan's mid-review adds): folded —
+  ticker reads rendered width not elapsed time; crit-inclusive-at-90 zone lookup; mark sprites
+  scale by count to fit the ~34px crit zone at 375px; 44px hit-area floor; growth-side runway
+  keeps a magnitude word; kit takes labels per surface (report = playback vocabulary, never
+  "Paused"/"Needs you"); skip = deliberate corner control; day-cap counts day GROUPS.
+- Review #2 (diff; 4 personas): **2 blockers, both fixed** — (1) first-press flag was a ref,
+  regressed "Paused"→"Play" on remount (nav away/back) → persisted UI pref (a sim-side
+  derivation lies: several events share tick 0); (2) runway popover froze a click-time snapshot
+  while the sim ran on → detail recomputed every render and patched into the open popover live.
+  Also folded: honest cap-line wording for the trimmed case; dead `setLanded(false)` dropped;
+  `gradeAt` moved to storyText.ts + 3 pin tests (boundaries, monotonicity, clamps); kenney.md
+  sprite list refreshed; trait-pill comment no longer overclaims char-page parity. Punch list
+  (non-blocking, logged): 1×-chip/Play visual near-twin; "Skip the rise" vs "Skip to result"
+  wording; app-wide trait visual language; InspectPopover's any-scroll dismiss on a sticky
+  anchor (pre-existing kit behavior).
+- Verified: `tsc -b` + `vite build` green; **92 vitest pass** (3 new gradeAt pins); headless
+  @430×932 full loop CLEAN — fresh "Play" → "Playing" → post-tick "Paused" → SURVIVES nav
+  away/back (the B1 repro) → runway tap popover → story with 5 mark cells, live "Botch…",
+  uppercase type chip, trait pill, skip → outcome card → day 5 with exactly 3 day groups +
+  cut line; zero console errors, no h-overflow. Screenshots `docs/screenshots/canvas5-*`
+  (re-captured after the copy fix — R#2 Designer's §60 catch).
+- Content pipeline (Stefan's question, answered in chat): a CONTENT-SPEC contract doc he pastes
+  into ChatGPT + typed data files under `web/src/game/guild/content/` + a schema-validating
+  vitest — its own small PR on his go.
+
 ## 2026-07-10 - Header driver (one toggle + speed chip) — build done, PR opened
 - Gate: **merged 2026-07-10 22:46 +0200** (merge commit `d6927a7`; backfilled 2026-07-10).
 - Codex (PR #39): ONE finding, P2 — the slimmed bottom padding dropped the nav's
