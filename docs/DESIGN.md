@@ -85,10 +85,11 @@ replay through the animated **story stage** (§4/§10). The map stays a *state* 
 marks. *(PR #32 shipped Kenney's border **frame**; the living-canvas slice adopted **Board Game
 Icons** (11 glyphs, CC0, mask-tinted via the kit `Icon`) for activities / buildings / gold /
 letters; feed registers read as row treatment (dim / normal / gold-boxed), not icons — see
-`docs/kenney.md`.)* Concretely: challenge types
+`docs/kenney.md`.)* Concretely: the currently shipped v1 challenge types
 (investigation / travel / social / combat), buildings & gear, resource/stat glyphs, and the feed's
 three registers each get a **recognisable icon + short label**, replacing Slice 1's hard-to-read
-coloured-dot rows. Icons carry meaning; text confirms it; a tap expands the detail.
+coloured-dot rows. Future challenge activities use the vocabulary in the authoritative challenge
+contract below. Icons carry meaning; text confirms it; a tap expands the detail.
 
 **How you lose (layered after the canvas).** The canvas is a *foundation*, not a void — it already
 responds to your upgrade investments. Tension is added next: **neglect → your heroes drift to a
@@ -99,26 +100,22 @@ order.
 **Report & challenges v2 — Stefan's spec (2026-07-10, the next slice).** Recorded from his
 second play session; builds on the shipped check-meter:
 
-- **Challenge types v2:** Investigation/Research · Travel · Mystic/Occult · Social/Politics ·
-  Craft/Labor (clear rubble, build, rescue work) · Combat · Infiltration. A challenge can
-  combine **two or more types at different levels** ("research the evil archmage" =
-  Investigation 60 + Occult 55) on a **~0–100 difficulty scale** (superseding today's 6–18).
-  Quest skulls stay ≈ the max across its challenges (possibly trimming outliers). His quest-card
-  mockup, verbatim:
-
-  > Find the green cat 💀💀
-  > ⌛ 2++ days
-  > From: Jalk Chozop, antiquarian
-  > 🔎 Investigation 💀💀
-  > 🏞 Travel 💀💀
-  > 🔪 Combat 💀
-  >
-  > (with the Kenney icons)
-- **Per-hero resolution:** every participating hero rolls the challenge — **one bar per hero,
-  filling simultaneously**. Challenges declare participation ("all must sneak" / "two may sneak
-  — then only those two fight the next challenge"). A **crit can assist the next check or cover
-  a teammate's failure**. Traits/gear/skills shift a hero's zone thresholds (~±5% per relevant
-  trait) — visible in the bar's benchmark positions.
+- **Challenge system v2:** the detailed challenge vocabulary, Attribute/Skill mapping,
+  check formula, result language, reasoning, and open tuning live in
+  [`docs/CHALLENGE_SYSTEM.md`](./CHALLENGE_SYSTEM.md), which is authoritative for this subsystem.
+  In summary: a challenge normally combines two broad Skills and tests both separately; labels
+  stay at the activity level (Researching in a library / Interviewing witnesses / Handling dungeon
+  traps / Gaining political support), while the quest owns specific people, places, and objectives.
+  Challenges retain a visible ~0–100 difficulty scale, but its conversion to a check target remains
+  explicitly open. The former Investigation/Travel/Mystic/Social/Craft/Combat/Infiltration list is
+  superseded by the linked contract; Combat uses a temporary special rule pending its own slice.
+- **Per-hero resolution:** every participating hero resolves the challenge's Skill checks
+  (normally two — the contract's "normally" hedge applies here too).
+  Challenges declare participation ("all must sneak" / "two may sneak — then only those two fight
+  the next challenge"). Attributes + Skills produce the checks; percentage modifiers may come
+  from traits, gear, cohesion, and earlier events as defined in the linked challenge contract.
+  How the two checks are presented (one combined bar, split bar, or two rises), and how combined
+  results create assistance, cover failures, or modify later checks, remain open.
 - **Quest pages + clickable everything:** every quest/party/hero mention (feed, quests card,
   strip) navigates to its page; popups get an X, pages get a back arrow. The quest page shows
   the challenge list and, below, the assigned party — with **the guild's ESTIMATE of which

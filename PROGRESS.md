@@ -2,8 +2,40 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-07-11 - Challenge system content contract — build done, PR opened
+- Gate: build + PR (Review #2 cleared; awaiting Codex)
+- Branch: `claude/slice-living-canvas-843hho` — the six doc commits were authored on
+  `agent/challenge-system-design` (Stefan's other agent) and cherry-picked here on Stefan's
+  explicit choice; authorship preserved. Review #1 below is that agent's own log, taken at its
+  word; Claude ran Review #2 on the cherry-picked diff.
+- Review #2 (Claude; two dual-persona agents — Designer+PX, Engineer+Adversary — declared):
+  **2 blockers, both fixed** — (1) result-ladder collision: the doc never said the new
+  Critical Failure/Failure/Insufficient/Success/Triumph language REPLACES the shipped
+  Botch/Poor/Success/Great/Triumph meter ladder ("Success" names a different tier in each) →
+  supersession note added; (2) structural gap: shared vs per-check difficulty was not even listed
+  as open (the retired mockup implied per-skill values; content can't be authored without it) →
+  explicit Open-decision bullet. Also folded: result name/value/band merged to ONE table
+  (paste-safety); Combat explicitly not a 16th table Skill + Wis/Cha gap named as placeholder;
+  DESIGN.md's absolute "two Skill checks" re-hedged to "normally two"; ceiling landmine noted
+  (unmodified max = 60) under the conversion bullet; pair-vs-sum consequence question added
+  (Success+Failure ≡ Insufficient+Insufficient by sum, but must narrate differently). Verified:
+  docs-only diff, combat core untouched, #40 backfill sha/date exact.
+- Scope: new `docs/CHALLENGE_SYSTEM.md`; minimal reconciliation/link in the live
+  `docs/DESIGN.md` challenge-v2 section; this progress log. Combat core and runtime untouched.
+- Narrative starts the contract: reports must stay authored rather than collapse into data dumps;
+  challenge labels stay broad ("Researching in a library", not a named tome/shelf). The document
+  then records Stefan's agreed Attribute/Skill vocabulary, two-check model, percentage-modifier
+  semantics, temporary Combat rule, result names/values, rationales, and explicitly open tuning.
+- Review #1 (Designer, Engineer, Adversary/QA, Player-experience): Engineer found one blocker —
+  DESIGN.md's older challenge-type list would compete with the new contract. Folded by making the
+  new document authoritative and reconciling the stale summary. All lenses required unresolved
+  difficulty conversion, visual spacing, combined consequences, narration machinery, and final
+  Combat to remain visibly open. No remaining blockers.
+- Open questions: Difficulty 0–100 target conversion; 5 vs 10 minimum visual threshold spacing;
+  combined-result consequences; scalable narration composition; final Combat model.
+
 ## 2026-07-10 - Feedback round 3 (state toggle · meter marks · skip · narration · feed cap) — build done, PR opened
-- Gate: codex-clean → awaiting merge decision (plan + Review #1 + Review #2 + Codex cleared)
+- Gate: **merged 2026-07-11 00:43 +0200** (merge commit `689b058`; backfilled 2026-07-11).
 - Codex (PR #40): ZERO findings — "Didn't find any major issues." on `fd57b5d`; no inline threads.
 - Branch: `claude/slice-living-canvas-843hho` (restarted off `origin/dev` after PR #39 merged;
   first commit = §50 backfill of #39). Scope: `web/src/ui/hall/*`, `web/src/ui/report/*`,
