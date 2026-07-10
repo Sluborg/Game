@@ -7,8 +7,10 @@
 .screen {
   min-height: 100vh;
   /* The driver lives in the header now — only the nav needs clearing (plus a
-     breath so the last feed row's buttons never kiss the nav). */
-  padding: 0 0 calc(var(--nav-h) + var(--sp-3));
+     breath so the last feed row's buttons never kiss the nav). The nav is
+     nav-h + the bottom safe-area inset tall (NavBar.module.css), so reserve
+     both — the old 104px cushion silently absorbed the inset (Codex PR #39). */
+  padding: 0 0 calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + var(--sp-3));
   background: var(--surface-0);
   color: var(--text-strong);
   font-family: var(--font-ui);
