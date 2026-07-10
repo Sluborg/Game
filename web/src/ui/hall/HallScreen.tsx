@@ -18,17 +18,21 @@ import {
   QUEST_BY_ID,
   PARTY_BY_ID,
   challengeDots,
+  questDifficulty,
   dayOf,
   phaseOf,
   lastLedger,
   TAVERN_PRICE,
   DAILY_UPKEEP,
   PASSIVE_INCOME,
+  BROKERAGE,
+  type Assignment,
   type BeatType,
   type FeedItem,
   type GuildState,
   type Mail,
   type PartyRuntime,
+  type QuestDef,
 } from "../../game/guild";
 import styles from "./HallScreen.module.css";
 
@@ -110,7 +114,8 @@ export function HallScreen() {
       {state.firstDay && (
         <p className={styles.coach}>
           Your heroes live their own lives — rest, train, take quests, come home. Tap{" "}
-          <strong>▷ Advance</strong>: the day plays out and stops when something needs you.
+          <strong>▷ Advance</strong> to skip ahead, or <strong>Auto</strong> to watch it play. Either
+          way it stops when something needs you.
         </p>
       )}
 
@@ -120,12 +125,8 @@ export function HallScreen() {
         ))}
       </section>
 
-      <BoardCard state={state} />
-      <InvestCard
-        state={state}
-        shownGold={shownGold}
-        onBuild={build}
-      />
+      <QuestsCard state={state} />
+      <BuildingsCard state={state} shownGold={shownGold} onBuild={build} />
 
       <Feed
         state={state}
@@ -137,15 +138,19 @@ export function HallScreen() {
       />
 
       <div className={styles.controls}>
+        {/* No DOM `disabled` flip under the player's finger (haptics mitigation —
+            the sim already makes a blocked press a strict no-op); aria-disabled +
+            the dimmed data-attr carry the state instead. */}
         <button
           type="button"
           className={styles.advance}
           onClick={advance}
-          disabled={pendingDecisions.length > 0}
+          aria-disabled={pendingDecisions.length > 0}
+          data-blocked={pendingDecisions.length > 0}
         >
           <span className={styles.advanceMain}>▷ Advance</span>
           <span className={styles.advanceSub}>
-            {pendingDecisions.length > 0 ? "answer what needs you first" : "until something needs you"}
+            {pendingDecisions.length > 0 ? "answer what needs you first" : "skips ahead until something needs you"}
           </span>
         </button>
         <button
@@ -153,9 +158,12 @@ export function HallScreen() {
           className={styles.autoBtn}
           data-on={auto > 0}
           onClick={() => setAuto((a) => (a === 0 ? 1 : a === 1 ? 3 : 0))}
-          aria-label={auto === 0 ? "Auto advance off" : autoPaused ? "Auto advance paused, needs you" : `Auto advance ${auto}x`}
+          aria-label={auto === 0 ? "Auto: watch it play, hands-free" : autoPaused ? "Auto paused — needs you" : `Auto: watching at ${auto}x`}
         >
-          {auto === 0 ? "Auto" : autoPaused ? "Paused" : `Auto ${auto}×`}
+          <span className={styles.autoMain}>{auto === 0 ? "Auto" : autoPaused ? "Paused" : `Auto ${auto}×`}</span>
+          <span className={styles.autoSub}>
+            {auto === 0 ? "watch it play" : autoPaused ? "needs you" : "watching"}
+          </span>
         </button>
       </div>
 
@@ -200,7 +208,9 @@ function partyStatus(runtime: PartyRuntime, tick: number): { icon: Parameters<ty
       ? { icon: "rest", text: "Resting" }
       : { icon: "train", text: "Training" };
   }
-  return { icon: "party", text: "In the hall" };
+  // A lone hero gets the single meeple, not the party cluster (Stefan).
+  const solo = (PARTY_BY_ID[runtime.id]?.memberIds.length ?? 1) === 1;
+  return { icon: solo ? "hero" : "party", text: "In the hall" };
 }
 
 function PartyRow({ runtime, tick }: { runtime: PartyRuntime; tick: number }) {
@@ -217,35 +227,122 @@ function PartyRow({ runtime, tick }: { runtime: PartyRuntime; tick: number }) {
   );
 }
 
-function BoardCard({ state }: { state: GuildState }) {
+function Stars({ quest }: { quest: QuestDef }) {
+  const n = questDifficulty(quest);
   return (
-    <Panel as="section" className={styles.card} aria-label="The quest board">
-      <h2 className={styles.cardHead}>
-        <Icon name="letter" size={16} /> The board
-      </h2>
-      {state.board.length === 0 && <p className={styles.cardNote}>Bare — fresh letters arrive most mornings.</p>}
+    <span className={styles.stars} role="img" aria-label={`difficulty ${n} of 5`}>
+      {"★".repeat(n)}
+      {"☆".repeat(5 - n)}
+    </span>
+  );
+}
+
+/** The shared tap-open detail body for a quest row. Reads ONLY the quest def +
+ * public assignment fields — never the sealed log (info asymmetry). */
+function QuestDetail({ quest, footer }: { quest: QuestDef; footer: string }) {
+  const dots = challengeDots(quest);
+  const lo = Math.round((quest.dailyRate * quest.minDuration * BROKERAGE) / 100);
+  const hi = Math.round((quest.dailyRate * quest.maxDuration * BROKERAGE) / 100);
+  return (
+    <div className={styles.questDetail}>
+      <span className={styles.detailLine}>
+        {(Object.keys(dots) as BeatType[])
+          .filter((k) => dots[k] > 0)
+          .map((k) => `${BEAT_LABEL[k]} ${"•".repeat(dots[k])}`)
+          .join("  ·  ")}
+      </span>
+      <span className={styles.detailLine}>
+        From {quest.giver} · your {BROKERAGE}% ≈ {lo}–{hi}g
+      </span>
+      <span className={styles.detailLine}>{footer}</span>
+    </div>
+  );
+}
+
+function QuestsCard({ state }: { state: GuildState }) {
+  const [showInfo, setShowInfo] = useState(false);
+  // One expanded row at a time, keyed by stable id (posting.id / party.id) — a
+  // row that vanishes mid-Advance just stops matching, harmlessly.
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const toggle = (id: string) => setExpandedId((cur) => (cur === id ? null : id));
+
+  const active = state.parties.filter(
+    (p): p is PartyRuntime & { assignment: Assignment } => !!p.assignment && p.assignment.tier !== "standing",
+  );
+  const today = dayOf(state.tick);
+
+  return (
+    <Panel as="section" className={styles.card} aria-label="Quests">
+      <button type="button" className={styles.cardHeadBtn} onClick={() => setShowInfo((v) => !v)} aria-expanded={showInfo}>
+        <h2 className={styles.cardHead}>
+          <Icon name="letter" size={16} /> Quests
+        </h2>
+        <span className={styles.infoGlyph} aria-hidden>ⓘ</span>
+      </button>
+      {showInfo && (
+        <p className={styles.cardNote}>
+          Heroes read the board and choose for themselves — you never assign anyone. The guild takes a
+          flat {BROKERAGE}% brokerage on completed quests. Tap a quest for its details.
+        </p>
+      )}
+
+      {state.board.length === 0 && active.length === 0 && (
+        <p className={styles.cardNote}>Nothing posted — fresh letters arrive most mornings.</p>
+      )}
+
       <ul className={styles.postings}>
         {state.board.map((p) => {
-          const quest = QUEST_BY_ID[p.tier];
-          const dots = challengeDots(quest);
-          const primary = (Object.keys(dots) as BeatType[]).reduce((a, b) => (dots[b] > dots[a] ? b : a));
+          const quest = QUEST_BY_ID[p.questId];
           return (
-            <li key={p.id} className={styles.posting}>
-              <span className={styles.postingTitle}>{p.title}</span>
-              <span className={styles.postingMeta}>
-                {quest.dailyRate}g/day · {quest.minDuration}–{quest.maxDuration} days · {BEAT_LABEL[primary]}-heavy ·{" "}
-                {p.daysLeft} day{p.daysLeft === 1 ? "" : "s"} till withdrawn
-              </span>
+            <li key={p.id}>
+              <button type="button" className={styles.questRow} onClick={() => toggle(p.id)} aria-expanded={expandedId === p.id}>
+                <span className={styles.postingTitle}>{p.title}</span>
+                <span className={styles.postingMeta}>
+                  {quest.dailyRate}g/day · {quest.minDuration}–{quest.maxDuration} days · <Stars quest={quest} />
+                  {p.daysLeft <= 1 && " · leaves tomorrow"}
+                </span>
+              </button>
+              {expandedId === p.id && (
+                <QuestDetail
+                  quest={quest}
+                  footer={`Open — withdrawn in ${p.daysLeft} day${p.daysLeft === 1 ? "" : "s"} if nobody takes it.`}
+                />
+              )}
+            </li>
+          );
+        })}
+        {active.map((p) => {
+          const a = p.assignment;
+          const quest = QUEST_BY_ID[a.questId];
+          const dayX = Math.min(today - dayOf(a.dispatchedTick) + 1, a.durationDays);
+          return (
+            <li key={p.id}>
+              <button
+                type="button"
+                className={styles.questRow}
+                data-active="true"
+                onClick={() => toggle(p.id)}
+                aria-expanded={expandedId === p.id}
+              >
+                <span className={styles.postingTitle}>
+                  <Icon name="depart" size={14} /> {a.questTitle}
+                </span>
+                <span className={styles.postingMeta}>
+                  {PARTY_BY_ID[p.id]?.name} are on it · day {dayX} of {a.durationDays} · <Stars quest={quest} />
+                </span>
+              </button>
+              {expandedId === p.id && (
+                <QuestDetail quest={quest} footer={`Active — due back ~day ${dayOf(a.returnTick)}.`} />
+              )}
             </li>
           );
         })}
       </ul>
-      <p className={styles.cardNote}>Heroes read the board and choose for themselves — you take a flat 10% brokerage.</p>
     </Panel>
   );
 }
 
-function InvestCard({
+function BuildingsCard({
   state,
   shownGold,
   onBuild,
@@ -254,36 +351,62 @@ function InvestCard({
   shownGold: number;
   onBuild: () => void;
 }) {
+  const [showInfo, setShowInfo] = useState(false);
   const built = state.buildings.tavern;
   const idleBurn = DAILY_UPKEEP - PASSIVE_INCOME;
   const left = shownGold - TAVERN_PRICE;
+  // "Ready" = something is buildable AND affordable at DISPLAYED gold (never raw
+  // gold — a sealed payout must not announce itself through the chip).
+  const ready = !built && shownGold >= TAVERN_PRICE;
+
   return (
-    <Panel as="section" className={styles.card} aria-label="Investments">
-      <h2 className={styles.cardHead}>
-        <Icon name="tavern" size={16} /> Investments
-      </h2>
-      {built ? (
+    <Panel as="section" className={styles.card} aria-label="Buildings">
+      <button type="button" className={styles.cardHeadBtn} onClick={() => setShowInfo((v) => !v)} aria-expanded={showInfo}>
+        <h2 className={styles.cardHead}>
+          <Icon name="tavern" size={16} /> Buildings
+          {ready && <span className={styles.readyChip}>Ready</span>}
+        </h2>
+        <span className={styles.infoGlyph} aria-hidden>ⓘ</span>
+      </button>
+      {showInfo && (
         <p className={styles.cardNote}>
-          <strong>The tavern is open.</strong> Hero coin spent resting lands in your till — takings post to the ledger
-          each night.
+          Buildings have fixed prices — no haggling, no rate-tuning. A built facility captures the coin
+          heroes would otherwise spend in the village; takings post to the ledger each night.
         </p>
-      ) : (
-        <div className={styles.invest}>
-          <div className={styles.investText}>
-            <span className={styles.investName}>Tavern — {TAVERN_PRICE}g, fixed price</span>
-            <span className={styles.investNote}>
-              Captures what heroes drink away in the village.{" "}
-              {left >= 0
-                ? `Leaves ${left}g ≈ ${Math.max(1, Math.floor(left / idleBurn))} days' upkeep.`
-                : `You're ${-left}g short.`}
-            </span>
-          </div>
-          {/* Gated on shownGold, not raw gold — the button must not leak a sealed payout */}
-          <button type="button" className={styles.buildBtn} onClick={onBuild} disabled={shownGold < TAVERN_PRICE}>
-            Build
-          </button>
-        </div>
       )}
+
+      <ul className={styles.buildings}>
+        <li className={styles.building}>
+          <span className={styles.investName}>Guild Hall</span>
+          <span className={styles.investNote}>Your seat. Brings in +{PASSIVE_INCOME}g/day.</span>
+        </li>
+        <li className={styles.building}>
+          {built ? (
+            <>
+              <span className={styles.investName}>Tavern — open</span>
+              <span className={styles.investNote}>
+                A place for heroes to drink, play games and enjoy themselves. Their coin lands in your till.
+              </span>
+            </>
+          ) : (
+            <div className={styles.invest}>
+              <div className={styles.investText}>
+                <span className={styles.investName}>Tavern — {TAVERN_PRICE}g, fixed price</span>
+                <span className={styles.investNote}>
+                  A place for heroes to drink, play games and enjoy themselves. Hero coin lands in your till.{" "}
+                  {left >= 0
+                    ? `Leaves ${left}g ≈ ${Math.max(1, Math.floor(left / idleBurn))} days' upkeep.`
+                    : `You're ${-left}g short.`}
+                </span>
+              </div>
+              {/* Gated on shownGold, not raw gold — must not leak a sealed payout */}
+              <button type="button" className={styles.buildBtn} onClick={onBuild} disabled={shownGold < TAVERN_PRICE}>
+                Build
+              </button>
+            </div>
+          )}
+        </li>
+      </ul>
     </Panel>
   );
 }

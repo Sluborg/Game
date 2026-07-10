@@ -2,6 +2,31 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-07-09 - Hall & Story UX polish — build done (Review #2 next)
+- Gate: build (plan + Review #1 cleared; Review #2 on the diff runs next)
+- Built (sim commit `fcc56b0`, isolated): `Beat.score` in the resolver — proven purely additive
+  by the committed golden fixture (20 cases/62 beats from the PRE-change resolver; id/grade/
+  roll/branch/outcome/reward/guildCut byte-identical); `questDifficulty` (1–5, critical-weighted);
+  EXPIRY_DAYS 7 (+ night-7 withdrawal test); SAVE_VERSION 3.
+- Built (UI): StoryStage **check meter** — 5 tinted grade zones (tint+tick, no labels; landed tag
+  carries the word; role="meter" aria), constant-RATE fill (duration ∝ score) starting 500ms
+  after mount, staged reveal (tag pop → narration/trait fade), tap-mid-rise snaps / landed tap
+  advances, Auto hold counts from fill-END, one cycling Slow/Normal/Fast chip persisted as
+  `guild.ui.storySpeed` (lazy + try/catch); context-aware effect notes in a pure `storyText.ts`
+  (+5 unit tests: no "next check" claims on final/bonus/recovery beats). Hall: lone-meeple
+  (`hero` glyph) for solos; Quests card (OPEN + ACTIVE rows with stable-id tap-details reading
+  only quest defs + public assignment fields, ★1–5 on the summary, expiry only as "leaves
+  tomorrow", ⓘ explainer behind the 44px title row); Buildings card (Guild Hall + Tavern, new
+  flavor copy + visible earn hint + runway consequence, READY chip gated on shownGold);
+  Advance/Auto verbs contrast ("skips ahead…" vs "watch it play"), Advance no longer flips DOM
+  `disabled` under the finger (aria-disabled + dimmed data-attr; sim no-op already pinned) and
+  every Hall/Story control gets `touch-action: manipulation` — the haptics mitigations (root
+  cause unconfirmed; Stefan retests).
+- Verified: `tsc -b` + `vite build` green; **87 vitest pass** (12 new). Headless @430px: stars,
+  quest tap-detail with brokerage math, ⓘ toggles, active-row gold border, READY chip, meter
+  zones + rising fill + snap + landed tag/note/narration + single-tap advance + speed cycling,
+  no h-overflow, no console errors. Screenshots `docs/screenshots/canvas2-*`.
+
 ## 2026-07-09 - Hall & Story UX polish (Stefan's play feedback) — plan done
 - Gate: plan
 - Branch: `claude/slice-living-canvas-843hho` (restarted off `origin/dev` after PR #36 merged;

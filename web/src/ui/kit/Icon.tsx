@@ -18,6 +18,7 @@ import notepad from "../../assets/kenney/board-game-icons/notepad.png";
 import shield from "../../assets/kenney/board-game-icons/shield.png";
 import hourglass from "../../assets/kenney/board-game-icons/hourglass.png";
 import pawns from "../../assets/kenney/board-game-icons/pawns.png";
+import pawn from "../../assets/kenney/board-game-icons/pawn.png";
 import styles from "./Icon.module.css";
 
 const SPRITES: Record<IconName, string> = {
@@ -32,6 +33,7 @@ const SPRITES: Record<IconName, string> = {
   watch: shield,
   night: hourglass,
   party: pawns,
+  hero: pawn,
 };
 
 export interface IconProps {

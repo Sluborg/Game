@@ -219,7 +219,8 @@ export type IconName =
   | "letter"
   | "watch"
   | "night"
-  | "party";
+  | "party"
+  | "hero";
 
 /** One line of the living world. Ambient collapses; notable reads; decision
  * auto-pauses and asks for the player. */
