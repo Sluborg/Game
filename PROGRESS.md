@@ -2,6 +2,25 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-07-10 - Board & report legibility v2 — build done (Review #2 next)
+- Gate: build (plan + Review #1 cleared; Review #2 on the diff runs next)
+- Built as planned (sim commit `1a62d51` carries both sim+UI; assets in `21de1c0`): flat rewards
+  (fixture reward/guildCut hand-edited, beat tuples byte-untouched — verified by an in-script
+  machine-diff before write), skulls/daysLabel helpers + pinned tests, Play/Pause/Speed driver
+  with the pinned state machine, kit-extracted Inspect popover (heroes/inspect.tsx is now a
+  shim), layered check meter with playhead, grade ladder Botch/Poor/Success/Great/Triumph,
+  result-first outcome, DESIGN.md amendments + Stefan's challenge-v2 spec folded.
+- Build-time catch: the card-title popovers crashed white-screen on tap — `e.currentTarget`
+  read inside the deferred setState updater (null by then; the exact PR #27 review lesson) →
+  hoisted before the updater. Caught by the headless walkthrough, not review — noted for
+  Review #2's attention.
+- Verified: `tsc -b` + `vite build` green; **89 vitest pass**; headless @430px full loop: flat
+  rewards + "1+ days" + skull rows, per-type detail, ⓘ popover open/dismiss, Play → auto-pause
+  ("Needs you" label) → tavern decision → sealed story (layered meter, zones visible through
+  the fill, playhead, "Great" tag, hero-named trait line) → brokerage-free outcome with the
+  ledger pointer → LATCHED auto-resume after resolve → Pause. Zero console errors, no
+  h-overflow. Screenshots `docs/screenshots/canvas3-*`.
+
 ## 2026-07-10 - Board & report legibility v2 (Stefan's 2nd play session) — plan done
 - Gate: plan
 - Branch: `claude/slice-living-canvas-843hho` (restarted off `origin/dev` after PR #37 merged;

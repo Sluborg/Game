@@ -311,18 +311,19 @@ function QuestsCard({ state }: { state: GuildState }) {
       <InspectChip
         className={styles.cardHeadBtn}
         active={info?.id === "quests"}
-        onClick={(e) =>
+        onClick={(e) => {
+          const anchor = e.currentTarget;
           setInfo((cur) =>
             cur?.id === "quests"
               ? null
               : {
                   id: "quests",
-                  anchor: e.currentTarget,
+                  anchor,
                   title: "Quests",
                   effect: `Heroes read the board and choose for themselves — you never assign anyone. The guild takes a flat ${BROKERAGE}% brokerage on completed quests. Tap a quest for its details.`,
                 },
-          )
-        }
+          );
+        }}
       >
         <h2 className={styles.cardHead}>
           <Icon name="letter" size={16} /> Quests
@@ -415,19 +416,20 @@ function BuildingsCard({
       <InspectChip
         className={styles.cardHeadBtn}
         active={info?.id === "buildings"}
-        onClick={(e) =>
+        onClick={(e) => {
+          const anchor = e.currentTarget;
           setInfo((cur) =>
             cur?.id === "buildings"
               ? null
               : {
                   id: "buildings",
-                  anchor: e.currentTarget,
+                  anchor,
                   title: "Buildings",
                   effect:
                     "Fixed prices — no haggling, no rate-tuning. A built facility captures the coin heroes would otherwise spend in the village; takings post to the ledger each night.",
                 },
-          )
-        }
+          );
+        }}
       >
         <h2 className={styles.cardHead}>
           <Icon name="tavern" size={16} /> Buildings
