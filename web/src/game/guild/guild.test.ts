@@ -40,7 +40,26 @@ import {
   clearSave,
   SAVE_VERSION,
 } from "./index";
-import type { GuildState, SimEvent } from "./types";
+import { scoreFor, GRADE_ZONES } from "./resolver";
+import { resolveQuest } from "./resolver";
+import { ROAD_JOB, RUINS, questDifficulty, QUEST_BY_ID } from "./quests";
+import { EXPIRY_DAYS } from "./tuning";
+import type { Grade, GuildState, SimEvent } from "./types";
+
+// ── Golden fixture: the resolver's EXACT output BEFORE Beat.score landed ──────
+// Captured from the pre-change code (20 cases, 62 beats, incl. a recovery branch
+// and bonus beats). The score field must be purely additive: any extra rng draw,
+// reordered call, or grade-boundary flip changes these tuples and fails here
+// (Review #1: Engineer B2 / Adversary B1).
+// Format: key "questId|partyId|seed" → { beats: [id, grade, roll, branch|null][],
+// outcome, reward, guildCut } at cutPct 10, durationDays 2.
+const RESOLVER_GOLDEN: Record<
+  string,
+  { beats: [string, Grade, number, string | null][]; outcome: string; reward: number; guildCut: number }
+> = JSON.parse(
+  `{"road|iron-vigil|1":{"beats":[["road-travel","crit",0.6270739405881613,null],["road-ambush","good",0.002735721180215478,null],["road-tip-bonus","crit",0.5274470399599522,"bonus"]],"outcome":"success","reward":496,"guildCut":50},"road|iron-vigil|11":{"beats":[["road-travel","crit",0.5115870486479253,null],["road-ambush","crit",0.5299464082345366,null],["road-tip-bonus","crit",0.6081185641232878,"bonus"]],"outcome":"success","reward":496,"guildCut":50},"road|iron-vigil|222":{"beats":[["road-travel","crit",0.2178377106320113,null],["road-ambush","crit",0.613124109338969,null],["road-tip-bonus","crit",0.8883060002699494,"bonus"]],"outcome":"success","reward":496,"guildCut":50},"road|iron-vigil|3333":{"beats":[["road-travel","crit",0.26626988616771996,null],["road-ambush","crit",0.2232151513453573,null],["road-tip-bonus","crit",0.585155368084088,"bonus"]],"outcome":"success","reward":496,"guildCut":50},"road|iron-vigil|44444":{"beats":[["road-travel","crit",0.5737847045529634,null],["road-ambush","crit",0.3409878355450928,null],["road-tip-bonus","crit",0.5664612813852727,"bonus"]],"outcome":"success","reward":496,"guildCut":50},"road|free-blades|1":{"beats":[["road-travel","crit",0.6270739405881613,null],["road-ambush","poor",0.002735721180215478,null]],"outcome":"success","reward":400,"guildCut":40},"road|free-blades|11":{"beats":[["road-travel","crit",0.5115870486479253,null],["road-ambush","good",0.5299464082345366,null],["road-tip-bonus","crit",0.6081185641232878,"bonus"]],"outcome":"success","reward":496,"guildCut":50},"road|free-blades|222":{"beats":[["road-travel","good",0.2178377106320113,null],["road-ambush","good",0.613124109338969,null],["road-tip-bonus","crit",0.8883060002699494,"bonus"]],"outcome":"success","reward":496,"guildCut":50},"road|free-blades|3333":{"beats":[["road-travel","good",0.26626988616771996,null],["road-ambush","ok",0.2232151513453573,null]],"outcome":"success","reward":400,"guildCut":40},"road|free-blades|44444":{"beats":[["road-travel","crit",0.5737847045529634,null],["road-ambush","ok",0.3409878355450928,null]],"outcome":"success","reward":400,"guildCut":40},"ruins|iron-vigil|1":{"beats":[["ruins-descent","crit",0.6270739405881613,null],["ruins-sigils","poor",0.002735721180215478,null],["ruins-guardian","ok",0.5274470399599522,null]],"outcome":"success","reward":600,"guildCut":60},"ruins|iron-vigil|11":{"beats":[["ruins-descent","crit",0.5115870486479253,null],["ruins-sigils","good",0.5299464082345366,null],["ruins-guardian","good",0.6081185641232878,null],["ruins-reliquary-bonus","crit",0.5901576359756291,"bonus"]],"outcome":"success","reward":744,"guildCut":74},"ruins|iron-vigil|222":{"beats":[["ruins-descent","good",0.2178377106320113,null],["ruins-sigils","crit",0.613124109338969,null],["ruins-guardian","crit",0.8883060002699494,null],["ruins-reliquary-bonus","good",0.14967497950419784,"bonus"]],"outcome":"success","reward":696,"guildCut":70},"ruins|iron-vigil|3333":{"beats":[["ruins-descent","good",0.26626988616771996,null],["ruins-sigils","ok",0.2232151513453573,null],["ruins-guardian","good",0.585155368084088,null]],"outcome":"success","reward":600,"guildCut":60},"ruins|iron-vigil|44444":{"beats":[["ruins-descent","crit",0.5737847045529634,null],["ruins-sigils","good",0.3409878355450928,null],["ruins-guardian","good",0.5664612813852727,null],["ruins-reliquary-bonus","crit",0.23683029878884554,"bonus"]],"outcome":"success","reward":744,"guildCut":74},"ruins|free-blades|1":{"beats":[["ruins-descent","crit",0.6270739405881613,null],["ruins-sigils","fail",0.002735721180215478,null],["ruins-guardian","fail",0.5274470399599522,null],["ruins-guardian-recovery","fail",0.9810509674716741,"recovery"]],"outcome":"failure","reward":0,"guildCut":0},"ruins|free-blades|11":{"beats":[["ruins-descent","crit",0.5115870486479253,null],["ruins-sigils","ok",0.5299464082345366,null],["ruins-guardian","poor",0.6081185641232878,null]],"outcome":"success","reward":600,"guildCut":60},"ruins|free-blades|222":{"beats":[["ruins-descent","good",0.2178377106320113,null],["ruins-sigils","good",0.613124109338969,null],["ruins-guardian","ok",0.8883060002699494,null],["ruins-reliquary-bonus","ok",0.14967497950419784,"bonus"]],"outcome":"success","reward":648,"guildCut":65},"ruins|free-blades|3333":{"beats":[["ruins-descent","good",0.26626988616771996,null],["ruins-sigils","poor",0.2232151513453573,null],["ruins-guardian","poor",0.585155368084088,null]],"outcome":"success","reward":600,"guildCut":60},"ruins|free-blades|44444":{"beats":[["ruins-descent","crit",0.5737847045529634,null],["ruins-sigils","ok",0.3409878355450928,null],["ruins-guardian","poor",0.5664612813852727,null]],"outcome":"success","reward":600,"guildCut":60}}`
+);
+
 
 const SEED = 12345;
 
@@ -499,6 +518,109 @@ describe("stale events & caps (handler guards)", () => {
     const again = advanceUntilStop(s);
     expect(again.stop).toBe("decision");
     expect(again.state).toBe(s);
+  });
+});
+
+describe("resolver: the check-score is additive and zone-honest", () => {
+  it("GOLDEN: same seeds give byte-identical beats/outcomes (score is the only new field)", () => {
+    for (const [key, expected] of Object.entries(RESOLVER_GOLDEN)) {
+      const [questId, partyId, seed] = key.split("|");
+      const quest = questId === "road" ? ROAD_JOB : RUINS;
+      const log = resolveQuest({ quest, partyId, cutPct: 10, durationDays: 2, seed: Number(seed) });
+      expect(log.beats.length).toBe(expected.beats.length);
+      log.beats.forEach((b, i) => {
+        const [id, grade, roll, branch] = expected.beats[i];
+        expect(b.id).toBe(id);
+        expect(b.grade).toBe(grade);
+        expect(b.roll).toBe(roll); // pins the exact rng stream — no extra draws
+        expect(b.branch ?? null).toBe(branch);
+      });
+      expect(log.outcome).toBe(expected.outcome);
+      expect(log.reward).toBe(expected.reward);
+      expect(log.guildCut).toBe(expected.guildCut);
+    }
+  });
+
+  it("every score sits inside its grade's zone (rounding can never escape)", () => {
+    for (const [key] of Object.entries(RESOLVER_GOLDEN)) {
+      const [questId, partyId, seed] = key.split("|");
+      const quest = questId === "road" ? ROAD_JOB : RUINS;
+      const log = resolveQuest({ quest, partyId, cutPct: 10, durationDays: 2, seed: Number(seed) });
+      for (const b of log.beats) {
+        const [zLo, zHi] = GRADE_ZONES[b.grade];
+        expect(b.score).toBeGreaterThanOrEqual(zLo);
+        expect(b.score).toBeLessThanOrEqual(b.grade === "crit" ? 100 : zHi - 1);
+      }
+    }
+  });
+
+  it("scoreFor: pinned anchors, clamps, monotonicity", () => {
+    expect(scoreFor(1.5, "crit")).toBe(90);
+    expect(scoreFor(2.0, "crit")).toBe(100);
+    expect(scoreFor(3.5, "crit")).toBe(100); // clamped above the synthetic anchor
+    expect(scoreFor(-1, "fail")).toBe(0); // fail-cascade carry can go negative
+    expect(scoreFor(0, "fail")).toBe(0);
+    expect(scoreFor(0.8999, "poor")).toBeLessThanOrEqual(39); // rounding stays in-zone
+    // Monotone within each band.
+    const bands: [Grade, number, number][] = [
+      ["fail", 0, 0.72],
+      ["poor", 0.72, 0.9],
+      ["ok", 0.9, 1.15],
+      ["good", 1.15, 1.5],
+      ["crit", 1.5, 2.0],
+    ];
+    for (const [grade, lo, hi] of bands) {
+      let last = -1;
+      for (let i = 0; i <= 10; i++) {
+        const score = scoreFor(lo + ((hi - lo) * i) / 10, grade);
+        expect(score).toBeGreaterThanOrEqual(last);
+        last = score;
+      }
+    }
+  });
+
+  it("questDifficulty: standing 1★, road 2★, ruins 3★ (critical beats weighted)", () => {
+    expect(questDifficulty(QUEST_BY_ID["guard-hall"])).toBe(1);
+    expect(questDifficulty(ROAD_JOB)).toBe(2);
+    expect(questDifficulty(RUINS)).toBe(3);
+  });
+});
+
+describe("posting expiry (EXPIRY_DAYS)", () => {
+  it("a fresh posting carries EXPIRY_DAYS and is withdrawn on that night, not sooner", () => {
+    const s = createInitialState(SEED);
+    expect(s.board.every((p) => p.daysLeft === EXPIRY_DAYS)).toBe(true);
+    // Park every party out so nobody takes the postings; step night after night.
+    const mod: GuildState = JSON.parse(JSON.stringify(s));
+    mod.parties = mod.parties.map((p) => ({
+      ...p,
+      activity: null,
+      assignment: {
+        questId: "ruins",
+        tier: "ruins" as const,
+        questTitle: "x",
+        seed: 1,
+        dispatchedTick: 0,
+        returnTick: 10_000,
+        durationDays: 3,
+        log: { beats: [], outcome: "failure" as const, reward: 0, guildCut: 0, cutPct: 10, durationDays: 3 },
+      },
+    }));
+    mod.queue = [{ id: "n", tick: 3, ord: 1, type: "night" }];
+    let out = mod;
+    for (let night = 1; night <= EXPIRY_DAYS; night++) {
+      const before = out.board.length;
+      out = step(out); // processes the night (self-reschedules)
+      // drain any non-night noise (there is none — all parties are out)
+      if (night < EXPIRY_DAYS) {
+        expect(out.board.length).toBe(before); // still posted
+      }
+    }
+    // On the EXPIRY_DAYS-th night both postings are withdrawn — and refilled
+    // fresh the same night (refill fires on missing tiers).
+    expect(out.feed.filter((f) => f.text.includes("withdrew")).length).toBe(2);
+    expect(out.board.length).toBe(2);
+    expect(out.board.every((p) => p.daysLeft === EXPIRY_DAYS)).toBe(true);
   });
 });
 

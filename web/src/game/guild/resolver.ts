@@ -10,6 +10,37 @@ import type { AdventureLog, Beat, Grade } from "./types";
 
 const GRADE_ORDER: Grade[] = ["fail", "poor", "ok", "good", "crit"];
 
+/** The ratio band each grade owns (mirrors gradeFor below; crit gets a synthetic
+ * upper anchor of 2.0 so real crits spread across their zone instead of piling
+ * at 90). fail's lower anchor is 0 — a fail-cascade carry can drive the ratio
+ * arbitrarily low; the clamp handles it. */
+const RATIO_BANDS: Record<Grade, [number, number]> = {
+  fail: [0, 0.72],
+  poor: [0.72, 0.9],
+  ok: [0.9, 1.15],
+  good: [1.15, 1.5],
+  crit: [1.5, 2.0],
+};
+
+/** The 0–100 meter zone each grade owns (the story check-bar's benchmarks). */
+export const GRADE_ZONES: Record<Grade, [number, number]> = {
+  fail: [0, 20],
+  poor: [20, 40],
+  ok: [40, 65],
+  good: [65, 90],
+  crit: [90, 100],
+};
+
+/** Place the ratio linearly inside its grade's zone. Rounding is zone-safe: a
+ * score can never escape the grade that produced it (crit alone may reach 100). */
+export function scoreFor(ratio: number, grade: Grade): number {
+  const [lo, hi] = RATIO_BANDS[grade];
+  const [zLo, zHi] = GRADE_ZONES[grade];
+  const t = Math.min(1, Math.max(0, (ratio - lo) / (hi - lo)));
+  const raw = Math.round(zLo + (zHi - zLo) * t);
+  return Math.min(raw, grade === "crit" ? 100 : zHi - 1);
+}
+
 /** Grade a beat from the ratio of (party power × variance) to its difficulty. */
 function gradeFor(ratio: number): Grade {
   if (ratio >= 1.5) return "crit";
@@ -46,6 +77,7 @@ function resolveBeat(
     location: def.location,
     grade,
     roll,
+    score: scoreFor(ratio, grade),
     text: def.narration[grade],
     traitBlurb: trait.blurb && trait.delta !== 0 ? trait.blurb : undefined,
     branch,
