@@ -2,6 +2,51 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-07-10 - Board & report legibility v2 (Stefan's 2nd play session) — plan done
+- Gate: plan
+- Branch: `claude/slice-living-canvas-843hho` (restarted off `origin/dev` after PR #37 merged;
+  first commit = §50 backfill of #37).
+- Stefan's forks answered directly: FLAT quest rewards (road 350g / ruins 700g / standing 25g;
+  duration costs time only); driver becomes **Play/Pause/Speed** (no single-event Advance);
+  the multi-hero/challenge-type redesign defers to its own slice via a DESIGN.md fold.
+- Scope: sim (flat rewards + comparator re-pin, typeSkulls/questSkulls/daysLabel helpers, feed
+  cleanup incl. tavern-perspective + hero-named trait cut-ins + de-articled challenge titles,
+  SAVE_VERSION 4 semantic bump); UI (quest rows "350g · 1+ days · 💀💀" + per-type icon+skull
+  detail, ⓘ→kit-extracted parchment popover, Play/Pause/Speed driver, story bar with zones
+  visible through the fill + re-ranked colors + playhead tick + grade labels
+  Botch/Poor/Success/Great/Triumph, two-row beat header, result-first outcome card without the
+  brokerage line); DESIGN.md fold of the challenge-v2 / per-hero-bars / navigation / outcome-v2
+  / economy-report sketches + the Time-paragraph amendment. Combat core untouched.
+- Review #1 (4-persona, on the PLAN): 7 merged blockers, all folded — (1) bestPosting re-pinned
+  as total-`reward` DESC, id ASC (heroes chase the number the board shows; the 7-day-purse
+  pathology is ACCEPTED in writing and revisits with challenge-v2); (2) the Play state machine
+  pinned: armed-through-decision-pauses with AUTO-RESUME on resolve (today's Auto semantics),
+  hard-disarm on tab-hide, blocked state shows main label "Needs you" (label ≠ subtitle) and
+  tapping scrolls to the Needs-you box, Pause dims via aria-disabled/data-attr; (3) golden
+  fixture: NO recapture — hand-edit only the 20 reward/guildCut values (beats byte-untouched by
+  construction; a recapture could launder rng drift); (4) helpers pinned: typeSkulls includes
+  the bonus beat (dots-never-lie precedent), absent types omitted; questSkulls = max (standing
+  1💀, road 2💀, ruins **4💀** — the killer guardian beat is what fails runs); daysLabel with
+  the "1 day" singular (road AND ruins both read "1+ days"); (5) travel challenge icon =
+  arrow_cross (flag_triangle already means "out on quest" in the same card); (6) the fill gets
+  a 2px playhead tick + a crit-zone contrast check (a Triumph landing must not wash out in the
+  gold tint); (7) DESIGN.md "Time" paragraph amended to play-primary + its three downstream
+  echoes annotated + a §12 number-sheet pointer.
+- Non-blocking folded: popover extracted from heroes/inspect.tsx into ui/kit (re-fighting its
+  dismiss bugs forbidden; text-only, no X); `advance` dropped from GuildApi (sim keeps
+  advanceUntilStop for tests); kit-side icon names for board glyphs (persisted IconName union
+  untouched); shared localStorage-pref kit helper for both speed chips; day-1 feed keeps one
+  informative seeded line ("two letters await takers" — not dawn bloat); outcome card gains the
+  faint pointer "settled in tonight's ledger"; grade UNION untouched (labels only — persisted +
+  fixture-pinned); stale-comment sweep (tuning +8g/day, life.ts comparator doc, ADVANCE_CAP
+  event count ~9/day, quests/types reward docs).
+- Adversary probes (10 seeds × 30 days, closed loop): flat economy needs NO retune — net/day
+  −15.4 [−24..−10.8] unbought (was −19.1), no board rot (withdrawals 0.6/30d), wallet inflation
+  +17% absorbed; pacing measured ~9 events/day → a watched day ≈ 8/4/2s at the three speeds;
+  next slice's 7-day quests re-open the top-speed question (noted).
+- Open questions: none blocking. SAVE_VERSION 4 wipes live saves (semantic pricing break, not
+  shape — flagged for the PR body).
+
 ## 2026-07-09 - Hall & Story UX polish — PR opened (awaiting Codex)
 - Gate: **merged 2026-07-10 13:20 +0200** (merge commit `08001b0`; backfilled 2026-07-10).
   **PR #37 into `dev`**. Plan + both reviews + Codex cleared. Codex (on `42f2cd7`, one P3,
