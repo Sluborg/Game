@@ -109,7 +109,8 @@ second play session; builds on the shipped check-meter:
   Challenges retain a visible ~0–100 difficulty scale, but its conversion to a check target remains
   explicitly open. The former Investigation/Travel/Mystic/Social/Craft/Combat/Infiltration list is
   superseded by the linked contract; Combat uses a temporary special rule pending its own slice.
-- **Per-hero resolution:** every participating hero resolves the challenge's two Skill checks.
+- **Per-hero resolution:** every participating hero resolves the challenge's Skill checks
+  (normally two — the contract's "normally" hedge applies here too).
   Challenges declare participation ("all must sneak" / "two may sneak — then only those two fight
   the next challenge"). Attributes + Skills produce the checks; percentage modifiers may come
   from traits, gear, cohesion, and earlier events as defined in the linked challenge contract.

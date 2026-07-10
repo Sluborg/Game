@@ -108,31 +108,28 @@ This makes modifiers strengthen or weaken capability without also amplifying ran
 
 ## Result language and values
 
-The five player-facing results and their internal contribution values are:
+The five player-facing results, their internal contribution values, and the working bands
+(one table, so a copy-paste into an authoring prompt can never misalign name ↔ value ↔ band):
 
-| Result | Value | Meaning |
-| --- | ---: | --- |
-| Critical Failure | -3 | Severe failure with major negative weight |
-| Failure | -1 | Failure with negative weight |
-| Insufficient | 0 | Did not meet the requirement, but adds no further penalty |
-| Success | +1 | Meets the requirement and adds positive weight |
-| Triumph | +3 | Exceptional result with major positive weight |
+| Result | Value | Working band | Meaning |
+| --- | ---: | ---: | --- |
+| Critical Failure | -3 | Below 60% of target | Severe failure with major negative weight |
+| Failure | -1 | 60% to below 80% | Failure with negative weight |
+| Insufficient | 0 | 80% to below 100% | Did not meet the requirement, but adds no further penalty |
+| Success | +1 | 100% to below 120% | Meets the requirement and adds positive weight |
+| Triumph | +3 | 120% or more | Exceptional result with major positive weight |
 
 Why **Insufficient**: it clearly says the attempt did not succeed, without falsely calling it a
 Partial Success. It also fits the game's bureaucratic voice.
 
-The working percentage bands discussed so far are:
+The band percentages are a tuning hypothesis, not locked balance. The result names and values are
+the decision; exact band tuning still needs simulation and visual validation.
 
-| Result | Working band |
-| --- | ---: |
-| Critical Failure | Below 60% of target |
-| Failure | 60% to below 80% |
-| Insufficient | 80% to below 100% |
-| Success | 100% to below 120% |
-| Triumph | 120% or more |
-
-These percentages are a tuning hypothesis, not locked balance. The result names and values are the
-decision; exact band tuning still needs simulation and visual validation.
+**Supersession note:** this result language **replaces** the shipped v1 meter ladder
+(Botch / Poor / Success / Great / Triumph) when the challenge system is implemented — the two
+vocabularies never coexist. Beware that "Success" names a different tier in each: the v1 middle
+tier vs. this ladder's second-best. Until the implementation slice lands, the shipped meter keeps
+its v1 labels.
 
 The two Skill results are added. For example, Success (+1) plus Failure (-1) yields 0 overall
 weight. What each combined total does to future challenges, rewards, complications, injuries, or
@@ -147,8 +144,10 @@ Score = ((max(Strength, Dexterity, Intelligence) + Combat) × (1 + modifierPerce
 ```
 
 This permits physical and magical fighters to use their strongest relevant approach while sharing
-one temporary Combat Skill. Combat is redesigned in a later dedicated slice; this rule must not be
-treated as the final combat system.
+one temporary Combat Skill. **Combat is deliberately absent from the Skills table above** — it is
+not a 16th ordinary Skill under an Attribute, and the missing Wisdom/Charisma path (faith- or
+charm-based fighters) is a known placeholder gap. Combat is redesigned in a later dedicated slice;
+this rule must not be treated as the final combat system.
 
 ## Difficulty and presentation
 
@@ -172,10 +171,18 @@ The detailed Perk system is outside this contract.
 
 ## Open decisions
 
-- Exact conversion from visible Difficulty 0–100 to the check target.
+- Exact conversion from visible Difficulty 0–100 to the check target. (Note the ceiling: an
+  unmodified check tops out at Attribute 20 + Skill 20 + d20 = 60 — the conversion must keep
+  Triumph's 120%-of-target reachable at high difficulty, or state that it deliberately isn't.)
+- **Whether a challenge's two checks share one difficulty/target or each declares its own** (the
+  retired mockup implied per-skill values like "Research 60 + Arcana 55"). Content cannot be
+  authored until this is decided.
 - Final percentage bands after probability simulation.
 - Minimum visual threshold spacing: 5 or 10 score points.
 - Exact combined-result consequence table.
+  - Including whether consequences key on the result **pair** or only the summed value —
+    Success + Failure and Insufficient + Insufficient both sum to 0 but should narrate
+    differently.
 - Scalable narration composition: authored quest facts, reusable phrasing, trait cut-ins, and
   location flavour.
 - Final Combat model.
