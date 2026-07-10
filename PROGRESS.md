@@ -3,7 +3,7 @@
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
 ## 2026-07-11 - Challenge system content contract — build done, PR opened
-- Gate: build + PR (Review #2 cleared; awaiting Codex)
+- Gate: **merged 2026-07-11 01:23 +0200** (merge commit `6bf8771`; backfilled 2026-07-11). **PR #41 into `dev`.**
 - Branch: `claude/slice-living-canvas-843hho` — the six doc commits were authored on
   `agent/challenge-system-design` (Stefan's other agent) and cherry-picked here on Stefan's
   explicit choice; authorship preserved. Review #1 below is that agent's own log, taken at its
