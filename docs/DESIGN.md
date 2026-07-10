@@ -85,10 +85,11 @@ replay through the animated **story stage** (§4/§10). The map stays a *state* 
 marks. *(PR #32 shipped Kenney's border **frame**; the living-canvas slice adopted **Board Game
 Icons** (11 glyphs, CC0, mask-tinted via the kit `Icon`) for activities / buildings / gold /
 letters; feed registers read as row treatment (dim / normal / gold-boxed), not icons — see
-`docs/kenney.md`.)* Concretely: challenge types
+`docs/kenney.md`.)* Concretely: the currently shipped v1 challenge types
 (investigation / travel / social / combat), buildings & gear, resource/stat glyphs, and the feed's
 three registers each get a **recognisable icon + short label**, replacing Slice 1's hard-to-read
-coloured-dot rows. Icons carry meaning; text confirms it; a tap expands the detail.
+coloured-dot rows. Future challenge activities use the vocabulary in the authoritative challenge
+contract below. Icons carry meaning; text confirms it; a tap expands the detail.
 
 **How you lose (layered after the canvas).** The canvas is a *foundation*, not a void — it already
 responds to your upgrade investments. Tension is added next: **neglect → your heroes drift to a
