@@ -238,11 +238,13 @@ function Stars({ quest }: { quest: QuestDef }) {
 }
 
 /** The shared tap-open detail body for a quest row. Reads ONLY the quest def +
- * public assignment fields — never the sealed log (info asymmetry). */
-function QuestDetail({ quest, footer }: { quest: QuestDef; footer: string }) {
+ * public assignment fields — never the sealed log (info asymmetry). For an
+ * ACTIVE quest the rolled duration is public (the departure feed said it), so
+ * the estimate can be exact; "≈" still hedges the bonus-find upside. */
+function QuestDetail({ quest, footer, exactDays }: { quest: QuestDef; footer: string; exactDays?: number }) {
   const dots = challengeDots(quest);
-  const lo = Math.round((quest.dailyRate * quest.minDuration * BROKERAGE) / 100);
-  const hi = Math.round((quest.dailyRate * quest.maxDuration * BROKERAGE) / 100);
+  const lo = Math.round((quest.dailyRate * (exactDays ?? quest.minDuration) * BROKERAGE) / 100);
+  const hi = Math.round((quest.dailyRate * (exactDays ?? quest.maxDuration) * BROKERAGE) / 100);
   return (
     <div className={styles.questDetail}>
       <span className={styles.detailLine}>
@@ -252,7 +254,7 @@ function QuestDetail({ quest, footer }: { quest: QuestDef; footer: string }) {
           .join("  ·  ")}
       </span>
       <span className={styles.detailLine}>
-        From {quest.giver} · your {BROKERAGE}% ≈ {lo}–{hi}g
+        From {quest.giver} · your {BROKERAGE}% ≈ {lo === hi ? `${lo}g` : `${lo}–${hi}g`}
       </span>
       <span className={styles.detailLine}>{footer}</span>
     </div>
@@ -299,13 +301,17 @@ function QuestsCard({ state }: { state: GuildState }) {
                 <span className={styles.postingTitle}>{p.title}</span>
                 <span className={styles.postingMeta}>
                   {quest.dailyRate}g/day · {quest.minDuration}–{quest.maxDuration} days · <Stars quest={quest} />
-                  {p.daysLeft <= 1 && " · leaves tomorrow"}
+                  {p.daysLeft <= 1 && " · last day"}
                 </span>
               </button>
               {expandedId === p.id && (
                 <QuestDetail
                   quest={quest}
-                  footer={`Open — withdrawn in ${p.daysLeft} day${p.daysLeft === 1 ? "" : "s"} if nobody takes it.`}
+                  footer={
+                    p.daysLeft <= 1
+                      ? "Open — withdrawn tonight if nobody takes it."
+                      : `Open — withdrawn in ${p.daysLeft} days if nobody takes it.`
+                  }
                 />
               )}
             </li>
@@ -332,7 +338,7 @@ function QuestsCard({ state }: { state: GuildState }) {
                 </span>
               </button>
               {expandedId === p.id && (
-                <QuestDetail quest={quest} footer={`Active — due back ~day ${dayOf(a.returnTick)}.`} />
+                <QuestDetail quest={quest} exactDays={a.durationDays} footer={`Active — due back ~day ${dayOf(a.returnTick)}.`} />
               )}
             </li>
           );

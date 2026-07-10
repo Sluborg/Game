@@ -26,7 +26,7 @@ export function effectNote(beat: Beat, hasNext: boolean): string | null {
   if (beat.branch === "bonus") {
     if (beat.grade === "crit" || beat.grade === "good") return "A rich find.";
     if (beat.grade === "ok") return "A modest haul.";
-    if (beat.grade === "poor") return "Barely worth the detour.";
+    if (beat.grade === "poor") return "Not worth the trouble.";
     return "Nothing but dust.";
   }
   switch (beat.grade) {
@@ -53,7 +53,7 @@ export type StorySpeed = "slow" | "normal" | "fast";
  * (Review #1 Designer B1). */
 export const FILL_BASE_MS: Record<StorySpeed, number> = { slow: 3000, normal: 1600, fast: 700 };
 /** Pause after the meter lands before Auto advances (counts from fill-END). */
-export const HOLD_MS: Record<StorySpeed, number> = { slow: 1700, normal: 1100, fast: 650 };
+export const HOLD_MS: Record<StorySpeed, number> = { slow: 1700, normal: 1100, fast: 800 };
 /** Delay before the fill starts, so the eye finds the bar first. */
 export const FILL_DELAY_MS = 500;
 

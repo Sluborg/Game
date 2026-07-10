@@ -139,8 +139,10 @@ export function StoryStage({
             {auto ? "Pause" : "Play"}
           </button>
           {!atEnd ? (
-            <button type="button" className={styles.next} onClick={advance}>
-              {index === log.beats.length - 1 ? "See outcome ›" : "Next ›"}
+            // Same gate as the stage: mid-rise it SNAPS, only a landed press
+            // advances — the biggest button must not skip the reveal (R#2 Designer).
+            <button type="button" className={styles.next} onClick={() => (shown ? advance() : setLanded(true))}>
+              {index === log.beats.length - 1 ? "See outcome ›" : shown ? "Next ›" : "Skip the rise"}
             </button>
           ) : (
             <button type="button" className={styles.next} onClick={onClose}>Done</button>
@@ -174,6 +176,17 @@ function BeatCard({
     return () => window.clearTimeout(t);
   }, []);
 
+  // Fallback landing: a score-0 beat never changes width, so transitionend
+  // never fires — without this, the card soft-locks and Auto stalls (real:
+  // ~4.4% of quests contain one, Review #2 Adversary). Timed to when the
+  // transition would end; transitionend landing first makes this a no-op.
+  useEffect(() => {
+    if (landed) return;
+    const t = window.setTimeout(onLanded, FILL_DELAY_MS + durationMs + 80);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [landed]);
+
   const note = effectNote(beat, hasNext);
   const width = landed || filling ? beat.score : 0;
 
@@ -194,8 +207,8 @@ function BeatCard({
         role="meter"
         aria-valuemin={0}
         aria-valuemax={100}
-        aria-valuenow={beat.score}
-        aria-valuetext={`${GRADE_LABEL[beat.grade]} — ${beat.score} of 100`}
+        aria-valuenow={landed ? beat.score : 0}
+        aria-valuetext={landed ? `${GRADE_LABEL[beat.grade]} — ${beat.score} of 100` : "rolling…"}
       >
         <div className={styles.zones} aria-hidden>
           {ZONE_ORDER.map((g) => (

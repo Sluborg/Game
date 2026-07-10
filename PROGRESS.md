@@ -2,8 +2,31 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
-## 2026-07-09 - Hall & Story UX polish — build done (Review #2 next)
-- Gate: build (plan + Review #1 cleared; Review #2 on the diff runs next)
+## 2026-07-09 - Hall & Story UX polish — PR opened (awaiting Codex)
+- Gate: PR (plan + both reviews cleared)
+- Review #2 (4-persona, on the DIFF): **3 blockers, all fixed** — (1, Adversary+Engineer) a
+  score-0 beat (REAL: ~4.4% of quests across a 100k-beat sweep — fail-cascade carry) animated
+  width 0→0, `transitionend` never fired, the card soft-locked and Auto stalled forever → a
+  fallback landing timer in BeatCard fires when the transition WOULD have ended (idempotent
+  with transitionend; also covers mobile's unreliable transition events); (2, Designer) the
+  gold "Next ›" button bypassed the landed gate and skipped the whole reveal mid-rise → it now
+  snaps first ("Skip the rise") and only a landed press advances, same rule as the stage tap;
+  (3, Designer) "leaves tomorrow" lied — a daysLeft-1 posting is withdrawn TONIGHT → "last day"
+  / "withdrawn tonight if nobody takes it".
+- Non-blocking folded: night refill no longer reposts a tier while a party is out on that very
+  quest (the Quests card showed the same title twice ~30–50% of steps — now "the giver waits
+  for word", + a regression test); ACTIVE tap-details give the exact rolled estimate (duration
+  is public via the departure line); bonus-poor note made value-neutral (poor bonus adds
+  nothing); Auto Fast hold 650→800ms so the prose gets read; meter aria announces "rolling…"
+  until landed (don't spoil the rise for screen readers). Engineer independently re-proved the
+  golden fixture by checking out the pre-change resolver and diffing 30,000 resolutions
+  head-to-head: byte-identical except `score`. Adversary: withdrawal still fires 1–3×/30 days
+  (rare texture as intended); speed-pref corruption never throws; Advance spam with a pending
+  decision = 0 re-renders. PX scorecard: **all 10 of Stefan's items answered**; meter verdict
+  "delivers" (Slow rise ≈1–3.5s reads as anticipation; zones legible at 430px).
+- Noted for later: progress dots leak run structure up front (reveal-as-landed is a future
+  polish); the beat card's empty lower half could hold portraits later; SAVE_VERSION 3 wipes
+  live saves incl. Stefan's tavern run (policy discard-reinit — flagged in the PR body).
 - Built (sim commit `fcc56b0`, isolated): `Beat.score` in the resolver — proven purely additive
   by the committed golden fixture (20 cases/62 beats from the PRE-change resolver; id/grade/
   roll/branch/outcome/reward/guildCut byte-identical); `questDifficulty` (1–5, critical-weighted);

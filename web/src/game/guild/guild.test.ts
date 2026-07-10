@@ -596,8 +596,10 @@ describe("posting expiry (EXPIRY_DAYS)", () => {
       ...p,
       activity: null,
       assignment: {
-        questId: "ruins",
-        tier: "ruins" as const,
+        // A STANDING job: keeps the party out without suppressing the scarce
+        // tiers' reposts (no-repost-while-out applies per questId's quest).
+        questId: "guard-hall",
+        tier: "standing" as const,
         questTitle: "x",
         seed: 1,
         dispatchedTick: 0,
@@ -621,6 +623,28 @@ describe("posting expiry (EXPIRY_DAYS)", () => {
     expect(out.feed.filter((f) => f.text.includes("withdrew")).length).toBe(2);
     expect(out.board.length).toBe(2);
     expect(out.board.every((p) => p.daysLeft === EXPIRY_DAYS)).toBe(true);
+  });
+
+  it("a tier is NOT reposted while a party is out on that quest (no duplicate titles)", () => {
+    let s = createInitialState(SEED);
+    // Drive until a scarce quest is taken.
+    let guard = 0;
+    while (!s.parties.some((p) => p.assignment && p.assignment.tier !== "standing") && guard++ < 60) s = step(s);
+    const out = s.parties.find((p) => p.assignment && p.assignment.tier !== "standing")!;
+    const takenTier = out.assignment!.tier;
+    // Cross at least one night while they're still out.
+    let guard2 = 0;
+    while (s.tick < out.assignment!.returnTick - 1 && guard2++ < 60) s = step(s);
+    // The taken tier must not be back on the board while they're out.
+    expect(s.parties.find((p) => p.id === out.id)!.assignment).not.toBeNull();
+    expect(s.board.some((p) => p.tier === takenTier)).toBe(false);
+    // After the return + the next night, the tier is reposted.
+    let guard3 = 0;
+    while ((s.parties.find((p) => p.id === out.id)!.assignment || !s.board.some((p) => p.tier === takenTier)) && guard3++ < 60) {
+      s = step(s);
+      for (const f of s.feed) if (f.register === "decision" && !f.done && f.mailId) s = markMailRead(s, f.mailId);
+    }
+    expect(s.board.some((p) => p.tier === takenTier)).toBe(true);
   });
 });
 
