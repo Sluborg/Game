@@ -71,6 +71,9 @@ export function HallScreen() {
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<HallSpeed>(() => readPref(HALL_SPEED_KEY, HALL_SPEED_ORDER, "normal"));
   const [story, setStory] = useState<OpenStory | null>(null);
+  // ONE popover for the whole Hall (the HeroCard pattern the kit assumes) —
+  // per-card state let two parchment boxes stack (Review #2 Designer B1).
+  const [info, setInfo] = useState<InspectData | null>(null);
   const needsYouRef = useRef<HTMLDivElement>(null);
 
   const day = dayOf(state.tick);
@@ -110,6 +113,10 @@ export function HallScreen() {
       return;
     }
     setPlaying(true);
+    // Latching with decisions already pending: show the player WHY it won't run.
+    if (pendingDecisions.length > 0) {
+      needsYouRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
   };
 
   const openStory = (mailId: string | undefined) => {
@@ -145,8 +152,8 @@ export function HallScreen() {
         ))}
       </section>
 
-      <QuestsCard state={state} />
-      <BuildingsCard state={state} shownGold={shownGold} onBuild={build} />
+      <QuestsCard state={state} info={info} setInfo={setInfo} />
+      <BuildingsCard state={state} shownGold={shownGold} onBuild={build} info={info} setInfo={setInfo} />
 
       <Feed
         state={state}
@@ -192,6 +199,8 @@ export function HallScreen() {
           {HALL_SPEED_LABEL[speed]}
         </button>
       </div>
+
+      <InspectPopover data={info} onClose={() => setInfo(null)} />
 
       {story && (
         <StoryStage
@@ -294,8 +303,15 @@ function QuestDetail({ quest, footer }: { quest: QuestDef; footer: string }) {
   );
 }
 
-function QuestsCard({ state }: { state: GuildState }) {
-  const [info, setInfo] = useState<InspectData | null>(null);
+function QuestsCard({
+  state,
+  info,
+  setInfo,
+}: {
+  state: GuildState;
+  info: InspectData | null;
+  setInfo: React.Dispatch<React.SetStateAction<InspectData | null>>;
+}) {
   // One expanded row at a time, keyed by stable id (posting.id / party.id) — a
   // row that vanishes mid-Advance just stops matching, harmlessly.
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -330,7 +346,6 @@ function QuestsCard({ state }: { state: GuildState }) {
         </h2>
         <span className={styles.infoGlyph} aria-hidden>ⓘ</span>
       </InspectChip>
-      <InspectPopover data={info} onClose={() => setInfo(null)} />
 
       {state.board.length === 0 && active.length === 0 && (
         <p className={styles.cardNote}>Nothing posted — fresh letters arrive most mornings.</p>
@@ -398,12 +413,15 @@ function BuildingsCard({
   state,
   shownGold,
   onBuild,
+  info,
+  setInfo,
 }: {
   state: GuildState;
   shownGold: number;
   onBuild: () => void;
+  info: InspectData | null;
+  setInfo: React.Dispatch<React.SetStateAction<InspectData | null>>;
 }) {
-  const [info, setInfo] = useState<InspectData | null>(null);
   const built = state.buildings.tavern;
   const idleBurn = DAILY_UPKEEP - PASSIVE_INCOME;
   const left = shownGold - TAVERN_PRICE;
@@ -437,7 +455,6 @@ function BuildingsCard({
         </h2>
         <span className={styles.infoGlyph} aria-hidden>ⓘ</span>
       </InspectChip>
-      <InspectPopover data={info} onClose={() => setInfo(null)} />
 
       <ul className={styles.buildings}>
         <li className={styles.building}>

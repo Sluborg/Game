@@ -2,8 +2,37 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
-## 2026-07-10 - Board & report legibility v2 — build done (Review #2 next)
-- Gate: build (plan + Review #1 cleared; Review #2 on the diff runs next)
+## 2026-07-10 - Board & report legibility v2 — PR opened (awaiting Codex)
+- Gate: PR (plan + both reviews cleared). Process note, declared: Review #2 ran as TWO
+  dual-persona agents (Designer+PX, Engineer+Adversary) covering all four §20 lenses — a
+  session-length economy, not a skipped lens.
+- Review #2 (on the DIFF): **5 blockers, all fixed** — (1) per-card popover state let TWO
+  parchment notes stack (the kit's one-note contract assumes shared state) → one `info` state +
+  one `InspectPopover` lifted to HallScreen; (2+3) two un-annotated Advance/Auto echoes remained
+  in DESIGN.md and life.ts still said "dailyRate desc" (a claimed sweep that hadn't landed —
+  §70) → all fixed; (4) Stefan's verbatim "green cat" quest-card mockup was missing from the
+  challenge-v2 fold → restored word-for-word; (5) the working tree carried the fixes uncommitted
+  (HEAD alone shipped the dual-popover bug) → committed. Also folded: the standalone backdrop
+  swallow now arms ONLY when a dialog is actually open (it was eating the first tap after
+  dismissing a Hall note — e.g. a Play press); scroll-to-Needs-you on the latching Play tap;
+  brighter skulls; dead popover CSS pruned from HeroCard.module.css; the as-built paragraph's
+  own stale comparator phrase.
+- Engineer+Adversary verified: golden fixture beats byte-identical vs origin/dev (all 20 keys,
+  mechanical diff) with hand-edited rewards confirmed by execution AND by hand; zero dailyRate
+  refs in code; driver state machine matches the pinned spec (latch/auto-resume/tab-hide/always-
+  live Pause, StrictMode-safe); playhead legible through the strongest tint (~0.64 vs 0.22 lum);
+  20-day flat-economy probe −6.9..−12.5 g/day unbought (inside the band); forbidden dirs
+  untouched. Designer+PX scorecard: all 11 of Stefan's round-2 asks verified in code +
+  screenshots.
+- Build-time catch (logged for honesty): the popovers initially white-screened —
+  `e.currentTarget` read inside a deferred setState updater (the PR #27 lesson re-learned);
+  caught by the headless walkthrough.
+- Verified after fixes: tsc + build green; 89 vitest pass; headless full loop green (popover
+  single-instance, Play→Needs you→story→layered meter "Triumph"→ledger-pointer outcome→latched
+  auto-resume). Screenshots `docs/screenshots/canvas3-*`.
+
+## 2026-07-10 - Board & report legibility v2 — build done (see PR entry)
+- Gate: build (plan + Review #1 cleared; Review #2 verdicts in the PR entry above)
 - Built as planned (sim commit `1a62d51` carries both sim+UI; assets in `21de1c0`): flat rewards
   (fixture reward/guildCut hand-edited, beat tuples byte-untouched — verified by an in-script
   machine-diff before write), skulls/daysLabel helpers + pinned tests, Play/Pause/Speed driver

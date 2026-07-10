@@ -14,8 +14,8 @@
 //     taps); any OTHER tap closes it, armed on the NEXT frame so the opening
 //     tap can't immediately close it. A backdrop-targeted dismiss arms a
 //     self-disarming capture click-swallow so a Sheet backdrop doesn't also
-//     close; used standalone (no role="dialog" ancestor) the swallow is
-//     needless but harmless — it self-disarms.
+//     close; standalone (no dialog open anywhere) the swallow is NOT armed at
+//     all — it would eat the next tap's click for no benefit.
 //   * Capture-phase scroll + resize dismiss it (viewport-pinned box, scrolling
 //     anchor).
 
@@ -75,7 +75,11 @@ export function InspectPopover({ data, onClose }: { data: InspectData | null; on
       if (boxRef.current?.contains(t)) return; // tapping the note itself: ignore
       if (t.closest("[data-inspect-chip]")) return; // a chip owns its own toggle / re-anchor
       onClose();
-      if (!t.closest('[role="dialog"]')) armBackdropSwallow();
+      // The swallow exists solely to keep a Sheet's backdrop-close from firing
+      // on the same tap. Standalone (no dialog open anywhere) it would EAT the
+      // next tap's click — e.g. a Play press after dismissing a Hall note — so
+      // arm it only when a dialog is actually present.
+      if (!t.closest('[role="dialog"]') && document.querySelector('[role="dialog"]')) armBackdropSwallow();
     };
 
     function armBackdropSwallow() {

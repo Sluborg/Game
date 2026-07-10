@@ -103,7 +103,17 @@ second play session; builds on the shipped check-meter:
   Craft/Labor (clear rubble, build, rescue work) · Combat · Infiltration. A challenge can
   combine **two or more types at different levels** ("research the evil archmage" =
   Investigation 60 + Occult 55) on a **~0–100 difficulty scale** (superseding today's 6–18).
-  Quest skulls stay ≈ the max across its challenges (possibly trimming outliers).
+  Quest skulls stay ≈ the max across its challenges (possibly trimming outliers). His quest-card
+  mockup, verbatim:
+
+  > Find the green cat 💀💀
+  > ⌛ 2++ days
+  > From: Jalk Chozop, antiquarian
+  > 🔎 Investigation 💀💀
+  > 🏞 Travel 💀💀
+  > 🔪 Combat 💀
+  >
+  > (with the Kenney icons)
 - **Per-hero resolution:** every participating hero rolls the challenge — **one bar per hero,
   filling simultaneously**. Challenges declare participation ("all must sneak" / "two may sneak
   — then only those two fight the next challenge"). A **crit can assist the next check or cover
@@ -820,7 +830,8 @@ consequence → readable outcome → money pressure. Carries its own foundations
 Every slice still ends playable; the canvas comes first, then the player's hand, then tension:
 
 1. **Living canvas** — the **event-queue clock** + skip-primary driver (Advance / play / speed /
-   skip-to-next-event / auto-pause) + **autonomous party daily-life** (rest / train / take-quest,
+   skip-to-next-event / auto-pause) *(driver later pivoted play-primary — see the amended Time
+   paragraph)* + **autonomous party daily-life** (rest / train / take-quest,
    minimal) + the **Hall Feed** + reuse of the board / resolver / animated story. Economy mostly
    stubbed **but not decision-less: ships at least one fixed-price investment** (e.g. a single
    building or a gear buy) that visibly shapes the canvas — so the first slice already responds to
@@ -837,7 +848,7 @@ Every slice still ends playable; the canvas comes first, then the player's hand,
    brokerage, split evenly, remainder to the boss; spend on rest ~15%/min 5g and train ~20%/min
    8g of wallet (always clamped to the wallet), routed to your facility if built, else lost to
    the village (a tracked sink the feed advertises); motivation = avg wallet < 60g → best-paying
-   eligible posting (pinned comparator: dailyRate desc, id asc) or a standing shift, else
+   eligible posting (pinned comparator: total reward desc, id asc — flat-pay amendment) or a standing shift, else
    lifestyle with a ~15% seeded fame-quest urge across ALL eligible postings; every return
    forces one decompress rest. The **Hall Feed** ships its three registers (ambient dim /
    notable / decision gold-boxed, undone decisions pinned under "Needs you"); standing-job
@@ -872,8 +883,8 @@ Every slice still ends playable; the canvas comes first, then the player's hand,
    pacing until more quest defs land). Investments renamed **Buildings** (Guild Hall + Tavern,
    "Ready" chip gated on displayed gold). The one-buyable "Ready" chip is a spend-your-400g nag
    today — it must become a real choice signal, not a checklist, when slice 2's menu lands
-   (guardrail #5). Explainers sit behind tap-the-title ⓘ. The Advance/Auto pair contrasts on
-   the verb (skip ahead vs watch it play).
+   (guardrail #5). Explainers sit behind tap-the-title ⓘ. *(The Advance/Auto pair described here was superseded
+   the next day by Play/Pause/Speed — see the amended Time paragraph.)*
 2. **The businessman's hand** — the full **Majesty building + gear upgrades at fixed prices** +
    the hero-spending economy + the flat 10% cut + building passive + upkeep. **The read the bet is
    priced against: the dormant CV certainty chips (already built in Slice 1) go LIVE here** — so

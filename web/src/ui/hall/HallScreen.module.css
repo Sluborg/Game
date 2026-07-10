@@ -135,7 +135,6 @@
 }
 .postingTitle { display: inline-flex; align-items: center; gap: 6px; font-size: 0.88rem; font-weight: 600; color: var(--text-strong); }
 .postingMeta { font-size: 0.72rem; color: var(--text-dim); }
-.stars { color: var(--gold-soft-hi); letter-spacing: 0.08em; }
 .questDetail {
   display: flex;
   flex-direction: column;
@@ -318,7 +317,7 @@
 .pauseBtn[data-dim="true"] { opacity: 0.5; }
 
 /* Skull ratings + per-type challenge rows. */
-.skulls { display: inline-flex; gap: 1px; vertical-align: -2px; color: var(--c-parchment-dim); }
+.skulls { display: inline-flex; gap: 1px; vertical-align: -2px; color: var(--c-parchment); }
 .typeRow {
   display: flex;
   align-items: center;
