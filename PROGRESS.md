@@ -3,7 +3,7 @@
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
 ## 2026-07-10 - Header driver (one toggle + speed chip) — build done, PR opened
-- Gate: codex-fixed → awaiting merge decision (plan + Review #1 + Review #2 + Codex cleared)
+- Gate: **merged 2026-07-10 22:46 +0200** (merge commit `d6927a7`; backfilled 2026-07-10).
 - Codex (PR #39): ONE finding, P2 — the slimmed bottom padding dropped the nav's
   `env(safe-area-inset-bottom)` share (the old 104px cushion silently absorbed it; ~22px of the
   last feed row under the nav on notched phones). Fixed to
