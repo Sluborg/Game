@@ -19,9 +19,17 @@ import shield from "../../assets/kenney/board-game-icons/shield.png";
 import hourglass from "../../assets/kenney/board-game-icons/hourglass.png";
 import pawns from "../../assets/kenney/board-game-icons/pawns.png";
 import pawn from "../../assets/kenney/board-game-icons/pawn.png";
+import skull from "../../assets/kenney/board-game-icons/skull.png";
+import bookOpen from "../../assets/kenney/board-game-icons/book_open.png";
+import arrowCross from "../../assets/kenney/board-game-icons/arrow_cross.png";
+import suitHearts from "../../assets/kenney/board-game-icons/suit_hearts.png";
 import styles from "./Icon.module.css";
 
-const SPRITES: Record<IconName, string> = {
+/** UI-only glyphs (board rows, skull ratings) — kept OUT of the persisted
+ * IconName union: these never enter GuildState. */
+export type UiIconName = "skull" | "typeInvestigation" | "typeTravel" | "typeSocial" | "typeCombat";
+
+const SPRITES: Record<IconName | UiIconName, string> = {
   rest: campfire,
   train: sword,
   depart: flagTriangle,
@@ -34,10 +42,15 @@ const SPRITES: Record<IconName, string> = {
   night: hourglass,
   party: pawns,
   hero: pawn,
+  skull,
+  typeInvestigation: bookOpen,
+  typeTravel: arrowCross,
+  typeSocial: suitHearts,
+  typeCombat: sword,
 };
 
 export interface IconProps {
-  name: IconName;
+  name: IconName | UiIconName;
   /** Pixel size (square). Default 18 — feed-line scale. */
   size?: number;
   className?: string;

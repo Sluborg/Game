@@ -133,75 +133,7 @@
 }
 
 /* --- Inspectable chips (button reset; shape classes applied alongside) ----- */
-.inspectable {
-  font: inherit;
-  color: inherit;
-  padding: 0;
-  border: none;
-  background: none;
-  text-align: left;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: filter var(--t-fast) var(--ease-out);
-}
-/* Transient press/hover only — no persistent "open" ring. The open state lives
-   in aria-expanded + the popover's own caret, per the selection-state principle
-   in DESIGN.md §5 (only persist a selected state when an action needs it). */
-.inspectable:hover { filter: brightness(1.12); }
-.inspectable:active { filter: brightness(0.95); }
-.inspectable:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--c-gold-light); }
-
-/* --- Floating parchment popover (portalled to body, fixed) ---------------- */
-.popover {
-  position: fixed;
-  z-index: 201;
-  max-width: min(280px, calc(100vw - 16px));
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 10px 12px;
-  border-radius: var(--r-sm);
-  background: var(--c-parchment);
-  color: var(--ink-parchment);
-  border: 1px solid var(--c-gold-dark);
-  box-shadow: var(--shadow-2);
-  animation: popIn var(--t-fast) var(--ease-out);
-}
-.popCaret {
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  background: var(--c-parchment);
-  transform: translateX(-50%) rotate(45deg);
-}
-.popCaret[data-place="above"] {
-  bottom: -6px;
-  border-right: 1px solid var(--c-gold-dark);
-  border-bottom: 1px solid var(--c-gold-dark);
-}
-.popCaret[data-place="below"] {
-  top: -6px;
-  border-left: 1px solid var(--c-gold-dark);
-  border-top: 1px solid var(--c-gold-dark);
-}
-.popTitle {
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--cv-accent-deep);
-}
-.popEffect {
-  font-size: 12.5px;
-  line-height: 1.4;
-  color: var(--ink-parchment-dim);
-}
-@keyframes popIn {
-  from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .popover { animation: none; }
-}
+/* (Inspect chip/popover styles moved to ui/kit/Inspect.module.css.) */
 
 /* --- Attribute chips: WIDER, 2-col grid; certainty in the fill ------------- */
 .stats {

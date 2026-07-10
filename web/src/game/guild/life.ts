@@ -6,7 +6,7 @@
 //
 // Motivation model (Review #1-folded):
 // - Coin runs low (avg member wallet < NEED_GOLD) → seek paid work: the best
-//   eligible posting by the PINNED comparator (dailyRate desc, id asc — B5);
+//   eligible posting by the PINNED comparator (total reward desc, id asc);
 //   none eligible → a standing watch shift (the survival floor).
 // - Comfortable → lifestyle: mostly rest/train, with a small seeded FAME_CHANCE
 //   of taking a posting anyway — picked seeded across ALL eligible postings

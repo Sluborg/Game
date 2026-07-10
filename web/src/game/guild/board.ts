@@ -29,15 +29,19 @@ export function partyEligible(partyId: string, tier: QuestTier): boolean {
   return anchor !== null && anchor !== undefined;
 }
 
-/** The pinned work comparator (Review #1 B5): eligible postings sorted by
- * dailyRate DESC, tie-broken by posting id ASC. Deterministic and testable. */
+/** The pinned work comparator (re-pinned for flat rewards): eligible postings
+ * by total `reward` DESC, tie posting-id ASC. Heroes chase the same number the
+ * board displays (information honesty); a broke party wants the biggest purse.
+ * ACCEPTED pathology, in writing: a future long low-per-day quest with a big
+ * purse would out-rank a short better-per-day one — revisited with the
+ * challenge-v2 slice's smarter hero brains. */
 export function bestPosting(board: Posting[], partyId: string): Posting | null {
   const eligible = board.filter((p) => partyEligible(partyId, p.tier));
   if (eligible.length === 0) return null;
   return [...eligible].sort((a, b) => {
-    const rate = (QUEST_BY_ID[b.questId]?.dailyRate ?? 0) - (QUEST_BY_ID[a.questId]?.dailyRate ?? 0);
+    const pay = (QUEST_BY_ID[b.questId]?.reward ?? 0) - (QUEST_BY_ID[a.questId]?.reward ?? 0);
     // Plain codepoint compare — localeCompare is locale-sensitive, and this
     // ordering must replay identically on any runtime (determinism).
-    return rate !== 0 ? rate : a.id < b.id ? -1 : 1;
+    return pay !== 0 ? pay : a.id < b.id ? -1 : 1;
   })[0];
 }

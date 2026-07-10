@@ -26,8 +26,9 @@ export interface QuestDef {
   tier: QuestTier;
   title: string;
   giver: string;
-  /** reward = dailyRate × rolled duration (§12 — per-day EV stays stable). */
-  dailyRate: number;
+  /** The quest's FLAT total reward (Stefan: "only total reward" — extra days
+   * cost time, never add gold). The § 12 per-day number sheet is superseded. */
+  reward: number;
   minDuration: number;
   maxDuration: number;
   /** Party gates: a tier the party can't bid is filtered before the ask check. */
@@ -50,14 +51,14 @@ export const ROAD_JOB: QuestDef = {
   tier: "road",
   title: "Courier Escort",
   giver: "a nervous merchant",
-  dailyRate: 200,
+  reward: 350,
   minDuration: 1,
   maxDuration: 2,
   beats: [
     {
       id: "road-travel",
       type: "travel",
-      location: "the Old Trade Road",
+      location: "Old Trade Road",
       attr: "sta",
       difficulty: 9,
       narration: n(
@@ -71,7 +72,7 @@ export const ROAD_JOB: QuestDef = {
     {
       id: "road-ambush",
       type: "combat",
-      location: "the Willow Ford",
+      location: "Willow Ford",
       attr: "str",
       difficulty: 11,
       critical: true,
@@ -89,7 +90,7 @@ export const ROAD_JOB: QuestDef = {
   bonusBeat: {
     id: "road-tip",
     type: "social",
-    location: "the waystation",
+    location: "Waystation",
     attr: "per",
     difficulty: 8,
     narration: n(
@@ -107,7 +108,7 @@ export const RUINS: QuestDef = {
   tier: "ruins",
   title: "The Sunken Ruins",
   giver: "a hooded antiquarian",
-  dailyRate: 300,
+  reward: 700,
   minDuration: 1,
   maxDuration: 3,
   requiresParty: true,
@@ -115,7 +116,7 @@ export const RUINS: QuestDef = {
     {
       id: "ruins-descent",
       type: "travel",
-      location: "the flooded stair",
+      location: "Flooded stair",
       attr: "dex",
       difficulty: 12,
       narration: n(
@@ -129,7 +130,7 @@ export const RUINS: QuestDef = {
     {
       id: "ruins-sigils",
       type: "investigation",
-      location: "the sigil hall",
+      location: "Sigil hall",
       attr: "per",
       difficulty: 15,
       unlocksBonus: true,
@@ -144,7 +145,7 @@ export const RUINS: QuestDef = {
     {
       id: "ruins-guardian",
       type: "combat",
-      location: "the drowned reliquary",
+      location: "Drowned reliquary",
       attr: "str",
       difficulty: 18,
       critical: true,
@@ -160,7 +161,7 @@ export const RUINS: QuestDef = {
   bonusBeat: {
     id: "ruins-reliquary",
     type: "investigation",
-    location: "the hidden reliquary",
+    location: "Hidden reliquary",
     attr: "per",
     difficulty: 12,
     narration: n(
@@ -182,14 +183,14 @@ export const STANDING_JOBS: QuestDef[] = [
     tier: "standing",
     title: "Guard the Guild Hall",
     giver: "the guild steward",
-    dailyRate: 27, // guild take lands ~+8g/day after the heroes' share
+    reward: 25, // tiny survival-floor pay; guild take = 3g (rounded 10%)
     minDuration: 1,
     maxDuration: 1,
     beats: [
       {
         id: "guard-watch",
         type: "social",
-        location: "the Guild Hall",
+        location: "Guild Hall",
         attr: "per",
         difficulty: 6,
         narration: n(
@@ -207,14 +208,14 @@ export const STANDING_JOBS: QuestDef[] = [
     tier: "standing",
     title: "Help the City Watch",
     giver: "the watch sergeant",
-    dailyRate: 27,
+    reward: 25,
     minDuration: 1,
     maxDuration: 1,
     beats: [
       {
         id: "watch-patrol",
         type: "travel",
-        location: "the Village lanes",
+        location: "Village lanes",
         attr: "sta",
         difficulty: 6,
         narration: n(
@@ -234,32 +235,31 @@ export const QUEST_BY_ID: Record<string, QuestDef> = Object.fromEntries(
   [...POSTABLE_QUESTS, ...STANDING_JOBS].map((q) => [q.id, q]),
 );
 
-/** Overall quest difficulty, 1–5 stars, from a weighted mean of the MAIN beats'
- * difficulties (critical beats ×1.5 — a lone killer beat must not hide behind
- * easy ones). Derived from the beats so it can't misrepresent the quest.
- * Today: standing 1★, road 2★, ruins 3★ (top of the scale waits for harder
- * content). */
-export function questDifficulty(quest: QuestDef): number {
-  let sum = 0;
-  let weight = 0;
-  for (const b of quest.beats) {
-    const w = b.critical ? 1.5 : 1;
-    sum += b.difficulty * w;
-    weight += w;
+/** Per-challenge-type skull rating, derived from the quest's beats (incl. the
+ * bonus beat — the dots-never-lie precedent: the story must never show a type
+ * the detail didn't advertise). Absent types are omitted. Skulls = MAX beat
+ * difficulty of the type: ≤8→1, ≤12→2, ≤16→3, ≤20→4, else 5. */
+export function typeSkulls(quest: QuestDef): Partial<Record<BeatType, number>> {
+  const out: Partial<Record<BeatType, number>> = {};
+  const all = [...quest.beats, ...(quest.bonusBeat ? [quest.bonusBeat] : [])];
+  for (const b of all) {
+    const skulls = b.difficulty <= 8 ? 1 : b.difficulty <= 12 ? 2 : b.difficulty <= 16 ? 3 : b.difficulty <= 20 ? 4 : 5;
+    out[b.type] = Math.max(out[b.type] ?? 0, skulls);
   }
-  const mean = weight > 0 ? sum / weight : 0;
-  if (mean <= 7) return 1;
-  if (mean <= 12) return 2;
-  if (mean <= 16) return 3;
-  if (mean <= 20) return 4;
-  return 5;
+  return out;
 }
 
-/** Challenge-dot signature for the board (0–3 dots per type), derived from the
- * quest's beats so it can't misrepresent what will be tested. */
-export function challengeDots(quest: QuestDef): Record<BeatType, number> {
-  const dots: Record<BeatType, number> = { investigation: 0, travel: 0, social: 0, combat: 0 };
-  const all = [...quest.beats, ...(quest.bonusBeat ? [quest.bonusBeat] : [])];
-  for (const b of all) dots[b.type] = Math.min(3, dots[b.type] + Math.max(1, Math.round(b.difficulty / 5)));
-  return dots;
+/** Overall danger: the MAX over the type skulls (Stefan: "approx max" — the
+ * killer beat is what actually fails a run). standing 1💀 · road 2💀 · ruins 4💀. */
+export function questSkulls(quest: QuestDef): number {
+  return Math.max(1, ...Object.values(typeSkulls(quest)));
+}
+
+/** Duration display: the KNOWN minimum plus fuzz, never a span (Stefan: "I
+ * don't want a known span"). extra = max−min: 0 → "N day(s)", 1–2 → "N+ days",
+ * ≥3 → "N++ days" (his examples: 1–3 → "1+", 3–7 → "3++"). */
+export function daysLabel(min: number, max: number): string {
+  const extra = max - min;
+  if (extra <= 0) return `${min} day${min === 1 ? "" : "s"}`;
+  return `${min}${extra <= 2 ? "+" : "++"} days`;
 }

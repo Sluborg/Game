@@ -95,6 +95,7 @@
 .beatType[data-type="combat"] { color: var(--c-blood); }
 .beatLoc { font-size: 0.8rem; color: var(--text-dim); font-style: italic; }
 
+.beatTitle { margin: 0; font-family: var(--font-display); font-size: 1.35rem; line-height: 1.25; color: var(--text-strong); }
 .beatText { margin: 0; font-size: 1.15rem; line-height: 1.5; font-family: var(--font-display); }
 .trait { margin: 0; font-size: 0.85rem; color: var(--gold-soft-hi); font-style: italic; }
 
@@ -108,20 +109,27 @@
   overflow: hidden;
   background: var(--surface-1);
 }
-.zones { position: absolute; inset: 0; display: flex; }
-.zone { height: 100%; border-right: 1px solid var(--surface-0); }
+/* Zone tints render ON TOP of the fill at partial alpha, so the benchmark
+   levels stay visible while the bar rises. Rank runs blood → ember → neutral →
+   emerald → BRIGHT emerald (best is green, not yellow — Stefan). */
+.zones { position: absolute; inset: 0; display: flex; pointer-events: none; }
+.zone { height: 100%; border-right: 1px solid color-mix(in srgb, var(--text-strong) 40%, transparent); }
 .zone:last-child { border-right: none; }
-.zone[data-grade="fail"] { background: color-mix(in srgb, var(--c-blood) 22%, var(--surface-1)); }
-.zone[data-grade="poor"] { background: color-mix(in srgb, var(--c-ember) 18%, var(--surface-1)); }
-.zone[data-grade="ok"]   { background: color-mix(in srgb, var(--c-parchment) 12%, var(--surface-1)); }
-.zone[data-grade="good"] { background: color-mix(in srgb, var(--c-emerald) 18%, var(--surface-1)); }
-.zone[data-grade="crit"] { background: color-mix(in srgb, var(--c-gold) 26%, var(--surface-1)); }
+.zone[data-grade="fail"] { background: color-mix(in srgb, var(--c-blood) 30%, transparent); }
+.zone[data-grade="poor"] { background: color-mix(in srgb, var(--c-ember) 24%, transparent); }
+.zone[data-grade="ok"]   { background: color-mix(in srgb, var(--c-parchment) 14%, transparent); }
+.zone[data-grade="good"] { background: color-mix(in srgb, var(--c-emerald) 26%, transparent); }
+.zone[data-grade="crit"] {
+  background: color-mix(in srgb, var(--c-emerald) 48%, transparent);
+  box-shadow: inset 0 0 6px color-mix(in srgb, var(--c-emerald) 70%, transparent);
+}
 .fill {
   position: absolute;
   left: 0; top: 0; bottom: 0;
-  background: linear-gradient(180deg, var(--gold-soft-hi), var(--gold-soft-lo));
-  border-radius: var(--r-pill);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--c-gold) 55%, transparent);
+  background: linear-gradient(180deg, var(--c-parchment), var(--c-parchment-dim));
+  /* The playhead: a 2px leading edge that survives every zone tint. */
+  border-right: 2px solid var(--text-strong);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--c-parchment) 60%, transparent);
 }
 
 /* The landed result: grade tag pops, effect note beside it, THEN the prose. */
@@ -140,7 +148,7 @@
   border-radius: var(--r-sm);
   border: 1px solid currentColor;
 }
-.rollGrade[data-grade="crit"] { color: var(--c-gold); }
+.rollGrade[data-grade="crit"] { color: var(--c-emerald); text-shadow: 0 0 8px color-mix(in srgb, var(--c-emerald) 60%, transparent); }
 .rollGrade[data-grade="good"] { color: var(--c-emerald); }
 .rollGrade[data-grade="ok"] { color: var(--c-parchment); }
 .rollGrade[data-grade="poor"] { color: var(--c-ember); }
@@ -175,7 +183,7 @@
 .outcome[data-outcome="success"] .outcomeTag { color: var(--c-emerald); }
 .outcome[data-outcome="failure"] .outcomeTag { color: var(--c-blood); }
 .outcomeReward { font-size: 0.95rem; color: var(--text-dim); }
-.outcomeCut { font-size: 1.4rem; font-weight: 800; color: var(--gold-soft-hi); }
+.outcomeNote { font-size: 0.8rem; color: var(--text-dim); font-style: italic; }
 
 .controls {
   padding: var(--sp-3) var(--sp-4) calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));

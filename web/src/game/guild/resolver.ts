@@ -130,7 +130,8 @@ export function resolveQuest({ quest, partyId, cutPct, durationDays, seed }: Res
     beats.push(resolveBeat(quest.bonusBeat, partyId, rng, carry, 1, "bonus"));
   }
 
-  const reward = quest.dailyRate * durationDays;
+  // Flat pay: the posted total is the pool; duration costs time, never adds gold.
+  const reward = quest.reward;
   const outcome: AdventureLog["outcome"] = failed ? "failure" : "success";
   // A bonus beat sweetens the reward; a poor overall run trims it a touch (the
   // pool the guild takes its cut of).

@@ -96,7 +96,9 @@ export function partyTraitMod(partyId: string, type: import("./types").BeatType)
       if (!t.types.includes(type)) continue;
       delta += t.delta;
       const mag = Math.abs(t.delta);
-      if (!pick || mag > pick.mag) pick = { mag, blurb: t.blurb };
+      // Name the hero — "slips through — Nimble" alone read as a riddle
+      // (Stefan). "Pell Quick slips through — Nimble".
+      if (!pick || mag > pick.mag) pick = { mag, blurb: `${HERO_BY_ID[id].name} ${t.blurb}` };
     }
   }
   return { delta, blurb: pick?.blurb };

@@ -10,7 +10,9 @@ export const PHASES = ["dawn", "midday", "dusk", "night"] as const;
 export type Phase = (typeof PHASES)[number];
 
 /** Bump on any breaking GuildState shape change (persist.ts discards + reinits). */
-export const SAVE_VERSION = 3; // v3: Beat.score (the story check-bar)
+export const SAVE_VERSION = 4; // v4: flat-rewards economy — a SEMANTIC break, not a
+// shape change (persisted Assignment.logs were priced per-day and would
+// contradict the new board + ledgers); discard-reinit per policy.
 
 export const STARTING_GOLD = 1000;
 export const DAILY_UPKEEP = 60;
@@ -48,8 +50,8 @@ export const SINK_LINES_BEFORE_PROPOSAL = 2;
 export const FEED_CAP = 150;
 export const MAIL_CAP = 120;
 
-/** advanceUntilStop's runaway guard. A normal day is ~25–35 events with three
- * parties; a full day must fit under this (tested). */
+/** advanceUntilStop's runaway guard. A normal day is ~9 events (range 4–13)
+ * with three parties; a full day must fit under this (tested). */
 export const ADVANCE_CAP = 60;
 
 /** Activity lengths in ticks. */

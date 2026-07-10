@@ -2,8 +2,104 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-07-10 - Board & report legibility v2 — PR opened (awaiting Codex)
+- Gate: codex-fixed — **PR #38 into `dev`**. Codex (on `a8beb94`): "Didn't find any major
+  issues." Nothing to fix. Process note, declared: Review #2 ran as TWO
+  dual-persona agents (Designer+PX, Engineer+Adversary) covering all four §20 lenses — a
+  session-length economy, not a skipped lens.
+- Review #2 (on the DIFF): **5 blockers, all fixed** — (1) per-card popover state let TWO
+  parchment notes stack (the kit's one-note contract assumes shared state) → one `info` state +
+  one `InspectPopover` lifted to HallScreen; (2+3) two un-annotated Advance/Auto echoes remained
+  in DESIGN.md and life.ts still said "dailyRate desc" (a claimed sweep that hadn't landed —
+  §70) → all fixed; (4) Stefan's verbatim "green cat" quest-card mockup was missing from the
+  challenge-v2 fold → restored word-for-word; (5) the working tree carried the fixes uncommitted
+  (HEAD alone shipped the dual-popover bug) → committed. Also folded: the standalone backdrop
+  swallow now arms ONLY when a dialog is actually open (it was eating the first tap after
+  dismissing a Hall note — e.g. a Play press); scroll-to-Needs-you on the latching Play tap;
+  brighter skulls; dead popover CSS pruned from HeroCard.module.css; the as-built paragraph's
+  own stale comparator phrase.
+- Engineer+Adversary verified: golden fixture beats byte-identical vs origin/dev (all 20 keys,
+  mechanical diff) with hand-edited rewards confirmed by execution AND by hand; zero dailyRate
+  refs in code; driver state machine matches the pinned spec (latch/auto-resume/tab-hide/always-
+  live Pause, StrictMode-safe); playhead legible through the strongest tint (~0.64 vs 0.22 lum);
+  20-day flat-economy probe −6.9..−12.5 g/day unbought (inside the band); forbidden dirs
+  untouched. Designer+PX scorecard: all 11 of Stefan's round-2 asks verified in code +
+  screenshots.
+- Build-time catch (logged for honesty): the popovers initially white-screened —
+  `e.currentTarget` read inside a deferred setState updater (the PR #27 lesson re-learned);
+  caught by the headless walkthrough.
+- Verified after fixes: tsc + build green; 89 vitest pass; headless full loop green (popover
+  single-instance, Play→Needs you→story→layered meter "Triumph"→ledger-pointer outcome→latched
+  auto-resume). Screenshots `docs/screenshots/canvas3-*`.
+
+## 2026-07-10 - Board & report legibility v2 — build done (see PR entry)
+- Gate: build (plan + Review #1 cleared; Review #2 verdicts in the PR entry above)
+- Built as planned (sim commit `1a62d51` carries both sim+UI; assets in `21de1c0`): flat rewards
+  (fixture reward/guildCut hand-edited, beat tuples byte-untouched — verified by an in-script
+  machine-diff before write), skulls/daysLabel helpers + pinned tests, Play/Pause/Speed driver
+  with the pinned state machine, kit-extracted Inspect popover (heroes/inspect.tsx is now a
+  shim), layered check meter with playhead, grade ladder Botch/Poor/Success/Great/Triumph,
+  result-first outcome, DESIGN.md amendments + Stefan's challenge-v2 spec folded.
+- Build-time catch: the card-title popovers crashed white-screen on tap — `e.currentTarget`
+  read inside the deferred setState updater (null by then; the exact PR #27 review lesson) →
+  hoisted before the updater. Caught by the headless walkthrough, not review — noted for
+  Review #2's attention.
+- Verified: `tsc -b` + `vite build` green; **89 vitest pass**; headless @430px full loop: flat
+  rewards + "1+ days" + skull rows, per-type detail, ⓘ popover open/dismiss, Play → auto-pause
+  ("Needs you" label) → tavern decision → sealed story (layered meter, zones visible through
+  the fill, playhead, "Great" tag, hero-named trait line) → brokerage-free outcome with the
+  ledger pointer → LATCHED auto-resume after resolve → Pause. Zero console errors, no
+  h-overflow. Screenshots `docs/screenshots/canvas3-*`.
+
+## 2026-07-10 - Board & report legibility v2 (Stefan's 2nd play session) — plan done
+- Gate: plan
+- Branch: `claude/slice-living-canvas-843hho` (restarted off `origin/dev` after PR #37 merged;
+  first commit = §50 backfill of #37).
+- Stefan's forks answered directly: FLAT quest rewards (road 350g / ruins 700g / standing 25g;
+  duration costs time only); driver becomes **Play/Pause/Speed** (no single-event Advance);
+  the multi-hero/challenge-type redesign defers to its own slice via a DESIGN.md fold.
+- Scope: sim (flat rewards + comparator re-pin, typeSkulls/questSkulls/daysLabel helpers, feed
+  cleanup incl. tavern-perspective + hero-named trait cut-ins + de-articled challenge titles,
+  SAVE_VERSION 4 semantic bump); UI (quest rows "350g · 1+ days · 💀💀" + per-type icon+skull
+  detail, ⓘ→kit-extracted parchment popover, Play/Pause/Speed driver, story bar with zones
+  visible through the fill + re-ranked colors + playhead tick + grade labels
+  Botch/Poor/Success/Great/Triumph, two-row beat header, result-first outcome card without the
+  brokerage line); DESIGN.md fold of the challenge-v2 / per-hero-bars / navigation / outcome-v2
+  / economy-report sketches + the Time-paragraph amendment. Combat core untouched.
+- Review #1 (4-persona, on the PLAN): 7 merged blockers, all folded — (1) bestPosting re-pinned
+  as total-`reward` DESC, id ASC (heroes chase the number the board shows; the 7-day-purse
+  pathology is ACCEPTED in writing and revisits with challenge-v2); (2) the Play state machine
+  pinned: armed-through-decision-pauses with AUTO-RESUME on resolve (today's Auto semantics),
+  hard-disarm on tab-hide, blocked state shows main label "Needs you" (label ≠ subtitle) and
+  tapping scrolls to the Needs-you box, Pause dims via aria-disabled/data-attr; (3) golden
+  fixture: NO recapture — hand-edit only the 20 reward/guildCut values (beats byte-untouched by
+  construction; a recapture could launder rng drift); (4) helpers pinned: typeSkulls includes
+  the bonus beat (dots-never-lie precedent), absent types omitted; questSkulls = max (standing
+  1💀, road 2💀, ruins **4💀** — the killer guardian beat is what fails runs); daysLabel with
+  the "1 day" singular (road AND ruins both read "1+ days"); (5) travel challenge icon =
+  arrow_cross (flag_triangle already means "out on quest" in the same card); (6) the fill gets
+  a 2px playhead tick + a crit-zone contrast check (a Triumph landing must not wash out in the
+  gold tint); (7) DESIGN.md "Time" paragraph amended to play-primary + its three downstream
+  echoes annotated + a §12 number-sheet pointer.
+- Non-blocking folded: popover extracted from heroes/inspect.tsx into ui/kit (re-fighting its
+  dismiss bugs forbidden; text-only, no X); `advance` dropped from GuildApi (sim keeps
+  advanceUntilStop for tests); kit-side icon names for board glyphs (persisted IconName union
+  untouched); shared localStorage-pref kit helper for both speed chips; day-1 feed keeps one
+  informative seeded line ("two letters await takers" — not dawn bloat); outcome card gains the
+  faint pointer "settled in tonight's ledger"; grade UNION untouched (labels only — persisted +
+  fixture-pinned); stale-comment sweep (tuning +8g/day, life.ts comparator doc, ADVANCE_CAP
+  event count ~9/day, quests/types reward docs).
+- Adversary probes (10 seeds × 30 days, closed loop): flat economy needs NO retune — net/day
+  −15.4 [−24..−10.8] unbought (was −19.1), no board rot (withdrawals 0.6/30d), wallet inflation
+  +17% absorbed; pacing measured ~9 events/day → a watched day ≈ 8/4/2s at the three speeds;
+  next slice's 7-day quests re-open the top-speed question (noted).
+- Open questions: none blocking. SAVE_VERSION 4 wipes live saves (semantic pricing break, not
+  shape — flagged for the PR body).
+
 ## 2026-07-09 - Hall & Story UX polish — PR opened (awaiting Codex)
-- Gate: codex-fixed — **PR #37 into `dev`**. Codex (on `42f2cd7`, one P3, fixed in `9e807f2`):
+- Gate: **merged 2026-07-10 13:20 +0200** (merge commit `08001b0`; backfilled 2026-07-10).
+  **PR #37 into `dev`**. Plan + both reviews + Codex cleared. Codex (on `42f2cd7`, one P3,
+  fixed in `9e807f2`):
   on the final beat mid-rise the button read "See outcome ›" while the handler correctly
   snapped — a label/behavior mismatch needing a confusing second tap → the label now follows
   the handler ("Skip the rise" mid-rise on every beat, including the last). Review #2 on the

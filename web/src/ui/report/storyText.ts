@@ -3,14 +3,17 @@
 // state mechanics that aren't true for THIS beat — no "next check" claims on
 // the final or bonus beat, and a good recovery still carries a penalty).
 
+import { readPref, savePref } from "../kit";
 import type { Beat, Grade } from "../../game/guild";
 
+// Display ladder (Stefan's benchmark words). The Grade UNION literals are
+// persisted + fixture-pinned — labels only, never the keys.
 export const GRADE_LABEL: Record<Grade, string> = {
   crit: "Triumph",
-  good: "Good",
-  ok: "Scraped by",
-  poor: "Rough",
-  fail: "Failed",
+  good: "Great",
+  ok: "Success",
+  poor: "Poor",
+  fail: "Botch",
 };
 
 /** The one-line consequence under the landed meter. `hasNext` = another beat
@@ -62,20 +65,9 @@ export const SPEED_ORDER: StorySpeed[] = ["slow", "normal", "fast"];
 export const SPEED_LABEL: Record<StorySpeed, string> = { slow: "Slow", normal: "Normal", fast: "Fast" };
 
 export function readStorySpeed(): StorySpeed {
-  if (typeof localStorage === "undefined") return "normal";
-  try {
-    const v = localStorage.getItem(SPEED_KEY);
-    return v === "slow" || v === "fast" ? v : "normal";
-  } catch {
-    return "normal";
-  }
+  return readPref<StorySpeed>(SPEED_KEY, SPEED_ORDER, "normal");
 }
 
 export function saveStorySpeed(speed: StorySpeed): void {
-  if (typeof localStorage === "undefined") return;
-  try {
-    localStorage.setItem(SPEED_KEY, speed);
-  } catch {
-    /* privacy mode — the pref just doesn't stick */
-  }
+  savePref(SPEED_KEY, speed);
 }

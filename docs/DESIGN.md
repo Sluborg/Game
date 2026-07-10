@@ -61,9 +61,12 @@ The loop: **wealth → upgrades (buildings + gear) & influence → better heroes
 prosperity & spending → more wealth.** Prices are fixed; you grow income by growing the ecosystem,
 not by tuning rates.
 
-**Time — a skip-primary living clock.** An **"Advance / ▷ to next event"** control is the spine
-(the thing you *need*); a running clock with **speed + auto-pause on events** is an *optional*
-lean-in overlay. Simulated time is **fully decoupled from real time** — you control the clock, it
+**Time — a play-primary living clock.** *(Amended on Stefan's 2nd play session — supersedes the
+original "skip-primary" framing below.)* The spine is **Play** — a running clock with a speed
+setting that **auto-pauses on decisions** — plus an explicit Pause. The single-event
+"Advance / ▷" control retired from the UI (it survives in the sim as `advance`/`advanceUntilStop`
+for tests). Original framing, kept for the record: an "Advance / ▷ to next event" control is the
+spine; the running clock is an optional lean-in overlay. Simulated time is **fully decoupled from real time** — you control the clock, it
 never controls you; backgrounding the app is safe, and reopening does a **lazy catch-up** to a
 single digest. Engineering: an **event-queue on integer sim-ticks**. Its *seed* already exists — the
 precompute-at-dispatch / reveal-at-return `Assignment`, the seeded RNG, and the pure-reducer +
@@ -92,6 +95,39 @@ responds to your upgrade investments. Tension is added next: **neglect → your 
 rival** (pre-rival: they quit the region, §8) and **over-investing → bankruptcy** (the cash clock /
 charter that Slice 1 built but left unwired). "Canvas first, then arm the loss" is the deliberate
 order.
+
+**Report & challenges v2 — Stefan's spec (2026-07-10, the next slice).** Recorded from his
+second play session; builds on the shipped check-meter:
+
+- **Challenge types v2:** Investigation/Research · Travel · Mystic/Occult · Social/Politics ·
+  Craft/Labor (clear rubble, build, rescue work) · Combat · Infiltration. A challenge can
+  combine **two or more types at different levels** ("research the evil archmage" =
+  Investigation 60 + Occult 55) on a **~0–100 difficulty scale** (superseding today's 6–18).
+  Quest skulls stay ≈ the max across its challenges (possibly trimming outliers). His quest-card
+  mockup, verbatim:
+
+  > Find the green cat 💀💀
+  > ⌛ 2++ days
+  > From: Jalk Chozop, antiquarian
+  > 🔎 Investigation 💀💀
+  > 🏞 Travel 💀💀
+  > 🔪 Combat 💀
+  >
+  > (with the Kenney icons)
+- **Per-hero resolution:** every participating hero rolls the challenge — **one bar per hero,
+  filling simultaneously**. Challenges declare participation ("all must sneak" / "two may sneak
+  — then only those two fight the next challenge"). A **crit can assist the next check or cover
+  a teammate's failure**. Traits/gear/skills shift a hero's zone thresholds (~±5% per relevant
+  trait) — visible in the bar's benchmark positions.
+- **Quest pages + clickable everything:** every quest/party/hero mention (feed, quests card,
+  strip) navigates to its page; popups get an X, pages get a back arrow. The quest page shows
+  the challenge list and, below, the assigned party — with **the guild's ESTIMATE of which
+  challenges look easy/hard for them** (never ground truth — this is the guardrail-#2 read).
+- **Outcome v2:** Result (main) → total reward (secondary) → extra loot (tertiary) → headers
+  for **injuries**, **new traits**, **relationship changes** ("Party cohesion −12, major
+  setback" · "Rudolf → Xerxes +4, combat heroics" · "All → Brynolf −8, fled during combat").
+  The guild cut stays out of this screen (economy report instead).
+- **Economy report:** total income view, tap-to-drill by source (sales / tavern / quests / …).
 
 **Design guardrails (the four kill-tests every later slice must pass):**
 1. **Not a spectator** — each session has a legible moment where *your* read/investment changed an
@@ -508,7 +544,9 @@ No other combat-core changes are authorized by this doc.
 > core model. New economy (see "The living guild"): income = **hero spending at your fixed-price
 > facilities** (main) + a flat **~10% brokerage cut** + **building passive**; upkeep is the burn;
 > the player grows income by **investing in upgrades**, never by tuning rates. The
-> cut-as-priced-decision does not survive. *(Amended in the living-canvas build: the acceptance /
+> cut-as-priced-decision does not survive. *(2nd amendment: quest pay is now FLAT — road 350g,
+> ruins 700g, standing 25g; duration costs time, never adds gold — superseding this section's
+> per-day number sheet, "reward × duration", and the 200g/600g figures below.)* *(Amended in the living-canvas build: the acceptance /
 > appetite / observation-bracket machinery is **dormant** this slice, not live — with a flat 10%
 > brokerage every share is 90%, so ask-vs-share acceptance is degenerate; quest choice is
 > motivation-driven (wallet need + a seeded fame urge, `life.ts`). The ask data survives in
@@ -792,7 +830,8 @@ consequence → readable outcome → money pressure. Carries its own foundations
 Every slice still ends playable; the canvas comes first, then the player's hand, then tension:
 
 1. **Living canvas** — the **event-queue clock** + skip-primary driver (Advance / play / speed /
-   skip-to-next-event / auto-pause) + **autonomous party daily-life** (rest / train / take-quest,
+   skip-to-next-event / auto-pause) *(driver later pivoted play-primary — see the amended Time
+   paragraph)* + **autonomous party daily-life** (rest / train / take-quest,
    minimal) + the **Hall Feed** + reuse of the board / resolver / animated story. Economy mostly
    stubbed **but not decision-less: ships at least one fixed-price investment** (e.g. a single
    building or a gear buy) that visibly shapes the canvas — so the first slice already responds to
@@ -803,12 +842,13 @@ Every slice still ends playable; the canvas comes first, then the player's hand,
    dawn/midday/dusk/night), pinned within-tick order `(tick, type-rank night-last, ord)`; pure
    handlers `decide / finish / return / night` in `web/src/game/guild/clock.ts` restructure the
    old endDay economics; `advanceUntilStop()` (to the next **decision** or nightfall) is the
-   skip-primary spine, with an optional Auto 1×/3× overlay that is pure presentation. **Hero
+   skip-primary spine, with an optional Auto 1×/3× overlay that is pure presentation. *(Driver
+   later pivoted play-primary — see the amended Time paragraph.)* **Hero
    wallets** (the design question resolved): per-hero gold; earn = reward − the flat 10%
    brokerage, split evenly, remainder to the boss; spend on rest ~15%/min 5g and train ~20%/min
    8g of wallet (always clamped to the wallet), routed to your facility if built, else lost to
    the village (a tracked sink the feed advertises); motivation = avg wallet < 60g → best-paying
-   eligible posting (pinned comparator: dailyRate desc, id asc) or a standing shift, else
+   eligible posting (pinned comparator: total reward desc, id asc — flat-pay amendment) or a standing shift, else
    lifestyle with a ~15% seeded fame-quest urge across ALL eligible postings; every return
    forces one decompress rest. The **Hall Feed** ships its three registers (ambient dim /
    notable / decision gold-boxed, undone decisions pinned under "Needs you"); standing-job
@@ -818,7 +858,8 @@ Every slice still ends playable; the canvas comes first, then the player's hand,
    night. The one investment is the **Tavern, 400g fixed** — proposal auto-pauses once grounded
    (day ≥ 2 + watched village sinks + affordable at *displayed* gold, so a sealed payout can
    never announce itself through the proposal); once built, rest-spend lands in the till
-   nightly. *A stated behavioral tell:* after the one forced decompress rest, a failed party is
+   nightly. *(The Advance/Auto driver described here pivoted to Play/Pause/Speed on Stefan's
+   2nd play session — see the amended Time paragraph.)* *A stated behavioral tell:* after the one forced decompress rest, a failed party is
    broke and marches straight back out while a successful one lazes — the strip telegraphing
    "they came home empty" before the envelope opens is diegetic texture we keep, not a leak
    (amounts stay hidden; the story still owns the reveal).
@@ -842,8 +883,8 @@ Every slice still ends playable; the canvas comes first, then the player's hand,
    pacing until more quest defs land). Investments renamed **Buildings** (Guild Hall + Tavern,
    "Ready" chip gated on displayed gold). The one-buyable "Ready" chip is a spend-your-400g nag
    today — it must become a real choice signal, not a checklist, when slice 2's menu lands
-   (guardrail #5). Explainers sit behind tap-the-title ⓘ. The Advance/Auto pair contrasts on
-   the verb (skip ahead vs watch it play).
+   (guardrail #5). Explainers sit behind tap-the-title ⓘ. *(The Advance/Auto pair described here was superseded
+   the next day by Play/Pause/Speed — see the amended Time paragraph.)*
 2. **The businessman's hand** — the full **Majesty building + gear upgrades at fixed prices** +
    the hero-spending economy + the flat 10% cut + building passive + upkeep. **The read the bet is
    priced against: the dormant CV certainty chips (already built in Slice 1) go LIVE here** — so
