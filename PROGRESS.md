@@ -2,9 +2,48 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-07-10 - Header driver (one toggle + speed chip) — build done, PR opened
+- Gate: codex-fixed → awaiting merge decision (plan + Review #1 + Review #2 + Codex cleared)
+- Codex (PR #39): ONE finding, P2 — the slimmed bottom padding dropped the nav's
+  `env(safe-area-inset-bottom)` share (the old 104px cushion silently absorbed it; ~22px of the
+  last feed row under the nav on notched phones). Fixed to
+  `calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + var(--sp-3))` — matches the
+  HeroesScreen/NavBar pattern. Delta re-reviewed (Engineer+Adversary): clean; build + headless
+  walkthrough re-run green. This also closes Review #2's "pre-existing safe-area gap" follow-up.
+- Branch: `claude/slice-living-canvas-843hho` (restarted off `origin/dev` after PR #38 merged;
+  first commit = §50 backfill of #38). Scope: `web/src/ui/hall/HallScreen.tsx` +
+  `HallScreen.module.css` only.
+- Stefan's ask, delivered: ONE Play⇄Pause toggle with icon (inline SVG glyphs — U+23F8 renders
+  as tofu in the display font), speed chip showing ▶/▶▶/▶▶▶ ("one, two or three plays"), both
+  folded into the sticky top header at half width with Day·Phase + gold in the other half,
+  runway on a thin full-width line below, bottom fixed bar deleted (~104px returned to the feed).
+- Review #1 (plan; 4 personas — Adversary + PX re-run after a session-limit failure, declared):
+  pinned toggle branch order (blocked → scroll, stay latched; playing → pause; else play);
+  blocked tap STAYS latched — both unlatch variants provably misfire (short feeds / manual
+  scroll), and the interval's first fire already gives a one-beat pause window after unblocking;
+  fixed-width speed chip so cycling never reflows the toggle under the thumb; "Needs you" gains
+  an ember pulse; day/phase gets its own ellipsis clamp; walkthrough must drive blocked +
+  pause-mid-play taps, not just the happy path.
+- Review #2 (diff; 4 personas): **5 blockers, all fixed** — (1) ⏸ tofu box → SVG play/pause
+  glyphs; (2) header split wasn't half/half (`.status` had no flex-grow) → `flex: 1 1 50%`;
+  (3) `.gold` had no overflow clamp (5-digit treasuries could spill into the driver) → clamped;
+  (4) `.playBtn` could bleed its label onto the chip when squeezed → overflow hidden;
+  (5) `needsPulse` lacked the codebase's `prefers-reduced-motion` guard → added. Also folded:
+  `aria-pressed` no longer announces "pressed" while the label reads "Needs you". Non-blocking
+  accepted: header placement trades thumb reach for Stefan's explicit consolidation; safe-area
+  inset gap is pre-existing (follow-up); landscape unverified.
+- Verified: `tsc -b` + `vite build` green; **89 vitest pass**; headless @430×932 twice (before
+  and after R#2 fixes): toggle 127×48 true half-split, chip cycle ▶▶→▶▶▶→▶→▶▶ width-stable,
+  Play → "Pause" (aria-pressed true) → tap → "Play" (false) → run → "Needs you" → blocked tap
+  stays latched + scrolls → report resolves → story → auto-resume "Pause"; bottom clearance
+  194px; zero console errors, no h-overflow. Screenshots `docs/screenshots/canvas4-*` (incl.
+  the lone-▶ slow-chip extreme).
+- Open questions: none — Stefan's "Paused⏸️" label was rendered as "⏸ Pause" (action-label
+  convention; the pressed-in style shows state), flagged here for his veto.
+
 ## 2026-07-10 - Board & report legibility v2 — PR opened (awaiting Codex)
-- Gate: codex-fixed — **PR #38 into `dev`**. Codex (on `a8beb94`): "Didn't find any major
-  issues." Nothing to fix. Process note, declared: Review #2 ran as TWO
+- Gate: **merged 2026-07-10 19:34 +0200** (merge commit `8e2f3ce`; backfilled 2026-07-10).
+  **PR #38 into `dev`**. Plan + both reviews + Codex (no findings) cleared. Process note, declared: Review #2 ran as TWO
   dual-persona agents (Designer+PX, Engineer+Adversary) covering all four §20 lenses — a
   session-length economy, not a skipped lens.
 - Review #2 (on the DIFF): **5 blockers, all fixed** — (1) per-card popover state let TWO

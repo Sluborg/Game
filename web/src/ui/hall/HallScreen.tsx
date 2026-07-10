@@ -1,7 +1,7 @@
 // HallScreen — the living canvas (DESIGN "The living guild", slice 1). The Hall
-// tab shows the world LIVING: a sim-tick clock with a skip-primary driver
-// ("▷ Advance" runs to the next decision or nightfall; "Auto" is the optional
-// lean-in overlay), a party strip that reads as life, the board the HEROES read
+// tab shows the world LIVING: a sim-tick clock driven from the sticky header
+// (one Play⇄Pause toggle + a ▶/▶▶/▶▶▶ speed chip — Stefan, PR #39; no bottom
+// bar), a party strip that reads as life, the board the HEROES read
 // (observation only — no player verbs on it), the Hall Feed in three registers,
 // and the slice's one fixed-price investment (the tavern). Sealed quest
 // outcomes open as the StoryStage directly over the Hall (one tap from pause to
@@ -54,8 +54,28 @@ const BEAT_LABEL: Record<BeatType, string> = {
 type HallSpeed = "slow" | "normal" | "fast";
 const HALL_SPEED_ORDER: HallSpeed[] = ["slow", "normal", "fast"];
 const HALL_SPEED_LABEL: Record<HallSpeed, string> = { slow: "Slow", normal: "Normal", fast: "Fast" };
+// "One, two or three plays" (Stefan). The chip is FIXED-WIDTH for ▶▶▶ so
+// cycling never reflows the toggle under the thumb (Review #1 Adversary B3).
+const HALL_SPEED_GLYPH: Record<HallSpeed, string> = { slow: "▶", normal: "▶▶", fast: "▶▶▶" };
 const HALL_SPEED_MS: Record<HallSpeed, number> = { slow: 900, normal: 450, fast: 220 };
 const HALL_SPEED_KEY = "guild.ui.hallSpeed";
+
+/* Inline SVG play/pause glyphs — U+23F8 "⏸" renders as a tofu box in the
+ * display font (R#2 PX B1); drawn shapes can't fall back. */
+function PlayGlyph() {
+  return (
+    <svg viewBox="0 0 12 12" width={11} height={11} aria-hidden="true">
+      <path d="M2 1l9 5-9 5z" fill="currentColor" />
+    </svg>
+  );
+}
+function PauseGlyph() {
+  return (
+    <svg viewBox="0 0 12 12" width={11} height={11} aria-hidden="true">
+      <path d="M2 1h3v10H2zM7 1h3v10H7z" fill="currentColor" />
+    </svg>
+  );
+}
 
 interface OpenStory {
   log: NonNullable<Mail["log"]>;
@@ -106,10 +126,18 @@ export function HallScreen() {
     savePref(HALL_SPEED_KEY, next);
   };
 
-  const onPlayTap = () => {
+  // ONE toggle (Stefan, PR #39). Branch order is PINNED (Review #1 Engineer
+  // B1): blocked wins over playing — a "Needs you" tap scrolls and STAYS
+  // latched (unlatch variants provably misfire: Adversary B1); resolving the
+  // decision is what resumes time, and the interval's first fire waits one
+  // full speed period, so "⏸ Pause" is tappable for a beat after unblocking.
+  const onToggleTap = () => {
     if (blocked) {
-      // "Needs you": bring the pinned decisions into view; stay latched.
       needsYouRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    if (playing) {
+      setPlaying(false);
       return;
     }
     setPlaying(true);
@@ -129,14 +157,53 @@ export function HallScreen() {
 
   return (
     <div className={styles.screen}>
+      {/* The driver lives IN the sticky header (Stefan, PR #39): toggle +
+          speed chip take the left half, Day·Phase + gold the right; the
+          runway rides a thin full-width line below. The h1 goes visually
+          hidden — screen readers keep the landmark, the pixels go to play. */}
       <header className={styles.topbar}>
-        <div className={styles.dayblock}>
-          <h1 className={styles.title}>The Guild Hall</h1>
-          <span className={styles.day}>
-            Day {day} · {PHASE_LABEL[phase]}
-          </span>
+        <h1 className={styles.srOnly}>The Guild Hall</h1>
+        <div className={styles.topRow}>
+          <div className={styles.driver}>
+            <button
+              type="button"
+              className={styles.playBtn}
+              onClick={onToggleTap}
+              aria-pressed={playing && !blocked}
+              data-on={playing && !blocked}
+              data-blocked={blocked}
+            >
+              {blocked ? (
+                "Needs you"
+              ) : playing ? (
+                <>
+                  <PauseGlyph /> Pause
+                </>
+              ) : (
+                <>
+                  <PlayGlyph /> Play
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              className={styles.speedBtn}
+              onClick={cycleSpeed}
+              aria-label={`Speed: ${HALL_SPEED_LABEL[speed]} — tap to change`}
+            >
+              {HALL_SPEED_GLYPH[speed]}
+            </button>
+          </div>
+          <div className={styles.status}>
+            <span className={styles.day}>
+              Day {day} · {PHASE_LABEL[phase]}
+            </span>
+            <span className={styles.gold} aria-label={`Treasury ${shownGold} gold`}>
+              <Icon name="gold" size={16} /> {shownGold}g
+            </span>
+          </div>
         </div>
-        <Treasury state={state} shownGold={shownGold} />
+        <Runway state={state} />
       </header>
 
       {state.firstDay && (
@@ -165,41 +232,6 @@ export function HallScreen() {
         shownGold={shownGold}
       />
 
-      <div className={styles.controls}>
-        {/* Play-primary driver (Stefan): wide Play, explicit Pause, one Speed
-            chip. Main text only — no subtitles. Blocked state swaps Play's
-            LABEL to "Needs you" (a label, not a subtitle) and tapping it
-            scrolls the pinned decisions into view. No DOM `disabled` flips
-            under the finger (haptics) — aria-disabled + data-attrs only. */}
-        <button
-          type="button"
-          className={styles.playBtn}
-          onClick={onPlayTap}
-          aria-pressed={playing}
-          data-on={playing && !blocked}
-          data-blocked={blocked}
-        >
-          {blocked ? "Needs you" : playing ? "Playing…" : "▶ Play"}
-        </button>
-        <button
-          type="button"
-          className={styles.pauseBtn}
-          onClick={() => setPlaying(false)}
-          aria-disabled={!playing}
-          data-dim={!playing}
-        >
-          Pause
-        </button>
-        <button
-          type="button"
-          className={styles.speedBtn}
-          onClick={cycleSpeed}
-          aria-label={`Speed: ${HALL_SPEED_LABEL[speed]} — tap to change`}
-        >
-          {HALL_SPEED_LABEL[speed]}
-        </button>
-      </div>
-
       <InspectPopover data={info} onClose={() => setInfo(null)} />
 
       {story && (
@@ -214,20 +246,14 @@ export function HallScreen() {
   );
 }
 
-function Treasury({ state, shownGold }: { state: GuildState; shownGold: number }) {
+function Runway({ state }: { state: GuildState }) {
   // Runway comes from the last nightly ledger; while any sealed return is
   // unopened its tally stays hidden (the sim stores it raw — Codex R#34).
+  // Full header width now, so the pending-mask sentence never truncates.
   const ledger = lastLedger(state);
   const pending = state.mail.some((m) => m.kind === "outcome" && !m.read);
   const runway = pending ? "Open your reports for the tally." : (ledger?.runwayNote ?? "The books open fresh.");
-  return (
-    <div className={styles.treasury} aria-label={`Treasury ${shownGold} gold`}>
-      <span className={styles.gold}>
-        <Icon name="gold" size={16} /> {shownGold}g
-      </span>
-      <span className={styles.runway}>{runway}</span>
-    </div>
-  );
+  return <span className={styles.runway}>{runway}</span>;
 }
 
 function partyStatus(runtime: PartyRuntime, tick: number): { icon: Parameters<typeof Icon>[0]["name"]; text: string } {

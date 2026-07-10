@@ -6,32 +6,56 @@
 
 .screen {
   min-height: 100vh;
-  /* Reserve room for the fixed Advance bar (~76px) + nav. */
-  padding: 0 0 calc(var(--nav-h) + 104px);
+  /* The driver lives in the header now — only the nav needs clearing (plus a
+     breath so the last feed row's buttons never kiss the nav). The nav is
+     nav-h + the bottom safe-area inset tall (NavBar.module.css), so reserve
+     both — the old 104px cushion silently absorbed the inset (Codex PR #39). */
+  padding: 0 0 calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + var(--sp-3));
   background: var(--surface-0);
   color: var(--text-strong);
   font-family: var(--font-ui);
 }
 
+/* Sticky header = the driver row + a thin full-width runway line. The h1 is
+   visually hidden (screen readers keep the landmark). */
 .topbar {
   position: sticky;
   top: 0;
   z-index: 5;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  padding: var(--sp-3) var(--sp-4);
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-4) var(--sp-1);
   background: linear-gradient(180deg, var(--bar-1), var(--bar-2));
   border-bottom: 1px solid var(--stroke-soft);
 }
-.dayblock { display: flex; flex-direction: column; }
-.title { margin: 0; font-family: var(--font-display); font-size: 1.15rem; color: var(--text-gold); }
-.day { font-size: 0.8rem; color: var(--text-dim); }
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
 
-.treasury { display: flex; flex-direction: column; align-items: flex-end; text-align: right; min-width: 0; }
-.gold { display: inline-flex; align-items: center; gap: 4px; font-size: 1.05rem; font-weight: 700; color: var(--gold-soft-hi); }
-.runway { font-size: 0.7rem; color: var(--text-dim); max-width: 46vw; }
+/* Left half: the toggle + speed chip. */
+.driver { display: flex; align-items: stretch; gap: var(--sp-2); flex: 1 1 50%; min-width: 0; }
+
+/* Right half: Day · Phase over gold; both clamp instead of wrapping the bar.
+   .status matches .driver's flex so the split is a true half/half (R#2 PX B2). */
+.status { display: flex; flex-direction: column; align-items: flex-end; text-align: right; flex: 1 1 50%; min-width: 0; }
+.day { font-size: 0.8rem; color: var(--text-dim); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gold { display: inline-flex; align-items: center; gap: 4px; font-size: 1.05rem; font-weight: 700; color: var(--gold-soft-hi); white-space: nowrap; max-width: 100%; overflow: hidden; }
+.runway { font-size: 0.7rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .coach {
   margin: var(--sp-3) var(--sp-4) 0;
@@ -260,30 +284,25 @@
 
 .faded { margin: 0; font-size: 0.72rem; color: var(--text-dim); font-style: italic; text-align: center; }
 
-/* ── The driver ────────────────────────────────────────────────────────────── */
-.controls {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: var(--nav-h);
-  z-index: 10;
-  display: flex;
-  gap: var(--sp-2);
-  align-items: stretch;
-  padding: var(--sp-2) var(--sp-4) var(--sp-3);
-  background: linear-gradient(180deg, transparent, var(--surface-0) 30%);
-}
+/* ── The driver (in the header) ────────────────────────────────────────────── */
 .playBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   flex: 1;
-  min-height: 56px;
+  min-width: 0;
+  min-height: 48px;
+  overflow: hidden; /* squeezed labels clip, never bleed onto the chip (R#2) */
   border-radius: var(--r-md);
   border: 1px solid var(--stroke-gold);
   background: linear-gradient(180deg, var(--gold-soft-hi), var(--gold-soft-lo));
   color: var(--ink-gold);
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 800;
-  box-shadow: var(--shadow-2);
+  white-space: nowrap;
+  box-shadow: var(--shadow-1);
 }
 .playBtn:active { filter: brightness(0.92); }
 /* Structural playing state — an inset "pressed" look, not glow-only. */
@@ -293,28 +312,38 @@
   border-color: var(--stroke-gold);
   box-shadow: inset 0 2px 6px rgb(0 0 0 / 45%);
 }
-/* Blocked (decision pending while latched): the label says "Needs you". */
+/* Blocked (decision pending while latched): "Needs you" — ember + a slow
+   pulse so time-frozen still pulls the eye from a busier header (R#1 PX B4). */
 .playBtn[data-blocked="true"] {
   background: var(--surface-2);
   color: var(--c-ember);
   border-color: var(--c-ember);
   box-shadow: none;
+  animation: needsPulse 1.6s var(--ease-out) infinite;
 }
-.pauseBtn,
+@keyframes needsPulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--c-ember) 45%, transparent); }
+  50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--c-ember) 12%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .playBtn[data-blocked="true"] { animation: none; }
+}
+/* The speed chip: FIXED width for ▶▶▶ so cycling never reflows the toggle
+   under the thumb (R#1 Adversary B3); dim + bordered + small glyphs so a
+   lone ▶ never reads as a second Play (R#1 PX B3). */
 .speedBtn {
   flex: 0 0 auto;
-  min-width: 72px;
-  min-height: 56px;
+  width: 58px;
+  min-height: 48px;
   border-radius: var(--r-md);
   border: 1px solid var(--stroke-soft);
   background: var(--surface-2);
   color: var(--text-dim);
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.6rem;
+  letter-spacing: 1px;
 }
-.pauseBtn:active,
 .speedBtn:active { filter: brightness(1.12); }
-.pauseBtn[data-dim="true"] { opacity: 0.5; }
 
 /* Skull ratings + per-type challenge rows. */
 .skulls { display: inline-flex; gap: 1px; vertical-align: -2px; color: var(--c-parchment); }
