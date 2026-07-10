@@ -142,7 +142,9 @@ export function StoryStage({
             // Same gate as the stage: mid-rise it SNAPS, only a landed press
             // advances — the biggest button must not skip the reveal (R#2 Designer).
             <button type="button" className={styles.next} onClick={() => (shown ? advance() : setLanded(true))}>
-              {index === log.beats.length - 1 ? "See outcome ›" : shown ? "Next ›" : "Skip the rise"}
+              {/* Label follows the handler: mid-rise it SNAPS on every beat —
+                  including the last (Codex P3 on PR #37). */}
+              {!shown ? "Skip the rise" : index === log.beats.length - 1 ? "See outcome ›" : "Next ›"}
             </button>
           ) : (
             <button type="button" className={styles.next} onClick={onClose}>Done</button>
