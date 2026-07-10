@@ -3,7 +3,8 @@
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
 ## 2026-07-10 - Feedback round 3 (state toggle · meter marks · skip · narration · feed cap) — build done, PR opened
-- Gate: build + PR (plan + Review #1 + Review #2 cleared; awaiting Codex)
+- Gate: codex-clean → awaiting merge decision (plan + Review #1 + Review #2 + Codex cleared)
+- Codex (PR #40): ZERO findings — "Didn't find any major issues." on `fd57b5d`; no inline threads.
 - Branch: `claude/slice-living-canvas-843hho` (restarted off `origin/dev` after PR #39 merged;
   first commit = §50 backfill of #39). Scope: `web/src/ui/hall/*`, `web/src/ui/report/*`,
   `web/src/ui/kit/` (new TimeControls + Icon additions), COPY-ONLY strings in
