@@ -62,7 +62,6 @@ export const FILL_DELAY_MS = 500;
 
 const SPEED_KEY = "guild.ui.storySpeed";
 export const SPEED_ORDER: StorySpeed[] = ["slow", "normal", "fast"];
-export const SPEED_LABEL: Record<StorySpeed, string> = { slow: "Slow", normal: "Normal", fast: "Fast" };
 
 export function readStorySpeed(): StorySpeed {
   return readPref<StorySpeed>(SPEED_KEY, SPEED_ORDER, "normal");

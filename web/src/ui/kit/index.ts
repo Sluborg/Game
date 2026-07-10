@@ -6,3 +6,4 @@ export { Panel, type PanelProps } from "./Panel";
 export { Icon, type IconProps } from "./Icon";
 export { InspectChip, InspectPopover, type InspectData } from "./Inspect";
 export { readPref, savePref } from "./prefs";
+export { PlayGlyph, PauseGlyph, SpeedChip, TIME_SPEED_ORDER, type TimeSpeed } from "./TimeControls";

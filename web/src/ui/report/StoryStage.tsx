@@ -9,8 +9,9 @@
 // is one cycling chip, persisted as a UI-only pref. The final card reveals the
 // outcome + the guild's brokerage — the payoff the sealed envelope withheld.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { GRADE_ZONES, type AdventureLog, type Beat, type BeatType, type Grade } from "../../game/guild";
+import { Icon, PauseGlyph, PlayGlyph, SpeedChip } from "../kit";
 import {
   GRADE_LABEL,
   effectNote,
@@ -19,7 +20,6 @@ import {
   HOLD_MS,
   readStorySpeed,
   saveStorySpeed,
-  SPEED_LABEL,
   SPEED_ORDER,
   type StorySpeed,
 } from "./storyText";
@@ -33,6 +33,30 @@ const TYPE_LABEL: Record<BeatType, string> = {
 };
 
 const ZONE_ORDER: Grade[] = ["fail", "poor", "ok", "good", "crit"];
+
+/* Grade marks above the meter (Stefan: dashed lines at the limits, with
+ * symbols per level). Broken hearts carry the bad end, award rosettes the
+ * good — NEVER skulls, which already mean quest DIFFICULTY (Stefan). Sprite
+ * size shrinks with count so three rosettes fit the ~34px crit zone at 375px
+ * (Review #1 Adversary). */
+const ZONE_MARK: Record<Grade, { icon: "heartBroken" | "award"; n: number }> = {
+  fail: { icon: "heartBroken", n: 2 },
+  poor: { icon: "heartBroken", n: 1 },
+  ok: { icon: "award", n: 1 },
+  good: { icon: "award", n: 2 },
+  crit: { icon: "award", n: 3 },
+};
+const MARK_SIZE: Record<number, number> = { 1: 12, 2: 11, 3: 9 };
+
+/** Zone lookup for the live ticker — derived from GRADE_ZONES (no restated
+ * magic numbers) with crit's lower bound INCLUSIVE, matching scoreFor's clamp
+ * (a crit beat can land at exactly 90 — Review #1 Adversary). */
+function gradeAt(pct: number): Grade {
+  for (let i = ZONE_ORDER.length - 1; i > 0; i--) {
+    if (pct >= GRADE_ZONES[ZONE_ORDER[i]][0]) return ZONE_ORDER[i];
+  }
+  return ZONE_ORDER[0];
+}
 
 export function StoryStage({
   log,
@@ -93,7 +117,24 @@ export function StoryStage({
           <div className={styles.party}>{partyName}</div>
           <div className={styles.quest}>{questTitle}</div>
         </div>
-        <button type="button" className={styles.close} onClick={onClose} aria-label="Close story">✕</button>
+        <div className={styles.headBtns}>
+          {/* Skip lives in the corner, AWAY from the meter — skipping must be
+              deliberate, never a mis-tap that eats the reveal (Review #1 PX).
+              It lands on the full outcome card, not past it. */}
+          {!atEnd && (
+            <button
+              type="button"
+              className={styles.skip}
+              onClick={() => {
+                setLanded(false);
+                setIndex(log.beats.length);
+              }}
+            >
+              Skip to result »
+            </button>
+          )}
+          <button type="button" className={styles.close} onClick={onClose} aria-label="Close story">✕</button>
+        </div>
       </header>
 
       <div className={styles.stage} onClick={atEnd ? undefined : stageTap}>
@@ -132,11 +173,20 @@ export function StoryStage({
           <span className={styles.dot} data-on={atEnd} data-current={atEnd} data-final />
         </div>
         <div className={styles.btns}>
-          <button type="button" className={styles.speed} onClick={cycleSpeed} aria-label={`Story speed: ${SPEED_LABEL[speed]} — tap to change`}>
-            {SPEED_LABEL[speed]}
-          </button>
+          {/* Same control language as the Hall header (Stefan: "reuse
+              symbolism, sizes etc.") — but ACTION labels: this is playback of
+              a recorded past, not the world clock (Review #1 Designer). */}
+          <SpeedChip speed={speed} onCycle={cycleSpeed} context="Report speed" />
           <button type="button" className={styles.toggle} onClick={() => setAuto((a) => !a)} disabled={atEnd}>
-            {auto ? "Pause" : "Play"}
+            {auto ? (
+              <>
+                <PauseGlyph /> Pause
+              </>
+            ) : (
+              <>
+                <PlayGlyph /> Play
+              </>
+            )}
           </button>
           {!atEnd ? (
             // Same gate as the stage: mid-rise it SNAPS, only a landed press
@@ -172,11 +222,35 @@ function BeatCard({
   // point can't be read off the pace (Review #1 Designer B1).
   const durationMs = Math.max(120, Math.round((beat.score / 100) * FILL_BASE_MS[speed]));
   const [filling, setFilling] = useState(false);
+  const fillRef = useRef<HTMLDivElement>(null);
+  const meterRef = useRef<HTMLDivElement>(null);
+  // The live grade readout under the rising bar (Stefan: "result should
+  // follow progress underneath changing text when passing the thresholds").
+  // It reads the RENDERED fill width each frame — never elapsed-time math —
+  // so it can't desync from the bar (speed change mid-rise, background tab,
+  // snap tap) or flash a grade above the landing (Review #1 Adversary).
+  const [liveGrade, setLiveGrade] = useState<Grade>("fail");
 
   useEffect(() => {
     const t = window.setTimeout(() => setFilling(true), FILL_DELAY_MS);
     return () => window.clearTimeout(t);
   }, []);
+
+  useEffect(() => {
+    if (landed) return; // the landed block takes over with the true grade
+    let raf = 0;
+    const tick = () => {
+      const fill = fillRef.current;
+      const meter = meterRef.current;
+      if (fill && meter) {
+        const track = meter.getBoundingClientRect().width;
+        if (track > 0) setLiveGrade(gradeAt((fill.getBoundingClientRect().width / track) * 100));
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [landed]);
 
   // Fallback landing: a score-0 beat never changes width, so transitionend
   // never fires — without this, the card soft-locks and Auto stalls (real:
@@ -205,7 +279,20 @@ function BeatCard({
       </div>
       <h3 className={styles.beatTitle}>{beat.location}</h3>
 
+      {/* Grade marks ride ABOVE the bar, one cell per zone, dashed lines at
+          the limits (Stefan): broken hearts on the bad end, rosettes on the
+          good. Widths derive from GRADE_ZONES — never restated. */}
+      <div className={styles.marks} aria-hidden>
+        {ZONE_ORDER.map((g) => (
+          <span key={g} className={styles.markCell} style={{ width: `${GRADE_ZONES[g][1] - GRADE_ZONES[g][0]}%` }}>
+            {Array.from({ length: ZONE_MARK[g].n }, (_, i) => (
+              <Icon key={i} name={ZONE_MARK[g].icon} size={MARK_SIZE[ZONE_MARK[g].n]} className={styles.markIcon} />
+            ))}
+          </span>
+        ))}
+      </div>
       <div
+        ref={meterRef}
         className={styles.meter}
         role="meter"
         aria-valuemin={0}
@@ -217,6 +304,7 @@ function BeatCard({
             stay visible the whole rise (Stefan); the 2px playhead survives
             every tint so the landing edge can't wash out (Review #1 PX B3). */}
         <div
+          ref={fillRef}
           className={styles.fill}
           aria-hidden
           style={{ width: `${width}%`, transition: landed ? "none" : `width ${durationMs}ms linear` }}
@@ -234,7 +322,15 @@ function BeatCard({
         </div>
       </div>
 
-      {landed && (
+      {/* The result follows the rise: the live word ticks up through the
+          thresholds, then the landed block takes over with the true grade. */}
+      {!landed ? (
+        <div className={styles.landing} aria-hidden>
+          <span className={styles.rollGrade} data-grade={liveGrade} data-live>
+            {GRADE_LABEL[liveGrade]}…
+          </span>
+        </div>
+      ) : (
         <div className={styles.landing}>
           <span className={styles.rollGrade} data-grade={beat.grade}>{GRADE_LABEL[beat.grade]}</span>
           {note && <span className={styles.effect}>{note}</span>}
@@ -244,9 +340,24 @@ function BeatCard({
       {landed && (
         <div className={styles.prose}>
           <p className={styles.beatText}>{beat.text}</p>
-          {beat.traitBlurb && <p className={styles.trait}>{beat.traitBlurb}</p>}
+          {beat.traitBlurb && <TraitLine blurb={beat.traitBlurb} />}
         </div>
       )}
     </article>
+  );
+}
+
+/** A trait cut-in line. The blurb's shape is "Hero Name does the thing —
+ * TraitName" (roster.ts); the trait name gets the char page's bordered-pill
+ * treatment (Stefan) so it reads as a TRAIT, not a stray adjective. A blurb
+ * without the separator renders plain — content from future drops must never
+ * crash the stage. */
+function TraitLine({ blurb }: { blurb: string }) {
+  const cut = blurb.lastIndexOf(" — ");
+  if (cut < 0) return <p className={styles.trait}>{blurb}</p>;
+  return (
+    <p className={styles.trait}>
+      {blurb.slice(0, cut)} <span className={styles.traitPill}>{blurb.slice(cut + 3)}</span>
+    </p>
   );
 }

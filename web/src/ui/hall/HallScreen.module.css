@@ -55,19 +55,27 @@
 .status { display: flex; flex-direction: column; align-items: flex-end; text-align: right; flex: 1 1 50%; min-width: 0; }
 .day { font-size: 0.8rem; color: var(--text-dim); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gold { display: inline-flex; align-items: center; gap: 4px; font-size: 1.05rem; font-weight: 700; color: var(--gold-soft-hi); white-space: nowrap; max-width: 100%; overflow: hidden; }
-.runway { font-size: 0.7rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.coach {
-  margin: var(--sp-3) var(--sp-4) 0;
-  padding: var(--sp-3);
-  font-size: 0.85rem;
-  line-height: 1.4;
-  color: var(--ink-parchment);
-  background: var(--c-parchment);
-  border-radius: var(--r-sm);
-  box-shadow: var(--shadow-1);
+/* The runway is a TAPPABLE narrated line (numbers live in its popover). The
+   chip resets button chrome; the dotted underline is the tap affordance. */
+.runwayBtn {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
 }
-.coach strong { color: var(--c-blood-deep); }
+.runway {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-decoration: underline dotted color-mix(in srgb, var(--text-dim) 55%, transparent);
+  text-underline-offset: 3px;
+}
 
 /* ── Party strip — the "alive" readout ─────────────────────────────────────── */
 .parties {
@@ -285,33 +293,39 @@
 .faded { margin: 0; font-size: 0.72rem; color: var(--text-dim); font-style: italic; text-align: center; }
 
 /* ── The driver (in the header) ────────────────────────────────────────────── */
+/* STATE-colored toggle (Stefan: the button shows the state, not the action):
+   PLAYING = lit gold, PAUSED/Play = dim surface, BLOCKED = ember. Visually low
+   (~38px — "they are very high, reduce height") but the tap target stays
+   ≥44px via the invisible extender (Review #1 Designer + PX). */
 .playBtn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   flex: 1;
   min-width: 0;
-  min-height: 48px;
+  min-height: 38px;
   overflow: hidden; /* squeezed labels clip, never bleed onto the chip (R#2) */
   border-radius: var(--r-md);
   border: 1px solid var(--stroke-gold);
-  background: linear-gradient(180deg, var(--gold-soft-hi), var(--gold-soft-lo));
-  color: var(--ink-gold);
+  background: var(--surface-2);
+  color: var(--text-gold);
   font-family: var(--font-display);
   font-size: 0.95rem;
   font-weight: 800;
   white-space: nowrap;
   box-shadow: var(--shadow-1);
 }
-.playBtn:active { filter: brightness(0.92); }
-/* Structural playing state — an inset "pressed" look, not glow-only. */
+.playBtn::after { content: ""; position: absolute; inset: -4px 0; }
+.playBtn:active { filter: brightness(1.1); }
+/* Structural playing state — LIT, the world is in motion. */
 .playBtn[data-on="true"] {
-  background: var(--surface-2);
-  color: var(--text-gold);
+  background: linear-gradient(180deg, var(--gold-soft-hi), var(--gold-soft-lo));
+  color: var(--ink-gold);
   border-color: var(--stroke-gold);
-  box-shadow: inset 0 2px 6px rgb(0 0 0 / 45%);
 }
+.playBtn[data-on="true"]:active { filter: brightness(0.92); }
 /* Blocked (decision pending while latched): "Needs you" — ember + a slow
    pulse so time-frozen still pulls the eye from a busier header (R#1 PX B4). */
 .playBtn[data-blocked="true"] {
@@ -328,22 +342,8 @@
 @media (prefers-reduced-motion: reduce) {
   .playBtn[data-blocked="true"] { animation: none; }
 }
-/* The speed chip: FIXED width for ▶▶▶ so cycling never reflows the toggle
-   under the thumb (R#1 Adversary B3); dim + bordered + small glyphs so a
-   lone ▶ never reads as a second Play (R#1 PX B3). */
-.speedBtn {
-  flex: 0 0 auto;
-  width: 58px;
-  min-height: 48px;
-  border-radius: var(--r-md);
-  border: 1px solid var(--stroke-soft);
-  background: var(--surface-2);
-  color: var(--text-dim);
-  font-weight: 700;
-  font-size: 0.6rem;
-  letter-spacing: 1px;
-}
-.speedBtn:active { filter: brightness(1.12); }
+/* (The speed chip moved to the kit — ui/kit/TimeControls, shared with the
+   StoryStage so both surfaces speak one control language.) */
 
 /* Skull ratings + per-type challenge rows. */
 .skulls { display: inline-flex; gap: 1px; vertical-align: -2px; color: var(--c-parchment); }

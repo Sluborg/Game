@@ -29,6 +29,20 @@
   font-size: 1rem;
   cursor: pointer;
 }
+.headBtns { display: flex; align-items: center; gap: var(--sp-2); }
+/* Skip-to-result: deliberate, corner-placed, away from the meter (R#1 PX). */
+.skip {
+  min-height: 44px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--stroke-soft);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.skip:active { filter: brightness(1.12); }
 
 .stage {
   flex: 1;
@@ -82,10 +96,13 @@
 .branch[data-branch="bonus"] { background: var(--gold-soft-lo); color: var(--ink-gold); }
 
 .beatTop { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+/* Larger + CAPS (Stefan: "the type text should be larger. maybe caps."). */
 .beatType {
-  font-size: 0.72rem;
+  font-size: 0.88rem;
   font-weight: 700;
-  padding: 3px 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 3px 12px;
   border-radius: var(--r-pill);
   border: 1px solid currentColor;
 }
@@ -98,9 +115,48 @@
 .beatTitle { margin: 0; font-family: var(--font-display); font-size: 1.35rem; line-height: 1.25; color: var(--text-strong); }
 .beatText { margin: 0; font-size: 1.15rem; line-height: 1.5; font-family: var(--font-display); }
 .trait { margin: 0; font-size: 0.85rem; color: var(--gold-soft-hi); font-style: italic; }
+/* The trait NAME as a bordered pill — the char page's trait treatment
+   carried into the story line (Stefan). */
+.traitPill {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid currentColor;
+  border-radius: var(--r-pill);
+  font-style: normal;
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+}
 
 /* ── The check meter — 5 grade zones (tint + tick, no labels: they don't fit
    430px; the landed grade tag carries the word — Review #1 PX B1). ────────── */
+
+/* Grade marks above the bar: one cell per zone, dashed lines at the LIMITS
+   rising from the bar (Stefan). Cells center their icon cluster; the dashed
+   right edge of each cell IS the threshold line. */
+.marks {
+  display: flex;
+  align-items: flex-end;
+  height: 18px;
+  margin-bottom: 2px;
+}
+.markCell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  height: 100%;
+  border-right: 1px dashed color-mix(in srgb, var(--text-strong) 55%, transparent);
+  overflow: hidden;
+}
+.markCell:last-child { border-right: none; }
+.markIcon { flex: 0 0 auto; color: var(--c-parchment); }
+/* Bad-end hearts read blood-tinted, good-end rosettes gold — the color says
+   which side of the line you're on before the count does. */
+.markCell:nth-child(1) .markIcon, .markCell:nth-child(2) .markIcon { color: var(--c-blood); }
+.markCell:nth-child(4) .markIcon { color: var(--gold-soft-hi); }
+.markCell:nth-child(5) .markIcon { color: var(--gold-soft-hi); }
+
 .meter {
   position: relative;
   height: 16px;
@@ -147,6 +203,13 @@
   padding: 3px 10px;
   border-radius: var(--r-sm);
   border: 1px solid currentColor;
+}
+/* The LIVE readout while the bar rises — visibly provisional (dashed, dim)
+   so the ticking word never reads as the verdict. */
+.rollGrade[data-live] {
+  border-style: dashed;
+  opacity: 0.75;
+  font-weight: 700;
 }
 .rollGrade[data-grade="crit"] { color: var(--c-emerald); text-shadow: 0 0 8px color-mix(in srgb, var(--c-emerald) 60%, transparent); }
 .rollGrade[data-grade="good"] { color: var(--c-emerald); }
@@ -203,23 +266,17 @@
 .dot[data-current="true"] { box-shadow: 0 0 0 3px var(--stroke-gold); }
 .dot[data-final] { border-style: dashed; }
 
-.btns { display: flex; gap: var(--sp-2); }
+.btns { display: flex; align-items: center; gap: var(--sp-2); }
 .overlay button { touch-action: manipulation; }
-.speed {
-  min-height: 48px;
-  min-width: 76px;
-  padding: 0 var(--sp-3);
-  border-radius: var(--r-md);
-  border: 1px solid var(--stroke-soft);
-  background: var(--surface-1);
-  color: var(--text-dim);
-  font-size: 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-.speed:active { filter: brightness(1.12); }
+/* (The speed chip moved to the kit — ui/kit/TimeControls — one control
+   language with the Hall header: same glyphs, same 38px-visual height.) */
 .toggle {
-  min-height: 48px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
   padding: 0 var(--sp-4);
   border-radius: var(--r-md);
   border: 1px solid var(--stroke-gold);
@@ -228,10 +285,11 @@
   font-weight: 700;
   cursor: pointer;
 }
+.toggle::after { content: ""; position: absolute; inset: -4px 0; }
 .toggle:disabled { opacity: 0.4; cursor: default; }
 .next {
   flex: 1;
-  min-height: 48px;
+  min-height: 44px;
   border-radius: var(--r-md);
   border: 1px solid var(--gold-soft-lo);
   background: linear-gradient(180deg, var(--gold-soft-hi), var(--gold-soft-lo));

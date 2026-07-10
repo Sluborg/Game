@@ -11,7 +11,20 @@
 // return can never leak its outcome through a visible gold jump (Review #1 B1).
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Icon, InspectChip, InspectPopover, Panel, readPref, savePref, type InspectData } from "../kit";
+import {
+  Icon,
+  InspectChip,
+  InspectPopover,
+  Panel,
+  PauseGlyph,
+  PlayGlyph,
+  SpeedChip,
+  TIME_SPEED_ORDER,
+  readPref,
+  savePref,
+  type InspectData,
+  type TimeSpeed,
+} from "../kit";
 import { useGuild } from "../guild/GuildContext";
 import { StoryStage } from "../report/StoryStage";
 import {
@@ -51,31 +64,10 @@ const BEAT_LABEL: Record<BeatType, string> = {
   combat: "Combat",
 };
 
-type HallSpeed = "slow" | "normal" | "fast";
-const HALL_SPEED_ORDER: HallSpeed[] = ["slow", "normal", "fast"];
-const HALL_SPEED_LABEL: Record<HallSpeed, string> = { slow: "Slow", normal: "Normal", fast: "Fast" };
-// "One, two or three plays" (Stefan). The chip is FIXED-WIDTH for ▶▶▶ so
-// cycling never reflows the toggle under the thumb (Review #1 Adversary B3).
-const HALL_SPEED_GLYPH: Record<HallSpeed, string> = { slow: "▶", normal: "▶▶", fast: "▶▶▶" };
-const HALL_SPEED_MS: Record<HallSpeed, number> = { slow: 900, normal: 450, fast: 220 };
+const HALL_SPEED_MS: Record<TimeSpeed, number> = { slow: 900, normal: 450, fast: 220 };
 const HALL_SPEED_KEY = "guild.ui.hallSpeed";
-
-/* Inline SVG play/pause glyphs — U+23F8 "⏸" renders as a tofu box in the
- * display font (R#2 PX B1); drawn shapes can't fall back. */
-function PlayGlyph() {
-  return (
-    <svg viewBox="0 0 12 12" width={11} height={11} aria-hidden="true">
-      <path d="M2 1l9 5-9 5z" fill="currentColor" />
-    </svg>
-  );
-}
-function PauseGlyph() {
-  return (
-    <svg viewBox="0 0 12 12" width={11} height={11} aria-hidden="true">
-      <path d="M2 1h3v10H2zM7 1h3v10H7z" fill="currentColor" />
-    </svg>
-  );
-}
+/** Feed render cap — today + the last two collapsed days. */
+const FEED_RENDER_DAYS = 3;
 
 interface OpenStory {
   log: NonNullable<Mail["log"]>;
@@ -89,7 +81,11 @@ export function HallScreen() {
   // decision-pause (interval gated below, resumes when the decision resolves);
   // tab-hide HARD-disarms (no surprise resume). Speed is a UI-only pref.
   const [playing, setPlaying] = useState(false);
-  const [speed, setSpeed] = useState<HallSpeed>(() => readPref(HALL_SPEED_KEY, HALL_SPEED_ORDER, "normal"));
+  const [speed, setSpeed] = useState<TimeSpeed>(() => readPref(HALL_SPEED_KEY, TIME_SPEED_ORDER, "normal"));
+  // Session-local: the toggle says "Play" (an invitation) only before the very
+  // first press on a fresh save; after that, stopped = "Paused" (a STATE —
+  // Stefan: the action-labeled button "feels reversed").
+  const everPlayed = useRef(false);
   const [story, setStory] = useState<OpenStory | null>(null);
   // ONE popover for the whole Hall (the HeroCard pattern the kit assumes) —
   // per-card state let two parchment boxes stack (Review #2 Designer B1).
@@ -121,7 +117,7 @@ export function HallScreen() {
   }, []);
 
   const cycleSpeed = () => {
-    const next = HALL_SPEED_ORDER[(HALL_SPEED_ORDER.indexOf(speed) + 1) % HALL_SPEED_ORDER.length];
+    const next = TIME_SPEED_ORDER[(TIME_SPEED_ORDER.indexOf(speed) + 1) % TIME_SPEED_ORDER.length];
     setSpeed(next);
     savePref(HALL_SPEED_KEY, next);
   };
@@ -141,6 +137,7 @@ export function HallScreen() {
       return;
     }
     setPlaying(true);
+    everPlayed.current = true;
     // Latching with decisions already pending: show the player WHY it won't run.
     if (pendingDecisions.length > 0) {
       needsYouRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -165,6 +162,10 @@ export function HallScreen() {
         <h1 className={styles.srOnly}>The Guild Hall</h1>
         <div className={styles.topRow}>
           <div className={styles.driver}>
+            {/* STATE labels, state-matched glyphs (Stefan: action labels "feel
+                reversed"): running = "▶ Playing", stopped = "⏸ Paused", the
+                very first visit invites with "▶ Play". Color carries the state
+                too — playing is lit gold, paused is dim (Review #1 PX). */}
             <button
               type="button"
               className={styles.playBtn}
@@ -177,22 +178,19 @@ export function HallScreen() {
                 "Needs you"
               ) : playing ? (
                 <>
-                  <PauseGlyph /> Pause
+                  <PlayGlyph /> Playing
                 </>
-              ) : (
+              ) : state.firstDay && !everPlayed.current ? (
                 <>
                   <PlayGlyph /> Play
                 </>
+              ) : (
+                <>
+                  <PauseGlyph /> Paused
+                </>
               )}
             </button>
-            <button
-              type="button"
-              className={styles.speedBtn}
-              onClick={cycleSpeed}
-              aria-label={`Speed: ${HALL_SPEED_LABEL[speed]} — tap to change`}
-            >
-              {HALL_SPEED_GLYPH[speed]}
-            </button>
+            <SpeedChip speed={speed} onCycle={cycleSpeed} context="Hall speed" />
           </div>
           <div className={styles.status}>
             <span className={styles.day}>
@@ -203,15 +201,13 @@ export function HallScreen() {
             </span>
           </div>
         </div>
-        <Runway state={state} />
+        <Runway state={state} shownGold={shownGold} setInfo={setInfo} active={info?.id === "runway"} />
       </header>
 
-      {state.firstDay && (
-        <p className={styles.coach}>
-          Your heroes live their own lives — rest, train, take quests, come home. Press{" "}
-          <strong>Play</strong>: the days roll by, and it pauses when something needs you.
-        </p>
-      )}
+      {/* The first-day coach paragraph is GONE (Stefan: "remove the start text
+          that heroes act on their own. we will add tutorial later."). Designer
+          flagged the cold start as a risk — accepted, player-directed; the
+          first-visit "▶ Play" toggle label is the remaining affordance. */}
 
       <section className={styles.parties} aria-label="Your parties">
         {state.parties.map((p) => (
@@ -246,14 +242,43 @@ export function HallScreen() {
   );
 }
 
-function Runway({ state }: { state: GuildState }) {
+function Runway({
+  state,
+  shownGold,
+  setInfo,
+  active,
+}: {
+  state: GuildState;
+  shownGold: number;
+  setInfo: React.Dispatch<React.SetStateAction<InspectData | null>>;
+  active: boolean;
+}) {
   // Runway comes from the last nightly ledger; while any sealed return is
   // unopened its tally stays hidden (the sim stores it raw — Codex R#34).
-  // Full header width now, so the pending-mask sentence never truncates.
+  // The line is NARRATED (Stefan: "the gold per day is a bit confusing at the
+  // top") — the actual per-night number lives behind a tap, and while sealed
+  // reports are pending the popover masks too (never leak through the detail).
   const ledger = lastLedger(state);
   const pending = state.mail.some((m) => m.kind === "outcome" && !m.read);
   const runway = pending ? "Open your reports for the tally." : (ledger?.runwayNote ?? "The books open fresh.");
-  return <span className={styles.runway}>{runway}</span>;
+  const recurring = ledger?.ledger?.reduce((s, e) => s + (e.oneOff ? 0 : e.amount), 0) ?? 0;
+  const detail = pending
+    ? "The tally hides until tonight's reports are opened."
+    : ledger
+      ? `The recurring trend is ${recurring >= 0 ? "+" : ""}${recurring}g a night (one-off works excluded). Treasury ${shownGold}g.`
+      : "No ledger yet — the first closes tonight.";
+  return (
+    <InspectChip
+      className={styles.runwayBtn}
+      active={active}
+      onClick={(e) => {
+        const anchor = e.currentTarget;
+        setInfo((cur) => (cur?.id === "runway" ? null : { id: "runway", anchor, title: "The books", effect: detail }));
+      }}
+    >
+      <span className={styles.runway}>{runway}</span>
+    </InspectChip>
+  );
 }
 
 function partyStatus(runtime: PartyRuntime, tick: number): { icon: Parameters<typeof Icon>[0]["name"]; text: string } {
@@ -470,7 +495,7 @@ function BuildingsCard({
                   anchor,
                   title: "Buildings",
                   effect:
-                    "Fixed prices — no haggling, no rate-tuning. A built facility captures the coin heroes would otherwise spend in the village; takings post to the ledger each night.",
+                    "The steward names one honest price for each work — paid once, and the hall is yours. A built hall captures the coin heroes would otherwise spend in the village; the takings post to the ledger each night.",
                 },
           );
         }}
@@ -485,7 +510,7 @@ function BuildingsCard({
       <ul className={styles.buildings}>
         <li className={styles.building}>
           <span className={styles.investName}>Guild Hall</span>
-          <span className={styles.investNote}>Your seat. Brings in +{PASSIVE_INCOME}g/day.</span>
+          <span className={styles.investNote}>Your seat. Steady rents bring in {PASSIVE_INCOME}g a day.</span>
         </li>
         <li className={styles.building}>
           {built ? (
@@ -498,7 +523,7 @@ function BuildingsCard({
           ) : (
             <div className={styles.invest}>
               <div className={styles.investText}>
-                <span className={styles.investName}>Tavern — {TAVERN_PRICE}g, fixed price</span>
+                <span className={styles.investName}>Tavern — {TAVERN_PRICE}g</span>
                 <span className={styles.investNote}>
                   A place for heroes to drink, play games and enjoy themselves. Hero coin lands in your till.{" "}
                   {left >= 0
@@ -547,6 +572,13 @@ function Feed({
     return [...map.entries()].sort((a, b) => b[0] - a[0]);
   }, [state.feed]);
 
+  // Render cap: today + the last two collapsed days (Stefan: "all the old
+  // days are piling up"). The cap slices the GROUPED output, never state.feed
+  // itself — the pinned "Needs you" strip above filters the FULL feed, so an
+  // undone decision can never be hidden by this (Review #1 Adversary).
+  const shownDays = byDay.slice(0, FEED_RENDER_DAYS);
+  const capped = byDay.length > FEED_RENDER_DAYS;
+
   return (
     <section className={styles.feed} aria-label="Hall feed">
       {pending.length > 0 && (
@@ -558,11 +590,11 @@ function Feed({
         </div>
       )}
 
-      {byDay.map(([d, items]) => (
+      {shownDays.map(([d, items]) => (
         <FeedDay key={d} day={d} items={items} today={d === today} onOpen={onOpen} onBuild={onBuild} onDismiss={onDismiss} shownGold={shownGold} />
       ))}
 
-      {state.feedTrimmed && <p className={styles.faded}>(older happenings have faded from memory)</p>}
+      {(capped || state.feedTrimmed) && <p className={styles.faded}>(older days rest in the ledgers)</p>}
     </section>
   );
 }

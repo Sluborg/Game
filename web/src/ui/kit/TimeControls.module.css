@@ -1,0 +1,28 @@
+/* TimeControls — one visual language for time controls on both surfaces.
+   Buttons are VISUALLY low (Stefan: "they are very high, reduce height") but
+   keep a ≥44px tap target via an invisible hit-area extender (Review #1
+   Designer + PX: never shrink the touch target of the most-used control). */
+
+.speedChip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  /* FIXED width so cycling 1×→3× never reflows the toggle under the thumb. */
+  width: 64px;
+  flex: 0 0 auto;
+  min-height: 38px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--stroke-soft);
+  background: var(--surface-2);
+  color: var(--text-dim);
+  font-weight: 700;
+  font-size: 0.78rem;
+  touch-action: manipulation;
+}
+.speedChip:active { filter: brightness(1.12); }
+/* Invisible hit-area extender: 38px visual, ~46px touchable. */
+.speedChip::after { content: ""; position: absolute; inset: -4px 0; }
+
+.factor { letter-spacing: 0.02em; }
