@@ -2,6 +2,47 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-07-09 - Hall & Story UX polish (Stefan's play feedback) — plan done
+- Gate: plan
+- Branch: `claude/slice-living-canvas-843hho` (restarted off `origin/dev` after PR #36 merged;
+  first commit = §50 backfill of #36's merged gate; remote branch had been auto-deleted →
+  recreated on push).
+- Scope declared: the 10 play-feedback items — lone-hero meeple (new Kenney `pawn` glyph, own
+  asset commit), Advance/Auto copy contrast, quest difficulty ★1–5 replacing "Type-heavy",
+  board card → "Quests" with OPEN + ACTIVE (UI-derived from assignments, quest-led rows),
+  explainers behind tap-the-title (44px row + chevron), EXPIRY_DAYS 3→7, tavern flavor copy
+  (+ 5-word earn hint stays visible), Investments → Buildings card with a "Ready" chip gated on
+  shownGold, haptics mitigation (no DOM `disabled` flip under the finger — aria-disabled +
+  dimmed data-attr; sim no-op already pinned), tap-a-quest detail (types+dots, reward math,
+  giver, expiry — sealed log never read), and the **story check-bar**: additive `Beat.score`
+  (0–100) computed in the resolver from the existing ratio, grade-owned zones (fail [0,20)
+  poor [20,40) ok [40,65) good [65,90) crit [90,100], bands lo→hi with fail lo=0 and crit
+  synthetic hi=2.0, zone-safe rounding), animated zone meter in StoryStage, speed as ONE
+  cycling chip (Slow/Normal/Fast, `guild.ui.storySpeed` localStorage, lazy+try/catch).
+  SAVE_VERSION 3 (v2 saves — including Stefan's live one — discard-reinit per policy; flagged).
+- Review #1 (4-persona, on the PLAN): 9 merged blockers, all folded — (1) constant fill RATE
+  (duration = score/100 × base), not constant duration, so the bar's stop stays unknown;
+  (2) stage the card: type/location → bar → grade tag → narration+trait fade (reduced-motion:
+  snap); (3+) effect notes context-aware — no "next check" claims on final/bonus beats,
+  recovery gets true copy (a good recovery still carries −1), fail note generic enough to
+  survive a non-critical last-beat fail before a success card; (4) score formula pinned exactly
+  (incl. negative-ratio clamp + rounding that can't escape the zone); (5) golden fixture from
+  the PRE-CHANGE resolver committed as a regression test (20 cases/62 beats incl. recovery +
+  bonus; asserts id/grade/roll/branch/outcome/reward/guildCut byte-identical — catches any
+  extra rng draw or boundary flip); (6) zone labels don't fit 430px → tint+tick only, landed
+  grade tag carries the word, role="meter" aria; (7) tap-during-fill = snap-to-result, only a
+  landed tap advances; auto-delay counts from fill-end (Auto+Slow can't skip the show);
+  (8) Advance/Auto copy contrasts on the verb ("skips ahead…" vs "watch it play, hands-free");
+  (9) one cycling speed chip, not a segmented control.
+- Non-blocking folded: fill starts ~500ms after mount; expiry moves into tap-detail (summary
+  only when "leaves tomorrow"); OPEN above ACTIVE, one-line active rows; whole title row is the
+  info tap target; "Ready" chip not a bare "!"; stable-id expansion state; sim change isolated
+  in its own commit; stale "(~3)" comment fixed; EXPIRY test (park parties, withdrawal fires
+  night 7); crit-zone anchor 2.0 pinned in the monotonicity test; duplicate-title active/open
+  distinction carried by the gold border + party line.
+- Open questions: none blocking. Haptics root cause unconfirmed from here (device tap-feedback
+  suspected) — mitigations ship, Stefan retests on the preview.
+
 Format per entry:
 ## YYYY-MM-DD HH:MM - <short scope>
 - Gate: plan | build | PR | codex-fixed | merged
