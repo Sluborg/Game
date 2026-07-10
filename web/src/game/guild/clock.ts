@@ -368,12 +368,18 @@ function onNight(next: GuildState): void {
   // excluded, else the night of the player's one big buy reads "gold lasts ~2
   // days" and the signature move looks like a bug (Review #2 Player-experience).
   const recurring = next.dayLedger.reduce((s, e) => s + (e.oneOff ? 0 : e.amount), 0);
+  // NARRATED, no per-day arithmetic on the surface (Stefan: "the gold per day
+  // is a bit confusing at the top") — the exact number lives behind the Hall
+  // runway's tap popover. Growth keeps a magnitude word so good news stays as
+  // legible as bad (Review #1 PX).
   const runwayNote =
     recurring >= 0
-      ? `Treasury growing +${recurring}g/day.`
+      ? recurring >= 25
+        ? "The coffers swell, night on night."
+        : "The coffers grow, night on night."
       : next.gold <= 0
-        ? `Treasury is in the red (${next.gold}g).`
-        : `Gold lasts ~${Math.max(1, Math.floor(next.gold / -recurring))} days at this burn.`;
+        ? "The coffers are empty — the guild runs on promises."
+        : `Coffers run dry in ~${Math.max(1, Math.floor(next.gold / -recurring))} days at this pace.`;
   next.mail.unshift({
     id: `mail-${++next.seq}`,
     day,
@@ -452,7 +458,7 @@ function postCheck(next: GuildState): void {
     pushFeed(next, {
       register: "decision",
       icon: "tavern",
-      text: `The steward proposes a tavern — ${TAVERN_PRICE}g, fixed price. "All that coin they drink away in the village could land in OUR till."`,
+      text: `The steward proposes a tavern — ${TAVERN_PRICE}g. "All that coin they drink away in the village could land in OUR till."`,
       action: "tavern",
     });
   }

@@ -23,11 +23,22 @@ import skull from "../../assets/kenney/board-game-icons/skull.png";
 import bookOpen from "../../assets/kenney/board-game-icons/book_open.png";
 import arrowCross from "../../assets/kenney/board-game-icons/arrow_cross.png";
 import suitHearts from "../../assets/kenney/board-game-icons/suit_hearts.png";
+import suitHeartsBroken from "../../assets/kenney/board-game-icons/suit_hearts_broken.png";
+import award from "../../assets/kenney/board-game-icons/award.png";
 import styles from "./Icon.module.css";
 
-/** UI-only glyphs (board rows, skull ratings) — kept OUT of the persisted
- * IconName union: these never enter GuildState. */
-export type UiIconName = "skull" | "typeInvestigation" | "typeTravel" | "typeSocial" | "typeCombat";
+/** UI-only glyphs (board rows, skull ratings, meter grade marks) — kept OUT
+ * of the persisted IconName union: these never enter GuildState. Grade marks
+ * are broken hearts (bad) / award rosettes (good) — NEVER skulls, which
+ * already mean quest DIFFICULTY (Stefan). */
+export type UiIconName =
+  | "skull"
+  | "typeInvestigation"
+  | "typeTravel"
+  | "typeSocial"
+  | "typeCombat"
+  | "heartBroken"
+  | "award";
 
 const SPRITES: Record<IconName | UiIconName, string> = {
   rest: campfire,
@@ -47,6 +58,8 @@ const SPRITES: Record<IconName | UiIconName, string> = {
   typeTravel: arrowCross,
   typeSocial: suitHearts,
   typeCombat: sword,
+  heartBroken: suitHeartsBroken,
+  award,
 };
 
 export interface IconProps {
