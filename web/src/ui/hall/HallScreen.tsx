@@ -60,6 +60,23 @@ const HALL_SPEED_GLYPH: Record<HallSpeed, string> = { slow: "▶", normal: "▶�
 const HALL_SPEED_MS: Record<HallSpeed, number> = { slow: 900, normal: 450, fast: 220 };
 const HALL_SPEED_KEY = "guild.ui.hallSpeed";
 
+/* Inline SVG play/pause glyphs — U+23F8 "⏸" renders as a tofu box in the
+ * display font (R#2 PX B1); drawn shapes can't fall back. */
+function PlayGlyph() {
+  return (
+    <svg viewBox="0 0 12 12" width={11} height={11} aria-hidden="true">
+      <path d="M2 1l9 5-9 5z" fill="currentColor" />
+    </svg>
+  );
+}
+function PauseGlyph() {
+  return (
+    <svg viewBox="0 0 12 12" width={11} height={11} aria-hidden="true">
+      <path d="M2 1h3v10H2zM7 1h3v10H7z" fill="currentColor" />
+    </svg>
+  );
+}
+
 interface OpenStory {
   log: NonNullable<Mail["log"]>;
   partyName: string;
@@ -152,11 +169,21 @@ export function HallScreen() {
               type="button"
               className={styles.playBtn}
               onClick={onToggleTap}
-              aria-pressed={playing}
+              aria-pressed={playing && !blocked}
               data-on={playing && !blocked}
               data-blocked={blocked}
             >
-              {blocked ? "Needs you" : playing ? "⏸ Pause" : "▶ Play"}
+              {blocked ? (
+                "Needs you"
+              ) : playing ? (
+                <>
+                  <PauseGlyph /> Pause
+                </>
+              ) : (
+                <>
+                  <PlayGlyph /> Play
+                </>
+              )}
             </button>
             <button
               type="button"
