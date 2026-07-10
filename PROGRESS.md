@@ -2,8 +2,25 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-07-11 - Challenge system content contract — plan done
+- Gate: plan (documentation/design only; no gameplay implementation claimed)
+- Branch: `agent/challenge-system-design` → PR into `dev`.
+- Scope: new `docs/CHALLENGE_SYSTEM.md`; minimal reconciliation/link in the live
+  `docs/DESIGN.md` challenge-v2 section; this progress log. Combat core and runtime untouched.
+- Narrative starts the contract: reports must stay authored rather than collapse into data dumps;
+  challenge labels stay broad ("Researching in a library", not a named tome/shelf). The document
+  then records Stefan's agreed Attribute/Skill vocabulary, two-check model, percentage-modifier
+  semantics, temporary Combat rule, result names/values, rationales, and explicitly open tuning.
+- Review #1 (Designer, Engineer, Adversary/QA, Player-experience): Engineer found one blocker —
+  DESIGN.md's older challenge-type list would compete with the new contract. Folded by making the
+  new document authoritative and reconciling the stale summary. All lenses required unresolved
+  difficulty conversion, visual spacing, combined consequences, narration machinery, and final
+  Combat to remain visibly open. No remaining blockers.
+- Open questions: Difficulty 0–100 target conversion; 5 vs 10 minimum visual threshold spacing;
+  combined-result consequences; scalable narration composition; final Combat model.
+
 ## 2026-07-10 - Feedback round 3 (state toggle · meter marks · skip · narration · feed cap) — build done, PR opened
-- Gate: codex-clean → awaiting merge decision (plan + Review #1 + Review #2 + Codex cleared)
+- Gate: **merged 2026-07-11 00:43 +0200** (merge commit `689b058`; backfilled 2026-07-11).
 - Codex (PR #40): ZERO findings — "Didn't find any major issues." on `fd57b5d`; no inline threads.
 - Branch: `claude/slice-living-canvas-843hho` (restarted off `origin/dev` after PR #39 merged;
   first commit = §50 backfill of #39). Scope: `web/src/ui/hall/*`, `web/src/ui/report/*`,
