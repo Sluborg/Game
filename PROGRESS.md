@@ -3,8 +3,8 @@
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
 ## 2026-07-10 - Board & report legibility v2 — PR opened (awaiting Codex)
-- Gate: codex-fixed — **PR #38 into `dev`**. Codex (on `a8beb94`): "Didn't find any major
-  issues." Nothing to fix. Process note, declared: Review #2 ran as TWO
+- Gate: **merged 2026-07-10 19:34 +0200** (merge commit `8e2f3ce`; backfilled 2026-07-10).
+  **PR #38 into `dev`**. Plan + both reviews + Codex (no findings) cleared. Process note, declared: Review #2 ran as TWO
   dual-persona agents (Designer+PX, Engineer+Adversary) covering all four §20 lenses — a
   session-length economy, not a skipped lens.
 - Review #2 (on the DIFF): **5 blockers, all fixed** — (1) per-card popover state let TWO
