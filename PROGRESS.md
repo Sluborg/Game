@@ -3,7 +3,9 @@
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
 ## 2026-07-09 - Hall & Story UX polish — PR opened (awaiting Codex)
-- Gate: codex-fixed — **PR #37 into `dev`**. Codex (on `42f2cd7`, one P3, fixed in `9e807f2`):
+- Gate: **merged 2026-07-10 13:20 +0200** (merge commit `08001b0`; backfilled 2026-07-10).
+  **PR #37 into `dev`**. Plan + both reviews + Codex cleared. Codex (on `42f2cd7`, one P3,
+  fixed in `9e807f2`):
   on the final beat mid-rise the button read "See outcome ›" while the handler correctly
   snapped — a label/behavior mismatch needing a confusing second tap → the label now follows
   the handler ("Skip the rise" mid-rise on every beat, including the last). Review #2 on the
