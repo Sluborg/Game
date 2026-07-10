@@ -110,9 +110,10 @@ second play session; builds on the shipped check-meter:
   superseded by the linked contract; Combat uses a temporary special rule pending its own slice.
 - **Per-hero resolution:** every participating hero rolls the challenge — **one bar per hero,
   filling simultaneously**. Challenges declare participation ("all must sneak" / "two may sneak
-  — then only those two fight the next challenge"). A **crit can assist the next check or cover
-  a teammate's failure**. Traits/gear/skills shift a hero's zone thresholds (~±5% per relevant
-  trait) — visible in the bar's benchmark positions.
+  — then only those two fight the next challenge"). Attributes + Skills produce the checks;
+  percentage modifiers may come from traits, gear, cohesion, and earlier events as defined in the
+  linked challenge contract. How combined results create assistance, cover failures, or modify
+  later checks remains open rather than being pre-committed here.
 - **Quest pages + clickable everything:** every quest/party/hero mention (feed, quests card,
   strip) navigates to its page; popups get an X, pages get a back arrow. The quest page shows
   the challenge list and, below, the assigned party — with **the guild's ESTIMATE of which
