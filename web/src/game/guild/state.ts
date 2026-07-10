@@ -42,7 +42,7 @@ export function createInitialState(seed: number): GuildState {
       day: 1,
       register: "ambient",
       icon: "party",
-      text: "Dawn over the Guild Hall. The hall stirs.",
+      text: "Two letters wait on the board — takers decide today.",
     },
   ];
 

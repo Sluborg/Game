@@ -4,10 +4,10 @@
 // change. freshSeed() (wall-clock entropy) is read ONLY here, at the UI boundary —
 // never inside a reducer — so the sim stays deterministic/replayable.
 //
-// The Advance spine is ONE commit: advanceUntilStop() is a pure sim function
-// (Review #1 B6), so a whole Advance press costs one setState + one autosave.
-// The Auto overlay steps single events (stepOnce) on a UI interval — the pacing
-// is presentation; the sim never touches the wall clock.
+// The driver is PLAY-primary (Stefan): a UI interval steps single events; the
+// pacing is presentation, the sim never touches the wall clock. Play latches
+// through decision-pauses and auto-resumes when they're answered; tab-hide
+// hard-disarms it.
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
@@ -16,7 +16,6 @@ import {
   clearSave,
   freshSeed,
   createInitialState,
-  advanceUntilStop,
   step,
   markMailRead,
   buyTavern,
@@ -29,9 +28,9 @@ interface GuildApi {
   state: GuildState;
   /** The treasury the UI shows — real gold minus unopened sealed credits (B1). */
   shownGold: number;
-  /** ▷ Advance: run to the next decision or nightfall (one commit/autosave). */
-  advance: () => void;
-  /** Auto mode: process exactly one sim event (called on a UI interval). */
+  /** Play mode: process exactly one sim event (called on a UI interval). The
+   * single-event Advance retired from the UI; the sim keeps advanceUntilStop
+   * for tests. */
   stepOnce: () => void;
   /** Open a sealed outcome / mark any mail read (settles shownGold). */
   readMail: (mailId: string) => void;
@@ -62,7 +61,6 @@ export function GuildProvider({ children }: { children: ReactNode }) {
   // closures). The effect above persists the result.
   const commit = useCallback((fn: (s: GuildState) => GuildState) => setState((prev) => fn(prev)), []);
 
-  const advance = useCallback(() => commit((s) => advanceUntilStop(s).state), [commit]);
   const stepOnce = useCallback(() => commit((s) => step(s)), [commit]);
   const readMail = useCallback((mailId: string) => commit((s) => markMailRead(s, mailId)), [commit]);
   const build = useCallback(() => commit((s) => buyTavern(s)), [commit]);
@@ -78,8 +76,8 @@ export function GuildProvider({ children }: { children: ReactNode }) {
   const shownGold = useMemo(() => displayedGold(state), [state]);
 
   const api = useMemo<GuildApi>(
-    () => ({ state, shownGold, advance, stepOnce, readMail, build, dismissProposal, reset, unread }),
-    [state, shownGold, advance, stepOnce, readMail, build, dismissProposal, reset, unread],
+    () => ({ state, shownGold, stepOnce, readMail, build, dismissProposal, reset, unread }),
+    [state, shownGold, stepOnce, readMail, build, dismissProposal, reset, unread],
   );
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
 }

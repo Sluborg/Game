@@ -115,10 +115,10 @@ export function StoryStage({
             <div className={styles.outcomeReward}>
               {log.outcome === "success" ? `Reward pool ${log.reward}g` : "No reward — they came back empty-handed."}
             </div>
-            <div className={styles.outcomeCut}>
-              {log.outcome === "success"
-                ? `Your ${log.cutPct}% brokerage: +${log.guildCut}g — the heroes pocket the rest.`
-                : `Your brokerage: +0g`}
+            {/* Result is the star; the guild's cut lives in the nightly ledger
+                (Stefan: no brokerage math at the payoff moment). */}
+            <div className={styles.outcomeNote}>
+              {log.outcome === "success" ? "Settled in tonight's ledger." : "Nothing to settle."}
             </div>
           </div>
         )}
@@ -199,10 +199,11 @@ function BeatCard({
           {beat.branch === "recovery" ? "Forced path — one chance to save it" : "Bonus — an opening"}
         </div>
       )}
+      {/* Two rows (Stefan): the TYPE chip, then the challenge title prominent. */}
       <div className={styles.beatTop}>
         <span className={styles.beatType} data-type={beat.type}>{TYPE_LABEL[beat.type]}</span>
-        <span className={styles.beatLoc}>{beat.location}</span>
       </div>
+      <h3 className={styles.beatTitle}>{beat.location}</h3>
 
       <div
         className={styles.meter}
@@ -212,6 +213,15 @@ function BeatCard({
         aria-valuenow={landed ? beat.score : 0}
         aria-valuetext={landed ? `${GRADE_LABEL[beat.grade]} — ${beat.score} of 100` : "rolling…"}
       >
+        {/* Fill sits UNDER the translucent zone tints so the benchmark levels
+            stay visible the whole rise (Stefan); the 2px playhead survives
+            every tint so the landing edge can't wash out (Review #1 PX B3). */}
+        <div
+          className={styles.fill}
+          aria-hidden
+          style={{ width: `${width}%`, transition: landed ? "none" : `width ${durationMs}ms linear` }}
+          onTransitionEnd={onLanded}
+        />
         <div className={styles.zones} aria-hidden>
           {ZONE_ORDER.map((g) => (
             <span
@@ -222,12 +232,6 @@ function BeatCard({
             />
           ))}
         </div>
-        <div
-          className={styles.fill}
-          aria-hidden
-          style={{ width: `${width}%`, transition: landed ? "none" : `width ${durationMs}ms linear` }}
-          onTransitionEnd={onLanded}
-        />
       </div>
 
       {landed && (

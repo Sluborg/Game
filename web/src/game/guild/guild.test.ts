@@ -42,7 +42,7 @@ import {
 } from "./index";
 import { scoreFor, GRADE_ZONES } from "./resolver";
 import { resolveQuest } from "./resolver";
-import { ROAD_JOB, RUINS, questDifficulty, QUEST_BY_ID } from "./quests";
+import { ROAD_JOB, RUINS, typeSkulls, questSkulls, daysLabel, QUEST_BY_ID } from "./quests";
 import { EXPIRY_DAYS } from "./tuning";
 import type { Grade, GuildState, SimEvent } from "./types";
 
@@ -52,12 +52,15 @@ import type { Grade, GuildState, SimEvent } from "./types";
 // reordered call, or grade-boundary flip changes these tuples and fails here
 // (Review #1: Engineer B2 / Adversary B1).
 // Format: key "questId|partyId|seed" → { beats: [id, grade, roll, branch|null][],
-// outcome, reward, guildCut } at cutPct 10, durationDays 2.
+// outcome, reward, guildCut } at cutPct 10, durationDays 2. The reward/guildCut
+// fields were HAND-EDITED for the flat-reward model (road 350/ruins 700 × the
+// bonus multiplier) — the beat tuples are the original pre-score capture,
+// byte-untouched, so any rng drift still fails here.
 const RESOLVER_GOLDEN: Record<
   string,
   { beats: [string, Grade, number, string | null][]; outcome: string; reward: number; guildCut: number }
 > = JSON.parse(
-  `{"road|iron-vigil|1":{"beats":[["road-travel","crit",0.6270739405881613,null],["road-ambush","good",0.002735721180215478,null],["road-tip-bonus","crit",0.5274470399599522,"bonus"]],"outcome":"success","reward":496,"guildCut":50},"road|iron-vigil|11":{"beats":[["road-travel","crit",0.5115870486479253,null],["road-ambush","crit",0.5299464082345366,null],["road-tip-bonus","crit",0.6081185641232878,"bonus"]],"outcome":"success","reward":496,"guildCut":50},"road|iron-vigil|222":{"beats":[["road-travel","crit",0.2178377106320113,null],["road-ambush","crit",0.613124109338969,null],["road-tip-bonus","crit",0.8883060002699494,"bonus"]],"outcome":"success","reward":496,"guildCut":50},"road|iron-vigil|3333":{"beats":[["road-travel","crit",0.26626988616771996,null],["road-ambush","crit",0.2232151513453573,null],["road-tip-bonus","crit",0.585155368084088,"bonus"]],"outcome":"success","reward":496,"guildCut":50},"road|iron-vigil|44444":{"beats":[["road-travel","crit",0.5737847045529634,null],["road-ambush","crit",0.3409878355450928,null],["road-tip-bonus","crit",0.5664612813852727,"bonus"]],"outcome":"success","reward":496,"guildCut":50},"road|free-blades|1":{"beats":[["road-travel","crit",0.6270739405881613,null],["road-ambush","poor",0.002735721180215478,null]],"outcome":"success","reward":400,"guildCut":40},"road|free-blades|11":{"beats":[["road-travel","crit",0.5115870486479253,null],["road-ambush","good",0.5299464082345366,null],["road-tip-bonus","crit",0.6081185641232878,"bonus"]],"outcome":"success","reward":496,"guildCut":50},"road|free-blades|222":{"beats":[["road-travel","good",0.2178377106320113,null],["road-ambush","good",0.613124109338969,null],["road-tip-bonus","crit",0.8883060002699494,"bonus"]],"outcome":"success","reward":496,"guildCut":50},"road|free-blades|3333":{"beats":[["road-travel","good",0.26626988616771996,null],["road-ambush","ok",0.2232151513453573,null]],"outcome":"success","reward":400,"guildCut":40},"road|free-blades|44444":{"beats":[["road-travel","crit",0.5737847045529634,null],["road-ambush","ok",0.3409878355450928,null]],"outcome":"success","reward":400,"guildCut":40},"ruins|iron-vigil|1":{"beats":[["ruins-descent","crit",0.6270739405881613,null],["ruins-sigils","poor",0.002735721180215478,null],["ruins-guardian","ok",0.5274470399599522,null]],"outcome":"success","reward":600,"guildCut":60},"ruins|iron-vigil|11":{"beats":[["ruins-descent","crit",0.5115870486479253,null],["ruins-sigils","good",0.5299464082345366,null],["ruins-guardian","good",0.6081185641232878,null],["ruins-reliquary-bonus","crit",0.5901576359756291,"bonus"]],"outcome":"success","reward":744,"guildCut":74},"ruins|iron-vigil|222":{"beats":[["ruins-descent","good",0.2178377106320113,null],["ruins-sigils","crit",0.613124109338969,null],["ruins-guardian","crit",0.8883060002699494,null],["ruins-reliquary-bonus","good",0.14967497950419784,"bonus"]],"outcome":"success","reward":696,"guildCut":70},"ruins|iron-vigil|3333":{"beats":[["ruins-descent","good",0.26626988616771996,null],["ruins-sigils","ok",0.2232151513453573,null],["ruins-guardian","good",0.585155368084088,null]],"outcome":"success","reward":600,"guildCut":60},"ruins|iron-vigil|44444":{"beats":[["ruins-descent","crit",0.5737847045529634,null],["ruins-sigils","good",0.3409878355450928,null],["ruins-guardian","good",0.5664612813852727,null],["ruins-reliquary-bonus","crit",0.23683029878884554,"bonus"]],"outcome":"success","reward":744,"guildCut":74},"ruins|free-blades|1":{"beats":[["ruins-descent","crit",0.6270739405881613,null],["ruins-sigils","fail",0.002735721180215478,null],["ruins-guardian","fail",0.5274470399599522,null],["ruins-guardian-recovery","fail",0.9810509674716741,"recovery"]],"outcome":"failure","reward":0,"guildCut":0},"ruins|free-blades|11":{"beats":[["ruins-descent","crit",0.5115870486479253,null],["ruins-sigils","ok",0.5299464082345366,null],["ruins-guardian","poor",0.6081185641232878,null]],"outcome":"success","reward":600,"guildCut":60},"ruins|free-blades|222":{"beats":[["ruins-descent","good",0.2178377106320113,null],["ruins-sigils","good",0.613124109338969,null],["ruins-guardian","ok",0.8883060002699494,null],["ruins-reliquary-bonus","ok",0.14967497950419784,"bonus"]],"outcome":"success","reward":648,"guildCut":65},"ruins|free-blades|3333":{"beats":[["ruins-descent","good",0.26626988616771996,null],["ruins-sigils","poor",0.2232151513453573,null],["ruins-guardian","poor",0.585155368084088,null]],"outcome":"success","reward":600,"guildCut":60},"ruins|free-blades|44444":{"beats":[["ruins-descent","crit",0.5737847045529634,null],["ruins-sigils","ok",0.3409878355450928,null],["ruins-guardian","poor",0.5664612813852727,null]],"outcome":"success","reward":600,"guildCut":60}}`
+  `{"road|iron-vigil|1":{"beats":[["road-travel","crit",0.6270739405881613,null],["road-ambush","good",0.002735721180215478,null],["road-tip-bonus","crit",0.5274470399599522,"bonus"]],"outcome":"success","reward":434,"guildCut":43},"road|iron-vigil|11":{"beats":[["road-travel","crit",0.5115870486479253,null],["road-ambush","crit",0.5299464082345366,null],["road-tip-bonus","crit",0.6081185641232878,"bonus"]],"outcome":"success","reward":434,"guildCut":43},"road|iron-vigil|222":{"beats":[["road-travel","crit",0.2178377106320113,null],["road-ambush","crit",0.613124109338969,null],["road-tip-bonus","crit",0.8883060002699494,"bonus"]],"outcome":"success","reward":434,"guildCut":43},"road|iron-vigil|3333":{"beats":[["road-travel","crit",0.26626988616771996,null],["road-ambush","crit",0.2232151513453573,null],["road-tip-bonus","crit",0.585155368084088,"bonus"]],"outcome":"success","reward":434,"guildCut":43},"road|iron-vigil|44444":{"beats":[["road-travel","crit",0.5737847045529634,null],["road-ambush","crit",0.3409878355450928,null],["road-tip-bonus","crit",0.5664612813852727,"bonus"]],"outcome":"success","reward":434,"guildCut":43},"road|free-blades|1":{"beats":[["road-travel","crit",0.6270739405881613,null],["road-ambush","poor",0.002735721180215478,null]],"outcome":"success","reward":350,"guildCut":35},"road|free-blades|11":{"beats":[["road-travel","crit",0.5115870486479253,null],["road-ambush","good",0.5299464082345366,null],["road-tip-bonus","crit",0.6081185641232878,"bonus"]],"outcome":"success","reward":434,"guildCut":43},"road|free-blades|222":{"beats":[["road-travel","good",0.2178377106320113,null],["road-ambush","good",0.613124109338969,null],["road-tip-bonus","crit",0.8883060002699494,"bonus"]],"outcome":"success","reward":434,"guildCut":43},"road|free-blades|3333":{"beats":[["road-travel","good",0.26626988616771996,null],["road-ambush","ok",0.2232151513453573,null]],"outcome":"success","reward":350,"guildCut":35},"road|free-blades|44444":{"beats":[["road-travel","crit",0.5737847045529634,null],["road-ambush","ok",0.3409878355450928,null]],"outcome":"success","reward":350,"guildCut":35},"ruins|iron-vigil|1":{"beats":[["ruins-descent","crit",0.6270739405881613,null],["ruins-sigils","poor",0.002735721180215478,null],["ruins-guardian","ok",0.5274470399599522,null]],"outcome":"success","reward":700,"guildCut":70},"ruins|iron-vigil|11":{"beats":[["ruins-descent","crit",0.5115870486479253,null],["ruins-sigils","good",0.5299464082345366,null],["ruins-guardian","good",0.6081185641232878,null],["ruins-reliquary-bonus","crit",0.5901576359756291,"bonus"]],"outcome":"success","reward":868,"guildCut":87},"ruins|iron-vigil|222":{"beats":[["ruins-descent","good",0.2178377106320113,null],["ruins-sigils","crit",0.613124109338969,null],["ruins-guardian","crit",0.8883060002699494,null],["ruins-reliquary-bonus","good",0.14967497950419784,"bonus"]],"outcome":"success","reward":812,"guildCut":81},"ruins|iron-vigil|3333":{"beats":[["ruins-descent","good",0.26626988616771996,null],["ruins-sigils","ok",0.2232151513453573,null],["ruins-guardian","good",0.585155368084088,null]],"outcome":"success","reward":700,"guildCut":70},"ruins|iron-vigil|44444":{"beats":[["ruins-descent","crit",0.5737847045529634,null],["ruins-sigils","good",0.3409878355450928,null],["ruins-guardian","good",0.5664612813852727,null],["ruins-reliquary-bonus","crit",0.23683029878884554,"bonus"]],"outcome":"success","reward":868,"guildCut":87},"ruins|free-blades|1":{"beats":[["ruins-descent","crit",0.6270739405881613,null],["ruins-sigils","fail",0.002735721180215478,null],["ruins-guardian","fail",0.5274470399599522,null],["ruins-guardian-recovery","fail",0.9810509674716741,"recovery"]],"outcome":"failure","reward":0,"guildCut":0},"ruins|free-blades|11":{"beats":[["ruins-descent","crit",0.5115870486479253,null],["ruins-sigils","ok",0.5299464082345366,null],["ruins-guardian","poor",0.6081185641232878,null]],"outcome":"success","reward":700,"guildCut":70},"ruins|free-blades|222":{"beats":[["ruins-descent","good",0.2178377106320113,null],["ruins-sigils","good",0.613124109338969,null],["ruins-guardian","ok",0.8883060002699494,null],["ruins-reliquary-bonus","ok",0.14967497950419784,"bonus"]],"outcome":"success","reward":756,"guildCut":76},"ruins|free-blades|3333":{"beats":[["ruins-descent","good",0.26626988616771996,null],["ruins-sigils","poor",0.2232151513453573,null],["ruins-guardian","poor",0.585155368084088,null]],"outcome":"success","reward":700,"guildCut":70},"ruins|free-blades|44444":{"beats":[["ruins-descent","crit",0.5737847045529634,null],["ruins-sigils","ok",0.3409878355450928,null],["ruins-guardian","poor",0.5664612813852727,null]],"outcome":"success","reward":700,"guildCut":70}}`
 );
 
 
@@ -200,7 +203,7 @@ describe("daily life: choices, quests over days, decompress", () => {
     if (choice.kind === "quest") expect(choice.posting.tier).toBe("ruins");
   });
 
-  it("bestPosting is dailyRate desc with id-asc tiebreak; ineligible tiers filtered", () => {
+  it("bestPosting is total-reward desc with id-asc tiebreak; ineligible tiers filtered", () => {
     const s = createInitialState(SEED);
     expect(bestPosting(s.board, "free-blades")?.tier).toBe("ruins");
     expect(bestPosting(s.board, "lone-mira")).toBeNull();
@@ -579,10 +582,22 @@ describe("resolver: the check-score is additive and zone-honest", () => {
     }
   });
 
-  it("questDifficulty: standing 1★, road 2★, ruins 3★ (critical beats weighted)", () => {
-    expect(questDifficulty(QUEST_BY_ID["guard-hall"])).toBe(1);
-    expect(questDifficulty(ROAD_JOB)).toBe(2);
-    expect(questDifficulty(RUINS)).toBe(3);
+  it("skulls: standing 1💀, road 2💀, ruins 4💀 (max — the killer beat is the danger)", () => {
+    expect(questSkulls(QUEST_BY_ID["guard-hall"])).toBe(1);
+    expect(questSkulls(ROAD_JOB)).toBe(2);
+    expect(questSkulls(RUINS)).toBe(4);
+    // Per-type: bonus beats count (the story must never show an unadvertised type).
+    expect(typeSkulls(ROAD_JOB)).toEqual({ travel: 2, combat: 2, social: 1 });
+    expect(typeSkulls(RUINS)).toEqual({ travel: 2, investigation: 3, combat: 4 });
+    expect(typeSkulls(QUEST_BY_ID["guard-hall"]).social).toBe(1);
+  });
+
+  it("daysLabel: known minimum + fuzz, never a span (Stefan's examples pinned)", () => {
+    expect(daysLabel(1, 1)).toBe("1 day");
+    expect(daysLabel(2, 2)).toBe("2 days");
+    expect(daysLabel(1, 2)).toBe("1+ days");
+    expect(daysLabel(1, 3)).toBe("1+ days");
+    expect(daysLabel(3, 7)).toBe("3++ days");
   });
 });
 

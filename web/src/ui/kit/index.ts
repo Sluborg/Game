@@ -4,3 +4,5 @@ export { Sheet, type SheetProps } from "./Sheet";
 export { NavBar, type NavBarProps, type NavKey } from "./NavBar";
 export { Panel, type PanelProps } from "./Panel";
 export { Icon, type IconProps } from "./Icon";
+export { InspectChip, InspectPopover, type InspectData } from "./Inspect";
+export { readPref, savePref } from "./prefs";

@@ -10,15 +10,16 @@
 // The treasury chip shows displayedGold (via useGuild().shownGold) so a mid-day
 // return can never leak its outcome through a visible gold jump (Review #1 B1).
 
-import { useEffect, useMemo, useState } from "react";
-import { Icon, Panel } from "../kit";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Icon, InspectChip, InspectPopover, Panel, readPref, savePref, type InspectData } from "../kit";
 import { useGuild } from "../guild/GuildContext";
 import { StoryStage } from "../report/StoryStage";
 import {
   QUEST_BY_ID,
   PARTY_BY_ID,
-  challengeDots,
-  questDifficulty,
+  typeSkulls,
+  questSkulls,
+  daysLabel,
   dayOf,
   phaseOf,
   lastLedger,
@@ -50,7 +51,11 @@ const BEAT_LABEL: Record<BeatType, string> = {
   combat: "Combat",
 };
 
-type AutoSpeed = 0 | 1 | 3;
+type HallSpeed = "slow" | "normal" | "fast";
+const HALL_SPEED_ORDER: HallSpeed[] = ["slow", "normal", "fast"];
+const HALL_SPEED_LABEL: Record<HallSpeed, string> = { slow: "Slow", normal: "Normal", fast: "Fast" };
+const HALL_SPEED_MS: Record<HallSpeed, number> = { slow: 900, normal: 450, fast: 220 };
+const HALL_SPEED_KEY = "guild.ui.hallSpeed";
 
 interface OpenStory {
   log: NonNullable<Mail["log"]>;
@@ -59,9 +64,14 @@ interface OpenStory {
 }
 
 export function HallScreen() {
-  const { state, shownGold, advance, stepOnce, readMail, build, dismissProposal } = useGuild();
-  const [auto, setAuto] = useState<AutoSpeed>(0);
+  const { state, shownGold, stepOnce, readMail, build, dismissProposal } = useGuild();
+  // The PINNED driver state machine (Review #1): `playing` LATCHES through a
+  // decision-pause (interval gated below, resumes when the decision resolves);
+  // tab-hide HARD-disarms (no surprise resume). Speed is a UI-only pref.
+  const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState<HallSpeed>(() => readPref(HALL_SPEED_KEY, HALL_SPEED_ORDER, "normal"));
   const [story, setStory] = useState<OpenStory | null>(null);
+  const needsYouRef = useRef<HTMLDivElement>(null);
 
   const day = dayOf(state.tick);
   const phase = phaseOf(state.tick);
@@ -70,26 +80,37 @@ export function HallScreen() {
     [state.feed],
   );
 
-  // Auto stalls (without turning off) while anything needs the player — the
-  // button says so, closing the "lit but frozen" confusion (Review #2 PX).
-  const autoPaused = auto > 0 && (story !== null || pendingDecisions.length > 0);
+  // Blocked = latched but gated (decision pending or story open).
+  const blocked = playing && (story !== null || pendingDecisions.length > 0);
 
-  // Auto mode: a UI interval stepping single sim events. The SIM never touches
-  // the wall clock — this pacing is pure presentation. Auto pauses itself on any
-  // open decision, while a story is open, and when the tab is hidden.
   useEffect(() => {
-    if (auto === 0 || story || pendingDecisions.length > 0) return;
-    const id = window.setInterval(() => stepOnce(), auto === 1 ? 900 : 300);
+    if (!playing || story || pendingDecisions.length > 0) return;
+    const id = window.setInterval(() => stepOnce(), HALL_SPEED_MS[speed]);
     return () => window.clearInterval(id);
-  }, [auto, story, pendingDecisions.length, stepOnce]);
+  }, [playing, story, pendingDecisions.length, speed, stepOnce]);
 
   useEffect(() => {
     const onVis = () => {
-      if (document.visibilityState === "hidden") setAuto(0);
+      if (document.visibilityState === "hidden") setPlaying(false);
     };
     document.addEventListener("visibilitychange", onVis);
     return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
+
+  const cycleSpeed = () => {
+    const next = HALL_SPEED_ORDER[(HALL_SPEED_ORDER.indexOf(speed) + 1) % HALL_SPEED_ORDER.length];
+    setSpeed(next);
+    savePref(HALL_SPEED_KEY, next);
+  };
+
+  const onPlayTap = () => {
+    if (blocked) {
+      // "Needs you": bring the pinned decisions into view; stay latched.
+      needsYouRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    setPlaying(true);
+  };
 
   const openStory = (mailId: string | undefined) => {
     if (!mailId) return;
@@ -113,9 +134,8 @@ export function HallScreen() {
 
       {state.firstDay && (
         <p className={styles.coach}>
-          Your heroes live their own lives — rest, train, take quests, come home. Tap{" "}
-          <strong>▷ Advance</strong> to skip ahead, or <strong>Auto</strong> to watch it play. Either
-          way it stops when something needs you.
+          Your heroes live their own lives — rest, train, take quests, come home. Press{" "}
+          <strong>Play</strong>: the days roll by, and it pauses when something needs you.
         </p>
       )}
 
@@ -131,6 +151,7 @@ export function HallScreen() {
       <Feed
         state={state}
         pending={pendingDecisions}
+        needsYouRef={needsYouRef}
         onOpen={openStory}
         onBuild={build}
         onDismiss={dismissProposal}
@@ -138,32 +159,37 @@ export function HallScreen() {
       />
 
       <div className={styles.controls}>
-        {/* No DOM `disabled` flip under the player's finger (haptics mitigation —
-            the sim already makes a blocked press a strict no-op); aria-disabled +
-            the dimmed data-attr carry the state instead. */}
+        {/* Play-primary driver (Stefan): wide Play, explicit Pause, one Speed
+            chip. Main text only — no subtitles. Blocked state swaps Play's
+            LABEL to "Needs you" (a label, not a subtitle) and tapping it
+            scrolls the pinned decisions into view. No DOM `disabled` flips
+            under the finger (haptics) — aria-disabled + data-attrs only. */}
         <button
           type="button"
-          className={styles.advance}
-          onClick={advance}
-          aria-disabled={pendingDecisions.length > 0}
-          data-blocked={pendingDecisions.length > 0}
+          className={styles.playBtn}
+          onClick={onPlayTap}
+          aria-pressed={playing}
+          data-on={playing && !blocked}
+          data-blocked={blocked}
         >
-          <span className={styles.advanceMain}>▷ Advance</span>
-          <span className={styles.advanceSub}>
-            {pendingDecisions.length > 0 ? "answer what needs you first" : "skips ahead until something needs you"}
-          </span>
+          {blocked ? "Needs you" : playing ? "Playing…" : "▶ Play"}
         </button>
         <button
           type="button"
-          className={styles.autoBtn}
-          data-on={auto > 0}
-          onClick={() => setAuto((a) => (a === 0 ? 1 : a === 1 ? 3 : 0))}
-          aria-label={auto === 0 ? "Auto: watch it play, hands-free" : autoPaused ? "Auto paused — needs you" : `Auto: watching at ${auto}x`}
+          className={styles.pauseBtn}
+          onClick={() => setPlaying(false)}
+          aria-disabled={!playing}
+          data-dim={!playing}
         >
-          <span className={styles.autoMain}>{auto === 0 ? "Auto" : autoPaused ? "Paused" : `Auto ${auto}×`}</span>
-          <span className={styles.autoSub}>
-            {auto === 0 ? "watch it play" : autoPaused ? "needs you" : "watching"}
-          </span>
+          Pause
+        </button>
+        <button
+          type="button"
+          className={styles.speedBtn}
+          onClick={cycleSpeed}
+          aria-label={`Speed: ${HALL_SPEED_LABEL[speed]} — tap to change`}
+        >
+          {HALL_SPEED_LABEL[speed]}
         </button>
       </div>
 
@@ -227,34 +253,41 @@ function PartyRow({ runtime, tick }: { runtime: PartyRuntime; tick: number }) {
   );
 }
 
-function Stars({ quest }: { quest: QuestDef }) {
-  const n = questDifficulty(quest);
+const TYPE_ICON: Record<BeatType, "typeInvestigation" | "typeTravel" | "typeSocial" | "typeCombat"> = {
+  investigation: "typeInvestigation",
+  travel: "typeTravel",
+  social: "typeSocial",
+  combat: "typeCombat",
+};
+
+/** A row of skull glyphs (Kenney sprite, mask-tinted — never the emoji). */
+function Skulls({ n, label }: { n: number; label: string }) {
   return (
-    <span className={styles.stars} role="img" aria-label={`difficulty ${n} of 5`}>
-      {"★".repeat(n)}
-      {"☆".repeat(5 - n)}
+    <span className={styles.skulls} role="img" aria-label={label}>
+      {Array.from({ length: n }, (_, i) => (
+        <Icon key={i} name="skull" size={14} />
+      ))}
     </span>
   );
 }
 
-/** The shared tap-open detail body for a quest row. Reads ONLY the quest def +
- * public assignment fields — never the sealed log (info asymmetry). For an
- * ACTIVE quest the rolled duration is public (the departure feed said it), so
- * the estimate can be exact; "≈" still hedges the bonus-find upside. */
-function QuestDetail({ quest, footer, exactDays }: { quest: QuestDef; footer: string; exactDays?: number }) {
-  const dots = challengeDots(quest);
-  const lo = Math.round((quest.dailyRate * (exactDays ?? quest.minDuration) * BROKERAGE) / 100);
-  const hi = Math.round((quest.dailyRate * (exactDays ?? quest.maxDuration) * BROKERAGE) / 100);
+/** The shared tap-open detail body for a quest row: one line per challenge
+ * type (icon + name + skulls). Reads ONLY the quest def + public assignment
+ * fields — never the sealed log (info asymmetry). */
+function QuestDetail({ quest, footer }: { quest: QuestDef; footer: string }) {
+  const skulls = typeSkulls(quest);
+  const cut = Math.round((quest.reward * BROKERAGE) / 100);
   return (
     <div className={styles.questDetail}>
+      {(Object.keys(skulls) as BeatType[]).map((k) => (
+        <span key={k} className={styles.typeRow}>
+          <Icon name={TYPE_ICON[k]} size={15} />
+          <span className={styles.typeName}>{BEAT_LABEL[k]}</span>
+          <Skulls n={skulls[k]!} label={`danger ${skulls[k]} of 5`} />
+        </span>
+      ))}
       <span className={styles.detailLine}>
-        {(Object.keys(dots) as BeatType[])
-          .filter((k) => dots[k] > 0)
-          .map((k) => `${BEAT_LABEL[k]} ${"•".repeat(dots[k])}`)
-          .join("  ·  ")}
-      </span>
-      <span className={styles.detailLine}>
-        From {quest.giver} · your {BROKERAGE}% ≈ {lo === hi ? `${lo}g` : `${lo}–${hi}g`}
+        From {quest.giver} · your {BROKERAGE}% ≈ {cut}g
       </span>
       <span className={styles.detailLine}>{footer}</span>
     </div>
@@ -262,7 +295,7 @@ function QuestDetail({ quest, footer, exactDays }: { quest: QuestDef; footer: st
 }
 
 function QuestsCard({ state }: { state: GuildState }) {
-  const [showInfo, setShowInfo] = useState(false);
+  const [info, setInfo] = useState<InspectData | null>(null);
   // One expanded row at a time, keyed by stable id (posting.id / party.id) — a
   // row that vanishes mid-Advance just stops matching, harmlessly.
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -275,18 +308,28 @@ function QuestsCard({ state }: { state: GuildState }) {
 
   return (
     <Panel as="section" className={styles.card} aria-label="Quests">
-      <button type="button" className={styles.cardHeadBtn} onClick={() => setShowInfo((v) => !v)} aria-expanded={showInfo}>
+      <InspectChip
+        className={styles.cardHeadBtn}
+        active={info?.id === "quests"}
+        onClick={(e) =>
+          setInfo((cur) =>
+            cur?.id === "quests"
+              ? null
+              : {
+                  id: "quests",
+                  anchor: e.currentTarget,
+                  title: "Quests",
+                  effect: `Heroes read the board and choose for themselves — you never assign anyone. The guild takes a flat ${BROKERAGE}% brokerage on completed quests. Tap a quest for its details.`,
+                },
+          )
+        }
+      >
         <h2 className={styles.cardHead}>
           <Icon name="letter" size={16} /> Quests
         </h2>
         <span className={styles.infoGlyph} aria-hidden>ⓘ</span>
-      </button>
-      {showInfo && (
-        <p className={styles.cardNote}>
-          Heroes read the board and choose for themselves — you never assign anyone. The guild takes a
-          flat {BROKERAGE}% brokerage on completed quests. Tap a quest for its details.
-        </p>
-      )}
+      </InspectChip>
+      <InspectPopover data={info} onClose={() => setInfo(null)} />
 
       {state.board.length === 0 && active.length === 0 && (
         <p className={styles.cardNote}>Nothing posted — fresh letters arrive most mornings.</p>
@@ -300,7 +343,8 @@ function QuestsCard({ state }: { state: GuildState }) {
               <button type="button" className={styles.questRow} onClick={() => toggle(p.id)} aria-expanded={expandedId === p.id}>
                 <span className={styles.postingTitle}>{p.title}</span>
                 <span className={styles.postingMeta}>
-                  {quest.dailyRate}g/day · {quest.minDuration}–{quest.maxDuration} days · <Stars quest={quest} />
+                  {quest.reward}g · {daysLabel(quest.minDuration, quest.maxDuration)} ·{" "}
+                  <Skulls n={questSkulls(quest)} label={`danger ${questSkulls(quest)} of 5`} />
                   {p.daysLeft <= 1 && " · last day"}
                 </span>
               </button>
@@ -334,11 +378,12 @@ function QuestsCard({ state }: { state: GuildState }) {
                   <Icon name="depart" size={14} /> {a.questTitle}
                 </span>
                 <span className={styles.postingMeta}>
-                  {PARTY_BY_ID[p.id]?.name} are on it · day {dayX} of {a.durationDays} · <Stars quest={quest} />
+                  {PARTY_BY_ID[p.id]?.name} are on it · day {dayX} of {a.durationDays} ·{" "}
+                  <Skulls n={questSkulls(quest)} label={`danger ${questSkulls(quest)} of 5`} />
                 </span>
               </button>
               {expandedId === p.id && (
-                <QuestDetail quest={quest} exactDays={a.durationDays} footer={`Active — due back ~day ${dayOf(a.returnTick)}.`} />
+                <QuestDetail quest={quest} footer={`Active — due back ~day ${dayOf(a.returnTick)}.`} />
               )}
             </li>
           );
@@ -357,7 +402,7 @@ function BuildingsCard({
   shownGold: number;
   onBuild: () => void;
 }) {
-  const [showInfo, setShowInfo] = useState(false);
+  const [info, setInfo] = useState<InspectData | null>(null);
   const built = state.buildings.tavern;
   const idleBurn = DAILY_UPKEEP - PASSIVE_INCOME;
   const left = shownGold - TAVERN_PRICE;
@@ -367,19 +412,30 @@ function BuildingsCard({
 
   return (
     <Panel as="section" className={styles.card} aria-label="Buildings">
-      <button type="button" className={styles.cardHeadBtn} onClick={() => setShowInfo((v) => !v)} aria-expanded={showInfo}>
+      <InspectChip
+        className={styles.cardHeadBtn}
+        active={info?.id === "buildings"}
+        onClick={(e) =>
+          setInfo((cur) =>
+            cur?.id === "buildings"
+              ? null
+              : {
+                  id: "buildings",
+                  anchor: e.currentTarget,
+                  title: "Buildings",
+                  effect:
+                    "Fixed prices — no haggling, no rate-tuning. A built facility captures the coin heroes would otherwise spend in the village; takings post to the ledger each night.",
+                },
+          )
+        }
+      >
         <h2 className={styles.cardHead}>
           <Icon name="tavern" size={16} /> Buildings
           {ready && <span className={styles.readyChip}>Ready</span>}
         </h2>
         <span className={styles.infoGlyph} aria-hidden>ⓘ</span>
-      </button>
-      {showInfo && (
-        <p className={styles.cardNote}>
-          Buildings have fixed prices — no haggling, no rate-tuning. A built facility captures the coin
-          heroes would otherwise spend in the village; takings post to the ledger each night.
-        </p>
-      )}
+      </InspectChip>
+      <InspectPopover data={info} onClose={() => setInfo(null)} />
 
       <ul className={styles.buildings}>
         <li className={styles.building}>
@@ -420,6 +476,7 @@ function BuildingsCard({
 function Feed({
   state,
   pending,
+  needsYouRef,
   onOpen,
   onBuild,
   onDismiss,
@@ -427,6 +484,7 @@ function Feed({
 }: {
   state: GuildState;
   pending: FeedItem[];
+  needsYouRef: React.RefObject<HTMLDivElement>;
   onOpen: (mailId: string | undefined) => void;
   onBuild: () => void;
   onDismiss: () => void;
@@ -447,7 +505,7 @@ function Feed({
   return (
     <section className={styles.feed} aria-label="Hall feed">
       {pending.length > 0 && (
-        <div className={styles.needsYou}>
+        <div className={styles.needsYou} ref={needsYouRef}>
           <h2 className={styles.needsHead}>Needs you</h2>
           {pending.map((f) => (
             <DecisionRow key={f.id} item={f} onOpen={onOpen} onBuild={onBuild} onDismiss={onDismiss} shownGold={shownGold} />

@@ -108,6 +108,11 @@ function partyName(id: string): string {
   return PARTY_BY_ID[id]?.name ?? id;
 }
 
+/** A lone hero's feed lines carry the single meeple, not the party cluster. */
+function soloIcon(partyId: string, fallback: "watch"): "hero" | "watch" {
+  return (PARTY_BY_ID[partyId]?.memberIds.length ?? 2) === 1 ? "hero" : fallback;
+}
+
 function findParty(next: GuildState, id: string | undefined): PartyRuntime | undefined {
   return next.parties.find((p) => p.id === id);
 }
@@ -191,7 +196,7 @@ function onDecide(next: GuildState, ev: SimEvent): void {
     schedule(next, party.assignment.returnTick, "return", { partyId: party.id });
     pushFeed(next, {
       register: "ambient",
-      icon: "watch",
+      icon: soloIcon(party.id, "watch"),
       text: `${partyName(party.id)} took a shift: ${choice.quest.title.toLowerCase()}.`,
     });
     return;
@@ -237,7 +242,7 @@ function onFinish(next: GuildState, ev: SimEvent): void {
       pushFeed(next, {
         register: "ambient",
         icon: "tavern",
-        text: `${partyName(party.id)} drank the evening away at your tavern.`,
+        text: `The tavern hums — ${partyName(party.id)} drink the evening away.`,
       });
     } else {
       next.villageSink += spent;
@@ -276,7 +281,7 @@ function onReturn(next: GuildState, ev: SimEvent): void {
     next.dayLedger.push({ label: `${a.questTitle} — ${partyName(party.id)}`, amount: a.log.guildCut });
     pushFeed(next, {
       register: "ambient",
-      icon: "watch",
+      icon: soloIcon(party.id, "watch"),
       text: `${partyName(party.id)} finished the shift: ${a.questTitle.toLowerCase()}.`,
     });
     schedule(next, next.tick + 1, "decide", { partyId: party.id });
@@ -340,7 +345,7 @@ function onNight(next: GuildState): void {
       pushFeed(next, {
         register: "ambient",
         icon: "letter",
-        text: `A letter arrived: ${quest.title}, ${quest.dailyRate}g a day, from ${quest.giver}.`,
+        text: `A letter arrived: ${quest.title} — ${quest.reward}g, from ${quest.giver}.`,
       });
     }
   }
@@ -382,7 +387,7 @@ function onNight(next: GuildState): void {
   });
   next.dayLedger = [];
 
-  pushFeed(next, { register: "ambient", icon: "night", text: `Night falls on day ${day}.` });
+  // (No "Night falls" line — Stefan: bloat. The feed's Day headers carry the boundary.)
   next.firstDay = false;
 
   // Caps (checked nightly, the cheap place): mail trims oldest READ first, then

@@ -88,7 +88,7 @@ export interface Beat {
 export interface AdventureLog {
   beats: Beat[];
   outcome: "success" | "failure";
-  /** Total reward pool for the run (daily_rate × duration; 0 on failure). */
+  /** Total reward pool: the quest's FLAT reward × any bonus find (0 on failure). */
   reward: number;
   /** The guild's gold from it = reward × cut (0 on failure). Under the pivot the
    * cut is the flat ~10% brokerage, not a player-set number. */
