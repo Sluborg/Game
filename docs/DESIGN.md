@@ -99,21 +99,15 @@ order.
 **Report & challenges v2 — Stefan's spec (2026-07-10, the next slice).** Recorded from his
 second play session; builds on the shipped check-meter:
 
-- **Challenge types v2:** Investigation/Research · Travel · Mystic/Occult · Social/Politics ·
-  Craft/Labor (clear rubble, build, rescue work) · Combat · Infiltration. A challenge can
-  combine **two or more types at different levels** ("research the evil archmage" =
-  Investigation 60 + Occult 55) on a **~0–100 difficulty scale** (superseding today's 6–18).
-  Quest skulls stay ≈ the max across its challenges (possibly trimming outliers). His quest-card
-  mockup, verbatim:
-
-  > Find the green cat 💀💀
-  > ⌛ 2++ days
-  > From: Jalk Chozop, antiquarian
-  > 🔎 Investigation 💀💀
-  > 🏞 Travel 💀💀
-  > 🔪 Combat 💀
-  >
-  > (with the Kenney icons)
+- **Challenge system v2:** the detailed challenge vocabulary, Attribute/Skill mapping,
+  check formula, result language, reasoning, and open tuning live in
+  [`docs/CHALLENGE_SYSTEM.md`](./CHALLENGE_SYSTEM.md), which is authoritative for this subsystem.
+  In summary: a challenge normally combines two broad Skills and tests both separately; labels
+  stay at the activity level (Researching in a library / Interviewing witnesses / Handling dungeon
+  traps / Gaining political support), while the quest owns specific people, places, and objectives.
+  Challenges retain a visible ~0–100 difficulty scale, but its conversion to a check target remains
+  explicitly open. The former Investigation/Travel/Mystic/Social/Craft/Combat/Infiltration list is
+  superseded by the linked contract; Combat uses a temporary special rule pending its own slice.
 - **Per-hero resolution:** every participating hero rolls the challenge — **one bar per hero,
   filling simultaneously**. Challenges declare participation ("all must sneak" / "two may sneak
   — then only those two fight the next challenge"). A **crit can assist the next check or cover
