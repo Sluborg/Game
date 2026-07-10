@@ -7,6 +7,7 @@
 // implementations can't "both match the plan").
 
 import { PARTY_BY_ID } from "./roster";
+import { EXPIRY_DAYS } from "./tuning";
 import { QUEST_BY_ID } from "./quests";
 import type { Posting, QuestTier } from "./types";
 
@@ -17,7 +18,7 @@ export function makePosting(quest: { id: string; tier: QuestTier; title: string;
     tier: quest.tier,
     title: quest.title,
     giver: quest.giver,
-    daysLeft: 3,
+    daysLeft: EXPIRY_DAYS,
   };
 }
 

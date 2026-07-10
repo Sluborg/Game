@@ -24,8 +24,8 @@ export type {
 } from "./types";
 
 export { HERO_DATA, PARTY_DATA, HERO_BY_ID, PARTY_BY_ID, partyAttr, partyQuality, partyTraitMod } from "./roster";
-export { ROAD_JOB, RUINS, STANDING_JOBS, POSTABLE_QUESTS, QUEST_BY_ID, challengeDots, type QuestDef, type BeatDef } from "./quests";
-export { resolveQuest } from "./resolver";
+export { ROAD_JOB, RUINS, STANDING_JOBS, POSTABLE_QUESTS, QUEST_BY_ID, challengeDots, questDifficulty, type QuestDef, type BeatDef } from "./quests";
+export { resolveQuest, scoreFor, GRADE_ZONES } from "./resolver";
 export { makePosting, partyEligible, bestPosting } from "./board";
 export { chooseActivity, avgWallet, type LifeChoice } from "./life";
 export {
@@ -59,6 +59,7 @@ export {
   FEED_CAP,
   MAIL_CAP,
   ADVANCE_CAP,
+  EXPIRY_DAYS,
 } from "./tuning";
 export { loadState, saveState, clearSave, freshSeed } from "./persist";
 export { deriveSeed } from "./seed";

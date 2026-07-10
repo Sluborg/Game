@@ -331,7 +331,11 @@ function onNight(next: GuildState): void {
   }
   next.board = next.board.filter((p) => !withdrawn.includes(p.id));
   for (const quest of [ROAD_JOB, RUINS]) {
-    if (!next.board.some((p) => p.tier === quest.tier)) {
+    // No repost while a party is out on this very quest — the giver waits for
+    // word, and the Quests card would otherwise show the same title twice
+    // (open + active), which reads as a double-post (Review #2 Adversary/PX).
+    const outOnIt = next.parties.some((p) => p.assignment?.questId === quest.id);
+    if (!outOnIt && !next.board.some((p) => p.tier === quest.tier)) {
       next.board.push(makePosting(quest, ++next.seq));
       pushFeed(next, {
         register: "ambient",

@@ -2,6 +2,100 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-07-09 - Hall & Story UX polish — PR opened (awaiting Codex)
+- Gate: codex-fixed — **PR #37 into `dev`**. Codex (on `42f2cd7`, one P3, fixed in `9e807f2`):
+  on the final beat mid-rise the button read "See outcome ›" while the handler correctly
+  snapped — a label/behavior mismatch needing a confusing second tap → the label now follows
+  the handler ("Skip the rise" mid-rise on every beat, including the last). Review #2 on the
+  delta (self, one-ternary label fix): behavior unchanged and already reviewed; no new
+  blockers. 88 tests + build green.
+- Review #2 (4-persona, on the DIFF): **3 blockers, all fixed** — (1, Adversary+Engineer) a
+  score-0 beat (REAL: ~4.4% of quests across a 100k-beat sweep — fail-cascade carry) animated
+  width 0→0, `transitionend` never fired, the card soft-locked and Auto stalled forever → a
+  fallback landing timer in BeatCard fires when the transition WOULD have ended (idempotent
+  with transitionend; also covers mobile's unreliable transition events); (2, Designer) the
+  gold "Next ›" button bypassed the landed gate and skipped the whole reveal mid-rise → it now
+  snaps first ("Skip the rise") and only a landed press advances, same rule as the stage tap;
+  (3, Designer) "leaves tomorrow" lied — a daysLeft-1 posting is withdrawn TONIGHT → "last day"
+  / "withdrawn tonight if nobody takes it".
+- Non-blocking folded: night refill no longer reposts a tier while a party is out on that very
+  quest (the Quests card showed the same title twice ~30–50% of steps — now "the giver waits
+  for word", + a regression test); ACTIVE tap-details give the exact rolled estimate (duration
+  is public via the departure line); bonus-poor note made value-neutral (poor bonus adds
+  nothing); Auto Fast hold 650→800ms so the prose gets read; meter aria announces "rolling…"
+  until landed (don't spoil the rise for screen readers). Engineer independently re-proved the
+  golden fixture by checking out the pre-change resolver and diffing 30,000 resolutions
+  head-to-head: byte-identical except `score`. Adversary: withdrawal still fires 1–3×/30 days
+  (rare texture as intended); speed-pref corruption never throws; Advance spam with a pending
+  decision = 0 re-renders. PX scorecard: **all 10 of Stefan's items answered**; meter verdict
+  "delivers" (Slow rise ≈1–3.5s reads as anticipation; zones legible at 430px).
+- Noted for later: progress dots leak run structure up front (reveal-as-landed is a future
+  polish); the beat card's empty lower half could hold portraits later; SAVE_VERSION 3 wipes
+  live saves incl. Stefan's tavern run (policy discard-reinit — flagged in the PR body).
+- Built (sim commit `fcc56b0`, isolated): `Beat.score` in the resolver — proven purely additive
+  by the committed golden fixture (20 cases/62 beats from the PRE-change resolver; id/grade/
+  roll/branch/outcome/reward/guildCut byte-identical); `questDifficulty` (1–5, critical-weighted);
+  EXPIRY_DAYS 7 (+ night-7 withdrawal test); SAVE_VERSION 3.
+- Built (UI): StoryStage **check meter** — 5 tinted grade zones (tint+tick, no labels; landed tag
+  carries the word; role="meter" aria), constant-RATE fill (duration ∝ score) starting 500ms
+  after mount, staged reveal (tag pop → narration/trait fade), tap-mid-rise snaps / landed tap
+  advances, Auto hold counts from fill-END, one cycling Slow/Normal/Fast chip persisted as
+  `guild.ui.storySpeed` (lazy + try/catch); context-aware effect notes in a pure `storyText.ts`
+  (+5 unit tests: no "next check" claims on final/bonus/recovery beats). Hall: lone-meeple
+  (`hero` glyph) for solos; Quests card (OPEN + ACTIVE rows with stable-id tap-details reading
+  only quest defs + public assignment fields, ★1–5 on the summary, expiry only as "leaves
+  tomorrow", ⓘ explainer behind the 44px title row); Buildings card (Guild Hall + Tavern, new
+  flavor copy + visible earn hint + runway consequence, READY chip gated on shownGold);
+  Advance/Auto verbs contrast ("skips ahead…" vs "watch it play"), Advance no longer flips DOM
+  `disabled` under the finger (aria-disabled + dimmed data-attr; sim no-op already pinned) and
+  every Hall/Story control gets `touch-action: manipulation` — the haptics mitigations (root
+  cause unconfirmed; Stefan retests).
+- Verified: `tsc -b` + `vite build` green; **87 vitest pass** (12 new). Headless @430px: stars,
+  quest tap-detail with brokerage math, ⓘ toggles, active-row gold border, READY chip, meter
+  zones + rising fill + snap + landed tag/note/narration + single-tap advance + speed cycling,
+  no h-overflow, no console errors. Screenshots `docs/screenshots/canvas2-*`.
+
+## 2026-07-09 - Hall & Story UX polish (Stefan's play feedback) — plan done
+- Gate: plan
+- Branch: `claude/slice-living-canvas-843hho` (restarted off `origin/dev` after PR #36 merged;
+  first commit = §50 backfill of #36's merged gate; remote branch had been auto-deleted →
+  recreated on push).
+- Scope declared: the 10 play-feedback items — lone-hero meeple (new Kenney `pawn` glyph, own
+  asset commit), Advance/Auto copy contrast, quest difficulty ★1–5 replacing "Type-heavy",
+  board card → "Quests" with OPEN + ACTIVE (UI-derived from assignments, quest-led rows),
+  explainers behind tap-the-title (44px row + chevron), EXPIRY_DAYS 3→7, tavern flavor copy
+  (+ 5-word earn hint stays visible), Investments → Buildings card with a "Ready" chip gated on
+  shownGold, haptics mitigation (no DOM `disabled` flip under the finger — aria-disabled +
+  dimmed data-attr; sim no-op already pinned), tap-a-quest detail (types+dots, reward math,
+  giver, expiry — sealed log never read), and the **story check-bar**: additive `Beat.score`
+  (0–100) computed in the resolver from the existing ratio, grade-owned zones (fail [0,20)
+  poor [20,40) ok [40,65) good [65,90) crit [90,100], bands lo→hi with fail lo=0 and crit
+  synthetic hi=2.0, zone-safe rounding), animated zone meter in StoryStage, speed as ONE
+  cycling chip (Slow/Normal/Fast, `guild.ui.storySpeed` localStorage, lazy+try/catch).
+  SAVE_VERSION 3 (v2 saves — including Stefan's live one — discard-reinit per policy; flagged).
+- Review #1 (4-persona, on the PLAN): 9 merged blockers, all folded — (1) constant fill RATE
+  (duration = score/100 × base), not constant duration, so the bar's stop stays unknown;
+  (2) stage the card: type/location → bar → grade tag → narration+trait fade (reduced-motion:
+  snap); (3+) effect notes context-aware — no "next check" claims on final/bonus beats,
+  recovery gets true copy (a good recovery still carries −1), fail note generic enough to
+  survive a non-critical last-beat fail before a success card; (4) score formula pinned exactly
+  (incl. negative-ratio clamp + rounding that can't escape the zone); (5) golden fixture from
+  the PRE-CHANGE resolver committed as a regression test (20 cases/62 beats incl. recovery +
+  bonus; asserts id/grade/roll/branch/outcome/reward/guildCut byte-identical — catches any
+  extra rng draw or boundary flip); (6) zone labels don't fit 430px → tint+tick only, landed
+  grade tag carries the word, role="meter" aria; (7) tap-during-fill = snap-to-result, only a
+  landed tap advances; auto-delay counts from fill-end (Auto+Slow can't skip the show);
+  (8) Advance/Auto copy contrasts on the verb ("skips ahead…" vs "watch it play, hands-free");
+  (9) one cycling speed chip, not a segmented control.
+- Non-blocking folded: fill starts ~500ms after mount; expiry moves into tap-detail (summary
+  only when "leaves tomorrow"); OPEN above ACTIVE, one-line active rows; whole title row is the
+  info tap target; "Ready" chip not a bare "!"; stable-id expansion state; sim change isolated
+  in its own commit; stale "(~3)" comment fixed; EXPIRY test (park parties, withdrawal fires
+  night 7); crit-zone anchor 2.0 pinned in the monotonicity test; duplicate-title active/open
+  distinction carried by the gold border + party line.
+- Open questions: none blocking. Haptics root cause unconfirmed from here (device tap-feedback
+  suspected) — mitigations ship, Stefan retests on the preview.
+
 Format per entry:
 ## YYYY-MM-DD HH:MM - <short scope>
 - Gate: plan | build | PR | codex-fixed | merged
@@ -11,8 +105,9 @@ Format per entry:
 - Open questions:
 
 ## 2026-07-09 - Slice: the living canvas — PR opened (awaiting Codex)
-- Gate: codex-fixed — **PR #36 into `dev`** (branch `claude/slice-living-canvas-843hho`). Plan +
-  both reviews cleared; `@codex review` posted per §30.
+- Gate: **merged 2026-07-09 21:42 +0200** (merge commit `7c4c135`; backfilled 2026-07-09).
+  **PR #36 into `dev`** (branch `claude/slice-living-canvas-843hho`). Plan + both reviews +
+  Codex (two P2s fixed) cleared.
 - Codex (on `2d4c2ac`, two P2s, both fixed): (1) **unread nightly ledgers were exempt from
   MAIL_CAP** — a Hall-only player who never expands ledger rows accrued one untrimmable mail per
   night (300 @300 days) → the cap now trims read mail first, then unread LEDGERS oldest-first;

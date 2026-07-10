@@ -69,6 +69,11 @@ export interface Beat {
   grade: Grade;
   /** 0..1 roll that produced the grade (persisted so the story replays identically). */
   roll: number;
+  /** 0..100 check score for the story meter — a monotone remap of the resolve
+   * ratio into the grade's OWN zone (resolver.ts GRADE_ZONES), so the bar always
+   * lands in the zone the grade names. Presentation-honest: derived from the
+   * same ratio that graded the beat, no extra rng. */
+  score: number;
   /** The narration line for this beat at its rolled grade. */
   text: string;
   /** A trait cut-in that coloured this beat, if any (§5). */
@@ -136,7 +141,7 @@ export interface Posting {
   tier: QuestTier;
   title: string;
   giver: string;
-  /** Days remaining before the giver withdraws it untaken (~3). */
+  /** Days remaining before the giver withdraws it untaken (tuning EXPIRY_DAYS). */
   daysLeft: number;
 }
 
@@ -214,7 +219,8 @@ export type IconName =
   | "letter"
   | "watch"
   | "night"
-  | "party";
+  | "party"
+  | "hero";
 
 /** One line of the living world. Ambient collapses; notable reads; decision
  * auto-pauses and asks for the player. */

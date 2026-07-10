@@ -98,23 +98,65 @@
 .beatText { margin: 0; font-size: 1.15rem; line-height: 1.5; font-family: var(--font-display); }
 .trait { margin: 0; font-size: 0.85rem; color: var(--gold-soft-hi); font-style: italic; }
 
-/* The roll/check result — deliberately tinted a distinct colour per grade. */
-.roll {
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
+/* ── The check meter — 5 grade zones (tint + tick, no labels: they don't fit
+   430px; the landed grade tag carries the word — Review #1 PX B1). ────────── */
+.meter {
+  position: relative;
+  height: 16px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--stroke-soft);
+  overflow: hidden;
+  background: var(--surface-1);
+}
+.zones { position: absolute; inset: 0; display: flex; }
+.zone { height: 100%; border-right: 1px solid var(--surface-0); }
+.zone:last-child { border-right: none; }
+.zone[data-grade="fail"] { background: color-mix(in srgb, var(--c-blood) 22%, var(--surface-1)); }
+.zone[data-grade="poor"] { background: color-mix(in srgb, var(--c-ember) 18%, var(--surface-1)); }
+.zone[data-grade="ok"]   { background: color-mix(in srgb, var(--c-parchment) 12%, var(--surface-1)); }
+.zone[data-grade="good"] { background: color-mix(in srgb, var(--c-emerald) 18%, var(--surface-1)); }
+.zone[data-grade="crit"] { background: color-mix(in srgb, var(--c-gold) 26%, var(--surface-1)); }
+.fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  background: linear-gradient(180deg, var(--gold-soft-hi), var(--gold-soft-lo));
+  border-radius: var(--r-pill);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--c-gold) 55%, transparent);
+}
+
+/* The landed result: grade tag pops, effect note beside it, THEN the prose. */
+.landing {
+  display: flex;
+  align-items: baseline;
   gap: var(--sp-2);
-  padding: 6px 12px;
+  flex-wrap: wrap;
+  animation: tagpop var(--t-fast) var(--ease-out);
+}
+@keyframes tagpop { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: none; } }
+.rollGrade {
+  font-size: 0.95rem;
+  font-weight: 800;
+  padding: 3px 10px;
   border-radius: var(--r-sm);
   border: 1px solid currentColor;
 }
-.rollLabel { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.75; }
-.rollGrade { font-size: 0.95rem; font-weight: 800; }
-.roll[data-grade="crit"] { color: var(--c-gold); }
-.roll[data-grade="good"] { color: var(--c-emerald); }
-.roll[data-grade="ok"] { color: var(--c-parchment); }
-.roll[data-grade="poor"] { color: var(--c-ember); }
-.roll[data-grade="fail"] { color: var(--c-blood); }
+.rollGrade[data-grade="crit"] { color: var(--c-gold); }
+.rollGrade[data-grade="good"] { color: var(--c-emerald); }
+.rollGrade[data-grade="ok"] { color: var(--c-parchment); }
+.rollGrade[data-grade="poor"] { color: var(--c-ember); }
+.rollGrade[data-grade="fail"] { color: var(--c-blood); }
+.effect { font-size: 0.8rem; color: var(--text-dim); font-style: italic; }
+
+.prose {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  animation: prosein var(--t-med) var(--ease-out) 0.25s both;
+}
+@keyframes prosein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .landing, .prose, .beat, .outcome { animation: none; }
+}
 
 .outcome {
   width: 100%;
@@ -153,7 +195,21 @@
 .dot[data-current="true"] { box-shadow: 0 0 0 3px var(--stroke-gold); }
 .dot[data-final] { border-style: dashed; }
 
-.btns { display: flex; gap: var(--sp-3); }
+.btns { display: flex; gap: var(--sp-2); }
+.overlay button { touch-action: manipulation; }
+.speed {
+  min-height: 48px;
+  min-width: 76px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--r-md);
+  border: 1px solid var(--stroke-soft);
+  background: var(--surface-1);
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.speed:active { filter: brightness(1.12); }
 .toggle {
   min-height: 48px;
   padding: 0 var(--sp-4);

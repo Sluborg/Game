@@ -10,7 +10,7 @@ export const PHASES = ["dawn", "midday", "dusk", "night"] as const;
 export type Phase = (typeof PHASES)[number];
 
 /** Bump on any breaking GuildState shape change (persist.ts discards + reinits). */
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3; // v3: Beat.score (the story check-bar)
 
 export const STARTING_GOLD = 1000;
 export const DAILY_UPKEEP = 60;
@@ -57,3 +57,8 @@ export const REST_TICKS = 1;
 export const TRAIN_TICKS = 2;
 /** A standing watch shift is out-and-back within the day. */
 export const STANDING_TICKS = 2;
+
+/** Days a posting sits before the giver withdraws it. Stefan: quests should be
+ * in "rather long" — with parties usually taking work within a day or two,
+ * withdrawal is now a rare texture, not a timer the player fights. */
+export const EXPIRY_DAYS = 7;

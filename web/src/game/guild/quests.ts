@@ -234,6 +234,27 @@ export const QUEST_BY_ID: Record<string, QuestDef> = Object.fromEntries(
   [...POSTABLE_QUESTS, ...STANDING_JOBS].map((q) => [q.id, q]),
 );
 
+/** Overall quest difficulty, 1–5 stars, from a weighted mean of the MAIN beats'
+ * difficulties (critical beats ×1.5 — a lone killer beat must not hide behind
+ * easy ones). Derived from the beats so it can't misrepresent the quest.
+ * Today: standing 1★, road 2★, ruins 3★ (top of the scale waits for harder
+ * content). */
+export function questDifficulty(quest: QuestDef): number {
+  let sum = 0;
+  let weight = 0;
+  for (const b of quest.beats) {
+    const w = b.critical ? 1.5 : 1;
+    sum += b.difficulty * w;
+    weight += w;
+  }
+  const mean = weight > 0 ? sum / weight : 0;
+  if (mean <= 7) return 1;
+  if (mean <= 12) return 2;
+  if (mean <= 16) return 3;
+  if (mean <= 20) return 4;
+  return 5;
+}
+
 /** Challenge-dot signature for the board (0–3 dots per type), derived from the
  * quest's beats so it can't misrepresent what will be tested. */
 export function challengeDots(quest: QuestDef): Record<BeatType, number> {

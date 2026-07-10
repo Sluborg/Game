@@ -2,6 +2,8 @@
    Register treatment carries meaning (Review #1 fold): ambient = dim, notable =
    normal, decision = gold-bordered. Icons sit beside text labels, never alone. */
 
+.screen button { touch-action: manipulation; }
+
 .screen {
   min-height: 100vh;
   /* Reserve room for the fixed Advance bar (~76px) + nav. */
@@ -87,10 +89,67 @@
 .cardNote { margin: var(--sp-2) 0 0; font-size: 0.75rem; color: var(--text-dim); line-height: 1.4; }
 .cardNote strong { color: var(--text-strong); }
 
+/* Tappable card title (the ⓘ explainer toggle — the whole row is the target). */
+.cardHeadBtn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
+}
+.cardHeadBtn .cardHead { margin: 0; }
+.cardHeadBtn:active { filter: brightness(1.15); }
+.infoGlyph { font-size: 0.9rem; color: var(--text-dim); }
+.readyChip {
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--gold-soft-hi), var(--gold-soft-lo));
+  color: var(--ink-gold);
+}
+
 .postings { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
-.posting { display: flex; flex-direction: column; gap: 2px; }
-.postingTitle { font-size: 0.88rem; font-weight: 600; color: var(--text-strong); }
+.questRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 1px solid var(--stroke-soft);
+  border-radius: var(--r-sm);
+  background: var(--surface-1);
+  text-align: left;
+}
+.questRow:active { filter: brightness(1.12); }
+.questRow[data-active="true"] {
+  border-left: 3px solid var(--c-gold);
+  background: var(--surface-2);
+}
+.postingTitle { display: inline-flex; align-items: center; gap: 6px; font-size: 0.88rem; font-weight: 600; color: var(--text-strong); }
 .postingMeta { font-size: 0.72rem; color: var(--text-dim); }
+.stars { color: var(--gold-soft-hi); letter-spacing: 0.08em; }
+.questDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 4px 2px 2px;
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 2px solid var(--stroke-soft);
+  animation: detailIn var(--t-fast) var(--ease-out);
+}
+@keyframes detailIn { from { opacity: 0; } to { opacity: 1; } }
+.detailLine { font-size: 0.75rem; color: var(--text-dim); line-height: 1.4; }
+
+.buildings { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-3); }
+.building { display: flex; flex-direction: column; gap: 2px; }
 
 .invest { display: flex; align-items: center; gap: var(--sp-3); }
 .investText { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
@@ -230,19 +289,26 @@
   box-shadow: var(--shadow-2);
 }
 .advance:active { filter: brightness(0.92); }
-.advance:disabled { opacity: 0.55; filter: saturate(0.6); }
+/* Blocked via data-attr, never the DOM disabled flag (haptics mitigation) —
+   same predicate as aria-disabled so the states can't diverge. */
+.advance[data-blocked="true"] { opacity: 0.55; filter: saturate(0.6); }
 .advanceMain { font-size: 1rem; font-weight: 800; }
 .advanceSub { font-size: 0.68rem; opacity: 0.85; }
 .autoBtn {
   flex: 0 0 auto;
-  min-width: 76px;
+  min-width: 104px;
   min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
   border-radius: var(--r-md);
   border: 1px solid var(--stroke-soft);
   background: var(--surface-2);
   color: var(--text-dim);
-  font-weight: 700;
-  font-size: 0.85rem;
 }
+.autoMain { font-weight: 700; font-size: 0.85rem; }
+.autoSub { font-size: 0.62rem; opacity: 0.85; }
 .autoBtn[data-on="true"] { border-color: var(--stroke-gold); color: var(--text-gold); }
 .autoBtn:active { filter: brightness(1.12); }

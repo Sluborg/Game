@@ -827,6 +827,23 @@ Every slice still ends playable; the canvas comes first, then the player's hand,
    one sink means allocation isn't a tradeoff yet, and post-tavern income overcorrects to
    roughly +70g/day with nothing left to buy: that surplus is deliberately the appetite slice 2's
    building/gear menu walks into.
+
+   **UX pass (Stefan's play feedback, same slice).** Beats resolve on screen as a **check
+   meter**: `Beat.score` (0–100, resolver-derived from the same ratio that graded the beat —
+   zones fail [0,20) / poor [20,40) / ok [40,65) / good [65,90) / crit [90,100], crit's ratio
+   anchor 2.0) rises at a **constant rate** (duration ∝ score, so the stop point stays unknown),
+   then the grade tag pops and the narration fades in; a tap mid-rise snaps, a landed tap
+   advances; speed Slow/Normal/Fast is one cycling chip (UI-only pref). Effect notes are
+   context-aware (no "next check" claims on final/bonus beats; a passed recovery reads rattled,
+   not eased — the resolver still carries −1). Quests card shows **difficulty ★1–5**
+   (critical-weighted mean of main-beat difficulties; type breakdown + brokerage math live in
+   the tap-detail) with OPEN and ACTIVE (party-assigned) rows; posting expiry is **7 days**
+   (withdrawal is rare texture now — the near-permanently-full 2-posting board is accepted
+   pacing until more quest defs land). Investments renamed **Buildings** (Guild Hall + Tavern,
+   "Ready" chip gated on displayed gold). The one-buyable "Ready" chip is a spend-your-400g nag
+   today — it must become a real choice signal, not a checklist, when slice 2's menu lands
+   (guardrail #5). Explainers sit behind tap-the-title ⓘ. The Advance/Auto pair contrasts on
+   the verb (skip ahead vs watch it play).
 2. **The businessman's hand** — the full **Majesty building + gear upgrades at fixed prices** +
    the hero-spending economy + the flat 10% cut + building passive + upkeep. **The read the bet is
    priced against: the dormant CV certainty chips (already built in Slice 1) go LIVE here** — so

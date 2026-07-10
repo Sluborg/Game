@@ -1,12 +1,28 @@
-// StoryStage — the animated story that replaces watchable combat in Slice 1 (§4).
-// A SINGLE fixed-viewport panel that swaps ONE beat at a time on tap (NOT a
-// horizontally-scrolling strip — "left-to-right" is only the per-beat slide-in).
-// Progress dots + a play/auto toggle; challenge/roll grade is tinted distinctly;
-// forced branches and trait cut-ins are called out. The final card reveals the
-// outcome + the guild's take — the payoff the sealed envelope withheld.
+// StoryStage — the animated story (§4). A SINGLE fixed-viewport panel that swaps
+// ONE beat at a time. Each beat now resolves on screen as a CHECK METER: a
+// 5-zone track (the grades' own score zones) whose fill rises at a constant
+// RATE — duration scales with the score, so the stop point stays unknown until
+// it lands (Review #1 Designer B1). The card is staged: type/location → the
+// rise → the grade tag pops → narration + trait fade in (the per-grade prose
+// must not spoil the bar — Designer B2). A tap during the rise SNAPS to the
+// result; only a tap after landing advances (PX B2). Speed (Slow/Normal/Fast)
+// is one cycling chip, persisted as a UI-only pref. The final card reveals the
+// outcome + the guild's brokerage — the payoff the sealed envelope withheld.
 
-import { useEffect, useState } from "react";
-import type { AdventureLog, Beat, BeatType } from "../../game/guild";
+import { useEffect, useMemo, useState } from "react";
+import { GRADE_ZONES, type AdventureLog, type Beat, type BeatType, type Grade } from "../../game/guild";
+import {
+  GRADE_LABEL,
+  effectNote,
+  FILL_BASE_MS,
+  FILL_DELAY_MS,
+  HOLD_MS,
+  readStorySpeed,
+  saveStorySpeed,
+  SPEED_LABEL,
+  SPEED_ORDER,
+  type StorySpeed,
+} from "./storyText";
 import styles from "./StoryStage.module.css";
 
 const TYPE_LABEL: Record<BeatType, string> = {
@@ -16,13 +32,7 @@ const TYPE_LABEL: Record<BeatType, string> = {
   combat: "Combat",
 };
 
-const GRADE_LABEL: Record<Beat["grade"], string> = {
-  crit: "Triumph",
-  good: "Good",
-  ok: "Scraped by",
-  poor: "Rough",
-  fail: "Failed",
-};
+const ZONE_ORDER: Grade[] = ["fail", "poor", "ok", "good", "crit"];
 
 export function StoryStage({
   log,
@@ -38,15 +48,43 @@ export function StoryStage({
   // index in [0, beats.length]; the last index shows the outcome card.
   const [index, setIndex] = useState(0);
   const [auto, setAuto] = useState(false);
+  const [speed, setSpeed] = useState<StorySpeed>(() => readStorySpeed());
+  // Has the current beat's meter landed? Resets per beat; a tap during the
+  // rise sets it early (snap). Gates narration AND advancing.
+  const [landed, setLanded] = useState(false);
   const atEnd = index >= log.beats.length;
 
-  useEffect(() => {
-    if (!auto || atEnd) return;
-    const t = window.setTimeout(() => setIndex((i) => Math.min(i + 1, log.beats.length)), 1700);
-    return () => window.clearTimeout(t);
-  }, [auto, index, atEnd, log.beats.length]);
+  const reducedMotion = useMemo(
+    () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
+    [],
+  );
 
-  const advance = () => setIndex((i) => Math.min(i + 1, log.beats.length));
+  const advance = () => {
+    setLanded(false);
+    setIndex((i) => Math.min(i + 1, log.beats.length));
+  };
+
+  // Auto counts its hold from fill-END (landed), never from card mount — so
+  // Auto+Slow can't advance mid-rise (PX B2).
+  useEffect(() => {
+    if (!auto || atEnd || !(landed || reducedMotion)) return;
+    const t = window.setTimeout(advance, HOLD_MS[speed]);
+    return () => window.clearTimeout(t);
+  }, [auto, landed, atEnd, speed, index, reducedMotion]);
+
+  const cycleSpeed = () => {
+    const next = SPEED_ORDER[(SPEED_ORDER.indexOf(speed) + 1) % SPEED_ORDER.length];
+    setSpeed(next);
+    saveStorySpeed(next);
+  };
+
+  const shown = landed || reducedMotion;
+
+  const stageTap = () => {
+    if (atEnd) return;
+    if (!shown) setLanded(true); // snap the rise to its result
+    else advance();
+  };
 
   return (
     <div className={styles.overlay} role="dialog" aria-modal="true" aria-label={`${questTitle} — the story`}>
@@ -58,11 +96,18 @@ export function StoryStage({
         <button type="button" className={styles.close} onClick={onClose} aria-label="Close story">✕</button>
       </header>
 
-      <div className={styles.stage} onClick={atEnd ? undefined : advance}>
+      <div className={styles.stage} onClick={atEnd ? undefined : stageTap}>
         {!atEnd ? (
           <>
-            <BeatCard key={index} beat={log.beats[index]} />
-            {index === 0 && <span className={styles.tapHint} aria-hidden>tap to continue</span>}
+            <BeatCard
+              key={index}
+              beat={log.beats[index]}
+              hasNext={index < log.beats.length - 1}
+              landed={shown}
+              onLanded={() => setLanded(true)}
+              speed={speed}
+            />
+            {index === 0 && <span className={styles.tapHint} aria-hidden>{shown ? "tap to continue" : "tap to skip the rise"}</span>}
           </>
         ) : (
           <div className={styles.outcome} data-outcome={log.outcome}>
@@ -87,12 +132,19 @@ export function StoryStage({
           <span className={styles.dot} data-on={atEnd} data-current={atEnd} data-final />
         </div>
         <div className={styles.btns}>
+          <button type="button" className={styles.speed} onClick={cycleSpeed} aria-label={`Story speed: ${SPEED_LABEL[speed]} — tap to change`}>
+            {SPEED_LABEL[speed]}
+          </button>
           <button type="button" className={styles.toggle} onClick={() => setAuto((a) => !a)} disabled={atEnd}>
             {auto ? "Pause" : "Play"}
           </button>
           {!atEnd ? (
-            <button type="button" className={styles.next} onClick={advance}>
-              {index === log.beats.length - 1 ? "See outcome ›" : "Next ›"}
+            // Same gate as the stage: mid-rise it SNAPS, only a landed press
+            // advances — the biggest button must not skip the reveal (R#2 Designer).
+            <button type="button" className={styles.next} onClick={() => (shown ? advance() : setLanded(true))}>
+              {/* Label follows the handler: mid-rise it SNAPS on every beat —
+                  including the last (Codex P3 on PR #37). */}
+              {!shown ? "Skip the rise" : index === log.beats.length - 1 ? "See outcome ›" : "Next ›"}
             </button>
           ) : (
             <button type="button" className={styles.next} onClick={onClose}>Done</button>
@@ -103,24 +155,94 @@ export function StoryStage({
   );
 }
 
-function BeatCard({ beat }: { beat: Beat }) {
+function BeatCard({
+  beat,
+  hasNext,
+  landed,
+  onLanded,
+  speed,
+}: {
+  beat: Beat;
+  hasNext: boolean;
+  landed: boolean;
+  onLanded: () => void;
+  speed: StorySpeed;
+}) {
+  // Constant RATE: a score-90 rise takes ~3× a score-30 rise, so the landing
+  // point can't be read off the pace (Review #1 Designer B1).
+  const durationMs = Math.max(120, Math.round((beat.score / 100) * FILL_BASE_MS[speed]));
+  const [filling, setFilling] = useState(false);
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setFilling(true), FILL_DELAY_MS);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  // Fallback landing: a score-0 beat never changes width, so transitionend
+  // never fires — without this, the card soft-locks and Auto stalls (real:
+  // ~4.4% of quests contain one, Review #2 Adversary). Timed to when the
+  // transition would end; transitionend landing first makes this a no-op.
+  useEffect(() => {
+    if (landed) return;
+    const t = window.setTimeout(onLanded, FILL_DELAY_MS + durationMs + 80);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [landed]);
+
+  const note = effectNote(beat, hasNext);
+  const width = landed || filling ? beat.score : 0;
+
   return (
     <article className={styles.beat}>
       {beat.branch && (
         <div className={styles.branch} data-branch={beat.branch}>
-          {beat.branch === "recovery" ? "Forced path — it went wrong" : "Bonus — an opening"}
+          {beat.branch === "recovery" ? "Forced path — one chance to save it" : "Bonus — an opening"}
         </div>
       )}
       <div className={styles.beatTop}>
         <span className={styles.beatType} data-type={beat.type}>{TYPE_LABEL[beat.type]}</span>
         <span className={styles.beatLoc}>{beat.location}</span>
       </div>
-      <p className={styles.beatText}>{beat.text}</p>
-      {beat.traitBlurb && <p className={styles.trait}>{beat.traitBlurb}</p>}
-      <div className={styles.roll} data-grade={beat.grade}>
-        <span className={styles.rollLabel}>Check</span>
-        <span className={styles.rollGrade}>{GRADE_LABEL[beat.grade]}</span>
+
+      <div
+        className={styles.meter}
+        role="meter"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={landed ? beat.score : 0}
+        aria-valuetext={landed ? `${GRADE_LABEL[beat.grade]} — ${beat.score} of 100` : "rolling…"}
+      >
+        <div className={styles.zones} aria-hidden>
+          {ZONE_ORDER.map((g) => (
+            <span
+              key={g}
+              className={styles.zone}
+              data-grade={g}
+              style={{ width: `${GRADE_ZONES[g][1] - GRADE_ZONES[g][0]}%` }}
+            />
+          ))}
+        </div>
+        <div
+          className={styles.fill}
+          aria-hidden
+          style={{ width: `${width}%`, transition: landed ? "none" : `width ${durationMs}ms linear` }}
+          onTransitionEnd={onLanded}
+        />
       </div>
+
+      {landed && (
+        <div className={styles.landing}>
+          <span className={styles.rollGrade} data-grade={beat.grade}>{GRADE_LABEL[beat.grade]}</span>
+          {note && <span className={styles.effect}>{note}</span>}
+        </div>
+      )}
+
+      {landed && (
+        <div className={styles.prose}>
+          <p className={styles.beatText}>{beat.text}</p>
+          {beat.traitBlurb && <p className={styles.trait}>{beat.traitBlurb}</p>}
+        </div>
+      )}
     </article>
   );
 }
