@@ -3,7 +3,12 @@
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
 ## 2026-07-09 - Hall & Story UX polish — PR opened (awaiting Codex)
-- Gate: PR (plan + both reviews cleared)
+- Gate: codex-fixed — **PR #37 into `dev`**. Codex (on `42f2cd7`, one P3, fixed in `9e807f2`):
+  on the final beat mid-rise the button read "See outcome ›" while the handler correctly
+  snapped — a label/behavior mismatch needing a confusing second tap → the label now follows
+  the handler ("Skip the rise" mid-rise on every beat, including the last). Review #2 on the
+  delta (self, one-ternary label fix): behavior unchanged and already reviewed; no new
+  blockers. 88 tests + build green.
 - Review #2 (4-persona, on the DIFF): **3 blockers, all fixed** — (1, Adversary+Engineer) a
   score-0 beat (REAL: ~4.4% of quests across a 100k-beat sweep — fail-cascade carry) animated
   width 0→0, `transitionend` never fired, the card soft-locked and Auto stalled forever → a
