@@ -2,8 +2,19 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
-## 2026-07-11 - Content pipeline (CONTENT-SPEC + validated content scaffold) — build done, PR opened
-- Gate: build + PR (Review #2 cleared; awaiting Codex)
+## 2026-07-11 - Content pipeline (CONTENT-SPEC + validated content scaffold) — codex-fixed
+- Gate: codex-fixed (awaiting merge decision)
+- **PR #42 into `dev`.** Codex (on `3dcad5a`): ONE finding, **P2 — "Reject non-array trait scopes"**:
+  when `appliesTo.skills` (or `.attributes`) is a present-but-non-array (e.g. a bare string) while
+  the other scope is a valid non-empty array, the `Array.isArray(...) ? ... : []` fallback coerced
+  the malformed scope to `[]` and the later ref-validators skipped it, so a bad drop passed CI. Real
+  hole. Fixed: a present-but-non-array scope is now rejected with its own issue (undefined stays
+  fine — the scope is simply omitted), and the "applies to nothing" message is suppressed when a
+  scope is already flagged malformed (no double-report). +1 negative fixture (40 content tests).
+  Re-ran Review #2 on the delta (self, proportionate to a ~15-line validator fix): seed content
+  (array scopes) still clean, `{}` still errors, empty-array + valid-other still fine; no new
+  blockers. `npm run test` **132 pass + 1 skipped**; `tsc -b && vite build` green.
+- Gate before this: build + PR (Review #2 cleared).
 - Branch: `claude/content-pipeline-spec-dh39y1`. Scope as planned: `docs/CONTENT-SPEC.md`,
   `docs/CHALLENGE_SYSTEM.md` fold, `web/src/game/guild/content/` (attributes/skills/ladder/types
   as typed `const` vocab + 4 JSON drops + `schema.ts` validator + `content.ts` loader + README +
