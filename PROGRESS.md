@@ -2,6 +2,45 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-07-11 - Content pipeline (CONTENT-SPEC + validated content scaffold) — build done, PR opened
+- Gate: build + PR (Review #2 cleared; awaiting Codex)
+- Branch: `claude/content-pipeline-spec-dh39y1`. Scope as planned: `docs/CONTENT-SPEC.md`,
+  `docs/CHALLENGE_SYSTEM.md` fold, `web/src/game/guild/content/` (attributes/skills/ladder/types
+  as typed `const` vocab + 4 JSON drops + `schema.ts` validator + `content.ts` loader + README +
+  `content.test.ts`), `.github/workflows/test.yml`. Additive; combat core untouched (empty diff vs
+  `origin/dev`); no sim/v1 file modified; nothing wired into the sim.
+- Built: a v2 content namespace, isolated from the shipped v1 sim (4-attr str/dex/sta/per). ChatGPT
+  authors JSON against CONTENT-SPEC; the schema vitest gates every drop. Per Stefan's decision each
+  challenge check declares its own 0–100 difficulty; visible difficulty = derived max
+  (`deriveVisibleDifficulty`, stored nowhere). Combat scoped out (absent from the 15-skill table —
+  validator rejects it with a dedicated message). Seed content: 6 challenges / 2 quests / 3 traits /
+  4 perks, all on-model.
+- Review #2 (4 personas on the DIFF — Designer, Engineer, Adversary/QA, Player-experience):
+  **1 blocker, fixed** — the test claimed "a bad fixture per rule" but several validator branches
+  had no negative test (unknown-attribute, skill-modifier percent bound, duration integer/<1,
+  non-integer reward, invalid `fromResult`, empty strings, 3-check, object guards) — a §70 truth
+  gap → 9 fixtures added (39 content tests). Non-blocking folded: dead `void ATTR_MAX/SKILL_MAX` +
+  false comment removed; isolation guard now flags ANY `../` specifier (side-effect + dynamic
+  imports, not just `from`), scanning shipped modules only (tests are build-excluded); **unknown-key
+  rejection** added per shape so the spec's "Never add fields" has teeth (a smuggled five-band prose
+  matrix on a challenge — the report data-dump the design forbids — now fails); `tsc -b` step added
+  to the test workflow so vocab TS regressions gate at PR time; CONTENT-SPEC folds — ladder Meaning
+  column now verbatim, required non-empty fields named, reject-list completed (non-integer
+  reward/duration, upgrade-triumph, empty/unknown fields), fog-transform clause on the derived
+  difficulty (guardrail #2), perk-vs-trait guidance for the numeric `skill-modifier`, dead
+  "read the seed" phone pointer reframed for maintainers; `oneOf` hints now list the full 15-skill
+  vocabulary. Accepted (non-blocking, logged): a challenge may repeat in a quest's run list; a 0%
+  trait/perk is allowed; per-kind perk param strictness (a stray `percent` on a param-less perk) is
+  union-keyed, not per-kind — detailed perk design is out of the CHALLENGE_SYSTEM contract.
+- Verified: `npm run test` **131 pass + 1 skipped** (39 content: real content clean, a negative
+  fixture per rule, vocabulary integrity — 6 attrs / 15 skills exact map / Combat absent / ladder
+  5×[−3/−1/0/+1/+3], v1/v2 isolation); `tsc -b && vite build` green; combat core diff empty vs
+  `origin/dev`; a corrupted real JSON drop turns the suite red with legible
+  `path: message (expected …)` then restores clean.
+- Open questions: none blocking. Downstream, still open per CHALLENGE_SYSTEM (unchanged by this
+  slice): 0–100→check-target conversion, final bands, combined-result consequence table, narration
+  composition, final Combat.
+
 ## 2026-07-11 - Content pipeline (CONTENT-SPEC + validated content scaffold) — plan done
 - Gate: plan
 - Branch: `claude/content-pipeline-spec-dh39y1` (off `origin/dev` incl. PR #41; first commit = §50
