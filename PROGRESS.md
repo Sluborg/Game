@@ -2,8 +2,96 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-07-11 - Content pipeline (CONTENT-SPEC + validated content scaffold) — codex-fixed
+- Gate: codex-fixed (awaiting merge decision)
+- **PR #42 into `dev`.** Codex (on `3dcad5a`): ONE finding, **P2 — "Reject non-array trait scopes"**:
+  when `appliesTo.skills` (or `.attributes`) is a present-but-non-array (e.g. a bare string) while
+  the other scope is a valid non-empty array, the `Array.isArray(...) ? ... : []` fallback coerced
+  the malformed scope to `[]` and the later ref-validators skipped it, so a bad drop passed CI. Real
+  hole. Fixed: a present-but-non-array scope is now rejected with its own issue (undefined stays
+  fine — the scope is simply omitted), and the "applies to nothing" message is suppressed when a
+  scope is already flagged malformed (no double-report). +1 negative fixture (40 content tests).
+  Re-ran Review #2 on the delta (self, proportionate to a ~15-line validator fix): seed content
+  (array scopes) still clean, `{}` still errors, empty-array + valid-other still fine; no new
+  blockers. `npm run test` **132 pass + 1 skipped**; `tsc -b && vite build` green.
+- Gate before this: build + PR (Review #2 cleared).
+- Branch: `claude/content-pipeline-spec-dh39y1`. Scope as planned: `docs/CONTENT-SPEC.md`,
+  `docs/CHALLENGE_SYSTEM.md` fold, `web/src/game/guild/content/` (attributes/skills/ladder/types
+  as typed `const` vocab + 4 JSON drops + `schema.ts` validator + `content.ts` loader + README +
+  `content.test.ts`), `.github/workflows/test.yml`. Additive; combat core untouched (empty diff vs
+  `origin/dev`); no sim/v1 file modified; nothing wired into the sim.
+- Built: a v2 content namespace, isolated from the shipped v1 sim (4-attr str/dex/sta/per). ChatGPT
+  authors JSON against CONTENT-SPEC; the schema vitest gates every drop. Per Stefan's decision each
+  challenge check declares its own 0–100 difficulty; visible difficulty = derived max
+  (`deriveVisibleDifficulty`, stored nowhere). Combat scoped out (absent from the 15-skill table —
+  validator rejects it with a dedicated message). Seed content: 6 challenges / 2 quests / 3 traits /
+  4 perks, all on-model.
+- Review #2 (4 personas on the DIFF — Designer, Engineer, Adversary/QA, Player-experience):
+  **1 blocker, fixed** — the test claimed "a bad fixture per rule" but several validator branches
+  had no negative test (unknown-attribute, skill-modifier percent bound, duration integer/<1,
+  non-integer reward, invalid `fromResult`, empty strings, 3-check, object guards) — a §70 truth
+  gap → 9 fixtures added (39 content tests). Non-blocking folded: dead `void ATTR_MAX/SKILL_MAX` +
+  false comment removed; isolation guard now flags ANY `../` specifier (side-effect + dynamic
+  imports, not just `from`), scanning shipped modules only (tests are build-excluded); **unknown-key
+  rejection** added per shape so the spec's "Never add fields" has teeth (a smuggled five-band prose
+  matrix on a challenge — the report data-dump the design forbids — now fails); `tsc -b` step added
+  to the test workflow so vocab TS regressions gate at PR time; CONTENT-SPEC folds — ladder Meaning
+  column now verbatim, required non-empty fields named, reject-list completed (non-integer
+  reward/duration, upgrade-triumph, empty/unknown fields), fog-transform clause on the derived
+  difficulty (guardrail #2), perk-vs-trait guidance for the numeric `skill-modifier`, dead
+  "read the seed" phone pointer reframed for maintainers; `oneOf` hints now list the full 15-skill
+  vocabulary. Accepted (non-blocking, logged): a challenge may repeat in a quest's run list; a 0%
+  trait/perk is allowed; per-kind perk param strictness (a stray `percent` on a param-less perk) is
+  union-keyed, not per-kind — detailed perk design is out of the CHALLENGE_SYSTEM contract.
+- Verified: `npm run test` **131 pass + 1 skipped** (39 content: real content clean, a negative
+  fixture per rule, vocabulary integrity — 6 attrs / 15 skills exact map / Combat absent / ladder
+  5×[−3/−1/0/+1/+3], v1/v2 isolation); `tsc -b && vite build` green; combat core diff empty vs
+  `origin/dev`; a corrupted real JSON drop turns the suite red with legible
+  `path: message (expected …)` then restores clean.
+- Open questions: none blocking. Downstream, still open per CHALLENGE_SYSTEM (unchanged by this
+  slice): 0–100→check-target conversion, final bands, combined-result consequence table, narration
+  composition, final Combat.
+
+## 2026-07-11 - Content pipeline (CONTENT-SPEC + validated content scaffold) — plan done
+- Gate: plan
+- Branch: `claude/content-pipeline-spec-dh39y1` (off `origin/dev` incl. PR #41; first commit = §50
+  backfill of PR #41's merged gate). Scope: new `docs/CONTENT-SPEC.md`; new
+  `web/src/game/guild/content/` (typed v2 vocab tables + JSON content drops + schema validator +
+  vitest); new `.github/workflows/test.yml` (so the schema test actually gates CI); a resolution
+  fold into `docs/CHALLENGE_SYSTEM.md`; this log. Additive only; combat core untouched; NOTHING
+  wired into the sim (funnel, not consumer — the sim stays v1 str/dex/sta/per, this content is the
+  v2 6-attr/15-skill vocabulary in its own namespace).
+- Design question resolved with Stefan BEFORE Review #1 (per CHALLENGE_SYSTEM Open decisions,
+  blocks all challenge content): **each of a challenge's two checks declares its OWN 0–100
+  difficulty** (`{skill, difficulty}`); the challenge's single visible difficulty is DERIVED
+  (max of the two). Recommended + chosen because it matches the doc's own "one label hides two
+  materially different demands" rationale and the retired mockup (Research 60 + Arcana 55), and a
+  shared target is just the equal-numbers special case (strictly more expressive, always
+  collapsible; the reverse needs a content migration). Folded into CONTENT-SPEC.md and
+  CHALLENGE_SYSTEM.md (moved from Open decisions → Model).
+- Review #1 (4 personas — Designer, Engineer, Adversary/QA, Player-experience — on the PLAN):
+  **11 blockers, all folded** — (1) no CI job runs vitest (deploy.yml is build-only, excludes
+  tests, runs post-merge not on PRs) → add a test workflow; (2) validator passes vacuously without
+  negative fixtures → ship a bad fixture per rule; (3) per-band narration matrix = the data dump
+  the doc forbids → NO prose this pass, broad activity label only, narration stays open;
+  (4) combat has no authoring path (absent from the 15-skill table) → combat scoped out with a
+  stated reason, validator rejects Combat checks; (5) TS-vs-JSON output undecided → ChatGPT emits
+  JSON; (6) no golden samples → 4 filled validator-passing samples end the spec + seed content;
+  (7) derived-difficulty rule + worked example missing → visible = max, display-only; (8) cryptic
+  errors → legible `{path,message,expected}`; (9) perks resist a schema → enum of exception-kinds;
+  (10) validator gaps (2-check count, distinct skills, empty lists, cross-kind id collision,
+  NaN/float, trait/perk→skill refs, case/unicode ids) → each an explicit rule; (11) ref-graph
+  shape unstated → declared a 2-level DAG. Non-blocking folded: derive attr from skill; min+max
+  duration fuzz; derived difficulty = authoring ground truth (player number is a later fog
+  transform); `as const` skill/attr unions; vocabulary-integrity test (15 skills, Combat absent,
+  ladder 5×[−3/−1/0/+1/+3]); no-v1-import guard test; trait = bounded modifierPercent; broad-label
+  DO/DON'T table; reward cites DESIGN magnitudes; authored-but-not-wired note; verbatim ladder
+  table (emit NAME only); orphan library content allowed; giver/location free-text this pass.
+- Open questions: none blocking. (Downstream, still open per CHALLENGE_SYSTEM: 0–100→check-target
+  conversion, final bands, combined-result consequence table, narration composition, final Combat.)
+
 ## 2026-07-11 - Challenge system content contract — build done, PR opened
-- Gate: build + PR (Review #2 cleared; awaiting Codex)
+- Gate: **merged 2026-07-11 01:23 +0200** (merge commit `6bf8771`; backfilled 2026-07-11). **PR #41 into `dev`.**
 - Branch: `claude/slice-living-canvas-843hho` — the six doc commits were authored on
   `agent/challenge-system-design` (Stefan's other agent) and cherry-picked here on Stefan's
   explicit choice; authorship preserved. Review #1 below is that agent's own log, taken at its

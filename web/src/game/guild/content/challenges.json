@@ -1,0 +1,56 @@
+[
+  {
+    "id": "research-library",
+    "activity": "Researching in a library",
+    "summary": "The heroes comb a scholarly collection for what the quest needs to know.",
+    "checks": [
+      { "skill": "research", "difficulty": 60 },
+      { "skill": "arcana", "difficulty": 55 }
+    ]
+  },
+  {
+    "id": "interview-witnesses",
+    "activity": "Interviewing witnesses",
+    "summary": "The heroes draw out people who saw something and weigh what they say.",
+    "checks": [
+      { "skill": "inquiry", "difficulty": 45 },
+      { "skill": "persuasion", "difficulty": 40 }
+    ]
+  },
+  {
+    "id": "dungeon-traps",
+    "activity": "Handling dungeon traps",
+    "summary": "The heroes spot and clear the hazards guarding the way down.",
+    "checks": [
+      { "skill": "investigation", "difficulty": 55 },
+      { "skill": "athletics", "difficulty": 50 }
+    ]
+  },
+  {
+    "id": "political-support",
+    "activity": "Gaining political support",
+    "summary": "The heroes win a faction's backing for the quest's cause.",
+    "checks": [
+      { "skill": "persuasion", "difficulty": 60 },
+      { "skill": "deception", "difficulty": 45 }
+    ]
+  },
+  {
+    "id": "wilderness-passage",
+    "activity": "Crossing wild country",
+    "summary": "The heroes travel hard ground to reach the site.",
+    "checks": [
+      { "skill": "survival", "difficulty": 40 },
+      { "skill": "endurance", "difficulty": 35 }
+    ]
+  },
+  {
+    "id": "false-pretences",
+    "activity": "Entering under false pretences",
+    "summary": "The heroes slip inside where they are not welcome without raising an alarm.",
+    "checks": [
+      { "skill": "stealth", "difficulty": 50 },
+      { "skill": "deception", "difficulty": 55 }
+    ]
+  }
+]
