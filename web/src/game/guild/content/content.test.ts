@@ -235,6 +235,63 @@ describe("validator rejects bad drops", () => {
     expectIssueAt(validateContent(c), "exception.fromResult");
   });
 
+  it("challenge with a THIRD check", () => {
+    const c = base();
+    const ch = c.challenges[0];
+    ch.checks = [ch.checks[0], ch.checks[1], { skill: "planning", difficulty: 30 }] as never;
+    expectIssueAt(validateContent(c), "challenges[0].checks");
+  });
+
+  it("empty (whitespace) required string field", () => {
+    const c = base();
+    c.challenges[0].activity = "   ";
+    expectIssueAt(validateContent(c), "challenges[0].activity");
+  });
+
+  it("non-integer reward", () => {
+    const c = base();
+    c.quests[0].reward = 350.5;
+    expectIssueAt(validateContent(c), "quests[0].reward");
+  });
+
+  it("minDuration below 1", () => {
+    const c = base();
+    c.quests[0].minDuration = 0;
+    expectIssueAt(validateContent(c), "quests[0].minDuration");
+  });
+
+  it("trait referencing an unknown attribute", () => {
+    const c = base();
+    c.traits[2].effect.appliesTo.attributes = ["strenght" as never];
+    expectIssueAt(validateContent(c), "traits[2].effect.appliesTo.attributes[0]");
+  });
+
+  it("skill-modifier perk with percent out of the ±0.5 bound", () => {
+    const c = base();
+    const p = c.perks.find((x) => x.exception.kind === "skill-modifier")!;
+    p.exception.percent = 5;
+    expectIssueAt(validateContent(c), "exception.percent");
+  });
+
+  it("upgrade-result perk with an invalid band", () => {
+    const c = base();
+    const p = c.perks.find((x) => x.exception.kind === "upgrade-result")!;
+    p.exception.fromResult = "great" as never;
+    expectIssueAt(validateContent(c), "exception.fromResult");
+  });
+
+  it("a non-object challenge entry", () => {
+    const c = base();
+    (c.challenges as unknown[])[0] = "not-an-object";
+    expectIssueAt(validateContent(c), "challenges[0]");
+  });
+
+  it("unknown/extra field is rejected (Never add fields)", () => {
+    const c = base();
+    (c.challenges[0] as Record<string, unknown>).results = { success: "…", failure: "…" };
+    expectIssueAt(validateContent(c), "challenges[0].results");
+  });
+
   it("a non-object content set is rejected at the root", () => {
     expectIssueAt(validateContent(null), "(root)");
     expectIssueAt(validateContent({ challenges: "nope" }), "challenges");
@@ -244,17 +301,18 @@ describe("validator rejects bad drops", () => {
 // ---- isolation guard: content/ imports nothing from the v1 sim --------------
 
 describe("v1/v2 isolation", () => {
-  it("no content module imports from outside content/ (no ../ specifiers)", () => {
+  it("no content module reaches outside content/ (any ../ specifier — import, export-from, side-effect, or dynamic)", () => {
     const dir = fileURLToPath(new URL(".", import.meta.url));
-    const files = readdirSync(dir).filter((f) => f.endsWith(".ts"));
-    const importRe = /(?:import|export)[^'"\n]*?from\s*['"]([^'"]+)['"]/g;
+    // Scan the shipped modules, not the tests: tests are build-excluded (they
+    // never enter the bundle) and may legitimately import v1 or name a ../ path.
+    const files = readdirSync(dir).filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts"));
+    // Any string literal specifier that climbs out of content/ — catches
+    // `from "../x"`, bare `import "../x"`, and dynamic `import("../x")` alike.
+    const parentSpecRe = /['"](\.\.\/[^'"]*)['"]/g;
     const offenders: string[] = [];
     for (const f of files) {
       const src = readFileSync(new URL(f, import.meta.url), "utf8");
-      for (const m of src.matchAll(importRe)) {
-        const spec = m[1];
-        if (spec.startsWith("../")) offenders.push(`${f} → ${spec}`);
-      }
+      for (const m of src.matchAll(parentSpecRe)) offenders.push(`${f} → ${m[1]}`);
     }
     expect(offenders, `content/ must not reach into the v1 sim:\n${offenders.join("\n")}`).toEqual([]);
   });

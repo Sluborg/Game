@@ -9,8 +9,8 @@
 // an author's bad drop may not even match the TS interfaces, so nothing here may
 // assume shape.
 
-import { ATTR_IDS, ATTR_MAX } from "./attributes";
-import { SKILL_IDS, SKILL_MAX, COMBAT_RESERVED } from "./skills";
+import { ATTR_IDS } from "./attributes";
+import { SKILL_IDS, COMBAT_RESERVED } from "./skills";
 import { RESULT_IDS } from "./ladder";
 
 export interface Issue {
@@ -37,11 +37,25 @@ const isInt = (v: unknown): v is number => typeof v === "number" && Number.isInt
 const isFiniteNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 const inRange = (v: number, lo: number, hi: number): boolean => v >= lo && v <= hi;
 
-/** Format a JSON list of allowed values for an `expected` hint (capped). */
+/** Format a JSON list of allowed values for an `expected` hint. Every content
+ * vocabulary (15 skills, 6 attributes, 5 bands, 4 perk kinds) is short enough to
+ * show in full, so a misspelled-skill message lists all valid ids. */
 const oneOf = (vals: readonly string[]): string => {
-  const shown = vals.slice(0, 6).join(", ");
-  return vals.length > 6 ? `one of: ${shown}, … (${vals.length} total)` : `one of: ${shown}`;
+  const cap = 20;
+  const shown = vals.slice(0, cap).join(", ");
+  return vals.length > cap ? `one of: ${shown}, … (${vals.length} total)` : `one of: ${shown}`;
 };
+
+/** Push an issue for any key on `obj` that isn't in `allowed` — enforces the
+ * spec's "Never add fields" so a stray field (e.g. a five-band prose matrix
+ * smuggled onto a challenge) can't validate clean. */
+function rejectUnknownKeys(obj: Record<string, unknown>, allowed: readonly string[], path: string, out: Issue[]): void {
+  for (const k of Object.keys(obj)) {
+    if (!allowed.includes(k)) {
+      out.push({ path: `${path}.${k}`, message: `unknown field "${k}"`, expected: `only: ${allowed.join(", ")}` });
+    }
+  }
+}
 
 // ---- derived, presentation-only ---------------------------------------------
 
@@ -88,6 +102,7 @@ function validateCheck(v: unknown, path: string, out: Issue[]): void {
     out.push({ path, message: "check must be an object", expected: '{ "skill": "research", "difficulty": 60 }' });
     return;
   }
+  rejectUnknownKeys(v, ["skill", "difficulty"], path, out);
   // skill
   if (!isStr(v.skill)) {
     out.push({ path: `${path}.skill`, message: "skill must be a string", expected: oneOf(SKILL_IDS) });
@@ -114,6 +129,7 @@ function validateChallenge(v: unknown, i: number, out: Issue[]): string | null {
     out.push({ path, message: "challenge must be an object" });
     return null;
   }
+  rejectUnknownKeys(v, ["id", "activity", "summary", "checks"], path, out);
   const id = collectId(v.id, `${path}.id`, out);
   if (!isNonEmptyStr(v.activity)) {
     out.push({ path: `${path}.activity`, message: "activity must be a non-empty broad label", expected: '"Researching in a library" (never a named shelf/tome)' });
@@ -143,6 +159,7 @@ function validateQuest(v: unknown, i: number, challengeIds: ReadonlySet<string>,
     out.push({ path, message: "quest must be an object" });
     return null;
   }
+  rejectUnknownKeys(v, ["id", "title", "giver", "location", "reward", "minDuration", "maxDuration", "challenges"], path, out);
   const id = collectId(v.id, `${path}.id`, out);
   for (const f of ["title", "giver", "location"] as const) {
     if (!isNonEmptyStr(v[f])) out.push({ path: `${path}.${f}`, message: `${f} must be a non-empty string` });
@@ -186,6 +203,7 @@ function validateTrait(v: unknown, i: number, out: Issue[]): string | null {
     out.push({ path, message: "trait must be an object" });
     return null;
   }
+  rejectUnknownKeys(v, ["id", "name", "description", "effect"], path, out);
   const id = collectId(v.id, `${path}.id`, out);
   for (const f of ["name", "description"] as const) {
     if (!isNonEmptyStr(v[f])) out.push({ path: `${path}.${f}`, message: `${f} must be a non-empty string` });
@@ -195,6 +213,7 @@ function validateTrait(v: unknown, i: number, out: Issue[]): string | null {
     out.push({ path: `${path}.effect`, message: "effect must be an object with modifierPercent + appliesTo" });
     return id;
   }
+  rejectUnknownKeys(eff, ["modifierPercent", "appliesTo"], `${path}.effect`, out);
   if (!isFiniteNum(eff.modifierPercent) || !inRange(eff.modifierPercent, -TRAIT_MOD_ABS, TRAIT_MOD_ABS)) {
     out.push({ path: `${path}.effect.modifierPercent`, message: "modifierPercent must be a number within ±0.5", expected: "e.g. 0.1 for +10%, -0.15 for −15%" });
   }
@@ -202,6 +221,7 @@ function validateTrait(v: unknown, i: number, out: Issue[]): string | null {
   if (!isObj(at)) {
     out.push({ path: `${path}.effect.appliesTo`, message: "appliesTo must be an object with skills and/or attributes" });
   } else {
+    rejectUnknownKeys(at, ["skills", "attributes"], `${path}.effect.appliesTo`, out);
     const skills = Array.isArray(at.skills) ? at.skills : [];
     const attrs = Array.isArray(at.attributes) ? at.attributes : [];
     if (skills.length + attrs.length === 0) {
@@ -227,6 +247,7 @@ function validatePerk(v: unknown, i: number, out: Issue[]): string | null {
     out.push({ path, message: "perk must be an object" });
     return null;
   }
+  rejectUnknownKeys(v, ["id", "name", "description", "exception"], path, out);
   const id = collectId(v.id, `${path}.id`, out);
   for (const f of ["name", "description"] as const) {
     if (!isNonEmptyStr(v[f])) out.push({ path: `${path}.${f}`, message: `${f} must be a non-empty string` });
@@ -236,6 +257,7 @@ function validatePerk(v: unknown, i: number, out: Issue[]): string | null {
     out.push({ path: `${path}.exception`, message: "exception must be an object with a kind", expected: oneOf(PERK_KINDS) });
     return id;
   }
+  rejectUnknownKeys(ex, ["kind", "fromResult", "skill", "percent"], `${path}.exception`, out);
   const kind = ex.kind;
   if (!isStr(kind) || !(PERK_KINDS as readonly string[]).includes(kind)) {
     out.push({ path: `${path}.exception.kind`, message: `unknown exception kind "${String(kind)}"`, expected: oneOf(PERK_KINDS) });
@@ -315,11 +337,6 @@ export function validateContent(raw: unknown): Issue[] {
       seen.set(ref.id, ref.path);
     }
   }
-
-  // Numbers used for range checks reference the vocabulary ceilings so the two
-  // never silently diverge (attrs/skills cap at 20; asserted in the integrity test).
-  void ATTR_MAX;
-  void SKILL_MAX;
 
   return out;
 }
