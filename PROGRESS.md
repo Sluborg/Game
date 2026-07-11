@@ -2,6 +2,44 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-07-11 - Content pipeline (CONTENT-SPEC + validated content scaffold) — plan done
+- Gate: plan
+- Branch: `claude/content-pipeline-spec-dh39y1` (off `origin/dev` incl. PR #41; first commit = §50
+  backfill of PR #41's merged gate). Scope: new `docs/CONTENT-SPEC.md`; new
+  `web/src/game/guild/content/` (typed v2 vocab tables + JSON content drops + schema validator +
+  vitest); new `.github/workflows/test.yml` (so the schema test actually gates CI); a resolution
+  fold into `docs/CHALLENGE_SYSTEM.md`; this log. Additive only; combat core untouched; NOTHING
+  wired into the sim (funnel, not consumer — the sim stays v1 str/dex/sta/per, this content is the
+  v2 6-attr/15-skill vocabulary in its own namespace).
+- Design question resolved with Stefan BEFORE Review #1 (per CHALLENGE_SYSTEM Open decisions,
+  blocks all challenge content): **each of a challenge's two checks declares its OWN 0–100
+  difficulty** (`{skill, difficulty}`); the challenge's single visible difficulty is DERIVED
+  (max of the two). Recommended + chosen because it matches the doc's own "one label hides two
+  materially different demands" rationale and the retired mockup (Research 60 + Arcana 55), and a
+  shared target is just the equal-numbers special case (strictly more expressive, always
+  collapsible; the reverse needs a content migration). Folded into CONTENT-SPEC.md and
+  CHALLENGE_SYSTEM.md (moved from Open decisions → Model).
+- Review #1 (4 personas — Designer, Engineer, Adversary/QA, Player-experience — on the PLAN):
+  **11 blockers, all folded** — (1) no CI job runs vitest (deploy.yml is build-only, excludes
+  tests, runs post-merge not on PRs) → add a test workflow; (2) validator passes vacuously without
+  negative fixtures → ship a bad fixture per rule; (3) per-band narration matrix = the data dump
+  the doc forbids → NO prose this pass, broad activity label only, narration stays open;
+  (4) combat has no authoring path (absent from the 15-skill table) → combat scoped out with a
+  stated reason, validator rejects Combat checks; (5) TS-vs-JSON output undecided → ChatGPT emits
+  JSON; (6) no golden samples → 4 filled validator-passing samples end the spec + seed content;
+  (7) derived-difficulty rule + worked example missing → visible = max, display-only; (8) cryptic
+  errors → legible `{path,message,expected}`; (9) perks resist a schema → enum of exception-kinds;
+  (10) validator gaps (2-check count, distinct skills, empty lists, cross-kind id collision,
+  NaN/float, trait/perk→skill refs, case/unicode ids) → each an explicit rule; (11) ref-graph
+  shape unstated → declared a 2-level DAG. Non-blocking folded: derive attr from skill; min+max
+  duration fuzz; derived difficulty = authoring ground truth (player number is a later fog
+  transform); `as const` skill/attr unions; vocabulary-integrity test (15 skills, Combat absent,
+  ladder 5×[−3/−1/0/+1/+3]); no-v1-import guard test; trait = bounded modifierPercent; broad-label
+  DO/DON'T table; reward cites DESIGN magnitudes; authored-but-not-wired note; verbatim ladder
+  table (emit NAME only); orphan library content allowed; giver/location free-text this pass.
+- Open questions: none blocking. (Downstream, still open per CHALLENGE_SYSTEM: 0–100→check-target
+  conversion, final bands, combined-result consequence table, narration composition, final Combat.)
+
 ## 2026-07-11 - Challenge system content contract — build done, PR opened
 - Gate: **merged 2026-07-11 01:23 +0200** (merge commit `6bf8771`; backfilled 2026-07-11). **PR #41 into `dev`.**
 - Branch: `claude/slice-living-canvas-843hho` — the six doc commits were authored on
