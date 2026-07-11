@@ -1,0 +1,26 @@
+[
+  {
+    "id": "second-wind",
+    "name": "Second Wind",
+    "description": "Once per challenge, the hero shrugs off a bad start and tries the weaker of the two demands again.",
+    "exception": { "kind": "reroll-lowest-check" }
+  },
+  {
+    "id": "lucky-break",
+    "name": "Lucky Break",
+    "description": "Disaster keeps finding a way to be merely bad: a Critical Failure is read as an ordinary Failure.",
+    "exception": { "kind": "soften-critical-failure" }
+  },
+  {
+    "id": "dogged",
+    "name": "Dogged",
+    "description": "Refuses to fall just short — an Insufficient result is read as a Success.",
+    "exception": { "kind": "upgrade-result", "fromResult": "insufficient" }
+  },
+  {
+    "id": "silver-tongue",
+    "name": "Silver Tongue",
+    "description": "A standing edge whenever persuasion is what the moment needs.",
+    "exception": { "kind": "skill-modifier", "skill": "persuasion", "percent": 0.2 }
+  }
+]
