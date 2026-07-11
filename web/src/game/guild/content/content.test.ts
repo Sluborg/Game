@@ -215,6 +215,15 @@ describe("validator rejects bad drops", () => {
     expectIssueAt(validateContent(c), "traits[0].effect.appliesTo");
   });
 
+  it("trait with a non-array scope alongside a valid one (Codex P2)", () => {
+    const c = base();
+    // skills is a bare string (malformed) while attributes is a valid array —
+    // must NOT be silently coerced to [] and skipped.
+    (c.traits[0].effect.appliesTo as { skills: unknown }).skills = "research";
+    c.traits[0].effect.appliesTo.attributes = ["wisdom"];
+    expectIssueAt(validateContent(c), "traits[0].effect.appliesTo.skills");
+  });
+
   it("perk with an unknown exception kind", () => {
     const c = base();
     (c.perks[0].exception as { kind: string }).kind = "make-it-easier";

@@ -222,14 +222,29 @@ function validateTrait(v: unknown, i: number, out: Issue[]): string | null {
     out.push({ path: `${path}.effect.appliesTo`, message: "appliesTo must be an object with skills and/or attributes" });
   } else {
     rejectUnknownKeys(at, ["skills", "attributes"], `${path}.effect.appliesTo`, out);
-    const skills = Array.isArray(at.skills) ? at.skills : [];
-    const attrs = Array.isArray(at.attributes) ? at.attributes : [];
-    if (skills.length + attrs.length === 0) {
+    // A present-but-non-array scope is malformed — reject it rather than coercing
+    // it to [] (which would silently drop the intended scope and let a bad drop
+    // pass; Codex P2). undefined is fine (the scope is simply omitted).
+    const skillsIsArr = Array.isArray(at.skills);
+    const attrsIsArr = Array.isArray(at.attributes);
+    const skillsMalformed = at.skills !== undefined && !skillsIsArr;
+    const attrsMalformed = at.attributes !== undefined && !attrsIsArr;
+    if (skillsMalformed) {
+      out.push({ path: `${path}.effect.appliesTo.skills`, message: "skills must be an array of skill ids", expected: '["research", "arcana"]' });
+    }
+    if (attrsMalformed) {
+      out.push({ path: `${path}.effect.appliesTo.attributes`, message: "attributes must be an array of attribute ids", expected: '["wisdom"]' });
+    }
+    const skillCount = skillsIsArr ? (at.skills as unknown[]).length : 0;
+    const attrCount = attrsIsArr ? (at.attributes as unknown[]).length : 0;
+    // "applies to nothing" only when neither scope is malformed (a malformed one
+    // is already reported) and both resolve to empty.
+    if (!skillsMalformed && !attrsMalformed && skillCount + attrCount === 0) {
       out.push({ path: `${path}.effect.appliesTo`, message: "a trait must apply to at least one skill or attribute" });
     }
     validateSkillRefs(at.skills, `${path}.effect.appliesTo.skills`, out);
-    if (Array.isArray(at.attributes)) {
-      at.attributes.forEach((a, ai) => {
+    if (attrsIsArr) {
+      (at.attributes as unknown[]).forEach((a, ai) => {
         if (!isStr(a) || !(ATTR_IDS as readonly string[]).includes(a)) {
           out.push({ path: `${path}.effect.appliesTo.attributes[${ai}]`, message: `unknown attribute "${String(a)}"`, expected: oneOf(ATTR_IDS) });
         }
