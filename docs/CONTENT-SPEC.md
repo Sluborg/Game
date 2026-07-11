@@ -53,11 +53,11 @@ temporary special rule authored in a later slice. Never emit a `combat` check.
 
 | Result | Value | Working band | Meaning |
 | --- | ---: | ---: | --- |
-| Critical Failure | −3 | Below 60% of target | Severe failure, major negative weight |
-| Failure | −1 | 60% to below 80% | Failure, negative weight |
-| Insufficient | 0 | 80% to below 100% | Did not meet the requirement, no further penalty |
-| Success | +1 | 100% to below 120% | Meets the requirement, positive weight |
-| Triumph | +3 | 120% or more | Exceptional, major positive weight |
+| Critical Failure | −3 | Below 60% of target | Severe failure with major negative weight |
+| Failure | −1 | 60% to below 80% | Failure with negative weight |
+| Insufficient | 0 | 80% to below 100% | Did not meet the requirement, but adds no further penalty |
+| Success | +1 | 100% to below 120% | Meets the requirement and adds positive weight |
+| Triumph | +3 | 120% or more | Exceptional result with major positive weight |
 
 You never write a result value or band. Where a perk names a band, use the
 lowercase id: `critical-failure`, `failure`, `insufficient`, `success`, `triumph`.
@@ -77,10 +77,12 @@ degree, not just kind — the research may be hard while the arcana is brutal:
 
 > "Researching in a library" → `research` 60 + `arcana` 55
 
-The challenge's single **visible difficulty** shown to the player is **derived**
-(the maximum of the two check difficulties) — you never write it. Difficulty is
-the visible 0–100 scale; its conversion to an internal check target is still being
-tuned, so treat the number as the relative demand of that check.
+The challenge's single **visible difficulty** is **derived** (the maximum of the
+two check difficulties) — you never write it. That derived number is authoring
+ground truth; the player is shown a *fogged* rating derived from it (the guild's
+estimate of easy/hard), never the raw value. Difficulty is the visible 0–100
+scale; its conversion to an internal check target is still being tuned, so treat
+the number as the relative demand of that check.
 
 ### Keep the label BROAD — the quest owns the specifics
 
@@ -125,6 +127,10 @@ quest/trait/perk id).
 - `checks` — exactly two, on two different Skills, each `difficulty` an integer
   0–100.
 
+Only `summary` is optional. `id`, `activity`, and both checks are required, and
+every string field must be non-empty. Do **not** add fields the shape doesn't
+list — an unknown field is rejected.
+
 ### quests.json
 
 ```json
@@ -149,7 +155,9 @@ quest/trait/perk id).
   (the min is the known floor; the gap above it is uncertainty the player sees as
   fuzz).
 - `challenges` — an **ordered, non-empty** list of challenge ids, each defined in
-  `challenges.json`. This is the run order.
+  `challenges.json`. This is the run order (a challenge may appear more than once).
+
+`id`, `title`, `giver`, and `location` are required non-empty strings.
 
 ### traits.json
 
@@ -186,6 +194,11 @@ Skill already covers. Choose a `kind` from this closed set:
 | `upgrade-result` | one named band is read as the next-higher band | `fromResult` (any band except `triumph`) |
 | `skill-modifier` | a standing +/−% on one named Skill | `skill` (id), `percent` (±0.5) |
 
+`id`, `name`, and `description` are required non-empty strings. Prefer a **trait**
+for an ordinary standing skill tilt (it is the same `modifierPercent`); reserve the
+`skill-modifier` perk for a hero whose *defining* edge is that one Skill, so perks
+stay distinctive rule-exceptions rather than a second way to write a trait.
+
 ```json
 [
   {
@@ -205,17 +218,21 @@ Skill already covers. Choose a `kind` from this closed set:
 
 ## WHAT THE VALIDATOR REJECTS (so emit clean)
 
-- an id that isn't lowercase kebab-case, or that repeats another id anywhere;
-- a challenge without **exactly two** checks, or whose two checks name the **same**
-  Skill;
+- an id that isn't lowercase kebab-case, isn't NFC-normalized, or that repeats
+  another id anywhere;
+- a challenge without **exactly two** checks (one or three both fail), or whose two
+  checks name the **same** Skill;
 - a `skill` not in the 15-skill table (including `combat`), or a wrong-cased skill
   (`Research` ≠ `research`);
 - a `difficulty` that isn't an integer 0–100 (no floats, no NaN, no 101);
-- a quest with **no** challenges, a challenge id that doesn't resolve, a negative
-  reward, or `maxDuration < minDuration`;
+- a quest with **no** challenges, a challenge id that doesn't resolve, a `reward`
+  that isn't an integer ≥ 0, a `minDuration`/`maxDuration` that isn't an integer
+  ≥ 1, or `maxDuration < minDuration`;
 - a trait whose `modifierPercent` is outside ±0.5, that applies to nothing, or that
   names an unknown skill/attribute;
-- a perk with a `kind` outside the set above, or missing its per-kind params.
+- a perk with a `kind` outside the set above, missing its per-kind params, or that
+  tries to `upgrade-result` on `triumph` (nothing is higher);
+- any **empty required string** field, or any **unknown/extra field** on any shape.
 
 ---
 
@@ -271,5 +288,5 @@ Skill already covers. Choose a `kind` from this closed set:
 }
 ```
 
-The live seed content in `web/src/game/guild/content/*.json` is a longer worked
-example of all four kinds and always passes the validator — read it for reference.
+(For maintainers: the live seed content in `web/src/game/guild/content/*.json` is a
+longer worked example of all four kinds and always passes the validator.)
