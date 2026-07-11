@@ -34,6 +34,18 @@ must be designed before content volume expands.
 A challenge normally declares two Skills. Both are tested separately, using each Skill's governing
 Attribute. Their result values are then combined to drive consequences within the quest.
 
+**Each check declares its own difficulty/target** (resolved 2026-07-11 — see the moved bullet under
+Open decisions). The retired mockup's per-skill values ("Research 60 + Arcana 55") are the model: a
+challenge carries two `{skill, difficulty}` checks, each on the visible 0–100 scale, because one
+broad label routinely hides two demands that differ not just in *kind* but in *degree* — the
+research may be hard while the arcana is brutal. A single shared target is just the special case
+where both numbers are equal, so per-check difficulty is strictly more expressive and can always
+collapse to it; the reverse would need a content migration. The challenge's single **visible
+difficulty** (the skulls/stars shown to the player) is **derived** from the two checks — the
+maximum, so the harder demand is what gates the challenge — and is stored nowhere; it is authored
+ground truth, and the player-facing number remains a downstream fog transform (guardrail #2), never
+wired straight from this value.
+
 This keeps the challenge readable while allowing combinations such as:
 
 - Research + Arcana
@@ -174,9 +186,10 @@ The detailed Perk system is outside this contract.
 - Exact conversion from visible Difficulty 0–100 to the check target. (Note the ceiling: an
   unmodified check tops out at Attribute 20 + Skill 20 + d20 = 60 — the conversion must keep
   Triumph's 120%-of-target reachable at high difficulty, or state that it deliberately isn't.)
-- **Whether a challenge's two checks share one difficulty/target or each declares its own** (the
-  retired mockup implied per-skill values like "Research 60 + Arcana 55"). Content cannot be
-  authored until this is decided.
+- ~~**Whether a challenge's two checks share one difficulty/target or each declares its own**~~
+  **RESOLVED 2026-07-11: each check declares its own** `{skill, difficulty}` on the visible 0–100
+  scale; the challenge's single visible difficulty is the derived maximum. See §Model. (The still-open
+  conversion below governs how each check's 0–100 difficulty becomes an internal target.)
 - Final percentage bands after probability simulation.
 - Minimum visual threshold spacing: 5 or 10 score points.
 - Exact combined-result consequence table.
