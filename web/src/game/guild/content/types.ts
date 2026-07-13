@@ -1,83 +1,74 @@
-// v2 content types — the shape ChatGPT emits and the repo stores as JSON
-// (challenges.json / quests.json / traits.json / perks.json). DATA-DESCRIBING
-// interfaces only; the runtime gate is schema.ts.
+// v2 content types (Skills v3) — the shape ChatGPT emits and the repo stores as
+// JSON. DATA-DESCRIBING interfaces only; the runtime gate is schema.ts.
 //
-// The reference graph is a strict 2-level DAG — quest → challenge → skill — with
-// NO back-edges, so cycles are structurally impossible and none are checked for.
-// Traits and perks are leaf library content: they reference the skill/attribute
-// vocabulary but nothing references them by id this slice.
+// Skills v3 replaces the v2 two-check Challenge with an ordered list of ENCOUNTERS.
+// The reference graph is a strict 2-level DAG — Quest → Challenge → Encounter →
+// skill — with no back-edges, so cycles are impossible and none are checked for.
+//
+// DELIBERATELY NOT IN THIS SHAPE YET (documented in docs/GLOSSARY.md as the coming
+// model, built in the engine PR): an Encounter's cooperation `mode`, `crisis`
+// (hard-fail consequence), `bridgeCost`, and actor min/max; a Quest's
+// Physical/Mental/Social `requirements` and `tags`; and per-encounter difficulty
+// (which lives on the Quest when it instantiates a Challenge, not on the reusable
+// Challenge). Authors must not emit those keys yet — the validator rejects unknown
+// fields on purpose.
 
 import type { AttrId } from "./attributes";
 import type { SkillId } from "./skills";
 import type { ResultId } from "./ladder";
 
-/** One of a challenge's two skill checks. Per Stefan's resolved decision, each
- * check declares its OWN difficulty (the retired mockup's "Research 60 + Arcana
- * 55"). The governing Attribute is NOT stored here — it is derived from the skill
- * via SKILL_ATTR. */
-export interface Check {
-  /** Must be one of the 15 skills (skills.ts). "combat" is rejected this slice. */
+/** One Encounter — a named Skill check, the atomic step of a Challenge. This
+ * slice authors only its skill; the mechanics fields above are deferred. */
+export interface Encounter {
+  /** Must be one of the nine skills (skills.ts). "combat" is rejected this slice. */
   skill: SkillId;
-  /** Integer 0–100, the visible difficulty scale (CHALLENGE_SYSTEM.md
-   * §"Difficulty and presentation"). Conversion to a check target is still open;
-   * this is the authored ground-truth demand for this check. */
-  difficulty: number;
 }
 
-/** A challenge activity, authored at the BROAD level (CHALLENGE_SYSTEM.md
- * §"Start with narrative"): "Researching in a library", never a named shelf or
- * tome. The quest owns the specific people/places/objectives; the challenge says
- * only what the heroes are broadly doing. It declares exactly two DISTINCT skill
- * checks. No per-band narration is authored this slice — the scalable narration
- * model is an open decision, and a per-check prose matrix is exactly the report
- * data-dump the contract forbids. */
+/** A Challenge — a broad, reusable activity ("Infiltrate and persuade"), authored
+ * at the activity level (docs/GLOSSARY.md): the Quest owns the specific people,
+ * places, and stakes; the Challenge says only what the heroes are broadly doing.
+ * It is an ORDERED list of one or more Encounters (array order = run order).
+ * One-Encounter Challenges are valid; repeated skills are allowed only for
+ * meaningfully different Encounters (a judgment, not machine-enforceable — the
+ * validator rejects only byte-identical adjacent Encounters). No per-band
+ * narration is authored here; the narration model is still open. */
 export interface Challenge {
   /** Globally unique across all content kinds; kebab-case `^[a-z0-9-]+$`. */
   id: string;
-  /** The broad activity label, e.g. "Researching in a library". */
+  /** The broad activity label, e.g. "Infiltrate and persuade". Kept named
+   * `activity` (not `title`) to signal breadth and avoid clashing with Quest. */
   activity: string;
-  /** Optional one-sentence broad summary of the activity. NOT per-result prose. */
+  /** Optional one-sentence broad summary. NOT per-result prose. */
   summary?: string;
-  /** Exactly two checks, on two DIFFERENT skills. */
-  checks: [Check, Check];
+  /** One or more Encounters, in run order. */
+  encounters: Encounter[];
 }
 
-/** A quest: a giver and place, a FLAT total reward, a duration window (time cost,
- * never extra gold — DESIGN.md), and an ordered list of challenge ids to run.
- * Reference magnitudes from the shipped board: road ≈ 350g, ruins ≈ 700g,
- * standing ≈ 25g. */
+/** A Quest: a giver and place, a FLAT total reward, a duration window, and an
+ * ordered list of Challenge ids. (Physical/Mental/Social requirements + tags are
+ * documented for the engine PR, not authored here.) */
 export interface Quest {
-  /** Globally unique; kebab-case. */
   id: string;
   title: string;
-  /** Free text this slice (not validated against sim node ids — content is not
-   * wired). e.g. "a nervous merchant". */
   giver: string;
-  /** Free text this slice. e.g. "Old Trade Road". */
   location: string;
-  /** Flat total reward in gold, integer ≥ 0. */
   reward: number;
-  /** Known-minimum days, integer ≥ 1. */
   minDuration: number;
-  /** Upper bound, integer ≥ minDuration (the fuzz above the known minimum). */
   maxDuration: number;
-  /** ≥ 1 challenge id, each resolving to a Challenge. Order is the run order. */
+  /** ≥ 1 Challenge id, each resolving to a Challenge. Order is the run order. */
   challenges: string[];
 }
 
-/** A trait's mechanical tilt. Numeric competence lives in Skills; a trait applies
- * a percentage modifier to the check formula's (Attribute + Skill) capability
- * (CHALLENGE_SYSTEM.md §"Check formula" — the d20 is never multiplied), scoped to
- * named skills and/or attributes. */
+/** A trait's mechanical tilt: a percentage modifier applied to the check formula's
+ * (Attribute + Skill) capability, scoped to named skills and/or attributes. */
 export interface TraitEffect {
-  /** Modifier applied as (1 + modifierPercent); bounded to ±0.5 (±50%). */
+  /** Applied as (1 + modifierPercent); bounded to ±0.5 (±50%). */
   modifierPercent: number;
   /** At least one skill or attribute the tilt applies to. */
   appliesTo: { skills?: SkillId[]; attributes?: AttrId[] };
 }
 
 export interface Trait {
-  /** Globally unique; kebab-case. */
   id: string;
   name: string;
   description: string;
@@ -85,23 +76,20 @@ export interface Trait {
 }
 
 /** The enumerated rule-exception vocabulary a Perk may declare. Perks change
- * RULES / create exceptions, they do not duplicate a Skill value
- * (CHALLENGE_SYSTEM.md §"Skills and Perks"). A free-text perk is un-validatable,
- * so an author selects a kind from this closed set. */
+ * RULES / create exceptions; they do not duplicate a Skill value. */
 export type PerkExceptionKind =
-  | "reroll-lowest-check" // re-roll the lower of the challenge's two checks once
-  | "soften-critical-failure" // a Critical Failure on any check counts as a Failure
+  | "reroll-lowest-check" // re-roll the weakest Encounter result once
+  | "soften-critical-failure" // a Critical Failure on any Encounter counts as a Failure
   | "upgrade-result" // one named result band is read as the next-higher band
-  | "skill-modifier"; // a bounded, standing +% on one named skill (the sole numeric exception)
+  | "skill-modifier"; // a bounded, standing +% on one named skill
 
 export interface Perk {
-  /** Globally unique; kebab-case. */
   id: string;
   name: string;
   description: string;
   exception: {
     kind: PerkExceptionKind;
-    /** upgrade-result: the band being upgraded (not "triumph" — nothing is higher). */
+    /** upgrade-result: the band being upgraded (not "triumph"). */
     fromResult?: ResultId;
     /** skill-modifier: the skill the standing modifier applies to. */
     skill?: SkillId;
