@@ -1,135 +1,103 @@
-# CONTENT-SPEC — the authoring contract
+# CONTENT-SPEC — the authoring contract (Skills v3)
 
-> **Paste everything between the rules below into ChatGPT**, then describe the
-> content you want. ChatGPT emits **JSON** in these exact shapes; you drop each
-> array into the matching file under `web/src/game/guild/content/` and open a PR.
-> A schema test (`content.test.ts`) gates every drop in CI and rejects a bad one
-> with a legible `path: message (expected …)`.
+> **Paste everything between the rules below into ChatGPT**, then describe the content you want.
+> ChatGPT emits **JSON** in these exact shapes; you drop each array into the matching file under
+> `web/src/game/guild/content/` and open a PR. A schema test (`content.test.ts`) gates every drop in
+> CI and rejects a bad one with a legible `path: message (expected …)`.
 
-This contract is authoritative for **content shape**. The game vocabulary it uses
-is authoritative in [`docs/CHALLENGE_SYSTEM.md`](./CHALLENGE_SYSTEM.md); where a
-term appears here it is copied verbatim from there.
+This contract governs **content shape**. The vocabulary's single source of truth is
+[`docs/GLOSSARY.md`](./GLOSSARY.md); it is reproduced here so the block below is self-contained.
 
-**Authored but not wired.** This content targets the challenge-system **v2**
-vocabulary (6 Attributes, 15 Skills, the five-band result ladder). The shipped
-game still runs the older 4-attribute model, so content you author now is stored
-and validated but not yet rendered in-game. That is expected — this pipeline is
-the funnel, not the consumer.
+**Authored but not wired.** This content targets the challenge-system v3 vocabulary; it is stored
+and validated but not yet rendered in-game. That's expected — this pipeline is the funnel, not the
+consumer.
 
 ---
 
 ## ROLE
 
-You are a content author for a fantasy guild-management game. You emit **only
-JSON**, in the shapes defined below, using **only** the vocabulary listed below.
-Never invent an attribute, skill, or result name. Never add fields. When unsure of
-a number, pick a sensible value inside the stated range and keep going.
+You are a content author for a fantasy guild-management game. You emit **only JSON**, in the shapes
+below, using **only** the vocabulary below. Never invent an attribute, skill, or field. When unsure
+of a value, pick a sensible one inside the stated range and keep going.
 
 ## THE VOCABULARY (use verbatim — do not rename, re-case, or invent)
 
-### The six Attributes
+### The five Attributes
+`strength` · `dexterity` · `constitution` · `mind` · `charisma`
+*(Mind is the single mental attribute — old Intelligence + Wisdom.)* You don't author attribute
+numbers; you name Skills, and each Skill's attribute is fixed by the table below.
 
-`strength` · `dexterity` · `constitution` · `intelligence` · `wisdom` · `charisma`
+### The nine Skills (id → attribute → pillar)
 
-Attributes cap at 20 (a new hero starts at ≤ 15). You do not author Attribute
-numbers directly — you name Skills, and each Skill's governing Attribute is fixed
-by the table below.
+| Skill (id) | Attribute | Pillar | Covers |
+| --- | --- | --- | --- |
+| `force` | strength | Physical | lift, break, overpower |
+| `mobility` | dexterity | Physical | stealth, climb, run, dodge |
+| `fortitude` | constitution | Physical | endurance; resist poison/disease |
+| `reasoning` | mind | Mental | research, investigation, planning, **magic** |
+| `nature` | mind | Mental | survival, tracking, **healing** |
+| `willpower` | mind | Mental | resist fear, domination, mental powers |
+| `influence` | charisma | Social | persuade, deceive, intimidate |
+| `inquiry` | charisma | Social | question people, gather rumours |
+| `integrity` | charisma | Social | resist manipulation, bribery, temptation |
 
-### The fifteen Skills (id → governing Attribute)
-
-| Attribute | Skills (id) |
-| --- | --- |
-| strength | `force`, `intimidation` |
-| dexterity | `stealth`, `athletics` |
-| constitution | `endurance`, `resist` |
-| intelligence | `research`, `arcana`, `planning` |
-| wisdom | `survival`, `investigation`, `medicine` |
-| charisma | `persuasion`, `deception`, `inquiry` |
-
-Skills cap at 20 (a new hero starts at ≤ 5). **`combat` is NOT a skill** — it is a
-temporary special rule authored in a later slice. Never emit a `combat` check.
+**`combat` is NOT a skill** — it is a temporary special rule authored later. Never emit it.
 
 ### The result ladder (fixed — never author a value or band)
 
-| Result | Value | Working band | Meaning |
-| --- | ---: | ---: | --- |
-| Critical Failure | −3 | Below 60% of target | Severe failure with major negative weight |
-| Failure | −1 | 60% to below 80% | Failure with negative weight |
-| Insufficient | 0 | 80% to below 100% | Did not meet the requirement, but adds no further penalty |
-| Success | +1 | 100% to below 120% | Meets the requirement and adds positive weight |
-| Triumph | +3 | 120% or more | Exceptional result with major positive weight |
+| Result | Value | Working band |
+| --- | ---: | ---: |
+| Critical Failure | −3 | Below 60% of target |
+| Failure | −1 | 60% to below 80% |
+| Insufficient | 0 | 80% to below 100% |
+| Success | +1 | 100% to below 120% |
+| Triumph | +3 | 120% or more |
 
-You never write a result value or band. Where a perk names a band, use the
-lowercase id: `critical-failure`, `failure`, `insufficient`, `success`, `triumph`.
-(Do **not** use the retired v1 ladder Botch/Poor/Success/Great/Triumph — "Success"
-means a different tier there.)
+Where a perk names a band, use the lowercase id: `critical-failure`, `failure`, `insufficient`,
+`success`, `triumph`. (Do **not** use the retired v1 ladder Botch/Poor/Success/Great/Triumph.)
 
 ## THE CHALLENGE MODEL
 
-A **challenge** is a broad, reusable activity — *what the heroes are broadly
-doing* — such as "Researching in a library" or "Interviewing witnesses". It
-declares **exactly two Skill checks** on **two different Skills**, because one
-broad label usually hides two materially different demands (understanding a magical
-text needs both research discipline *and* magical comprehension).
+A **Challenge** is a broad, reusable activity — *what the heroes are broadly doing* — such as
+"Infiltrate and persuade". It holds an **ordered list of Encounters**. An **Encounter is one named
+Skill check.** A Challenge has **one or more** Encounters (normally 1–2; 3+ only for rare set
+pieces). Array order is the order they play out.
 
-**Each check declares its own difficulty (0–100).** The two demands can differ in
-degree, not just kind — the research may be hard while the arcana is brutal:
-
-> "Researching in a library" → `research` 60 + `arcana` 55
-
-The challenge's single **visible difficulty** is **derived** (the maximum of the
-two check difficulties) — you never write it. That derived number is authoring
-ground truth; the player is shown a *fogged* rating derived from it (the guild's
-estimate of easy/hard), never the raw value. Difficulty is the visible 0–100
-scale; its conversion to an internal check target is still being tuned, so treat
-the number as the relative demand of that check.
+- One-Encounter Challenges are valid.
+- A skill may repeat across Encounters **only when the Encounters are meaningfully different** —
+  never `mobility → mobility` just to pad a list. The validator rejects identical adjacent
+  Encounters.
+- **You do not author difficulty.** A generic Challenge carries no difficulty; the Quest sets it.
 
 ### Keep the label BROAD — the quest owns the specifics
-
-The challenge says only what the heroes are broadly doing. The **quest** owns the
-specific people, places, and objectives. Do not encode a named shelf, tome, room,
-or NPC in a challenge.
 
 | ✅ DO (broad activity) | ❌ DON'T (quest-specific detail) |
 | --- | --- |
 | Researching in a library | Searching the East Reading Room for the Codex of Vharn |
 | Interviewing witnesses | Questioning the innkeeper Marta about the fire |
-| Handling dungeon traps | Disarming the poison-dart trap on the third stair |
-| Gaining political support | Bribing Duke Aldric's chamberlain |
+| Infiltrate and persuade | Sneak past Duke Aldric's guards and bribe the chamberlain |
 
 ## THE OUTPUT SHAPES
 
-Emit each kind as a JSON array. All `id`s are **kebab-case** (`^[a-z0-9-]+$`),
-lowercase, and **unique across every kind** (a challenge id must not equal any
-quest/trait/perk id).
+All `id`s are **kebab-case** (`^[a-z0-9-]+$`), lowercase, and **unique across every kind**.
 
 ### challenges.json
 
 ```json
 [
   {
-    "id": "research-library",
-    "activity": "Researching in a library",
-    "summary": "The heroes comb a scholarly collection for what the quest needs to know.",
-    "checks": [
-      { "skill": "research", "difficulty": 60 },
-      { "skill": "arcana", "difficulty": 55 }
-    ]
+    "id": "infiltration-job",
+    "activity": "Infiltration job",
+    "summary": "The heroes slip inside, then talk their way deeper.",
+    "encounters": [ { "skill": "mobility" }, { "skill": "influence" } ]
   }
 ]
 ```
 
-- `activity` — the broad label (required).
-- `summary` — one optional broad sentence. **Do not** write per-result prose (a
-  win/lose line for each of the five bands): the scalable narration model is still
-  open, and a five-band prose matrix per check is exactly the report data-dump the
-  design forbids.
-- `checks` — exactly two, on two different Skills, each `difficulty` an integer
-  0–100.
-
-Only `summary` is optional. `id`, `activity`, and both checks are required, and
-every string field must be non-empty. Do **not** add fields the shape doesn't
-list — an unknown field is rejected.
+- `id`, `activity`, and `encounters` are required; `activity` must be non-empty and **broad**.
+- `summary` is optional, one broad sentence. **Do not** write per-result prose (a line per band) —
+  that's the report data-dump the design forbids.
+- `encounters` — one or more, each `{ "skill": <one of the 9> }` and **nothing else**.
 
 ### quests.json
 
@@ -148,145 +116,105 @@ list — an unknown field is rejected.
 ]
 ```
 
-- `reward` — a **flat** total in gold (integer ≥ 0). Extra days cost time, never
-  extra gold. Reference magnitudes from the shipped board: a road job ≈ 350, a
-  ruins delve ≈ 700, a standing job ≈ 25.
-- `minDuration` / `maxDuration` — integer days, `maxDuration ≥ minDuration ≥ 1`
-  (the min is the known floor; the gap above it is uncertainty the player sees as
-  fuzz).
-- `challenges` — an **ordered, non-empty** list of challenge ids, each defined in
-  `challenges.json`. This is the run order (a challenge may appear more than once).
-
-`id`, `title`, `giver`, and `location` are required non-empty strings.
+- `reward` — a **flat** integer ≥ 0 (road ≈ 350, ruins ≈ 700, standing ≈ 25). Extra days cost time,
+  never gold.
+- `minDuration` / `maxDuration` — integer days, `maxDuration ≥ minDuration ≥ 1`.
+- `challenges` — an **ordered, non-empty** list of challenge ids, each defined in `challenges.json`.
+- `id`, `title`, `giver`, `location` are required non-empty strings.
 
 ### traits.json
 
-A trait applies a **percentage modifier** to the check formula's
-`(Attribute + Skill)` capability, scoped to named Skills and/or Attributes.
-(Numeric competence itself lives in Skills; a trait tilts it.)
+A trait applies a **percentage modifier** to the check formula's `(Attribute + Skill)` capability,
+scoped to named Skills and/or Attributes.
 
 ```json
 [
   {
     "id": "bookish",
     "name": "Bookish",
-    "description": "Years among stacks and scroll-cases. Reading and magical study come easily.",
-    "effect": {
-      "modifierPercent": 0.15,
-      "appliesTo": { "skills": ["research", "arcana"] }
-    }
+    "description": "Study and lore come easily.",
+    "effect": { "modifierPercent": 0.15, "appliesTo": { "skills": ["reasoning"] } }
   }
 ]
 ```
 
-- `modifierPercent` — a number within **±0.5** (`0.15` = +15%, `-0.15` = −15%).
+- `modifierPercent` — within **±0.5** (`0.15` = +15%).
 - `appliesTo` — at least one `skills` id and/or one `attributes` id.
+- `id`, `name`, `description` required non-empty.
 
 ### perks.json
 
-A perk **changes a rule / creates an exception** — it does not just add a number a
-Skill already covers. Choose a `kind` from this closed set:
+A perk **changes a rule / creates an exception** — it doesn't just add a number a Skill covers.
+Choose a `kind` from this closed set:
 
 | kind | meaning | extra params |
 | --- | --- | --- |
-| `reroll-lowest-check` | re-roll the lower of the challenge's two checks once | — |
-| `soften-critical-failure` | a Critical Failure is read as an ordinary Failure | — |
-| `upgrade-result` | one named band is read as the next-higher band | `fromResult` (any band except `triumph`) |
+| `reroll-lowest-check` | re-roll the weakest Encounter once | — |
+| `soften-critical-failure` | a Critical Failure is read as a Failure | — |
+| `upgrade-result` | one named band → the next-higher band | `fromResult` (any band except `triumph`) |
 | `skill-modifier` | a standing +/−% on one named Skill | `skill` (id), `percent` (±0.5) |
-
-`id`, `name`, and `description` are required non-empty strings. Prefer a **trait**
-for an ordinary standing skill tilt (it is the same `modifierPercent`); reserve the
-`skill-modifier` perk for a hero whose *defining* edge is that one Skill, so perks
-stay distinctive rule-exceptions rather than a second way to write a trait.
 
 ```json
 [
-  {
-    "id": "dogged",
-    "name": "Dogged",
-    "description": "Refuses to fall just short — an Insufficient result is read as a Success.",
-    "exception": { "kind": "upgrade-result", "fromResult": "insufficient" }
-  },
-  {
-    "id": "silver-tongue",
-    "name": "Silver Tongue",
-    "description": "A standing edge whenever persuasion is what the moment needs.",
-    "exception": { "kind": "skill-modifier", "skill": "persuasion", "percent": 0.2 }
-  }
+  { "id": "dogged", "name": "Dogged", "description": "Refuses to fall just short — an Insufficient result is read as a Success.",
+    "exception": { "kind": "upgrade-result", "fromResult": "insufficient" } },
+  { "id": "silver-tongue", "name": "Silver Tongue", "description": "A standing edge whenever influence is what the moment needs.",
+    "exception": { "kind": "skill-modifier", "skill": "influence", "percent": 0.2 } }
 ]
 ```
 
+`id`, `name`, `description` required non-empty.
+
+## DO NOT EMIT (documented, not yet authorable)
+
+These are part of the designed model but the game can't consume them yet, so the validator
+**rejects them as unknown fields**. Do not put them in a drop:
+
+- on an Encounter: `mode`, `crisis`, `bridgeCost`, `minActors`/`maxActors`, `difficulty`;
+- on a Quest: `requirements` (Physical/Mental/Social), `tags`.
+
+They arrive in a later engine PR. Until then, emit only the fields shown above.
+
 ## WHAT THE VALIDATOR REJECTS (so emit clean)
 
-- an id that isn't lowercase kebab-case, isn't NFC-normalized, or that repeats
-  another id anywhere;
-- a challenge without **exactly two** checks (one or three both fail), or whose two
-  checks name the **same** Skill;
-- a `skill` not in the 15-skill table (including `combat`), or a wrong-cased skill
-  (`Research` ≠ `research`);
-- a `difficulty` that isn't an integer 0–100 (no floats, no NaN, no 101);
-- a quest with **no** challenges, a challenge id that doesn't resolve, a `reward`
-  that isn't an integer ≥ 0, a `minDuration`/`maxDuration` that isn't an integer
-  ≥ 1, or `maxDuration < minDuration`;
-- a trait whose `modifierPercent` is outside ±0.5, that applies to nothing, or that
-  names an unknown skill/attribute;
-- a perk with a `kind` outside the set above, missing its per-kind params, or that
-  tries to `upgrade-result` on `triumph` (nothing is higher);
-- any **empty required string** field, or any **unknown/extra field** on any shape.
+- an id that isn't lowercase kebab-case, isn't NFC-normalized, or repeats another id anywhere;
+- a challenge with **no encounters**, an encounter that isn't `{skill}`, a `skill` not in the
+  9-skill table (including `combat`) or wrong-cased (`Reasoning` ≠ `reasoning`), or two
+  **identical adjacent** encounters;
+- a quest with **no** challenges, an unresolved challenge id, a `reward` that isn't an integer ≥ 0,
+  a `minDuration`/`maxDuration` that isn't an integer ≥ 1, or `maxDuration < minDuration`;
+- a trait whose `modifierPercent` is outside ±0.5, that applies to nothing, or names an unknown
+  skill/attribute;
+- a perk with a `kind` outside the set, missing its per-kind params, or upgrading `triumph`;
+- any **empty required string** or any **unknown/extra field** on any shape.
 
 ---
 
-## FOUR FILLED SAMPLES (each passes the validator)
+## THREE FILLED SAMPLES (this small set validates on its own)
+
+`challenges.json` — a ONE-encounter challenge and a TWO-encounter challenge:
 
 ```json
-// challenges.json (excerpt)
-{
-  "id": "interview-witnesses",
-  "activity": "Interviewing witnesses",
-  "summary": "The heroes draw out people who saw something and weigh what they say.",
-  "checks": [
-    { "skill": "inquiry", "difficulty": 45 },
-    { "skill": "persuasion", "difficulty": 40 }
-  ]
-}
+[
+  { "id": "research-library", "activity": "Researching in a library",
+    "summary": "The heroes comb a scholarly collection for what the quest needs to know.",
+    "encounters": [ { "skill": "reasoning" } ] },
+  { "id": "wilderness-passage", "activity": "Crossing wild country",
+    "summary": "The heroes travel hard ground to reach the site.",
+    "encounters": [ { "skill": "nature" }, { "skill": "fortitude" } ] }
+]
 ```
+
+`quests.json` — its challenge ids resolve against the challenges above:
 
 ```json
-// quests.json (excerpt)
-{
-  "id": "the-magistrates-favor",
-  "title": "The Magistrate's Favor",
-  "giver": "a nervous clerk",
-  "location": "The Magistrate's Hall",
-  "reward": 350,
-  "minDuration": 1,
-  "maxDuration": 2,
-  "challenges": ["interview-witnesses", "political-support"]
-}
+[
+  { "id": "the-drowned-archive", "title": "The Drowned Archive",
+    "giver": "a hooded antiquarian", "location": "The Sunken Library",
+    "reward": 700, "minDuration": 1, "maxDuration": 3,
+    "challenges": ["wilderness-passage", "research-library"] }
+]
 ```
 
-```json
-// traits.json (excerpt)
-{
-  "id": "frail",
-  "name": "Frail",
-  "description": "Tires fast and bruises easily; hard travel and climbing take a toll.",
-  "effect": {
-    "modifierPercent": -0.15,
-    "appliesTo": { "attributes": ["constitution"], "skills": ["athletics"] }
-  }
-}
-```
-
-```json
-// perks.json (excerpt)
-{
-  "id": "second-wind",
-  "name": "Second Wind",
-  "description": "Once per challenge, the hero shrugs off a bad start and tries the weaker demand again.",
-  "exception": { "kind": "reroll-lowest-check" }
-}
-```
-
-(For maintainers: the live seed content in `web/src/game/guild/content/*.json` is a
-longer worked example of all four kinds and always passes the validator.)
+*(For maintainers: the live seed in `web/src/game/guild/content/*.json` is a longer worked example
+and always passes the validator.)*

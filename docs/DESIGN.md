@@ -102,20 +102,28 @@ second play session; builds on the shipped check-meter:
 
 - **Challenge system v2:** the detailed challenge vocabulary, Attribute/Skill mapping,
   check formula, result language, reasoning, and open tuning live in
-  [`docs/CHALLENGE_SYSTEM.md`](./CHALLENGE_SYSTEM.md), which is authoritative for this subsystem.
-  In summary: a challenge normally combines two broad Skills and tests both separately; labels
+  [`docs/CHALLENGE_SYSTEM.md`](./CHALLENGE_SYSTEM.md), which is authoritative for this subsystem;
+  the **Skills v3 vocabulary** (5 Attributes — Str/Dex/Con/**Mind**/Cha — and 9 Skills in 3
+  Physical/Mental/Social pillars, 3 per pillar) is defined in [`docs/GLOSSARY.md`](./GLOSSARY.md),
+  the single source of truth. In summary: a **Challenge** is an ordered array of **Encounters**
+  (each Encounter is one named Skill check; a Challenge has 1+ Encounters, normally 1–2); labels
   stay at the activity level (Researching in a library / Interviewing witnesses / Handling dungeon
-  traps / Gaining political support), while the quest owns specific people, places, and objectives.
-  Challenges retain a visible ~0–100 difficulty scale, but its conversion to a check target remains
-  explicitly open. The former Investigation/Travel/Mystic/Social/Craft/Combat/Infiltration list is
-  superseded by the linked contract; Combat uses a temporary special rule pending its own slice.
-- **Per-hero resolution:** every participating hero resolves the challenge's Skill checks
-  (normally two — the contract's "normally" hedge applies here too).
+  traps / Gaining political support), while the quest owns specific people, places, and objectives
+  **and sets each Encounter's difficulty** (a generic Challenge carries none). The visible ~0–100
+  difficulty scale survives, but its conversion to a check target remains explicitly open. The
+  former Investigation/Travel/Mystic/Social/Craft/Combat/Infiltration list is superseded by the
+  linked contract; Combat uses a temporary special rule pending its own slice. A quest's
+  **requirements** become **Physical / Mental / Social point budgets** (the new "skulls",
+  replacing the v1 Travel/Combat glyphs) plus **tags** that drive narration and which Challenges a
+  future generator draws — documented in the contract but with values + generator **DEFERRED to a
+  later engine PR (not authorable yet)**.
+- **Per-hero resolution:** every participating hero resolves the Challenge's Encounters
+  (normally 1–2 — the contract's "normally" hedge applies here too).
   Challenges declare participation ("all must sneak" / "two may sneak — then only those two fight
-  the next challenge"). Attributes + Skills produce the checks; percentage modifiers may come
-  from traits, gear, cohesion, and earlier events as defined in the linked challenge contract.
-  How the two checks are presented (one combined bar, split bar, or two rises), and how combined
-  results create assistance, cover failures, or modify later checks, remain open.
+  the next challenge"). Attributes + Skills produce each Encounter check; percentage modifiers may
+  come from traits, gear, cohesion, and earlier events as defined in the linked challenge contract.
+  How the Encounters are presented (one combined bar, split bar, or successive rises), and how
+  combined results create assistance, cover failures, or modify later Encounters, remain open.
 - **Quest pages + clickable everything:** every quest/party/hero mention (feed, quests card,
   strip) navigates to its page; popups get an X, pages get a back arrow. The quest page shows
   the challenge list and, below, the assigned party — with **the guild's ESTIMATE of which
@@ -206,9 +214,16 @@ presence has earned.
      cycle: renew at current terms, renegotiate your cut, or release. Every report you read
      between renewals informs the next one — this is what makes ongoing CV knowledge keep paying
      off, not just the first hire. (An extension of the bounty/hiring lever, not a third lever.)
-2. **Influence** — a per-Area stat you pour money into, with **ongoing upkeep**. Raising it buys
+2. **Presence** — a per-Area stat you pour money into, with **ongoing upkeep**. Raising it buys
    report fidelity (§4) and contests rival guilds; let it lapse and it decays. **No pieces to move
    on the map** — a bureaucrat funds things, he doesn't sneak through forests.
+   *(Renamed from "Influence" for the Skills v3 vocabulary: "Influence" is now the social **Skill**
+   (persuade + deceive + intimidate — see `docs/CHALLENGE_SYSTEM.md` / `docs/GLOSSARY.md`), so the
+   per-Area control stat is **Presence**. Other "Influence"/"influence" references elsewhere in this doc that denote
+   this per-Area stat — map fog/reveal (§9), fidelity (§4), the rival tug-of-war (§7), upkeep and
+   loss (§8/§12) — all now mean **Presence**; a full term sweep of those out-of-slice sections is
+   deferred. Abstract "influence" as clout (§1's "fame, influence, and wealth") and the verb "you
+   influence, never order" are unrelated and unchanged.)*
 
 Everything below is a soft nudge or a spend, not a third lever:
 
