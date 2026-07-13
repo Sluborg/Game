@@ -1,24 +1,22 @@
-// v2 content vocabulary — the six Attributes (docs/CHALLENGE_SYSTEM.md §Attributes).
+// v2 content vocabulary — the Attributes (Skills v3, docs/GLOSSARY.md).
 //
-// AUTHORED-BUT-NOT-WIRED: this is the challenge-system v2 vocabulary the content
-// pipeline authors against. It is deliberately SEPARATE from the shipped v1 sim
-// (web/src/game/guild/*.ts still runs on the 4-attribute str/dex/sta/per model and
-// the crit/good/ok/poor/fail grade ladder). Nothing here is consumed by the sim
-// yet — this slice is the funnel, not the consumer. When the challenge system is
-// implemented, the sim migrates onto this vocabulary and the v1 ladder is
-// superseded (CHALLENGE_SYSTEM.md §"Supersession note").
+// AUTHORED-BUT-NOT-WIRED: the challenge-system v2/v3 vocabulary the content
+// pipeline authors against, deliberately SEPARATE from the shipped v1 sim
+// (web/src/game/guild/*.ts still runs the 4-attribute str/dex/sta/per model). This
+// slice is the funnel, not the consumer — nothing here is imported by the sim.
 //
-// DATA ONLY — no logic lives in this file. Validation lives in schema.ts; the
-// `as const` table is the single source the validator and the SkillId/AttrId
-// unions derive from, so a typo is caught at compile time AND at test time.
+// Skills v3 merges Intelligence + Wisdom into a single MIND attribute, so the set
+// is five: three Physical, one Mental (Mind), one Social (Charisma). The pillars
+// (docs/GLOSSARY.md) fall out of this grouping cleanly — see pillars.ts.
+//
+// DATA ONLY — validation lives in schema.ts.
 
-/** The six Attributes, in the canonical order of CHALLENGE_SYSTEM.md §Attributes. */
+/** The five Attributes, in canonical order. */
 export const ATTRIBUTES = [
   { id: "strength", label: "Strength" },
   { id: "dexterity", label: "Dexterity" },
   { id: "constitution", label: "Constitution" },
-  { id: "intelligence", label: "Intelligence" },
-  { id: "wisdom", label: "Wisdom" },
+  { id: "mind", label: "Mind" },
   { id: "charisma", label: "Charisma" },
 ] as const;
 
@@ -28,8 +26,7 @@ export type AttrId = (typeof ATTRIBUTES)[number]["id"];
 /** The set of valid attribute ids, for the runtime validator (schema.ts). */
 export const ATTR_IDS: readonly AttrId[] = ATTRIBUTES.map((a) => a.id);
 
-/** Hard maximum for any Attribute (CHALLENGE_SYSTEM.md §Attributes). A newly
- * generated hero can start with at most 15; the ceiling of 20 is what content
- * numbers are range-checked against. */
+/** Hard maximum for any Attribute. A newly generated hero starts at ≤ 15; the
+ * ceiling of 20 is what content numbers are range-checked against. */
 export const ATTR_MAX = 20;
 export const ATTR_START_MAX = 15;

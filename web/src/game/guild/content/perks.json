@@ -2,7 +2,7 @@
   {
     "id": "second-wind",
     "name": "Second Wind",
-    "description": "Once per challenge, the hero shrugs off a bad start and tries the weaker of the two demands again.",
+    "description": "Once per challenge, the hero shrugs off a bad start and re-attempts the weakest encounter.",
     "exception": { "kind": "reroll-lowest-check" }
   },
   {
@@ -20,7 +20,7 @@
   {
     "id": "silver-tongue",
     "name": "Silver Tongue",
-    "description": "A standing edge whenever persuasion is what the moment needs.",
-    "exception": { "kind": "skill-modifier", "skill": "persuasion", "percent": 0.2 }
+    "description": "A standing edge whenever influence is what the moment needs.",
+    "exception": { "kind": "skill-modifier", "skill": "influence", "percent": 0.2 }
   }
 ]
