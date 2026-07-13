@@ -40,10 +40,12 @@ export const SKILL_ATTR: Readonly<Record<SkillId, AttrId>> = Object.fromEntries(
   SKILLS.map((s) => [s.id, s.attr]),
 ) as Record<SkillId, AttrId>;
 
-/** Hard maximum for any Skill. Start cap is 5; the ceiling of 20 is what content
- * numbers are range-checked against. */
+/** Hard maximum for any Skill (docs/CHALLENGE_SYSTEM.md §Skills) — double the
+ * Attribute ceiling, so training can reach 2× aptitude. A new hero starts with a
+ * small kit (one Skill at 2, three at 1, rest 0) and Skills grow from use.
+ * Reference constants for the future resolution slice. */
 export const SKILL_MAX = 20;
-export const SKILL_START_MAX = 5;
+export const SKILL_START_MAX = 2;
 
 /** The reserved label the temporary Combat rule uses. Present ONLY so the
  * validator can give a friendly "combat is authored later" message. NOT a skill. */

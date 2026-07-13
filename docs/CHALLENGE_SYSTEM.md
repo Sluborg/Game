@@ -111,15 +111,24 @@ Five Attributes (see [`docs/GLOSSARY.md`](./GLOSSARY.md) for the authoritative l
 **Mind** replaces the old Intelligence and Wisdom Attributes as a single mental Attribute, so the
 old six-Attribute spread collapses to five.
 
-Attributes have a hard maximum of 20. A newly generated hero can start with at most 15 in an
-Attribute.
+**Bounded, standardized, use-grown.** Attributes have a hard maximum of **10**. Every hero is
+generated with the **same standardized spread — total 14 points across the five Attributes, each
+2–4** — so no hero is born dominant and there is nothing to reroll-fish for; the *spread* is the
+archetype (a scholar's 4 is in Mind, a brute's in Strength). Attributes then **grow from use**,
+slowly: an Attribute is a pillar-wide *floor*, so it rises a fraction each time one of its Skills is
+used (see §Progression).
 
-Reasoning: the familiar names reduce onboarding cost, while the lower generation ceiling leaves
-visible room for long-term growth.
+Reasoning: standardized birth kills the reroll lottery and makes *training*, not luck-at-creation,
+what distinguishes heroes — which is the whole "invest in your heroes" pitch. The 2–4 birth band
+plus a modest ceiling of 10 leaves the visible growth in the Skills.
 
 ## Skills
 
-Skills have a hard maximum of 20. A newly generated hero can start with at most 5 in a Skill.
+**The earned axis.** Skills have a hard maximum of **20** — double the Attribute ceiling, so a
+trained Skill can eventually reach twice a hero's aptitude, and *training beats birth*. A new hero
+enters with a small **starting kit** rather than zeros — e.g. **one Skill at 2 and three at 1**,
+the rest untrained (0) — a fingerprint of their archetype. Skills then **grow from use**, faster
+than Attributes (they are the specific competence, not the pillar floor — see §Progression).
 
 **9 Skills, 3 per pillar** (see [`docs/GLOSSARY.md`](./GLOSSARY.md) for the authoritative
 definitions). Pillars are **Physical / Mental / Social**, derived from Attributes (Str/Dex/Con →
@@ -164,14 +173,22 @@ Physical, Mind → Mental, Charisma → Social):
 Each ordinary Skill check uses:
 
 ```text
-Score = ((Attribute + Skill) × (1 + modifierPercent)) + d20
+Score = ((Attribute + Skill) × (1 + modifierPercent)) + 2d6
 ```
 
-Percentage modifiers affect the hero's Attribute + Skill capability. The d20 is added afterward
-and is never multiplied.
+**The die is 2d6, not d20.** A d20 on the bounded stats above (Attribute ≤ 10 + Skill ≤ 20) would
+swing outcomes on luck more than on the hero; **2d6** is a tight bell curve (2–12, clustered at 7)
+so *who the hero is* and *what modifiers fired* decide the check, and luck is a small wobble at the
+margin. This is deliberate for a **feats-focused** game: the memorable swings come from a feat or
+trait firing (a reroll, a band upgrade), not from the dice gods.
 
-Modifiers may come from earlier challenge results, cohesion, gear, perks, or other circumstances.
-This makes modifiers strengthen or weaken capability without also amplifying random luck.
+Percentage modifiers affect the hero's Attribute + Skill *capability*. The 2d6 is added afterward
+and is **never multiplied**, so a rising hero's capability scales while luck stays constant.
+Modifiers may come from **traits, feats, gear, cohesion**, earlier Encounter results, or other
+circumstances. On this bounded scale a percentage modifier is proportionally strong — a +50% on a
+capable hero can exceed the whole 2d6 range — which fits the design (a defining trait/feat should
+outweigh a dice wobble); exact modifier magnitudes are **tuning-open** and must be recalibrated for
+the small scale (the old ±0.5 trait cap was set for 40-point stats).
 
 ## Result language and values
 
@@ -207,11 +224,12 @@ complications, injuries, or other quest state remains open.
 Combat is intentionally a temporary special case:
 
 ```text
-Score = ((max(Strength, Dexterity, Mind) + Combat) × (1 + modifierPercent)) + d20
+Score = ((max(Strength, Dexterity, Mind) + Combat) × (1 + modifierPercent)) + 2d6
 ```
 
-The formula mechanic is **unchanged**; only the removed Intelligence Attribute is written as its v3
-successor **Mind** (Intelligence + Wisdom merged), since Intelligence no longer exists.
+The formula *shape* is unchanged; it tracks the ordinary-check formula — the die is **2d6** (not
+d20) and the removed Intelligence Attribute is written as its v3 successor **Mind** (Intelligence +
+Wisdom merged).
 
 This permits physical and magical fighters to use their strongest relevant approach while sharing
 one temporary Combat Skill. **Combat is deliberately absent from the Skills table above** — it is
@@ -223,29 +241,49 @@ treated as the final combat system.
 
 Difficulty is set by the **Quest** per Encounter (see §Model), not authored on the Challenge, but it
 still uses the visible 0–100 scale. That visible rating must later be converted to a check target
-compatible with Attributes and Skills capped at 20 plus a d20.
+compatible with Attribute ≤ 10 + Skill ≤ 20 + 2d6.
 
 The conversion is not decided. In particular, the earlier illustrative formula
-`10 + difficulty × 0.4` is not adopted.
+`10 + difficulty × 0.4` is not adopted. Because growth is **bounded**, difficulty is intended to be
+near-absolute (set once, not re-tuned per tier), and — with a tight 2d6 — a check is largely
+decided by whether capability clears the target, with feats/traits and the ±wobble at the margin.
 
 Result thresholds on the animated meter should remain visually distinct. A minimum absolute gap of
 5 or 10 score points was discussed, but the correct value depends on the final target conversion
 and meter presentation.
 
-## Skills and Perks
+## Progression and Feats
 
-Numeric Skills represent ordinary competence and progression. Perks should represent distinctive
-abilities that change rules, create exceptions, or add special effects rather than merely duplicating
-a Skill value.
+Two growth vectors, on purpose:
 
-The detailed Perk system is outside this contract.
+- **Numbers grow from use** (the smooth, broad axis). Doing an Encounter raises the **Skill** it
+  tested, and a *fraction* of that also raises its governing **Attribute** (the pillar floor). So
+  Attributes lag Skills and lift a whole pillar at once, while Skills spike where the hero actually
+  works. This is the deliberate anti-D&D move: a hero is shaped by **what you send them to do**, not
+  by dumping every level into one stat — send a hero on varied quests and they broaden; focus them
+  and they specialize. It also plugs straight into the P/M/S quest profiles (see `docs/GLOSSARY.md`).
+- **Feats grow from level-ups** (the chosen, build-defining axis). Leveling grants a pick from a
+  **feat tree**. Feats are where distinctiveness lives — they **modify rolls, Skills, difficulties,
+  and add rule-exceptions** (reroll the weakest Encounter, treat a band as the next one up, a
+  standing modifier, a cooperation-mode trick, a Crisis avoidance). Because the dice are tight (2d6),
+  **feats are the main source of dramatic swing**, not luck.
+
+The detailed feat tree is **deferred** (its own design pass): tree structure, gating, pick cadence,
+and keeping feats *tradeoffs* rather than a flat power ladder. Feats are the grown-up form of the
+content pipeline's **perk exception-kinds** (`reroll-lowest-check`, `soften-critical-failure`,
+`upgrade-result`, `skill-modifier` — see `docs/CONTENT-SPEC.md`), which are the seed of the tree.
+
+Perks/feats change rules and create exceptions rather than merely duplicating a Skill value.
 
 ## Open decisions
 
 - Exact conversion from the visible 0–100 Difficulty (now set by the Quest per Encounter — see
-  §Model) to the check target. (Note the ceiling: an unmodified check tops out at Attribute 20 +
-  Skill 20 + d20 = 60 — the conversion must keep Triumph's 120%-of-target reachable at high
-  difficulty, or state that it deliberately isn't.)
+  §Model) to the check target. (Note the ceiling: an unmodified check tops out at Attribute 10 +
+  Skill 20 + 2d6(max 12) = 42 — the conversion must keep Triumph's 120%-of-target reachable at high
+  difficulty, or state that it deliberately isn't. Percentage modifiers from traits/feats can push
+  above this.)
+- Final resolution tuning: the exact Attribute/Skill grow-from-use rates, the feat-tree design, and
+  the recalibrated modifier magnitudes for the bounded 2d6 scale.
   - Note: the earlier "RESOLVED 2026-07-11" question (whether a Challenge's checks each declare
     their own `{skill, difficulty}`) is no longer framed as a Challenge-authoring decision — the
     **skill** stays authored on the Encounter, and the **difficulty/target** has been **relocated
