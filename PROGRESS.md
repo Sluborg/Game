@@ -2,8 +2,13 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
-## 2026-07-13 - Skills v3: vocabulary + Challenge/Encounter shape — build done, PR opened
-- Gate: build + PR (both reviews cleared; awaiting Codex)
+## 2026-07-13 - Skills v3: vocabulary + Challenge/Encounter shape — codex-fixed
+- Gate: codex-fixed (awaiting merge decision)
+- **PR #43 into `dev`.** Codex (on `4c3c326`): ONE finding, **P3** — GLOSSARY referenced
+  `docs/skills-v3.md`, which was only ever an upload, never committed. Fixed by committing the
+  brainstorm as `docs/skills-v3.md` with a non-normative/superseded banner (it's the documented
+  backlog — the 45-row pairing + narration libraries — the task asked to keep documented). Docs-only
+  delta; nothing to re-review beyond the added file.
 - Branch: `claude/skills-v3-content` (NEW branch off `origin/dev`, on Stefan's ask — v3 is fresh
   work, not a continuation of merged PR #42; first commit = §50 backfill of PR #42's merged gate).
   Scope: `docs/GLOSSARY.md` (NEW single source of truth), rewrites of `docs/CHALLENGE_SYSTEM.md` +
