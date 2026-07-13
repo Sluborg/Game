@@ -3,7 +3,7 @@
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
 ## 2026-07-11 - Content pipeline (CONTENT-SPEC + validated content scaffold) — codex-fixed
-- Gate: codex-fixed (awaiting merge decision)
+- Gate: **merged 2026-07-11 10:40 +0200** (merge commit `0d897b3`; backfilled 2026-07-13).
 - **PR #42 into `dev`.** Codex (on `3dcad5a`): ONE finding, **P2 — "Reject non-array trait scopes"**:
   when `appliesTo.skills` (or `.attributes`) is a present-but-non-array (e.g. a bare string) while
   the other scope is a valid non-empty array, the `Array.isArray(...) ? ... : []` fallback coerced
