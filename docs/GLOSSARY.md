@@ -21,8 +21,10 @@ Two labels appear throughout:
 | **Mind** *(Intelligence + Wisdom merged)* | Mental |
 | Charisma | Social |
 
-Hard max 20; a new hero starts at ≤ 15. The three physical attributes stay distinct (they make the
-different combat builds); Mind and Charisma each govern three skills.
+Hard max **10**. Birth is **standardized** — every hero gets **total 14 points, each Attribute 2–4**
+(the spread is the archetype; no reroll-fishing) — and Attributes then **grow slowly from use** (a
+pillar-wide floor). The three physical attributes stay distinct (they make the different combat
+builds); Mind and Charisma each govern three skills.
 
 ## Skills (9) — *authorable vocabulary*
 
@@ -39,6 +41,10 @@ Three per pillar, one **resistance** skill in each (Fortitude / Willpower / Inte
 | Social | Charisma | **Influence** | persuade, deceive, intimidate |
 | Social | Charisma | **Inquiry** | question people, gather rumours |
 | Social | Charisma | **Integrity** | composure; resist manipulation, bribery, temptation (*character*) |
+
+Hard max **20** (double the Attribute ceiling — training beats birth). A new hero enters with a
+small **starting kit** (e.g. one Skill at 2, three at 1, the rest 0) and Skills **grow from use**,
+faster than Attributes.
 
 `combat` is **not** a skill — it is a temporary special rule (`CHALLENGE_SYSTEM.md`), authored in a
 later slice. The validator rejects a `combat` skill with a dedicated message.
@@ -72,6 +78,14 @@ the axis a Quest's requirements are expressed in and the axis a future generator
 - **Beat** — reserved for the **narration** layer only (one narrated beat may span several
   Encounters). It is *not* a structural unit; do not confuse it with Encounter.
 
+## Resolution — *design direction (numbers tuning-open)*
+
+An Encounter check is **Score = (Attribute + Skill) × (1 + modifierPercent) + 2d6**, vs. the Quest's
+Difficulty; the margin drives the ladder below. **2d6** (not d20) keeps luck a tight wobble so the
+hero and their modifiers decide the check. Growth is **bounded** (Attr ≤ 10, Skill ≤ 20) and
+**use-driven**; **feats** (from a level-up tree) are the build layer and the main source of dramatic
+swing. Full rationale + tuning-open notes in `CHALLENGE_SYSTEM.md` §Check formula / §Progression.
+
 ## Result ladder — *authorable vocabulary (fixed)*
 
 Global, never redefined by content: **Critical Failure −3 · Failure −1 · Insufficient 0 · Success
@@ -96,6 +110,9 @@ Global, never redefined by content: **Critical Failure −3 · Failure −1 · I
 - **Quest requirements** — Physical/Mental/Social point **budgets** (the new "skulls", replacing the
   v1 Travel/Combat glyphs) + **tags** (steer narration *and* which Challenges the generator draws).
   *Budget values + the generator are deferred.*
+- **Feats** — the level-up build layer: picks from a **feat tree** that modify rolls, Skills,
+  difficulties, and add rule-exceptions (the grown-up form of the perk exception-kinds in
+  `CONTENT-SPEC.md`). *Tree design deferred; philosophy in `CHALLENGE_SYSTEM.md` §Progression.*
 - **Presence** — the guild-master's per-area control/standing stat (formerly called "Influence",
   renamed so the *skill* Influence is unambiguous). Lives in `DESIGN.md`, not the content pipeline.
 

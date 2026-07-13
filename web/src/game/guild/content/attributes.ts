@@ -26,7 +26,9 @@ export type AttrId = (typeof ATTRIBUTES)[number]["id"];
 /** The set of valid attribute ids, for the runtime validator (schema.ts). */
 export const ATTR_IDS: readonly AttrId[] = ATTRIBUTES.map((a) => a.id);
 
-/** Hard maximum for any Attribute. A newly generated hero starts at ≤ 15; the
- * ceiling of 20 is what content numbers are range-checked against. */
-export const ATTR_MAX = 20;
-export const ATTR_START_MAX = 15;
+/** Hard maximum for any Attribute (docs/CHALLENGE_SYSTEM.md §Attributes). Birth is
+ * standardized (total 14 across the five, each 2–4) and Attributes grow from use.
+ * Reference constants for the future resolution slice; hero generation is not part
+ * of this content funnel. */
+export const ATTR_MAX = 10;
+export const ATTR_START_MAX = 4;

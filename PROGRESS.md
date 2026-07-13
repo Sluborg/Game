@@ -2,8 +2,40 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-07-13 - Resolution & progression model (2d6, bounded, feats philosophy) — build done, PR opened
+- Gate: build + PR (design interview + Review #2 cleared; awaiting Codex)
+- Branch: `claude/resolution-model` (NEW off `origin/dev`, on Stefan's ask; first commit = §50
+  backfill of PR #43's merged gate). Docs-only design change + a tiny reconcile of vestigial funnel
+  constants; combat core untouched; nothing wired into the sim.
+- What it captures (settled through a long design interview with Stefan — the plan/Review-#1
+  equivalent): the check formula's die changes **d20 → 2d6** (bounded stats made a d20 pure luck;
+  2d6 keeps luck a tight wobble so the hero + modifiers decide the check — deliberate for a
+  feats-focused game). **Attributes** hard-max **10**, standardized birth (**total 14 across the
+  five, each 2–4** — no reroll-fishing), grow slowly from use (pillar floor). **Skills** hard-max
+  **20** (2× the attribute ceiling → training beats birth), start as a small kit (one 2 + three 1s),
+  grow from use faster than attributes. Growth is **bounded** so difficulty is near-absolute (set by
+  the Quest). **% modifiers** stay (traits/feats/gear/cohesion), multiply capability, die never
+  multiplied; magnitudes tuning-open for the smaller scale. **Feats** = the level-up build layer
+  (tree deferred, philosophy only) — modify rolls/skills/difficulties/exceptions; the grown-up form
+  of the content pipeline's perk exception-kinds. Numbers grow from **use** (anti-D&D breadth: a
+  hero is shaped by what you send them to do), feats grow from **level-ups**.
+- Scope: `docs/CHALLENGE_SYSTEM.md` (§Attributes/§Skills/§Check formula/§Combat/§Difficulty rewritten
+  to the above; new §Progression; §Open-decisions ceiling fixed to Attr 10 + Skill 20 + 2d6 = 42),
+  `docs/GLOSSARY.md` (caps, birth, a §Resolution one-liner, a Feats entry), `PROGRESS.md`; plus
+  `content/attributes.ts` + `content/skills.ts` cap constants reconciled (ATTR_MAX 20→10,
+  ATTR_START_MAX 15→4, SKILL_START_MAX 5→2 — unused reference consts, matched to the docs so no
+  doc/code cap contradiction).
+- Review #2 (consistency/accuracy/adversary on the diff): **0 blockers.** Confirmed no stale d20 /
+  old caps / old ceiling; the two docs agree; no unbacked code promise (the ±0.5 trait cap is
+  described as tuning-open, not changed). Folded both non-blockers: reconciled the cap constants and
+  added this entry.
+- Verified: `npx tsc -b` clean; `npm run test` **132 pass + 1 skipped** (unchanged — docs + unused
+  consts); combat core untouched.
+- Open (deferred to the resolution/engine slice): exact grow-from-use rates, the feat tree,
+  recalibrated modifier magnitudes, 0–100 difficulty → target conversion.
+
 ## 2026-07-13 - Skills v3: vocabulary + Challenge/Encounter shape — codex-fixed
-- Gate: codex-fixed (awaiting merge decision)
+- Gate: **merged 2026-07-13 21:18 +0200** (merge commit `2c720b9`; backfilled 2026-07-13). **PR #43 into `dev`.**
 - **PR #43 into `dev`.** Codex (on `4c3c326`): ONE finding, **P3** — GLOSSARY referenced
   `docs/skills-v3.md`, which was only ever an upload, never committed. Fixed by committing the
   brainstorm as `docs/skills-v3.md` with a non-normative/superseded banner (it's the documented
