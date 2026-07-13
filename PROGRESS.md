@@ -3,7 +3,7 @@
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
 ## 2026-07-13 - Skills v3: vocabulary + Challenge/Encounter shape — codex-fixed
-- Gate: codex-fixed (awaiting merge decision)
+- Gate: **merged 2026-07-13 21:18 +0200** (merge commit `2c720b9`; backfilled 2026-07-13). **PR #43 into `dev`.**
 - **PR #43 into `dev`.** Codex (on `4c3c326`): ONE finding, **P3** — GLOSSARY referenced
   `docs/skills-v3.md`, which was only ever an upload, never committed. Fixed by committing the
   brainstorm as `docs/skills-v3.md` with a non-normative/superseded banner (it's the documented
