@@ -2,6 +2,44 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-07-13 - Skills v3: vocabulary + Challenge/Encounter shape — build done, PR opened
+- Gate: build + PR (both reviews cleared; awaiting Codex)
+- Branch: `claude/skills-v3-content` (NEW branch off `origin/dev`, on Stefan's ask — v3 is fresh
+  work, not a continuation of merged PR #42; first commit = §50 backfill of PR #42's merged gate).
+  Scope: `docs/GLOSSARY.md` (NEW single source of truth), rewrites of `docs/CHALLENGE_SYSTEM.md` +
+  `docs/CONTENT-SPEC.md`, reconcile `docs/DESIGN.md`; `web/src/game/guild/content/*` (attributes,
+  skills, NEW pillars, types, schema, tests, seed JSON, README). Additive; combat core untouched;
+  still nothing wired into the sim (funnel, not consumer).
+- Design settled with Stefan over an extended interview (all his calls): **Skills v3 = 5 attributes,
+  9 skills, pillars 3/3/3.** Strength→Force · Dexterity→Mobility · Constitution→Fortitude ·
+  **Mind** (Int+Wis merged)→Reasoning/Nature/Willpower · Charisma→Influence/Inquiry/Integrity. One
+  **resistance** skill per pillar (Fortitude/Willpower/Integrity). Magic→Reasoning, healing→Nature.
+  Structure: Quest → Challenges → **Encounters** (a named Skill check; a Challenge is an ordered 1+
+  list; one-Encounter valid; repeats only if meaningfully different — not machine-enforceable).
+  Per-check difficulty (merged in #42) is **relocated** to the Quest (it sets each Encounter's
+  target), not deleted. Challenge headline stays `activity` (not `title`). Guild lever "Influence"
+  → **Presence** (frees the word for the skill). Cooperation **Modes** (additive/resisted/lead/
+  individual), **Crisis** (hard-fail path, replaces "Panic"), participation (Committed/Assigned/
+  Qualified/Bridged), bridging/overflow, and Quest **P/M/S requirements + tags** (the new "skulls")
+  are **documented in GLOSSARY, NOT authorable yet** — built in a follow-up **engine PR**.
+- Review #1 (4 personas on the PLAN): 11 blockers folded (no CI test job → added earlier; per-band
+  narration matrix → deferred; combat → scoped out; JSON output; validator gaps; ref-graph = DAG;
+  etc.), then re-vetted after the v3 vocabulary churn.
+- Review #2 (4 personas on the DIFF): **0 blockers.** Folds: re-added the non-object-challenge
+  fixture (§70 per-rule coverage), `import type { ResultId }` consistency, "adjacent same-skill"
+  guard wording + engine-PR note, self-consistent CONTENT-SPEC samples (moved `//` labels out of the
+  JSON fences), aligned the Nature row to GLOSSARY, widened the DESIGN Presence-rename note, cosmetic
+  comment fixes. Adversary verdict: "migration is clean" — no stale-vocabulary contradiction, every
+  documented shape matches the validator, deferred fields rejected as unknown on purpose.
+- Verified: `npx tsc -b` clean; `npm run test` **132 pass + 1 skipped** (40 content: real content
+  clean, a negative fixture per rule, vocabulary integrity — 5 attrs / 9 skills / 3-3-3 pillars /
+  ladder −3..+3, v1/v2 isolation); `vite build` green; a corrupted JSON drop turns the suite red
+  with legible messages; combat core diff empty vs `origin/dev`.
+- Open (documented, for the engine PR): Crisis threshold, Mode mechanics, bridging/overflow math,
+  participation rules, P/M/S requirement values + tag vocabulary + the generator, narration
+  composition, final Combat. The 45-row pairing library in `docs/skills-v3.md` stays documented
+  (non-normative), not imported.
+
 ## 2026-07-11 - Content pipeline (CONTENT-SPEC + validated content scaffold) — codex-fixed
 - Gate: **merged 2026-07-11 10:40 +0200** (merge commit `0d897b3`; backfilled 2026-07-13).
 - **PR #42 into `dev`.** Codex (on `3dcad5a`): ONE finding, **P2 — "Reject non-array trait scopes"**:
