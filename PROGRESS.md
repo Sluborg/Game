@@ -5,7 +5,7 @@ Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat 
 ## 2026-09-30 - Resolution engine: 2d6 check, difficulty→target, grow-from-use, sim — build done, PR opened
 - Gate: build + PR (Review #1 + Review #2 cleared; awaiting Codex)
 - Branch: `ccr-c145e2cc-3s42bn` (off `origin/dev`; first commit = §50 backfill of PR #44's merged
-  gate) → PR into `dev`. Pure engine, NOT wired into the live v1 sim (its heroes carry no v3
+  gate) → **PR #46 into `dev`**. Pure engine, NOT wired into the live v1 sim (its heroes carry no v3
   attributes/skills; a v1→v3 mapping would be a second scope). Combat core and `resolver.ts`
   untouched; the GOLDEN resolver test is byte-identical.
 - Decisions (Stefan chose the recommended defaults, 2026-09-30): **Target = 6 + 0.30 × Difficulty**
