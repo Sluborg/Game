@@ -2,6 +2,12 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-09-30 - Codex P2 fixes from promotion PR #45 — PR opened
+- Gate: PR opened → awaiting Codex review
+- Branch: `ccr-f054514f-0jzz9m` → **PR #47 into `dev`**; `@codex review` posted. Once merged, the
+  `dev` → `main` promotion PR #45 carries these fixes (its head is `dev`).
+- Open questions: none.
+
 ## 2026-09-30 - Codex P2 fixes from promotion PR #45 — build done
 - Gate: build (Review #2 cleared, 0 blockers; opening PR)
 - Branch: `ccr-f054514f-0jzz9m`.
