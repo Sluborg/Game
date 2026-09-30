@@ -2,7 +2,8 @@
 // shown first, each in a bordered card that wraps its members, and the heroes not
 // yet in a party fall into a "Without a party" section below. Tapping any hero —
 // a party member or a solo one — opens that hero's tabbed stat page (HeroCard) in
-// a bottom Sheet. UI scaffolding only — mock data (mockHeroes + mockParties).
+// a bottom Sheet. Mock roster data (mockHeroes + mockParties), but each hero's
+// status is LIVE — derived from GuildState with the Hall's own wording (liveStatus.ts).
 
 import { useCallback, useState } from "react";
 import { HEROES } from "./mockHeroes";
@@ -11,9 +12,12 @@ import { HeroSprite } from "./HeroSprite";
 import { HeroCard } from "./HeroCard";
 import { PartyCard } from "./PartyCard";
 import { Button, Sheet } from "../kit";
+import { useGuild } from "../guild/GuildContext";
+import { heroStatus } from "./liveStatus";
 import styles from "./HeroesScreen.module.css";
 
 export function HeroesScreen() {
+  const { state } = useGuild();
   const [openId, setOpenId] = useState<string | null>(null);
   const openHero = HEROES.find((h) => h.id === openId) ?? null;
   const close = () => setOpenId(null);
@@ -50,31 +54,34 @@ export function HeroesScreen() {
             Without a party
           </h2>
           <ul className={styles.roster}>
-            {SOLO.map((hero) => (
-              <li key={hero.id}>
-                <button
-                  type="button"
-                  className={styles.row}
-                  onClick={() => setOpenId(hero.id)}
-                  aria-haspopup="dialog"
-                  aria-label={`${hero.name}, ${hero.archetype}. ${hero.status.text}. Open stat page.`}
-                >
-                  <HeroSprite layers={hero.layers} name={hero.name} size={64} />
-                  <span className={styles.rowText}>
-                    <span className={styles.rowName}>{hero.name}</span>
-                    <span className={styles.rowArch}>{hero.archetype}</span>
-                    {/* Status dot is the glanceable code; the text is the second cue. */}
-                    <span className={styles.status} data-kind={hero.status.kind}>
-                      <span className={styles.dot} aria-hidden />
-                      {hero.status.text}
+            {SOLO.map((hero) => {
+              const status = heroStatus(hero.id, state);
+              return (
+                <li key={hero.id}>
+                  <button
+                    type="button"
+                    className={styles.row}
+                    onClick={() => setOpenId(hero.id)}
+                    aria-haspopup="dialog"
+                    aria-label={`${hero.name}, ${hero.archetype}. ${status.text}. Open stat page.`}
+                  >
+                    <HeroSprite layers={hero.layers} name={hero.name} size={64} />
+                    <span className={styles.rowText}>
+                      <span className={styles.rowName}>{hero.name}</span>
+                      <span className={styles.rowArch}>{hero.archetype}</span>
+                      {/* Status dot is the glanceable code; the text is the second cue. */}
+                      <span className={styles.status} data-kind={status.kind}>
+                        <span className={styles.dot} aria-hidden />
+                        {status.text}
+                      </span>
                     </span>
-                  </span>
-                  <span className={styles.chev} aria-hidden>
-                    ›
-                  </span>
-                </button>
-              </li>
-            ))}
+                    <span className={styles.chev} aria-hidden>
+                      ›
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}
@@ -83,7 +90,7 @@ export function HeroesScreen() {
         {openHero && (
           <>
             {/* key resets tab/inspector state when the sheet swaps heroes (incl. via View). */}
-            <HeroCard key={openHero.id} hero={openHero} onGoto={goTo} />
+            <HeroCard key={openHero.id} hero={openHero} status={heroStatus(openHero.id, state)} onGoto={goTo} />
             {/* A full-width secondary close at the bottom of the sheet — easier
                 one-handed reach than the top-right ×, and the kit Button in use. */}
             <Button variant="secondary" className={styles.sheetClose} onClick={close}>

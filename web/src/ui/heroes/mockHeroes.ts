@@ -75,7 +75,8 @@ export interface Hero {
   archetype: string;
   presetKey: keyof typeof PRESETS;
   layers: ResolvedLayer[];
-  status: HeroStatus;
+  // No `status` here: whereabouts are LIVE, derived from GuildState by
+  // liveStatus.ts (a static one contradicted the Hall — Codex P2 on PR #45).
   /** Exactly the 4 real attributes (§5 UI-lean). */
   attributes: HeroAttr[];
   equipment: Equipment;
@@ -119,7 +120,6 @@ export const HEROES: Hero[] = [
     presetKey: "knight",
     layers: layersFor("knight"),
     // Leads The Free Blades; between contracts at the hall (matches mockParties.ts).
-    status: { kind: "guild", text: "At Guild Hall" },
     attributes: attrs([15, "verified"], [9, "claimed"], [13, "verified"], [7, "rumor"]),
     equipment: {
       armor: { name: "Steel Plate", effect: "Heavy mitigation; the sim's best armour tier." },
@@ -143,9 +143,6 @@ export const HEROES: Hero[] = [
     archetype: "Champion",
     presetKey: "champion",
     layers: layersFor("champion"),
-    // Leads The Iron Vigil into the Sunken Ruins — status matches the party's
-    // reported location (mockParties.ts) so the sheet never contradicts the card.
-    status: { kind: "quest", text: "On quest: Sunken Ruins" },
     attributes: attrs([16, "verified"], [12, "verified"], [14, "verified"], [11, "claimed"]),
     equipment: {
       head: { name: "Gilded Helm", effect: "Ornate; a proud hero's statement piece." },
@@ -171,7 +168,6 @@ export const HEROES: Hero[] = [
     archetype: "Recruit",
     presetKey: "squire",
     layers: layersFor("squire"),
-    status: { kind: "idle", text: "Idle" },
     attributes: attrs([6, "rumor"], [11, "claimed"], [8, "rumor"], [10, "claimed"]),
     equipment: {
       mainhand: { name: "Dagger", effect: "Fast, low damage; a beginner's blade." },
@@ -193,7 +189,6 @@ export const HEROES: Hero[] = [
     // The Iron Vigil's scout — her Perception/Dexterity are what let the party
     // clear the Ruins' non-combat beats (sigils, the flooded descent). Attribute
     // VALUES mirror the sim ground truth (game/guild/roster.ts) — enforced by test.
-    status: { kind: "quest", text: "On quest: Sunken Ruins" },
     attributes: attrs([7, "rumor"], [13, "claimed"], [9, "rumor"], [15, "verified"]),
     equipment: {
       mainhand: { name: "Hunting Bow", effect: "Reach without closing; sets up the party's opener." },
@@ -217,7 +212,6 @@ export const HEROES: Hero[] = [
     presetKey: "knight",
     layers: layersFor("knight"),
     // The Iron Vigil's dependable second — same quest/location as Ysolt.
-    status: { kind: "quest", text: "On quest: Sunken Ruins" },
     attributes: attrs([12, "claimed"], [8, "claimed"], [12, "verified"], [9, "rumor"]),
     equipment: {
       armor: { name: "Mail Hauberk", effect: "Mid-tier mitigation." },
@@ -239,7 +233,6 @@ export const HEROES: Hero[] = [
     archetype: "Cutpurse",
     presetKey: "squire",
     layers: layersFor("squire"),
-    status: { kind: "guild", text: "At Guild Hall" },
     attributes: attrs([5, "verified"], [15, "claimed"], [7, "claimed"], [12, "claimed"]),
     equipment: {
       mainhand: { name: "Dagger", effect: "Fast, low damage; his weapon of choice." },

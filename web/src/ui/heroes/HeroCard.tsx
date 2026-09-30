@@ -11,7 +11,7 @@
 // rumor pill "?", relationships as chips/rows (never a web).
 
 import { useCallback, useState, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
-import type { Bond, Hero, HeroAttr } from "./mockHeroes";
+import type { Bond, Hero, HeroAttr, HeroStatus } from "./mockHeroes";
 import type { GearSlot } from "./mockHeroes";
 import { HEROES } from "./mockHeroes";
 import { HeroSprite } from "./HeroSprite";
@@ -73,7 +73,7 @@ const GEAR_SLOTS: { key: GearSlot; label: string }[] = [
   { key: "trinket2", label: "Trinket" },
 ];
 
-export function HeroCard({ hero, onGoto }: { hero: Hero; onGoto: (id: string) => void }) {
+export function HeroCard({ hero, status, onGoto }: { hero: Hero; status: HeroStatus; onGoto: (id: string) => void }) {
   const [tab, setTab] = useState<TabKey>("character");
   const [pop, setPop] = useState<InspectData | null>(null);
 
@@ -109,9 +109,9 @@ export function HeroCard({ hero, onGoto }: { hero: Hero; onGoto: (id: string) =>
         <HeroSprite layers={hero.layers} name={hero.name} size={88} />
         <div className={styles.headText}>
           <span className={styles.archetype}>{hero.archetype}</span>
-          <span className={styles.status} data-kind={hero.status.kind}>
+          <span className={styles.status} data-kind={status.kind}>
             <span className={styles.dot} aria-hidden />
-            {hero.status.text}
+            {status.text}
           </span>
         </div>
       </div>
