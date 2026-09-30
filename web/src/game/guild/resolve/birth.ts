@@ -2,10 +2,12 @@
 // BIRTH_TOTAL (14) attribute points, each attribute in [BIRTH_MIN, BIRTH_MAX] =
 // [2, 4], and a starting skill kit of one skill at 2 and three others at 1.
 //
-// Algorithm (bias-free, always terminates): start every attribute at BIRTH_MIN
-// (5 × 2 = 10), then place the remaining 4 points one at a time by drawing
-// uniformly among the attributes still below BIRTH_MAX. A 5 is impossible by
-// construction and the total is always exactly 14.
+// Algorithm (no positional bias, always terminates): start every attribute at
+// BIRTH_MIN (5 × 2 = 10), then place the remaining 4 points one at a time by
+// drawing uniformly among the attributes still below BIRTH_MAX. Every attribute
+// is equally likely to be the 4; the distribution over exact spreads is not
+// uniform, which is fine. A 5 is impossible by construction and the total is
+// always exactly 14.
 
 import type { Rng } from "../../battle/rng";
 import { ATTR_IDS, type AttrId } from "../content/attributes";

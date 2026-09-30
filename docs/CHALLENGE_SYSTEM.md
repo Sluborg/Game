@@ -282,7 +282,7 @@ Two growth vectors, on purpose:
   **feats are the main source of dramatic swing**, not luck.
 
 **Rates (engine, 2026-09-30, `resolve/growth.ts`):** the tested Skill gains **1 XP per use, 2 on a
-Success or Triumph**; Skill level *n* → *n+1* costs **5 × n** XP (1 → 20 is 950 XP). The governing
+Success or Triumph**; Skill level *n* → *n+1* costs **5 × n** XP (0 → 1 also costs 5; 1 → 20 is 950 XP). The governing
 Attribute gains **1 XP per Success/Triumph** only; level *n* → *n+1* costs **20 × n** XP (2 → 10 is
 880 XP). Caps are independent (a capped Skill still feeds its Attribute); XP at a cap is discarded.
 Simulated feel (`docs/resolution-sim.md` §D/§E): at "fair" difficulty (target = capability + 7) a

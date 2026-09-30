@@ -2,8 +2,8 @@
 // from what a hero is sent to do: the tested Skill gains XP on every use, its
 // governing Attribute only on a Success or Triumph, and each level costs more.
 //
-//   skill level n → n+1 costs SKILL_XP_PER_LEVEL × n     (5n)
-//   attr  level n → n+1 costs ATTR_XP_PER_LEVEL × n      (20n)
+//   skill level n → n+1 costs SKILL_XP_PER_LEVEL × max(n, 1)   (5n; 0 → 1 costs 5)
+//   attr  level n → n+1 costs ATTR_XP_PER_LEVEL × max(n, 1)    (20n)
 //   skill XP per use: SKILL_XP_USE (1), or SKILL_XP_SUCCESS (2) on Success/Triumph
 //   attr  XP per use: ATTR_XP_SUCCESS (1) on Success/Triumph, else 0
 //
@@ -35,12 +35,13 @@ export interface UseOutcome {
   attrUp: number;
 }
 
+/** An untrained (0) skill is not free: 0 → 1 costs the same as 1 → 2. */
 export function skillXpToNext(level: number): number {
-  return SKILL_XP_PER_LEVEL * level;
+  return SKILL_XP_PER_LEVEL * Math.max(1, level);
 }
 
 export function attrXpToNext(level: number): number {
-  return ATTR_XP_PER_LEVEL * level;
+  return ATTR_XP_PER_LEVEL * Math.max(1, level);
 }
 
 /** Total XP from level `from` to level `to` (sum of per-level costs). */

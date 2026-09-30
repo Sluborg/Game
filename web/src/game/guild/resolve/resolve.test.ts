@@ -31,6 +31,7 @@ describe("targetFor: 6 + 0.30 × difficulty, integer, clamped", () => {
     expect(targetFor(100)).toBe(36);
     expect(targetFor(1)).toBe(6); // 6.3 → 6
     expect(targetFor(5)).toBe(8); // 7.5 → 8 (half-up)
+    expect(targetFor(100.4)).toBe(36);
   });
   it("clamps and rounds the visible scale", () => {
     expect(targetFor(-40)).toBe(6);
@@ -85,7 +86,10 @@ describe("roll2d6", () => {
     expect(b.capability).toBe(26);
   });
   it("deterministic by seed; two seeds differ somewhere", () => {
-    const run = (seed: number) => Array.from({ length: 20 }, () => resolveCheck({ attr: 5, skill: 8, difficulty: 50 }, mulberry32(seed)).score);
+    const run = (seed: number) => {
+      const rng = mulberry32(seed);
+      return Array.from({ length: 20 }, () => resolveCheck({ attr: 5, skill: 8, difficulty: 50 }, rng).score);
+    };
     expect(run(7)).toEqual(run(7));
     expect(run(7)).not.toEqual(run(8));
   });
@@ -222,9 +226,17 @@ describe("applyUse: grow-from-use", () => {
     expect(p.xp.skills.reasoning).toBe(0); // pure
     expect(() => applyUse(p, "combat" as never, "success")).toThrow(/unknown skill/);
   });
-  it("cost tables: skill 1→20 = 950 XP, attr 2→10 = 880 XP", () => {
+  it("cost tables: skill 1→20 = 950 XP, attr 2→10 = 880 XP; an untrained skill is not free", () => {
     expect(skillXpBetween(1, 20)).toBe(950);
     expect(attrXpBetween(2, 10)).toBe(880);
+    expect(skillXpBetween(0, 1)).toBe(5);
+    const p = heroAt(0, 3);
+    expect(applyUse(p, "reasoning", "failure").progress.skills.reasoning).toBe(0);
+    expect(applyUse(p, "reasoning", "failure").progress.xp.skills.reasoning).toBe(1);
+  });
+  it("modPct is quantised to whole percent so x.5 products round predictably", () => {
+    expect(capabilityFor(5, 0, 0.1)).toBe(6); // 5 × 1.1 = 5.5 → 6, never 5.4999…
+    expect(capabilityFor(5, 0, 0.104)).toBe(6);
   });
 });
 

@@ -139,13 +139,15 @@ function runCareer(seed: number, skill: SkillId, policy: Policy, uses: number): 
   return { points, usesToSkill, usesToAttr };
 }
 
+/** True median (mean of the middle pair on even lengths). */
 function median(xs: number[]): number {
   const s = [...xs].sort((a, b) => a - b);
-  return s[Math.floor(s.length / 2)];
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
 }
 
 function medianOrNever(xs: (number | null)[]): string {
-  if (xs.some((x) => x === null)) return "never";
+  if (xs.some((x) => x === null)) return "never (within 1500)";
   return String(median(xs as number[]));
 }
 
@@ -162,7 +164,7 @@ function careerSection(policy: Policy): string {
     ...ATTR_MILESTONES.map((m) => [`Attr ${m}`, medianOrNever(runs.map((r) => r.usesToAttr[m]))]),
   ];
   return [
-    table(["Uses", "Skill", "Attr", "P(≥Success) now"], rows),
+    table(["Uses", "Skill", "Attr", "Success odds now"], rows),
     "",
     table(["Milestone", "Uses (median of 3 seeds)"], milestones),
   ].join("\n");
@@ -176,12 +178,22 @@ interface Strategy {
 }
 
 const STRATEGIES: readonly Strategy[] = [
-  { label: "Focused: 1 skill (Reasoning)", skills: ["reasoning"] },
-  { label: "Same pillar: 2 skills (Reasoning, Nature)", skills: ["reasoning", "nature"] },
-  { label: "Across pillars: 3 skills (Force, Reasoning, Influence)", skills: ["force", "reasoning", "influence"] },
+  { label: "1 skill (Rsn)", skills: ["reasoning"] },
+  { label: "2, same pillar (Rsn, Nat)", skills: ["reasoning", "nature"] },
+  { label: "3, across pillars (Frc, Rsn, Inf)", skills: ["force", "reasoning", "influence"] },
 ];
 
 const VARIED_USES = 600;
+const VARIED_SEEDS = [44, 55, 66];
+const SHORT: Record<string, string> = {
+  reasoning: "Rsn",
+  nature: "Nat",
+  force: "Frc",
+  influence: "Inf",
+  mind: "Mind",
+  strength: "Str",
+  charisma: "Cha",
+};
 
 function runStrategy(seed: number, s: Strategy): { hero: HeroProgress; attrUps: number } {
   const rng = mulberry32(seed);
@@ -200,17 +212,16 @@ function runStrategy(seed: number, s: Strategy): { hero: HeroProgress; attrUps: 
   return { hero, attrUps };
 }
 
-function fmtLevels<K extends string>(rec: Record<K, number>, keys: K[]): string {
-  return keys.map((k) => `${k} ${rec[k]}`).join(", ");
-}
-
 function variedSection(): string {
   const rows = STRATEGIES.map((s) => {
-    const { hero, attrUps } = runStrategy(44, s);
+    const runs = VARIED_SEEDS.map((seed) => runStrategy(seed, s));
     const attrs = [...new Set(s.skills.map((k) => SKILL_ATTR[k]))] as AttrId[];
-    return [s.label, fmtLevels(hero.skills, s.skills), fmtLevels(hero.attrs, attrs), attrUps];
+    const skillCells = s.skills.map((k) => `${SHORT[k]} ${median(runs.map((r) => r.hero.skills[k]))}`).join(" · ");
+    const attrCells = attrs.map((a) => `${SHORT[a]} ${median(runs.map((r) => r.hero.attrs[a]))}`).join(" · ");
+    const ups = median(runs.map((r) => r.attrUps));
+    return [s.label, skillCells, `${attrCells} (+${ups} ups)`];
   });
-  return table(["Strategy (600 uses, fair)", "Skills", "Attributes", "Attr level-ups"], rows);
+  return table(["Strategy", "Skills", "Attrs touched"], rows);
 }
 
 // ── Render ─────────────────────────────────────────────────────────────────────
@@ -227,7 +238,8 @@ export function renderSim(): string {
     "outcomes enumerated), not Monte Carlo. Careers use fixed seeds.",
     "",
     "**What this means for a player:** nothing on screen changes yet. This is the engine the next",
-    "slice wires into quests. Read the tables and say whether the feel is right.",
+    "slice wires into quests. Read the tables and say whether the feel is right: is 58% at fair",
+    "difficulty too swingy? Do Veterans feel too safe? Is a 600-use climb to Skill 20 too long?",
     "",
     "## How to read",
     "",
@@ -237,6 +249,9 @@ export function renderSim(): string {
       RESULT_LADDER.map((r) => `${BAND_SHORT[r.id]} ${r.bandHi === Infinity ? `≥${r.bandLo}%` : `${r.bandLo}–${r.bandHi}%`}`).join(" · ") +
       ".",
     "- **Archetypes:** Fresh = a newborn hero's best skill; Journeyman/Veteran = mid-career; Max = both caps.",
+    "- **Diff** = Difficulty (0–100). **(T21)** = Target 21, the score to reach. **Insuf** = close but not",
+    "  enough (no penalty). **Success odds** = Success or Triumph. **Fair** difficulty = target is",
+    "  capability + 7 (the 2d6 average), so an unmodified hero succeeds ~58% of the time.",
     "- **Unmodified ceiling:** Attr 10 + Skill 20 + 12 = 42. Triumph at the top of the scale needs",
     "  modifiers, by design (see the Reach table).",
     "",
@@ -254,32 +269,57 @@ export function renderSim(): string {
       table(["Diff (Target)", ...RESULT_LADDER.map((r) => BAND_SHORT[r.id])], rows),
       "",
       `Feel check: at fair difficulty ${fair} (target ${targetFor(fair)} = capability ${capabilityFor(a.attr, a.skill)} + 7) this hero gets ` +
-        `Success-or-better ${pct(pSuccess(fd))}, Triumph ${pct(fd.triumph)}, CritFail ${pct(fd["critical-failure"])}.`,
+        `Success-or-better ${pct(pSuccess(fd))}, Triumph ${pct(fd.triumph)}, CritFail ${pct(fd["critical-failure"])}` +
+        (fair === 100 ? " (fair is clipped at 100, the hardest task in the game)." : "."),
       "",
     );
   }
 
-  push("## B. Hero-relative difficulty", "", "The difficulty where each hero's Success-or-better odds fall to about 50% and 70%, with the full split.", "");
+  push(
+    "## B. Hero-relative difficulty",
+    "",
+    "For each hero: the difficulty (D) where Success odds fall to about 70% and about 50%, and the",
+    "full split there. Max hits the scale's end (D100) before dropping to 50%, so both rows match.",
+    "",
+  );
   const bRows: (string | number)[][] = [];
   for (const a of ARCHETYPES) {
     for (const p of [0.7, 0.5]) {
       const d = difficultyAtSuccess(a, 0, p);
-      bRows.push(distRow(`${a.label.split(" (")[0]} @${Math.round(p * 100)}% → diff ${d}`, checkDistribution({ attr: a.attr, skill: a.skill, difficulty: d })));
+      bRows.push(distRow(`${a.label.split(" (")[0]} · ${Math.round(p * 100)}% · D${d}`, checkDistribution({ attr: a.attr, skill: a.skill, difficulty: d })));
     }
   }
-  push(table(["Hero @ odds → difficulty", ...RESULT_LADDER.map((r) => BAND_SHORT[r.id])], bRows), "");
+  push(table(["Hero · odds · D", ...RESULT_LADDER.map((r) => BAND_SHORT[r.id])], bRows), "");
 
-  push("### Reach: highest difficulty with Triumph ≥ 5%", "");
   push(
+    "### Reach",
+    "",
+    "The hardest difficulty where Triumph is still ≥ 5% likely, without and with the +30% modifier",
+    "cap; and how much +30% lifts Success odds in a fair fight.",
+    "",
     table(
-      ["Hero", "No mod", `+${Math.round(MOD_CAP * 100)}% mod`, `Fair diff, no mod → +${Math.round(MOD_CAP * 100)}%: P(≥Success)`],
+      ["Hero", "Triumph reach", `+${Math.round(MOD_CAP * 100)}%`, `Fair-fight odds (no mod → +${Math.round(MOD_CAP * 100)}%)`],
       ARCHETYPES.map((a) => {
         const fair = policyDifficulty("fair", capabilityFor(a.attr, a.skill));
         const d0 = checkDistribution({ attr: a.attr, skill: a.skill, difficulty: fair });
         const d1 = checkDistribution({ attr: a.attr, skill: a.skill, modPct: MOD_CAP, difficulty: fair });
-        return [a.label.split(" (")[0], triumphReach(a, 0), triumphReach(a, MOD_CAP), `${pct(pSuccess(d0))} → ${pct(pSuccess(d1))}`];
+        return [a.label.split(" (")[0], `D${triumphReach(a, 0)}`, `D${triumphReach(a, MOD_CAP)}`, `D${fair}: ${pct(pSuccess(d0))} → ${pct(pSuccess(d1))}`];
       }),
     ),
+    "",
+    "### Design flags (for Stefan to rule on)",
+    "",
+    "- **Dead top of the scale unmodified.** An unmodified Max hero cannot Triumph above D98 and is",
+    "  below 5% from D95; at D100 it sits at 72% Success / 28% Insuf / 0% Triumph. Only modifiers",
+    "  (feats, traits, gear) open the top ~6 points. Intended per Stefan's target decision; confirm.",
+    "- **Narrow Success band mid-scale.** At T21 (D50) Success is scores 21–25, five points wide, so a",
+    "  Journeyman goes from 83% Triumph (D30) to 0% Triumph (D50) across 20 difficulty points. The",
+    "  dice barely move the band; capability gates it. Intended (feats not dice), but the cliff is real.",
+    "- **Attributes crawl.** Fair play: Attr 7 after ~530 uses, Attr 10 after ~1340. Stretch play",
+    "  (target = capability + 9): Attr 10 never within 1500 uses and the Skill caps at 20 around use",
+    "  735, after which attribute XP is the only progression left.",
+    "- **Fair tracking stops at D100.** Once capability passes 29 the fair target cannot follow (36 max),",
+    "  so the last career row jumps to 72%: the hero has outgrown the scale.",
     "",
   );
 
@@ -315,9 +355,14 @@ export function renderSim(): string {
     "",
     "## E. Focused vs varied (heroes are shaped by what you send them to do)",
     "",
-    "Same 600 uses at fair difficulty, round-robin across the listed skills. One seed.",
+    "Same 600 uses at fair difficulty, round-robin across the listed skills. Medians of 3 seeds.",
+    "Rsn Reasoning · Nat Nature · Frc Force · Inf Influence · Str Strength · Cha Charisma.",
     "",
     variedSection(),
+    "",
+    "Takeaway: focus maxes one skill; variety gives several mid-level skills. Attribute XP only",
+    "comes from Successes, so the number of attribute level-ups (+ups) is about the same either way;",
+    "focus stacks them on one pillar, spreading across pillars spreads them thin.",
     "",
   );
 

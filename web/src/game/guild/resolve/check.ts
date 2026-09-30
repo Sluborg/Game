@@ -3,6 +3,8 @@
 //
 //   Score = round((Attribute + Skill) × (1 + modifierPercent)) + 2d6
 //   Target = 6 + 0.30 × Difficulty            (Difficulty on the visible 0–100 scale)
+// modifierPercent is clamped to ±MOD_CAP and quantised to whole percent, so the
+// capability product is exact in floating point before it is rounded.
 //   Result = the RESULT_LADDER band that Score/Target × 100 falls in
 //
 // Design intent (Stefan, 2026-09-30): the 2d6 is a tight wobble; capability and
@@ -17,10 +19,12 @@ import { ATTR_MAX } from "../content/attributes";
 import { SKILL_MAX } from "../content/skills";
 import { RESULT_LADDER, type ResultId } from "../content/ladder";
 
-/** Target = TARGET_BASE + TARGET_PER_DIFFICULTY × difficulty. Integer math below
- * (6 + 3d/10) so the rounding is exact, never a float artefact. */
+/** Target = TARGET_BASE + TARGET_PER_DIFFICULTY × difficulty, computed as
+ * TARGET_BASE + round(TARGET_PER_DIFFICULTY_PCT × d / 100) in integer math so the
+ * rounding is exact, never a float artefact. */
 export const TARGET_BASE = 6;
-export const TARGET_PER_DIFFICULTY = 0.3;
+export const TARGET_PER_DIFFICULTY_PCT = 30;
+export const TARGET_PER_DIFFICULTY = TARGET_PER_DIFFICULTY_PCT / 100;
 /** The summed percentage modifier is clamped to ±MOD_CAP of capability. */
 export const MOD_CAP = 0.3;
 /** Difficulty's visible scale. */
@@ -62,31 +66,27 @@ function clamp(n: number, lo: number, hi: number): number {
   return Math.min(hi, Math.max(lo, n));
 }
 
-/** Round half-up on non-negative values (Math.round is half-up for positives). */
-function roundHalfUp(n: number): number {
-  return Math.round(n);
-}
-
 /** Normalise an input into the engine's domain (throw on non-finite, clamp the rest). */
 export function normalizeInput(input: CheckInput): Required<CheckInput> {
   return {
-    attr: clamp(roundHalfUp(finite(input.attr, "attr")), 0, ATTR_MAX),
-    skill: clamp(roundHalfUp(finite(input.skill, "skill")), 0, SKILL_MAX),
-    modPct: clamp(finite(input.modPct ?? 0, "modPct"), -MOD_CAP, MOD_CAP),
-    difficulty: clamp(roundHalfUp(finite(input.difficulty, "difficulty")), DIFFICULTY_MIN, DIFFICULTY_MAX),
+    attr: clamp(Math.round(finite(input.attr, "attr")), 0, ATTR_MAX),
+    skill: clamp(Math.round(finite(input.skill, "skill")), 0, SKILL_MAX),
+    // Whole percent: 0.1 becomes 10/100 exactly, so (A+S) × (100 + pct) / 100 is exact.
+    modPct: Math.round(clamp(finite(input.modPct ?? 0, "modPct"), -MOD_CAP, MOD_CAP) * 100) / 100,
+    difficulty: clamp(Math.round(finite(input.difficulty, "difficulty")), DIFFICULTY_MIN, DIFFICULTY_MAX),
   };
 }
 
 /** Visible difficulty → integer check target. Exact: 6 + round(3d / 10). */
 export function targetFor(difficulty: number): number {
-  const d = clamp(roundHalfUp(finite(difficulty, "difficulty")), DIFFICULTY_MIN, DIFFICULTY_MAX);
-  return TARGET_BASE + roundHalfUp((3 * d) / 10);
+  const d = clamp(Math.round(finite(difficulty, "difficulty")), DIFFICULTY_MIN, DIFFICULTY_MAX);
+  return TARGET_BASE + Math.round((TARGET_PER_DIFFICULTY_PCT * d) / 100);
 }
 
 /** Integer capability: (attr + skill) × (1 + clamped modPct), rounded half-up. */
 export function capabilityFor(attr: number, skill: number, modPct = 0): number {
   const n = normalizeInput({ attr, skill, modPct, difficulty: 0 });
-  return roundHalfUp((n.attr + n.skill) * (1 + n.modPct));
+  return Math.round(((n.attr + n.skill) * (100 + Math.round(n.modPct * 100))) / 100);
 }
 
 /** Exactly two draws, in order: die 1 then die 2, each 1..6. */
