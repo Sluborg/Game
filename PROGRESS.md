@@ -2,6 +2,13 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-09-30 - Codex P2 fixes from promotion PR #45 — codex-fixed
+- Gate: codex-fixed → awaiting merge decision
+- Branch: `ccr-f054514f-0jzz9m` → **PR #47 into `dev`**.
+- Codex (on `0aeb2e3`; only a PROGRESS-only commit after it): **zero findings** ("Didn't find any
+  major issues"). No delta, so no Review #2 re-run. CI green on the head.
+- Open questions: none.
+
 ## 2026-09-30 - Codex P2 fixes from promotion PR #45 — PR opened
 - Gate: PR opened → awaiting Codex review
 - Branch: `ccr-f054514f-0jzz9m` → **PR #47 into `dev`**; `@codex review` posted. Once merged, the
