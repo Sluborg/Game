@@ -158,11 +158,17 @@ describe("Insufficient narration (Codex P2): the prose matches the result", () =
     expect(ok).toBeGreaterThan(0);
     expect(other).toBeGreaterThan(0);
   });
-  it("v1 still reads its ok line (unchanged)", () => {
-    for (let seed = 1; seed <= 200; seed++) {
+  it("v1 still reads its ok line (unchanged), matched to the exact beat", () => {
+    let seen = 0;
+    for (let seed = 1; seed <= 300; seed++) {
       const log = resolveQuest({ quest: RUINS, partyId: "free-blades", cutPct: 10, durationDays: 1, seed, engine: "v1" });
-      for (const b of log.beats.filter((x) => x.grade === "ok")) expect(Object.values(RUINS.beats.find((d) => b.id.startsWith(d.id))?.narration ?? RUINS.bonusBeat!.narration)).toContain(b.text);
+      for (const b of log.beats.filter((x) => x.grade === "ok")) {
+        const def = questBeats(RUINS).find((d) => b.id === d.id || b.id === `${d.id}-recovery` || b.id === `${d.id}-bonus`)!;
+        expect(b.text, b.id).toBe(def.narration.ok);
+        seen++;
+      }
     }
+    expect(seen).toBeGreaterThan(0);
   });
   it("a v3 bonus beat at Insufficient earns no bonus-purse sweetener; Success still does; v1 keeps its +8% for ok", () => {
     // In the shipped data no bonus beat lands Insufficient (they are Success or Triumph), so use a

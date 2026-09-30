@@ -77,7 +77,7 @@ export const ROAD_JOB: QuestDef = {
       difficulty: 9,
       skill: "fortitude",
       diff3: 49,
-      insufficient: "The road wears them down and the cart falls behind, but it keeps rolling.",
+      insufficient: "The road wears them down, but the cart keeps rolling.",
       narration: n(
         "They make the waystation by dusk, hours ahead of the wagons.",
         "The road is long but the party keeps a good pace.",
@@ -144,7 +144,7 @@ export const RUINS: QuestDef = {
       difficulty: 12,
       skill: "mobility",
       diff3: 53,
-      insufficient: "They struggle down the flooded stair, slow and shaken, and reach the vault late.",
+      insufficient: "The flooded stair gives them trouble, but they reach the vault.",
       narration: n(
         "They rope down the flooded stair without a splash.",
         "The descent is slick but they manage it clean.",
@@ -258,7 +258,7 @@ export const STANDING_JOBS: QuestDef[] = [
         difficulty: 6,
         skill: "fortitude",
         diff3: 15,
-        insufficient: "They drag through the patrol, late and footsore, but the lanes stay quiet.",
+        insufficient: "They drag through the patrol, but the lanes stay quiet.",
         narration: n(
           "They walk the lanes till dawn; the sergeant is impressed.",
           "A steady patrol; the lanes stay quiet.",
