@@ -2,6 +2,28 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-09-30 - Codex P2 fixes from promotion PR #45 — build done
+- Gate: build (Review #2 cleared, 0 blockers; opening PR)
+- Branch: `ccr-f054514f-0jzz9m`.
+- Files: new `web/src/ui/guild/partyStatus.ts` (the Hall's `partyStatus`, moved + shared),
+  `web/src/ui/hall/HallScreen.tsx` (imports it), new `web/src/ui/heroes/liveStatus.ts` (+test),
+  `HeroesScreen.tsx` / `HeroCard.tsx` (live status via `useGuild`), `mockHeroes.ts` (hardcoded
+  `status` removed), `*.module.css` (status dot top-aligned for wrapping), new
+  `web/src/ui/report/sealed.ts` (+test) + `ReportScreen.tsx`, `game/guild/content/schema.ts`
+  (per-kind `PERK_FIELDS`) + `content.test.ts`, `game/guild/guild.test.ts` (unread-outcome-never-
+  trimmed invariant), `docs/screenshots/codexfix-{hall-strip,heroes-sheet}.png`.
+- Verification: `tsc -b` clean, `vitest` 181 pass + 1 skipped (was 163), `npm run build` green;
+  each new test fails with its fix reverted (Adversary, fresh worktree). Screenshots from a real sim
+  state reproducing Codex's case (Free Blades in the Ruins): Hall strip and Brok's sheet both read
+  "Out — The Sunken Ruins · day 2 of 3".
+- Review #2 (4 personas on the diff): **0 blockers.** Folded: dot top-aligned for wrapped status,
+  guard text "Whereabouts unknown" (not a fake "Idle" state), stale mock comments. Not folded, logged
+  as follow-ups: PartyCard's "See the Hall" line → live party status; Hall strip `.partyText`
+  ellipsis cuts "of m" at 390px (pre-existing CSS); shift vs quest dot colour; unused mock
+  `location`/`plan` fields in `mockParties.ts`; a pre-PR-#36 save that already lost an unread
+  outcome would now show that cut (local-only, accepted).
+- Open questions: none.
+
 ## 2026-09-30 - Codex P2 fixes from promotion PR #45 — plan done
 - Gate: plan (Review #1 folded; proceeding to build)
 - Branch: `ccr-f054514f-0jzz9m` (off `origin/dev` @ `49fa2a3`; first commit = §50 backfill of PR
