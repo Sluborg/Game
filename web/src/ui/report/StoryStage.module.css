@@ -217,6 +217,9 @@
 .rollGrade[data-grade="poor"] { color: var(--c-ember); }
 .rollGrade[data-grade="fail"] { color: var(--c-blood); }
 .effect { font-size: 0.8rem; color: var(--text-dim); font-style: italic; }
+/* The v3 check line: a footnote under the result, never competing with it. */
+.rollLine { flex-basis: 100%; font-size: 0.72rem; color: var(--text-dim); }
+.rollDice { opacity: 0.75; }
 
 .prose {
   display: flex;

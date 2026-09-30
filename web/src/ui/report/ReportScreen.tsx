@@ -9,7 +9,7 @@ import { useMemo, useState } from "react";
 import { useGuild } from "../guild/GuildContext";
 import { StoryStage } from "./StoryStage";
 import { isLedgerLineMasked, sealedView } from "./sealed";
-import { dayOf, type AdventureLog, type Mail } from "../../game/guild";
+import { dayOf, getEngine, type AdventureLog, type Mail } from "../../game/guild";
 import styles from "./ReportScreen.module.css";
 
 interface OpenStory {
@@ -54,7 +54,12 @@ export function ReportScreen() {
     <div className={styles.screen}>
       <header className={styles.topbar}>
         <h1 className={styles.title}>Report</h1>
-        <span className={styles.day}>Day {dayOf(state.tick)}</span>
+        <span className={styles.day}>
+          <span className={styles.engineChip} data-engine={getEngine()} title="Which rules grade new quests. Add ?engine=v1 or ?engine=v3 to the URL to switch.">
+            Rules {getEngine()}
+          </span>{" "}
+          Day {dayOf(state.tick)}
+        </span>
       </header>
 
       {byDay.length === 0 && <p className={styles.empty}>No mail yet. Advance the day in the Hall — reports and ledgers land here.</p>}

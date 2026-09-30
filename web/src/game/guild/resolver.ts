@@ -4,6 +4,9 @@
 // NO combat engine is called; the combat beat is a graded roll like the others.
 
 import { mulberry32 } from "../battle/rng";
+import { GRADE_ZONES } from "./zones";
+import { resolveBeatV3 } from "./wire/bridge";
+import type { Engine } from "./engine";
 import { partyAttr, partyTraitMod } from "./roster";
 import type { QuestDef, BeatDef } from "./quests";
 import type { AdventureLog, Beat, Grade } from "./types";
@@ -22,14 +25,9 @@ const RATIO_BANDS: Record<Grade, [number, number]> = {
   crit: [1.5, 2.0],
 };
 
-/** The 0–100 meter zone each grade owns (the story check-bar's benchmarks). */
-export const GRADE_ZONES: Record<Grade, [number, number]> = {
-  fail: [0, 20],
-  poor: [20, 40],
-  ok: [40, 65],
-  good: [65, 90],
-  crit: [90, 100],
-};
+/** The 0–100 meter zone each grade owns (the story check-bar's benchmarks) —
+ * defined in zones.ts, re-exported here so existing imports are unchanged. */
+export { GRADE_ZONES };
 
 /** Place the ratio linearly inside its grade's zone. Rounding is zone-safe: a
  * score can never escape the grade that produced it (crit alone may reach 100). */
@@ -90,17 +88,25 @@ export interface ResolveInput {
   cutPct: number;
   durationDays: number;
   seed: number;
+  /** Which resolution engine grades the beats. Default "v1" so every existing
+   * caller (and the GOLDEN fixture) is byte-identical; clock.ts passes the
+   * configured engine at dispatch (engine.ts). The carry / recovery / bonus /
+   * outcome logic below is shared by both engines — it reads grade slots only. */
+  engine?: Engine;
 }
 
-export function resolveQuest({ quest, partyId, cutPct, durationDays, seed }: ResolveInput): AdventureLog {
+export function resolveQuest({ quest, partyId, cutPct, durationDays, seed, engine = "v1" }: ResolveInput): AdventureLog {
+  // Each engine owns its stream (v1: one draw per beat, v3: two dice per beat);
+  // the stream is created here per call, never shared between engines.
   const rng = mulberry32(seed);
+  const resolveBeat_ = engine === "v3" ? resolveBeatV3 : resolveBeat;
   const beats: Beat[] = [];
   let carry = 0;
   let failed = false;
   let bonusUnlocked = false;
 
   for (const def of quest.beats) {
-    const beat = resolveBeat(def, partyId, rng, carry, 1);
+    const beat = resolveBeat_(def, partyId, rng, carry, 1);
     beats.push(beat);
 
     if (isStrong(beat.grade)) {
@@ -111,7 +117,7 @@ export function resolveQuest({ quest, partyId, cutPct, durationDays, seed }: Res
     } else if (beat.grade === "fail") {
       if (def.critical) {
         // Forced hard branch: a recovery beat at raised difficulty (§10).
-        const recovery = resolveBeat(def, partyId, rng, carry - 2, 1.3, "recovery");
+        const recovery = resolveBeat_(def, partyId, rng, carry - 2, 1.3, "recovery");
         beats.push(recovery);
         if (recovery.grade === "fail" || recovery.grade === "poor") {
           failed = true;
@@ -127,7 +133,7 @@ export function resolveQuest({ quest, partyId, cutPct, durationDays, seed }: Res
   // The optional bonus beat, appended when a strong result unlocked it and the
   // quest didn't already fail.
   if (bonusUnlocked && !failed && quest.bonusBeat) {
-    beats.push(resolveBeat(quest.bonusBeat, partyId, rng, carry, 1, "bonus"));
+    beats.push(resolveBeat_(quest.bonusBeat, partyId, rng, carry, 1, "bonus"));
   }
 
   // Flat pay: the posted total is the pool; duration costs time, never adds gold.

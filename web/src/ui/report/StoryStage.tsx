@@ -13,8 +13,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { GRADE_ZONES, type AdventureLog, type Beat, type BeatType, type Grade } from "../../game/guild";
 import { Icon, PauseGlyph, PlayGlyph, SpeedChip } from "../kit";
 import {
-  GRADE_LABEL,
   effectNote,
+  isV3Beat,
+  labelFor,
   gradeAt,
   FILL_BASE_MS,
   FILL_DELAY_MS,
@@ -251,6 +252,9 @@ function BeatCard({
   }, [landed]);
 
   const note = effectNote(beat, hasNext);
+  // One label source for the ticker, the landed word and the aria text: v3 names
+  // when the v3 engine resolved this beat, the v1 benchmark words otherwise.
+  const v3 = isV3Beat(beat);
   const width = landed || filling ? beat.score : 0;
 
   return (
@@ -285,7 +289,7 @@ function BeatCard({
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={landed ? beat.score : 0}
-        aria-valuetext={landed ? `${GRADE_LABEL[beat.grade]} — ${beat.score} of 100` : "rolling…"}
+        aria-valuetext={landed ? `${labelFor(beat.grade, v3)} — ${beat.score} of 100` : "rolling…"}
       >
         {/* Fill sits UNDER the translucent zone tints so the benchmark levels
             stay visible the whole rise (Stefan); the 2px playhead survives
@@ -314,13 +318,21 @@ function BeatCard({
       {!landed ? (
         <div className={styles.landing} aria-hidden>
           <span className={styles.rollGrade} data-grade={liveGrade} data-live>
-            {GRADE_LABEL[liveGrade]}…
+            {labelFor(liveGrade, v3)}…
           </span>
         </div>
       ) : (
         <div className={styles.landing}>
-          <span className={styles.rollGrade} data-grade={beat.grade}>{GRADE_LABEL[beat.grade]}</span>
+          <span className={styles.rollGrade} data-grade={beat.grade}>{labelFor(beat.grade, v3)}</span>
           {note && <span className={styles.effect}>{note}</span>}
+          {beat.check && (
+            // Only after landing (never spoils the rise): plain words first, the
+            // dice as a dim footnote.
+            <span className={styles.rollLine}>
+              Needed {beat.check.target}, got {beat.check.score}
+              <span className={styles.rollDice}> (2d6 {beat.check.dice[0]}+{beat.check.dice[1]} + {beat.check.capability})</span>
+            </span>
+          )}
         </div>
       )}
 

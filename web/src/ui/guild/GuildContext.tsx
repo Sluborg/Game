@@ -23,6 +23,7 @@ import {
   displayedGold,
   type GuildState,
 } from "../../game/guild";
+import { initEngine } from "./engineInit";
 
 interface GuildApi {
   state: GuildState;
@@ -48,7 +49,10 @@ const Ctx = createContext<GuildApi | null>(null);
 
 export function GuildProvider({ children }: { children: ReactNode }) {
   // Lazy init: load an existing run or start fresh. One localStorage read.
-  const [state, setState] = useState<GuildState>(() => loadState(freshSeed()));
+  const [state, setState] = useState<GuildState>(() => {
+    initEngine(); // before the first dispatch; idempotent (StrictMode double-invokes)
+    return loadState(freshSeed());
+  });
 
   // Persistence is a side effect of state, NOT part of the reducer/updater (which
   // must stay pure — dev StrictMode double-invokes updaters). Autosave whenever the

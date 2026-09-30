@@ -220,6 +220,13 @@ vocabularies never coexist. Beware that "Success" names a different tier in each
 tier vs. this ladder's second-best. Until the implementation slice lands, the shipped meter keeps
 its v1 labels.
 
+**Wired (2026-09-30, dev builds):** the v3 results now run in the live quest resolver behind an engine
+switch (`web/src/game/guild/wire/`, `engine.ts`): dev builds (`/Game/dev/`) and `?engine=v3` show the v3
+result names and a "Needed X, got Y" line; production and `?engine=v1` keep the v1 ladder until a later
+promotion flips the default. Each v3 result fills the matching v1 grade slot so momentum, recovery and
+bonus logic are unchanged (a stand-in until the combined-result consequence table is decided). Proof of
+feel parity: [`docs/resolution-wire.md`](./resolution-wire.md) (generated, tested).
+
 A Challenge's Encounter results are added. For example, Success (+1) plus Failure (-1) across two
 Encounters yields 0 overall weight. What each combined total does to future challenges, rewards,
 complications, injuries, or other quest state remains open.

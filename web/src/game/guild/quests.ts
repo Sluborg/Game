@@ -4,6 +4,7 @@
 // signature shown on the board is DERIVED from these beats, so the dots never lie
 // about what the quest tests. Road ≈ 2 beats; Ruins ≈ 3–4 + 1 optional bonus.
 
+import type { SkillId } from "./content/skills";
 import type { AttrKey, BeatType, Grade, QuestTier } from "./types";
 
 export interface BeatDef {
@@ -12,6 +13,14 @@ export interface BeatDef {
   location: string;
   attr: AttrKey;
   difficulty: number;
+  /** The Skills-v3 Encounter this beat is (read by the v3 engine only; "combat" is
+   * the temporary special rule, not a SkillId). */
+  skill: SkillId | "combat";
+  /** The v3 difficulty on the visible 0–100 scale (target = 6 + 0.30 × diff3).
+   * Calibrated against the v1 `difficulty` so the two engines feel alike
+   * (docs/resolution-wire.md); its ORDER within a beat type matches `difficulty`
+   * (the skull dots never lie — wire.test.ts). */
+  diff3: number;
   /** Failing a critical beat forces a hard recovery branch; failing THAT fails
    * the quest (§10 forced paths). Non-critical fails just penalize momentum. */
   critical?: boolean;
@@ -61,6 +70,8 @@ export const ROAD_JOB: QuestDef = {
       location: "Old Trade Road",
       attr: "sta",
       difficulty: 9,
+      skill: "fortitude",
+      diff3: 49,
       narration: n(
         "They make the waystation by dusk, hours ahead of the wagons.",
         "The road is long but the party keeps a good pace.",
@@ -75,6 +86,8 @@ export const ROAD_JOB: QuestDef = {
       location: "Willow Ford",
       attr: "str",
       difficulty: 11,
+      skill: "combat",
+      diff3: 53,
       critical: true,
       // A strong showing at the ford earns the merchant's gratitude (the bonus beat).
       unlocksBonus: true,
@@ -93,6 +106,8 @@ export const ROAD_JOB: QuestDef = {
     location: "Waystation",
     attr: "per",
     difficulty: 8,
+    skill: "influence",
+    diff3: 22,
     narration: n(
       "A grateful ally slips them a rumor worth real coin.",
       "The merchant tips well and name-drops them to a friend.",
@@ -119,6 +134,8 @@ export const RUINS: QuestDef = {
       location: "Flooded stair",
       attr: "dex",
       difficulty: 12,
+      skill: "mobility",
+      diff3: 53,
       narration: n(
         "They rope down the flooded stair without a splash.",
         "The descent is slick but they manage it clean.",
@@ -133,6 +150,8 @@ export const RUINS: QuestDef = {
       location: "Sigil hall",
       attr: "per",
       difficulty: 15,
+      skill: "reasoning",
+      diff3: 60,
       unlocksBonus: true,
       narration: n(
         "They read the sigils perfectly — and spot a hidden reliquary.",
@@ -148,6 +167,8 @@ export const RUINS: QuestDef = {
       location: "Drowned reliquary",
       attr: "str",
       difficulty: 18,
+      skill: "combat",
+      diff3: 100,
       critical: true,
       narration: n(
         "The stone guardian is shattered in a single furious exchange.",
@@ -164,6 +185,8 @@ export const RUINS: QuestDef = {
     location: "Hidden reliquary",
     attr: "per",
     difficulty: 12,
+    skill: "reasoning",
+    diff3: 20,
     narration: n(
       "The reliquary yields a relic worth a small fortune.",
       "A tidy cache of coin and old silver.",
@@ -193,6 +216,8 @@ export const STANDING_JOBS: QuestDef[] = [
         location: "Guild Hall",
         attr: "per",
         difficulty: 6,
+        skill: "willpower",
+        diff3: 5,
         narration: n(
           "A quiet, watchful night — not so much as a mouse.",
           "An uneventful watch; the hall is secure.",
@@ -218,6 +243,8 @@ export const STANDING_JOBS: QuestDef[] = [
         location: "Village lanes",
         attr: "sta",
         difficulty: 6,
+        skill: "fortitude",
+        diff3: 15,
         narration: n(
           "They walk the lanes till dawn; the sergeant is impressed.",
           "A steady patrol; the lanes stay quiet.",

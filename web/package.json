@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "sim:resolution": "vite-node src/game/guild/resolve/sim.cli.ts"
+    "sim:resolution": "vite-node src/game/guild/resolve/sim.cli.ts",
+    "sim:wire": "vite-node src/game/guild/wire/report.cli.ts"
   },
   "dependencies": {
     "react": "^18.3.1",

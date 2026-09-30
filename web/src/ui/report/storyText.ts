@@ -16,6 +16,28 @@ export const GRADE_LABEL: Record<Grade, string> = {
   fail: "Botch",
 };
 
+/** The v3 result names (docs/CHALLENGE_SYSTEM.md §Result language), keyed by the
+ * SAME grade slot the v3 engine maps each result onto (wire/bridge.ts), so the
+ * ticker, the landed word and the aria text can never disagree. */
+export const V3_LABEL: Record<Grade, string> = {
+  crit: "Triumph",
+  good: "Success",
+  ok: "Insufficient",
+  poor: "Failure",
+  fail: "Critical Failure",
+};
+
+/** True when the v3 engine produced this beat (it carries its check). */
+export function isV3Beat(beat: Beat): boolean {
+  return beat.check !== undefined;
+}
+
+/** THE label source for a grade slot: v3 names for a v3 log, the v1 benchmark
+ * words otherwise. Every place that prints a grade word goes through this. */
+export function labelFor(grade: Grade, v3: boolean): string {
+  return v3 ? V3_LABEL[grade] : GRADE_LABEL[grade];
+}
+
 /** The one-line consequence under the landed meter. `hasNext` = another beat
  * card follows this one in the displayed sequence. Returns null for no note. */
 export function effectNote(beat: Beat, hasNext: boolean): string | null {
@@ -28,7 +50,8 @@ export function effectNote(beat: Beat, hasNext: boolean): string | null {
   }
   if (beat.branch === "bonus") {
     if (beat.grade === "crit" || beat.grade === "good") return "A rich find.";
-    if (beat.grade === "ok") return "A modest haul.";
+    // v3 Insufficient means the requirement was NOT met: never a positive note.
+    if (beat.grade === "ok") return isV3Beat(beat) ? "Not enough to find much." : "A modest haul.";
     if (beat.grade === "poor") return "Not worth the trouble.";
     return "Nothing but dust.";
   }
@@ -38,6 +61,8 @@ export function effectNote(beat: Beat, hasNext: boolean): string | null {
     case "good":
       return hasNext ? "They press the advantage — the next check is eased." : "A strong finish.";
     case "ok":
+      // v3 Insufficient: short of the requirement, but costs nothing (value 0).
+      if (isV3Beat(beat)) return hasNext ? "Not enough, but no lasting harm." : "Not enough, but it held.";
       return hasNext ? "They hold steady." : "Steady to the end.";
     case "poor":
       return hasNext ? "Shaken — the next check is harder." : "A ragged finish.";
