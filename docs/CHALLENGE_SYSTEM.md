@@ -190,6 +190,11 @@ capable hero can exceed the whole 2d6 range — which fits the design (a definin
 outweigh a dice wobble); exact modifier magnitudes are **tuning-open** and must be recalibrated for
 the small scale (the old ±0.5 trait cap was set for 40-point stats).
 
+**Engine (2026-09-30, `web/src/game/guild/resolve/`):** the *summed* modifier is clamped to
+**±30%** of capability (`MOD_CAP`); individual sources (a trait, cohesion, gear) are nominally
+±10% each, tuning-open. Capability is rounded to an integer before the dice are added, so a
+Score is always an integer and the band test is exact integer math (no float edge cases).
+
 ## Result language and values
 
 The five player-facing results, their internal contribution values, and the working bands
@@ -243,14 +248,22 @@ Difficulty is set by the **Quest** per Encounter (see §Model), not authored on 
 still uses the visible 0–100 scale. That visible rating must later be converted to a check target
 compatible with Attribute ≤ 10 + Skill ≤ 20 + 2d6.
 
-The conversion is not decided. In particular, the earlier illustrative formula
-`10 + difficulty × 0.4` is not adopted. Because growth is **bounded**, difficulty is intended to be
-near-absolute (set once, not re-tuned per tier), and — with a tight 2d6 — a check is largely
-decided by whether capability clears the target, with feats/traits and the ±wobble at the margin.
+**Adopted (2026-09-30): `Target = 6 + 0.30 × Difficulty`**, rounded to an integer (Difficulty 0 →
+6, 50 → 21, 100 → 36). The earlier illustrative `10 + difficulty × 0.4` is not adopted. Because
+growth is **bounded**, difficulty is near-absolute (set once, not re-tuned per tier), and — with a
+tight 2d6 — a check is largely decided by whether capability clears the target, with feats/traits
+and the ±wobble at the margin. **Deliberate consequence:** the unmodified ceiling (Attr 10 + Skill
+20 + 12 = 42) means an unmodified max hero can Triumph only up to Difficulty 98 (and at ≥5% odds
+only up to 94); Triumph at the top of the scale **requires modifiers**. Exact odds per archetype
+and difficulty: [`docs/resolution-sim.md`](./resolution-sim.md) (generated, tested against the
+engine).
 
-Result thresholds on the animated meter should remain visually distinct. A minimum absolute gap of
-5 or 10 score points was discussed, but the correct value depends on the final target conversion
-and meter presentation.
+Result thresholds on the animated meter must stay visually distinct. The engine defines the
+mapping for the wire slice (`meterFor` in `resolve/check.ts`): the needle is placed
+piecewise-linearly inside each result's own 0–100 zone — Critical Failure 0–20, Failure 20–40,
+Insufficient 40–60, Success 60–85, Triumph 85–100 (saturating at 160% of target) — so the zone
+gaps are 20/20/25/15 points, above the 5–10 discussed. Not yet on screen; the shipped v1 meter
+keeps its labels until the wire slice.
 
 ## Progression and Feats
 
@@ -268,6 +281,14 @@ Two growth vectors, on purpose:
   standing modifier, a cooperation-mode trick, a Crisis avoidance). Because the dice are tight (2d6),
   **feats are the main source of dramatic swing**, not luck.
 
+**Rates (engine, 2026-09-30, `resolve/growth.ts`):** the tested Skill gains **1 XP per use, 2 on a
+Success or Triumph**; Skill level *n* → *n+1* costs **5 × n** XP (0 → 1 also costs 5; 1 → 20 is 950 XP). The governing
+Attribute gains **1 XP per Success/Triumph** only; level *n* → *n+1* costs **20 × n** XP (2 → 10 is
+880 XP). Caps are independent (a capped Skill still feeds its Attribute); XP at a cap is discarded.
+Simulated feel (`docs/resolution-sim.md` §D/§E): at "fair" difficulty (target = capability + 7) a
+fresh hero reaches Skill 10 in ~140 uses, Skill 20 in ~600, Attr 7 in ~530 and Attr 10 in ~1340;
+spreading 600 uses over three pillars yields three Skills at ~11 instead of one at 20.
+
 The detailed feat tree is **deferred** (its own design pass): tree structure, gating, pick cadence,
 and keeping feats *tradeoffs* rather than a flat power ladder. Feats are the grown-up form of the
 content pipeline's **perk exception-kinds** (`reroll-lowest-check`, `soften-critical-failure`,
@@ -277,20 +298,20 @@ Perks/feats change rules and create exceptions rather than merely duplicating a 
 
 ## Open decisions
 
-- Exact conversion from the visible 0–100 Difficulty (now set by the Quest per Encounter — see
-  §Model) to the check target. (Note the ceiling: an unmodified check tops out at Attribute 10 +
-  Skill 20 + 2d6(max 12) = 42 — the conversion must keep Triumph's 120%-of-target reachable at high
-  difficulty, or state that it deliberately isn't. Percentage modifiers from traits/feats can push
-  above this.)
-- Final resolution tuning: the exact Attribute/Skill grow-from-use rates, the feat-tree design, and
-  the recalibrated modifier magnitudes for the bounded 2d6 scale.
+- ~~Exact conversion from the visible 0–100 Difficulty to the check target~~ — **settled
+  2026-09-30:** `Target = 6 + 0.30 × Difficulty` (§Difficulty). Triumph at the top of the scale
+  deliberately needs modifiers.
+- ~~Attribute/Skill grow-from-use rates~~ — **settled 2026-09-30** (§Progression). Still open: the
+  feat-tree design, and the per-source modifier magnitudes (the ±30% *sum* cap is set).
   - Note: the earlier "RESOLVED 2026-07-11" question (whether a Challenge's checks each declare
     their own `{skill, difficulty}`) is no longer framed as a Challenge-authoring decision — the
     **skill** stays authored on the Encounter, and the **difficulty/target** has been **relocated
     to the Quest** (§Model). This conversion bullet governs how that per-Encounter 0–100 difficulty
     becomes an internal target.
-- Final percentage bands after probability simulation.
-- Minimum visual threshold spacing: 5 or 10 score points.
+- Final percentage bands after probability simulation (the simulation now exists:
+  `docs/resolution-sim.md`; the bands are unchanged until play says otherwise).
+- ~~Minimum visual threshold spacing~~ — the engine's meter zones give 15–25 points (§Difficulty);
+  presentation is validated in the wire slice.
 - Exact combined-result consequence table.
   - Including whether consequences key on the result **pair** or only the summed value —
     Success + Failure and Insufficient + Insufficient both sum to 0 but should narrate

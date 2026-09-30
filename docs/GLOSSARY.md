@@ -78,10 +78,13 @@ the axis a Quest's requirements are expressed in and the axis a future generator
 - **Beat** — reserved for the **narration** layer only (one narrated beat may span several
   Encounters). It is *not* a structural unit; do not confuse it with Encounter.
 
-## Resolution — *design direction (numbers tuning-open)*
+## Resolution — *engine built, tuning-open*
 
 An Encounter check is **Score = (Attribute + Skill) × (1 + modifierPercent) + 2d6**, vs. the Quest's
-Difficulty; the margin drives the ladder below. **2d6** (not d20) keeps luck a tight wobble so the
+Difficulty as **Target = 6 + 0.30 × Difficulty** (0 → 6, 50 → 21, 100 → 36); the margin drives the
+ladder below. Modifier sum capped at ±30%. Growth: Skill +1 XP per use (+2 on Success), level n
+costs 5n; Attribute +1 XP per Success, level n costs 20n. Engine: `web/src/game/guild/resolve/`,
+odds tables: `docs/resolution-sim.md`. **2d6** (not d20) keeps luck a tight wobble so the
 hero and their modifiers decide the check. Growth is **bounded** (Attr ≤ 10, Skill ≤ 20) and
 **use-driven**; **feats** (from a level-up tree) are the build layer and the main source of dramatic
 swing. Full rationale + tuning-open notes in `CHALLENGE_SYSTEM.md` §Check formula / §Progression.

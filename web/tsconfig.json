@@ -18,5 +18,5 @@
   },
   "include": ["src"],
   "// exclude": "Tests are type-stripped and run by vitest; the production build (tsc -b) checks app code only. This keeps Node-only test imports (node:fs, the reconcile .mjs) from breaking the Pages build.",
-  "exclude": ["src/**/*.test.ts"]
+  "exclude": ["src/**/*.test.ts", "src/**/*.cli.ts"]
 }
