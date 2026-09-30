@@ -120,7 +120,8 @@ export function resolveBeatV3(
     grade,
     roll: (dice[0] + dice[1] - 2) / 10, // 0..1, from the dice (a v3 beat has no separate roll)
     score: meterScoreFor(score, target, result),
-    text: def.narration[grade],
+    // The ok slot is v3 Insufficient: its own line, never the v1 ok line (which reads as a pass).
+    text: grade === "ok" ? def.insufficient : def.narration[grade],
     traitBlurb: trait.blurb && trait.delta !== 0 ? trait.blurb : undefined,
     branch,
     check,

@@ -17,6 +17,7 @@ v1. Add `?engine=v1` or `?engine=v3` to any URL to force one. Old saved reports 
 - **Combat** uses the temporary rule: best of Strength, Dexterity, Mind plus the hero's Combat value.
 - **Result to old grade slot** (so momentum, recovery and bonus logic are unchanged): Critical Failure → fail, Failure → poor, Insufficient → ok, Success → good, Triumph → crit.
 - **Stand-ins:** the flat size bonus and "best member leads" stand in for the open Cooperation Modes.
+- **Insufficient** (did not meet the requirement, costs nothing more) has its own line on every beat and earns no bonus-purse sweetener; v1's old "ok" line would have read as a win.
 
 ## A. Same feel? (the gate)
 

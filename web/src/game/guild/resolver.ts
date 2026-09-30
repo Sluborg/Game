@@ -142,7 +142,10 @@ export function resolveQuest({ quest, partyId, cutPct, durationDays, seed, engin
   // A bonus beat sweetens the reward; a poor overall run trims it a touch (the
   // pool the guild takes its cut of).
   const bonusBeat = beats.find((b) => b.branch === "bonus");
-  const bonusMult = bonusBeat ? 1 + Math.max(0, GRADE_ORDER.indexOf(bonusBeat.grade) - 1) * 0.08 : 1;
+  // v3 Insufficient (the ok slot) did not meet the requirement, so it earns no
+  // sweetener; v1's ok keeps its +8% (byte-identical).
+  const bonusSteps = engine === "v3" && bonusBeat?.grade === "ok" ? 0 : bonusBeat ? Math.max(0, GRADE_ORDER.indexOf(bonusBeat.grade) - 1) : 0;
+  const bonusMult = bonusBeat ? 1 + bonusSteps * 0.08 : 1;
   const effReward = outcome === "success" ? Math.round(reward * bonusMult) : 0;
   const guildCut = Math.round((effReward * cutPct) / 100);
 

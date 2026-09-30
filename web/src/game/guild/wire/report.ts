@@ -67,6 +67,7 @@ export function renderWire(): string {
     `- **Result to old grade slot** (so momentum, recovery and bonus logic are unchanged): ` +
       RESULT_LADDER.map((r) => `${r.name} → ${RESULT_TO_GRADE[r.id]}`).join(", ") + ".",
     "- **Stand-ins:** the flat size bonus and \"best member leads\" stand in for the open Cooperation Modes.",
+    "- **Insufficient** (did not meet the requirement, costs nothing more) has its own line on every beat and earns no bonus-purse sweetener; v1's old \"ok\" line would have read as a win.",
     "",
     "## A. Same feel? (the gate)",
     "",

@@ -131,6 +131,68 @@ describe("meterScoreFor: lands inside the mapped grade's existing zone", () => {
   });
 });
 
+describe("Insufficient narration (Codex P2): the prose matches the result", () => {
+  const all = Object.values(QUEST_BY_ID).flatMap(questBeats);
+  it("every beat has its own Insufficient line, distinct from all five v1 lines", () => {
+    for (const b of all) {
+      expect(b.insufficient.length, b.id).toBeGreaterThan(10);
+      expect(Object.values(b.narration), b.id).not.toContain(b.insufficient);
+    }
+  });
+  it("a v3 beat at the ok slot reads the Insufficient line; other slots keep their v1 line", () => {
+    let ok = 0;
+    let other = 0;
+    for (let seed = 1; seed <= 400 && (ok < 5 || other < 5); seed++) {
+      const log = resolveQuest({ quest: RUINS, partyId: "free-blades", cutPct: 10, durationDays: 1, seed, engine: "v3" });
+      for (const b of log.beats) {
+        const def = questBeats(RUINS).find((d) => b.id === d.id || b.id === `${d.id}-recovery` || b.id === `${d.id}-bonus`)!;
+        if (b.grade === "ok") {
+          expect(b.text).toBe(def.insufficient);
+          ok++;
+        } else {
+          expect(b.text).toBe(def.narration[b.grade]);
+          other++;
+        }
+      }
+    }
+    expect(ok).toBeGreaterThan(0);
+    expect(other).toBeGreaterThan(0);
+  });
+  it("v1 still reads its ok line (unchanged)", () => {
+    for (let seed = 1; seed <= 200; seed++) {
+      const log = resolveQuest({ quest: RUINS, partyId: "free-blades", cutPct: 10, durationDays: 1, seed, engine: "v1" });
+      for (const b of log.beats.filter((x) => x.grade === "ok")) expect(Object.values(RUINS.beats.find((d) => b.id.startsWith(d.id))?.narration ?? RUINS.bonusBeat!.narration)).toContain(b.text);
+    }
+  });
+  it("a v3 bonus beat at Insufficient earns no bonus-purse sweetener; Success still does; v1 keeps its +8% for ok", () => {
+    // In the shipped data no bonus beat lands Insufficient (they are Success or Triumph), so use a
+    // harder synthetic tip beat (diff3 45, v1 difficulty 14) that yields every result for the Free Blades.
+    const hard = { ...ROAD_JOB, bonusBeat: { ...ROAD_JOB.bonusBeat!, diff3: 45, difficulty: 14 } };
+    const seen = { v3ok: false, v3good: false, v1ok: false };
+    for (let seed = 1; seed <= 1500; seed++) {
+      const v3 = resolveQuest({ quest: hard, partyId: "free-blades", cutPct: 10, durationDays: 1, seed, engine: "v3" });
+      const b3 = v3.beats.find((b) => b.branch === "bonus");
+      if (b3 && v3.outcome === "success") {
+        if (b3.grade === "ok") {
+          expect(v3.reward).toBe(ROAD_JOB.reward);
+          seen.v3ok = true;
+        }
+        if (b3.grade === "good") {
+          expect(v3.reward).toBeGreaterThan(ROAD_JOB.reward);
+          seen.v3good = true;
+        }
+      }
+      const v1 = resolveQuest({ quest: hard, partyId: "free-blades", cutPct: 10, durationDays: 1, seed, engine: "v1" });
+      const b1 = v1.beats.find((b) => b.branch === "bonus");
+      if (b1?.grade === "ok" && v1.outcome === "success") {
+        expect(v1.reward).toBe(Math.round(ROAD_JOB.reward * 1.08));
+        seen.v1ok = true;
+      }
+    }
+    expect(seen).toEqual({ v3ok: true, v3good: true, v1ok: true });
+  });
+});
+
 describe("resolveBeatV3", () => {
   it("consumes exactly two draws, derives roll from the dice, and keeps the slot/check/zone consistent", () => {
     let draws = 0;

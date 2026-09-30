@@ -21,6 +21,11 @@ export interface BeatDef {
    * (docs/resolution-wire.md); its ORDER within a beat type matches `difficulty`
    * (the skull dots never lie — wire.test.ts). */
   diff3: number;
+  /** v3 only: the narration for an Insufficient result (did not meet the
+   * requirement, costs nothing more). The v1 `ok` line reads as a pass ("They
+   * bring the guardian down"), so the v3 engine must not reuse it (Codex P2). It
+   * must also read right when the quest goes on, and on a forced recovery. */
+  insufficient: string;
   /** Failing a critical beat forces a hard recovery branch; failing THAT fails
    * the quest (§10 forced paths). Non-critical fails just penalize momentum. */
   critical?: boolean;
@@ -72,6 +77,7 @@ export const ROAD_JOB: QuestDef = {
       difficulty: 9,
       skill: "fortitude",
       diff3: 49,
+      insufficient: "The road wears them down and the cart falls behind, but it keeps rolling.",
       narration: n(
         "They make the waystation by dusk, hours ahead of the wagons.",
         "The road is long but the party keeps a good pace.",
@@ -88,6 +94,7 @@ export const ROAD_JOB: QuestDef = {
       difficulty: 11,
       skill: "combat",
       diff3: 53,
+      insufficient: "They cannot break the bandits at the ford, but the cart gets through.",
       critical: true,
       // A strong showing at the ford earns the merchant's gratitude (the bonus beat).
       unlocksBonus: true,
@@ -108,6 +115,7 @@ export const ROAD_JOB: QuestDef = {
     difficulty: 8,
     skill: "influence",
     diff3: 22,
+    insufficient: "The merchant hears them out, but there is nothing extra for it.",
     narration: n(
       "A grateful ally slips them a rumor worth real coin.",
       "The merchant tips well and name-drops them to a friend.",
@@ -136,6 +144,7 @@ export const RUINS: QuestDef = {
       difficulty: 12,
       skill: "mobility",
       diff3: 53,
+      insufficient: "They struggle down the flooded stair, slow and shaken, and reach the vault late.",
       narration: n(
         "They rope down the flooded stair without a splash.",
         "The descent is slick but they manage it clean.",
@@ -152,6 +161,7 @@ export const RUINS: QuestDef = {
       difficulty: 15,
       skill: "reasoning",
       diff3: 60,
+      insufficient: "The sigils stay half a mystery; they feel their way through without the answer.",
       unlocksBonus: true,
       narration: n(
         "They read the sigils perfectly — and spot a hidden reliquary.",
@@ -169,6 +179,7 @@ export const RUINS: QuestDef = {
       difficulty: 18,
       skill: "combat",
       diff3: 100,
+      insufficient: "They cannot bring the guardian down, but they hold it off long enough to slip past.",
       critical: true,
       narration: n(
         "The stone guardian is shattered in a single furious exchange.",
@@ -187,6 +198,7 @@ export const RUINS: QuestDef = {
     difficulty: 12,
     skill: "reasoning",
     diff3: 20,
+    insufficient: "They search the reliquary and come away with nothing worth carrying.",
     narration: n(
       "The reliquary yields a relic worth a small fortune.",
       "A tidy cache of coin and old silver.",
@@ -218,6 +230,7 @@ export const STANDING_JOBS: QuestDef[] = [
         difficulty: 6,
         skill: "willpower",
         diff3: 5,
+        insufficient: "A restless watch; nothing is done well, but nothing goes wrong.",
         narration: n(
           "A quiet, watchful night — not so much as a mouse.",
           "An uneventful watch; the hall is secure.",
@@ -245,6 +258,7 @@ export const STANDING_JOBS: QuestDef[] = [
         difficulty: 6,
         skill: "fortitude",
         diff3: 15,
+        insufficient: "They drag through the patrol, late and footsore, but the lanes stay quiet.",
         narration: n(
           "They walk the lanes till dawn; the sergeant is impressed.",
           "A steady patrol; the lanes stay quiet.",

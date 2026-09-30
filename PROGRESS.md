@@ -2,6 +2,20 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-09-30 - Wire A: the v3 check live in the quest resolver — codex-fixed
+- Gate: codex-fixed -> awaiting merge decision (delta Review #2 pending at time of writing)
+- Branch: `ccr-c145e2cc-3s42bn` -> **PR #48 into `dev`**.
+- Codex (on `f6bd592`): ONE finding, **P2** — a v3 Insufficient maps to the `ok` slot and reused the v1 `ok`
+  narration, which reads as a win ("They bring the guardian down") under an "Insufficient" label. Valid.
+  Fixed: every beat gets its own required `insufficient` line (BeatDef, authored so it reads right when
+  the quest goes on and on a forced recovery), used by the v3 bridge for the ok slot; v1 keeps its ok
+  lines. The same slot also paid the +8% bonus-purse sweetener, contradicting "did not meet the
+  requirement": a v3 Insufficient bonus beat now earns none (v1 byte-identical). Tests: every beat has a
+  distinct Insufficient line, the ok slot reads it on both engines' paths, sweetener zero on v3 / +8% on
+  v1 (synthetic harder bonus beat, since no shipped bonus beat lands Insufficient). Doc notes it.
+- Verified: `tsc -b` clean; `npm run test` 222 pass + 1 skipped (GOLDEN untouched); `vite build`;
+  `docs/resolution-wire.md` regenerated, `docs/resolution-sim.md` unchanged.
+
 ## 2026-09-30 - Wire A: the v3 check live in the quest resolver — PR opened
 - Gate: PR (Review #2 cleared; `@codex review` posted)
 - Branch: `ccr-c145e2cc-3s42bn` -> PR into `dev` (restarted from `dev` after PR #47; `dev` is PR #45's
