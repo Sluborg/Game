@@ -17,7 +17,6 @@
 // convert to percent at TRAIT_PCT_PER_DELTA.
 
 import type { Rng } from "../../battle/rng";
-import { ATTR_IDS } from "../content/attributes";
 import { RESULT_LADDER, type ResultId } from "../content/ladder";
 import { SKILL_ATTR, type SkillId } from "../content/skills";
 import { METER_PCT_MAX, bandFor, capabilityFor, roll2d6, targetFor } from "../resolve/check";
@@ -40,15 +39,6 @@ export const RESULT_TO_GRADE: Record<ResultId, Grade> = {
   insufficient: "ok",
   failure: "poor",
   "critical-failure": "fail",
-};
-
-/** The inverse, for display helpers. */
-export const GRADE_TO_RESULT: Record<Grade, ResultId> = {
-  crit: "triumph",
-  good: "success",
-  ok: "insufficient",
-  poor: "failure",
-  fail: "critical-failure",
 };
 
 export type EncounterSkill = SkillId | "combat";
@@ -147,6 +137,3 @@ export function beatDistribution(partyId: string, def: Pick<BeatDef, "skill" | "
   for (let total = 2; total <= 12; total++) dist[bandFor(capability + total, target)] += ways[total] / 36;
   return dist;
 }
-
-/** Attribute ids, re-exported for the stat-validation tests. */
-export { ATTR_IDS };

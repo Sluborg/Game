@@ -16,6 +16,7 @@ import {
   effectNote,
   isV3Beat,
   labelFor,
+  logIsV3,
   gradeAt,
   FILL_BASE_MS,
   FILL_DELAY_MS,
@@ -106,7 +107,11 @@ export function StoryStage({
       <header className={styles.head}>
         <div>
           <div className={styles.party}>{partyName}</div>
-          <div className={styles.quest}>{questTitle}</div>
+          <div className={styles.quest}>
+            {questTitle}
+            {/* Per-report truth: shown only when THIS report was graded by the v3 rules. */}
+            {logIsV3(log.beats) && <span className={styles.rulesTag}>v3 rules</span>}
+          </div>
         </div>
         <div className={styles.headBtns}>
           {/* Skip lives in the corner, AWAY from the meter — skipping must be

@@ -32,6 +32,12 @@ export function isV3Beat(beat: Beat): boolean {
   return beat.check !== undefined;
 }
 
+/** True when any beat of this report was resolved by the v3 engine (per-report
+ * truth: old stored v1 reports say nothing, so a mixed history is never mislabelled). */
+export function logIsV3(beats: readonly Beat[]): boolean {
+  return beats.some(isV3Beat);
+}
+
 /** THE label source for a grade slot: v3 names for a v3 log, the v1 benchmark
  * words otherwise. Every place that prints a grade word goes through this. */
 export function labelFor(grade: Grade, v3: boolean): string {
@@ -45,7 +51,8 @@ export function effectNote(beat: Beat, hasNext: boolean): string | null {
     // A recovery that passes still leaves the party rattled (carry −1); a
     // recovery that lands poor/fail ends the quest — the outcome card follows.
     if (beat.grade === "crit" || beat.grade === "good") return "They claw it back — rattled, but through.";
-    if (beat.grade === "ok") return "They scrape out of the mess.";
+    // v3 Insufficient did not meet the requirement: never worded as a clean pass.
+    if (beat.grade === "ok") return isV3Beat(beat) ? "Not enough, but they get through." : "They scrape out of the mess.";
     return "It slips away from them.";
   }
   if (beat.branch === "bonus") {

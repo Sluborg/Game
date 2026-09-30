@@ -2,6 +2,27 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-09-30 - Wire A: the v3 check live in the quest resolver — PR opened
+- Gate: PR (Review #2 cleared; `@codex review` posted)
+- Branch: `ccr-c145e2cc-3s42bn` -> PR into `dev` (restarted from `dev` after PR #47; `dev` is PR #45's
+  head, so this ships to production with #45, and production stays inert: v1 default, no new UI).
+- Review #2 (4 personas on the DIFF): **0 blockers** (Engineer APPROVE; QA fresh-clone `npm ci && test &&
+  sim:wire && sim:resolution` clean, tree unchanged). Non-blockers folded: the "Rules v1" chip no
+  longer renders in production (chip only while v3 grades new quests, plus a per-report "v3 rules" tag
+  in the story view so mixed history is never mislabelled); v3 wording for a recovery at Insufficient
+  ("Not enough, but they get through."); the generated doc now states candidly that standing jobs and
+  the Hidden reliquary are zero-luck, adds a legend (T = target, arrows, strong beats, %) and a Design
+  flags block; dropped the unused `GRADE_TO_RESULT` and a pointless re-export; true-median style nits
+  none. Not folded (accepted): `initEngine()` stays in the `useState` initializer (idempotent, dispatch
+  only happens after mount); meter zone icons keep v1 positions (later UI slice); named
+  `labelFor`/`logIsV3` live in `storyText.ts`, not a new `resultLabels.ts`.
+- Verified after the folds: `npx tsc -b` clean; `vite build`; `npm run test` 218 pass + 1 skipped
+  (GOLDEN untouched); headless Chromium at 390px, both bases: production shows no chip and no tag,
+  dev shows "Rules v3" + "v3 rules", no console errors. Screenshots refreshed in `docs/screenshots/`.
+- Open for Stefan (also in `docs/resolution-wire.md` Design flags): zero-luck standing jobs and Hidden
+  reliquary; hero stats fitted to v1 results rather than written by character (Pell Reasoning 7 >
+  Mobility 6, Brok Combat 7 < Force 9); zone icons keep v1 positions.
+
 ## 2026-09-30 - Wire A: the v3 check live in the quest resolver — build done
 - Gate: build (Review #1 folded; heading into Review #2)
 - Branch: `ccr-c145e2cc-3s42bn` (restarted from `origin/dev` @ `f794d1e` after PR #47 merged; first

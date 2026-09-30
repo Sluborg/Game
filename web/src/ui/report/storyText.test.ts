@@ -4,7 +4,7 @@
 // (the resolver still carries −1 after a recovery).
 
 import { describe, it, expect } from "vitest";
-import { GRADE_LABEL, V3_LABEL, effectNote, gradeAt, isV3Beat, labelFor } from "./storyText";
+import { GRADE_LABEL, V3_LABEL, effectNote, gradeAt, isV3Beat, labelFor, logIsV3 } from "./storyText";
 import { GRADE_ZONES } from "../../game/guild";
 import type { Beat, Grade } from "../../game/guild";
 
@@ -101,6 +101,14 @@ describe("labelFor: one label source for ticker, landed word and aria", () => {
   });
 });
 
+describe("logIsV3: per-report truth for the rules tag", () => {
+  it("true if any beat carries a check; false for an old v1 report", () => {
+    expect(logIsV3([beat("ok"), v3Beat("good")])).toBe(true);
+    expect(logIsV3([beat("ok"), beat("good")])).toBe(false);
+    expect(logIsV3([])).toBe(false);
+  });
+});
+
 describe("effectNote for v3 Insufficient: short of the requirement is never read as a pass", () => {
   it("normal beat: not a 'steady' pass, no mechanics claim", () => {
     expect(effectNote(v3Beat("ok"), true)).toBe("Not enough, but no lasting harm.");
@@ -109,6 +117,10 @@ describe("effectNote for v3 Insufficient: short of the requirement is never read
   it("bonus beat: not a 'modest haul'", () => {
     expect(effectNote(v3Beat("ok", "bonus"), false)).toBe("Not enough to find much.");
     expect(effectNote(beat("ok", "bonus"), false)).toBe("A modest haul.");
+  });
+  it("recovery: Insufficient is not worded as a clean pass", () => {
+    expect(effectNote(v3Beat("ok", "recovery"), false)).toBe("Not enough, but they get through.");
+    expect(effectNote(beat("ok", "recovery"), false)).toBe("They scrape out of the mess.");
   });
   it("v1 wording is unchanged", () => {
     expect(effectNote(beat("ok"), true)).toBe("They hold steady.");

@@ -12,7 +12,6 @@ import { HERO_DATA, HERO_BY_ID, partyTraitMod } from "../roster";
 import { QUEST_BY_ID, ROAD_JOB, RUINS } from "../quests";
 import type { Grade } from "../types";
 import {
-  GRADE_TO_RESULT,
   RESULT_TO_GRADE,
   beatDistribution,
   beatTarget,
@@ -57,7 +56,7 @@ describe("engine selection", () => {
 describe("result → grade slot", () => {
   it("maps the ladder onto the v1 slots, bijectively", () => {
     expect(RESULT_TO_GRADE).toEqual({ triumph: "crit", success: "good", insufficient: "ok", failure: "poor", "critical-failure": "fail" });
-    for (const r of RESULT_LADDER) expect(GRADE_TO_RESULT[RESULT_TO_GRADE[r.id]]).toBe(r.id);
+    expect(new Set(Object.values(RESULT_TO_GRADE)).size).toBe(RESULT_LADDER.length);
   });
 });
 

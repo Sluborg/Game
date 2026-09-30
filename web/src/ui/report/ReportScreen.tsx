@@ -55,9 +55,14 @@ export function ReportScreen() {
       <header className={styles.topbar}>
         <h1 className={styles.title}>Report</h1>
         <span className={styles.day}>
-          <span className={styles.engineChip} data-engine={getEngine()} title="Which rules grade new quests. Add ?engine=v1 or ?engine=v3 to the URL to switch.">
-            Rules {getEngine()}
-          </span>{" "}
+          {/* Production (v1) shows nothing new; the chip appears only when v3 grades new quests. */}
+          {getEngine() === "v3" && (
+            <>
+              <span className={styles.engineChip} data-engine="v3">
+                Rules v3
+              </span>{" "}
+            </>
+          )}
           Day {dayOf(state.tick)}
         </span>
       </header>
