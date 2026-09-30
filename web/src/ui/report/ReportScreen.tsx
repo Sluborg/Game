@@ -8,6 +8,7 @@
 import { useMemo, useState } from "react";
 import { useGuild } from "../guild/GuildContext";
 import { StoryStage } from "./StoryStage";
+import { isLedgerLineMasked, sealedView } from "./sealed";
 import { dayOf, type AdventureLog, type Mail } from "../../game/guild";
 import styles from "./ReportScreen.module.css";
 
@@ -32,23 +33,16 @@ export function ReportScreen() {
     return [...map.entries()].sort((a, b) => b[0] - a[0]);
   }, [state.mail]);
 
-  // Which mail envelopes have been opened — used to keep a sealed quest's ledger
-  // cut masked until its story has been watched (don't spoil the reveal, §4).
-  const readIds = useMemo(() => new Set(state.mail.filter((m) => m.read).map((m) => m.id)), [state.mail]);
-
-  // The earliest day with a still-sealed outcome. EVERY ledger from that day on
-  // must withhold its tally: a later night's endGold would otherwise let the
-  // player back-solve the hidden payout (day-4 endGold + visible day-5/6 lines
-  // − day-6 endGold = the sealed cut) — the R#34 leak through the side door
-  // (Review #2 Adversary). The Tavern-takings amount is masked too: the forced
-  // post-return decompress spend sizes the reward (Review #2 Designer).
-  const sealedSinceDay = useMemo(() => {
-    let min = Infinity;
-    for (const m of state.mail) {
-      if (m.kind === "outcome" && !m.read) min = Math.min(min, m.day);
-    }
-    return min;
-  }, [state.mail]);
+  // Masking inputs, from one pass over the mail (sealed.ts). unreadOutcomeIds
+  // keeps a sealed quest's ledger cut masked until its story has been watched
+  // (don't spoil the reveal, §4). sealedSinceDay is the earliest day with a
+  // still-sealed outcome: EVERY ledger from that day on must withhold its tally,
+  // or a later night's endGold would let the player back-solve the hidden payout
+  // (day-4 endGold + visible day-5/6 lines − day-6 endGold = the sealed cut) —
+  // the R#34 leak through the side door (Review #2 Adversary). The Tavern-takings
+  // amount is masked too: the forced post-return decompress spend sizes the
+  // reward (Review #2 Designer).
+  const { unreadOutcomeIds, sealedSinceDay } = useMemo(() => sealedView(state.mail), [state.mail]);
 
   const openStory = (m: Mail) => {
     if (!m.log) return;
@@ -71,7 +65,7 @@ export function ReportScreen() {
           <ul className={styles.list}>
             {items.map((m) => (
               <li key={m.id}>
-                <MailRow mail={m} readIds={readIds} sealedSinceDay={sealedSinceDay} onOpen={() => openStory(m)} onRead={() => readMail(m.id)} />
+                <MailRow mail={m} unreadOutcomeIds={unreadOutcomeIds} sealedSinceDay={sealedSinceDay} onOpen={() => openStory(m)} onRead={() => readMail(m.id)} />
               </li>
             ))}
           </ul>
@@ -87,13 +81,13 @@ export function ReportScreen() {
 
 function MailRow({
   mail,
-  readIds,
+  unreadOutcomeIds,
   sealedSinceDay,
   onOpen,
   onRead,
 }: {
   mail: Mail;
-  readIds: Set<string>;
+  unreadOutcomeIds: ReadonlySet<string>;
   sealedSinceDay: number;
   onOpen: () => void;
   onRead: () => void;
@@ -136,9 +130,7 @@ function MailRow({
               // opened (§4); while the night is pending, the Tavern-takings
               // amount hides too — the returning party's decompress spend is in
               // it, and its size tracks the sealed reward (Review #2 Designer).
-              const masked =
-                (e.sealedMailId !== undefined && !readIds.has(e.sealedMailId)) ||
-                (pending && e.label === "Tavern takings");
+              const masked = isLedgerLineMasked(e, unreadOutcomeIds, pending);
               return (
                 <li key={i}>
                   <span>{e.label}</span>
