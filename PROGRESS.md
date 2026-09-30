@@ -2,8 +2,86 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-09-30 - Wire A: the v3 check live in the quest resolver — codex-fixed
+- Gate: codex-fixed -> awaiting merge decision (delta Review #2 cleared, 0 blockers)
+- Branch: `ccr-c145e2cc-3s42bn` -> **PR #48 into `dev`**.
+- Codex (on `f6bd592`): ONE finding, **P2** — a v3 Insufficient maps to the `ok` slot and reused the v1 `ok`
+  narration, which reads as a win ("They bring the guardian down") under an "Insufficient" label. Valid.
+  Fixed: every beat gets its own required `insufficient` line (BeatDef, authored so it reads right when
+  the quest goes on and on a forced recovery), used by the v3 bridge for the ok slot; v1 keeps its ok
+  lines. The same slot also paid the +8% bonus-purse sweetener, contradicting "did not meet the
+  requirement": a v3 Insufficient bonus beat now earns none (v1 byte-identical). Tests: every beat has a
+  distinct Insufficient line, the ok slot reads it on both engines' paths, sweetener zero on v3 / +8% on
+  v1 (synthetic harder bonus beat, since no shipped bonus beat lands Insufficient). Doc notes it.
+- Delta Review #2 (4 personas on the delta): 0 blockers. Folded: three lines that implied a cost ("falls
+  behind", "late") softened to match "costs nothing more"; the v1-ok test now matches by exact beat id.
+- Verified: `tsc -b` clean; `npm run test` 222 pass + 1 skipped (GOLDEN untouched); `vite build`;
+  `docs/resolution-wire.md` regenerated, `docs/resolution-sim.md` unchanged.
+
+## 2026-09-30 - Wire A: the v3 check live in the quest resolver — PR opened
+- Gate: PR (Review #2 cleared; `@codex review` posted)
+- Branch: `ccr-c145e2cc-3s42bn` -> PR into `dev` (restarted from `dev` after PR #47; `dev` is PR #45's
+  head, so this ships to production with #45, and production stays inert: v1 default, no new UI).
+- Review #2 (4 personas on the DIFF): **0 blockers** (Engineer APPROVE; QA fresh-clone `npm ci && test &&
+  sim:wire && sim:resolution` clean, tree unchanged). Non-blockers folded: the "Rules v1" chip no
+  longer renders in production (chip only while v3 grades new quests, plus a per-report "v3 rules" tag
+  in the story view so mixed history is never mislabelled); v3 wording for a recovery at Insufficient
+  ("Not enough, but they get through."); the generated doc now states candidly that standing jobs and
+  the Hidden reliquary are zero-luck, adds a legend (T = target, arrows, strong beats, %) and a Design
+  flags block; dropped the unused `GRADE_TO_RESULT` and a pointless re-export; true-median style nits
+  none. Not folded (accepted): `initEngine()` stays in the `useState` initializer (idempotent, dispatch
+  only happens after mount); meter zone icons keep v1 positions (later UI slice); named
+  `labelFor`/`logIsV3` live in `storyText.ts`, not a new `resultLabels.ts`.
+- Verified after the folds: `npx tsc -b` clean; `vite build`; `npm run test` 218 pass + 1 skipped
+  (GOLDEN untouched); headless Chromium at 390px, both bases: production shows no chip and no tag,
+  dev shows "Rules v3" + "v3 rules", no console errors. Screenshots refreshed in `docs/screenshots/`.
+- Open for Stefan (also in `docs/resolution-wire.md` Design flags): zero-luck standing jobs and Hidden
+  reliquary; hero stats fitted to v1 results rather than written by character (Pell Reasoning 7 >
+  Mobility 6, Brok Combat 7 < Force 9); zone icons keep v1 positions.
+
+## 2026-09-30 - Wire A: the v3 check live in the quest resolver — build done
+- Gate: build (Review #1 folded; heading into Review #2)
+- Branch: `ccr-c145e2cc-3s42bn` (restarted from `origin/dev` @ `f794d1e` after PR #47 merged; first
+  commit = §50 backfill of PR #47's merged gate; #46 was already backfilled by #47). Combat core
+  (`game/battle/*`) untouched; `resolve/` (PR #46) consumed, not modified.
+- Files: NEW `game/guild/{engine,zones}.ts`, `game/guild/wire/{bridge,harness,report,report.cli}.ts` +
+  `wire.test.ts`, `ui/guild/engineInit.ts`, `docs/resolution-wire.md` (generated, drift-tested),
+  `docs/screenshots/wire-{dev-v3,prod-v1}-report.png`; MOD `types.ts` (HeroV3, Beat.check),
+  `roster.ts` (v3 stats), `quests.ts` (skill + diff3 per beat), `resolver.ts` (engine switch; GRADE_ZONES
+  moved to `zones.ts` and re-exported), `clock.ts` (engine at dispatch), `index.ts`; UI `storyText.ts`
+  (one label source, v3 notes), `StoryStage.tsx/.css` (roll line), `ReportScreen.tsx/.css` (engine chip),
+  `GuildContext.tsx` (initEngine); `package.json` (`sim:wire`); `docs/CHALLENGE_SYSTEM.md` pointer.
+- Decisions (mine, Stefan delegated): v3 is an option beside v1; production inert (v1 default, v3 only
+  on `/Game/dev/` or `?engine=v3`); each v3 result fills the v1 grade slot; carry and size bonus enter
+  outside the engine clamp; recovery raises the TARGET x1.3; veterans pre-grown, Mira follows the birth
+  rule; trait delta = +3% per point.
+- Calibration (seeds 1..2000, real `resolveQuest`, gate = success/bonus within 10 points, strong beats
+  within 0.3): all eligible quest x party rows pass; worst deltas +7pp success (Blades/Ruins 63 to 70),
+  +8pp bonus (Vigil/Ruins 75 to 83), 0.14 strong. Numbers fitted by a throwaway coordinate-descent over
+  `diff3` and a few hero combat/skill values, then fixed by hand and pinned in a generated doc.
+- Verified: `npx tsc -b` clean; `npm run test` 216 pass + 1 skipped (GOLDEN resolver fixture untouched and
+  green); `vite build` for `--base=/Game/` and `--base=/Game/dev/`; headless Chromium at 390px with a saved run
+  per engine: production shows "Rules v1" + "Success / They hold steady.", dev shows "Rules v3" +
+  "Insufficient / Not enough, but no lasting harm. / Needed 22, got 21", no console errors.
+- Open: none blocking. Next: Review #2, PR, Codex.
+
+## 2026-09-30 - Wire A: the v3 check live in the quest resolver — plan done
+- Gate: plan (Review #1 cleared)
+- Branch: `ccr-c145e2cc-3s42bn`. Scope declared: `game/guild/{resolver,roster,quests,types,clock,index}`,
+  new `engine.ts`, `zones.ts`, `wire/`, the Report UI label path, docs. PR #45 (dev to main) has `dev`
+  as its head, so this PR ships to production with it: v1 must stay the production default.
+- Review #1 (4 personas on the PLAN): 11 blockers, all folded into the plan: bridge lives in `wire/` (keeps
+  `resolve/` boundary test intact); explicit separate rng per engine, shared carry/recovery loop, v3
+  `roll` derived from dice; carry and size bonus outside the clamp; recovery x1.3 applies to the target;
+  calibration bar widened to success + bonus + strong beats; explicit production-inert gate with a pure
+  `detectEngine`; veterans pre-grown and Mira exactly on the birth rule; one label source for ticker,
+  landed word and aria; v3 note copy for Insufficient (never read as a pass); roll line after landing
+  only; engine chip. Non-blockers folded: required `HeroData.v3`, named trait constant, engine reset in
+  tests, combat split owned by the bridge, meter clamp and monotonic test.
+- Open questions: none blocking.
+
 ## 2026-09-30 - Codex P2 fixes from promotion PR #45 — codex-fixed
-- Gate: codex-fixed → awaiting merge decision
+- Gate: **merged 2026-09-30 23:24 +0200** (merge commit `f794d1e`; backfilled 2026-09-30). **PR #47 into `dev`.**
 - Branch: `ccr-f054514f-0jzz9m` → **PR #47 into `dev`**.
 - Codex (on `0aeb2e3`; only a PROGRESS-only commit after it): **zero findings** ("Didn't find any
   major issues"). No delta, so no Review #2 re-run. CI green on the head.

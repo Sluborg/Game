@@ -7,6 +7,8 @@ export type {
   BeatType,
   Grade,
   Beat,
+  BeatCheck,
+  HeroV3,
   AdventureLog,
   Assignment,
   PartyRuntime,
@@ -26,6 +28,7 @@ export type {
 export { HERO_DATA, PARTY_DATA, HERO_BY_ID, PARTY_BY_ID, partyAttr, partyQuality, partyTraitMod } from "./roster";
 export { ROAD_JOB, RUINS, STANDING_JOBS, POSTABLE_QUESTS, QUEST_BY_ID, typeSkulls, questSkulls, daysLabel, type QuestDef, type BeatDef } from "./quests";
 export { resolveQuest, scoreFor, GRADE_ZONES } from "./resolver";
+export { getEngine, setEngine, detectEngine, type Engine } from "./engine";
 export { makePosting, partyEligible, bestPosting } from "./board";
 export { chooseActivity, avgWallet, type LifeChoice } from "./life";
 export {

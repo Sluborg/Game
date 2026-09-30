@@ -217,6 +217,19 @@
 .rollGrade[data-grade="poor"] { color: var(--c-ember); }
 .rollGrade[data-grade="fail"] { color: var(--c-blood); }
 .effect { font-size: 0.8rem; color: var(--text-dim); font-style: italic; }
+/* Marks a report graded by the v3 rules (old v1 reports show nothing). */
+.rulesTag {
+  margin-left: var(--sp-2);
+  padding: 0 6px;
+  font-size: 0.68rem;
+  color: var(--text-gold);
+  border: 1px solid var(--text-gold);
+  border-radius: var(--r-sm);
+  vertical-align: middle;
+}
+/* The v3 check line: a footnote under the result, never competing with it. */
+.rollLine { flex-basis: 100%; font-size: 0.72rem; color: var(--text-dim); }
+.rollDice { opacity: 0.75; }
 
 .prose {
   display: flex;

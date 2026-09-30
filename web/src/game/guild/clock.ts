@@ -16,6 +16,7 @@
 import { makePosting, partyEligible } from "./board";
 import { chooseActivity } from "./life";
 import { QUEST_BY_ID, ROAD_JOB, RUINS, type QuestDef } from "./quests";
+import { getEngine } from "./engine";
 import { resolveQuest } from "./resolver";
 import { PARTY_BY_ID } from "./roster";
 import { deriveSeed, rngFor, rollInt } from "./seed";
@@ -123,7 +124,7 @@ function findParty(next: GuildState, id: string | undefined): PartyRuntime | und
 function dispatch(next: GuildState, partyId: string, quest: QuestDef, atTick: number): Assignment {
   const duration = rollInt(rngFor(next.rngSeed, "dur", atTick, quest.id, partyId), quest.minDuration, quest.maxDuration);
   const seed = deriveSeed(next.rngSeed, "quest", atTick, quest.id, partyId);
-  const log = resolveQuest({ quest, partyId, cutPct: BROKERAGE, durationDays: duration, seed });
+  const log = resolveQuest({ quest, partyId, cutPct: BROKERAGE, durationDays: duration, seed, engine: getEngine() });
   const ticksOut = quest.tier === "standing" ? STANDING_TICKS : duration * TICKS_PER_DAY;
   return {
     questId: quest.id,

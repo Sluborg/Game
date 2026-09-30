@@ -11,6 +11,10 @@
 // round-trips through localStorage (persist.ts). Ground-truth roster data lives
 // in roster.ts.
 
+import type { AttrId } from "./content/attributes";
+import type { SkillId } from "./content/skills";
+import type { ResultId } from "./content/ladder";
+
 /** The four attributes the sim actually uses (mirrors battle/attributes.ts —
  * str/dex/sta/per; no Int/Cha invented yet). */
 export type AttrKey = "str" | "dex" | "sta" | "per";
@@ -36,6 +40,18 @@ export interface TraitEffect {
   blurb: string;
 }
 
+/** A hero's Skills-v3 stats (docs/CHALLENGE_SYSTEM.md): five attributes (cap 10),
+ * skills (cap 20, absent = untrained 0) and the temporary Combat value. Used only
+ * by the v3 resolution engine (wire/bridge.ts). Static in Wire A — growth from
+ * use is the next slice. Veterans are PRE-GROWN; a new recruit follows the
+ * standardized birth rule (resolve/birth.ts). */
+export interface HeroV3 {
+  attrs: Record<AttrId, number>;
+  skills: Partial<Record<SkillId, number>>;
+  /** The temporary Combat skill (not a SkillId — docs/CHALLENGE_SYSTEM.md §Temporary Combat rule). */
+  combat: number;
+}
+
 export interface HeroData {
   id: string;
   name: string;
@@ -43,6 +59,8 @@ export interface HeroData {
   /** Ground-truth attributes (the sim's reality; the UI's CV chips may differ and
    * are dormant/locked this slice). */
   attrs: Record<AttrKey, number>;
+  /** The Skills-v3 stats the v3 resolution engine reads (v1 ignores them). */
+  v3: HeroV3;
   traits: TraitEffect[];
 }
 
@@ -59,6 +77,17 @@ export interface PartyData {
   /** Starting wallet per member (staggered so minute one shows the full
    * behavioral vocabulary: one party in lifestyle, one heading out, one broke). */
   startWallet: number;
+}
+
+/** The v3 check behind a beat (present only when the v3 engine resolved it):
+ * 2d6 dice, the integer capability and score, the integer target, and the result
+ * band. Optional + additive, so old saves and v1 logs load unchanged. */
+export interface BeatCheck {
+  dice: [number, number];
+  capability: number;
+  score: number;
+  target: number;
+  result: ResultId;
 }
 
 /** One resolved beat in an adventure (§10 envelope element). */
@@ -78,6 +107,8 @@ export interface Beat {
   text: string;
   /** A trait cut-in that coloured this beat, if any (§5). */
   traitBlurb?: string;
+  /** The v3 check that produced this beat's grade slot (absent on v1 beats). */
+  check?: BeatCheck;
   /** True when this beat was inserted by a forced branch (a fail recovery) or is
    * the optional bonus beat unlocked by a strong result. */
   branch?: "recovery" | "bonus";

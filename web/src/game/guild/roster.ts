@@ -24,15 +24,21 @@ const GREEDY: HeroData["traits"][number] = { name: "Greedy", types: ["social"], 
 const NIMBLE: HeroData["traits"][number] = { name: "Nimble", types: ["investigation", "travel"], delta: 3, blurb: "slips through — Nimble" };
 const COWARD: HeroData["traits"][number] = { name: "Coward", types: ["combat"], delta: -5, blurb: "balks at the fight — Coward" };
 
+// Skills-v3 stats (`v3`, read by the v3 engine only). Rule: Strength/Dexterity/
+// Constitution/Mind = ceil(v1 str/dex/sta/per ÷ 2) for the veterans (pre-GROWN from
+// use: attrs ≤ 10, skills ≤ 20, total attrs may exceed the 14-point BIRTH rule), Charisma
+// and the skill kits by hand per archetype, `combat` the temporary Combat value.
+// Mira is a fresh recruit and follows the birth rule EXACTLY (14 points, each 2–4,
+// kit 2/1/1/1 — wire.test.ts). Numbers calibrated against v1: docs/resolution-wire.md.
 export const HERO_DATA: HeroData[] = [
-  { id: "ysolt", name: "Ysolt Vane", archetype: "Champion", attrs: { str: 16, dex: 12, sta: 14, per: 11 }, traits: [DISCIPLINED, PROUD, VENGEFUL] },
-  { id: "doran", name: "Doran Blackfen", archetype: "Hedge Knight", attrs: { str: 12, dex: 8, sta: 12, per: 9 }, traits: [LOYAL] },
+  { id: "ysolt", name: "Ysolt Vane", archetype: "Champion", attrs: { str: 16, dex: 12, sta: 14, per: 11 }, v3: { attrs: { strength: 8, dexterity: 6, constitution: 7, mind: 6, charisma: 4 }, skills: { force: 10, fortitude: 8, mobility: 4, influence: 5, willpower: 4, integrity: 3, reasoning: 2, inquiry: 2 }, combat: 13 }, traits: [DISCIPLINED, PROUD, VENGEFUL] },
+  { id: "doran", name: "Doran Blackfen", archetype: "Hedge Knight", attrs: { str: 12, dex: 8, sta: 12, per: 9 }, v3: { attrs: { strength: 6, dexterity: 4, constitution: 6, mind: 5, charisma: 3 }, skills: { force: 7, fortitude: 8, willpower: 4, mobility: 2, reasoning: 1, integrity: 2 }, combat: 8 }, traits: [LOYAL] },
   // The new 6th hero — a pathfinder giving the Iron Vigil non-combat coverage
   // (investigation/travel), which is what makes it the high-QUALITY party.
-  { id: "wren", name: "Wren Ashdown", archetype: "Pathfinder", attrs: { str: 7, dex: 13, sta: 9, per: 15 }, traits: [SHARP_EYED, WAYFARER] },
-  { id: "brok", name: "Brok Ironhand", archetype: "Sellsword", attrs: { str: 15, dex: 9, sta: 13, per: 7 }, traits: [BRAVE, GREEDY] },
-  { id: "pell", name: "Pell Quick", archetype: "Cutpurse", attrs: { str: 5, dex: 15, sta: 7, per: 12 }, traits: [NIMBLE, COWARD] },
-  { id: "mira", name: "Mira Song", archetype: "Recruit", attrs: { str: 6, dex: 11, sta: 8, per: 10 }, traits: [] },
+  { id: "wren", name: "Wren Ashdown", archetype: "Pathfinder", attrs: { str: 7, dex: 13, sta: 9, per: 15 }, v3: { attrs: { strength: 4, dexterity: 7, constitution: 5, mind: 8, charisma: 4 }, skills: { reasoning: 6, nature: 8, mobility: 7, fortitude: 5, inquiry: 4, influence: 2, force: 1 }, combat: 5 }, traits: [SHARP_EYED, WAYFARER] },
+  { id: "brok", name: "Brok Ironhand", archetype: "Sellsword", attrs: { str: 15, dex: 9, sta: 13, per: 7 }, v3: { attrs: { strength: 8, dexterity: 5, constitution: 7, mind: 4, charisma: 4 }, skills: { force: 9, fortitude: 7, influence: 4, mobility: 3, willpower: 3 }, combat: 7 }, traits: [BRAVE, GREEDY] },
+  { id: "pell", name: "Pell Quick", archetype: "Cutpurse", attrs: { str: 5, dex: 15, sta: 7, per: 12 }, v3: { attrs: { strength: 3, dexterity: 8, constitution: 4, mind: 6, charisma: 5 }, skills: { mobility: 6, inquiry: 6, influence: 4, reasoning: 7, fortitude: 2 }, combat: 3 }, traits: [NIMBLE, COWARD] },
+  { id: "mira", name: "Mira Song", archetype: "Recruit", attrs: { str: 6, dex: 11, sta: 8, per: 10 }, v3: { attrs: { strength: 2, dexterity: 4, constitution: 3, mind: 3, charisma: 2 }, skills: { mobility: 2, reasoning: 1, fortitude: 1, influence: 1 }, combat: 2 }, traits: [] },
 ];
 
 export const PARTY_DATA: PartyData[] = [
