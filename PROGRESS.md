@@ -2,8 +2,63 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
-## 2026-09-30 - Resolution engine — codex-fixed
+## 2026-09-30 - Codex P2 fixes from promotion PR #45 — codex-fixed
 - Gate: codex-fixed → awaiting merge decision
+- Branch: `ccr-f054514f-0jzz9m` → **PR #47 into `dev`**.
+- Codex (on `0aeb2e3`; only a PROGRESS-only commit after it): **zero findings** ("Didn't find any
+  major issues"). No delta, so no Review #2 re-run. CI green on the head.
+- Open questions: none.
+
+## 2026-09-30 - Codex P2 fixes from promotion PR #45 — PR opened
+- Gate: PR opened → awaiting Codex review
+- Branch: `ccr-f054514f-0jzz9m` → **PR #47 into `dev`**; `@codex review` posted. Once merged, the
+  `dev` → `main` promotion PR #45 carries these fixes (its head is `dev`).
+- Open questions: none.
+
+## 2026-09-30 - Codex P2 fixes from promotion PR #45 — build done
+- Gate: build (Review #2 cleared, 0 blockers; opening PR)
+- Branch: `ccr-f054514f-0jzz9m`.
+- Files: new `web/src/ui/guild/partyStatus.ts` (the Hall's `partyStatus`, moved + shared),
+  `web/src/ui/hall/HallScreen.tsx` (imports it), new `web/src/ui/heroes/liveStatus.ts` (+test),
+  `HeroesScreen.tsx` / `HeroCard.tsx` (live status via `useGuild`), `mockHeroes.ts` (hardcoded
+  `status` removed), `*.module.css` (status dot top-aligned for wrapping), new
+  `web/src/ui/report/sealed.ts` (+test) + `ReportScreen.tsx`, `game/guild/content/schema.ts`
+  (per-kind `PERK_FIELDS`) + `content.test.ts`, `game/guild/guild.test.ts` (unread-outcome-never-
+  trimmed invariant), `docs/screenshots/codexfix-{hall-strip,heroes-sheet}.png`.
+- Verification: `tsc -b` clean, `vitest` 181 pass + 1 skipped (was 163), `npm run build` green;
+  each new test fails with its fix reverted (Adversary, fresh worktree). Screenshots from a real sim
+  state reproducing Codex's case (Free Blades in the Ruins): Hall strip and Brok's sheet both read
+  "Out — The Sunken Ruins · day 2 of 3".
+- Review #2 (4 personas on the diff): **0 blockers.** Folded: dot top-aligned for wrapped status,
+  guard text "Whereabouts unknown" (not a fake "Idle" state), stale mock comments. Not folded, logged
+  as follow-ups: PartyCard's "See the Hall" line → live party status; Hall strip `.partyText`
+  ellipsis cuts "of m" at 390px (pre-existing CSS); shift vs quest dot colour; unused mock
+  `location`/`plan` fields in `mockParties.ts`; a pre-PR-#36 save that already lost an unread
+  outcome would now show that cut (local-only, accepted).
+- Open questions: none.
+
+## 2026-09-30 - Codex P2 fixes from promotion PR #45 — plan done
+- Gate: plan (Review #1 folded; proceeding to build)
+- Branch: `ccr-f054514f-0jzz9m` (off `origin/dev` @ `49fa2a3`; first commit = §50 backfill of PR
+  #46's merged gate). Fixes the three P2s Codex raised on the `dev` → `main` promotion PR #45 (code
+  already on `dev`, so the fix lands on `dev` and #45 picks it up). Combat core untouched.
+- F1 Heroes status was mock (`mockHeroes.ts` "On quest: Sunken Ruins" while the Hall showed other
+  activity) → derive from live `GuildState` via ONE shared party-status helper used by both the Hall
+  strip and the Heroes roster/sheet (same words, incl. "day n of m").
+- F2 Report ledger re-masked a trimmed read outcome ("see report ›" to a deleted report) → mask iff
+  the linked outcome is present AND unread (`clock.ts` never trims an unread outcome; now test-locked).
+- F3 perk schema accepted wrong-kind fields → per-kind closed allowlist, exactly one unknown-key pass
+  per path.
+- Review #1 (4 personas): **2 blockers, both folded** — (1) Player-exp: Heroes wording must match the
+  Hall's exactly → shared helper; (2) Adversary: F3 must not double-report a stray key → single
+  `rejectUnknownKeys` per path. Non-blockers folded: "In the hall" fallback (no new "Idle" vocab
+  except a missing-party guard), `unreadOutcomeIds` naming, trim-invariant test, returned-party test,
+  every mock hero maps to a sim party, screenshot required. Deferred: PartyCard's "See the Hall" line
+  → live status (follow-up, out of scope).
+- Open questions: none.
+
+## 2026-09-30 - Resolution engine — codex-fixed
+- Gate: **merged 2026-09-30 23:08 +0200** (merge commit `49fa2a3`; backfilled 2026-09-30). **PR #46 into `dev`.**
 - Branch: `ccr-c145e2cc-3s42bn` → **PR #46 into `dev`**.
 - Codex (on `da4af67`): ONE finding, **P1** — the log collapsed plan/build/PR into a single
   `build + PR` entry, against AGENTS.md's "one dated entry per gate". Fixed by splitting it into

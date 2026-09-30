@@ -243,6 +243,17 @@ function validateTrait(v: unknown, i: number, out: Issue[]): string | null {
 
 const PERK_KINDS = ["reroll-lowest-check", "soften-critical-failure", "upgrade-result", "skill-modifier"] as const;
 
+/** Each exception kind's CLOSED field set — a field that belongs to another kind
+ * (e.g. `percent` on reroll-lowest-check) is rejected, not silently carried
+ * (Codex P2 on PR #45). */
+const PERK_FIELDS: Record<(typeof PERK_KINDS)[number], readonly string[]> = {
+  "reroll-lowest-check": ["kind"],
+  "soften-critical-failure": ["kind"],
+  "upgrade-result": ["kind", "fromResult"],
+  "skill-modifier": ["kind", "skill", "percent"],
+};
+const ALL_PERK_FIELDS = [...new Set(Object.values(PERK_FIELDS).flat())];
+
 function validatePerk(v: unknown, i: number, out: Issue[]): string | null {
   const path = `perks[${i}]`;
   if (!isObj(v)) {
@@ -259,12 +270,15 @@ function validatePerk(v: unknown, i: number, out: Issue[]): string | null {
     out.push({ path: `${path}.exception`, message: "exception must be an object with a kind", expected: oneOf(PERK_KINDS) });
     return id;
   }
-  rejectUnknownKeys(ex, ["kind", "fromResult", "skill", "percent"], `${path}.exception`, out);
   const kind = ex.kind;
   if (!isStr(kind) || !(PERK_KINDS as readonly string[]).includes(kind)) {
     out.push({ path: `${path}.exception.kind`, message: `unknown exception kind "${String(kind)}"`, expected: oneOf(PERK_KINDS) });
+    // Kind unknown, so no per-kind set applies: still flag fields no kind uses.
+    rejectUnknownKeys(ex, ALL_PERK_FIELDS, `${path}.exception`, out);
     return id;
   }
+  // Exactly one unknown-field pass per path (no double report).
+  rejectUnknownKeys(ex, PERK_FIELDS[kind as (typeof PERK_KINDS)[number]], `${path}.exception`, out);
   if (kind === "skill-modifier") {
     if (!isStr(ex.skill) || !(SKILL_IDS as readonly string[]).includes(ex.skill)) {
       out.push({ path: `${path}.exception.skill`, message: `skill-modifier needs a valid skill (got "${String(ex.skill)}")`, expected: oneOf(SKILL_IDS) });

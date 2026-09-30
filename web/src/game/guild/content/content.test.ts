@@ -279,6 +279,35 @@ describe("validator rejects bad drops", () => {
     expectIssueAt(validateContent(c), "exception.fromResult");
   });
 
+  // Per-kind closed field sets (Codex P2 on PR #45): a field that belongs to a
+  // DIFFERENT exception kind is rejected — exactly once.
+  const wrongKindField: [string, string, unknown][] = [
+    ["reroll-lowest-check", "percent", 0.2],
+    ["soften-critical-failure", "skill", "influence"],
+    ["skill-modifier", "fromResult", "insufficient"],
+    ["upgrade-result", "skill", "influence"],
+  ];
+  for (const [kind, field, value] of wrongKindField) {
+    it(`${kind} perk carrying another kind's "${field}"`, () => {
+      const c = base();
+      const p = c.perks.find((x) => x.exception.kind === kind)!;
+      (p.exception as Record<string, unknown>)[field] = value;
+      const issues = validateContent(c);
+      expect(issues.filter((x) => x.path.endsWith(`exception.${field}`)), formatIssues(issues)).toHaveLength(1);
+      expect(issues, formatIssues(issues)).toHaveLength(1);
+    });
+  }
+
+  it("a stray field on a perk with an unknown kind is still reported, once", () => {
+    const c = base();
+    const ex = c.perks[0].exception as Record<string, unknown>;
+    ex.kind = "make-it-easier";
+    ex.bogus = 1;
+    const issues = validateContent(c);
+    expect(issues.filter((x) => x.path.endsWith("exception.bogus")), formatIssues(issues)).toHaveLength(1);
+    expectIssueAt(issues, "perks[0].exception.kind");
+  });
+
   it("a non-object challenge entry", () => {
     const c = base();
     (c.challenges as unknown[])[0] = "not-an-object";

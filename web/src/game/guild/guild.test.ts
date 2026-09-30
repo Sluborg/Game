@@ -508,6 +508,26 @@ describe("stale events & caps (handler guards)", () => {
     expect(out.mail.some((m) => m.id === "sealed-keep")).toBe(true);
   });
 
+  it("an unread outcome is NEVER trimmed, even when only unread outcomes exceed the cap (the Report relies on it)", () => {
+    // ui/report/sealed.ts treats a missing linked outcome as READ; that is only
+    // sound while this holds (Codex P2 on PR #45).
+    const mod: GuildState = JSON.parse(JSON.stringify(createInitialState(SEED)));
+    mod.mail = [];
+    for (let d = 0; d < MAIL_CAP + 5; d++) {
+      mod.mail.push({
+        id: `sealed-${d}`,
+        day: 1,
+        kind: "outcome",
+        teaser: "back",
+        log: { beats: [], outcome: "success", reward: 100, guildCut: 10, cutPct: BROKERAGE, durationDays: 1 },
+        read: false,
+      });
+    }
+    mod.queue = [{ id: "n", tick: 3, ord: 1, type: "night" }];
+    const out = step(mod);
+    for (let d = 0; d < MAIL_CAP + 5; d++) expect(out.mail.some((m) => m.id === `sealed-${d}`), `sealed-${d}`).toBe(true);
+  });
+
   it("Advance refuses to move the clock while a decision is already pending (Codex P2)", () => {
     let s = createInitialState(SEED);
     let guard = 0;

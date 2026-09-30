@@ -26,6 +26,7 @@ import {
   type TimeSpeed,
 } from "../kit";
 import { useGuild } from "../guild/GuildContext";
+import { partyStatus } from "../guild/partyStatus";
 import { StoryStage } from "../report/StoryStage";
 import {
   QUEST_BY_ID,
@@ -303,24 +304,6 @@ function Runway({
       <span className={styles.runway}>{runway}</span>
     </InspectChip>
   );
-}
-
-function partyStatus(runtime: PartyRuntime, tick: number): { icon: Parameters<typeof Icon>[0]["name"]; text: string } {
-  const a = runtime.assignment;
-  if (a) {
-    if (a.tier === "standing") return { icon: "watch", text: `On a shift — ${a.questTitle}` };
-    const dayNow = dayOf(tick);
-    const dayX = dayNow - dayOf(a.dispatchedTick) + 1;
-    return { icon: "depart", text: `Out — ${a.questTitle} · day ${Math.min(dayX, a.durationDays)} of ${a.durationDays}` };
-  }
-  if (runtime.activity) {
-    return runtime.activity.kind === "rest"
-      ? { icon: "rest", text: "Resting" }
-      : { icon: "train", text: "Training" };
-  }
-  // A lone hero gets the single meeple, not the party cluster (Stefan).
-  const solo = (PARTY_BY_ID[runtime.id]?.memberIds.length ?? 1) === 1;
-  return { icon: solo ? "hero" : "party", text: "In the hall" };
 }
 
 function PartyRow({ runtime, tick }: { runtime: PartyRuntime; tick: number }) {
