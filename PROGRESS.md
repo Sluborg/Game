@@ -2,6 +2,26 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-09-30 - Codex P2 fixes from promotion PR #45 — plan done
+- Gate: plan (Review #1 folded; proceeding to build)
+- Branch: `ccr-f054514f-0jzz9m` (off `origin/dev` @ `49fa2a3`; first commit = §50 backfill of PR
+  #46's merged gate). Fixes the three P2s Codex raised on the `dev` → `main` promotion PR #45 (code
+  already on `dev`, so the fix lands on `dev` and #45 picks it up). Combat core untouched.
+- F1 Heroes status was mock (`mockHeroes.ts` "On quest: Sunken Ruins" while the Hall showed other
+  activity) → derive from live `GuildState` via ONE shared party-status helper used by both the Hall
+  strip and the Heroes roster/sheet (same words, incl. "day n of m").
+- F2 Report ledger re-masked a trimmed read outcome ("see report ›" to a deleted report) → mask iff
+  the linked outcome is present AND unread (`clock.ts` never trims an unread outcome; now test-locked).
+- F3 perk schema accepted wrong-kind fields → per-kind closed allowlist, exactly one unknown-key pass
+  per path.
+- Review #1 (4 personas): **2 blockers, both folded** — (1) Player-exp: Heroes wording must match the
+  Hall's exactly → shared helper; (2) Adversary: F3 must not double-report a stray key → single
+  `rejectUnknownKeys` per path. Non-blockers folded: "In the hall" fallback (no new "Idle" vocab
+  except a missing-party guard), `unreadOutcomeIds` naming, trim-invariant test, returned-party test,
+  every mock hero maps to a sim party, screenshot required. Deferred: PartyCard's "See the Hall" line
+  → live status (follow-up, out of scope).
+- Open questions: none.
+
 ## 2026-09-30 - Resolution engine — codex-fixed
 - Gate: **merged 2026-09-30 23:08 +0200** (merge commit `49fa2a3`; backfilled 2026-09-30). **PR #46 into `dev`.**
 - Branch: `ccr-c145e2cc-3s42bn` → **PR #46 into `dev`**.
