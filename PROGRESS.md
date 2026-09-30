@@ -3,7 +3,7 @@
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
 ## 2026-09-30 - Resolution engine — codex-fixed
-- Gate: codex-fixed → awaiting merge decision
+- Gate: **merged 2026-09-30 23:08 +0200** (merge commit `49fa2a3`; backfilled 2026-09-30). **PR #46 into `dev`.**
 - Branch: `ccr-c145e2cc-3s42bn` → **PR #46 into `dev`**.
 - Codex (on `da4af67`): ONE finding, **P1** — the log collapsed plan/build/PR into a single
   `build + PR` entry, against AGENTS.md's "one dated entry per gate". Fixed by splitting it into
