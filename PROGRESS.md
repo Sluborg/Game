@@ -3,7 +3,7 @@
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
 ## 2026-07-13 - Resolution & progression model (2d6, bounded, feats philosophy) — build done, PR opened
-- Gate: build + PR (design interview + Review #2 cleared; awaiting Codex)
+- Gate: **merged 2026-07-14 00:46 +0200** (merge commit `07147b2`; backfilled 2026-09-30). **PR #44 into `dev`.**
 - Branch: `claude/resolution-model` (NEW off `origin/dev`, on Stefan's ask; first commit = §50
   backfill of PR #43's merged gate). Docs-only design change + a tiny reconcile of vestigial funnel
   constants; combat core untouched; nothing wired into the sim.
