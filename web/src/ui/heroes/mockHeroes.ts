@@ -119,7 +119,7 @@ export const HEROES: Hero[] = [
     archetype: "Sellsword",
     presetKey: "knight",
     layers: layersFor("knight"),
-    // Leads The Free Blades; between contracts at the hall (matches mockParties.ts).
+    // Leads The Free Blades.
     attributes: attrs([15, "verified"], [9, "claimed"], [13, "verified"], [7, "rumor"]),
     equipment: {
       armor: { name: "Steel Plate", effect: "Heavy mitigation; the sim's best armour tier." },
@@ -211,7 +211,7 @@ export const HEROES: Hero[] = [
     archetype: "Hedge Knight",
     presetKey: "knight",
     layers: layersFor("knight"),
-    // The Iron Vigil's dependable second — same quest/location as Ysolt.
+    // The Iron Vigil's dependable second.
     attributes: attrs([12, "claimed"], [8, "claimed"], [12, "verified"], [9, "rumor"]),
     equipment: {
       armor: { name: "Mail Hauberk", effect: "Mid-tier mitigation." },

@@ -55,8 +55,8 @@ describe("heroStatus — live, Hall-worded", () => {
     expect(heroStatus("ysolt", s)).toEqual({ kind: "guild", text: "In the hall" });
   });
 
-  it("guard: a party missing from the state falls back to Idle instead of throwing", () => {
+  it("guard: a party missing from the state falls back to an unknown instead of throwing", () => {
     const s = { ...createInitialState(1), parties: [] };
-    expect(heroStatus("ysolt", s)).toEqual({ kind: "idle", text: "Idle" });
+    expect(heroStatus("ysolt", s)).toEqual({ kind: "idle", text: "Whereabouts unknown" });
   });
 });

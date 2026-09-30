@@ -9,6 +9,7 @@ import type { HeroStatus } from "./mockHeroes";
 export function heroStatus(heroId: string, state: GuildState): HeroStatus {
   const s = heroPartyStatus(heroId, state);
   // Guard only: every roster hero belongs to a sim party (liveStatus.test.ts).
-  if (!s) return { kind: "idle", text: "Idle" };
+  // Worded as an unknown, not a state the sim never produces (Review #2 Designer).
+  if (!s) return { kind: "idle", text: "Whereabouts unknown" };
   return { kind: s.away ? "quest" : "guild", text: s.text };
 }
