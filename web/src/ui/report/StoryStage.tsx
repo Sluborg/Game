@@ -216,6 +216,8 @@ function GrowthBlock({ log }: { log: AdventureLog }) {
         ))}
       </ul>
       {more > 0 && <div className={styles.growthMore}>+{more} more</div>}
+      {/* The Heroes screen still shows its old stats (a live sheet is a later slice). */}
+      <div className={styles.growthMore}>Hero sheets update in a later build.</div>
     </div>
   );
 }

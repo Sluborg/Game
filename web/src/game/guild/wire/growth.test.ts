@@ -12,6 +12,7 @@ import { SKILL_MAX } from "../content/skills";
 import type { ResultId } from "../content/ladder";
 import type { AdventureLog, Beat, HeroProgressState } from "../types";
 import { renderGrowth } from "./growthReport";
+import { skillXpToNext } from "../resolve/growth";
 import { awardGrowth, heroStatsFrom, initialHeroes, normalizeHeroes, validHeroProgress } from "./progress";
 import { questStats } from "./harness";
 
@@ -160,6 +161,14 @@ describe("normalizeHeroes / validHeroProgress", () => {
     expect(mk((p) => (p.skills.force = 2.5))).toBe(false);
     expect(mk((p) => (p.xp.skills.force = -1))).toBe(false);
     expect(mk((p) => (p.xp.skills.force = 9999))).toBe(false); // bank beyond the next level's cost
+    expect(mk((p) => (p.xp.skills.force = skillXpToNext(p.skills.force)))).toBe(false); // a bank EQUAL to the cost has already levelled
+    expect(mk((p) => (p.xp.skills.force = null as never))).toBe(false); // JSON turns NaN into null
+    expect(mk((p) => (p.xp.attrs.mind = Number.NaN))).toBe(false);
+    // At the caps the bank is always 0 (XP there is discarded): anything above is corrupt.
+    expect(mk((p) => ((p.skills.force = SKILL_MAX), (p.xp.skills.force = 3)))).toBe(false);
+    expect(mk((p) => ((p.attrs.mind = ATTR_MAX), (p.xp.attrs.mind = 3)))).toBe(false);
+    expect(mk((p) => ((p.skills.force = SKILL_MAX), (p.xp.skills.force = 0)))).toBe(true);
+    expect(mk((p) => ((p.attrs.mind = ATTR_MAX), (p.xp.attrs.mind = 0)))).toBe(true);
     expect(mk((p) => delete (p.skills as Record<string, number>).force)).toBe(false);
     expect(validHeroProgress(null)).toBe(false);
   });
@@ -268,6 +277,43 @@ describe("growth through the real clock", () => {
   });
 });
 
+describe("module boundary: only wire/ reaches resolve/", () => {
+  it("no source file outside game/guild/wire/ and game/guild/resolve/ imports a resolve/ module", () => {
+    const root = fileURLToPath(new URL("../../../", import.meta.url));
+    const offenders: string[] = [];
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir)) {
+        const full = dir + name;
+        if (statSync(full).isDirectory()) walk(full + "/");
+        else if (/\.(ts|tsx)$/.test(name) && !/\.test\./.test(name) && !/\.cli\./.test(name)) {
+          const rel = full.slice(root.length);
+          if (rel.startsWith("game/guild/wire/") || rel.startsWith("game/guild/resolve/")) continue;
+          if (/from\s+['"][^'"]*\/resolve(\/[^'"]*)?['"]/.test(readFileSync(full, "utf8"))) offenders.push(rel);
+        }
+      }
+    };
+    walk(root + "game/");
+    walk(root + "ui/");
+    expect(offenders).toEqual([]);
+  });
+});
+
+describe("determinism across a save boundary", () => {
+  it("replaying the returning step from a JSON-round-tripped state reproduces the heroes and the sealed log byte for byte", () => {
+    setEngine("v3");
+    let s = createInitialState(1);
+    let prev = clone(s);
+    for (let i = 0; i < 800; i++) {
+      prev = clone(s);
+      s = step(s);
+      if (s.mail.some((m) => m.kind === "outcome" && m.log?.growth)) break;
+    }
+    const replay = step(clone(prev));
+    expect(JSON.stringify(replay.heroes)).toBe(JSON.stringify(s.heroes));
+    expect(JSON.stringify(replay.mail)).toBe(JSON.stringify(s.mail));
+  });
+});
+
 describe("a sealed log's growth stays small", () => {
   it("four growth lines serialise to well under 1 KB", () => {
     const out = awardGrowth(initialHeroes(), "iron-vigil", logOf([beat("reasoning", "wren", "success"), beat("nature", "wren", "success"), beat("mobility", "wren", "success"), beat("fortitude", "ysolt", "success")]));
@@ -294,7 +340,9 @@ describe("nothing outside the story card reads sealed growth or live heroes", ()
         else if (/\.(ts|tsx)$/.test(name) && !/\.test\./.test(name)) {
           const rel = full.slice(root.length);
           if (rel.startsWith("game/guild/wire/") || allowed.includes(rel)) continue;
-          if (/\.(heroes|growth)\b/.test(readFileSync(full, "utf8"))) offenders.push(rel);
+          const src = readFileSync(full, "utf8");
+          // property reads, bracket reads and destructuring
+          if (/\.(heroes|growth)\b|\[["'](heroes|growth)["']\]|\{[^}]*\b(heroes|growth)\b[^}]*\}\s*=/.test(src)) offenders.push(rel);
         }
       }
     };

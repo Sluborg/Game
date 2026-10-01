@@ -14,7 +14,7 @@
 
 import { ATTR_IDS, ATTR_MAX, type AttrId } from "../content/attributes";
 import { SKILL_IDS, SKILL_MAX, SKILL_ATTR, type SkillId } from "../content/skills";
-import { applySupport, applyUse, attrXpToNext, emptyProgress, isSuccess, skillXpToNext, type HeroProgress } from "../resolve/growth";
+import { applySupport, applyUse, attrXpToNext, emptyProgress, isSuccess, skillXpToNext } from "../resolve/growth";
 import { HERO_BY_ID, HERO_DATA, PARTY_BY_ID } from "../roster";
 import type { AdventureLog, GrowthLine, HeroProgressState, HeroStatsMap } from "../types";
 
@@ -35,7 +35,8 @@ export function heroStatsFrom(heroes: Record<string, HeroProgressState>): HeroSt
   const out: HeroStatsMap = {};
   for (const h of HERO_DATA) {
     const p = heroes[h.id];
-    out[h.id] = p ? { attrs: { ...p.attrs }, skills: { ...p.skills }, combat: h.v3.combat } : h.v3;
+    // A hero missing from `heroes` falls back to a COPY of the roster stats (never the shared object).
+    out[h.id] = p ? { attrs: { ...p.attrs }, skills: { ...p.skills }, combat: h.v3.combat } : { attrs: { ...h.v3.attrs }, skills: { ...h.v3.skills }, combat: h.v3.combat };
   }
   return out;
 }
@@ -52,6 +53,7 @@ export function validHeroProgress(p: unknown): p is HeroProgressState {
   if (!q.attrs || !q.skills || !q.xp || !q.xp.attrs || !q.xp.skills) return false;
   for (const a of ATTR_IDS) {
     if (!isLevel(q.attrs[a], ATTR_MAX)) return false;
+    // At the cap the bank is always 0 (applyUse discards XP there), so a bound of 1 admits only 0.
     if (!isBank(q.xp.attrs[a], q.attrs[a] >= ATTR_MAX ? 1 : attrXpToNext(q.attrs[a]))) return false;
   }
   for (const s of SKILL_IDS) {
@@ -92,12 +94,12 @@ export function awardGrowth(heroes: Record<string, HeroProgressState>, partyId: 
   if (log.growth) return { heroes, lines: log.growth };
   const party = PARTY_BY_ID[partyId];
   const next = cloneHeroes(heroes);
-  type Acc = { gained: number; levelUp: boolean; attrUp: boolean };
-  const acc = new Map<string, Acc>(); // `${heroId}|${skill}`
+  type Acc = { heroId: string; skill: SkillId; gained: number; levelUp: boolean; attrUp: boolean };
+  const acc = new Map<string, Acc>(); // one entry per hero + skill, in first-touched order
   const touch = (heroId: string, skill: SkillId): Acc => {
-    const k = `${heroId}|${skill}`;
+    const k = `${heroId}\u0000${skill}`;
     let a = acc.get(k);
-    if (!a) acc.set(k, (a = { gained: 0, levelUp: false, attrUp: false }));
+    if (!a) acc.set(k, (a = { heroId, skill, gained: 0, levelUp: false, attrUp: false }));
     return a;
   };
 
@@ -108,17 +110,17 @@ export function awardGrowth(heroes: Record<string, HeroProgressState>, partyId: 
     const success = isSuccess(c.result);
     for (const id of party.memberIds) {
       const atCap = next[id].skills[skill] >= SKILL_MAX; // XP at the cap is discarded, so it is not "gained"
-      const prog = next[id] as unknown as HeroProgress;
+      const prog = next[id];
       if (id === c.leadId) {
         const out = applyUse(prog, skill, c.result);
-        next[id] = out.progress as unknown as HeroProgressState;
+        next[id] = out.progress;
         const a = touch(id, skill);
         if (!atCap) a.gained += success ? 2 : 1;
         if (out.skillUp > 0) a.levelUp = true;
         if (out.attrUp > 0) a.attrUp = true;
       } else {
         const out = applySupport(prog, skill, c.result);
-        next[id] = out.progress as unknown as HeroProgressState;
+        next[id] = out.progress;
         if (success) {
           const a = touch(id, skill);
           if (!atCap) a.gained += 1;
@@ -130,10 +132,9 @@ export function awardGrowth(heroes: Record<string, HeroProgressState>, partyId: 
 
   const lines: GrowthLine[] = [];
   const order = (id: string) => party.memberIds.indexOf(id);
-  for (const [k, a] of acc) {
+  for (const a of acc.values()) {
     if (a.gained <= 0 && !a.levelUp && !a.attrUp) continue;
-    const [heroId, skillRaw] = k.split("|");
-    const skill = skillRaw as SkillId;
+    const { heroId, skill } = a;
     const p = next[heroId];
     const level = p.skills[skill];
     const attr: AttrId = SKILL_ATTR[skill];

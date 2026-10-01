@@ -89,15 +89,23 @@ export function renderGrowth(): string {
   const solved = contested.filter((d) => d.to90 === 0);
   const slow = contested.filter((d) => d.to90 !== 0);
   const label = (d: Drift) => `${d.quest.title} · ${SHORT[d.partyId]}`;
+  const attrGain = (id: string) => partyTotals(id, snapAt(careers.get(id)!, 100)).attrs - partyTotals(id, base).attrs;
+  const attrTotal = PARTY_DATA.reduce((t, p) => t + attrGain(p.id), 0);
   const verdict =
     `**Verdict:** ${solved.length} of ${contested.length} postable quest·party pairs are already at 90% success or better before any growth (the same as v1). ` +
     (slow.length === 0
-      ? "Nothing left to grow into."
+      ? "Nothing is left to grow into. "
       : `The rest (${slow.map((d) => `${label(d)}: ${pct(d.atSnap[0])} now, ${pct(d.atSnap[3])} after 100 quests`).join("; ")}) ` +
         (slow.every((d) => d.to90 !== null)
-          ? `reach 90% after ${slow.map((d) => d.to90).join(", ")} quests.`
-          : `do not reach 90% within ${MAX_QUESTS} quests: growth is slow against fixed difficulty.`)) +
-    " Harder quests (content progression) will be needed long before heroes feel stuck.";
+          ? `reach 90% after ${slow.map((d) => d.to90).join(", ")} quests. `
+          : `do not reach 90% within ${MAX_QUESTS} quests. `)) +
+    `Attributes gain ${attrTotal === 0 ? "no levels at all" : `only ${attrTotal} level${attrTotal === 1 ? "" : "s"}`} in 100 quests (20 XP per level, Success only).`;
+  const decision =
+    "**Decide:** raise the skill XP rates, or ship harder quests first, before building more growth UI? " +
+    "(Harder quests, content progression, are not in this slice.)";
+  // Only the pairs that move are worth a table row; the rest sit at 100% throughout.
+  const interesting = drifts.filter((d) => d.atSnap.some((x) => x < 1) || d.to90 !== 0);
+  const flat = drifts.length - interesting.length;
 
   const out: string[] = [];
   const push = (...l: string[]) => out.push(...l);
@@ -109,14 +117,16 @@ export function renderGrowth(): string {
     "",
     verdict,
     "",
+    decision,
+    "",
     "**What this means for a player:** after each quest the end-of-story card lists the experience the party earned",
-    "(\"Reasoning 6 · 12/30 XP (+2)\", \"Level up!\"). The Heroes screen still shows its old mock stats; a live",
+    "(\"Wren Ashdown · Reasoning 6 · +2 XP (12/30 to next)\", \"Level up!\"). The Heroes screen still shows its old mock stats; a live",
     "hero-sheet panel is a later slice. Production (v1) earns no experience.",
     "",
     "## How growth works",
     "",
     "- The hero who **led** an encounter gets skill XP (+1, +2 on Success or Triumph) and attribute XP (+1 on Success or Triumph).",
-    "- Every other party member gets +1 skill XP on a Success or Triumph, no attribute XP, so nobody stalls.",
+    "- Every other party member gets +1 XP in the skill that encounter tested on a Success or Triumph, no attribute XP, so nobody stalls.",
     "- Skill level n costs 5n XP, attribute level n costs 20n XP (PR #46's rates). **Attributes will not visibly move in a playtest.**",
     "- **Combat beats train nothing** (combat is a temporary rule), so combat-heavy quests are growth-neutral.",
     "- Difficulty is absolute: a stronger hero simply succeeds more often.",
@@ -136,18 +146,16 @@ export function renderGrowth(): string {
       }),
     ),
     "",
-    `Attribute levels gained after 100 quests (whole party): ` +
-      PARTY_DATA.map((p) => `${SHORT[p.id]} +${partyTotals(p.id, snapAt(careers.get(p.id)!, 100)).attrs - partyTotals(p.id, base).attrs}`).join(", ") +
-      ".",
-    "",
     "## B. Difficulty drift",
     "",
     "P(success) of each quest with the party's heroes as grown after N quests (400 seeded runs each).",
     "",
     table(
       ["Quest · party", "0", "20", "50", "100"],
-      drifts.map((d) => [`${d.quest.title} · ${SHORT[d.partyId]}`, ...d.atSnap.map(pct)]),
+      interesting.map((d) => [`${d.quest.title} · ${SHORT[d.partyId]}`, ...d.atSnap.map(pct)]),
     ),
+    "",
+    `The other ${flat} quest·party pairs are at 100% throughout.`,
     "",
     "## C. Quests until 90% success",
     "",
@@ -155,13 +163,8 @@ export function renderGrowth(): string {
     "",
     table(
       ["Quest · party", "Quests to 90%"],
-      drifts.map((d) => [`${d.quest.title} · ${SHORT[d.partyId]}`, d.to90 === null ? `over ${MAX_QUESTS}` : d.to90 === 0 ? "already" : d.to90]),
+      interesting.map((d) => [`${d.quest.title} · ${SHORT[d.partyId]}`, d.to90 === null ? `over ${MAX_QUESTS}` : d.to90 === 0 ? "already" : d.to90]),
     ),
-    "",
-    "### Open questions (for Stefan)",
-    "",
-    "- Is that the right amount of play before a quest feels solved, or should XP rates change?",
-    "- Harder quests (content progression) are not in this slice.",
     "",
   );
   return out.join("\n");

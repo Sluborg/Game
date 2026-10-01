@@ -129,10 +129,14 @@ describe("effectNote for v3 Insufficient: short of the requirement is never read
 
 describe("formatGrowth: the outcome card's Experience rows", () => {
   const line = (over: Partial<GrowthLine>): GrowthLine => ({ heroId: "wren", name: "Wren Ashdown", skill: "reasoning", xpGained: 2, level: 6, xp: 12, cost: 30, levelUp: false, ...over });
-  it("shows level, bank toward the next level and the gain; level-ups read as such", () => {
-    const { rows } = formatGrowth([line({}), line({ skill: "nature", levelUp: true, level: 7, xp: 0, cost: 35 })]);
-    expect(rows[0]).toEqual({ text: "Wren Ashdown · Reasoning 6 · 12/30 XP (+2)", levelUp: false });
+  it("shows the gain and the bank toward the next level; level-ups read as such; a first level is 'learned'", () => {
+    const { rows } = formatGrowth([line({}), line({ skill: "nature", levelUp: true, level: 7, xp: 0, cost: 35 }), line({ skill: "influence", levelUp: true, level: 1, xp: 0, cost: 10 })]);
+    expect(rows[0]).toEqual({ text: "Wren Ashdown · Reasoning 6 · +2 XP (12/30 to next)", levelUp: false });
     expect(rows[1]).toEqual({ text: "Level up! Wren Ashdown · Nature 7", levelUp: true });
+    expect(rows[2]).toEqual({ text: "Wren Ashdown learned Influence", levelUp: true });
+  });
+  it("an untrained skill says so instead of 'Reasoning 0'", () => {
+    expect(formatGrowth([line({ level: 0, xp: 2, cost: 5 })]).rows[0].text).toBe("Wren Ashdown · Reasoning (untrained) · +2 XP (2/5 to next)");
   });
   it("caps at 4 rows with a '+n more' count; empty and missing give nothing", () => {
     const many = Array.from({ length: 7 }, (_, i) => line({ heroId: `h${i}` }));
