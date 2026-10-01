@@ -3,7 +3,7 @@
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
 ## 2026-09-30 - Wire A: the v3 check live in the quest resolver — codex-fixed
-- Gate: codex-fixed -> awaiting merge decision (delta Review #2 cleared, 0 blockers)
+- Gate: **merged 2026-09-30 23:46 +0200** (merge commit `ed800cb`; backfilled 2026-10-01). **PR #48 into `dev`.**
 - Branch: `ccr-c145e2cc-3s42bn` -> **PR #48 into `dev`**.
 - Codex (on `f6bd592`): ONE finding, **P2** — a v3 Insufficient maps to the `ok` slot and reused the v1 `ok`
   narration, which reads as a win ("They bring the guardian down") under an "Insufficient" label. Valid.
