@@ -15,8 +15,8 @@
 import { ATTR_IDS, ATTR_MAX, type AttrId } from "../content/attributes";
 import { SKILL_IDS, SKILL_MAX, SKILL_ATTR, type SkillId } from "../content/skills";
 import { applySupport, applyUse, attrXpToNext, emptyProgress, isSuccess, skillXpToNext } from "../resolve/growth";
-import { HERO_BY_ID, HERO_DATA, PARTY_BY_ID } from "../roster";
-import type { AdventureLog, GrowthLine, HeroProgressState, HeroStatsMap } from "../types";
+import { HERO_BY_ID, HERO_DATA, PARTY_BY_ID, PARTY_DATA } from "../roster";
+import type { AdventureLog, GrowthLine, GuildState, HeroProgressState, HeroStatsMap } from "../types";
 
 /** The starting progress of every roster hero: their v3 stats, zero XP banks. */
 export function initialHeroes(): Record<string, HeroProgressState> {
@@ -78,6 +78,15 @@ export function normalizeHeroes(raw: unknown): Record<string, HeroProgressState>
 export interface AwardResult {
   heroes: Record<string, HeroProgressState>;
   lines: GrowthLine[];
+  /** True when the log has v3 beats that carry `skill` + `leadId`, i.e. it is subject
+   * to the award. The caller then stores `lines` (possibly empty) on `log.growth`,
+   * which is the explicit "already awarded" marker. */
+  awardable: boolean;
+}
+
+/** Does this log carry v3 beats the award can read? (v1 logs and older v3 logs do not.) */
+function isAwardable(log: AdventureLog): boolean {
+  return log.beats.some((b) => b.check?.leadId && b.check.skill);
 }
 
 function cloneHeroes(h: Record<string, HeroProgressState>): Record<string, HeroProgressState> {
@@ -88,10 +97,11 @@ const SKILL_ORDER = (s: SkillId) => SKILL_IDS.indexOf(s);
 
 /** Experience a returning party earns from its sealed log. Pure: returns new heroes and
  * the aggregated per-hero, per-skill lines (level-ups first, then most XP, then party
- * order). A no-op when the log already carries `growth` (idempotence guard) or has no
+ * order). A no-op when the log already carries `growth` (the awarded marker) or has no
  * trainable v3 beats. */
 export function awardGrowth(heroes: Record<string, HeroProgressState>, partyId: string, log: AdventureLog): AwardResult {
-  if (log.growth) return { heroes, lines: log.growth };
+  // `growth` set (even to []) is the "already awarded" marker: never award twice.
+  if (log.growth !== undefined) return { heroes, lines: log.growth, awardable: false };
   const party = PARTY_BY_ID[partyId];
   const next = cloneHeroes(heroes);
   type Acc = { heroId: string; skill: SkillId; gained: number; levelUp: boolean; attrUp: boolean };
@@ -162,5 +172,30 @@ export function awardGrowth(heroes: Record<string, HeroProgressState>, partyId: 
       order(x.heroId) - order(y.heroId) ||
       SKILL_ORDER(x.skill) - SKILL_ORDER(y.skill),
   );
-  return { heroes: next, lines };
+  return { heroes: next, lines, awardable: isAwardable(log) };
+}
+
+/** Recover experience a returning quest should have earned but did not: the shared
+ * save lets an OLDER build (no `awardGrowth`) return a v3 quest dispatched in dev,
+ * clearing the assignment and storing the log without `growth`. On load, every
+ * sealed outcome whose log is awardable but carries no `growth` marker is awarded
+ * now (oldest first), exactly once: the marker is then set, even to [], so the next
+ * load skips it. A standing shift leaves no stored log, so its XP cannot be
+ * recovered. Mutates the freshly parsed state; returns how many logs were recovered. */
+export function recoverGrowth(state: Pick<GuildState, "heroes" | "mail">): number {
+  let recovered = 0;
+  for (let i = state.mail.length - 1; i >= 0; i--) {
+    const m = state.mail[i];
+    const log = m.log;
+    if (m.kind !== "outcome" || !log || log.growth !== undefined) continue;
+    const lead = log.beats.find((b) => b.check?.leadId)?.check?.leadId;
+    const party = lead ? PARTY_DATA.find((p) => p.memberIds.includes(lead)) : undefined;
+    if (!party) continue;
+    const award = awardGrowth(state.heroes, party.id, log);
+    if (!award.awardable) continue;
+    state.heroes = award.heroes;
+    log.growth = award.lines;
+    recovered++;
+  }
+  return recovered;
 }

@@ -18,6 +18,9 @@ hero-sheet panel is a later slice. Production (v1) earns no experience.
 - Skill level n costs 5n XP, attribute level n costs 20n XP (PR #46's rates). **Attributes will not visibly move in a playtest.**
 - **Combat beats train nothing** (combat is a temporary rule), so combat-heavy quests are growth-neutral.
 - Difficulty is absolute: a stronger hero simply succeeds more often.
+- **Shared save:** `/Game/` and `/Game/dev/` share one save. If an older build returns a v3 quest, the next load of
+  this build awards its experience once (the log's `growth` field is the "already awarded" marker). A standing
+  shift leaves no stored log, so its experience cannot be recovered.
 
 ## A. Pace
 

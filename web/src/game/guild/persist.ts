@@ -7,7 +7,7 @@
 // not orphaned.
 
 import { createInitialState } from "./state";
-import { normalizeHeroes } from "./wire/progress";
+import { normalizeHeroes, recoverGrowth } from "./wire/progress";
 import { SAVE_VERSION } from "./tuning";
 import type { GuildState } from "./types";
 
@@ -67,6 +67,9 @@ export function loadState(seed: number): GuildState {
     // corrupt entry is refilled alone; SAVE_VERSION is NOT bumped (/Game/ and
     // /Game/dev/ share this save, and an older build just carries the field through).
     parsed.heroes = normalizeHeroes(parsed.heroes);
+    // An older build sharing this save may have returned a v3 quest without awarding
+    // its experience: award it now, once (the log's `growth` marker prevents repeats).
+    recoverGrowth(parsed);
     return parsed;
   } catch {
     return createInitialState(seed);

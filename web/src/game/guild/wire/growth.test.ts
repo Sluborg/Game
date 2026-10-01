@@ -13,7 +13,7 @@ import type { ResultId } from "../content/ladder";
 import type { AdventureLog, Beat, HeroProgressState } from "../types";
 import { renderGrowth } from "./growthReport";
 import { skillXpToNext } from "../resolve/growth";
-import { awardGrowth, heroStatsFrom, initialHeroes, normalizeHeroes, validHeroProgress } from "./progress";
+import { awardGrowth, heroStatsFrom, initialHeroes, normalizeHeroes, recoverGrowth, validHeroProgress } from "./progress";
 import { questStats } from "./harness";
 
 afterEach(() => setEngine("v1"));
@@ -243,7 +243,7 @@ describe("growth through the real clock", () => {
 
   it("v1: production behaviour is inert: no growth lines, heroes deep-equal the defaults", () => {
     const s = runUntilOutcome("v1");
-    expect(s.mail.some((m) => m.log?.growth)).toBe(false);
+    expect(s.mail.some((m) => m.log?.growth !== undefined)).toBe(false);
     expect(s.heroes).toEqual(initialHeroes());
   });
 
@@ -274,6 +274,74 @@ describe("growth through the real clock", () => {
     const before = questStats(RUINS, "free-blades", "v3", 400);
     const after = questStats(RUINS, "free-blades", "v3", 400, heroStatsFrom(grown));
     expect(after.success).toBeGreaterThan(before.success);
+  });
+});
+
+describe("recovering experience an older shared-save build skipped (Codex P2)", () => {
+  const mailOf = (log: AdventureLog) => [{ id: "m1", day: 1, kind: "outcome" as const, teaser: "back", log, read: false }];
+  const v3Log = () => logOf([beat("reasoning", "wren", "success")]);
+
+  it("an awardable log with no `growth` marker is awarded on load, exactly once", () => {
+    const state = { heroes: initialHeroes(), mail: mailOf(v3Log()) };
+    expect(recoverGrowth(state)).toBe(1);
+    expect(state.heroes.wren.xp.skills.reasoning).toBe(2);
+    expect(state.mail[0].log!.growth!.length).toBeGreaterThan(0);
+    const before = JSON.stringify(state.heroes);
+    expect(recoverGrowth(state)).toBe(0); // the marker stops a second award
+    expect(JSON.stringify(state.heroes)).toBe(before);
+  });
+
+  it("a log that awarded nothing still gets the marker (growth = []), so attribute XP is never double-counted", () => {
+    const heroes = initialHeroes();
+    for (const id of ["wren", "ysolt", "doran"]) heroes[id].skills.reasoning = SKILL_MAX; // every skill capped: the award is the lead's attribute XP only, no line
+    const state = { heroes, mail: mailOf(v3Log()) };
+    expect(recoverGrowth(state)).toBe(1);
+    expect(state.mail[0].log!.growth).toEqual([]);
+    const attrXp = state.heroes.wren.xp.attrs.mind;
+    expect(attrXp).toBe(1);
+    recoverGrowth(state);
+    expect(state.heroes.wren.xp.attrs.mind).toBe(attrXp);
+  });
+
+  it("v1 logs, older v3 logs (no leadId) and already-awarded logs are untouched", () => {
+    const v1: Beat = { ...beat("reasoning", "wren", "success"), check: undefined };
+    const old = beat("reasoning", "wren", "success");
+    delete old.check!.leadId;
+    const done = { ...v3Log(), growth: [] };
+    const heroes = initialHeroes();
+    const state = { heroes, mail: [...mailOf(logOf([v1])), ...mailOf(logOf([old])), ...mailOf(done)] };
+    expect(recoverGrowth(state)).toBe(0);
+    expect(state.heroes).toEqual(initialHeroes());
+  });
+
+  it("processes oldest first, and the clock marks awardable logs even when they award nothing", () => {
+    const heroes = initialHeroes();
+    const first = v3Log();
+    const second = v3Log();
+    const state = { heroes, mail: [{ id: "new", day: 2, kind: "outcome" as const, teaser: "", log: second, read: false }, { id: "old", day: 1, kind: "outcome" as const, teaser: "", log: first, read: false }] };
+    recoverGrowth(state);
+    expect(state.mail[1].log!.growth).toBeDefined();
+    expect(state.mail[0].log!.growth).toBeDefined();
+    expect(state.heroes.wren.xp.skills.reasoning).toBe(4);
+  });
+
+  describe("through loadState", () => {
+    const store = new Map<string, string>();
+    const g = globalThis as unknown as { localStorage?: unknown };
+    afterEach(() => {
+      delete g.localStorage;
+      store.clear();
+    });
+    it("a save an older build returned (log without growth) is recovered on load and stays recovered", () => {
+      g.localStorage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v), removeItem: (k: string) => void store.delete(k) };
+      const s = clone(createInitialState(5));
+      s.mail = mailOf(v3Log()) as never;
+      saveState(s);
+      const once = loadState(5);
+      expect(once.heroes.wren.xp.skills.reasoning).toBe(2);
+      saveState(once);
+      expect(loadState(5).heroes.wren.xp.skills.reasoning).toBe(2); // not awarded again
+    });
   });
 });
 

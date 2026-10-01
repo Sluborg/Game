@@ -290,7 +290,7 @@ function onReturn(next: GuildState, ev: SimEvent): void {
   // card after the story is watched. v1 logs carry no check: nothing is awarded.
   const award = awardGrowth(next.heroes, party.id, a.log);
   next.heroes = award.heroes;
-  if (award.lines.length > 0) a.log.growth = award.lines;
+  if (award.awardable) a.log.growth = award.lines; // the marker, even when empty
 
   next.gold += a.log.guildCut;
   creditWallets(next, party.id, a.log.reward - a.log.guildCut);

@@ -133,14 +133,20 @@ export interface GrowthRow {
  * visible between level-ups ("Wren Ashdown · Reasoning 6 · +2 XP (12/30 to next)"). */
 export function formatGrowth(lines: readonly GrowthLine[] | undefined, max = 4): { rows: GrowthRow[]; more: number } {
   if (!lines || lines.length === 0) return { rows: [], more: 0 };
-  const rows: GrowthRow[] = lines.map((l) => {
-    // A first level is a milestone ("learned"), not a number.
-    if (l.levelUp && l.level === 1) return { text: `${l.name} learned ${title(l.skill)}`, levelUp: true };
-    if (l.levelUp) return { text: `Level up! ${l.name} · ${title(l.skill)} ${l.level}`, levelUp: true };
-    if (l.attrUp && l.attr && l.xpGained === 0) return { text: `${l.name} · ${title(l.attr)} ${l.attrLevel} (attribute up)`, levelUp: true };
-    const skill = l.level === 0 ? `${title(l.skill)} (untrained)` : `${title(l.skill)} ${l.level}`;
-    const next = l.cost === null ? "max" : `${l.xp}/${l.cost} to next`;
-    return { text: `${l.name} · ${skill} · +${l.xpGained} XP (${next})`, levelUp: false };
-  });
+  const rows: GrowthRow[] = [];
+  for (const l of lines) {
+    if (l.levelUp && l.level === 1) {
+      // A first level is a milestone ("learned"), not a number.
+      rows.push({ text: `${l.name} learned ${title(l.skill)}`, levelUp: true });
+    } else if (l.levelUp) {
+      rows.push({ text: `Level up! ${l.name} · ${title(l.skill)} ${l.level}`, levelUp: true });
+    } else if (l.xpGained > 0) {
+      const skill = l.level === 0 ? `${title(l.skill)} (untrained)` : `${title(l.skill)} ${l.level}`;
+      const next = l.cost === null ? "max" : `${l.xp}/${l.cost} to next`;
+      rows.push({ text: `${l.name} · ${skill} · +${l.xpGained} XP (${next})`, levelUp: false });
+    }
+    // The governing attribute going up is always shown, alongside the skill row (Codex P2).
+    if (l.attrUp && l.attr) rows.push({ text: `${l.name} · ${title(l.attr)} ${l.attrLevel} (attribute up)`, levelUp: true });
+  }
   return { rows: rows.slice(0, max), more: Math.max(0, rows.length - max) };
 }
