@@ -1,0 +1,22 @@
+[
+  {
+    "id": "the-sunken-archive",
+    "title": "The Sunken Archive",
+    "giver": "a hooded antiquarian",
+    "location": "The Drowned Library",
+    "reward": 700,
+    "minDuration": 1,
+    "maxDuration": 3,
+    "challenges": ["wilderness-passage", "research-library", "dungeon-traps"]
+  },
+  {
+    "id": "the-magistrates-favor",
+    "title": "The Magistrate's Favor",
+    "giver": "a nervous clerk",
+    "location": "The Magistrate's Hall",
+    "reward": 350,
+    "minDuration": 1,
+    "maxDuration": 2,
+    "challenges": ["interview-witnesses", "political-support"]
+  }
+]

@@ -1,0 +1,15 @@
+/* Kenney icon, tinted via mask so one sprite follows currentColor. */
+.icon {
+  display: inline-block;
+  flex: 0 0 auto;
+  vertical-align: -0.2em;
+  background-color: currentColor;
+  -webkit-mask-image: var(--icon-url);
+  mask-image: var(--icon-url);
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}

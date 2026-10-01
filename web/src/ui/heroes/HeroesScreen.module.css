@@ -5,7 +5,7 @@
   /* Reserve room for the fixed bottom NavBar so the last row never hides under it. */
   padding-bottom: calc(var(--nav-h) + var(--sp-4) + env(safe-area-inset-bottom));
   background:
-    radial-gradient(140% 60% at 50% 0%, rgba(106, 47, 191, 0.22), transparent 55%),
+    radial-gradient(140% 60% at 50% 0%, rgba(255, 198, 92, 0.1), transparent 55%),
     linear-gradient(180deg, var(--surface-1), var(--surface-0));
 }
 
@@ -17,7 +17,7 @@
   align-items: baseline;
   justify-content: space-between;
   padding: var(--sp-3) var(--sp-4);
-  background: linear-gradient(180deg, var(--c-royal-deep), rgba(46, 16, 101, 0.6));
+  background: linear-gradient(180deg, var(--bar-1), var(--bar-2));
   border-bottom: 1px solid var(--stroke-gold);
   backdrop-filter: blur(6px);
 }
@@ -33,10 +33,32 @@
   color: var(--text-dim);
 }
 
+/* Sections: Parties first, then "Without a party". The section owns the outer
+   padding; the lists inside just stack. */
+.section {
+  padding: var(--sp-4) var(--sp-4) 0;
+}
+.section:last-of-type {
+  padding-bottom: var(--sp-4);
+}
+.sectionTitle {
+  margin: 0 0 var(--sp-3);
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: var(--c-gold);
+}
+.parties {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
 .roster {
   list-style: none;
   margin: 0;
-  padding: var(--sp-4);
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
@@ -59,6 +81,10 @@
 .row:hover {
   transform: translateY(-1px);
   filter: brightness(1.1);
+}
+.row:active {
+  transform: translateY(0);
+  filter: brightness(0.94);
 }
 .row:focus-visible {
   outline: none;
@@ -87,7 +113,8 @@
 }
 .status {
   display: inline-flex;
-  align-items: center;
+  /* top-aligned: a long live status ("Out — … · day n of m") may wrap */
+  align-items: flex-start;
   gap: var(--sp-2);
   margin-top: 2px;
   font-size: 12.5px;
@@ -96,6 +123,7 @@
 .dot {
   width: 9px;
   height: 9px;
+  margin-top: 0.35em;
   border-radius: 50%;
   flex: 0 0 auto;
 }

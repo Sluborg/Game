@@ -30,9 +30,12 @@ export interface LpcSpriteProps {
   scale?: number;
   /** Knocked out — static, greyed. */
   down?: boolean;
+  /** When false, suppress the idle bob so the figure stands still (used for the
+   *  static hero portrait/roster thumbnails). Combat callers omit it → true. */
+  animate?: boolean;
 }
 
-function LpcSpriteImpl({ layers, lungeDir, swingNonce, hurtNonce, scale = 1, down = false }: LpcSpriteProps) {
+function LpcSpriteImpl({ layers, lungeDir, swingNonce, hurtNonce, scale = 1, down = false, animate = true }: LpcSpriteProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const scratchRef = useRef<HTMLCanvasElement | null>(null);
   const imagesRef = useRef<{ img: HTMLImageElement; layer: ResolvedLayer }[]>([]);
@@ -41,8 +44,8 @@ function LpcSpriteImpl({ layers, lungeDir, swingNonce, hurtNonce, scale = 1, dow
   const actionRef = useRef<Action>(null);
 
   // Mirror animation-affecting props into refs so the long-lived rAF loop stays current.
-  const propsRef = useRef({ lungeDir, scale, down });
-  propsRef.current = { lungeDir, scale, down };
+  const propsRef = useRef({ lungeDir, scale, down, animate });
+  propsRef.current = { lungeDir, scale, down, animate };
 
   // Load (and cache) layer images; redraw from scratch when the gear/tint changes.
   useEffect(() => {
@@ -117,7 +120,7 @@ function LpcSpriteImpl({ layers, lungeDir, swingNonce, hurtNonce, scale = 1, dow
 
     let raf = 0;
     const loop = (now: number) => {
-      const { lungeDir: dir, scale: s, down: ko } = propsRef.current;
+      const { lungeDir: dir, scale: s, down: ko, animate: anim } = propsRef.current;
       let col = 0;
       let tx = 0;
       let ty = 0;
@@ -143,7 +146,9 @@ function LpcSpriteImpl({ layers, lungeDir, swingNonce, hurtNonce, scale = 1, dow
           tx = -dir * env * 9 + Math.sin(p * 48) * 1.6;
           filter = `brightness(${1 + (1 - p) * 1.1})`;
         } else {
-          ty = Math.sin((now / BOB_PERIOD) * Math.PI * 2) * 2;
+          // Idle: a gentle bob — suppressed when animate is false so a static
+          // portrait/thumbnail rests on the neutral standing frame (col 0).
+          ty = anim ? Math.sin((now / BOB_PERIOD) * Math.PI * 2) * 2 : 0;
         }
       }
 

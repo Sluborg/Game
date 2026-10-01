@@ -1,0 +1,315 @@
+/* StoryStage — a full-screen fixed-viewport story player. No horizontal scroll. */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at 50% 0%, var(--surface-2), var(--surface-0));
+  color: var(--text-strong);
+  font-family: var(--font-ui);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: var(--sp-4);
+  border-bottom: 1px solid var(--stroke-soft);
+}
+.party { font-family: var(--font-display); font-size: 1.1rem; color: var(--text-gold); }
+.quest { font-size: 0.8rem; color: var(--text-dim); }
+.close {
+  min-width: 44px; min-height: 44px;
+  border: 1px solid var(--stroke-soft);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text-dim);
+  font-size: 1rem;
+  cursor: pointer;
+}
+.headBtns { display: flex; align-items: center; gap: var(--sp-2); }
+/* Skip-to-result: deliberate, corner-placed, away from the meter (R#1 PX). */
+.skip {
+  min-height: 44px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--stroke-soft);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.skip:active { filter: brightness(1.12); }
+
+.stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Top-aligned (not dead-centre) so a short beat anchors near the top instead of
+     floating in a void that reads as half-loaded on a tall phone (PX Review #2). */
+  justify-content: flex-start;
+  padding: 8vh var(--sp-4) var(--sp-4);
+  overflow-y: auto;
+  cursor: pointer;
+  position: relative;
+}
+.tapHint {
+  position: absolute;
+  bottom: var(--sp-4);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  opacity: 0.8;
+  animation: hintpulse 1.6s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes hintpulse { 0%,100% { opacity: 0.35; } 50% { opacity: 0.85; } }
+
+.beat {
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  animation: slideIn var(--t-med) var(--ease-out);
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(28px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.branch {
+  align-self: flex-start;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.branch[data-branch="recovery"] { background: var(--c-blood-deep); color: var(--c-parchment); }
+.branch[data-branch="bonus"] { background: var(--gold-soft-lo); color: var(--ink-gold); }
+
+.beatTop { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+/* Larger + CAPS (Stefan: "the type text should be larger. maybe caps."). */
+.beatType {
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 3px 12px;
+  border-radius: var(--r-pill);
+  border: 1px solid currentColor;
+}
+.beatType[data-type="investigation"] { color: var(--c-sky); }
+.beatType[data-type="travel"] { color: var(--c-emerald); }
+.beatType[data-type="social"] { color: var(--gold-soft-hi); }
+.beatType[data-type="combat"] { color: var(--c-blood); }
+.beatLoc { font-size: 0.8rem; color: var(--text-dim); font-style: italic; }
+
+.beatTitle { margin: 0; font-family: var(--font-display); font-size: 1.35rem; line-height: 1.25; color: var(--text-strong); }
+.beatText { margin: 0; font-size: 1.15rem; line-height: 1.5; font-family: var(--font-display); }
+.trait { margin: 0; font-size: 0.85rem; color: var(--gold-soft-hi); font-style: italic; }
+/* The trait NAME as a bordered pill — the char page's trait treatment
+   carried into the story line (Stefan). */
+.traitPill {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid currentColor;
+  border-radius: var(--r-pill);
+  font-style: normal;
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+}
+
+/* ── The check meter — 5 grade zones (tint + tick, no labels: they don't fit
+   430px; the landed grade tag carries the word — Review #1 PX B1). ────────── */
+
+/* Grade marks above the bar: one cell per zone, dashed lines at the LIMITS
+   rising from the bar (Stefan). Cells center their icon cluster; the dashed
+   right edge of each cell IS the threshold line. */
+.marks {
+  display: flex;
+  align-items: flex-end;
+  height: 18px;
+  margin-bottom: 2px;
+}
+.markCell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  height: 100%;
+  border-right: 1px dashed color-mix(in srgb, var(--text-strong) 55%, transparent);
+  overflow: hidden;
+}
+.markCell:last-child { border-right: none; }
+.markIcon { flex: 0 0 auto; color: var(--c-parchment); }
+/* Bad-end hearts read blood-tinted, good-end rosettes gold — the color says
+   which side of the line you're on before the count does. */
+.markCell:nth-child(1) .markIcon, .markCell:nth-child(2) .markIcon { color: var(--c-blood); }
+.markCell:nth-child(4) .markIcon { color: var(--gold-soft-hi); }
+.markCell:nth-child(5) .markIcon { color: var(--gold-soft-hi); }
+
+.meter {
+  position: relative;
+  height: 16px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--stroke-soft);
+  overflow: hidden;
+  background: var(--surface-1);
+}
+/* Zone tints render ON TOP of the fill at partial alpha, so the benchmark
+   levels stay visible while the bar rises. Rank runs blood → ember → neutral →
+   emerald → BRIGHT emerald (best is green, not yellow — Stefan). */
+.zones { position: absolute; inset: 0; display: flex; pointer-events: none; }
+.zone { height: 100%; border-right: 1px solid color-mix(in srgb, var(--text-strong) 40%, transparent); }
+.zone:last-child { border-right: none; }
+.zone[data-grade="fail"] { background: color-mix(in srgb, var(--c-blood) 30%, transparent); }
+.zone[data-grade="poor"] { background: color-mix(in srgb, var(--c-ember) 24%, transparent); }
+.zone[data-grade="ok"]   { background: color-mix(in srgb, var(--c-parchment) 14%, transparent); }
+.zone[data-grade="good"] { background: color-mix(in srgb, var(--c-emerald) 26%, transparent); }
+.zone[data-grade="crit"] {
+  background: color-mix(in srgb, var(--c-emerald) 48%, transparent);
+  box-shadow: inset 0 0 6px color-mix(in srgb, var(--c-emerald) 70%, transparent);
+}
+.fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  background: linear-gradient(180deg, var(--c-parchment), var(--c-parchment-dim));
+  /* The playhead: a 2px leading edge that survives every zone tint. */
+  border-right: 2px solid var(--text-strong);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--c-parchment) 60%, transparent);
+}
+
+/* The landed result: grade tag pops, effect note beside it, THEN the prose. */
+.landing {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  animation: tagpop var(--t-fast) var(--ease-out);
+}
+@keyframes tagpop { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: none; } }
+.rollGrade {
+  font-size: 0.95rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: var(--r-sm);
+  border: 1px solid currentColor;
+}
+/* The LIVE readout while the bar rises — visibly provisional (dashed, dim)
+   so the ticking word never reads as the verdict. */
+.rollGrade[data-live] {
+  border-style: dashed;
+  opacity: 0.75;
+  font-weight: 700;
+}
+.rollGrade[data-grade="crit"] { color: var(--c-emerald); text-shadow: 0 0 8px color-mix(in srgb, var(--c-emerald) 60%, transparent); }
+.rollGrade[data-grade="good"] { color: var(--c-emerald); }
+.rollGrade[data-grade="ok"] { color: var(--c-parchment); }
+.rollGrade[data-grade="poor"] { color: var(--c-ember); }
+.rollGrade[data-grade="fail"] { color: var(--c-blood); }
+.effect { font-size: 0.8rem; color: var(--text-dim); font-style: italic; }
+/* Marks a report graded by the v3 rules (old v1 reports show nothing). */
+.rulesTag {
+  margin-left: var(--sp-2);
+  padding: 0 6px;
+  font-size: 0.68rem;
+  color: var(--text-gold);
+  border: 1px solid var(--text-gold);
+  border-radius: var(--r-sm);
+  vertical-align: middle;
+}
+/* The v3 check line: a footnote under the result, never competing with it. */
+.rollLine { flex-basis: 100%; font-size: 0.72rem; color: var(--text-dim); }
+.rollDice { opacity: 0.75; }
+
+.prose {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  animation: prosein var(--t-med) var(--ease-out) 0.25s both;
+}
+@keyframes prosein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .landing, .prose, .beat, .outcome { animation: none; }
+}
+
+.outcome {
+  width: 100%;
+  max-width: 520px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  animation: slideIn var(--t-med) var(--ease-out);
+}
+.outcomeTag {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+.outcome[data-outcome="success"] .outcomeTag { color: var(--c-emerald); }
+.outcome[data-outcome="failure"] .outcomeTag { color: var(--c-blood); }
+.outcomeReward { font-size: 0.95rem; color: var(--text-dim); }
+.outcomeNote { font-size: 0.8rem; color: var(--text-dim); font-style: italic; }
+
+.controls {
+  padding: var(--sp-3) var(--sp-4) calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--stroke-soft);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.dots { display: flex; justify-content: center; gap: 8px; }
+.dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--surface-3);
+  border: 1px solid var(--stroke-soft);
+  transition: background var(--t-fast);
+}
+.dot[data-on="true"] { background: var(--gold-soft-hi); border-color: var(--gold-soft-hi); }
+.dot[data-current="true"] { box-shadow: 0 0 0 3px var(--stroke-gold); }
+.dot[data-final] { border-style: dashed; }
+
+.btns { display: flex; align-items: center; gap: var(--sp-2); }
+.overlay button { touch-action: manipulation; }
+/* (The speed chip moved to the kit — ui/kit/TimeControls — one control
+   language with the Hall header: same glyphs, same 38px-visual height.) */
+.toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 var(--sp-4);
+  border-radius: var(--r-md);
+  border: 1px solid var(--stroke-gold);
+  background: var(--surface-2);
+  color: var(--text-gold);
+  font-weight: 700;
+  cursor: pointer;
+}
+.toggle::after { content: ""; position: absolute; inset: -4px 0; }
+.toggle:disabled { opacity: 0.4; cursor: default; }
+.next {
+  flex: 1;
+  min-height: 44px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--gold-soft-lo);
+  background: linear-gradient(180deg, var(--gold-soft-hi), var(--gold-soft-lo));
+  color: var(--ink-gold);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.next:active { transform: scale(0.98); }

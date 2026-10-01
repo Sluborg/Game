@@ -1,7 +1,8 @@
 // HeroSprite — renders a hero's placeholder portrait by reusing the existing LPC
-// compositor (LpcSprite) at a fixed square size: 64×64 for a roster thumbnail,
-// 256×256 for the stat-page portrait (same composite, CSS-upscaled with
-// image-rendering: pixelated, exactly how LpcSprite already renders).
+// compositor (LpcSprite) at a caller-set square size (64×64 roster thumbnail;
+// 192 stat-page portrait display — the portrait ART TARGET remains 256×256, an
+// asset-vs-display split). Same composite, CSS-upscaled with image-rendering:
+// pixelated, exactly how LpcSprite already renders. Rendered static (no bob).
 //
 // LpcSprite draws to an aria-hidden <canvas> and silently swallows image-load
 // failures (LpcSprite.tsx:58) — on a fresh clone / blocked fetch that would
@@ -66,7 +67,8 @@ export function HeroSprite({ layers, name, size }: HeroSpriteProps) {
       )}
       {ready && (
         <div className={styles.sprite}>
-          <LpcSprite layers={layers} lungeDir={1} swingNonce={0} hurtNonce={0} scale={1} />
+          {/* Static presentation (no idle bob) — heroes are shown, not fighting. */}
+          <LpcSprite layers={layers} lungeDir={1} swingNonce={0} hurtNonce={0} scale={1} animate={false} />
         </div>
       )}
     </div>

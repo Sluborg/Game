@@ -1,0 +1,29 @@
+[
+  {
+    "id": "bookish",
+    "name": "Bookish",
+    "description": "Years among stacks and scroll-cases. Study and lore come easily.",
+    "effect": {
+      "modifierPercent": 0.15,
+      "appliesTo": { "skills": ["reasoning"] }
+    }
+  },
+  {
+    "id": "glib",
+    "name": "Glib",
+    "description": "A ready tongue that talks its way in and out of trouble.",
+    "effect": {
+      "modifierPercent": 0.1,
+      "appliesTo": { "skills": ["influence"] }
+    }
+  },
+  {
+    "id": "frail",
+    "name": "Frail",
+    "description": "Tires fast and bruises easily; hard travel and climbing take a toll.",
+    "effect": {
+      "modifierPercent": -0.15,
+      "appliesTo": { "attributes": ["constitution"], "skills": ["mobility"] }
+    }
+  }
+]

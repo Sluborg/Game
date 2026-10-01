@@ -1,60 +1,60 @@
-// Landing screen: pick the Combat Test feature or the minimal Node Test.
-// Styled via the shared token system; icons are inline SVG.
+// Landing screen: the "Asset Report" key art (its own title) with a compact menu
+// of entry points. "Enter the Guild" is the primary way into the Slice 1 loop;
+// World Map and Combat Test are secondary. A Reset control wipes the saved run
+// (behind a confirm), reachable even if a broken save ever kept the app from the
+// board. Controls use the shared kit <Button>.
 
+import { useState } from "react";
+import { Button } from "./kit";
 import styles from "./StartScreen.module.css";
 
 interface Props {
-  onCombatTest: () => void;
+  onPlay: () => void;
   onNodeTest: () => void;
+  onCombatTest: () => void;
+  onReset: () => void;
 }
 
-function SwordsIcon() {
-  return (
-    <svg viewBox="0 0 48 48" className={styles.icon} aria-hidden>
-      <path d="M12 6l5 1 17 23-4 4L7 17Z" fill="var(--c-blood)" />
-      <path d="M36 6l-5 1L14 30l4 4 17-17Z" fill="var(--c-gold)" />
-      <rect x={6} y={36} width={10} height={4} rx={1} transform="rotate(45 11 38)" fill="var(--c-parchment-dim)" />
-      <rect x={32} y={36} width={10} height={4} rx={1} transform="rotate(-45 37 38)" fill="var(--c-parchment-dim)" />
-    </svg>
-  );
-}
+export function StartScreen({ onPlay, onNodeTest, onCombatTest, onReset }: Props) {
+  const [confirming, setConfirming] = useState(false);
 
-function NodeIcon() {
-  return (
-    <svg viewBox="0 0 48 48" className={styles.icon} aria-hidden>
-      <path d="M6 16l18-8 18 8-18 8Z" fill="var(--c-royal-light)" />
-      <path d="M6 16v16l18 8V24Z" fill="var(--c-royal-deep)" />
-      <path d="M42 16v16l-18 8V24Z" fill="var(--c-royal)" />
-      <circle cx={24} cy={15} r={4} fill="var(--c-gold)" />
-      <circle cx={14} cy={28} r={3} fill="var(--c-gold-light)" />
-      <circle cx={34} cy={29} r={3} fill="var(--c-gold-light)" />
-    </svg>
-  );
-}
-
-export function StartScreen({ onCombatTest, onNodeTest }: Props) {
   return (
     <div className={styles.screen}>
-      <div className={styles.inner}>
-        <h1 className={styles.title}>Godblood</h1>
-        <p className={styles.subtitle}>A demigod kingdom, day by day.</p>
-
-        <button className={`${styles.card} ${styles.test}`} onClick={onCombatTest}>
-          <SwordsIcon />
-          <span className={styles.text}>
-            <span className={styles.name}>Combat Test</span>
-            <span className={styles.desc}>Watch the tick-based battle engine resolve a fight.</span>
-          </span>
-        </button>
-
-        <button className={`${styles.card} ${styles.node}`} onClick={onNodeTest}>
-          <NodeIcon />
-          <span className={styles.text}>
-            <span className={styles.name}>World Map</span>
-            <span className={styles.desc}>Preview the world map and building nodes; the bottom nav takes you to Heroes and Combat Test from there.</span>
-          </span>
-        </button>
-      </div>
+      <h1 className={styles.srOnly}>Asset Report</h1>
+      <nav className={styles.menu} aria-label="Main menu">
+        <Button className={styles.menuBtn} onClick={onPlay}>
+          Enter the Guild
+        </Button>
+        <Button variant="secondary" className={styles.menuBtn} onClick={onNodeTest}>
+          World Map
+        </Button>
+        <Button variant="secondary" className={styles.menuBtn} onClick={onCombatTest}>
+          Combat Test
+        </Button>
+        {!confirming ? (
+          <Button variant="secondary" className={styles.menuBtn} onClick={() => setConfirming(true)}>
+            Reset run
+          </Button>
+        ) : (
+          <div className={styles.confirm}>
+            <span className={styles.confirmText}>Wipe this run and start over?</span>
+            <div className={styles.confirmRow}>
+              <Button
+                className={styles.confirmBtn}
+                onClick={() => {
+                  onReset();
+                  setConfirming(false);
+                }}
+              >
+                Reset
+              </Button>
+              <Button variant="secondary" className={styles.confirmBtn} onClick={() => setConfirming(false)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+      </nav>
     </div>
   );
 }

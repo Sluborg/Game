@@ -8,7 +8,9 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "sim:resolution": "vite-node src/game/guild/resolve/sim.cli.ts",
+    "sim:wire": "vite-node src/game/guild/wire/report.cli.ts"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -20,6 +22,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "typescript": "^5.6.3",
     "vite": "^5.4.11",
+    "vite-node": "^2.1.9",
     "vitest": "^2.1.8"
   }
 }

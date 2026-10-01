@@ -2,6 +2,662 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-09-30 - Wire A: the v3 check live in the quest resolver — codex-fixed
+- Gate: codex-fixed -> awaiting merge decision (delta Review #2 cleared, 0 blockers)
+- Branch: `ccr-c145e2cc-3s42bn` -> **PR #48 into `dev`**.
+- Codex (on `f6bd592`): ONE finding, **P2** — a v3 Insufficient maps to the `ok` slot and reused the v1 `ok`
+  narration, which reads as a win ("They bring the guardian down") under an "Insufficient" label. Valid.
+  Fixed: every beat gets its own required `insufficient` line (BeatDef, authored so it reads right when
+  the quest goes on and on a forced recovery), used by the v3 bridge for the ok slot; v1 keeps its ok
+  lines. The same slot also paid the +8% bonus-purse sweetener, contradicting "did not meet the
+  requirement": a v3 Insufficient bonus beat now earns none (v1 byte-identical). Tests: every beat has a
+  distinct Insufficient line, the ok slot reads it on both engines' paths, sweetener zero on v3 / +8% on
+  v1 (synthetic harder bonus beat, since no shipped bonus beat lands Insufficient). Doc notes it.
+- Delta Review #2 (4 personas on the delta): 0 blockers. Folded: three lines that implied a cost ("falls
+  behind", "late") softened to match "costs nothing more"; the v1-ok test now matches by exact beat id.
+- Verified: `tsc -b` clean; `npm run test` 222 pass + 1 skipped (GOLDEN untouched); `vite build`;
+  `docs/resolution-wire.md` regenerated, `docs/resolution-sim.md` unchanged.
+
+## 2026-09-30 - Wire A: the v3 check live in the quest resolver — PR opened
+- Gate: PR (Review #2 cleared; `@codex review` posted)
+- Branch: `ccr-c145e2cc-3s42bn` -> PR into `dev` (restarted from `dev` after PR #47; `dev` is PR #45's
+  head, so this ships to production with #45, and production stays inert: v1 default, no new UI).
+- Review #2 (4 personas on the DIFF): **0 blockers** (Engineer APPROVE; QA fresh-clone `npm ci && test &&
+  sim:wire && sim:resolution` clean, tree unchanged). Non-blockers folded: the "Rules v1" chip no
+  longer renders in production (chip only while v3 grades new quests, plus a per-report "v3 rules" tag
+  in the story view so mixed history is never mislabelled); v3 wording for a recovery at Insufficient
+  ("Not enough, but they get through."); the generated doc now states candidly that standing jobs and
+  the Hidden reliquary are zero-luck, adds a legend (T = target, arrows, strong beats, %) and a Design
+  flags block; dropped the unused `GRADE_TO_RESULT` and a pointless re-export; true-median style nits
+  none. Not folded (accepted): `initEngine()` stays in the `useState` initializer (idempotent, dispatch
+  only happens after mount); meter zone icons keep v1 positions (later UI slice); named
+  `labelFor`/`logIsV3` live in `storyText.ts`, not a new `resultLabels.ts`.
+- Verified after the folds: `npx tsc -b` clean; `vite build`; `npm run test` 218 pass + 1 skipped
+  (GOLDEN untouched); headless Chromium at 390px, both bases: production shows no chip and no tag,
+  dev shows "Rules v3" + "v3 rules", no console errors. Screenshots refreshed in `docs/screenshots/`.
+- Open for Stefan (also in `docs/resolution-wire.md` Design flags): zero-luck standing jobs and Hidden
+  reliquary; hero stats fitted to v1 results rather than written by character (Pell Reasoning 7 >
+  Mobility 6, Brok Combat 7 < Force 9); zone icons keep v1 positions.
+
+## 2026-09-30 - Wire A: the v3 check live in the quest resolver — build done
+- Gate: build (Review #1 folded; heading into Review #2)
+- Branch: `ccr-c145e2cc-3s42bn` (restarted from `origin/dev` @ `f794d1e` after PR #47 merged; first
+  commit = §50 backfill of PR #47's merged gate; #46 was already backfilled by #47). Combat core
+  (`game/battle/*`) untouched; `resolve/` (PR #46) consumed, not modified.
+- Files: NEW `game/guild/{engine,zones}.ts`, `game/guild/wire/{bridge,harness,report,report.cli}.ts` +
+  `wire.test.ts`, `ui/guild/engineInit.ts`, `docs/resolution-wire.md` (generated, drift-tested),
+  `docs/screenshots/wire-{dev-v3,prod-v1}-report.png`; MOD `types.ts` (HeroV3, Beat.check),
+  `roster.ts` (v3 stats), `quests.ts` (skill + diff3 per beat), `resolver.ts` (engine switch; GRADE_ZONES
+  moved to `zones.ts` and re-exported), `clock.ts` (engine at dispatch), `index.ts`; UI `storyText.ts`
+  (one label source, v3 notes), `StoryStage.tsx/.css` (roll line), `ReportScreen.tsx/.css` (engine chip),
+  `GuildContext.tsx` (initEngine); `package.json` (`sim:wire`); `docs/CHALLENGE_SYSTEM.md` pointer.
+- Decisions (mine, Stefan delegated): v3 is an option beside v1; production inert (v1 default, v3 only
+  on `/Game/dev/` or `?engine=v3`); each v3 result fills the v1 grade slot; carry and size bonus enter
+  outside the engine clamp; recovery raises the TARGET x1.3; veterans pre-grown, Mira follows the birth
+  rule; trait delta = +3% per point.
+- Calibration (seeds 1..2000, real `resolveQuest`, gate = success/bonus within 10 points, strong beats
+  within 0.3): all eligible quest x party rows pass; worst deltas +7pp success (Blades/Ruins 63 to 70),
+  +8pp bonus (Vigil/Ruins 75 to 83), 0.14 strong. Numbers fitted by a throwaway coordinate-descent over
+  `diff3` and a few hero combat/skill values, then fixed by hand and pinned in a generated doc.
+- Verified: `npx tsc -b` clean; `npm run test` 216 pass + 1 skipped (GOLDEN resolver fixture untouched and
+  green); `vite build` for `--base=/Game/` and `--base=/Game/dev/`; headless Chromium at 390px with a saved run
+  per engine: production shows "Rules v1" + "Success / They hold steady.", dev shows "Rules v3" +
+  "Insufficient / Not enough, but no lasting harm. / Needed 22, got 21", no console errors.
+- Open: none blocking. Next: Review #2, PR, Codex.
+
+## 2026-09-30 - Wire A: the v3 check live in the quest resolver — plan done
+- Gate: plan (Review #1 cleared)
+- Branch: `ccr-c145e2cc-3s42bn`. Scope declared: `game/guild/{resolver,roster,quests,types,clock,index}`,
+  new `engine.ts`, `zones.ts`, `wire/`, the Report UI label path, docs. PR #45 (dev to main) has `dev`
+  as its head, so this PR ships to production with it: v1 must stay the production default.
+- Review #1 (4 personas on the PLAN): 11 blockers, all folded into the plan: bridge lives in `wire/` (keeps
+  `resolve/` boundary test intact); explicit separate rng per engine, shared carry/recovery loop, v3
+  `roll` derived from dice; carry and size bonus outside the clamp; recovery x1.3 applies to the target;
+  calibration bar widened to success + bonus + strong beats; explicit production-inert gate with a pure
+  `detectEngine`; veterans pre-grown and Mira exactly on the birth rule; one label source for ticker,
+  landed word and aria; v3 note copy for Insufficient (never read as a pass); roll line after landing
+  only; engine chip. Non-blockers folded: required `HeroData.v3`, named trait constant, engine reset in
+  tests, combat split owned by the bridge, meter clamp and monotonic test.
+- Open questions: none blocking.
+
+## 2026-09-30 - Codex P2 fixes from promotion PR #45 — codex-fixed
+- Gate: **merged 2026-09-30 23:24 +0200** (merge commit `f794d1e`; backfilled 2026-09-30). **PR #47 into `dev`.**
+- Branch: `ccr-f054514f-0jzz9m` → **PR #47 into `dev`**.
+- Codex (on `0aeb2e3`; only a PROGRESS-only commit after it): **zero findings** ("Didn't find any
+  major issues"). No delta, so no Review #2 re-run. CI green on the head.
+- Open questions: none.
+
+## 2026-09-30 - Codex P2 fixes from promotion PR #45 — PR opened
+- Gate: PR opened → awaiting Codex review
+- Branch: `ccr-f054514f-0jzz9m` → **PR #47 into `dev`**; `@codex review` posted. Once merged, the
+  `dev` → `main` promotion PR #45 carries these fixes (its head is `dev`).
+- Open questions: none.
+
+## 2026-09-30 - Codex P2 fixes from promotion PR #45 — build done
+- Gate: build (Review #2 cleared, 0 blockers; opening PR)
+- Branch: `ccr-f054514f-0jzz9m`.
+- Files: new `web/src/ui/guild/partyStatus.ts` (the Hall's `partyStatus`, moved + shared),
+  `web/src/ui/hall/HallScreen.tsx` (imports it), new `web/src/ui/heroes/liveStatus.ts` (+test),
+  `HeroesScreen.tsx` / `HeroCard.tsx` (live status via `useGuild`), `mockHeroes.ts` (hardcoded
+  `status` removed), `*.module.css` (status dot top-aligned for wrapping), new
+  `web/src/ui/report/sealed.ts` (+test) + `ReportScreen.tsx`, `game/guild/content/schema.ts`
+  (per-kind `PERK_FIELDS`) + `content.test.ts`, `game/guild/guild.test.ts` (unread-outcome-never-
+  trimmed invariant), `docs/screenshots/codexfix-{hall-strip,heroes-sheet}.png`.
+- Verification: `tsc -b` clean, `vitest` 181 pass + 1 skipped (was 163), `npm run build` green;
+  each new test fails with its fix reverted (Adversary, fresh worktree). Screenshots from a real sim
+  state reproducing Codex's case (Free Blades in the Ruins): Hall strip and Brok's sheet both read
+  "Out — The Sunken Ruins · day 2 of 3".
+- Review #2 (4 personas on the diff): **0 blockers.** Folded: dot top-aligned for wrapped status,
+  guard text "Whereabouts unknown" (not a fake "Idle" state), stale mock comments. Not folded, logged
+  as follow-ups: PartyCard's "See the Hall" line → live party status; Hall strip `.partyText`
+  ellipsis cuts "of m" at 390px (pre-existing CSS); shift vs quest dot colour; unused mock
+  `location`/`plan` fields in `mockParties.ts`; a pre-PR-#36 save that already lost an unread
+  outcome would now show that cut (local-only, accepted).
+- Open questions: none.
+
+## 2026-09-30 - Codex P2 fixes from promotion PR #45 — plan done
+- Gate: plan (Review #1 folded; proceeding to build)
+- Branch: `ccr-f054514f-0jzz9m` (off `origin/dev` @ `49fa2a3`; first commit = §50 backfill of PR
+  #46's merged gate). Fixes the three P2s Codex raised on the `dev` → `main` promotion PR #45 (code
+  already on `dev`, so the fix lands on `dev` and #45 picks it up). Combat core untouched.
+- F1 Heroes status was mock (`mockHeroes.ts` "On quest: Sunken Ruins" while the Hall showed other
+  activity) → derive from live `GuildState` via ONE shared party-status helper used by both the Hall
+  strip and the Heroes roster/sheet (same words, incl. "day n of m").
+- F2 Report ledger re-masked a trimmed read outcome ("see report ›" to a deleted report) → mask iff
+  the linked outcome is present AND unread (`clock.ts` never trims an unread outcome; now test-locked).
+- F3 perk schema accepted wrong-kind fields → per-kind closed allowlist, exactly one unknown-key pass
+  per path.
+- Review #1 (4 personas): **2 blockers, both folded** — (1) Player-exp: Heroes wording must match the
+  Hall's exactly → shared helper; (2) Adversary: F3 must not double-report a stray key → single
+  `rejectUnknownKeys` per path. Non-blockers folded: "In the hall" fallback (no new "Idle" vocab
+  except a missing-party guard), `unreadOutcomeIds` naming, trim-invariant test, returned-party test,
+  every mock hero maps to a sim party, screenshot required. Deferred: PartyCard's "See the Hall" line
+  → live status (follow-up, out of scope).
+- Open questions: none.
+
+## 2026-09-30 - Resolution engine — codex-fixed
+- Gate: **merged 2026-09-30 23:08 +0200** (merge commit `49fa2a3`; backfilled 2026-09-30). **PR #46 into `dev`.**
+- Branch: `ccr-c145e2cc-3s42bn` → **PR #46 into `dev`**.
+- Codex (on `da4af67`): ONE finding, **P1** — the log collapsed plan/build/PR into a single
+  `build + PR` entry, against AGENTS.md's "one dated entry per gate". Fixed by splitting it into
+  the three entries below (plan done, build done, PR opened) with the review verdicts at the gate
+  they belong to. Docs-only delta; Review #2 re-run on the delta (self, small scope): no new
+  blockers. CI green on the head.
+
+## 2026-09-30 - Resolution engine — PR opened
+- Gate: PR (Review #2 cleared; `@codex review` posted)
+- Branch: `ccr-c145e2cc-3s42bn` → **PR #46 into `dev`**.
+- Review #2 (4-persona on the DIFF): Engineer + QA PASS (fresh clone `npm ci && test && sim` clean).
+  4 blockers folded: Table B/E reshaped for phones with legend + takeaway, E over 3 seeds with a
+  comparable metric (attribute level-ups), a **Design flags** block in the sim doc. Non-blockers
+  folded: an untrained skill no longer levels for free (0→1 costs 5), modPct quantised so x.5
+  products round predictably, target derived from one constant, `renderSim` dropped from the
+  barrel, true median, rng hoisted in the determinism test.
+- Verified after the folds: `npx tsc -b` clean; `vite build` green; `npm run test` **163 pass +
+  1 skipped**; `npm run sim:resolution` regenerates `docs/resolution-sim.md` byte-identical.
+- Open (for Stefan, listed in `docs/resolution-sim.md` §Design flags): the dead unmodified top of
+  the scale (D95+), the narrow mid-scale Success band (cliff), attribute crawl under stretch play.
+  Next slice: give heroes v3 stats and wire `resolve/` into `resolver.ts` behind a flag.
+
+## 2026-09-30 - Resolution engine — build done
+- Gate: build
+- Branch: `ccr-c145e2cc-3s42bn`. Pure engine, NOT wired into the live v1 sim (its heroes carry no
+  v3 attributes/skills; a v1→v3 mapping would be a second scope). Combat core and `resolver.ts`
+  untouched; the GOLDEN resolver test is byte-identical.
+- Files: NEW `web/src/game/guild/resolve/{check,growth,birth,sim,sim.cli,index}.ts` +
+  `resolve.test.ts`; NEW `docs/resolution-sim.md` (generated by `npm run sim:resolution`,
+  drift-tested); `web/package.json` (script + `vite-node` devDependency), `web/package-lock.json`,
+  `web/tsconfig.json` (exclude `*.cli.ts`); `docs/CHALLENGE_SYSTEM.md` (§Check formula cap note,
+  §Difficulty adopted conversion + meter zones, §Progression rates, §Open decisions settled),
+  `docs/GLOSSARY.md` §Resolution; `PROGRESS.md`.
+- Verified: `npx tsc -b` clean; `vite build` green; `npm run test` 162 pass + 1 skipped (30 new).
+
+## 2026-09-30 - Resolution engine: 2d6 check, difficulty→target, grow-from-use, sim — plan done
+- Gate: plan (Review #1 cleared)
+- Branch: `ccr-c145e2cc-3s42bn` (off `origin/dev`; first commit = §50 backfill of PR #44's merged
+  gate) → PR into `dev`. Scope declared: new `web/src/game/guild/resolve/`, docs, PROGRESS.md.
+- Decisions (Stefan chose the recommended defaults, 2026-09-30): **Target = 6 + 0.30 × Difficulty**
+  (0→6, 50→21, 100→36; Triumph at the top of the scale deliberately needs modifiers); **grow-from-use**
+  Skill +1 XP per use / +2 on Success, level n costs 5n; Attribute +1 XP per Success, level n
+  costs 20n; caps independent; **modifier sum clamped to ±30%**.
+- Review #1 (4-persona on the PLAN): 11 blockers, all folded into the plan — narrow phone tables +
+  legend + feel checks, a story-meter mapping (`meterFor`, zones 0–20/20–40/40–60/60–85/85–100),
+  input-domain rules (throw on non-finite, clamp the rest), integer band math (no float edges),
+  multi-level growth with independent caps, a drift test on the generated doc, cwd-independent CLI
+  path, career horizon 1500 with named policies (fair = capability + 7, stretch = + 9),
+  focused-vs-varied.
+- Open questions: none blocking.
+
+## 2026-07-13 - Resolution & progression model (2d6, bounded, feats philosophy) — build done, PR opened
+- Gate: **merged 2026-07-14 00:46 +0200** (merge commit `07147b2`; backfilled 2026-09-30). **PR #44 into `dev`.**
+- Branch: `claude/resolution-model` (NEW off `origin/dev`, on Stefan's ask; first commit = §50
+  backfill of PR #43's merged gate). Docs-only design change + a tiny reconcile of vestigial funnel
+  constants; combat core untouched; nothing wired into the sim.
+- What it captures (settled through a long design interview with Stefan — the plan/Review-#1
+  equivalent): the check formula's die changes **d20 → 2d6** (bounded stats made a d20 pure luck;
+  2d6 keeps luck a tight wobble so the hero + modifiers decide the check — deliberate for a
+  feats-focused game). **Attributes** hard-max **10**, standardized birth (**total 14 across the
+  five, each 2–4** — no reroll-fishing), grow slowly from use (pillar floor). **Skills** hard-max
+  **20** (2× the attribute ceiling → training beats birth), start as a small kit (one 2 + three 1s),
+  grow from use faster than attributes. Growth is **bounded** so difficulty is near-absolute (set by
+  the Quest). **% modifiers** stay (traits/feats/gear/cohesion), multiply capability, die never
+  multiplied; magnitudes tuning-open for the smaller scale. **Feats** = the level-up build layer
+  (tree deferred, philosophy only) — modify rolls/skills/difficulties/exceptions; the grown-up form
+  of the content pipeline's perk exception-kinds. Numbers grow from **use** (anti-D&D breadth: a
+  hero is shaped by what you send them to do), feats grow from **level-ups**.
+- Scope: `docs/CHALLENGE_SYSTEM.md` (§Attributes/§Skills/§Check formula/§Combat/§Difficulty rewritten
+  to the above; new §Progression; §Open-decisions ceiling fixed to Attr 10 + Skill 20 + 2d6 = 42),
+  `docs/GLOSSARY.md` (caps, birth, a §Resolution one-liner, a Feats entry), `PROGRESS.md`; plus
+  `content/attributes.ts` + `content/skills.ts` cap constants reconciled (ATTR_MAX 20→10,
+  ATTR_START_MAX 15→4, SKILL_START_MAX 5→2 — unused reference consts, matched to the docs so no
+  doc/code cap contradiction).
+- Review #2 (consistency/accuracy/adversary on the diff): **0 blockers.** Confirmed no stale d20 /
+  old caps / old ceiling; the two docs agree; no unbacked code promise (the ±0.5 trait cap is
+  described as tuning-open, not changed). Folded both non-blockers: reconciled the cap constants and
+  added this entry.
+- Verified: `npx tsc -b` clean; `npm run test` **132 pass + 1 skipped** (unchanged — docs + unused
+  consts); combat core untouched.
+- Open (deferred to the resolution/engine slice): exact grow-from-use rates, the feat tree,
+  recalibrated modifier magnitudes, 0–100 difficulty → target conversion.
+
+## 2026-07-13 - Skills v3: vocabulary + Challenge/Encounter shape — codex-fixed
+- Gate: **merged 2026-07-13 21:18 +0200** (merge commit `2c720b9`; backfilled 2026-07-13). **PR #43 into `dev`.**
+- **PR #43 into `dev`.** Codex (on `4c3c326`): ONE finding, **P3** — GLOSSARY referenced
+  `docs/skills-v3.md`, which was only ever an upload, never committed. Fixed by committing the
+  brainstorm as `docs/skills-v3.md` with a non-normative/superseded banner (it's the documented
+  backlog — the 45-row pairing + narration libraries — the task asked to keep documented). Docs-only
+  delta; nothing to re-review beyond the added file.
+- Branch: `claude/skills-v3-content` (NEW branch off `origin/dev`, on Stefan's ask — v3 is fresh
+  work, not a continuation of merged PR #42; first commit = §50 backfill of PR #42's merged gate).
+  Scope: `docs/GLOSSARY.md` (NEW single source of truth), rewrites of `docs/CHALLENGE_SYSTEM.md` +
+  `docs/CONTENT-SPEC.md`, reconcile `docs/DESIGN.md`; `web/src/game/guild/content/*` (attributes,
+  skills, NEW pillars, types, schema, tests, seed JSON, README). Additive; combat core untouched;
+  still nothing wired into the sim (funnel, not consumer).
+- Design settled with Stefan over an extended interview (all his calls): **Skills v3 = 5 attributes,
+  9 skills, pillars 3/3/3.** Strength→Force · Dexterity→Mobility · Constitution→Fortitude ·
+  **Mind** (Int+Wis merged)→Reasoning/Nature/Willpower · Charisma→Influence/Inquiry/Integrity. One
+  **resistance** skill per pillar (Fortitude/Willpower/Integrity). Magic→Reasoning, healing→Nature.
+  Structure: Quest → Challenges → **Encounters** (a named Skill check; a Challenge is an ordered 1+
+  list; one-Encounter valid; repeats only if meaningfully different — not machine-enforceable).
+  Per-check difficulty (merged in #42) is **relocated** to the Quest (it sets each Encounter's
+  target), not deleted. Challenge headline stays `activity` (not `title`). Guild lever "Influence"
+  → **Presence** (frees the word for the skill). Cooperation **Modes** (additive/resisted/lead/
+  individual), **Crisis** (hard-fail path, replaces "Panic"), participation (Committed/Assigned/
+  Qualified/Bridged), bridging/overflow, and Quest **P/M/S requirements + tags** (the new "skulls")
+  are **documented in GLOSSARY, NOT authorable yet** — built in a follow-up **engine PR**.
+- Review #1 (4 personas on the PLAN): 11 blockers folded (no CI test job → added earlier; per-band
+  narration matrix → deferred; combat → scoped out; JSON output; validator gaps; ref-graph = DAG;
+  etc.), then re-vetted after the v3 vocabulary churn.
+- Review #2 (4 personas on the DIFF): **0 blockers.** Folds: re-added the non-object-challenge
+  fixture (§70 per-rule coverage), `import type { ResultId }` consistency, "adjacent same-skill"
+  guard wording + engine-PR note, self-consistent CONTENT-SPEC samples (moved `//` labels out of the
+  JSON fences), aligned the Nature row to GLOSSARY, widened the DESIGN Presence-rename note, cosmetic
+  comment fixes. Adversary verdict: "migration is clean" — no stale-vocabulary contradiction, every
+  documented shape matches the validator, deferred fields rejected as unknown on purpose.
+- Verified: `npx tsc -b` clean; `npm run test` **132 pass + 1 skipped** (40 content: real content
+  clean, a negative fixture per rule, vocabulary integrity — 5 attrs / 9 skills / 3-3-3 pillars /
+  ladder −3..+3, v1/v2 isolation); `vite build` green; a corrupted JSON drop turns the suite red
+  with legible messages; combat core diff empty vs `origin/dev`.
+- Open (documented, for the engine PR): Crisis threshold, Mode mechanics, bridging/overflow math,
+  participation rules, P/M/S requirement values + tag vocabulary + the generator, narration
+  composition, final Combat. The 45-row pairing library in `docs/skills-v3.md` stays documented
+  (non-normative), not imported.
+
+## 2026-07-11 - Content pipeline (CONTENT-SPEC + validated content scaffold) — codex-fixed
+- Gate: **merged 2026-07-11 10:40 +0200** (merge commit `0d897b3`; backfilled 2026-07-13).
+- **PR #42 into `dev`.** Codex (on `3dcad5a`): ONE finding, **P2 — "Reject non-array trait scopes"**:
+  when `appliesTo.skills` (or `.attributes`) is a present-but-non-array (e.g. a bare string) while
+  the other scope is a valid non-empty array, the `Array.isArray(...) ? ... : []` fallback coerced
+  the malformed scope to `[]` and the later ref-validators skipped it, so a bad drop passed CI. Real
+  hole. Fixed: a present-but-non-array scope is now rejected with its own issue (undefined stays
+  fine — the scope is simply omitted), and the "applies to nothing" message is suppressed when a
+  scope is already flagged malformed (no double-report). +1 negative fixture (40 content tests).
+  Re-ran Review #2 on the delta (self, proportionate to a ~15-line validator fix): seed content
+  (array scopes) still clean, `{}` still errors, empty-array + valid-other still fine; no new
+  blockers. `npm run test` **132 pass + 1 skipped**; `tsc -b && vite build` green.
+- Gate before this: build + PR (Review #2 cleared).
+- Branch: `claude/content-pipeline-spec-dh39y1`. Scope as planned: `docs/CONTENT-SPEC.md`,
+  `docs/CHALLENGE_SYSTEM.md` fold, `web/src/game/guild/content/` (attributes/skills/ladder/types
+  as typed `const` vocab + 4 JSON drops + `schema.ts` validator + `content.ts` loader + README +
+  `content.test.ts`), `.github/workflows/test.yml`. Additive; combat core untouched (empty diff vs
+  `origin/dev`); no sim/v1 file modified; nothing wired into the sim.
+- Built: a v2 content namespace, isolated from the shipped v1 sim (4-attr str/dex/sta/per). ChatGPT
+  authors JSON against CONTENT-SPEC; the schema vitest gates every drop. Per Stefan's decision each
+  challenge check declares its own 0–100 difficulty; visible difficulty = derived max
+  (`deriveVisibleDifficulty`, stored nowhere). Combat scoped out (absent from the 15-skill table —
+  validator rejects it with a dedicated message). Seed content: 6 challenges / 2 quests / 3 traits /
+  4 perks, all on-model.
+- Review #2 (4 personas on the DIFF — Designer, Engineer, Adversary/QA, Player-experience):
+  **1 blocker, fixed** — the test claimed "a bad fixture per rule" but several validator branches
+  had no negative test (unknown-attribute, skill-modifier percent bound, duration integer/<1,
+  non-integer reward, invalid `fromResult`, empty strings, 3-check, object guards) — a §70 truth
+  gap → 9 fixtures added (39 content tests). Non-blocking folded: dead `void ATTR_MAX/SKILL_MAX` +
+  false comment removed; isolation guard now flags ANY `../` specifier (side-effect + dynamic
+  imports, not just `from`), scanning shipped modules only (tests are build-excluded); **unknown-key
+  rejection** added per shape so the spec's "Never add fields" has teeth (a smuggled five-band prose
+  matrix on a challenge — the report data-dump the design forbids — now fails); `tsc -b` step added
+  to the test workflow so vocab TS regressions gate at PR time; CONTENT-SPEC folds — ladder Meaning
+  column now verbatim, required non-empty fields named, reject-list completed (non-integer
+  reward/duration, upgrade-triumph, empty/unknown fields), fog-transform clause on the derived
+  difficulty (guardrail #2), perk-vs-trait guidance for the numeric `skill-modifier`, dead
+  "read the seed" phone pointer reframed for maintainers; `oneOf` hints now list the full 15-skill
+  vocabulary. Accepted (non-blocking, logged): a challenge may repeat in a quest's run list; a 0%
+  trait/perk is allowed; per-kind perk param strictness (a stray `percent` on a param-less perk) is
+  union-keyed, not per-kind — detailed perk design is out of the CHALLENGE_SYSTEM contract.
+- Verified: `npm run test` **131 pass + 1 skipped** (39 content: real content clean, a negative
+  fixture per rule, vocabulary integrity — 6 attrs / 15 skills exact map / Combat absent / ladder
+  5×[−3/−1/0/+1/+3], v1/v2 isolation); `tsc -b && vite build` green; combat core diff empty vs
+  `origin/dev`; a corrupted real JSON drop turns the suite red with legible
+  `path: message (expected …)` then restores clean.
+- Open questions: none blocking. Downstream, still open per CHALLENGE_SYSTEM (unchanged by this
+  slice): 0–100→check-target conversion, final bands, combined-result consequence table, narration
+  composition, final Combat.
+
+## 2026-07-11 - Content pipeline (CONTENT-SPEC + validated content scaffold) — plan done
+- Gate: plan
+- Branch: `claude/content-pipeline-spec-dh39y1` (off `origin/dev` incl. PR #41; first commit = §50
+  backfill of PR #41's merged gate). Scope: new `docs/CONTENT-SPEC.md`; new
+  `web/src/game/guild/content/` (typed v2 vocab tables + JSON content drops + schema validator +
+  vitest); new `.github/workflows/test.yml` (so the schema test actually gates CI); a resolution
+  fold into `docs/CHALLENGE_SYSTEM.md`; this log. Additive only; combat core untouched; NOTHING
+  wired into the sim (funnel, not consumer — the sim stays v1 str/dex/sta/per, this content is the
+  v2 6-attr/15-skill vocabulary in its own namespace).
+- Design question resolved with Stefan BEFORE Review #1 (per CHALLENGE_SYSTEM Open decisions,
+  blocks all challenge content): **each of a challenge's two checks declares its OWN 0–100
+  difficulty** (`{skill, difficulty}`); the challenge's single visible difficulty is DERIVED
+  (max of the two). Recommended + chosen because it matches the doc's own "one label hides two
+  materially different demands" rationale and the retired mockup (Research 60 + Arcana 55), and a
+  shared target is just the equal-numbers special case (strictly more expressive, always
+  collapsible; the reverse needs a content migration). Folded into CONTENT-SPEC.md and
+  CHALLENGE_SYSTEM.md (moved from Open decisions → Model).
+- Review #1 (4 personas — Designer, Engineer, Adversary/QA, Player-experience — on the PLAN):
+  **11 blockers, all folded** — (1) no CI job runs vitest (deploy.yml is build-only, excludes
+  tests, runs post-merge not on PRs) → add a test workflow; (2) validator passes vacuously without
+  negative fixtures → ship a bad fixture per rule; (3) per-band narration matrix = the data dump
+  the doc forbids → NO prose this pass, broad activity label only, narration stays open;
+  (4) combat has no authoring path (absent from the 15-skill table) → combat scoped out with a
+  stated reason, validator rejects Combat checks; (5) TS-vs-JSON output undecided → ChatGPT emits
+  JSON; (6) no golden samples → 4 filled validator-passing samples end the spec + seed content;
+  (7) derived-difficulty rule + worked example missing → visible = max, display-only; (8) cryptic
+  errors → legible `{path,message,expected}`; (9) perks resist a schema → enum of exception-kinds;
+  (10) validator gaps (2-check count, distinct skills, empty lists, cross-kind id collision,
+  NaN/float, trait/perk→skill refs, case/unicode ids) → each an explicit rule; (11) ref-graph
+  shape unstated → declared a 2-level DAG. Non-blocking folded: derive attr from skill; min+max
+  duration fuzz; derived difficulty = authoring ground truth (player number is a later fog
+  transform); `as const` skill/attr unions; vocabulary-integrity test (15 skills, Combat absent,
+  ladder 5×[−3/−1/0/+1/+3]); no-v1-import guard test; trait = bounded modifierPercent; broad-label
+  DO/DON'T table; reward cites DESIGN magnitudes; authored-but-not-wired note; verbatim ladder
+  table (emit NAME only); orphan library content allowed; giver/location free-text this pass.
+- Open questions: none blocking. (Downstream, still open per CHALLENGE_SYSTEM: 0–100→check-target
+  conversion, final bands, combined-result consequence table, narration composition, final Combat.)
+
+## 2026-07-11 - Challenge system content contract — build done, PR opened
+- Gate: **merged 2026-07-11 01:23 +0200** (merge commit `6bf8771`; backfilled 2026-07-11). **PR #41 into `dev`.**
+- Branch: `claude/slice-living-canvas-843hho` — the six doc commits were authored on
+  `agent/challenge-system-design` (Stefan's other agent) and cherry-picked here on Stefan's
+  explicit choice; authorship preserved. Review #1 below is that agent's own log, taken at its
+  word; Claude ran Review #2 on the cherry-picked diff.
+- Review #2 (Claude; two dual-persona agents — Designer+PX, Engineer+Adversary — declared):
+  **2 blockers, both fixed** — (1) result-ladder collision: the doc never said the new
+  Critical Failure/Failure/Insufficient/Success/Triumph language REPLACES the shipped
+  Botch/Poor/Success/Great/Triumph meter ladder ("Success" names a different tier in each) →
+  supersession note added; (2) structural gap: shared vs per-check difficulty was not even listed
+  as open (the retired mockup implied per-skill values; content can't be authored without it) →
+  explicit Open-decision bullet. Also folded: result name/value/band merged to ONE table
+  (paste-safety); Combat explicitly not a 16th table Skill + Wis/Cha gap named as placeholder;
+  DESIGN.md's absolute "two Skill checks" re-hedged to "normally two"; ceiling landmine noted
+  (unmodified max = 60) under the conversion bullet; pair-vs-sum consequence question added
+  (Success+Failure ≡ Insufficient+Insufficient by sum, but must narrate differently). Verified:
+  docs-only diff, combat core untouched, #40 backfill sha/date exact.
+- Scope: new `docs/CHALLENGE_SYSTEM.md`; minimal reconciliation/link in the live
+  `docs/DESIGN.md` challenge-v2 section; this progress log. Combat core and runtime untouched.
+- Narrative starts the contract: reports must stay authored rather than collapse into data dumps;
+  challenge labels stay broad ("Researching in a library", not a named tome/shelf). The document
+  then records Stefan's agreed Attribute/Skill vocabulary, two-check model, percentage-modifier
+  semantics, temporary Combat rule, result names/values, rationales, and explicitly open tuning.
+- Review #1 (Designer, Engineer, Adversary/QA, Player-experience): Engineer found one blocker —
+  DESIGN.md's older challenge-type list would compete with the new contract. Folded by making the
+  new document authoritative and reconciling the stale summary. All lenses required unresolved
+  difficulty conversion, visual spacing, combined consequences, narration machinery, and final
+  Combat to remain visibly open. No remaining blockers.
+- Open questions: Difficulty 0–100 target conversion; 5 vs 10 minimum visual threshold spacing;
+  combined-result consequences; scalable narration composition; final Combat model.
+
+## 2026-07-10 - Feedback round 3 (state toggle · meter marks · skip · narration · feed cap) — build done, PR opened
+- Gate: **merged 2026-07-11 00:43 +0200** (merge commit `689b058`; backfilled 2026-07-11).
+- Codex (PR #40): ZERO findings — "Didn't find any major issues." on `fd57b5d`; no inline threads.
+- Branch: `claude/slice-living-canvas-843hho` (restarted off `origin/dev` after PR #39 merged;
+  first commit = §50 backfill of #39). Scope: `web/src/ui/hall/*`, `web/src/ui/report/*`,
+  `web/src/ui/kit/` (new TimeControls + Icon additions), COPY-ONLY strings in
+  `web/src/game/guild/clock.ts`, docs. Combat core untouched.
+- Stefan's asks, delivered: toggle shows STATE (▶ Playing lit gold / ⏸ Paused dim / first-ever
+  ▶ Play via persisted pref / Needs you ember) — he confirmed state-labels via question; buttons
+  lowered to 38px visual with ≥44px invisible hit extenders; speed chip → shared kit
+  (play-glyph 1×, fast-forward 2×/3×, fixed width), consumed by BOTH the Hall and the StoryStage
+  ("reuse symbolism, sizes") with separate prefs + distinct aria wording; meter grade marks
+  (broken hearts bad / award rosettes good — skulls stay difficulty-only, his icon list) with
+  dashed limit lines derived from GRADE_ZONES; live grade word under the rising bar (reads the
+  RENDERED width per frame — can't desync or spoil); "Skip to result »" corner-placed, lands on
+  the full outcome card; type chip larger + CAPS; trait names as bordered pills; first-day coach
+  REMOVED (player-directed; Designer's cold-start objection logged as accepted); building +
+  steward copy de-design-speak'd; runway narrated with the per-night number behind a tap popover
+  that masks while reports are sealed; feed renders only the last 3 day groups (slices the
+  GROUPED list — pinned Needs-you strip still filters the full feed) with an honest
+  "(older days have folded away)" cut line.
+- Review #1 (plan; 4 personas + a 4-persona addendum pass for Stefan's mid-review adds): folded —
+  ticker reads rendered width not elapsed time; crit-inclusive-at-90 zone lookup; mark sprites
+  scale by count to fit the ~34px crit zone at 375px; 44px hit-area floor; growth-side runway
+  keeps a magnitude word; kit takes labels per surface (report = playback vocabulary, never
+  "Paused"/"Needs you"); skip = deliberate corner control; day-cap counts day GROUPS.
+- Review #2 (diff; 4 personas): **2 blockers, both fixed** — (1) first-press flag was a ref,
+  regressed "Paused"→"Play" on remount (nav away/back) → persisted UI pref (a sim-side
+  derivation lies: several events share tick 0); (2) runway popover froze a click-time snapshot
+  while the sim ran on → detail recomputed every render and patched into the open popover live.
+  Also folded: honest cap-line wording for the trimmed case; dead `setLanded(false)` dropped;
+  `gradeAt` moved to storyText.ts + 3 pin tests (boundaries, monotonicity, clamps); kenney.md
+  sprite list refreshed; trait-pill comment no longer overclaims char-page parity. Punch list
+  (non-blocking, logged): 1×-chip/Play visual near-twin; "Skip the rise" vs "Skip to result"
+  wording; app-wide trait visual language; InspectPopover's any-scroll dismiss on a sticky
+  anchor (pre-existing kit behavior).
+- Verified: `tsc -b` + `vite build` green; **92 vitest pass** (3 new gradeAt pins); headless
+  @430×932 full loop CLEAN — fresh "Play" → "Playing" → post-tick "Paused" → SURVIVES nav
+  away/back (the B1 repro) → runway tap popover → story with 5 mark cells, live "Botch…",
+  uppercase type chip, trait pill, skip → outcome card → day 5 with exactly 3 day groups +
+  cut line; zero console errors, no h-overflow. Screenshots `docs/screenshots/canvas5-*`
+  (re-captured after the copy fix — R#2 Designer's §60 catch).
+- Content pipeline (Stefan's question, answered in chat): a CONTENT-SPEC contract doc he pastes
+  into ChatGPT + typed data files under `web/src/game/guild/content/` + a schema-validating
+  vitest — its own small PR on his go.
+
+## 2026-07-10 - Header driver (one toggle + speed chip) — build done, PR opened
+- Gate: **merged 2026-07-10 22:46 +0200** (merge commit `d6927a7`; backfilled 2026-07-10).
+- Codex (PR #39): ONE finding, P2 — the slimmed bottom padding dropped the nav's
+  `env(safe-area-inset-bottom)` share (the old 104px cushion silently absorbed it; ~22px of the
+  last feed row under the nav on notched phones). Fixed to
+  `calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + var(--sp-3))` — matches the
+  HeroesScreen/NavBar pattern. Delta re-reviewed (Engineer+Adversary): clean; build + headless
+  walkthrough re-run green. This also closes Review #2's "pre-existing safe-area gap" follow-up.
+- Branch: `claude/slice-living-canvas-843hho` (restarted off `origin/dev` after PR #38 merged;
+  first commit = §50 backfill of #38). Scope: `web/src/ui/hall/HallScreen.tsx` +
+  `HallScreen.module.css` only.
+- Stefan's ask, delivered: ONE Play⇄Pause toggle with icon (inline SVG glyphs — U+23F8 renders
+  as tofu in the display font), speed chip showing ▶/▶▶/▶▶▶ ("one, two or three plays"), both
+  folded into the sticky top header at half width with Day·Phase + gold in the other half,
+  runway on a thin full-width line below, bottom fixed bar deleted (~104px returned to the feed).
+- Review #1 (plan; 4 personas — Adversary + PX re-run after a session-limit failure, declared):
+  pinned toggle branch order (blocked → scroll, stay latched; playing → pause; else play);
+  blocked tap STAYS latched — both unlatch variants provably misfire (short feeds / manual
+  scroll), and the interval's first fire already gives a one-beat pause window after unblocking;
+  fixed-width speed chip so cycling never reflows the toggle under the thumb; "Needs you" gains
+  an ember pulse; day/phase gets its own ellipsis clamp; walkthrough must drive blocked +
+  pause-mid-play taps, not just the happy path.
+- Review #2 (diff; 4 personas): **5 blockers, all fixed** — (1) ⏸ tofu box → SVG play/pause
+  glyphs; (2) header split wasn't half/half (`.status` had no flex-grow) → `flex: 1 1 50%`;
+  (3) `.gold` had no overflow clamp (5-digit treasuries could spill into the driver) → clamped;
+  (4) `.playBtn` could bleed its label onto the chip when squeezed → overflow hidden;
+  (5) `needsPulse` lacked the codebase's `prefers-reduced-motion` guard → added. Also folded:
+  `aria-pressed` no longer announces "pressed" while the label reads "Needs you". Non-blocking
+  accepted: header placement trades thumb reach for Stefan's explicit consolidation; safe-area
+  inset gap is pre-existing (follow-up); landscape unverified.
+- Verified: `tsc -b` + `vite build` green; **89 vitest pass**; headless @430×932 twice (before
+  and after R#2 fixes): toggle 127×48 true half-split, chip cycle ▶▶→▶▶▶→▶→▶▶ width-stable,
+  Play → "Pause" (aria-pressed true) → tap → "Play" (false) → run → "Needs you" → blocked tap
+  stays latched + scrolls → report resolves → story → auto-resume "Pause"; bottom clearance
+  194px; zero console errors, no h-overflow. Screenshots `docs/screenshots/canvas4-*` (incl.
+  the lone-▶ slow-chip extreme).
+- Open questions: none — Stefan's "Paused⏸️" label was rendered as "⏸ Pause" (action-label
+  convention; the pressed-in style shows state), flagged here for his veto.
+
+## 2026-07-10 - Board & report legibility v2 — PR opened (awaiting Codex)
+- Gate: **merged 2026-07-10 19:34 +0200** (merge commit `8e2f3ce`; backfilled 2026-07-10).
+  **PR #38 into `dev`**. Plan + both reviews + Codex (no findings) cleared. Process note, declared: Review #2 ran as TWO
+  dual-persona agents (Designer+PX, Engineer+Adversary) covering all four §20 lenses — a
+  session-length economy, not a skipped lens.
+- Review #2 (on the DIFF): **5 blockers, all fixed** — (1) per-card popover state let TWO
+  parchment notes stack (the kit's one-note contract assumes shared state) → one `info` state +
+  one `InspectPopover` lifted to HallScreen; (2+3) two un-annotated Advance/Auto echoes remained
+  in DESIGN.md and life.ts still said "dailyRate desc" (a claimed sweep that hadn't landed —
+  §70) → all fixed; (4) Stefan's verbatim "green cat" quest-card mockup was missing from the
+  challenge-v2 fold → restored word-for-word; (5) the working tree carried the fixes uncommitted
+  (HEAD alone shipped the dual-popover bug) → committed. Also folded: the standalone backdrop
+  swallow now arms ONLY when a dialog is actually open (it was eating the first tap after
+  dismissing a Hall note — e.g. a Play press); scroll-to-Needs-you on the latching Play tap;
+  brighter skulls; dead popover CSS pruned from HeroCard.module.css; the as-built paragraph's
+  own stale comparator phrase.
+- Engineer+Adversary verified: golden fixture beats byte-identical vs origin/dev (all 20 keys,
+  mechanical diff) with hand-edited rewards confirmed by execution AND by hand; zero dailyRate
+  refs in code; driver state machine matches the pinned spec (latch/auto-resume/tab-hide/always-
+  live Pause, StrictMode-safe); playhead legible through the strongest tint (~0.64 vs 0.22 lum);
+  20-day flat-economy probe −6.9..−12.5 g/day unbought (inside the band); forbidden dirs
+  untouched. Designer+PX scorecard: all 11 of Stefan's round-2 asks verified in code +
+  screenshots.
+- Build-time catch (logged for honesty): the popovers initially white-screened —
+  `e.currentTarget` read inside a deferred setState updater (the PR #27 lesson re-learned);
+  caught by the headless walkthrough.
+- Verified after fixes: tsc + build green; 89 vitest pass; headless full loop green (popover
+  single-instance, Play→Needs you→story→layered meter "Triumph"→ledger-pointer outcome→latched
+  auto-resume). Screenshots `docs/screenshots/canvas3-*`.
+
+## 2026-07-10 - Board & report legibility v2 — build done (see PR entry)
+- Gate: build (plan + Review #1 cleared; Review #2 verdicts in the PR entry above)
+- Built as planned (sim commit `1a62d51` carries both sim+UI; assets in `21de1c0`): flat rewards
+  (fixture reward/guildCut hand-edited, beat tuples byte-untouched — verified by an in-script
+  machine-diff before write), skulls/daysLabel helpers + pinned tests, Play/Pause/Speed driver
+  with the pinned state machine, kit-extracted Inspect popover (heroes/inspect.tsx is now a
+  shim), layered check meter with playhead, grade ladder Botch/Poor/Success/Great/Triumph,
+  result-first outcome, DESIGN.md amendments + Stefan's challenge-v2 spec folded.
+- Build-time catch: the card-title popovers crashed white-screen on tap — `e.currentTarget`
+  read inside the deferred setState updater (null by then; the exact PR #27 review lesson) →
+  hoisted before the updater. Caught by the headless walkthrough, not review — noted for
+  Review #2's attention.
+- Verified: `tsc -b` + `vite build` green; **89 vitest pass**; headless @430px full loop: flat
+  rewards + "1+ days" + skull rows, per-type detail, ⓘ popover open/dismiss, Play → auto-pause
+  ("Needs you" label) → tavern decision → sealed story (layered meter, zones visible through
+  the fill, playhead, "Great" tag, hero-named trait line) → brokerage-free outcome with the
+  ledger pointer → LATCHED auto-resume after resolve → Pause. Zero console errors, no
+  h-overflow. Screenshots `docs/screenshots/canvas3-*`.
+
+## 2026-07-10 - Board & report legibility v2 (Stefan's 2nd play session) — plan done
+- Gate: plan
+- Branch: `claude/slice-living-canvas-843hho` (restarted off `origin/dev` after PR #37 merged;
+  first commit = §50 backfill of #37).
+- Stefan's forks answered directly: FLAT quest rewards (road 350g / ruins 700g / standing 25g;
+  duration costs time only); driver becomes **Play/Pause/Speed** (no single-event Advance);
+  the multi-hero/challenge-type redesign defers to its own slice via a DESIGN.md fold.
+- Scope: sim (flat rewards + comparator re-pin, typeSkulls/questSkulls/daysLabel helpers, feed
+  cleanup incl. tavern-perspective + hero-named trait cut-ins + de-articled challenge titles,
+  SAVE_VERSION 4 semantic bump); UI (quest rows "350g · 1+ days · 💀💀" + per-type icon+skull
+  detail, ⓘ→kit-extracted parchment popover, Play/Pause/Speed driver, story bar with zones
+  visible through the fill + re-ranked colors + playhead tick + grade labels
+  Botch/Poor/Success/Great/Triumph, two-row beat header, result-first outcome card without the
+  brokerage line); DESIGN.md fold of the challenge-v2 / per-hero-bars / navigation / outcome-v2
+  / economy-report sketches + the Time-paragraph amendment. Combat core untouched.
+- Review #1 (4-persona, on the PLAN): 7 merged blockers, all folded — (1) bestPosting re-pinned
+  as total-`reward` DESC, id ASC (heroes chase the number the board shows; the 7-day-purse
+  pathology is ACCEPTED in writing and revisits with challenge-v2); (2) the Play state machine
+  pinned: armed-through-decision-pauses with AUTO-RESUME on resolve (today's Auto semantics),
+  hard-disarm on tab-hide, blocked state shows main label "Needs you" (label ≠ subtitle) and
+  tapping scrolls to the Needs-you box, Pause dims via aria-disabled/data-attr; (3) golden
+  fixture: NO recapture — hand-edit only the 20 reward/guildCut values (beats byte-untouched by
+  construction; a recapture could launder rng drift); (4) helpers pinned: typeSkulls includes
+  the bonus beat (dots-never-lie precedent), absent types omitted; questSkulls = max (standing
+  1💀, road 2💀, ruins **4💀** — the killer guardian beat is what fails runs); daysLabel with
+  the "1 day" singular (road AND ruins both read "1+ days"); (5) travel challenge icon =
+  arrow_cross (flag_triangle already means "out on quest" in the same card); (6) the fill gets
+  a 2px playhead tick + a crit-zone contrast check (a Triumph landing must not wash out in the
+  gold tint); (7) DESIGN.md "Time" paragraph amended to play-primary + its three downstream
+  echoes annotated + a §12 number-sheet pointer.
+- Non-blocking folded: popover extracted from heroes/inspect.tsx into ui/kit (re-fighting its
+  dismiss bugs forbidden; text-only, no X); `advance` dropped from GuildApi (sim keeps
+  advanceUntilStop for tests); kit-side icon names for board glyphs (persisted IconName union
+  untouched); shared localStorage-pref kit helper for both speed chips; day-1 feed keeps one
+  informative seeded line ("two letters await takers" — not dawn bloat); outcome card gains the
+  faint pointer "settled in tonight's ledger"; grade UNION untouched (labels only — persisted +
+  fixture-pinned); stale-comment sweep (tuning +8g/day, life.ts comparator doc, ADVANCE_CAP
+  event count ~9/day, quests/types reward docs).
+- Adversary probes (10 seeds × 30 days, closed loop): flat economy needs NO retune — net/day
+  −15.4 [−24..−10.8] unbought (was −19.1), no board rot (withdrawals 0.6/30d), wallet inflation
+  +17% absorbed; pacing measured ~9 events/day → a watched day ≈ 8/4/2s at the three speeds;
+  next slice's 7-day quests re-open the top-speed question (noted).
+- Open questions: none blocking. SAVE_VERSION 4 wipes live saves (semantic pricing break, not
+  shape — flagged for the PR body).
+
+## 2026-07-09 - Hall & Story UX polish — PR opened (awaiting Codex)
+- Gate: **merged 2026-07-10 13:20 +0200** (merge commit `08001b0`; backfilled 2026-07-10).
+  **PR #37 into `dev`**. Plan + both reviews + Codex cleared. Codex (on `42f2cd7`, one P3,
+  fixed in `9e807f2`):
+  on the final beat mid-rise the button read "See outcome ›" while the handler correctly
+  snapped — a label/behavior mismatch needing a confusing second tap → the label now follows
+  the handler ("Skip the rise" mid-rise on every beat, including the last). Review #2 on the
+  delta (self, one-ternary label fix): behavior unchanged and already reviewed; no new
+  blockers. 88 tests + build green.
+- Review #2 (4-persona, on the DIFF): **3 blockers, all fixed** — (1, Adversary+Engineer) a
+  score-0 beat (REAL: ~4.4% of quests across a 100k-beat sweep — fail-cascade carry) animated
+  width 0→0, `transitionend` never fired, the card soft-locked and Auto stalled forever → a
+  fallback landing timer in BeatCard fires when the transition WOULD have ended (idempotent
+  with transitionend; also covers mobile's unreliable transition events); (2, Designer) the
+  gold "Next ›" button bypassed the landed gate and skipped the whole reveal mid-rise → it now
+  snaps first ("Skip the rise") and only a landed press advances, same rule as the stage tap;
+  (3, Designer) "leaves tomorrow" lied — a daysLeft-1 posting is withdrawn TONIGHT → "last day"
+  / "withdrawn tonight if nobody takes it".
+- Non-blocking folded: night refill no longer reposts a tier while a party is out on that very
+  quest (the Quests card showed the same title twice ~30–50% of steps — now "the giver waits
+  for word", + a regression test); ACTIVE tap-details give the exact rolled estimate (duration
+  is public via the departure line); bonus-poor note made value-neutral (poor bonus adds
+  nothing); Auto Fast hold 650→800ms so the prose gets read; meter aria announces "rolling…"
+  until landed (don't spoil the rise for screen readers). Engineer independently re-proved the
+  golden fixture by checking out the pre-change resolver and diffing 30,000 resolutions
+  head-to-head: byte-identical except `score`. Adversary: withdrawal still fires 1–3×/30 days
+  (rare texture as intended); speed-pref corruption never throws; Advance spam with a pending
+  decision = 0 re-renders. PX scorecard: **all 10 of Stefan's items answered**; meter verdict
+  "delivers" (Slow rise ≈1–3.5s reads as anticipation; zones legible at 430px).
+- Noted for later: progress dots leak run structure up front (reveal-as-landed is a future
+  polish); the beat card's empty lower half could hold portraits later; SAVE_VERSION 3 wipes
+  live saves incl. Stefan's tavern run (policy discard-reinit — flagged in the PR body).
+- Built (sim commit `fcc56b0`, isolated): `Beat.score` in the resolver — proven purely additive
+  by the committed golden fixture (20 cases/62 beats from the PRE-change resolver; id/grade/
+  roll/branch/outcome/reward/guildCut byte-identical); `questDifficulty` (1–5, critical-weighted);
+  EXPIRY_DAYS 7 (+ night-7 withdrawal test); SAVE_VERSION 3.
+- Built (UI): StoryStage **check meter** — 5 tinted grade zones (tint+tick, no labels; landed tag
+  carries the word; role="meter" aria), constant-RATE fill (duration ∝ score) starting 500ms
+  after mount, staged reveal (tag pop → narration/trait fade), tap-mid-rise snaps / landed tap
+  advances, Auto hold counts from fill-END, one cycling Slow/Normal/Fast chip persisted as
+  `guild.ui.storySpeed` (lazy + try/catch); context-aware effect notes in a pure `storyText.ts`
+  (+5 unit tests: no "next check" claims on final/bonus/recovery beats). Hall: lone-meeple
+  (`hero` glyph) for solos; Quests card (OPEN + ACTIVE rows with stable-id tap-details reading
+  only quest defs + public assignment fields, ★1–5 on the summary, expiry only as "leaves
+  tomorrow", ⓘ explainer behind the 44px title row); Buildings card (Guild Hall + Tavern, new
+  flavor copy + visible earn hint + runway consequence, READY chip gated on shownGold);
+  Advance/Auto verbs contrast ("skips ahead…" vs "watch it play"), Advance no longer flips DOM
+  `disabled` under the finger (aria-disabled + dimmed data-attr; sim no-op already pinned) and
+  every Hall/Story control gets `touch-action: manipulation` — the haptics mitigations (root
+  cause unconfirmed; Stefan retests).
+- Verified: `tsc -b` + `vite build` green; **87 vitest pass** (12 new). Headless @430px: stars,
+  quest tap-detail with brokerage math, ⓘ toggles, active-row gold border, READY chip, meter
+  zones + rising fill + snap + landed tag/note/narration + single-tap advance + speed cycling,
+  no h-overflow, no console errors. Screenshots `docs/screenshots/canvas2-*`.
+
+## 2026-07-09 - Hall & Story UX polish (Stefan's play feedback) — plan done
+- Gate: plan
+- Branch: `claude/slice-living-canvas-843hho` (restarted off `origin/dev` after PR #36 merged;
+  first commit = §50 backfill of #36's merged gate; remote branch had been auto-deleted →
+  recreated on push).
+- Scope declared: the 10 play-feedback items — lone-hero meeple (new Kenney `pawn` glyph, own
+  asset commit), Advance/Auto copy contrast, quest difficulty ★1–5 replacing "Type-heavy",
+  board card → "Quests" with OPEN + ACTIVE (UI-derived from assignments, quest-led rows),
+  explainers behind tap-the-title (44px row + chevron), EXPIRY_DAYS 3→7, tavern flavor copy
+  (+ 5-word earn hint stays visible), Investments → Buildings card with a "Ready" chip gated on
+  shownGold, haptics mitigation (no DOM `disabled` flip under the finger — aria-disabled +
+  dimmed data-attr; sim no-op already pinned), tap-a-quest detail (types+dots, reward math,
+  giver, expiry — sealed log never read), and the **story check-bar**: additive `Beat.score`
+  (0–100) computed in the resolver from the existing ratio, grade-owned zones (fail [0,20)
+  poor [20,40) ok [40,65) good [65,90) crit [90,100], bands lo→hi with fail lo=0 and crit
+  synthetic hi=2.0, zone-safe rounding), animated zone meter in StoryStage, speed as ONE
+  cycling chip (Slow/Normal/Fast, `guild.ui.storySpeed` localStorage, lazy+try/catch).
+  SAVE_VERSION 3 (v2 saves — including Stefan's live one — discard-reinit per policy; flagged).
+- Review #1 (4-persona, on the PLAN): 9 merged blockers, all folded — (1) constant fill RATE
+  (duration = score/100 × base), not constant duration, so the bar's stop stays unknown;
+  (2) stage the card: type/location → bar → grade tag → narration+trait fade (reduced-motion:
+  snap); (3+) effect notes context-aware — no "next check" claims on final/bonus beats,
+  recovery gets true copy (a good recovery still carries −1), fail note generic enough to
+  survive a non-critical last-beat fail before a success card; (4) score formula pinned exactly
+  (incl. negative-ratio clamp + rounding that can't escape the zone); (5) golden fixture from
+  the PRE-CHANGE resolver committed as a regression test (20 cases/62 beats incl. recovery +
+  bonus; asserts id/grade/roll/branch/outcome/reward/guildCut byte-identical — catches any
+  extra rng draw or boundary flip); (6) zone labels don't fit 430px → tint+tick only, landed
+  grade tag carries the word, role="meter" aria; (7) tap-during-fill = snap-to-result, only a
+  landed tap advances; auto-delay counts from fill-end (Auto+Slow can't skip the show);
+  (8) Advance/Auto copy contrasts on the verb ("skips ahead…" vs "watch it play, hands-free");
+  (9) one cycling speed chip, not a segmented control.
+- Non-blocking folded: fill starts ~500ms after mount; expiry moves into tap-detail (summary
+  only when "leaves tomorrow"); OPEN above ACTIVE, one-line active rows; whole title row is the
+  info tap target; "Ready" chip not a bare "!"; stable-id expansion state; sim change isolated
+  in its own commit; stale "(~3)" comment fixed; EXPIRY test (park parties, withdrawal fires
+  night 7); crit-zone anchor 2.0 pinned in the monotonicity test; duplicate-title active/open
+  distinction carried by the gold border + party line.
+- Open questions: none blocking. Haptics root cause unconfirmed from here (device tap-feedback
+  suspected) — mitigations ship, Stefan retests on the preview.
+
 Format per entry:
 ## YYYY-MM-DD HH:MM - <short scope>
 - Gate: plan | build | PR | codex-fixed | merged
@@ -9,6 +665,524 @@ Format per entry:
 - Files touched:
 - Review verdict: blockers found / fixed
 - Open questions:
+
+## 2026-07-09 - Slice: the living canvas — PR opened (awaiting Codex)
+- Gate: **merged 2026-07-09 21:42 +0200** (merge commit `7c4c135`; backfilled 2026-07-09).
+  **PR #36 into `dev`** (branch `claude/slice-living-canvas-843hho`). Plan + both reviews +
+  Codex (two P2s fixed) cleared.
+- Codex (on `2d4c2ac`, two P2s, both fixed): (1) **unread nightly ledgers were exempt from
+  MAIL_CAP** — a Hall-only player who never expands ledger rows accrued one untrimmable mail per
+  night (300 @300 days) → the cap now trims read mail first, then unread LEDGERS oldest-first;
+  an unread sealed outcome is never dropped (+ regression test). (2) **Advance rolled past
+  already-pending decisions** — it only stopped on NEW ones, so nightfalls could pile up behind
+  an unresolved "Needs you" → `advanceUntilStop` returns immediately (same state reference, so
+  React bails and nothing autosaves) when any undone decision exists, and the Hall disables the
+  button with "answer what needs you first" (+ regression test: pressing Advance while pending
+  is a strict no-op). Re-ran Review #2 on the delta (self, proportionate): trim order preserves
+  the newest ledger (Hall runway) and every sealed story; the early-return preserves purity;
+  Auto's effect guard already held — no new blockers. 77 vitest pass; build green; headless
+  walkthrough re-run end-to-end (the guarded Advance doesn't wedge the loop).
+- Review #2 (4-persona, on the DIFF): **5 blockers, all fixed** — (1, Designer+Adversary) the
+  sealed payout was back-solvable through LATER nights' ledgers (day-4 endGold + visible day-5/6
+  lines − day-6 endGold = the hidden cut) → every ledger from the earliest sealed day on withholds
+  its tally, and the Tavern-takings amount masks while pending (the decompress spend sizes the
+  reward); (2, Engineer) the tavern proposal gated on RAW gold, so "it's affordable now" could
+  announce a sealed success → gates on `displayedGold` + a regression test; (3, Designer) the §12
+  dormancy amendment claimed in the build entry had silently not applied (replace-miss) → applied
+  for real (§70 lesson: grep the doc, don't trust the script's exit); (4, PX) the runway note
+  counted one-off construction as daily burn ("gold lasts ~2 days" the night of the big buy) →
+  runway projects recurring movements only (`oneOff` ledger flag); (5, PX) a stale screenshot
+  showed the pre-fix decision double-nag → retaken from the fixed build.
+- Non-blocking folded: done decisions become feed-trimmable (Adversary's 300-day probe showed
+  decision stubs alone exceeding the cap ~day 350); conservation test now covers construction;
+  empty-queue reseed also revives idle parties (corrupt-save "alive-looking softlock");
+  `Posting.questId` (tier==id was a coincidence); locale-proof comparators; persist guards for
+  seq/rngSeed/gold counters (NaN-id class); honest missed-posting wording; Report badge counts
+  unwatched stories only (was +1/day ledger creep); Auto shows "Paused" while something needs
+  you; 44px tap targets; Advance sub-label "until something needs you"; behavioral outcome-tell
+  (a broke failed party marches straight back out) owned in DESIGN.md as diegetic texture.
+- Adversary long-run probes (4 seeds, 60/200/300 days): unbought ≈ −17g/day (~50-day runway, the
+  tavern is the visible lever); post-tavern ≈ +100g/day and unbounded (accepted — slice 2's
+  building/gear menu is the counter-sink); world alive at day 60 (queue bounded at 4, road job
+  taken on every seed, wallets oscillate 893–2,225 total); save blob ≤ ~173KB (quota-safe).
+  Accepted/noted: unread mail is never trimmed (never-open player grows the archive slowly);
+  deep-negative shownGold messaging for a never-open player.
+- Verified after fixes: `tsc -b` + `vite build` green; **75 vitest pass**; headless walkthrough
+  re-run on the fixed build (screenshots refreshed).
+- Open questions: none blocking. Next: Codex gate → merge gate.
+
+## 2026-07-09 - Slice: the living canvas — build done (Review #2 done, see PR entry)
+- Gate: build (plan + Review #1 cleared; Review #2 on the diff ran after — verdicts in the PR
+  entry above)
+- Branch: `claude/slice-living-canvas-843hho`
+- Built: `web/src/game/guild/` restructured — new `clock.ts` (event queue on integer sim-ticks,
+  4/day, pinned order night-last, pure handlers decide/finish/return/night, `advanceUntilStop`),
+  `life.ts` (wallet-motivated rest/train/quest + forced decompress), `tuning.ts` (all knobs);
+  `endDay.ts` deleted (economics moved into `night`); SAVE_VERSION 2. New `web/src/ui/hall/`
+  (clock header + masked treasury, party strip, read-only board card, invest card, 3-register
+  feed with pinned "Needs you", Advance + Auto 1×/3×, StoryStage overlay); `ui/board/` deleted;
+  kit `Icon` (Kenney Board Game Icons, CC0, mask-tinted — committed in their own commit);
+  GuildContext rewritten; Report/StoryStage lightly adapted (archive role, brokerage wording);
+  PartyCard mock location/plan lines neutralized. All 16 Review #1 blockers landed as specced
+  (displayedGold masking, standing-quiet, spend clamp, handler guards, pinned comparator,
+  night-flushed takings, staggered wallets 90/45/20, gated proposal, feed streaming, one-tap
+  story from the Hall).
+- Verified: `tsc -b` + `vite build` green; **74 vitest pass** (31 guild tests incl. purity,
+  determinism, night-last ordering, conservation identity, sealed-display masking,
+  standing-quiet, proposal gating, stale-event guards, caps, full-day-under-cap, persistence
+  reinit). Headless Chromium @430px: fresh hall → Advance → return decision auto-pause → sealed
+  story → outcome → tavern proposal → build → capture lines → refresh resumes → Report archive;
+  no h-overflow; only the known art-CDN 404. Screenshots `docs/screenshots/canvas-*`.
+- DESIGN.md reconciled: §12 appetite-dormancy amendment, slice-1 as-built block, the slice-2
+  R2-successor kill-test (≥ +40g/day informed-vs-blind) written into guardrail #2, Kenney
+  adoption note; docs/kenney.md + CREDITS.md updated.
+
+## 2026-07-09 - Slice: the living canvas (clock · daily-life · Hall Feed · tavern) — plan done
+- Gate: plan
+- Branch: `claude/slice-living-canvas-843hho` (first commit: §50 backfill of PR #35's merged gate).
+- Scope declared: restructure `web/src/game/guild/` — new `clock.ts` (event-queue on integer
+  sim-ticks, pure handlers) + `life.ts` (autonomous rest/train/quest daily-life + hero wallets);
+  `endDay.ts` deleted (its economics move into the `night` handler); SAVE_VERSION 2. New
+  `web/src/ui/hall/` living-canvas screen replaces `ui/board/` at `#/guild` (BoardScreen + the
+  player-set cut retire per the pivot). Kit `Icon` + Kenney icon assets (CC0), GuildContext
+  rewrite, ReportScreen minor, HeroesScreen mock activity/intent lines neutralized, DESIGN.md /
+  kenney.md / CREDITS.md. Combat core untouched (D1a stays dormant); resolver/seed/persist/
+  StoryStage/Assignment seal-reveal reused.
+- Review #1 (4-persona, on the PLAN): 16 merged blockers, ALL folded into the plan before build —
+  (1) live treasury/wallets would leak the sealed outcome at the return tick → sim credits at
+  return but a pure `displayedGold()` masks every always-on gold surface until the envelope opens,
+  and ambient lines never print amounts; (2) standing-job returns are ambient+ledger only (no
+  sealed mail / auto-pause — Mira must not spam decisions); (3) spend clamp
+  `min(wallet, max(min, pct·wallet))`; (4) per-handler precondition guards (stale events no-op,
+  queue never starves); (5) quest comparator pinned (dailyRate desc, id asc) + fame roll picks any
+  eligible posting (road never rots); (6) `advanceUntilStop()` is a pure sim export (one
+  commit/autosave per Advance; the 50-event cap is sim-testable); (7) within-tick order pinned
+  (tick, type-rank with night LAST, ord); (8) MAIL_CAP trimming read mail only; (9) GuildContext
+  added to declared scope; (10) DESIGN §12 amended — appetite machinery dormant this slice,
+  returns with slice-4 variable terms; (11) staggered starting wallets (90/45/20) so minute one
+  shows the full behavioral vocabulary + tavern proposal gated on day≥2 and visible village-sink
+  lines; (12) read-only postings card in the Hall; (13, folded into 11); (14) Hall firstDay coach
+  line; (15) current day's feed expanded + streaming, past days collapse; (16) the return decision
+  item opens StoryStage directly over the Hall (Report stays the archive).
+- Non-blocking folded: finish-only narration, "Auto" naming (not a second "Play"), tavern
+  "Not yet" dismiss + consequence line ("leaves Xg ≈ N days' upkeep"), party-strip change pulse,
+  registers as row treatment + icon budget on activities/tavern/gold, outcome-agnostic return
+  wording, persisted dayTakings, visibilitychange pause, full-day-under-cap test, faded-expander
+  note, guardrail #5 explicitly deferred + post-tavern overcorrection noted as slice 2's hook.
+- Open questions: none blocking. Straw numbers (ratios are the design): TICKS_PER_DAY 4,
+  BROKERAGE 10%, NEED_GOLD 60, rest 15%/min 5g, train 20%/min 8g, TAVERN 400g, FEED_CAP 150,
+  MAIL_CAP 120. Design Q1 (wallet/spend model) and Q2 (R2-successor kill-test written now, live at
+  slice 2; this slice's tavern is knowledge-free by design) resolved in the plan.
+
+## 2026-07-09 - Redesign: pivot the core to the living-guild vision (DESIGN.md)
+- Gate: **merged 2026-07-09 20:26 +0200** (merge commit `7b2def2`; backfilled 2026-07-09).
+  **PR #35 into `dev`** (branch `claude/slice-1-planning-2qni0b`, restarted off `origin/dev`
+  after PR #34 merged). Docs-only. Plan + both reviews + Codex (P3 fixed) cleared.
+- Why: on playing merged Slice 1, Stefan found the per-quest **cut** decision "felt odd" and
+  clarified a bigger pivot. New core (DESIGN.md "The living guild" section, now leading the doc):
+  player = a **businessman** (fame/influence/wealth) running a **living world** of autonomous
+  heroes who live their lives and quest; he never commands, he **invests in Majesty-style building
+  & gear upgrades at fixed prices** (no cut-%, no price-fiddling); income = **hero spending** (main)
+  + flat ~10% brokerage + building passive; a **skip-primary living clock** (event-queue that reuses
+  the seal/reveal + seeded-RNG + persistence backbone, restructures the daily loop); a collapsible
+  **Hall Feed**; **Kenney icons** for clarity; loss layered after the canvas; **five kill-test
+  guardrails**. Board/resolver/report survive as scaffolding; combat core untouched.
+- Files: `docs/DESIGN.md` (new vision section + pivot notes on §1/§2/§3/§8/§9/§12 + re-sliced
+  "How we build": canvas → businessman's hand → tension), `PROGRESS.md`. First commit this branch
+  was the §50 backfill of **PR #34's** merged gate.
+- Design pass = a **four-perspective** divergent analysis (Designer, Phone-UX, Engineer, Adversary)
+  on the pivot; its synthesis (reframe-don't-delete the priced decision; entangle life+economy;
+  skip-primary clock; Hall Feed not animated map; keep governors) is the plan, approved by Stefan.
+- Review #2 (2-lens on the DIFF — consistency + accuracy-vs-code; proportionate to a docs diff the
+  4-perspective pass already deeply shaped): **7 blockers, all fixed** — (1) hero-spending main
+  income was undefined + contradicted §12 "wallets not tracked" → defined + superseded; (2) §2/§8/§9
+  still asserted the cut as income core → pivot notes added, §8 Cash row rewritten to the
+  upgrade-vs-spending clock + the over-invest→bankruptcy path; (3) Slice 1 was decision-less
+  ("economy stubbed") → now ships one fixed-price investment so the canvas responds to the player
+  (guardrails #1/#3); (4) the upgrade "read-driven bet" had no read system → Slice 2 activates the
+  dormant CV certainty chips so it's knowledge-priced (guardrail #2); (5) "Kenney icons already
+  ship" overstated (only the border frame shipped) → corrected; (6) "resolver reuse" vs a reactive
+  mid-quest clock contradicted → resolution note: near-term = sealed-at-dispatch (resolver reused),
+  reactive in-flight steering is a later flagged resolver change; (7) "generalizes not rewrites"
+  flattered a real restructure → softened. Non-blocking folded: a **5th guardrail** (allocation
+  stays a tradeoff), the equip target defined + tied to retention/poaching, and the R2-payoff caveat
+  (cut-based, retires — the upgrade bet's knowledge→gold is a to-prove). Accuracy lens **confirmed**
+  the Assignment/seed/persist reuse claims against the code.
+- Open questions: none blocking. Next: `@codex review` → codex gate → merge gate. Then build
+  sessions start at the **living canvas** slice.
+
+## 2026-07-08 - Slice 1: the thin closed loop (board · cut · quests · report)
+- Gate: **merged 2026-07-09 09:55 +0200** (merge commit `0d5c831`; backfilled 2026-07-09).
+  **PR #34 into `dev`** (feature branch `claude/slice-1-planning-2qni0b`). Plan + both reviews +
+  Codex (two P2s fixed) cleared.
+- Scope: the first playable guild loop (§12 reshaped in this planning interview). New pure sim
+  `web/src/game/guild/` (types, seed, roster, quests, resolver, board, state, endDay, persist) +
+  new UI `web/src/ui/{guild,board,report}/` + nav/roster edits. Combat core (`web/src/game/battle/`)
+  and art pipeline untouched (consumed read-only; D1a seam left unused).
+- What it does: 3 fixed parties bid on a board of 2 scarce postings (road + Ruins) plus always-up
+  standing jobs. The **cut dials WHICH party** takes a scarce quest via anti-correlated ask⟂quality,
+  awarded to the best-fit bidder — 30% → Free Blades take the Ruins (medium, ~67% success); drop to
+  ≤~24% → the strong Iron Vigil (verified 300/300 @20, 0/300 @30 — a crisp, always-available read).
+  Rich multi-beat quests resolve as graded skill-vs-diff rolls (inter-beat modifiers, forced-branch
+  recovery, trait cut-ins, optional bonus beat; no engine call). End Day runs the §12 tick behind a
+  night beat → Report of **sealed** outcome envelopes that withhold the result until opened as an
+  animated story stage. Cash clock visible (treasury, itemized ledger, runway); debt/charter defined
+  but unwired. localStorage persist with corrupt/version → reinit. New hero Wren Ashdown; 6 heroes /
+  3 parties.
+- First commit: §50 backfill of PR #31/#32 merged gates (separate `chore(progress)` commit).
+- Review #1 (4-persona, on the PLAN): 7 blockers folded pre-build — economy re-derivation
+  (anti-correlated asks, reward×duration, standing pay < idle burn), endDay assignment order,
+  module-boundary inversion, deterministic seed derivation, persistence guard, story-stage vs
+  horizontal scroll, teaser-envelope + card hierarchy. Non-blocking adopted (locked-CV framing,
+  §2/§4 sequencing-only, unknown-appetite + noise-thresholded eager, first-run coach + out-party
+  progress chip, declared nav scope, 4-attr beat map).
+- Review #2 (4-persona, on the DIFF): 7 blockers, all fixed — (1) ledger spoiled the sealed story
+  → returning-quest cut masked until the envelope is opened; (2) refilled postings were locked at
+  30% (`makePosting` lastRevisedDay) → revisable on arrival day; (3) "eager" chip could lie →
+  threshold tightened to maxAcceptedCut − 2·NOISE; (4) Iron Vigil anchor too near the cut floor on
+  low-offset runs → RUN_ASK_BAND ±5→±2 so the strong party is always lurable at cut 20 and never
+  bites at 30; (5) story beat floated in dead space → top-aligned + tap hint; (6) DESIGN §6/§12
+  still named the road job as the floor + stale idle-net → reconciled to standing jobs; (7)
+  no-blocker from Engineer (combat core untouched, sim pure/deterministic — verified). Non-blocking
+  folded: unmount-safe night timer, save-out-of-updater, road-bonus dead code, persist
+  knowledge/askRunOffset guard, no-takers-when-busy mislabel, dots primary-type label, board
+  bottom padding, strengthened tests.
+- Verified: `tsc -b` + `vite build` green; **68 vitest pass** (26 new incl. endDay purity/determinism,
+  assignment order, anti-correlated award, appetite-never-lies, persistence corrupt/version → reinit,
+  UI↔sim attribute parity). Headless Chromium @430px walks board → cut → End Day → sealed Report →
+  masked ledger → animated story → outcome payoff; refresh resumes; no horizontal scroll; only the
+  known art-CDN 404. Screenshots `docs/screenshots/slice1-*`.
+- DESIGN.md: §12 "Slice 1 as built", §9 standing jobs, §10 Slice-1 beat vocabulary, §2/§4 sequencing
+  note, new "Scramble" parked pillar (+ the lich's-tomb race, exclusivity research), other parked
+  ideas (investigate lever, hero downtime/nudge, recruitment).
+- Open questions: all tuning numbers are straw defaults (ratios are the design). Next: `@codex review`
+  → codex gate → merge gate.
+
+## 2026-07-06 - Kenney frame + Asset Report palette/button foundation
+- Gate: **merged 2026-07-06 22:40 +0200** (merge commit `fc488b2`; backfilled 2026-07-08). **PR #32 into `dev`**.
+- Codex (on head `b85cdf3`): "Didn't find any major issues." No fixes needed.
+  No PR-level CI on this repo (deploy triggers on push to main/dev only); UI-only.
+- Branch: `claude/kenney-ui-foundation` → PR into `dev`.
+- Scope: visual foundation aligning the guild UI to the "Asset Report" key art.
+  Additive/UI-only; combat core, LPC pipeline, and art pipeline untouched.
+- Files touched: new `web/src/ui/kit/Panel.{tsx,module.css}` (Kenney 9-slice frame)
+  + `kit/index.ts`; `web/src/assets/kenney/fantasy-ui-borders/` (CC0 sprite+license)
+  and `web/src/assets/brand/asset-report-key-art.jpg`; `theme/tokens.css` (warm
+  surfaces/strokes/bars, soft-gold button tokens, teal `--cv-*` certainty accent);
+  `StartScreen.{tsx,module.css}` (key-art bg + kit-Button menu); `kit/Button.module.css`
+  (soft-gold default); `combat/Controls.module.css` (.primary retint only);
+  `heroes/{PartyCard,HeroCard,HeroesScreen}.*` (frame, de-purple, Sway→Button);
+  `node/NodeTestScreen.module.css` (map contrast); `styles.css` (body bg);
+  `public/CREDITS.md`; `docs/kenney.md`; `docs/screenshots/*`.
+- Review #1 (4-persona, on the plan): blockers fixed pre-build — scope excludes the
+  certainty sheet from the skin, assets committed (no build-time fetch), Panel
+  graceful fallback, one framed level per view, dark-only tokens, assembled panel
+  PNG pinned for border-image.
+- Review #2 (4-persona, on the diff): **no blockers.** Keystone survives the teal;
+  build/tsc/42 tests green; forbidden dirs untouched; offline build + colorblind-safe.
+  Non-blocking polish applied: Start button hierarchy, map node contrast, certainty
+  label a11y + single-hue hatch, dropped an unused token, compressed screenshots.
+- Open questions: none blocking. Combat Test's selected-chip purple (`--c-royal`)
+  left intentionally (sprites + verified chip); optional full de-purple is a follow-up.
+
+## 2026-07-06 - §50 merged-gate backfill rule
+- Gate: **merged 2026-07-06 02:09 +0200** (merge commit `2eb2be3`; backfilled 2026-07-08). **PR #31 into `dev`** (Codex on `28884e4`: no
+  findings — nothing to fix)
+- Branch: `claude/economy-quest-fees-jto58v` (designated session branch, restarted from
+  `origin/dev` at `d70b6ee` after PR #30 merged) → PR #31 into `dev` (docs-only; no PR-level CI
+  on this repo)
+- Scope: **§50 now defines the merged gate as a backfill** — GitHub PR state is authoritative;
+  every new branch starts with `git fetch origin`, then idempotently backfills all missing merged
+  gates (PR #29 and later; older history grandfathered) as a separate `chore(progress)` first
+  commit, updating the existing entry's Gate line in place with merge data read from the fetched
+  history; read-only sessions defer their entries the same way. Why: §50 demanded a merged entry
+  at merge time while §80 forbids commits to `dev` without a PR — and the session was in plan
+  mode when PR #30 merged; the standard demanded a commit it also forbids. Exercised immediately:
+  PR #29 and #30 both backfilled in this PR.
+- Files touched: `CLAUDE.md` (§50 + four sub-bullets), `PROGRESS.md` (PR #30 backfill + this entry).
+- Review #1 (4-persona, on the plan): 5 blockers, all fixed in the rule text — (1) idempotent
+  backfill-all-missing procedure (kills duplicate races and the who-logs-the-logger regress);
+  (2) update Gate line in place, not a new dated entry (preserves phone chronology); (3) backfill
+  data verified on GitHub/`origin/dev`, never memory, with an explicit "(backfilled)" marker;
+  (4) §60 exemption by name + separate conventional commit + promotion-PR exclusion; (5) stale
+  local `origin/dev` caught — fetch + verify merge commit added as verification step zero.
+  Non-blocking folded: authoritative-record sentence, eventual-consistency wording, this PR's own
+  merged gate deliberately left as the demonstrating one-entry lag.
+- Review #2 (4-persona, on the DIFF): 3 blockers, fixed — (1) rule text now mandates `git fetch
+  origin` before verifying (the PROGRESS entry claimed it; the doc didn't say it); (2) the rule's
+  own first run violated the rule: PR #29 is merged but its Gate line still said "awaiting merge
+  decision" — now backfilled alongside #30; (3) "all missing merged gates" gained a cutoff (PR
+  #29+; older multi-entry history grandfathered) so the next branch's first commit can't balloon
+  into a 28-PR archaeology dig. Non-blocking folded: first bullet says "merged is backfilled — see
+  below", plural commit-message form, always-in-scope covers §10's declared scope too, backfill's
+  place relative to The Loop stated, §50 rationale trimmed to imperatives, "becomes" instead of
+  nested arrows, time+offset on midnight-straddling merges, this entry re-led bottom-line-first.
+- Open questions: none.
+
+## 2026-07-05 - Economy: the board, the cut, the clock — plan + build
+- Gate: **merged 2026-07-06 00:41 +0200** (merge commit `d70b6ee`; backfilled 2026-07-06).
+  **PR #30 into `dev`**.
+- Codex (P1 on `2001a87`, the only finding): quest-cycle downtime broke the road floor — with
+  acceptance at end-day N, payout at N+1, and replacement letters only after *completion*, a
+  cycle took 2 days, halving throughput (+6g/day floor was really ~−16g/day). Fixed as Codex
+  suggested: a quest's replacement letter now triggers when the quest is **taken** (leaves the
+  board), so a replacement is postable while the party is out and — payouts preceding acceptance
+  rolls in the tick order — the returning party re-takes the same night. Back-to-back workdays;
+  the stated EVs hold. Re-ran Review #2 on the one-bullet delta (self, proportionate): tick
+  order, take-beat timing, failure identity all consistent; letter buildup bounded by the
+  two-failure withdrawal; no new blockers.
+- Note: no PR-level CI on this repo (deploy.yml + android-apk.yml trigger on push to `main`/`dev`
+  only); docs-only diff, nothing to build.
+- Branch: `claude/economy-quest-fees-jto58v` → PR into `dev` (docs-only)
+- Scope: fold the Slice 1 economy decided in the design chat into `docs/DESIGN.md`. Decisions
+  (Stefan, 2026-07-05): **posting fee is dead** — quests come to the guild as letters, the board
+  is free, and the **player-set cut** (base 30%, −10/−5/+5/+10 → 20–40%) is the priced decision;
+  gold scale 1,000g start; two quests (road job 200g = survival, Ruins 600g = growth); failure
+  consequences phased (Slice 1: story-based quest reaction; slice 3: fame/relation; slice 5:
+  influence; boss-tier: permadeath — locked note); givers-come-to-guild framing.
+- Files touched: `docs/DESIGN.md` (new §12 economy section; reconciling edits to §3 lever 1, §5
+  asking-price line, §8 cash-in-detail, §9 economy para, Ideas parked ×2, Next-up Slice 1),
+  `PROGRESS.md`.
+- Review #1 (4-persona, on the PLAN): 7 merged blockers, all fixed in the spec before building —
+  (1) acceptance model pinned (hidden per-party ask + daily noise, one roll per end-day, anchors
+  at 20/30/40% so no cut dominates blind); (2) §3/§5 "ask is known" reconciled (hiring ask public,
+  quest-split appetite hidden); (3) Slice 1 knowledge source named (observation brackets + free
+  report lines — no dependency on slice 2/5); (4) quest refresh cadence defined (next-morning
+  letter, road-tier always on offer = unstick floor at base cut); (5) resolution model specced
+  (one fixed party of 3, 1-day quests, better-share stub); (6) loan de-ratcheted (flat 5%/day on
+  principal, one per run, worked comeback math); (7) visibility mandated (itemized end-day ledger
+  + runway line; rot/no-takers days always produce mail). Non-blocking folded: tick order,
+  Ruins-specific squeeze label, failure pay-bump bounds, cut revisable once/end-day, curation
+  honestly labeled a Slice 1 no-decision.
+- Review #2 (4-persona, on the DIFF): 6 blockers, all fixed — (1) road job success ~85% now in
+  the number sheet (3 personas caught the omission); (2) end-day tick order completed (cut
+  revisions → payouts → acceptance rolls → trickle → upkeep → interest → force-repay → loan →
+  insolvency check) and take/resolve/payout timing pinned (accept night N, out day N+1, payout
+  night N+1 — a take is its own mail beat); (3) appetite chip reworded eager/might-pass/won't-bite
+  (QA-UX: "risky" collided with quest danger; no third "?" marker); (4) "no setting dominates
+  blind" claim was false on our own anchors — reworded to "blind play is base-optimal by design;
+  deviation pays only with knowledge" (that IS the R2 shape); (5) failed-quest identity pinned
+  (same letter returns, failure count + pay bump persist, expiry resets); (6) ask band ±5
+  cut-points per run + ±2 daily noise straw numbers added. Non-blocking folded: squeeze labeled
+  per-completed-Ruins-day gross, "roughly two" successes clear debt, §6 unstick → §12 pointer,
+  contract cut = hero default/floor with posting buttons surviving, free report lines capped
+  occasional, slice-2 residual ~4-point band to sell, strict <0 boundary + force-repay wording,
+  Slice 1 treasury chip (gold + runway) pinned on header, rot day = idle net not a fee, positive
+  runway wording.
+- Open questions: none blocking; all numbers are straw defaults (ratios are the design).
+
+## 2026-07-03 - Part B: Parties-primary Heroes view
+- Gate: **merged 2026-07-04** (merge commit `382e09b`; backfilled 2026-07-06). PR #29 into `dev`.
+- Codex (P2 on `7b64daf`, the only finding): Brok & Pell render inside "The Free Blades" but had no
+  `scope:"party"` bond, so `BondsTab` (which builds the "Their Party" card from party-scope bonds)
+  showed no party card when you tapped them — inconsistent with Iron Vigil. Fixed by adding matching
+  party bonds in `mockHeroes.ts` (Brok +42 boss, Pell +26), mirroring Ysolt/Doran — NOT by coupling
+  the untouched HeroCard to PARTIES. Re-reviewed the 2-line delta (self, proportionate): valid Bond
+  shape, in-range valence-positive scores, no double party membership; no new blockers. Verified
+  headless @430px: Brok's Bonds tab now shows the "Their Party" card. Build + 42 tests green.
+- Branch: `claude/parties-primary-heroes-view-glyo4q` (restarted off `dev` after Part A / #28 merged)
+- Scope (additive): NEW `web/src/ui/heroes/mockParties.ts`, `PartyCard.tsx`, `PartyCard.module.css`,
+  `mockParties.test.ts`; MODIFIED `HeroesScreen.tsx`, `HeroesScreen.module.css`, `mockHeroes.ts`
+  (status reconcile only), `docs/DESIGN.md` (§6 note). Combat core + art pipeline + HeroCard/inspect
+  untouched (the existing hero Sheet is reused as-is).
+- What it does: the roster now leads with PARTIES (§6) — 2 mock parties, each a bordered card that
+  WRAPS its members: name, an observed "In {location} · {activity}" line, a 2×2 value grid
+  (Fame/Cohesion/Morale 0–100 meters + a Rating), a "Guild estimate" caption, a "Plans to {…}"
+  intent line, members inside (boss-first + crown, ★rating, per-member mood dot), and a DISABLED
+  "Sway the boss" (soon) lever. Then a "Without a party" section (Mira, solo). Tapping any hero
+  opens the existing tabbed Sheet. Mock: Iron Vigil = Ysolt(boss)+Doran; Free Blades = Brok+Pell;
+  solo Mira. (5 heroes → 2×2-person parties + 1 solo; "a couple of solo" approximated to one to
+  reuse all five bond-consistently — tunable.)
+- DESIGN mapping: Fame→§5/§7 track record, Cohesion→§6, Morale→§8 (also per-member so an at-risk
+  hero like Pell isn't hidden by the average), Rating→§5 certainty-WEIGHTED CV aggregate.
+- Review #1 (4-persona, PLAN): many blockers, all folded before build — certainty laundering of the
+  rating (exclude rumor + estimate framing), per-hero retention hidden by a party mean (per-member
+  mood dot), omniscient "plan"/location (reframed as the party's own intent + observed report),
+  wrong "Influence" lever (→ "Sway the boss", §6), SOLO must subtract boss∪members + NaN/id guards,
+  4-value legibility + label confusion + boss★ collision (2×2 + icons + crown, renamed
+  Cohesion/Morale). Reconciled mock hero statuses so members agree with the party line.
+- Review #2 (4-persona, DIFF): 1 blocker fixed — (Designer) the rating excluded rumor but folded
+  CLAIMED stats at full weight and called them "trusted", contradicting §5 → made it a certainty-
+  WEIGHTED mean (verified ×1, claimed ×0.5, rumor excluded), clamped 0–5, relabelled
+  "certainty-weighted CVs", and corrected the §6 note + §5/§7 citations. Engineer/Adversary/
+  Player-exp: no blockers. Folded non-blockers: meter value clamp, amber mood-dot ring/gap vs the
+  star, cohesion-comment scope. Documented (non-blocking): mood colour cue is also in the accessible
+  name (colourblind text-cue = future polish), boss∈members enforced by test not runtime.
+- Verified: `tsc -b && vite build` green (93 modules); 42 vitest pass (6 new mockParties guards incl.
+  the §5-weighting test); headless Chromium @430px — 2 party cards, header "2 parties · 5 heroes",
+  boss crown, weighted ratings (Ysolt 3.8 / Doran 2.8 / Brok 3.6 / Pell 2.4), Pell amber "unsettled"
+  dot, disabled "Sway the boss", Mira in "Without a party", NO h-overflow, member+solo taps open the
+  correct Sheet, no page errors. Screenshots `docs/screenshots/partB-*`.
+- Open questions: solo count (1 vs "a couple") is the 5-hero-reuse constraint; party values are
+  tunable mock defaults. Next: PR into `dev` → @codex → merge gate.
+
+## 2026-07-03 - Part A: hero-sheet interaction fixes
+- Gate: merged — PR #28 into `dev` (Codex reviewed `ffedb3c`, no issues).
+- Branch: `claude/parties-primary-heroes-view-glyo4q` (off `dev`)
+- Scope (additive): `web/src/ui/heroes/inspect.tsx`, `HeroCard.tsx`, `HeroCard.module.css`,
+  `docs/DESIGN.md` (one UI-principle note). No combat core / art pipeline touched.
+- What changed:
+  1. Inspect dismiss reworked. Root cause: the transparent scrim ate the tap on pointerdown, then
+     the same gesture's click reopened the chip → same-chip re-tap never hid. Dropped the scrim;
+     chips carry `data-inspect-chip` so the new next-frame document pointerdown(capture) listener
+     ignores chip taps (chip owns same-id toggle / in-place re-anchor) and closes only on true
+     outside taps. A backdrop tap arms a target-scoped, self-disarming capture click-swallow so it
+     closes the popover WITHOUT closing the Sheet (a 2nd backdrop tap closes the Sheet).
+  2. Dropped the persistent gold "open" ring on chips (popover + caret is the feedback now);
+     kept `aria-expanded`. Established the selection-state principle in DESIGN.md §5.
+  3. Bonds relation-row button "Go ›" → "View ›" (aria-label "View {name}'s sheet").
+- Review #1 (4-persona on the PLAN): 2 blockers, both fixed before build — (Designer) ring removal
+  needs an anchor cue → the popover's existing caret is that cue; (Player-exp) chip→chip move must
+  be a single re-anchor, not destroy/recreate → `data-inspect-chip` keeps one box mounted.
+  Engineer + Adversary each raised the swallow-lifecycle blocker (rAF-removal races the click /
+  once:true leaks on a no-click drag) → redesigned to a self-disarming, target-scoped swallow that
+  lives outside the effect cleanup + a next-pointerdown disarm.
+- Review #2 (4-persona on the DIFF): 1 blocker fixed — (Designer) DESIGN.md carve-out was
+  self-undercutting → reworded to "control's own surface (expander) vs a separate transient
+  element". Engineer + Adversary: no blockers (all 8 / all failure-mode checks pass). Non-blocking
+  fixed: stale "Go to" comments, `[role=dialog]` coupling guard comment.
+- Verified: `tsc -b && vite build` green; 36 vitest pass; headless Chromium @430px confirmed
+  tap=peek, re-tap=hide, different-chip=1 popover moved, backdrop=popover-closes+sheet-stays,
+  2nd backdrop=sheet-closes, Bonds shows "View ›". Screenshots in `docs/screenshots/partA-*`.
+- Open questions: two reviewers (non-blocking) note "View" can read as "view this bond" vs the
+  chip's own peek; kept "View ›" per the task's explicit rename — flag for Codex/merge if a
+  clearer verb (Go/Open/Sheet) is preferred. Move-in-place doesn't replay popIn for adjacent chips
+  (deferred polish; keeping the box mounted was the round-1 requirement).
+
+## 2026-07-03 - Hero sheet refinement: Codex fix (in-modal inspect a11y)
+- Gate: codex-fixed
+- Branch: `claude/ui-foundations-guild-master-x9v3l4` → PR #27 into `dev`
+- Codex finding (P2, the only one): the inspect popover is portalled to `document.body`, OUTSIDE
+  the `aria-modal` Sheet subtree, so a screen reader inside the modal can't reach the effect text —
+  the `aria-live` I'd added to the portalled box doesn't help across the modal boundary. Fixed:
+  keep the visual popover portalled (for layout) but mark it `aria-hidden`, and mirror its
+  title+effect in an IN-modal visually-hidden `aria-live="polite"` region (`.srOnly`) rendered
+  inside HeroCard, so activating a chip announces the effect within the modal without a double read.
+- Note: Codex DID run this time on a bot-triggered `@codex review` (after an initial "create an
+  environment" reply) — so the CLAUDE.md §30 self-trigger rule works; Stefan can still set up a
+  Codex environment if he wants it more reliable.
+- Review #2 on the delta (self, a11y markup + one CSS class): no new blockers.
+- Verified: build green; headless confirms the in-modal live region holds "Strength. Raises hit
+  damage and max HP." inside the dialog while the portalled popover is aria-hidden.
+- Open questions: none. Next: awaiting merge decision (no self-merge).
+
+## 2026-07-03 - Hero sheet refinement (popover / bonds / go-to): PR opened
+- Gate: PR
+- Branch: `claude/ui-foundations-guild-master-x9v3l4` (restarted off `dev` after #26 merged) → new PR into `dev`
+- Scope: additive UI-only refinement of the hero sheet, from Stefan's screenshot feedback.
+  `web/src/ui/heroes/` + tokens.css + docs. Combat core + art pipeline untouched. Also adds a
+  CLAUDE.md §30 rule (trigger Codex yourself — API-opened PRs don't auto-review).
+- Changes: (1) inspect detail is now a **floating parchment popover ABOVE** the tapped chip
+  (portalled, position:fixed, scrim catches the dismiss tap, flip-below + viewport clamp,
+  capture scroll/resize dismiss) replacing the inline-below card. (2) Attribute chips **wider** —
+  2-col grid. (3) Portrait **vertically centred** (sprite nudged up; LPC frames carry extra
+  headroom). (4) Bonds → **distinct Guild card** + Party card + **Other-Heroes rows** (one two-line
+  row each: full name + score + **Go ›** jump to that hero; archetype · variant; valence accent).
+  (5) **Relation variants** (Old grudge / Drinking buddy …) layered on the band, valence-respecting,
+  folded into DESIGN.md §5. Bond model gains optional `targetId` + `type`; `onGoto` guarded.
+- Review #1 (4-persona, PLAN): blockers folded — space-based popover flip + two-line relation row
+  (Player-exp); thread guarded `onGoto`, capture-scroll dismiss, `targetId` guard, `useLayoutEffect`
+  positioning (Engineer/Adversary); keep the party scope + write variants into DESIGN.md §5 +
+  parchment popover (Designer). The Adversary's popover "blockers" dissolved: popover is text-only
+  (Go-to is an inline in-panel button), so the focus trap/Escape objections don't apply.
+- Review #2 (4-persona, DIFF): **zero blockers**. Engineer (combat untouched, stacking/flip/clamp
+  sound), Adversary (7 edge vectors — party/guild card guards, remount-on-hop, self-ref no-op all
+  hold), Designer (§5 fidelity, valence-consistent mock, parchment on-brand), Player-exp (phone
+  read). Folded: hoist `currentTarget` before the deferred updater; popover `aria-live`; ink-on-
+  parchment tokens + `--c-royal-deep` for the pop title; legend↔Traits spacing; §5 pool marked
+  illustrative. Noted (later): valence guard when the bond sim lands; alpha-of-brand rgba.
+- Verified: build green (90 modules), 36 tests pass; headless 430px — wide attr cells, popover
+  appears ABOVE the chip (portalled, parchment, aria-live), scrim closes popover only, Guild+Party+
+  Other-Heroes cards, Go-to navigates + resets to Character, no dialog h-overflow, no console
+  errors. Screenshots `docs/screenshots/hero-{popover,bonds}.png`.
+- Open questions: relation-variant pool + band names/cutoffs still tunable. Next: Parties-primary
+  mock view (PR-B). Awaiting Codex review, then merge gate.
+
+## 2026-07-03 - Hero sheet tabs: Codex fix (tabpanel focus ring)
+- Gate: codex-fixed
+- Branch: `claude/ui-foundations-guild-master-x9v3l4` → PR #26 into `dev`
+- Codex finding (P3, the only one): `.panel:focus-visible { outline: none }` stripped the focus
+  indicator from the tabpanel, which is a tab stop (`tabIndex=0`), so keyboard focus visually
+  vanished when landing on it — worst on the Career/Skills stubs where the panel is the only
+  focusable content before Close. Fixed: keep the panel a tab stop (so empty stub tabs stay
+  reachable, per WAI-ARIA) but give it a visible inset gold focus ring instead of removing it.
+- Review #2 on the delta (self, one-line a11y CSS): no new blockers.
+- Verified: build green; headless keyboard-Tab to the tabpanel confirms it now matches
+  `:focus-visible` with a visible ring (programmatic .focus() doesn't trigger :focus-visible, so
+  the check drives real keyboard focus).
+- Open questions: none. Next: awaiting merge decision (no self-merge).
+
+## 2026-07-03 - Hero sheet → tabs (Character/Gear/Bonds/Career/Skills): PR opened
+- Gate: PR
+- Branch: `claude/ui-foundations-guild-master-x9v3l4` (restarted off `dev` after #25 merged) → new PR into `dev`
+- Scope: additive UI-only — reorganise the hero detail sheet into tabs, from Stefan's feedback +
+  the agreed IA. Mock data only. Combat core (`web/src/game/battle/`) + art pipeline untouched
+  (verified name-only diff); `battle/attributes.ts` read for its real attribute names only (prose,
+  no import). Also a small DESIGN.md fold of the locked decisions.
+- Files: `web/src/ui/heroes/HeroCard.tsx` (5 tabs + WAI-ARIA keyboard + inline inspect),
+  `heroes/inspect.tsx` (new — inline accordion "tap a chip for its effect"; no portal/Escape),
+  `heroes/relationships.ts` (new — −100..100 → named feeling band, exact cutoffs),
+  `heroes/mockHeroes.ts` (new model: 4 real attributes str/dex/sta/per + effects, 6 gear slots,
+  traits w/ effects, scored bonds), `heroes/HeroCard.module.css`, `heroes/HeroesScreen.tsx`
+  (`key={hero.id}`), `docs/DESIGN.md` (§5 tabbed-sheet + relationship-band note), screenshots.
+- Tabs: **Character** (the 4 real sim attributes as certainty chips + 3 trait slots, each
+  tap-to-inspect for its real combat effect) · **Gear** (6 slots head/armor/mainhand/offhand/
+  trinket×2) · **Bonds** (relationships as named-feeling chips over a −100..100 score, valence by
+  colour, grouped To Guild / Party / Heroes) · **Career** & **Skills** (honest "coming" stubs +
+  soon badge). Compact header (88px static portrait + archetype/status; name stays the Sheet title).
+- Review #1 (4-persona, PLAN): blockers folded — inline-accordion inspect (Engineer: a popover
+  would clip/detach in the scroll container + fight the focus trap); no Escape in inspect (Sheet
+  owns Escape); short one-word tabs, no h-scroll; portrait collapsed to a compact header; honest
+  stub empty states + soon badge; inspect discoverability hint; **dropped the `~` bond-uncertainty**
+  (Designer: invents an unlocked relationship-fidelity mechanic) → plain named-band chips; Character
+  capped at the 4 real attributes; exact band cutoffs; Tabs kept local (YAGNI); `key={hero.id}`.
+- Review #2 (4-persona, DIFF): **zero blockers** from all four. Engineer confirmed combat core
+  untouched + typecheck green + no id collisions; Adversary broke all 7 vectors (empty/sparse
+  heroes, inspect lifecycle, focus-trap vs roving tabindex, band boundaries, keyboard, no layout
+  shift) — all sound; Designer confirmed §5 fidelity (certainty fill-only, 4-attr lean, chips-not-
+  a-web, pill-vs-hexagon "?"); Player-exp confirmed the phone read. Folded two cosmetics
+  (focus-ring vs open-ring order; a comment). Noted for later: per-group vs per-cell detail
+  placement on wrap rows; empty-state fixtures; valence rgba→token; fixed-3-trait frame (Slice 3).
+- Verified: build green (90 modules), 36 tests pass; headless 430px walks all 5 tabs — real
+  attributes with certainty fills + "?", inspect opens/toggles, 6 gear slots + Empty, bonds with
+  named feelings/valence/score grouped by target, career stub, tab arrow-key nav, no dialog
+  h-overflow, no console errors. Screenshots `docs/screenshots/hero-{character,gear,bonds,career}.png`.
+- Open questions: relationship band names/cutoffs are a tunable default (say the word). Next: the
+  Parties-primary mock view (PR-B). Awaiting Codex review, then merge gate.
+
+## 2026-07-03 - UI polish (map selection / bars / portrait): PR opened
+- Gate: PR
+- Branch: `claude/ui-foundations-guild-master-x9v3l4` (restarted off `dev` after #23 merged) → new PR into `dev`
+- Scope: visual polish only, additive, `web/src/ui/` — from Stefan's feedback. Combat core
+  (`web/src/game/battle/`) and art pipeline untouched (verified name-only diff). `LpcSprite` is the
+  UI compositor, not the frozen core.
+- Changes: (1) **Map selection** — killed the blue mobile tap-highlight (global `button,a`
+  `-webkit-tap-highlight-color: transparent`) + `:active` press cues on every live tappable; the
+  selected node now *lights up* (soft gold bloom + brightness + scale 1.14) instead of a hard
+  rectangular ring (matches the DESIGN.md "soft glow" polish backlog). (2) **Bars** — new
+  `--bar-1/--bar-2` tokens (wine/aubergine, less "blue" but still royal-purple brand) drive ALL
+  chrome bars (nav + all 3 top bars); content surfaces keep `--c-royal-deep`. (3) **Hero portrait**
+  — display 256→192 (art target stays 256), and made static via an additive `animate?: boolean`
+  (default true) on `LpcSprite` so combat is byte-identical; `HeroSprite` passes `animate={false}`.
+- Review #1 (4-persona, on the PLAN): 4 blockers folded before build — static-draw would blank
+  the canvas (resolved by suppressing the bob, NOT stopping the rAF loop); freeze both roster +
+  portrait (consistent); global tap-highlight needs paired `:active` cues; bar must stay
+  purple-leaning (wine/aubergine, not brown). Plus: repoint ALL chrome bars; keep glow gold; bump
+  selected scale; keep 256 as the documented asset target.
+- Review #2 (4-persona, on the DIFF): 1 blocker — StartScreen's two landing cards lost their tap
+  flash with no `:active` (phone-only user) → added `.card:active` (and `.close:active` on the
+  sheet ×). Engineer confirmed combat core untouched + combat byte-identical; Designer confirmed
+  wine hue + gold glow + single-source bars; all fixes verified landed.
+- Verified: build green (88 modules), 36 tests pass; headless 430px confirms portrait 192×192 with
+  a frame-stable transform (no float), the selected node renders a soft gold glow (no 3px ring),
+  and every chrome bar uses the new gradient; no console errors. Screenshots refreshed in
+  `docs/screenshots/`.
+- Deferred (out of this scope, pre-existing — flagged for a follow-up): map node *labels* clip
+  their placeholder tiles ("Guild Hall" cut off); node caption pills sit low / low-contrast; the
+  selected node's dashed-box vs rounded-glow double-outline; static sprites keep a no-op rAF loop
+  (a micro-opt). None introduced by this diff.
+- Open questions: bar shade + node-selection intensity are subjective — easy one-token retune if
+  Stefan wants a different direction. Next: awaiting Codex review, then merge gate.
 
 ## 2026-07-03 - UI foundations (guild kit + Heroes): Codex fix (trait-row overflow)
 - Gate: codex-fixed
