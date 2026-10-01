@@ -217,6 +217,13 @@
 .rollGrade[data-grade="poor"] { color: var(--c-ember); }
 .rollGrade[data-grade="fail"] { color: var(--c-blood); }
 .effect { font-size: 0.8rem; color: var(--text-dim); font-style: italic; }
+/* The outcome card's Experience block: quiet, phone-width, level-ups lit. */
+.growth { margin-top: var(--sp-3); text-align: left; max-width: 100%; }
+.growthHead { font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); margin-bottom: var(--sp-1); }
+.growthList { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.growthRow { font-size: 0.82rem; color: var(--text-dim); overflow-wrap: anywhere; }
+.growthRow[data-up="true"] { color: var(--text-gold); font-weight: 700; }
+.growthMore { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; }
 /* Marks a report graded by the v3 rules (old v1 reports show nothing). */
 .rulesTag {
   margin-left: var(--sp-2);

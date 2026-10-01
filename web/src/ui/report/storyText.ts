@@ -4,7 +4,7 @@
 // the final or bonus beat, and a good recovery still carries a penalty).
 
 import { readPref, savePref } from "../kit";
-import { GRADE_ZONES, type Beat, type Grade } from "../../game/guild";
+import { GRADE_ZONES, type Beat, type Grade, type GrowthLine } from "../../game/guild";
 
 // Display ladder (Stefan's benchmark words). The Grade UNION literals are
 // persisted + fixture-pinned — labels only, never the keys.
@@ -116,4 +116,37 @@ export function readStorySpeed(): StorySpeed {
 
 export function saveStorySpeed(speed: StorySpeed): void {
   savePref(SPEED_KEY, speed);
+}
+
+// ── The outcome card's Experience block (Wire B) ──────────────────────────────
+
+const title = (id: string) => id.charAt(0).toUpperCase() + id.slice(1);
+
+export interface GrowthRow {
+  text: string;
+  levelUp: boolean;
+}
+
+/** Experience rows for the outcome card: level-ups first and highlighted, then by XP
+ * gained (the order the sim already sorted them), at most `max` rows plus a count of
+ * the rest. A row shows the gain and the bank toward the next level so progress is
+ * visible between level-ups ("Wren Ashdown · Reasoning 6 · +2 XP (12/30 to next)"). */
+export function formatGrowth(lines: readonly GrowthLine[] | undefined, max = 4): { rows: GrowthRow[]; more: number } {
+  if (!lines || lines.length === 0) return { rows: [], more: 0 };
+  const rows: GrowthRow[] = [];
+  for (const l of lines) {
+    if (l.levelUp && l.level === 1) {
+      // A first level is a milestone ("learned"), not a number.
+      rows.push({ text: `${l.name} learned ${title(l.skill)}`, levelUp: true });
+    } else if (l.levelUp) {
+      rows.push({ text: `Level up! ${l.name} · ${title(l.skill)} ${l.level}`, levelUp: true });
+    } else if (l.xpGained > 0) {
+      const skill = l.level === 0 ? `${title(l.skill)} (untrained)` : `${title(l.skill)} ${l.level}`;
+      const next = l.cost === null ? "max" : `${l.xp}/${l.cost} to next`;
+      rows.push({ text: `${l.name} · ${skill} · +${l.xpGained} XP (${next})`, levelUp: false });
+    }
+    // The governing attribute going up is always shown, alongside the skill row (Codex P2).
+    if (l.attrUp && l.attr) rows.push({ text: `${l.name} · ${title(l.attr)} ${l.attrLevel} (attribute up)`, levelUp: true });
+  }
+  return { rows: rows.slice(0, max), more: Math.max(0, rows.length - max) };
 }

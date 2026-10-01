@@ -7,6 +7,7 @@ import { mulberry32 } from "../battle/rng";
 import { GRADE_ZONES } from "./zones";
 import { resolveBeatV3 } from "./wire/bridge";
 import type { Engine } from "./engine";
+import type { HeroStatsMap } from "./types";
 import { partyAttr, partyTraitMod } from "./roster";
 import type { QuestDef, BeatDef } from "./quests";
 import type { AdventureLog, Beat, Grade } from "./types";
@@ -93,13 +94,21 @@ export interface ResolveInput {
    * configured engine at dispatch (engine.ts). The carry / recovery / bonus /
    * outcome logic below is shared by both engines — it reads grade slots only. */
   engine?: Engine;
+  /** v3 only: the live hero stats (grown heroes from GuildState). Default: the static
+   * roster stats, so every existing caller is unchanged. */
+  stats?: HeroStatsMap;
 }
 
-export function resolveQuest({ quest, partyId, cutPct, durationDays, seed, engine = "v1" }: ResolveInput): AdventureLog {
+export function resolveQuest({ quest, partyId, cutPct, durationDays, seed, engine = "v1", stats }: ResolveInput): AdventureLog {
   // Each engine owns its stream (v1: one draw per beat, v3: two dice per beat);
   // the stream is created here per call, never shared between engines.
   const rng = mulberry32(seed);
-  const resolveBeat_ = engine === "v3" ? resolveBeatV3 : resolveBeat;
+  // v3 closes over the live stats; the v1 path is the untouched resolveBeat.
+  const resolveBeat_ =
+    engine === "v3"
+      ? (def: BeatDef, party: string, r: { next(): number }, carry: number, diffMult: number, branch?: Beat["branch"]) =>
+          resolveBeatV3(def, party, r, carry, diffMult, branch, stats)
+      : resolveBeat;
   const beats: Beat[] = [];
   let carry = 0;
   let failed = false;

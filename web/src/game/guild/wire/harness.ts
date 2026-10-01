@@ -8,6 +8,7 @@ import { PARTY_DATA } from "../roster";
 import { ROAD_JOB, RUINS, STANDING_JOBS, type BeatDef, type QuestDef } from "../quests";
 import { resolveQuest } from "../resolver";
 import type { Engine } from "../engine";
+import type { HeroStatsMap } from "../types";
 import { beatDistribution } from "./bridge";
 
 export const SEEDS = 2000;
@@ -32,13 +33,13 @@ export interface QuestStats {
   strong: number;
 }
 
-export function questStats(quest: QuestDef, partyId: string, engine: Engine, seeds = SEEDS): QuestStats {
+export function questStats(quest: QuestDef, partyId: string, engine: Engine, seeds = SEEDS, stats?: HeroStatsMap): QuestStats {
   let ok = 0;
   let bonus = 0;
   let rec = 0;
   let strong = 0;
   for (let seed = 1; seed <= seeds; seed++) {
-    const log = resolveQuest({ quest, partyId, cutPct: 10, durationDays: 1, seed, engine });
+    const log = resolveQuest({ quest, partyId, cutPct: 10, durationDays: 1, seed, engine, stats });
     if (log.outcome === "success") ok++;
     if (log.beats.some((b) => b.branch === "bonus")) bonus++;
     if (log.beats.some((b) => b.branch === "recovery")) rec++;

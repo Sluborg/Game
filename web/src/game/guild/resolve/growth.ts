@@ -19,6 +19,8 @@ export const ATTR_XP_PER_LEVEL = 20;
 export const SKILL_XP_USE = 1;
 export const SKILL_XP_SUCCESS = 2;
 export const ATTR_XP_SUCCESS = 1;
+/** A supporting member's skill XP on a Success or Triumph. */
+export const SKILL_XP_SUPPORT = 1;
 
 export interface HeroProgress {
   attrs: Record<AttrId, number>;
@@ -107,6 +109,24 @@ export function applyUse(progress: HeroProgress, skill: SkillId, result: ResultI
   next.xp.attrs[attr] = ab;
 
   return { progress: next, skillUp, attrUp };
+}
+
+export interface SupportOutcome {
+  progress: HeroProgress;
+  skillUp: number;
+}
+
+/** A SUPPORTING party member's share of an encounter someone else led: +1 skill XP
+ * on a Success or Triumph, nothing on anything else, and never attribute XP. (Wire B:
+ * differentiates the party without letting the best member pull away alone.) */
+export function applySupport(progress: HeroProgress, skill: SkillId, result: ResultId): SupportOutcome {
+  if (!SKILL_IDS.includes(skill)) throw new Error(`unknown skill: ${String(skill)}`);
+  const next = cloneProgress(progress);
+  if (!isSuccess(result)) return { progress: next, skillUp: 0 };
+  const [sl, sb, skillUp] = advance(next.skills[skill], next.xp.skills[skill], SKILL_XP_SUPPORT, SKILL_MAX, skillXpToNext);
+  next.skills[skill] = sl;
+  next.xp.skills[skill] = sb;
+  return { progress: next, skillUp };
 }
 
 /** An all-zero progress record (a blank slate; birth.ts fills the real kit). */

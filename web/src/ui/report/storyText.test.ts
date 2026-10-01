@@ -4,9 +4,9 @@
 // (the resolver still carries −1 after a recovery).
 
 import { describe, it, expect } from "vitest";
-import { GRADE_LABEL, V3_LABEL, effectNote, gradeAt, isV3Beat, labelFor, logIsV3 } from "./storyText";
+import { GRADE_LABEL, V3_LABEL, effectNote, formatGrowth, gradeAt, isV3Beat, labelFor, logIsV3 } from "./storyText";
 import { GRADE_ZONES } from "../../game/guild";
-import type { Beat, Grade } from "../../game/guild";
+import type { Beat, Grade, GrowthLine } from "../../game/guild";
 
 function beat(grade: Grade, branch?: Beat["branch"]): Beat {
   return { id: "x", type: "combat", location: "y", grade, roll: 0.5, text: "t", score: 50, branch };
@@ -124,5 +124,44 @@ describe("effectNote for v3 Insufficient: short of the requirement is never read
   });
   it("v1 wording is unchanged", () => {
     expect(effectNote(beat("ok"), true)).toBe("They hold steady.");
+  });
+});
+
+describe("formatGrowth: the outcome card's Experience rows", () => {
+  const line = (over: Partial<GrowthLine>): GrowthLine => ({ heroId: "wren", name: "Wren Ashdown", skill: "reasoning", xpGained: 2, level: 6, xp: 12, cost: 30, levelUp: false, ...over });
+  it("shows the gain and the bank toward the next level; level-ups read as such; a first level is 'learned'", () => {
+    const { rows } = formatGrowth([line({}), line({ skill: "nature", levelUp: true, level: 7, xp: 0, cost: 35 }), line({ skill: "influence", levelUp: true, level: 1, xp: 0, cost: 10 })]);
+    expect(rows[0]).toEqual({ text: "Wren Ashdown · Reasoning 6 · +2 XP (12/30 to next)", levelUp: false });
+    expect(rows[1]).toEqual({ text: "Level up! Wren Ashdown · Nature 7", levelUp: true });
+    expect(rows[2]).toEqual({ text: "Wren Ashdown learned Influence", levelUp: true });
+  });
+  it("an untrained skill says so instead of 'Reasoning 0'", () => {
+    expect(formatGrowth([line({ level: 0, xp: 2, cost: 5 })]).rows[0].text).toBe("Wren Ashdown · Reasoning (untrained) · +2 XP (2/5 to next)");
+  });
+  it("caps at 4 rows with a '+n more' count; empty and missing give nothing", () => {
+    const many = Array.from({ length: 7 }, (_, i) => line({ heroId: `h${i}` }));
+    expect(formatGrowth(many)).toMatchObject({ more: 3 });
+    expect(formatGrowth(many).rows).toHaveLength(4);
+    expect(formatGrowth(undefined)).toEqual({ rows: [], more: 0 });
+    expect(formatGrowth([])).toEqual({ rows: [], more: 0 });
+  });
+  it("an attribute level-up shows alongside a normal skill row AND alongside a skill level-up (Codex P2)", () => {
+    const withXp = formatGrowth([line({ attr: "mind", attrLevel: 6, attrUp: true })]).rows;
+    expect(withXp.map((r) => r.text)).toEqual(["Wren Ashdown · Reasoning 6 · +2 XP (12/30 to next)", "Wren Ashdown · Mind 6 (attribute up)"]);
+    expect(withXp[1].levelUp).toBe(true);
+    const both = formatGrowth([line({ levelUp: true, level: 7, xp: 0, cost: 35, attr: "mind", attrLevel: 6, attrUp: true })]).rows;
+    expect(both.map((r) => r.text)).toEqual(["Level up! Wren Ashdown · Reasoning 7", "Wren Ashdown · Mind 6 (attribute up)"]);
+  });
+  it("attribute rows count toward the 4-row cap", () => {
+    const lines = [line({ heroId: "a", attr: "mind", attrLevel: 6, attrUp: true }), line({ heroId: "b", attr: "mind", attrLevel: 6, attrUp: true }), line({ heroId: "c" })];
+    const out = formatGrowth(lines);
+    expect(out.rows).toHaveLength(4);
+    expect(out.more).toBe(1);
+  });
+  it("a maxed skill shows 'max' and an attribute-only gain reads as an attribute up", () => {
+    expect(formatGrowth([line({ level: 20, cost: null, xp: 0 })]).rows[0].text).toContain("max");
+    const a = formatGrowth([line({ xpGained: 0, attr: "mind", attrLevel: 6, attrUp: true })]).rows[0];
+    expect(a.text).toBe("Wren Ashdown · Mind 6 (attribute up)");
+    expect(a.levelUp).toBe(true);
   });
 });
