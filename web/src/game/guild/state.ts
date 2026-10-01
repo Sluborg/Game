@@ -7,6 +7,7 @@
 import { PARTY_DATA } from "./roster";
 import { ROAD_JOB, RUINS } from "./quests";
 import { makePosting } from "./board";
+import { initialHeroes } from "./wire/progress";
 import { SAVE_VERSION as V, STARTING_GOLD, TAVERN_PRICE, TICKS_PER_DAY } from "./tuning";
 import type { FeedItem, GuildState, Mail, SimEvent } from "./types";
 
@@ -48,6 +49,7 @@ export function createInitialState(seed: number): GuildState {
 
   return {
     version: SAVE_VERSION,
+    heroes: initialHeroes(),
     tick: 0,
     gold: STARTING_GOLD,
     wallets,

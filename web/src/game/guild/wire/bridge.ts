@@ -21,8 +21,8 @@ import { RESULT_LADDER, type ResultId } from "../content/ladder";
 import { SKILL_ATTR, type SkillId } from "../content/skills";
 import { METER_PCT_MAX, bandFor, capabilityFor, roll2d6, targetFor } from "../resolve/check";
 import type { BeatDef } from "../quests";
-import { HERO_BY_ID, PARTY_BY_ID, partyTraitMod } from "../roster";
-import type { Beat, BeatCheck, Grade, HeroData } from "../types";
+import { HERO_DATA, PARTY_BY_ID, partyTraitMod } from "../roster";
+import type { Beat, BeatCheck, Grade, HeroStatsMap, HeroV3 } from "../types";
 import { GRADE_ZONES } from "../zones";
 
 /** Each point of a v1 trait delta becomes this fraction of capability (the
@@ -43,24 +43,32 @@ export const RESULT_TO_GRADE: Record<ResultId, Grade> = {
 
 export type EncounterSkill = SkillId | "combat";
 
+/** The static roster stats, the default for every bridge function (so the calibration
+ * gate, the generated docs and the GOLDEN fixture are unaffected by Wire B). */
+export const ROSTER_STATS: HeroStatsMap = Object.fromEntries(HERO_DATA.map((h) => [h.id, h.v3]));
+
 /** A hero's (attribute, skill) pair for an encounter. Combat is the temporary
  * special rule: the best of Strength / Dexterity / Mind plus the Combat value —
  * the bridge owns this split, the engine only sees two numbers. */
-export function encounterStats(hero: HeroData, skill: EncounterSkill): { attr: number; skill: number } {
+export function encounterStats(v3: HeroV3, skill: EncounterSkill): { attr: number; skill: number } {
   if (skill === "combat") {
-    const a = hero.v3.attrs;
-    return { attr: Math.max(a.strength, a.dexterity, a.mind), skill: hero.v3.combat };
+    const a = v3.attrs;
+    return { attr: Math.max(a.strength, a.dexterity, a.mind), skill: v3.combat };
   }
-  return { attr: hero.v3.attrs[SKILL_ATTR[skill]], skill: hero.v3.skills[skill] ?? 0 };
+  return { attr: v3.attrs[SKILL_ATTR[skill]], skill: v3.skills[skill] ?? 0 };
 }
 
 /** The party member who leads an encounter: the highest (attr + skill), ties to
  * the earlier member. */
-export function partyLead(partyId: string, skill: EncounterSkill): { heroId: string; attr: number; skill: number } {
+export function partyLead(
+  partyId: string,
+  skill: EncounterSkill,
+  stats: HeroStatsMap = ROSTER_STATS,
+): { heroId: string; attr: number; skill: number } {
   const party = PARTY_BY_ID[partyId];
   let best: { heroId: string; attr: number; skill: number } | null = null;
   for (const id of party.memberIds) {
-    const st = encounterStats(HERO_BY_ID[id], skill);
+    const st = encounterStats(stats[id], skill);
     if (!best || st.attr + st.skill > best.attr + best.skill) best = { heroId: id, ...st };
   }
   return best!;
@@ -68,8 +76,8 @@ export function partyLead(partyId: string, skill: EncounterSkill): { heroId: str
 
 /** The integer capability a party brings to a beat (before dice). `carry` and the
  * size bonus are added after the engine's clamp; the total is floored at 0. */
-export function partyCapability(partyId: string, def: Pick<BeatDef, "skill" | "type">, carry = 0): number {
-  const lead = partyLead(partyId, def.skill);
+export function partyCapability(partyId: string, def: Pick<BeatDef, "skill" | "type">, carry = 0, stats: HeroStatsMap = ROSTER_STATS): number {
+  const lead = partyLead(partyId, def.skill, stats);
   const trait = partyTraitMod(partyId, def.type);
   const base = capabilityFor(lead.attr, lead.skill, trait.delta * TRAIT_PCT_PER_DELTA);
   const size = (PARTY_BY_ID[partyId].memberIds.length - 1) * SIZE_BONUS_PER_EXTRA;
@@ -104,15 +112,18 @@ export function resolveBeatV3(
   carry: number,
   diffMult: number,
   branch?: Beat["branch"],
+  stats: HeroStatsMap = ROSTER_STATS,
 ): Beat {
   const trait = partyTraitMod(partyId, def.type);
-  const capability = partyCapability(partyId, def, carry);
+  const lead = partyLead(partyId, def.skill, stats);
+  const capability = partyCapability(partyId, def, carry, stats);
   const dice = roll2d6(rng);
   const score = capability + dice[0] + dice[1];
   const target = beatTarget(def.diff3, diffMult);
   const result = bandFor(score, target);
   const grade = RESULT_TO_GRADE[result];
-  const check: BeatCheck = { dice, capability, score, target, result };
+  // skill + leadId are stored NOW (growth changes who would lead later); Wire B awards from them.
+  const check: BeatCheck = { skill: def.skill, leadId: lead.heroId, dice, capability, score, target, result };
   return {
     id: branch ? `${def.id}-${branch}` : def.id,
     type: def.type,
@@ -130,8 +141,14 @@ export function resolveBeatV3(
 
 /** Exact per-beat result distribution for a party (no carry, no recovery): used by
  * the calibration harness and docs. Enumerates the 36 dice outcomes. */
-export function beatDistribution(partyId: string, def: Pick<BeatDef, "skill" | "type" | "diff3">, carry = 0, diffMult = 1): Record<ResultId, number> {
-  const capability = partyCapability(partyId, def, carry);
+export function beatDistribution(
+  partyId: string,
+  def: Pick<BeatDef, "skill" | "type" | "diff3">,
+  carry = 0,
+  diffMult = 1,
+  stats: HeroStatsMap = ROSTER_STATS,
+): Record<ResultId, number> {
+  const capability = partyCapability(partyId, def, carry, stats);
   const target = beatTarget(def.diff3, diffMult);
   const dist = Object.fromEntries(RESULT_LADDER.map((r) => [r.id, 0])) as Record<ResultId, number>;
   const ways: Record<number, number> = { 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 5, 9: 4, 10: 3, 11: 2, 12: 1 };

@@ -7,6 +7,7 @@
 // not orphaned.
 
 import { createInitialState } from "./state";
+import { normalizeHeroes } from "./wire/progress";
 import { SAVE_VERSION } from "./tuning";
 import type { GuildState } from "./types";
 
@@ -62,6 +63,10 @@ export function loadState(seed: number): GuildState {
     ) {
       return createInitialState(seed);
     }
+    // Wire B: grown hero progress. A save without it gets the roster defaults and a
+    // corrupt entry is refilled alone; SAVE_VERSION is NOT bumped (/Game/ and
+    // /Game/dev/ share this save, and an older build just carries the field through).
+    parsed.heroes = normalizeHeroes(parsed.heroes);
     return parsed;
   } catch {
     return createInitialState(seed);

@@ -63,12 +63,12 @@ describe("result → grade slot", () => {
 describe("encounterStats / partyLead", () => {
   it("a skill beat reads the governing attribute and the skill (0 when untrained)", () => {
     const ysolt = HERO_BY_ID.ysolt;
-    expect(encounterStats(ysolt, "force")).toEqual({ attr: ysolt.v3.attrs.strength, skill: ysolt.v3.skills.force });
-    expect(encounterStats(ysolt, "nature")).toEqual({ attr: ysolt.v3.attrs.mind, skill: 0 });
+    expect(encounterStats(ysolt.v3, "force")).toEqual({ attr: ysolt.v3.attrs.strength, skill: ysolt.v3.skills.force });
+    expect(encounterStats(ysolt.v3, "nature")).toEqual({ attr: ysolt.v3.attrs.mind, skill: 0 });
   });
   it("combat is the best of Str/Dex/Mind plus the Combat value, and never indexes the skill table", () => {
     const pell = HERO_BY_ID.pell; // dex 8 is his best
-    expect(encounterStats(pell, "combat")).toEqual({ attr: 8, skill: pell.v3.combat });
+    expect(encounterStats(pell.v3, "combat")).toEqual({ attr: 8, skill: pell.v3.combat });
     expect((SKILL_IDS as readonly string[]).includes("combat")).toBe(false);
   });
   it("the lead is the member with the highest attr+skill (ties to the earlier member)", () => {

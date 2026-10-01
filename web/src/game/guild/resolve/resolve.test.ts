@@ -18,7 +18,7 @@ import {
   roll2d6,
   targetFor,
 } from "./check";
-import { applyUse, attrXpBetween, emptyProgress, skillXpBetween, type HeroProgress } from "./growth";
+import { applySupport, applyUse, attrXpBetween, emptyProgress, skillXpBetween, type HeroProgress } from "./growth";
 import { BIRTH_MAX, BIRTH_MIN, BIRTH_TOTAL, birthHero } from "./birth";
 import { renderSim } from "./sim";
 
@@ -237,6 +237,29 @@ describe("applyUse: grow-from-use", () => {
   it("modPct is quantised to whole percent so x.5 products round predictably", () => {
     expect(capabilityFor(5, 0, 0.1)).toBe(6); // 5 × 1.1 = 5.5 → 6, never 5.4999…
     expect(capabilityFor(5, 0, 0.104)).toBe(6);
+  });
+});
+
+describe("applySupport: a supporter's share", () => {
+  it("+1 skill XP on a Success or Triumph only, never attribute XP, never mutates", () => {
+    const p = heroAt(1, 3);
+    const win = applySupport(p, "reasoning", "success");
+    expect(win.progress.xp.skills.reasoning).toBe(1);
+    expect(win.progress.xp.attrs.mind).toBe(0);
+    expect(applySupport(p, "reasoning", "triumph").progress.xp.skills.reasoning).toBe(1);
+    for (const r of ["insufficient", "failure", "critical-failure"] as const) expect(applySupport(p, "reasoning", r).progress).toEqual(p);
+    expect(p.xp.skills.reasoning).toBe(0);
+  });
+  it("levels up with carry, discards XP at the cap, and rejects an unknown skill", () => {
+    const p = heroAt(1, 3);
+    p.xp.skills.reasoning = 4; // level 1 costs 5
+    const up = applySupport(p, "reasoning", "success");
+    expect(up.skillUp).toBe(1);
+    expect(up.progress.skills.reasoning).toBe(2);
+    expect(up.progress.xp.skills.reasoning).toBe(0);
+    const capped = applySupport(heroAt(SKILL_MAX, 3), "reasoning", "success");
+    expect(capped.progress.xp.skills.reasoning).toBe(0);
+    expect(() => applySupport(p, "combat" as never, "success")).toThrow(/unknown skill/);
   });
 });
 

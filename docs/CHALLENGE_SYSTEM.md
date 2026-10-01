@@ -296,6 +296,12 @@ Simulated feel (`docs/resolution-sim.md` §D/§E): at "fair" difficulty (target 
 fresh hero reaches Skill 10 in ~140 uses, Skill 20 in ~600, Attr 7 in ~530 and Attr 10 in ~1340;
 spreading 600 uses over three pillars yields three Skills at ~11 instead of one at 20.
 
+**Wired (2026-10-01, dev builds, `web/src/game/guild/wire/progress.ts`):** a returning party earns experience from its
+sealed log. The hero who **led** an encounter gets the rates above; every other member gets **+1 skill XP on a Success
+or Triumph and no Attribute XP** (so the best member does not pull away alone and nobody stalls). Combat beats train
+nothing (the temporary Combat rule). Hero progress persists in the save without a version bump. Pace and how fast quests
+become solved: [`docs/resolution-growth.md`](./resolution-growth.md) (generated, tested).
+
 The detailed feat tree is **deferred** (its own design pass): tree structure, gating, pick cadence,
 and keeping feats *tradeoffs* rather than a flat power ladder. Feats are the grown-up form of the
 content pipeline's **perk exception-kinds** (`reroll-lowest-check`, `soften-critical-failure`,

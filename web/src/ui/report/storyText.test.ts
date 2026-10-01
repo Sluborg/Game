@@ -4,9 +4,9 @@
 // (the resolver still carries −1 after a recovery).
 
 import { describe, it, expect } from "vitest";
-import { GRADE_LABEL, V3_LABEL, effectNote, gradeAt, isV3Beat, labelFor, logIsV3 } from "./storyText";
+import { GRADE_LABEL, V3_LABEL, effectNote, formatGrowth, gradeAt, isV3Beat, labelFor, logIsV3 } from "./storyText";
 import { GRADE_ZONES } from "../../game/guild";
-import type { Beat, Grade } from "../../game/guild";
+import type { Beat, Grade, GrowthLine } from "../../game/guild";
 
 function beat(grade: Grade, branch?: Beat["branch"]): Beat {
   return { id: "x", type: "combat", location: "y", grade, roll: 0.5, text: "t", score: 50, branch };
@@ -124,5 +124,27 @@ describe("effectNote for v3 Insufficient: short of the requirement is never read
   });
   it("v1 wording is unchanged", () => {
     expect(effectNote(beat("ok"), true)).toBe("They hold steady.");
+  });
+});
+
+describe("formatGrowth: the outcome card's Experience rows", () => {
+  const line = (over: Partial<GrowthLine>): GrowthLine => ({ heroId: "wren", name: "Wren Ashdown", skill: "reasoning", xpGained: 2, level: 6, xp: 12, cost: 30, levelUp: false, ...over });
+  it("shows level, bank toward the next level and the gain; level-ups read as such", () => {
+    const { rows } = formatGrowth([line({}), line({ skill: "nature", levelUp: true, level: 7, xp: 0, cost: 35 })]);
+    expect(rows[0]).toEqual({ text: "Wren Ashdown · Reasoning 6 · 12/30 XP (+2)", levelUp: false });
+    expect(rows[1]).toEqual({ text: "Level up! Wren Ashdown · Nature 7", levelUp: true });
+  });
+  it("caps at 4 rows with a '+n more' count; empty and missing give nothing", () => {
+    const many = Array.from({ length: 7 }, (_, i) => line({ heroId: `h${i}` }));
+    expect(formatGrowth(many)).toMatchObject({ more: 3 });
+    expect(formatGrowth(many).rows).toHaveLength(4);
+    expect(formatGrowth(undefined)).toEqual({ rows: [], more: 0 });
+    expect(formatGrowth([])).toEqual({ rows: [], more: 0 });
+  });
+  it("a maxed skill shows 'max' and an attribute-only gain reads as an attribute up", () => {
+    expect(formatGrowth([line({ level: 20, cost: null, xp: 0 })]).rows[0].text).toContain("max");
+    const a = formatGrowth([line({ xpGained: 0, attr: "mind", attrLevel: 6, attrUp: true })]).rows[0];
+    expect(a.text).toBe("Wren Ashdown · Mind 6 (attribute up)");
+    expect(a.levelUp).toBe(true);
   });
 });

@@ -14,6 +14,7 @@ import { GRADE_ZONES, type AdventureLog, type Beat, type BeatType, type Grade } 
 import { Icon, PauseGlyph, PlayGlyph, SpeedChip } from "../kit";
 import {
   effectNote,
+  formatGrowth,
   isV3Beat,
   labelFor,
   logIsV3,
@@ -154,6 +155,7 @@ export function StoryStage({
             <div className={styles.outcomeNote}>
               {log.outcome === "success" ? "Settled in tonight's ledger." : "Nothing to settle."}
             </div>
+            <GrowthBlock log={log} />
           </div>
         )}
       </div>
@@ -194,6 +196,26 @@ export function StoryStage({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** The Experience block (v3 reports only): sealed with the log, so it appears here,
+ * after the story, and nowhere earlier. */
+function GrowthBlock({ log }: { log: AdventureLog }) {
+  const { rows, more } = formatGrowth(log.growth);
+  if (rows.length === 0) return null;
+  return (
+    <div className={styles.growth}>
+      <div className={styles.growthHead}>Experience</div>
+      <ul className={styles.growthList}>
+        {rows.map((r, i) => (
+          <li key={i} className={styles.growthRow} data-up={r.levelUp}>
+            {r.text}
+          </li>
+        ))}
+      </ul>
+      {more > 0 && <div className={styles.growthMore}>+{more} more</div>}
     </div>
   );
 }

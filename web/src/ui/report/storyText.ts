@@ -4,7 +4,7 @@
 // the final or bonus beat, and a good recovery still carries a penalty).
 
 import { readPref, savePref } from "../kit";
-import { GRADE_ZONES, type Beat, type Grade } from "../../game/guild";
+import { GRADE_ZONES, type Beat, type Grade, type GrowthLine } from "../../game/guild";
 
 // Display ladder (Stefan's benchmark words). The Grade UNION literals are
 // persisted + fixture-pinned — labels only, never the keys.
@@ -116,4 +116,28 @@ export function readStorySpeed(): StorySpeed {
 
 export function saveStorySpeed(speed: StorySpeed): void {
   savePref(SPEED_KEY, speed);
+}
+
+// ── The outcome card's Experience block (Wire B) ──────────────────────────────
+
+const title = (id: string) => id.charAt(0).toUpperCase() + id.slice(1);
+
+export interface GrowthRow {
+  text: string;
+  levelUp: boolean;
+}
+
+/** Experience rows for the outcome card: level-ups first and highlighted, then by XP
+ * gained (the order the sim already sorted them), at most `max` rows plus a count of
+ * the rest. A line shows the level and the bank toward the next one so progress is
+ * visible between level-ups ("Reasoning 6 · 12/30 XP (+2)"). */
+export function formatGrowth(lines: readonly GrowthLine[] | undefined, max = 4): { rows: GrowthRow[]; more: number } {
+  if (!lines || lines.length === 0) return { rows: [], more: 0 };
+  const rows: GrowthRow[] = lines.map((l) => {
+    if (l.levelUp) return { text: `Level up! ${l.name} · ${title(l.skill)} ${l.level}`, levelUp: true };
+    if (l.attrUp && l.attr && l.xpGained === 0) return { text: `${l.name} · ${title(l.attr)} ${l.attrLevel} (attribute up)`, levelUp: true };
+    const bank = l.cost === null ? "max" : `${l.xp}/${l.cost} XP`;
+    return { text: `${l.name} · ${title(l.skill)} ${l.level} · ${bank} (+${l.xpGained})`, levelUp: false };
+  });
+  return { rows: rows.slice(0, max), more: Math.max(0, rows.length - max) };
 }

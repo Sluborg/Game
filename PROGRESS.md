@@ -2,6 +2,45 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-10-01 - Wire B: heroes grow from use (v3 engine), persisted — build done
+- Gate: build (Review #1 folded; heading into Review #2)
+- Branch: `ccr-c145e2cc-3s42bn` (restarted from `origin/dev` @ `ed800cb` after PR #45 merged; first commit =
+  §50 backfill of PR #48's merged gate). Combat core untouched; `resolve/` extended additively (`applySupport`).
+- Files: NEW `game/guild/wire/{progress,growthReport,growthReport.cli}.ts` + `growth.test.ts`,
+  `docs/resolution-growth.md` (generated, drift-tested), `docs/screenshots/growth-dev-{card,levelup}.png`;
+  MOD `types.ts` (HeroProgressState, GrowthLine, HeroStatsMap, BeatCheck.skill/leadId, AdventureLog.growth,
+  GuildState.heroes), `state.ts`, `persist.ts` (normalise, NO version bump), `resolver.ts` + `wire/bridge.ts`
+  (live stats map), `clock.ts` (stats at dispatch, award at return, standing-job level-up feed line),
+  `resolve/growth.ts` (+`applySupport`), `wire/harness.ts`, UI `storyText.ts` (`formatGrowth`),
+  `StoryStage.tsx/.css` (Experience block), `package.json` (`sim:growth`), `docs/CHALLENGE_SYSTEM.md`.
+- Decisions (mine): the lead gets the PR #46 rates, every other member +1 skill XP on Success/Triumph and no
+  attribute XP; award keys off the LOG (beats with `check.skill` + `leadId`), not the engine; growth is sealed
+  in `log.growth` and shown only on the outcome card; `heroes` is additive in the save (no `SAVE_VERSION`
+  bump) because `/Game/` and `/Game/dev/` share one localStorage save; combat beats train nothing.
+- Findings worth Stefan's eye (`docs/resolution-growth.md`): 3 of 4 postable quest x party pairs are already
+  at 90%+ before any growth (same as v1); the one hard pair (Ruins, Free Blades) climbs only 72% to 82% in 100
+  quests and never reaches 90% within 300; attributes gain +0 levels in 100 quests; first level-ups arrive
+  around quest 6 to 10. Growth is real but slow against fixed difficulty, so harder quests are the next need.
+- Verified: `npx tsc -b` clean; `npm run test` 252 pass + 1 skipped (GOLDEN, calibration gate and the two
+  other generated-doc drift tests untouched and green); `vite build`; headless Chromium at 390px on both
+  bases with seeded saves: dev shows the Experience block (plain and with a highlighted level-up), an older
+  save with no `heroes` loads on production and dev and gets the defaults saved back, no console errors.
+- Known gap (stated in the PR): the Heroes screen still shows its mock v1 stats; a live hero-sheet panel is a
+  later slice and must mask unread outcomes like the ledger.
+- Open: none blocking. Next: Review #2, PR, Codex.
+
+## 2026-10-01 - Wire B: heroes grow from use (v3 engine), persisted — plan done
+- Gate: plan (Review #1 cleared)
+- Branch: `ccr-c145e2cc-3s42bn`. Scope declared: `game/guild/{types,state,persist,resolver,clock,index}`,
+  `resolve/growth.ts` (additive), `wire/`, the story card, docs. Production must stay inert.
+- Review #1 (4 personas on the PLAN): 8 blockers, all folded: types live in `types.ts` as structural copies
+  (the `resolve/` import-boundary tests forbid importing it); the award rule is pinned to the log, not the
+  engine, with an idempotence guard; `loadState` validates every attr/skill/XP bank per hero and refills a bad
+  hero alone; no reader outside the story card touches `heroes`/`growth` (static test) and the Heroes screen
+  gap is stated; XP progress ("12/30 XP (+2)") and level-ups-first on the card; the doc gets an explicit
+  "quests until 90% success" threshold and says attributes will not visibly move and combat is growth-neutral.
+- Open questions: none blocking.
+
 ## 2026-09-30 - Wire A: the v3 check live in the quest resolver — codex-fixed
 - Gate: **merged 2026-09-30 23:46 +0200** (merge commit `ed800cb`; backfilled 2026-10-01). **PR #48 into `dev`.**
 - Branch: `ccr-c145e2cc-3s42bn` -> **PR #48 into `dev`**.

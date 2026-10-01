@@ -40,6 +40,38 @@ export interface TraitEffect {
   blurb: string;
 }
 
+/** A hero's grown Skills-v3 progress (Wire B). Structurally identical to
+ * resolve/growth.ts's HeroProgress; defined here so types.ts never imports resolve/
+ * (the import-boundary tests). attrs/skills are the LIVE levels, xp the banks toward
+ * the NEXT level. */
+export interface HeroProgressState {
+  attrs: Record<AttrId, number>;
+  skills: Record<SkillId, number>;
+  xp: { attrs: Record<AttrId, number>; skills: Record<SkillId, number> };
+}
+
+/** One quest's experience for one hero and skill (aggregated over the quest's
+ * beats), written to the sealed log when the party returns and shown only on the
+ * story's outcome card. Optional + additive on AdventureLog. */
+export interface GrowthLine {
+  heroId: string;
+  name: string;
+  skill: SkillId;
+  /** Skill XP gained this quest. */
+  xpGained: number;
+  /** The skill's level and banked XP AFTER this quest. */
+  level: number;
+  xp: number;
+  /** XP the next level costs (null at the cap). */
+  cost: number | null;
+  /** The skill went up at least one level this quest. */
+  levelUp: boolean;
+  /** The governing attribute went up this quest (leads only; rare). */
+  attr?: AttrId;
+  attrLevel?: number;
+  attrUp?: boolean;
+}
+
 /** A hero's Skills-v3 stats (docs/CHALLENGE_SYSTEM.md): five attributes (cap 10),
  * skills (cap 20, absent = untrained 0) and the temporary Combat value. Used only
  * by the v3 resolution engine (wire/bridge.ts). Static in Wire A — growth from
@@ -51,6 +83,10 @@ export interface HeroV3 {
   /** The temporary Combat skill (not a SkillId — docs/CHALLENGE_SYSTEM.md §Temporary Combat rule). */
   combat: number;
 }
+
+/** Live v3 stats by hero id, as the bridge reads them (static roster by default,
+ * the grown heroes in GuildState from Wire B on). */
+export type HeroStatsMap = Record<string, HeroV3>;
 
 export interface HeroData {
   id: string;
@@ -83,6 +119,12 @@ export interface PartyData {
  * 2d6 dice, the integer capability and score, the integer target, and the result
  * band. Optional + additive, so old saves and v1 logs load unchanged. */
 export interface BeatCheck {
+  /** The encounter's skill ("combat" is the temporary rule, never trained) and the
+   * party member who LED it, stored at resolve time (never recomputed: growth
+   * changes who would lead). Wire B awards experience from these; older logs lack
+   * them and award nothing. */
+  skill?: SkillId | "combat";
+  leadId?: string;
   dice: [number, number];
   capability: number;
   score: number;
@@ -118,6 +160,8 @@ export interface Beat {
  * Report fidelity tiers (a later slice) will be exact filters over this. */
 export interface AdventureLog {
   beats: Beat[];
+  /** Experience this quest earned (v3 only), written at return, sealed with the log. */
+  growth?: GrowthLine[];
   outcome: "success" | "failure";
   /** Total reward pool: the quest's FLAT reward × any bonus find (0 on failure). */
   reward: number;
@@ -303,6 +347,10 @@ export interface GuildState {
   /** Monotonic counter for unique ids (kept in state so id generation is pure). */
   seq: number;
   rngSeed: number;
+  /** Per-hero grown v3 progress (Wire B). Required in the type, normalised by
+   * loadState (a save without it gets the roster defaults; NO SAVE_VERSION bump:
+   * /Game/ and /Game/dev/ share one localStorage save). */
+  heroes: Record<string, HeroProgressState>;
   /** True until the first nightfall (drives the Hall's first-run coach line). */
   firstDay: boolean;
 }

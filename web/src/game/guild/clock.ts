@@ -17,6 +17,7 @@ import { makePosting, partyEligible } from "./board";
 import { chooseActivity } from "./life";
 import { QUEST_BY_ID, ROAD_JOB, RUINS, type QuestDef } from "./quests";
 import { getEngine } from "./engine";
+import { awardGrowth, heroStatsFrom } from "./wire/progress";
 import { resolveQuest } from "./resolver";
 import { PARTY_BY_ID } from "./roster";
 import { deriveSeed, rngFor, rollInt } from "./seed";
@@ -124,7 +125,17 @@ function findParty(next: GuildState, id: string | undefined): PartyRuntime | und
 function dispatch(next: GuildState, partyId: string, quest: QuestDef, atTick: number): Assignment {
   const duration = rollInt(rngFor(next.rngSeed, "dur", atTick, quest.id, partyId), quest.minDuration, quest.maxDuration);
   const seed = deriveSeed(next.rngSeed, "quest", atTick, quest.id, partyId);
-  const log = resolveQuest({ quest, partyId, cutPct: BROKERAGE, durationDays: duration, seed, engine: getEngine() });
+  const engine = getEngine();
+  // v3 reads the live (grown) hero stats at dispatch; v1 never touches them.
+  const log = resolveQuest({
+    quest,
+    partyId,
+    cutPct: BROKERAGE,
+    durationDays: duration,
+    seed,
+    engine,
+    stats: engine === "v3" ? heroStatsFrom(next.heroes) : undefined,
+  });
   const ticksOut = quest.tier === "standing" ? STANDING_TICKS : duration * TICKS_PER_DAY;
   return {
     questId: quest.id,
@@ -273,6 +284,14 @@ function onReturn(next: GuildState, ev: SimEvent): void {
   const a = party.assignment;
   party.assignment = null;
 
+  // Wire B: experience from the sealed log, awarded exactly once (the stale guards
+  // above plus awardGrowth's own no-op when `log.growth` is set). Written to the log
+  // BEFORE it is copied into the sealed mail, so it is revealed only on the outcome
+  // card after the story is watched. v1 logs carry no check: nothing is awarded.
+  const award = awardGrowth(next.heroes, party.id, a.log);
+  next.heroes = award.heroes;
+  if (award.lines.length > 0) a.log.growth = award.lines;
+
   next.gold += a.log.guildCut;
   creditWallets(next, party.id, a.log.reward - a.log.guildCut);
 
@@ -285,6 +304,16 @@ function onReturn(next: GuildState, ev: SimEvent): void {
       icon: soloIcon(party.id, "watch"),
       text: `${partyName(party.id)} finished the shift: ${a.questTitle.toLowerCase()}.`,
     });
+    // A standing shift is UNSEALED by design (no mail, no decision), so a level-up may
+    // show in the feed; one batched ambient line, never per hero.
+    const ups = award.lines.filter((l) => l.levelUp);
+    if (ups.length > 0) {
+      pushFeed(next, {
+        register: "ambient",
+        icon: "train",
+        text: `${ups.map((l) => `${l.name} grew: ${l.skill.charAt(0).toUpperCase()}${l.skill.slice(1)} ${l.level}`).join("; ")}.`,
+      });
+    }
     schedule(next, next.tick + 1, "decide", { partyId: party.id });
     return;
   }
