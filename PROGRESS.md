@@ -2,6 +2,23 @@
 
 Running log Claude Code appends to at each gate, so a phone-only Claude.ai chat can follow. Newest entries on top.
 
+## 2026-10-01 - Wire B: heroes grow from use (v3 engine), persisted — codex-fixed
+- Gate: codex-fixed -> awaiting merge decision (delta Review #2 cleared, 0 blockers)
+- Branch: `ccr-c145e2cc-3s42bn` -> **PR #49 into `dev`**.
+- Codex (on `fbb616f`): TWO findings, both **P2**, both valid. (1) The Experience card hid an attribute
+  level-up whenever the skill also gained XP (almost always): attribute rows now always show alongside the
+  skill row, and count toward the 4-row cap. (2) Cross-build hole in the shared save: an OLDER build can return a
+  v3 quest dispatched in dev, clearing the assignment and storing the sealed log without growth, so the XP was
+  lost. Fixed: `log.growth` (even `[]`) is now an explicit "already awarded" marker set in `onReturn` for every
+  awardable log, and `recoverGrowth` (called from `loadState`) awards any sealed outcome whose log is awardable
+  but unmarked, oldest first, exactly once. Unrecoverable and documented: a standing shift (no stored log) and a
+  report trimmed from the mail before that load.
+- Delta Review #2 (4 personas on the delta): 0 blockers. Folded: a dispatch -> return -> save -> load test that
+  asserts the marker and byte-equal heroes/mail across several seeds, an attribute-rows-vs-cap test, and the
+  trimmed-mail clause in the doc.
+- Verified: `tsc -b` clean; `npm run test` 263 pass + 1 skipped; `vite build`; the generated docs regenerate
+  (`resolution-growth.md` gained the shared-save note, the other two unchanged).
+
 ## 2026-10-01 - Wire B: heroes grow from use (v3 engine), persisted — PR opened
 - Gate: PR (Review #2 cleared; `@codex review` posted)
 - Branch: `ccr-c145e2cc-3s42bn` -> PR into `dev` (restarted from `dev` after PR #45; first commit = #48

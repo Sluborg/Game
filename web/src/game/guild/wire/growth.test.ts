@@ -345,6 +345,33 @@ describe("recovering experience an older shared-save build skipped (Codex P2)", 
   });
 });
 
+describe("the clock marks every awardable return, so a save/load never re-awards", () => {
+  const store = new Map<string, string>();
+  const g = globalThis as unknown as { localStorage?: unknown };
+  afterEach(() => {
+    delete g.localStorage;
+    store.clear();
+  });
+  it("dispatch -> return -> save -> load leaves heroes and sealed logs unchanged (several seeds)", () => {
+    g.localStorage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v), removeItem: (k: string) => void store.delete(k) };
+    setEngine("v3");
+    for (let seed = 1; seed <= 6; seed++) {
+      let s = createInitialState(seed);
+      for (let i = 0; i < 700; i++) {
+        s = step(s);
+        if (s.mail.filter((m) => m.kind === "outcome").length >= 2) break;
+      }
+      const sealed = s.mail.filter((m) => m.kind === "outcome" && m.log);
+      expect(sealed.length, `seed ${seed}`).toBeGreaterThan(0);
+      for (const m of sealed) expect(m.log!.growth, `seed ${seed} ${m.id}`).toBeDefined(); // the marker, even when []
+      saveState(s);
+      const loaded = loadState(seed);
+      expect(JSON.stringify(loaded.heroes), `seed ${seed}`).toBe(JSON.stringify(s.heroes));
+      expect(JSON.stringify(loaded.mail), `seed ${seed}`).toBe(JSON.stringify(s.mail));
+    }
+  });
+});
+
 describe("module boundary: only wire/ reaches resolve/", () => {
   it("no source file outside game/guild/wire/ and game/guild/resolve/ imports a resolve/ module", () => {
     const root = fileURLToPath(new URL("../../../", import.meta.url));

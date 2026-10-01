@@ -152,6 +152,12 @@ describe("formatGrowth: the outcome card's Experience rows", () => {
     const both = formatGrowth([line({ levelUp: true, level: 7, xp: 0, cost: 35, attr: "mind", attrLevel: 6, attrUp: true })]).rows;
     expect(both.map((r) => r.text)).toEqual(["Level up! Wren Ashdown · Reasoning 7", "Wren Ashdown · Mind 6 (attribute up)"]);
   });
+  it("attribute rows count toward the 4-row cap", () => {
+    const lines = [line({ heroId: "a", attr: "mind", attrLevel: 6, attrUp: true }), line({ heroId: "b", attr: "mind", attrLevel: 6, attrUp: true }), line({ heroId: "c" })];
+    const out = formatGrowth(lines);
+    expect(out.rows).toHaveLength(4);
+    expect(out.more).toBe(1);
+  });
   it("a maxed skill shows 'max' and an attribute-only gain reads as an attribute up", () => {
     expect(formatGrowth([line({ level: 20, cost: null, xp: 0 })]).rows[0].text).toContain("max");
     const a = formatGrowth([line({ xpGained: 0, attr: "mind", attrLevel: 6, attrUp: true })]).rows[0];

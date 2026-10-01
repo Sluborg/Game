@@ -132,7 +132,7 @@ export function renderGrowth(): string {
     "- Difficulty is absolute: a stronger hero simply succeeds more often.",
     "- **Shared save:** `/Game/` and `/Game/dev/` share one save. If an older build returns a v3 quest, the next load of",
     "  this build awards its experience once (the log's `growth` field is the \"already awarded\" marker). A standing",
-    "  shift leaves no stored log, so its experience cannot be recovered.",
+    "  shift leaves no stored log, and a report trimmed from the mail before that load is gone too, so neither can be recovered.",
     "",
     "## A. Pace",
     "",
