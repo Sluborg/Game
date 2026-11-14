@@ -53,3 +53,4 @@ Blobz are drawn in code (`src/blob.ts`) as pixel SVG/canvas: color, eyes, mouth 
 - Source: https://pixel-boy.itch.io/ninja-adventure-asset-pack (full pack, downloaded by Stefan)
 - License: CC0 1.0 (see `public/assets/ninja-adventure/LICENSE.txt`)
 - Vendored: Actor, Backgrounds, FX, Items, Ui (images). Audio (96 MB) not vendored yet; a curated, compressed subset will follow.
+| `art/dungeon/weapons/*.png` | ChatGPT image generation (Stefan, order N-4 hovering weapons), sliced by `scripts/slice_weapons.py` | Hovering dungeon weapons |
