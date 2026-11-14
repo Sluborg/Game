@@ -7,25 +7,26 @@ deploy branch `claude/mobile-game-5-players-8qthjq` (cd8ceb3) plus the heads of 
 
 - **Ninja** paths are relative to `public/assets/ninja-adventure/`; rects are `x,y,w,h` (see `docs/ART_MAP.md`).
 - **GAP** = Ninja has nothing usable: needs a ChatGPT order (or an Art piece only with Stefan's OK).
+- **STAND-IN** = no exact Ninja match, but a Ninja piece that reads right (Lead's call: good enough).
 - **PENDING** = an Art piece made before the "no own art" rule; it waits for Stefan's rating.
 - Owner = who swaps the reference: Code (meadow, UI, `game.ts`/`main.ts`/`style.css`/`index.html`), Code 2 (`dungeon*`).
 - Tick the box when the game no longer loads the old file.
 
-**Counts: 209 total / 169 mapped to Ninja / 4 pending Art rating / 36 gaps.**
+**Counts: 209 total / 169 mapped to Ninja / 22 Ninja stand-ins / 4 pending Art rating / 0 gaps / 14 done.**
 
 
 ## Screens
 
 | Done | Old file (public/) | Used in | Owner | Ninja replacement |
 |---|---|---|---|---|
-| [ ] | `art/title.png` | start screen bg (style.css #start, i18n) | Code | GAP: ChatGPT N-2 (landscape) + start-portrait |
-| [ ] | `art/start-portrait.png` | start screen portrait bg (style.css) | Code | GAP: ChatGPT N-2 (portrait approved 4/5) |
-| [ ] | `art/lobby.png` | lobby bg (style.css #lobby, index.html, net.ts) | Code | GAP: needs ChatGPT (no N-order yet; or reuse N-2 art) |
-| [ ] | `art/loading.png` | loading screen (index.html, main.ts, style.css) | Code | GAP: needs ChatGPT (no N-order yet; or reuse N-2 art) |
-| [ ] | `art/loading-portrait.png` | loading screen portrait (style.css) | Code | GAP: needs ChatGPT (with loading.png) |
-| [ ] | `art/loading-landscape.png` | loading screen landscape (style.css) | Code | GAP: needs ChatGPT (with loading.png) |
-| [ ] | `art/logo.png` | logo on loading/start (index.html, main.ts) | Code | GAP: needs ChatGPT (logo; fallback text uses Kenney Ski font) |
-| [ ] | `art/victory.png` | end screen bg (style.css #end) | Code | GAP: ChatGPT N-6 (Art alt public/art/victory-ninja.png waits for rating) |
+| [x] | `art/title.png` | start screen bg landscape (style.css #start, i18n) | Code | DONE by ChatGPT N-2 landscape (556f547); not Ninja, approved route |
+| [x] | `art/start-portrait.png` | start screen portrait bg (style.css) | Code | DONE: approved ChatGPT art (N-2 portrait), keep |
+| [ ] | `art/lobby.png` | lobby bg (style.css #lobby; the lobby screen still shows) | Code | STAND-IN: reuse the N-2 start art (art/title.png landscape, art/start-portrait.png portrait) under the lobby card |
+| [x] | `art/loading.png` | loading screen (index.html, main.ts, style.css) | Code | DONE: approved ChatGPT art, keep |
+| [x] | `art/loading-portrait.png` | loading screen portrait (style.css) | Code | DONE: approved ChatGPT art (N-3), keep |
+| [x] | `art/loading-landscape.png` | loading screen landscape (style.css) | Code | DONE: approved ChatGPT art (N-3), keep |
+| [x] | `art/logo.png` | logo on loading/start (index.html, main.ts) | Code | DONE: approved ChatGPT art, keep |
+| [x] | `art/victory.png` | end screen bg (style.css #end) | Code | DONE: ChatGPT N-6 (6f5fb3e, no coins) |
 
 ## UI kit
 
@@ -44,10 +45,10 @@ deploy branch `claude/mobile-game-5-players-8qthjq` (cd8ceb3) plus the heads of 
 | [ ] | `art/ui/stick-base.png` | joystick base #stick | Code | Ui/Receptacle/Receptacle Sphere/BackgroundWood.png 32x32 (substitute, no real stick) |
 | [ ] | `art/ui/stick-knob.png` | joystick knob #knob | Code | Ui/Receptacle/Receptacle Sphere/ProgressYellow.png 22x22 |
 | [ ] | `art/icons/back.png` | back buttons (data-icon, dungeonUi) | Code + Code 2 | Ui/Theme/Theme Wood/arrow_left.png 16x16 |
-| [ ] | `art/icons/check.png` | done button, checked option (data-icon, style.css), Bärregn intro | Code | GAP: no check mark in Ninja (Ui/Dialog/YesButton.png 26x16 has English text) |
+| [x] | `art/icons/check.png` | done button, checked option (data-icon, style.css), Bärregn intro | Code | DONE: ChatGPT N-10 (19x16, scripts/slice_n_orders.py) |
 | [ ] | `art/icons/dice.png` | random skin button (data-icon) | Code | Items/Object/Dice 6.png |
 | [ ] | `art/icons/dash-arrow.png` | dash button icon (data-icon, controls.ts, dungeonUi) | Code + Code 2 | Ui/Skill Icon/Items & Weapon/Boot.png 24x24 (or Ui/Theme/Theme Wood/arrow_right.png) |
-| [ ] | `art/icons/house.png` | new-village chip, home edge arrow, house marker (game.ts ic-house) | Code | GAP: no home icon in Ninja (ART_MAP gaps) |
+| [ ] | `art/icons/house.png` | new-village chip, home edge arrow, house marker (game.ts ic-house) | Code | STAND-IN: Backgrounds/Tilesets/TilesetHouse.png round straw hut 48,128,47,32 (small, reads as home) |
 | [ ] | `art/icons/coin.png` | dungeon gold HUD + end stat (index.html) | Code 2 | Items/Treasure/Coin2.png frame 0 (10x10) or GoldCoin.png 7x7 |
 
 ## Meadow HUD
@@ -63,9 +64,9 @@ deploy branch `claude/mobile-game-5-players-8qthjq` (cd8ceb3) plus the heads of 
 | [ ] | `art/gather/daybar-fill.png` | day bar fill | Code | Ui/Receptacle/LifeBarMiniProgress.png recoloured yellow #ffe18d |
 | [ ] | `art/gather/bar-fill-green.png` | quest bar fill | Code | Ui/Receptacle/LifeBarMiniProgress.png recoloured green |
 | [ ] | `art/gather/sun.png` | day bar sun, end screen sun | Code | Ui/Skill Icon/Meteo/Sun.png 24x24 |
-| [ ] | `art/gather/star.png` | quest / Bärregn / end stars (main.ts) | Code | GAP: no star icon in Ninja (Items/Treasure/GoldCup.png 9x11 as alt) |
-| [ ] | `art/gather/star-empty.png` | empty stars (index.html, main.ts) | Code | GAP: with star.png (SilverCup.png as alt) |
-| [ ] | `art/fine/icons/quest-home.png` | quest title "bring home" (index.html) | Code | GAP: no home icon (same as icons/house) |
+| [x] | `art/gather/star.png` | quest / Bärregn / end stars (main.ts) | Code | DONE: ChatGPT N-10 (19x17; old was 11x11, check CSS size) |
+| [x] | `art/gather/star-empty.png` | empty stars (index.html, main.ts) | Code | DONE: ChatGPT N-10 (19x17) |
+| [ ] | `art/fine/icons/quest-home.png` | quest title "bring home" (index.html) | Code | STAND-IN: Backgrounds/Tilesets/TilesetHouse.png round straw hut 48,128,47,32 |
 | [ ] | `art/gather/btn-axe.png` | action button with axe (controls.ts) | Code | Ui/Skill Icon/Job & Action/Harvest.png 24x24 (or Items/Tool/Axe.png) |
 | [ ] | `art/gather/btn-pickaxe.png` | action button with pickaxe | Code | Ui/Skill Icon/Job & Action/Mine.png 24x24 |
 | [ ] | `art/gather/btn-rake.png` | action button with rake | Code | Ui/Skill Icon/Job & Action/Plant.png 24x24 (or Items/Tool/Sickle.png) |
@@ -75,15 +76,15 @@ deploy branch `claude/mobile-game-5-players-8qthjq` (cd8ceb3) plus the heads of 
 
 | Done | Old file (public/) | Used in | Owner | Ninja replacement |
 |---|---|---|---|---|
-| [ ] | `art/fine/icons/carry-4.png` | build card: storage (main.ts BUILD_ICONS) | Code | GAP: composite hint icon, no Ninja equivalent (compose from Ninja pieces needs Stefan OK, or ChatGPT) |
-| [ ] | `art/fine/icons/hit-minus.png` | build card: workshop | Code | GAP: composite hint icon |
+| [ ] | `art/fine/icons/carry-4.png` | build card: storage (main.ts BUILD_ICONS) | Code | STAND-IN: Items/Object/CrateEmpty.png (storage holds more) |
+| [ ] | `art/fine/icons/hit-minus.png` | build card: workshop | Code | STAND-IN: Ui/Skill Icon/Spell/AttackUpgrade.png |
 | [ ] | `art/fine/icons/speed.png` | build card: workshop; speed power-up (game.ts) | Code | Ui/Skill Icon/Items & Weapon/Boot.png 24x24 |
-| [ ] | `art/fine/icons/berry-plus.png` | build card: garden | Code | GAP: composite hint icon |
-| [ ] | `art/fine/icons/berry-x2-home.png` | build card: well | Code | GAP: composite hint icon |
-| [ ] | `art/fine/icons/arrow-to-resource.png` | build card: watchtower | Code | GAP: composite hint icon |
-| [ ] | `art/fine/icons/new-corner.png` | build card: bridge | Code | GAP: composite hint icon |
-| [ ] | `art/fine/icons/carry-plus-1.png` | build card: cottage 2 | Code | GAP: composite hint icon |
-| [ ] | `art/fine/icons/regrow-fast.png` | build card: cottage 3 | Code | GAP: composite hint icon |
+| [ ] | `art/fine/icons/berry-plus.png` | build card: garden | Code | STAND-IN: Ui/Skill Icon/Job & Action/Plant.png |
+| [ ] | `art/fine/icons/berry-x2-home.png` | build card: well | Code | STAND-IN: Ui/Skill Icon/Spell/LuckUpgrade.png (clover = double luck) |
+| [ ] | `art/fine/icons/arrow-to-resource.png` | build card: watchtower | Code | STAND-IN: Ui/Skill Icon/Spell/Vision.png (the tower shows where things are) |
+| [ ] | `art/fine/icons/new-corner.png` | build card: bridge | Code | STAND-IN: Items/Scroll/Scroll.png (map) |
+| [ ] | `art/fine/icons/carry-plus-1.png` | build card: cottage 2 | Code | STAND-IN: Items/Object/Bag.png |
+| [ ] | `art/fine/icons/regrow-fast.png` | build card: cottage 3 | Code | STAND-IN: Items/Object/Hourglass.png |
 | [ ] | `art/fine/icons/village-badge.png` | village badge (main.ts) | Code | Backgrounds/Animated/Flag/Flag{Color}16x16.png frame 0 (4 frames 16x16) |
 
 ## Meadow world
@@ -106,7 +107,7 @@ deploy branch `claude/mobile-game-5-players-8qthjq` (cd8ceb3) plus the heads of 
 | [ ] | `art/fine/icons/log.png` | wood item on ground / carried (game.ts ic-log) | Code | Items/Resource/Branch.png 16x16 (chunky: tileset_camp.png 0,0,32,16) |
 | [ ] | `art/fine/icons/chest.png` | puzzle chest, dungeon chest icon (game.ts, dungeonScene) | Code + Code 2 | Items/Treasure/LittleTreasureChest.png 2 x 16x16 (closed, open) |
 | [ ] | `art/fine/icons/boot.png` | speed power-up (game.ts ic-boot) | Code | Ui/Skill Icon/Items & Weapon/Boot.png 24x24 |
-| [ ] | `art/fine/icons/magnet.png` | magnet power-up (game.ts, sim.ts) | Code | GAP: no magnet in Ninja |
+| [ ] | `art/fine/icons/magnet.png` | magnet power-up (game.ts, sim.ts) | Code | STAND-IN: Ui/Skill Icon/Items & Weapon/Hook.png 24x24 (pulls things in) |
 | [ ] | `art/fine/icons/base-marker.png` | base marker (game.ts m-base-marker) | Code | Backgrounds/Animated/Flag/Flag{Color}16x16.png (4 frames) |
 | [ ] | `art/gather/tool-axe.png` | tool swing strip (game.ts tool-axe) | Code | Items/Tool/Axe.png 16x16, swung in code (no strip) |
 | [ ] | `art/gather/tool-pickaxe.png` | tool swing strip | Code | Items/Tool/Pickaxe.png 16x16, swung in code |
@@ -124,9 +125,9 @@ deploy branch `claude/mobile-game-5-players-8qthjq` (cd8ceb3) plus the heads of 
 | [ ] | `art/props/sign.png` | sign | Code | Backgrounds/Tilesets/TilesetElement.png signpost 96,48,16,32 |
 | [ ] | `art/props/plate.png` | pressure plate | Code | Backgrounds/Tilesets/TilesetDungeon.png 0,16,16,16 |
 | [ ] | `art/props/plate-down.png` | pressure plate pressed | Code | Backgrounds/Tilesets/TilesetDungeon.png 16,16,16,16 |
-| [ ] | `art/props/gate.png` | puzzle gate closed (game.ts, sim.ts) | Code | GAP: no gate in Ninja (iron fence Backgrounds/Tilesets/TilesetHouse.png 144,160,80,32 as a stand-in) |
-| [ ] | `art/props/gate-open.png` | puzzle gate open | Code | GAP: with gate.png |
-| [ ] | `art/props/gate-post.png` | puzzle gate post | Code | GAP: with gate.png |
+| [ ] | `art/props/gate.png` | puzzle gate closed (game.ts, sim.ts) | Code | STAND-IN: Backgrounds/Tilesets/TilesetHouse.png iron fence with gateway, block 150,162,68,46: a closed fence run from its top edge (crop by eye) |
+| [ ] | `art/props/gate-open.png` | puzzle gate open | Code | STAND-IN: Backgrounds/Tilesets/TilesetHouse.png the open iron gateway arch at the bottom of block 150,162,68,46 (or torii 0,78,41,33) |
+| [ ] | `art/props/gate-post.png` | puzzle gate post | Code | STAND-IN: Backgrounds/Tilesets/TilesetHouse.png the open iron gateway arch at the bottom of block 150,162,68,46 (or torii 0,78,41,33) |
 
 ## Base
 
@@ -142,10 +143,10 @@ deploy branch `claude/mobile-game-5-players-8qthjq` (cd8ceb3) plus the heads of 
 | [ ] | `art/base/workshop.png` | workshop | Code | Backgrounds/Tilesets/TilesetHouse.png shed 304,304,48,48 |
 | [ ] | `art/base/storage.png` | storage | Code | Backgrounds/Tilesets/TilesetHouse.png barn 400,224,64,80 (small: crates 304,224,32,32) |
 | [ ] | `art/base/well.png` | well | Code | Backgrounds/Tilesets/TilesetElement.png roofed well 112,27,16,21 (draw 2x) |
-| [ ] | `art/base/bridge-site.png` | bridge under construction | Code | GAP: no construction sites in Ninja (or the finished Ninja building at 50% alpha in code) |
+| [ ] | `art/base/bridge-site.png` | bridge under construction | Code | STAND-IN: Backgrounds/Tilesets/TilesetWater.png plank strip 0,240,64,16 (deck being laid) |
 | [ ] | `art/base/watchtower-site.png` | watchtower site | Code | Backgrounds/Tilesets/TilesetTowers.png damaged tower 64,0,32,32 |
 | [ ] | `art/base/garden-site.png` | garden site | Code | Backgrounds/Tilesets/tileset_camp.png soil plots 0,128,64,16 |
-| [ ] | `art/base/workshop-site.png` | workshop site | Code | GAP: with bridge-site |
+| [ ] | `art/base/workshop-site.png` | workshop site | Code | STAND-IN: Backgrounds/Tilesets/TilesetHouse.png crates of goods 304,224,32,32 |
 | [ ] | `art/base/storage-site.png` | storage site | Code | Backgrounds/Tilesets/tileset_camp.png wood pile 0,16,48,32 (materials waiting) |
 | [ ] | `art/base/well-site.png` | well site | Code | Backgrounds/Tilesets/TilesetElement.png stone well 96,16,16,16 (no roof yet) |
 
@@ -158,9 +159,9 @@ deploy branch `claude/mobile-game-5-players-8qthjq` (cd8ceb3) plus the heads of 
 | [ ] | `art/props-winter/tree-snow-small.png` | snow wood node 2 | Code | Backgrounds/Tilesets/TilesetNature.png 128,0,32,32 |
 | [ ] | `art/props-winter/rock-snow.png` | snow stone node 3 | Code | Backgrounds/Tilesets/TilesetNature.png snowy boulder 32,192,32,32 |
 | [ ] | `art/props-winter/ice-rock.png` | snow stone node 4 | Code | Backgrounds/Tilesets/TilesetNature.png snowy rock 64,192,16,16 (or snowy peaks 144,192) |
-| [ ] | `art/props-winter/bush-berries-snow.png` | snow berry node 5 | Code | GAP: no snowy berry bush (berry-bush-ninja is pending; a snowy variant would be a new Art piece) |
+| [ ] | `art/props-winter/bush-berries-snow.png` | snow berry node 5 | Code | STAND-IN: Backgrounds/Tilesets/TilesetNature.png snow bush 192,0,32,32 with Items/Food/Nut2.png drawn on top in code |
 | [ ] | `art/props-winter/bush-empty-snow.png` | picked snow berry node | Code | Backgrounds/Tilesets/TilesetNature.png snow bush 192,0,32,32 |
-| [ ] | `art/props-winter/snowman.png` | snow decor, map picker | Code | GAP: no snowman in Ninja (snowball 80,192 / snow mound 160,192 as decor) |
+| [ ] | `art/props-winter/snowman.png` | snow decor, map picker | Code | STAND-IN: Backgrounds/Tilesets/TilesetNature.png snowball 80,192,16,16 / snow mound 160,192,16,16 |
 | [ ] | `art/props-winter/igloo.png` | snow decor | Code | Backgrounds/Tilesets/TilesetHouse.png igloo 0,176,48,46 |
 | [ ] | `art/props-winter/ice.png` | snow decor | Code | Backgrounds/Tilesets/TilesetFloor.png frozen pond 3x3 0,336,48,48 |
 | [ ] | `art/props-winter/tree-bare.png` | snow decor | Code | Backgrounds/Tilesets/TilesetNature.png dead tree 64,0,32,32 |
@@ -170,9 +171,9 @@ deploy branch `claude/mobile-game-5-players-8qthjq` (cd8ceb3) plus the heads of 
 
 | Done | Old file (public/) | Used in | Owner | Ninja replacement |
 |---|---|---|---|---|
-| [ ] | `art/fine/dungeon/ko-stars.png` | mini-ko (game.ts) + dungeon KO (dungeonScene) | Code + Code 2 | GAP: no dizzy stars in Ninja (Ui/Emote/emote29.png star bubble as stand-in) |
-| [ ] | `art/dungeon/ko-stars.png` | Bärregn intro .mi-ko (style.css) | Code | GAP: with fine/dungeon/ko-stars |
-| [ ] | `art/fine/dungeon/slam-warning.png` | mini-warn (game.ts) | Code | GAP: no warning marker (FX/Magic/Circle/SpriteSheetWhite.png ring as stand-in) |
+| [ ] | `art/fine/dungeon/ko-stars.png` | mini-ko (game.ts) + dungeon KO (dungeonScene) | Code + Code 2 | STAND-IN: Ui/Emote/emote3.png 14x13 (dizzy x-x face bubble) |
+| [ ] | `art/dungeon/ko-stars.png` | Bärregn intro .mi-ko (style.css) | Code | STAND-IN: Ui/Emote/emote3.png |
+| [ ] | `art/fine/dungeon/slam-warning.png` | mini-warn (game.ts) | Code | STAND-IN: Ui/Emote/emote22.png red "!" + FX/Magic/Circle/SpriteSheetWhite.png ring on the ground |
 | [ ] | `art/fine/dungeon/shockwave.png` | mini-wave (game.ts) + dungeon shockwave | Code + Code 2 | FX/Smoke/SmokeCircular/SpriteSheet.png 8 x 30x14 |
 
 ## Dungeon
@@ -204,10 +205,10 @@ deploy branch `claude/mobile-game-5-players-8qthjq` (cd8ceb3) plus the heads of 
 | [ ] | `art/dungeon/xp-frame.png` | XP bar frame (dungeon.css) | Code 2 | Ui/Receptacle/LifeBarMiniUnder.png 18x4 |
 | [ ] | `art/dungeon/xp-fill.png` | XP bar fill (dungeon.css) | Code 2 | Ui/Receptacle/LifeBarMiniProgress.png recoloured yellow |
 | [ ] | `art/dungeon/btn-sidestep.png` | sidestep button (dungeonUi) | Code 2 | Ui/Skill Icon/Spell/Camouflage.png 24x24 (substitute) |
-| [ ] | `art/dungeon/card-class-rogue.png` | class pick card | Code 2 | GAP: ChatGPT N-5 class cards |
-| [ ] | `art/dungeon/card-class-healer.png` | class pick card | Code 2 | GAP: ChatGPT N-5 |
-| [ ] | `art/dungeon/card-class-marksman.png` | class pick card | Code 2 | GAP: ChatGPT N-5 |
-| [ ] | `art/dungeon/card-class-tank.png` | class pick card | Code 2 | GAP: ChatGPT N-5 |
+| [x] | `art/dungeon/card-class-rogue.png` | class pick card | Code 2 | DONE: ChatGPT N-5, sliced by scripts/slice_cards.py |
+| [x] | `art/dungeon/card-class-healer.png` | class pick card | Code 2 | DONE: ChatGPT N-5 |
+| [x] | `art/dungeon/card-class-marksman.png` | class pick card | Code 2 | DONE: ChatGPT N-5 |
+| [x] | `art/dungeon/card-class-tank.png` | class pick card | Code 2 | DONE: ChatGPT N-5 |
 | [ ] | `art/dungeon/card-sword.png` | rogue weapon card | Code 2 | Items/Weapons/Sword/Sprite.png 6x17 on a nine_path_panel card |
 | [ ] | `art/dungeon/card-hammer.png` | rogue weapon card | Code 2 | Items/Weapons/Hammer/Sprite.png 9x16 |
 | [ ] | `art/dungeon/card-dagger.png` | rogue weapon card | Code 2 | Items/Weapons/Sai/Sprite.png 7x13 |

@@ -18,14 +18,14 @@ PEND = 'PENDING (Art piece, waits for Stefan rating): '
 # (area, old file under public/, where used, owner, replacement)
 ROWS = [
     # ---------------- screens / illustrations ----------------
-    ('Screens', 'art/title.png', 'start screen bg (style.css #start, i18n)', C, 'GAP: ChatGPT N-2 (landscape) + start-portrait'),
-    ('Screens', 'art/start-portrait.png', 'start screen portrait bg (style.css)', C, 'GAP: ChatGPT N-2 (portrait approved 4/5)'),
-    ('Screens', 'art/lobby.png', 'lobby bg (style.css #lobby, index.html, net.ts)', C, 'GAP: needs ChatGPT (no N-order yet; or reuse N-2 art)'),
-    ('Screens', 'art/loading.png', 'loading screen (index.html, main.ts, style.css)', C, 'GAP: needs ChatGPT (no N-order yet; or reuse N-2 art)'),
-    ('Screens', 'art/loading-portrait.png', 'loading screen portrait (style.css)', C, 'GAP: needs ChatGPT (with loading.png)'),
-    ('Screens', 'art/loading-landscape.png', 'loading screen landscape (style.css)', C, 'GAP: needs ChatGPT (with loading.png)'),
-    ('Screens', 'art/logo.png', 'logo on loading/start (index.html, main.ts)', C, 'GAP: needs ChatGPT (logo; fallback text uses Kenney Ski font)'),
-    ('Screens', 'art/victory.png', 'end screen bg (style.css #end)', C, 'GAP: ChatGPT N-6 (Art alt public/art/victory-ninja.png waits for rating)'),
+    ('Screens', 'art/title.png', 'start screen bg landscape (style.css #start, i18n)', C, 'DONE by ChatGPT N-2 landscape (556f547); not Ninja, approved route'),
+    ('Screens', 'art/start-portrait.png', 'start screen portrait bg (style.css)', C, 'DONE: approved ChatGPT art (N-2 portrait), keep'),
+    ('Screens', 'art/lobby.png', 'lobby bg (style.css #lobby; the lobby screen still shows)', C, 'STAND-IN: reuse the N-2 start art (art/title.png landscape, art/start-portrait.png portrait) under the lobby card'),
+    ('Screens', 'art/loading.png', 'loading screen (index.html, main.ts, style.css)', C, 'DONE: approved ChatGPT art, keep'),
+    ('Screens', 'art/loading-portrait.png', 'loading screen portrait (style.css)', C, 'DONE: approved ChatGPT art (N-3), keep'),
+    ('Screens', 'art/loading-landscape.png', 'loading screen landscape (style.css)', C, 'DONE: approved ChatGPT art (N-3), keep'),
+    ('Screens', 'art/logo.png', 'logo on loading/start (index.html, main.ts)', C, 'DONE: approved ChatGPT art, keep'),
+    ('Screens', 'art/victory.png', 'end screen bg (style.css #end)', C, 'DONE: ChatGPT N-6 (6f5fb3e, no coins)'),
     # ---------------- UI kit ----------------
     ('UI kit', 'art/ui/panel.png', 'all panels / cards (style.css border-image 4)', C, f'{W}nine_path_panel.png, border-image slice 6 6 5 5 fill (white text fill: nine_path_panel_3)'),
     ('UI kit', 'art/ui/btn-orange.png', 'big buttons, #dash, #attack (style.css, dungeon.css)', 'Code + Code 2', f'{W}button_normal.png 16x8, slice 2 fill'),
@@ -40,10 +40,10 @@ ROWS = [
     ('UI kit', 'art/ui/stick-base.png', 'joystick base #stick', C, 'Ui/Receptacle/Receptacle Sphere/BackgroundWood.png 32x32 (substitute, no real stick)'),
     ('UI kit', 'art/ui/stick-knob.png', 'joystick knob #knob', C, 'Ui/Receptacle/Receptacle Sphere/ProgressYellow.png 22x22'),
     ('UI kit', 'art/icons/back.png', 'back buttons (data-icon, dungeonUi)', 'Code + Code 2', f'{W}arrow_left.png 16x16'),
-    ('UI kit', 'art/icons/check.png', 'done button, checked option (data-icon, style.css), Bärregn intro', C, 'GAP: no check mark in Ninja (Ui/Dialog/YesButton.png 26x16 has English text)'),
+    ('UI kit', 'art/icons/check.png', 'done button, checked option (data-icon, style.css), Bärregn intro', C, 'DONE: ChatGPT N-10 (19x16, scripts/slice_n_orders.py)'),
     ('UI kit', 'art/icons/dice.png', 'random skin button (data-icon)', C, 'Items/Object/Dice 6.png'),
     ('UI kit', 'art/icons/dash-arrow.png', 'dash button icon (data-icon, controls.ts, dungeonUi)', 'Code + Code 2', f'{SI}Items & Weapon/Boot.png 24x24 (or {W}arrow_right.png)'),
-    ('UI kit', 'art/icons/house.png', 'new-village chip, home edge arrow, house marker (game.ts ic-house)', C, 'GAP: no home icon in Ninja (ART_MAP gaps)'),
+    ('UI kit', 'art/icons/house.png', 'new-village chip, home edge arrow, house marker (game.ts ic-house)', C, f'STAND-IN: {T}TilesetHouse.png round straw hut 48,128,47,32 (small, reads as home)'),
     ('UI kit', 'art/icons/coin.png', 'dungeon gold HUD + end stat (index.html)', C2, 'Items/Treasure/Coin2.png frame 0 (10x10) or GoldCoin.png 7x7'),
     # ---------------- meadow HUD ----------------
     ('Meadow HUD', 'art/gather/hud-wood.png', 'quest rows, bank, edge arrows, build costs', C, 'Items/Resource/Branch.png 16x16'),
@@ -55,23 +55,23 @@ ROWS = [
     ('Meadow HUD', 'art/gather/daybar-fill.png', 'day bar fill', C, 'Ui/Receptacle/LifeBarMiniProgress.png recoloured yellow #ffe18d'),
     ('Meadow HUD', 'art/gather/bar-fill-green.png', 'quest bar fill', C, 'Ui/Receptacle/LifeBarMiniProgress.png recoloured green'),
     ('Meadow HUD', 'art/gather/sun.png', 'day bar sun, end screen sun', C, f'{SI}Meteo/Sun.png 24x24'),
-    ('Meadow HUD', 'art/gather/star.png', 'quest / Bärregn / end stars (main.ts)', C, 'GAP: no star icon in Ninja (Items/Treasure/GoldCup.png 9x11 as alt)'),
-    ('Meadow HUD', 'art/gather/star-empty.png', 'empty stars (index.html, main.ts)', C, 'GAP: with star.png (SilverCup.png as alt)'),
-    ('Meadow HUD', 'art/fine/icons/quest-home.png', 'quest title "bring home" (index.html)', C, 'GAP: no home icon (same as icons/house)'),
+    ('Meadow HUD', 'art/gather/star.png', 'quest / Bärregn / end stars (main.ts)', C, 'DONE: ChatGPT N-10 (19x17; old was 11x11, check CSS size)'),
+    ('Meadow HUD', 'art/gather/star-empty.png', 'empty stars (index.html, main.ts)', C, 'DONE: ChatGPT N-10 (19x17)'),
+    ('Meadow HUD', 'art/fine/icons/quest-home.png', 'quest title "bring home" (index.html)', C, f'STAND-IN: {T}TilesetHouse.png round straw hut 48,128,47,32'),
     ('Meadow HUD', 'art/gather/btn-axe.png', 'action button with axe (controls.ts)', C, f'{SI}Job & Action/Harvest.png 24x24 (or Items/Tool/Axe.png)'),
     ('Meadow HUD', 'art/gather/btn-pickaxe.png', 'action button with pickaxe', C, f'{SI}Job & Action/Mine.png 24x24'),
     ('Meadow HUD', 'art/gather/btn-rake.png', 'action button with rake', C, f'{SI}Job & Action/Plant.png 24x24 (or Items/Tool/Sickle.png)'),
     ('Meadow HUD', 'art/base/btn-build.png', 'build chip + build panel (index.html, main.ts)', C, f'{SI}Job & Action/Repair.png 24x24'),
     # ---------------- build hint icons ----------------
-    ('Build hints', 'art/fine/icons/carry-4.png', 'build card: storage (main.ts BUILD_ICONS)', C, 'GAP: composite hint icon, no Ninja equivalent (compose from Ninja pieces needs Stefan OK, or ChatGPT)'),
-    ('Build hints', 'art/fine/icons/hit-minus.png', 'build card: workshop', C, 'GAP: composite hint icon'),
+    ('Build hints', 'art/fine/icons/carry-4.png', 'build card: storage (main.ts BUILD_ICONS)', C, 'STAND-IN: Items/Object/CrateEmpty.png (storage holds more)'),
+    ('Build hints', 'art/fine/icons/hit-minus.png', 'build card: workshop', C, 'STAND-IN: Ui/Skill Icon/Spell/AttackUpgrade.png'),
     ('Build hints', 'art/fine/icons/speed.png', 'build card: workshop; speed power-up (game.ts)', C, f'{SI}Items & Weapon/Boot.png 24x24'),
-    ('Build hints', 'art/fine/icons/berry-plus.png', 'build card: garden', C, 'GAP: composite hint icon'),
-    ('Build hints', 'art/fine/icons/berry-x2-home.png', 'build card: well', C, 'GAP: composite hint icon'),
-    ('Build hints', 'art/fine/icons/arrow-to-resource.png', 'build card: watchtower', C, 'GAP: composite hint icon'),
-    ('Build hints', 'art/fine/icons/new-corner.png', 'build card: bridge', C, 'GAP: composite hint icon'),
-    ('Build hints', 'art/fine/icons/carry-plus-1.png', 'build card: cottage 2', C, 'GAP: composite hint icon'),
-    ('Build hints', 'art/fine/icons/regrow-fast.png', 'build card: cottage 3', C, 'GAP: composite hint icon'),
+    ('Build hints', 'art/fine/icons/berry-plus.png', 'build card: garden', C, 'STAND-IN: Ui/Skill Icon/Job & Action/Plant.png'),
+    ('Build hints', 'art/fine/icons/berry-x2-home.png', 'build card: well', C, 'STAND-IN: Ui/Skill Icon/Spell/LuckUpgrade.png (clover = double luck)'),
+    ('Build hints', 'art/fine/icons/arrow-to-resource.png', 'build card: watchtower', C, 'STAND-IN: Ui/Skill Icon/Spell/Vision.png (the tower shows where things are)'),
+    ('Build hints', 'art/fine/icons/new-corner.png', 'build card: bridge', C, 'STAND-IN: Items/Scroll/Scroll.png (map)'),
+    ('Build hints', 'art/fine/icons/carry-plus-1.png', 'build card: cottage 2', C, 'STAND-IN: Items/Object/Bag.png'),
+    ('Build hints', 'art/fine/icons/regrow-fast.png', 'build card: cottage 3', C, 'STAND-IN: Items/Object/Hourglass.png'),
     ('Build hints', 'art/fine/icons/village-badge.png', 'village badge (main.ts)', C, 'Backgrounds/Animated/Flag/Flag{Color}16x16.png frame 0 (4 frames 16x16)'),
     # ---------------- meadow world ----------------
     ('Meadow world', 'art/fine/tiles/grass.png', 'meadow ground (game.ts f-grass)', C, f'{T}TilesetFloor.png grass 0,192,16,16 + variants 16..64,192 (Code: bakeNinjaMeadow on claude/blobz-code)'),
@@ -90,7 +90,7 @@ ROWS = [
     ('Meadow world', 'art/fine/icons/log.png', 'wood item on ground / carried (game.ts ic-log)', C, 'Items/Resource/Branch.png 16x16 (chunky: tileset_camp.png 0,0,32,16)'),
     ('Meadow world', 'art/fine/icons/chest.png', 'puzzle chest, dungeon chest icon (game.ts, dungeonScene)', 'Code + Code 2', 'Items/Treasure/LittleTreasureChest.png 2 x 16x16 (closed, open)'),
     ('Meadow world', 'art/fine/icons/boot.png', 'speed power-up (game.ts ic-boot)', C, f'{SI}Items & Weapon/Boot.png 24x24'),
-    ('Meadow world', 'art/fine/icons/magnet.png', 'magnet power-up (game.ts, sim.ts)', C, 'GAP: no magnet in Ninja'),
+    ('Meadow world', 'art/fine/icons/magnet.png', 'magnet power-up (game.ts, sim.ts)', C, f'STAND-IN: {SI}Items & Weapon/Hook.png 24x24 (pulls things in)'),
     ('Meadow world', 'art/fine/icons/base-marker.png', 'base marker (game.ts m-base-marker)', C, 'Backgrounds/Animated/Flag/Flag{Color}16x16.png (4 frames)'),
     ('Meadow world', 'art/gather/tool-axe.png', 'tool swing strip (game.ts tool-axe)', C, 'Items/Tool/Axe.png 16x16, swung in code (no strip)'),
     ('Meadow world', 'art/gather/tool-pickaxe.png', 'tool swing strip', C, 'Items/Tool/Pickaxe.png 16x16, swung in code'),
@@ -108,9 +108,9 @@ ROWS = [
     ('Meadow world', 'art/props/sign.png', 'sign', C, f'{T}TilesetElement.png signpost 96,48,16,32'),
     ('Meadow world', 'art/props/plate.png', 'pressure plate', C, f'{T}TilesetDungeon.png 0,16,16,16'),
     ('Meadow world', 'art/props/plate-down.png', 'pressure plate pressed', C, f'{T}TilesetDungeon.png 16,16,16,16'),
-    ('Meadow world', 'art/props/gate.png', 'puzzle gate closed (game.ts, sim.ts)', C, f'GAP: no gate in Ninja (iron fence {T}TilesetHouse.png 144,160,80,32 as a stand-in)'),
-    ('Meadow world', 'art/props/gate-open.png', 'puzzle gate open', C, 'GAP: with gate.png'),
-    ('Meadow world', 'art/props/gate-post.png', 'puzzle gate post', C, 'GAP: with gate.png'),
+    ('Meadow world', 'art/props/gate.png', 'puzzle gate closed (game.ts, sim.ts)', C, f'STAND-IN: {T}TilesetHouse.png iron fence with gateway, block 150,162,68,46: a closed fence run from its top edge (crop by eye)'),
+    ('Meadow world', 'art/props/gate-open.png', 'puzzle gate open', C, f'STAND-IN: {T}TilesetHouse.png the open iron gateway arch at the bottom of block 150,162,68,46 (or torii 0,78,41,33)'),
+    ('Meadow world', 'art/props/gate-post.png', 'puzzle gate post', C, f'STAND-IN: {T}TilesetHouse.png the open iron gateway arch at the bottom of block 150,162,68,46 (or torii 0,78,41,33)'),
     # ---------------- base ----------------
     ('Base', 'art/base/cottage-1.png', 'cottage level 1 (game.ts, build panel)', C, f'{T}TilesetHouse.png hut 0,128,45,47'),
     ('Base', 'art/base/cottage-2.png', 'cottage level 2', C, f'{T}TilesetHouse.png orange-thatch house 0,0,64,48'),
@@ -122,10 +122,10 @@ ROWS = [
     ('Base', 'art/base/workshop.png', 'workshop', C, f'{T}TilesetHouse.png shed 304,304,48,48'),
     ('Base', 'art/base/storage.png', 'storage', C, f'{T}TilesetHouse.png barn 400,224,64,80 (small: crates 304,224,32,32)'),
     ('Base', 'art/base/well.png', 'well', C, f'{T}TilesetElement.png roofed well 112,27,16,21 (draw 2x)'),
-    ('Base', 'art/base/bridge-site.png', 'bridge under construction', C, 'GAP: no construction sites in Ninja (or the finished Ninja building at 50% alpha in code)'),
+    ('Base', 'art/base/bridge-site.png', 'bridge under construction', C, f'STAND-IN: {T}TilesetWater.png plank strip 0,240,64,16 (deck being laid)'),
     ('Base', 'art/base/watchtower-site.png', 'watchtower site', C, f'{T}TilesetTowers.png damaged tower 64,0,32,32'),
     ('Base', 'art/base/garden-site.png', 'garden site', C, f'{T}tileset_camp.png soil plots 0,128,64,16'),
-    ('Base', 'art/base/workshop-site.png', 'workshop site', C, 'GAP: with bridge-site'),
+    ('Base', 'art/base/workshop-site.png', 'workshop site', C, f'STAND-IN: {T}TilesetHouse.png crates of goods 304,224,32,32'),
     ('Base', 'art/base/storage-site.png', 'storage site', C, f'{T}tileset_camp.png wood pile 0,16,48,32 (materials waiting)'),
     ('Base', 'art/base/well-site.png', 'well site', C, f'{T}TilesetElement.png stone well 96,16,16,16 (no roof yet)'),
     # ---------------- snow ----------------
@@ -134,17 +134,17 @@ ROWS = [
     ('Snow world', 'art/props-winter/tree-snow-small.png', 'snow wood node 2', C, f'{T}TilesetNature.png 128,0,32,32'),
     ('Snow world', 'art/props-winter/rock-snow.png', 'snow stone node 3', C, f'{T}TilesetNature.png snowy boulder 32,192,32,32'),
     ('Snow world', 'art/props-winter/ice-rock.png', 'snow stone node 4', C, f'{T}TilesetNature.png snowy rock 64,192,16,16 (or snowy peaks 144,192)'),
-    ('Snow world', 'art/props-winter/bush-berries-snow.png', 'snow berry node 5', C, 'GAP: no snowy berry bush (berry-bush-ninja is pending; a snowy variant would be a new Art piece)'),
+    ('Snow world', 'art/props-winter/bush-berries-snow.png', 'snow berry node 5', C, f'STAND-IN: {T}TilesetNature.png snow bush 192,0,32,32 with Items/Food/Nut2.png drawn on top in code'),
     ('Snow world', 'art/props-winter/bush-empty-snow.png', 'picked snow berry node', C, f'{T}TilesetNature.png snow bush 192,0,32,32'),
-    ('Snow world', 'art/props-winter/snowman.png', 'snow decor, map picker', C, 'GAP: no snowman in Ninja (snowball 80,192 / snow mound 160,192 as decor)'),
+    ('Snow world', 'art/props-winter/snowman.png', 'snow decor, map picker', C, f'STAND-IN: {T}TilesetNature.png snowball 80,192,16,16 / snow mound 160,192,16,16'),
     ('Snow world', 'art/props-winter/igloo.png', 'snow decor', C, f'{T}TilesetHouse.png igloo 0,176,48,46'),
     ('Snow world', 'art/props-winter/ice.png', 'snow decor', C, f'{T}TilesetFloor.png frozen pond 3x3 0,336,48,48'),
     ('Snow world', 'art/props-winter/tree-bare.png', 'snow decor', C, f'{T}TilesetNature.png dead tree 64,0,32,32'),
     ('Snow world', 'art/props-winter/pond-frozen-tiles.png', 'frozen pond tiles (w-pond)', C, f'{T}TilesetFloor.png ice block 0,336,48,48, ice fill 16,352,16,16'),
     # ---------------- Bärregn (meadow mini game) ----------------
-    ('Bärregn', 'art/fine/dungeon/ko-stars.png', 'mini-ko (game.ts) + dungeon KO (dungeonScene)', 'Code + Code 2', 'GAP: no dizzy stars in Ninja (Ui/Emote/emote29.png star bubble as stand-in)'),
-    ('Bärregn', 'art/dungeon/ko-stars.png', 'Bärregn intro .mi-ko (style.css)', C, 'GAP: with fine/dungeon/ko-stars'),
-    ('Bärregn', 'art/fine/dungeon/slam-warning.png', 'mini-warn (game.ts)', C, 'GAP: no warning marker (FX/Magic/Circle/SpriteSheetWhite.png ring as stand-in)'),
+    ('Bärregn', 'art/fine/dungeon/ko-stars.png', 'mini-ko (game.ts) + dungeon KO (dungeonScene)', 'Code + Code 2', 'STAND-IN: Ui/Emote/emote3.png 14x13 (dizzy x-x face bubble)'),
+    ('Bärregn', 'art/dungeon/ko-stars.png', 'Bärregn intro .mi-ko (style.css)', C, 'STAND-IN: Ui/Emote/emote3.png'),
+    ('Bärregn', 'art/fine/dungeon/slam-warning.png', 'mini-warn (game.ts)', C, 'STAND-IN: Ui/Emote/emote22.png red "!" + FX/Magic/Circle/SpriteSheetWhite.png ring on the ground'),
     ('Bärregn', 'art/fine/dungeon/shockwave.png', 'mini-wave (game.ts) + dungeon shockwave', 'Code + Code 2', 'FX/Smoke/SmokeCircular/SpriteSheet.png 8 x 30x14'),
     # ---------------- dungeon ----------------
     ('Dungeon', 'art/fine/tiles/dungeon-floor.png', 'dungeon floor', C2, f'{T}Interior/TilesetInteriorFloor.png stone brick fill 176,192,16,16 (block 176,192,176,80)'),
@@ -172,10 +172,10 @@ ROWS = [
     ('Dungeon', 'art/dungeon/xp-frame.png', 'XP bar frame (dungeon.css)', C2, 'Ui/Receptacle/LifeBarMiniUnder.png 18x4'),
     ('Dungeon', 'art/dungeon/xp-fill.png', 'XP bar fill (dungeon.css)', C2, 'Ui/Receptacle/LifeBarMiniProgress.png recoloured yellow'),
     ('Dungeon', 'art/dungeon/btn-sidestep.png', 'sidestep button (dungeonUi)', C2, f'{SI}Spell/Camouflage.png 24x24 (substitute)'),
-    ('Dungeon', 'art/dungeon/card-class-rogue.png', 'class pick card', C2, 'GAP: ChatGPT N-5 class cards'),
-    ('Dungeon', 'art/dungeon/card-class-healer.png', 'class pick card', C2, 'GAP: ChatGPT N-5'),
-    ('Dungeon', 'art/dungeon/card-class-marksman.png', 'class pick card', C2, 'GAP: ChatGPT N-5'),
-    ('Dungeon', 'art/dungeon/card-class-tank.png', 'class pick card', C2, 'GAP: ChatGPT N-5'),
+    ('Dungeon', 'art/dungeon/card-class-rogue.png', 'class pick card', C2, 'DONE: ChatGPT N-5, sliced by scripts/slice_cards.py'),
+    ('Dungeon', 'art/dungeon/card-class-healer.png', 'class pick card', C2, 'DONE: ChatGPT N-5'),
+    ('Dungeon', 'art/dungeon/card-class-marksman.png', 'class pick card', C2, 'DONE: ChatGPT N-5'),
+    ('Dungeon', 'art/dungeon/card-class-tank.png', 'class pick card', C2, 'DONE: ChatGPT N-5'),
     ('Dungeon', 'art/dungeon/card-sword.png', 'rogue weapon card', C2, 'Items/Weapons/Sword/Sprite.png 6x17 on a nine_path_panel card'),
     ('Dungeon', 'art/dungeon/card-hammer.png', 'rogue weapon card', C2, 'Items/Weapons/Hammer/Sprite.png 9x16'),
     ('Dungeon', 'art/dungeon/card-dagger.png', 'rogue weapon card', C2, 'Items/Weapons/Sai/Sprite.png 7x13'),
@@ -235,13 +235,17 @@ def kind(r):
         return 'pending'
     if rep.startswith('GAP'):
         return 'gap'
+    if rep.startswith('STAND-IN'):
+        return 'stand-in'
+    if rep.startswith('DONE'):
+        return 'done'
     return 'mapped'
 
 
 def main():
     for r in ROWS:
         assert os.path.exists(os.path.join(ROOT, 'public', r[1])), r[1]
-    n = {'mapped': 0, 'pending': 0, 'gap': 0}
+    n = {'mapped': 0, 'stand-in': 0, 'pending': 0, 'gap': 0, 'done': 0}
     for r in ROWS:
         n[kind(r)] += 1
     out = ['# Old art checklist: every non-Ninja image still used, and its Ninja replacement', '',
@@ -251,16 +255,17 @@ def main():
            '`python3 scripts/old_art_checklist.py` after editing the rows there.', '',
            '- **Ninja** paths are relative to `public/assets/ninja-adventure/`; rects are `x,y,w,h` (see `docs/ART_MAP.md`).',
            '- **GAP** = Ninja has nothing usable: needs a ChatGPT order (or an Art piece only with Stefan\'s OK).',
+           '- **STAND-IN** = no exact Ninja match, but a Ninja piece that reads right (Lead\'s call: good enough).',
            '- **PENDING** = an Art piece made before the "no own art" rule; it waits for Stefan\'s rating.',
            '- Owner = who swaps the reference: Code (meadow, UI, `game.ts`/`main.ts`/`style.css`/`index.html`), Code 2 (`dungeon*`).',
            '- Tick the box when the game no longer loads the old file.', '',
-           f'**Counts: {len(ROWS)} total / {n["mapped"]} mapped to Ninja / {n["pending"]} pending Art rating / {n["gap"]} gaps.**', '']
+           f'**Counts: {len(ROWS)} total / {n["mapped"]} mapped to Ninja / {n["stand-in"]} Ninja stand-ins / {n["pending"]} pending Art rating / {n["gap"]} gaps / {n["done"]} done.**', '']
     area = None
     for r in ROWS:
         if r[0] != area:
             area = r[0]
             out += ['', f'## {area}', '', '| Done | Old file (public/) | Used in | Owner | Ninja replacement |', '|---|---|---|---|---|']
-        out.append(f'| [ ] | `{r[1]}` | {r[2]} | {r[3]} | {r[4]} |')
+        out.append(f'| {"[x]" if kind(r) == "done" else "[ ]"} | `{r[1]}` | {r[2]} | {r[3]} | {r[4]} |')
     out += ['', '## Not counted (on disk but not loaded)', '',
             'Old files nothing references any more (safe to delete later, by Lead): `art/icons/{boot,chest,log,magnet,dash,clock,diamond*,gem*,',
             'mushroom,sparkle,team}.png`, `art/gather/{item-stone,chips-*,btn-dash}.png`, `art/fx/*`, `art/fine/base/build-spot.png`,',
