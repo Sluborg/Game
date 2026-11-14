@@ -23,7 +23,12 @@ Merge routine: fetch, merge each branch, resolve, `npx tsc --noEmit && npm test 
 - ChatGPT art queue: `blobz/docs/ART_ORDERS.md` (ChatGPT project instructions point to its raw GitHub URL on the deploy branch).
   D-orders = small direction tests; A-orders stay WAITING until Stefan locks the direction for their area.
 
-## State at handover (2026-11-14, v039b)
+## Art decision (2026-11-14, LOCKED)
+- ONE art source: Ninja Adventure (CC0), vendored in `public/assets/ninja-adventure/` (images; audio list in
+  AUDIO_INDEX.txt, raw audio not vendored). Blobz are ours, redrawn on Ninja's 16 px grid, 3/4 view, 4 facings.
+- `docs/ART_MAP.md` (Art) maps every game object to a Ninja file. ChatGPT orders are all cancelled.
+
+## State at handover (2026-11-14, v041)
 - Live: meadow gather + build menu at the house (no totems), Bärregn mini game, snow map, test dungeon with 4 classes
   (Helare/Rogue/Riddare/Skytt; EN Healer/Rogue/Tank/Marksman), level-up cards (no timer), loot roll/pass, SV+EN,
   blobz look where they move, Fredoka font, fine-res items/ground on the meadow.
