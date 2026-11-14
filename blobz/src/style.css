@@ -757,3 +757,107 @@ body { font-weight: 500; } /* Fredoka (Stefan's pick on the board) */
   #lobby-list .blob { width: 40px; height: 40px; }
   .lanrow .blob { width: 40px; height: 40px; }
 }
+
+/* ======================================================================================================
+   Ninja Adventure UI (Ui/Theme/Theme Wood, ART_MAP 7): replaces the old ChatGPT UI kit (art/ui/*).
+   9-slice via border-image at 3 CSS px per art pixel; Fredoka stays for text.
+   ====================================================================================================== */
+.card, #hud-score, #hud-time {
+  border-width: 18px 15px 15px 18px;
+  border-image: url('/assets/ninja-adventure/Ui/Theme/Theme%20Wood/nine_path_panel_3.png') 6 5 5 6 fill / 18px 15px 15px 18px stretch;
+}
+button.big {
+  border-width: 6px; padding: 0 10px 3px; min-height: 60px; color: #fff7e6;
+  text-shadow: 0 2px 0 #7a2e14, 2px 0 0 #7a2e14, -2px 0 0 #7a2e14, 0 -2px 0 #7a2e14;
+  border-image: url('/assets/ninja-adventure/Ui/Theme/Theme%20Wood/button_normal.png') 2 fill / 6px stretch;
+}
+button.big:active { transform: none; padding-top: 3px; padding-bottom: 0; border-image-source: url('/assets/ninja-adventure/Ui/Theme/Theme%20Wood/button_pressed.png'); }
+button.big.alt { border-image-source: url('/assets/ninja-adventure/Ui/Theme/Theme%20Wood/button_hover.png'); }
+button.big.alt:active { border-image-source: url('/assets/ninja-adventure/Ui/Theme/Theme%20Wood/button_pressed.png'); }
+.chip, .edit {
+  border-width: 6px; padding: 0 6px 2px; color: #fff7e6; text-shadow: 0 2px 0 #7a2e14, 1px 0 0 #7a2e14, -1px 0 0 #7a2e14;
+  border-image: url('/assets/ninja-adventure/Ui/Theme/Theme%20Wood/button_normal.png') 2 fill / 6px stretch;
+}
+.chip:active, .edit:active { padding-top: 3px; padding-bottom: 0; border-image-source: url('/assets/ninja-adventure/Ui/Theme/Theme%20Wood/button_pressed.png'); }
+.edit { border-image-source: url('/assets/ninja-adventure/Ui/Theme/Theme%20Wood/button_hover.png'); }
+input {
+  border-width: 12px 10px 10px 12px;
+  border-image: url('/assets/ninja-adventure/Ui/Theme/Theme%20Wood/nine_path_panel_3.png') 6 5 5 6 fill / 12px 10px 10px 12px stretch;
+}
+.tab {
+  border-width: 12px 18px 0 12px; padding: 0 0 4px;
+  border-image: url('/assets/ninja-adventure/Ui/Theme/Theme%20Wood/tab_unselected.png') 4 6 0 4 fill / 12px 18px 0 12px stretch;
+}
+.tab.on { border-image-source: url('/assets/ninja-adventure/Ui/Theme/Theme%20Wood/tab_selected.png'); }
+.opt, .me, #lobby-list li {
+  border-width: 12px 10px 10px 12px;
+  border-image: url('/assets/ninja-adventure/Ui/Theme/Theme%20Wood/nine_path_panel_3.png') 6 5 5 6 fill / 12px 10px 10px 12px stretch;
+}
+.opt.on { border-image-source: url('/assets/ninja-adventure/Ui/Theme/Theme%20Wood/nine_path_panel.png'); border-image-slice: 6 5 5 6 fill; }
+/* designer tiles: the blob always fits the tile's content box (selected and unselected alike; the frame is the only
+   difference), so nothing is cut by overflow or the border */
+.opt { overflow: visible; padding: 0; display: flex; align-items: center; justify-content: center; }
+.opt .blob { width: min(60px, 100%); height: auto; aspect-ratio: 1; }
+@media (orientation: landscape) and (max-height: 520px) { .opt .blob { width: min(40px, 100%); } }
+
+/* ---- home screen (Stefan): no card; the logo big and free, the blob big in the scene, name on a Ninja plate ---- */
+#menu #home.home {
+  border: 0; border-image: none; background: none; filter: none; box-shadow: none; padding: 0; margin: 0;
+  width: 100%; max-width: none; min-height: 100%; display: grid; gap: 6px; justify-items: center; align-content: space-between;
+  grid-template-columns: 1fr; grid-template-rows: auto 1fr auto auto;
+  grid-template-areas: 'logo' 'me' 'actions' 'foot';
+}
+#menu:has(#home:not(.hidden)) { padding: max(10px, env(safe-area-inset-top)) 16px max(10px, env(safe-area-inset-bottom)); align-items: stretch; }
+#menu #home .logo { grid-area: logo; margin: 0; width: 100%; }
+#menu #home .logo-img { width: 88vw; max-width: 440px; max-height: none; margin: 0 auto; filter: drop-shadow(0 6px 0 #3f263155); }
+/* the player's blob, big, standing in the scene; tap it (or the plate) to open the designer */
+#menu #home .me {
+  grid-area: me; border: 0; border-image: none; background: none; width: auto; padding: 0; margin: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer;
+}
+#menu #home .me .blob { width: min(240px, 30vh); height: min(240px, 30vh); position: relative; }
+#menu #home .me .blob::after { content: ''; position: absolute; left: 18%; right: 18%; bottom: 2%; height: 9%; border-radius: 50%; background: #1f3a1f55; z-index: -1; }
+#menu #home .me .bounce { animation: bob 2.4s ease-in-out infinite; }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+/* name plate (Ninja panel, white fill) with a small edit button (Ninja button + feather icon) */
+#menu #home .me-text {
+  flex-direction: row; align-items: center; gap: 8px; padding: 0 4px;
+  border-style: solid; border-width: 12px 10px 10px 12px; image-rendering: pixelated;
+  border-image: url('/assets/ninja-adventure/Ui/Theme/Theme%20Wood/nine_path_panel_3.png') 6 5 5 6 fill / 12px 10px 10px 12px stretch;
+}
+#menu #home .me-text b { font-size: 22px; max-width: 52vw; }
+#menu #home .me-text .edit {
+  font-size: 0; width: 40px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center;
+}
+#menu #home .me-text .edit::before { content: ''; width: 24px; height: 24px; background: url('/assets/ninja-adventure/Items/Resource/feather.png') center / 24px 24px no-repeat; image-rendering: pixelated; }
+#menu #home .actions { grid-area: actions; width: 100%; max-width: 460px; gap: 10px; }
+#menu #home .actions .msg { min-height: 0; text-align: center; }
+#menu #home .homefoot { grid-area: foot; display: flex; align-items: center; justify-content: center; gap: 10px; }
+#menu #home .version, #menu #home .langtog { color: #fff7e6; opacity: 1; text-shadow: 0 1px 0 #3f2631, 1px 0 0 #3f2631, -1px 0 0 #3f2631, 0 -1px 0 #3f2631; }
+@media (orientation: landscape) {
+  #menu:has(#home:not(.hidden)) { padding: max(8px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 8px max(16px, env(safe-area-inset-left)); }
+  #menu #home.home {
+    grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr auto;
+    grid-template-areas: 'logo actions' 'me actions' 'me foot'; align-items: center; column-gap: 24px;
+  }
+  #menu #home .logo-img { width: 45vw; max-height: 34vh; object-fit: contain; }
+  #menu #home .me .blob { width: min(200px, 40vh); height: min(200px, 40vh); }
+  #menu #home .actions { align-self: center; }
+}
+
+/* lobby: the same N-2 village art as the start screen (portrait art upright, title.png in landscape) */
+#lobby.screen { background: #45b2fc url('/art/start-portrait.png') center bottom / cover no-repeat; }
+@media (orientation: landscape) { #lobby.screen { background: #9ccd38 url('/art/title.png') center 70% / cover no-repeat; } }
+
+/* loading (Stefan): logo + bar lower than the notch: top at ~13% in portrait, in the upper calm area in landscape */
+@media (orientation: portrait) {
+  #loading { align-items: flex-start; padding-top: max(13vh, calc(env(safe-area-inset-top) + 24px)); padding-bottom: 0; }
+}
+@media (orientation: landscape) {
+  #loading { align-items: flex-start; justify-content: center; padding: max(6vh, calc(env(safe-area-inset-top) + 12px)) 0 0; }
+}
+.tab {
+  border-width: 8px 12px 0 8px; border-image-width: 8px 12px 0 8px; min-height: 40px; padding: 2px 0 6px;
+  color: #fff7e6; text-shadow: 0 2px 0 #7a2e14, 1px 0 0 #7a2e14, -1px 0 0 #7a2e14, 0 -1px 0 #7a2e14;
+}
+.tab.on { color: #3f2631; text-shadow: none; }

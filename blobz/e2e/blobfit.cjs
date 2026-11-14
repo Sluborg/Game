@@ -16,6 +16,13 @@ const check = (p) => p.evaluate(() => {
     const w = img.naturalWidth * s, h = img.naturalHeight * s;
     const pic = { l: r.left + (r.width - w) / 2, r: r.right - (r.width - w) / 2, t: r.top + (r.height - h) / 2, b: r.bottom - (r.height - h) / 2 };
     if (getComputedStyle(img).objectFit !== 'contain') bad.push('object-fit ' + getComputedStyle(img).objectFit);
+    // designer tiles (selected or not): the picture must sit inside the tile's padding box, never under its 9-slice frame
+    const tile = img.closest('.opt');
+    if (tile) {
+      const t = tile.getBoundingClientRect(), cs = getComputedStyle(tile);
+      const pad = { l: t.left + parseFloat(cs.borderLeftWidth), r: t.right - parseFloat(cs.borderRightWidth), t: t.top + parseFloat(cs.borderTopWidth), b: t.bottom - parseFloat(cs.borderBottomWidth) };
+      if (pic.l < pad.l - 0.5 || pic.r > pad.r + 0.5 || pic.t < pad.t - 0.5 || pic.b > pad.b + 0.5) bad.push(`${tile.classList.contains('on') ? 'selected' : 'unselected'} tile frame covers the blob`);
+    }
     for (let el = img.parentElement; el && el !== document.body; el = el.parentElement) {
       const cs = getComputedStyle(el);
       if (cs.overflowX === 'visible' && cs.overflowY === 'visible') continue;
@@ -46,13 +53,17 @@ const check = (p) => p.evaluate(() => {
           const home = await check(p);
           await p.click('#me'); await p.waitForSelector('#custom:not(.hidden)');
           const bad = [...home];
-          for (const part of ['shape', 'eyes', 'mouth', 'hat']) { await p.click(`.tab[data-part="${part}"]`); await p.waitForTimeout(260); bad.push(...(await check(p))); }
+          for (const part of ['shape', 'eyes', 'mouth', 'hat']) {
+            await p.click(`.tab[data-part="${part}"]`); await p.waitForTimeout(260);
+            if (!(await p.$('#opts .opt.on')) || !(await p.$('#opts .opt:not(.on)'))) bad.push(`${part}: needs both a selected and an unselected tile`);
+            bad.push(...(await check(p)));
+          }
           if (shape === 0 && hat === 7) { await p.click('#btn-custom-done'); await p.click('#btn-host'); await p.waitForSelector('#lobby:not(.hidden)'); bad.push(...(await check(p))); }
           if (bad.length) throw new Error(`FAIL: ${tag} hat ${hat} shape ${shape}: ${[...new Set(bad)].join('; ')}`);
           await ctx.close();
         }
       }
-      ok(true, `${tag}: headphones, cat ears and devil horns on all 6 shapes: every blob picture shows its whole canvas (home, designer tabs, lobby)`);
+      ok(true, `${tag}: headphones, cat ears and devil horns on all 6 shapes: every blob picture shows its whole canvas (home, designer tabs with selected + unselected tiles, lobby)`);
     }
     console.log('ALL PASSED');
   } finally {
