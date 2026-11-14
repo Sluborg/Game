@@ -2,9 +2,10 @@
 // Own files need their own row; Ninja Adventure files are covered by the per-folder rows.
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-const ROOT = join(__dirname, '..');
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const PUB = join(ROOT, 'public');
 const IMG = /\.(png|gif|jpe?g|webp|svg)$/i;
 
