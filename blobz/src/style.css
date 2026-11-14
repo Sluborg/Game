@@ -716,3 +716,10 @@ body { font-weight: 500; } /* Fredoka (Stefan's pick on the board) */
   #menu .home .actions .msg { min-height: 0; }
   #menu .home .version, #menu .home .langtog { flex: 0 0 auto; margin: 0; }
 }
+
+/* loading screen in portrait (ChatGPT N-3 r3, approved): the cave + blobz on top, logo + bar in the calm lower
+   third. Landscape keeps loading.png until the landscape version arrives. */
+@media (orientation: portrait) {
+  #loading { background: #263f24 url('/art/loading-portrait.png') 58% top / cover no-repeat;
+    align-items: flex-end; padding-top: 0; padding-bottom: max(9vh, env(safe-area-inset-bottom)); }
+}
