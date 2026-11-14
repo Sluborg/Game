@@ -6,7 +6,8 @@ Owners: Art keeps the queue and statuses current; Lead reviews. Stefan only says
 
 ## For ChatGPT: how to work (read every time)
 1. Re-read this file at the start of every chat and every time Stefan writes "next" (it changes often).
-2. Make the FIRST order in the queue with status **READY** that you have not already made in this chat
+2. Orders with id D-* are small direction tests: Stefan answers them before any big A-order is READY.
+   Make the FIRST order in the queue with status **READY** that you have not already made in this chat
    **in its current round** (an order whose title says "round N" higher than the one you made must be made again).
    Skip WAITING and DONE orders.
 3. ONE image per reply. Apply the style block below to every image.
@@ -32,16 +33,63 @@ Make ONE image per reply and wait for "next".
 ## Queue
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
-| A-1 | READY | Class cards, round 3 | `dungeon/card-class-*.png` |
-| A-2 | READY | Cottage level 2 and 3 + snow igloo, matching the loading-screen house | `base/cottage-2.png`, `cottage-3.png`, `props-winter/igloo.png` |
-| A-3 | READY | Landscape loading screen | `art/loading-landscape.png` |
-| A-4 | READY | Dungeon entrance, meadow + snow | `dungeon/entrance.png`, `entrance-snow.png` |
-| A-5 | READY | Base buildings (build menu picture cards + on the map) | `base/*` buildings |
+| D-1 | READY | Direction test 1: small style probe (one tiny scene) | nothing, a test |
+| D-2 | WAITING (Stefan's verdict on D-1) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
+| D-3 | WAITING (after D-2) | Direction test 3: one enemy in 3 poses | nothing, a test |
+| D-4 | WAITING (after D-3) | Direction test 4: one base building | nothing, a test |
+| A-1 | WAITING (paused: art direction first, see D-orders) | Class cards, round 3 | `dungeon/card-class-*.png` |
+| A-2 | WAITING (paused: art direction first, see D-orders) | Cottage level 2 and 3 + snow igloo, matching the loading-screen house | `base/cottage-2.png`, `cottage-3.png`, `props-winter/igloo.png` |
+| A-3 | WAITING (paused: art direction first, see D-orders) | Landscape loading screen | `art/loading-landscape.png` |
+| A-4 | WAITING (paused: art direction first, see D-orders) | Dungeon entrance, meadow + snow | `dungeon/entrance.png`, `entrance-snow.png` |
+| A-5 | WAITING (paused: art direction first, see D-orders) | Base buildings (build menu picture cards + on the map) | `base/*` buildings |
 | A-6 | WAITING (Rogue weapon decision) | Weapon cards: daggers, sword, hammer, spear | `dungeon/card-dagger.png`, `card-sword.png`, `card-hammer.png`, `card-spear.png` |
-| A-7 | READY | Meadow props incl. berry bush (cozy storybook style) | `props/*`, `gather/bush-*` |
+| A-7 | WAITING (style pick on the board) | Meadow props incl. berry bush | `props/*`, `gather/bush-*` |
 | A-8 | WAITING (variants on the board) | Dungeon buttons, goo enemies, skill icons, back arrow | `dungeon/btn-*`, `enemies/*`, `dungeon/skills/*`, `icons/back.png` |
-| A-9 | READY | Bärregn mini game: bomb, falling berries, basket, plop, fence | `mini/bomb.png`, `mini/berries.png`, `mini/basket.png`, `mini/plop.png`, `mini/fence-*.png` |
-| A-10 | READY | Winter props in the same cozy storybook style as A-7 | `props-winter/*` |
+| A-9 | WAITING (paused: art direction first, see D-orders) | Bärregn mini game: bomb, falling berries, basket, plop, fence | `mini/bomb.png`, `mini/berries.png`, `mini/basket.png`, `mini/plop.png`, `mini/fence-*.png` |
+| A-10 | WAITING (after A-7 style pick) | Winter props in the same style as A-7 | `props-winter/*` |
+
+### D-1 Direction test 1: style probe (small)
+Goal: lock the art direction with ONE small image before any big order. Stefan judges it and Art writes the next test.
+```
+Make ONE small square image, 768x768, of a tiny corner of the game world, top-down 3/4 view, in a cozy storybook style:
+warm yellow-green grass with soft light patches and a few tiny flowers, a short dirt path.
+On it, spaced apart with room around each: one round leafy tree, one berry bush full of shiny red berries, one grey
+rock, one small wooden signpost, and ONE blob (a soft round slime with big white eyes, black pupils, a small smile,
+1px dark plum outline #3f2631, light blue body, no arms or legs).
+IMPORTANT pixel size: crisp pixel art where the blob is about 36 game pixels wide and the tree about 48, i.e. the
+same fine pixel grid for everything (no chunky 16x16 tiles). One consistent pixel size, no blur, no gradients,
+no text. This is a style test, keep it simple and clean.
+```
+
+### D-2 Direction test 2: icon family probe (small)
+Goal: one consistent icon family (nav buttons + skills) in the locked D-1 style. Compared on the board with the Kenney
+icon families (docs/art-review/icons-A/B/C.png).
+```
+Make ONE small image, 768x384, transparent background (or solid magenta #ff00ff): 10 game icons in a neat row of 5
+and a row of 5, same size each (about 40 game pixels), same pixel grid and style as the cozy storybook test (crisp
+pixel art, 1px dark plum outline #3f2631, flat colours with one highlight and one shadow, no blur, no gradients, no text).
+Row 1, interface icons, all drawn the SAME way (same line weight, same plum colour on a cream round tile):
+back arrow, home, close X, check mark, settings gear.
+Row 2, skill icons, each a small coloured object on a dark purple round tile with a thin gold rim:
+red heart (heal), yellow target (critical hit), blue shield (block), white curved arrow (spin attack), orange flame (special).
+Keep every icon simple and readable at small size for kids. Nothing touching, even spacing.
+```
+
+### D-3 Direction test 3: one enemy (small)
+```
+Make ONE small image, 768x384, transparent background (or solid magenta #ff00ff), in the same cozy storybook pixel
+style and pixel grid as the style test: ONE enemy for a kids' game, a friendly-but-naughty purple goo slime, shown
+3 times side by side: idle, hopping (squashed and stretched), and hit (white flash, eyes squeezed). About the same
+size as a blob (36 game pixels wide). 1px dark plum outline #3f2631, no text, nothing scary.
+```
+
+### D-4 Direction test 4: one base building (small)
+```
+Make ONE small image, 768x768, transparent background (or solid magenta #ff00ff), same cozy storybook pixel style
+and pixel grid as the style test: ONE small wooden workshop building for the blobz' base, top-down 3/4 view, about
+90 game pixels wide: plank walls, a red tiled roof, a workbench with a hammer and saw under a little awning.
+1px dark plum outline #3f2631, flat colours, no text, no people.
+```
 
 ### A-1 Class cards, round 3
 Classes (EN / SV): Healer / Helare, Rogue / Rogue, Tank / Riddare, Marksman / Skytt. Theme colours follow the common
@@ -118,7 +166,7 @@ On each card the same neutral white blob, centred, holding the weapon: 1 two sho
 2 a sword raised, 3 a big hammer held over its shoulder, 4 a long spear held upright. Blobz wear no hats.
 ```
 
-### A-7 Meadow props
+### A-7 Meadow props (WAITING)
 ```
 Order I-4: meadow props, sheet 5 columns x 3 rows, in this order: 1 round green tree, 2 orange autumn tree,
 3 pine tree, 4 small rock, 5 big boulder, 6 berry bush full of red berries, 7 the same bush picked empty,
@@ -126,10 +174,8 @@ Order I-4: meadow props, sheet 5 columns x 3 rows, in this order: 1 round green 
 13 berries item, 14 small pond, 15 grass tuft. Items (11-13) a bit bigger and very readable for kids.
 Second sheet (4 columns x 2 rows): 1 pressure plate up, 2 pressure plate pressed down, 3 wooden gate closed,
 4 wooden gate open, 5 gate post, 6 wooden fence piece, 7 treasure chest closed, 8 treasure chest open.
-DIRECTION "cozy storybook": warm, friendly colours (golden-green grass tones, warm wood, rosy berries), soft
-sunny light from the top-left, rounded fluffy shapes, small charming details (a few flowers, moss, leaf veins).
-Items 11-13 get a thin light-yellow glow line just outside the plum outline so they pop on grass. Still crisp pixels:
-no blur, no gradients, no soft brushes; shading is flat bands only.
+[Add the chosen direction here: A "polished current", B "cozy storybook: warmer colours, soft light, light outline
+glow on items", or C "chunky bold: thick outlines, few colours, high contrast".]
 Also: the berry bush (full and picked) must look lush and appetising: fluffy round leaves, 6-8 big shiny red berries.
 ```
 
@@ -159,11 +205,9 @@ Art slices into `public/art/mini/` (bomb ~12x12, berries ~10x10, basket ~12x10, 
 16 px tiles) and tells Code the sizes.
 
 
-### A-10 Winter props
+### A-10 Winter props (WAITING: same style as the picked A-7)
 ```
-Order A-10: the snow-map versions of the meadow props, same "cozy storybook" style and pixel size as order A-7
-(warm friendly colours under the snow, soft top-left light, rounded fluffy shapes, snow as soft white caps with
-light-blue shade bands, flat colours, no blur), sheet 5 columns x 2 rows:
+Order A-10: the snow-map versions of the meadow props, same style and pixel size as order A-7, sheet 5 columns x 2 rows:
 1 snowy round tree, 2 snowy pine tree, 3 small snowy pine, 4 bare winter tree, 5 snowy rock, 6 ice rock (blue,
 crystal-like, glinting), 7 winter berry bush with snow on top and red berries, 8 the same bush picked empty,
 9 snowy tree stump, 10 snowman with a carrot nose.
