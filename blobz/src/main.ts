@@ -230,6 +230,7 @@ function fmtTime(t: number) {
 }
 
 function onView(v: View) {
+  if (DEBUG) (window as unknown as { __blobzView: View }).__blobzView = v;
   $('score').textContent = String(v.score);
   const max = v.stars[2];
   $('starfill').style.width = Math.min(100, (v.score / max) * 100) + '%';
@@ -317,6 +318,8 @@ async function hostGame() {
   const newRound = () => {
     seed = Math.floor(Math.random() * 1e9);
     state = createState([...infos.values()], seed);
+    // Test hook (?debug): lets Playwright place blobz on plates etc. Never set in normal play.
+    if (DEBUG) (window as unknown as { __blobz: unknown }).__blobz = { state };
     if (roundSecs) state.time = roundSecs;
     acc = 0; netAcc = 0; localFx.length = 0; netFx = [];
     net.broadcast({ t: 'start', seed });
@@ -424,6 +427,7 @@ void lanNamespace();
 $('btn-leave').onclick = () => location.reload();
 $('btn-menu').onclick = () => location.reload();
 
+const DEBUG = new URLSearchParams(location.search).has('debug');
 // Optional round length for quick games/tests: ?t=60
 const roundSecs = Math.max(0, Math.min(600, Number(new URLSearchParams(location.search).get('t')) || 0));
 

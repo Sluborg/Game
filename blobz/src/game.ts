@@ -2,7 +2,8 @@
 import Phaser from 'phaser';
 import { blobCanvas, BODY_CY, clampLook } from './blob';
 import { sfx } from './sfx';
-import { BASE, makeTrees, rng, WORLD_H, WORLD_W } from './sim';
+import { BASE, GATE_W, makePuzzles, makeTrees, PLATE_R, rng, WORLD_H, WORLD_W } from './sim';
+import type { PuzzleLayout } from './sim';
 import type { FxEvent, Input, ItemKind, PlayerInfo, View } from './sim';
 
 export interface Session {
@@ -24,6 +25,17 @@ const PROPS = ['tree-green', 'tree-orange', 'tree-pine', 'rock', 'boulder', 'bus
 const BLOB_SCALE = 1.45; // 36x48 blob grid // 18x24 pixel blob grid
 // decorations from Tiny Farm (sheet 'farm') and Tiny Town ('town')
 const DECOR: [string, number][] = [['pr-bush', 2], ['pr-bush', 2], ['pr-flowers', 2]];
+
+interface PuzzleGfx {
+  l: PuzzleLayout;
+  plates: Phaser.GameObjects.Image[];
+  bubbles: Phaser.GameObjects.Text[];
+  gate: Phaser.GameObjects.Image;
+  chest: Phaser.GameObjects.Image;
+  glow: Phaser.GameObjects.Graphics;
+  open: boolean;
+  taken: boolean;
+}
 
 interface BlobGfx {
   shadow: Phaser.GameObjects.Ellipse;
@@ -50,6 +62,7 @@ export class GameScene extends Phaser.Scene {
   private items = new Map<number, Phaser.GameObjects.Image>();
   private gems = new Map<number, { g: Phaser.GameObjects.Graphics; img: Phaser.GameObjects.Image; t: Phaser.GameObjects.Image[]; x: number; y: number }>();
   private powers = new Map<number, Phaser.GameObjects.Container>();
+  private pz: PuzzleGfx[] = [];
   private trailG!: Phaser.GameObjects.Graphics;
   private pickG!: Phaser.GameObjects.Graphics;
   private baseG!: Phaser.GameObjects.Graphics;
@@ -136,20 +149,24 @@ export class GameScene extends Phaser.Scene {
       this.add.image(t.x, t.y + 10, key).setScale(sc).setOrigin(0.5, t.kind < 3 ? 0.95 : 0.8).setDepth(t.y);
     }
 
-    // flat decorations (no collision), from the same seed on every phone
+    // flat decorations (no collision), from the same seed on every phone; never on the puzzle pens/plates
     const trees = makeTrees(this.s.seed);
+    const zones = makePuzzles(this.s.seed).map((l) => l.zone);
+    const inZone = (x: number, y: number, pad: number) => zones.some((z) => x > z.x0 - pad && x < z.x1 + pad && y > z.y0 - pad && y < z.y1 + pad);
     for (let i = 0; i < 22; i++) {
       const x = 30 + r() * (WORLD_W - 60), y = 30 + r() * (WORLD_H - 60);
       const [key, sc] = DECOR[Math.floor(r() * DECOR.length)];
-      if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 30 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 46)) continue;
+      if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 30 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 46) || inZone(x, y, 20)) continue;
       this.add.image(x, y, key).setScale(sc).setDepth(-600);
     }
 
     for (let i = 0, placed = 0; i < 40 && placed < 2; i++) {
       const x = 120 + r() * (WORLD_W - 240), y = 120 + r() * (WORLD_H - 240);
-      if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 120 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 80)) continue;
+      if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 120 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 80) || inZone(x, y, 40)) continue;
       this.add.image(x, y, 'pr-pond').setScale(2.4).setDepth(-650); placed++;
     }
+
+    this.pz = makePuzzles(this.s.seed).map((l) => this.buildPuzzle(l));
 
     this.trailG = this.add.graphics().setDepth(-400);
     this.pickG = this.add.graphics().setDepth(-450);
@@ -228,6 +245,9 @@ export class GameScene extends Phaser.Scene {
         .setAlpha(n < g.holders ? 1 : 0.35).setTint(n < g.holders ? 0xffffff : 0x666666).setDepth(e!.y + 1000));
     }
     for (const [id, e] of this.gems) if (!seenG.has(id)) { e.g.destroy(); e.img.destroy(); e.t.forEach((ic) => ic.destroy()); this.gems.delete(id); }
+
+    // ---- co-op puzzles ----
+    v.puzzles?.forEach((z, i) => this.drawPuzzle(this.pz[i], z, now));
 
     // ---- power-ups ----
     const seenW = new Set<number>();
@@ -353,6 +373,66 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  /** Fenced pen (static) + gate, plates, count bubbles and the bonus chest. */
+  private buildPuzzle(l: PuzzleLayout): PuzzleGfx {
+    const S = 2.6;
+    for (const w of l.walls) {
+      const wide = w.x1 - w.x0 > w.y1 - w.y0;
+      if (wide) {
+        // fence planks along the run, evenly stretched so the ends line up with the corners
+        const n = Math.max(1, Math.round((w.x1 - w.x0) / (16 * S)));
+        const tw = (w.x1 - w.x0) / n;
+        for (let k = 0; k < n; k++) this.add.image(w.x0 + tw * (k + 0.5), w.y1 + 4, 'pr-fence').setOrigin(0.5, 1).setDisplaySize(tw + 1, 12 * S).setDepth(w.y1);
+      } else {
+        // side fences seen from above: a column of posts
+        for (let y = w.y0 + 8; y <= w.y1 + 1; y += 16) this.add.image((w.x0 + w.x1) / 2, y + 6, 'pr-gate-post').setOrigin(0.5, 1).setScale(S).setDepth(y);
+      }
+    }
+    const gate = this.add.image(l.cx, l.gate.y1 + 4, 'pr-gate').setOrigin(0.5, 1).setDisplaySize(GATE_W + 2, 12 * S + 4).setDepth(l.gate.y1);
+    const glow = this.add.graphics().setDepth(-460);
+    const chest = this.add.image(l.chest.x, l.chest.y, 'ic-chest').setScale(3).setDepth(l.chest.y);
+    const plates = l.plates.map((p) => this.add.image(p.x, p.y, 'pr-plate').setScale((PLATE_R * 2) / 13).setDepth(-700).setVisible(false));
+    const bubbles = l.plates.map((p) => this.add.text(p.x, p.y - 72, '', {
+      fontFamily: "'Pixelify Sans', sans-serif", fontSize: '20px', color: '#3f2631', fontStyle: 'bold',
+      backgroundColor: '#fff7e6', padding: { x: 7, y: 2 }, stroke: '#fff7e6', strokeThickness: 1,
+    }).setOrigin(0.5).setDepth(4000).setVisible(false));
+    return { l, plates, bubbles, gate, chest, glow, open: false, taken: false };
+  }
+
+  private drawPuzzle(g: PuzzleGfx | undefined, z: View['puzzles'][number], now: number) {
+    if (!g) return;
+    const held = [0, 1, 2].filter((k) => z.mask & (1 << k)).length;
+    g.glow.clear();
+    g.plates.forEach((pl, k) => {
+      const used = k < z.need;
+      const down = !!(z.mask & (1 << k)) || z.open;
+      pl.setVisible(used).setTexture(down ? 'pr-plate-down' : 'pr-plate');
+      const b = g.bubbles[k];
+      b.setVisible(used && !z.open);
+      if (used && !z.open) {
+        const t = `${held}/${z.need}`;
+        if (b.text !== t) b.setText(t);
+        b.setColor(down ? '#2f8a2f' : '#3f2631');
+        b.setY(pl.y - 72 + Math.sin(now / 300 + k) * 3);
+        // light ring on empty plates so they read as "stand here"
+        if (!down) g.glow.lineStyle(3, 0xffffff, 0.45 + 0.3 * Math.sin(now / 220 + k)).strokeCircle(pl.x, pl.y, PLATE_R + 6);
+      }
+    });
+    if (z.open !== g.open) {
+      g.open = z.open;
+      // hinged open: the swung gate sits at the left post of the gap
+      if (z.open) g.gate.setTexture('pr-gate-open').setOrigin(0, 1).setX(g.l.gate.x0 - 2).setDisplaySize(11 * 2.6, 14 * 2.6);
+    }
+    if (z.taken !== g.taken) {
+      g.taken = z.taken;
+      g.chest.setVisible(!z.taken);
+    }
+    if (!z.taken) {
+      g.chest.setY(g.l.chest.y - (z.open ? Math.abs(Math.sin(now / 200)) * 6 : 0));
+      if (z.open) g.glow.fillStyle(0xffe08a, 0.3 + 0.15 * Math.sin(now / 120)).fillCircle(g.l.chest.x, g.l.chest.y + 4, 30);
+    }
+  }
+
   private drawGem(g: Phaser.GameObjects.Graphics, x: number, y: number, holders: number, now: number) {
     // treasure chest (Tiny Dungeon) is a separate image; this draws its shadow + carry ring
     g.clear().setDepth(y - 1);
@@ -373,6 +453,10 @@ export class GameScene extends Phaser.Scene {
       sfx.bump();
       this.burst(f.x, f.y - 20, 0x5aa83a, 8);
       this.cameras.main.shake(80, 0.003);
+    } else if (f.t === 'gate') {
+      sfx.star();
+      this.burst(f.x, f.y, 0xffe08a, 12);
+      this.cameras.main.shake(120, 0.004);
     } else if (f.t === 'power') {
       sfx.power();
       const c = this.add.circle(f.x, f.y, 10, f.kind === 'speed' ? 0xffc93c : 0xff6b8b, 0.6).setDepth(5000);
