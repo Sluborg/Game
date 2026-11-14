@@ -37,3 +37,4 @@ Blobz are drawn in code (`src/blob.ts`) as pixel SVG/canvas: color, eyes, mouth 
 | `art/gather/*.png` | Own art (CC0) by `scripts/gather_art.py` | Tools, action icons, berry bush, rubble, chips, items, HUD (resources, sun, day bar, stars, quest card) |
 | `art/base/*.png` | Own art (CC0) by `scripts/base_art.py` | Base cottage (3 levels), base buildings (site + finished), build spot marker |
 | `art/dungeon/*.png` | Own art (CC0) by `scripts/dungeon_art.py` (hit flashes are recoloured `art/enemies/goo-*.png`) | Weapons, picker cards, attack icon, entrance and stairs, hearts, XP bar, level badge, KO/revive, slam warning, shockwave, chest |
+| `art/base/cottage-1.png` | Cut from Stefan's ChatGPT loading-screen art (`art/loading.png`) by `scripts/cut_loading_house.py` | Base cottage level 1 |
