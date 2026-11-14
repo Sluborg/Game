@@ -12,6 +12,9 @@
 | Board Game Icons | Kenney (www.kenney.nl) | CC0 1.0 | https://opengameart.org/content/board-game-icons | not vendored yet: only in `docs/art-review/icons-A.png` |
 | 1-Bit Pack 1.1 | Kenney (www.kenney.nl) | CC0 1.0 | https://opengameart.org/content/1-bit-pack | not vendored yet: only in `docs/art-review/icons-B.png` |
 | Tiny Creatures 1.0 | Kenney (www.kenney.nl) | CC0 1.0 | https://opengameart.org/content/tiny-creatures | not vendored yet: only in `docs/art-review/enemy-options.png` |
+| Ninja Adventure | Pixel-boy & AAA | CC0 1.0 | https://pixel-boy.itch.io/ninja-adventure-asset-pack | not vendored: `docs/art-review/pack-B.png` uses the itch page preview images only (zip download not reachable from the build environment) |
+| LPC Base Assets | LPC contributors (see CREDITS.TXT in the zip) | CC-BY-SA 3.0 / GPL 3.0 (attribution + share-alike) | https://opengameart.org/content/liberated-pixel-cup-lpc-base-assets-sprites-map-tiles | not vendored: only `docs/art-review/pack-C.png` |
+| Zelda-like tilesets and sprites | ArMM1998 | CC0 1.0 | https://opengameart.org/content/zelda-like-tilesets-and-sprites | not vendored: only `docs/art-review/pack-D.png` |
 
 
 
