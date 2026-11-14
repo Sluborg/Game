@@ -30,7 +30,7 @@ Make ONE image per reply and wait for "next".
 ## Queue
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
-| A-1 | READY | Class cards, round 2 | `dungeon/card-class-*.png` |
+| A-1 | READY | Class cards, round 3 | `dungeon/card-class-*.png` |
 | A-2 | READY | Cottage level 2 and 3 + snow igloo, matching the loading-screen house | `base/cottage-2.png`, `cottage-3.png`, `props-winter/igloo.png` |
 | A-3 | READY | Landscape loading screen | `art/loading-landscape.png` |
 | A-4 | READY | Dungeon entrance, meadow + snow | `dungeon/entrance.png`, `entrance-snow.png` |
@@ -40,20 +40,27 @@ Make ONE image per reply and wait for "next".
 | A-8 | WAITING (variants on the board) | Dungeon buttons, goo enemies, skill icons, back arrow | `dungeon/btn-*`, `enemies/*`, `dungeon/skills/*`, `icons/back.png` |
 | A-9 | READY | Bärregn mini game: bomb, falling berries, basket, plop, fence | `mini/bomb.png`, `mini/berries.png`, `mini/basket.png`, `mini/plop.png`, `mini/fence-*.png` |
 
-### A-1 Class cards, round 2
-Classes: Healer, Rogue, Tank, Archer (final names for now).
+### A-1 Class cards, round 3
+Classes (EN / SV): Healer / Helare, Rogue / Smygare, Tank / Riddare, Marksman / Skytt. Theme colours follow the common
+role/class conventions: Healer red (heart = health), Rogue yellow, Tank blue, Marksman green.
+Round 2 feedback: blobz off-centre, daggers awkward, colours mixed up (healer got the yellow ribbon), flat expressions.
 ```
-Redo the 4 class cards with these changes. Keep everything else from the last image: the same parchment card
-frame, cute round blobz with big white eyes and small smiles, crisp pixel art, 1px dark plum outline, no text.
-Cards in this order, evenly spaced, same size, transparent background (or solid magenta #ff00ff):
-1 HEALER: the same white blob in the white priest hood with the gold cross and the staff, but the card theme is
-  RED: a red ribbon at the bottom and ONE big red heart above the blob to show healing. No green, no plus signs.
-2 ROGUE (replaces the viking): a YELLOW blob wearing a black bandana tied on its head, holding a short dagger
-  in each hand, ready stance. Yellow ribbon.
-3 TANK: the blue blob with a steel knight helmet that sits centred and straight on its head (symmetrical, the
-  visor above the eyes so both eyes show), holding a plain round steel shield with rivets (grey metal, no cross,
-  no flag, no emblem). Blue ribbon.
-4 ARCHER: the same green blob with the green feathered cap, aiming the crossbow. Green ribbon.
+Redo the 4 class cards (round 3). Same parchment card frame and size as before, crisp pixel art, one consistent
+pixel size, 1px dark plum outline #3f2631, no text, transparent background (or solid magenta #ff00ff).
+ALL FOUR BLOBZ ARE THE SAME NEUTRAL WHITE BLOB (same body shape, same size). The class shows through its gear and
+the card's THEME COLOUR: the ribbon, a soft tint of that colour inside the card, and colour accents on the gear.
+Every blob stands exactly in the CENTRE of its card, on the same baseline just above the ribbon, gear kept inside
+the card, nothing touching the frame. Big expressive eyes:
+1 HEALER, theme RED: white blob in a white priest hood with a small RED cross, holding a golden staff with a red
+  gem. One big red heart floats above it. Expression: kind and warm, soft happy eyes, gentle smile.
+2 ROGUE, theme YELLOW: white blob with a black bandana (yellow trim) tied on its head, ends fluttering to one side.
+  Two short daggers (silver blades, dark leather grips, small gold guards) crossed in an X in front of its body.
+  Expression: sly and playful, one eye half-closed, sneaky grin.
+3 TANK, theme BLUE: white blob in a steel knight helmet that sits perfectly centred and straight (symmetrical,
+  visor raised above the eyes, a small blue plume on top), a big round steel shield with rivets in front of its
+  lower body, no emblem. Expression: stalwart and brave, steady eyes, firm small mouth.
+4 MARKSMAN, theme GREEN: white blob in a green feathered cap, aiming a wooden crossbow sideways.
+  Expression: concentrated, one eye squinting along the crossbow, tongue slightly out.
 NO effects: no swing trails, no sparks or explosions, no flying arrows or bolts, no motion lines.
 ```
 
