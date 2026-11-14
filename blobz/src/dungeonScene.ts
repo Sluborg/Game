@@ -18,7 +18,7 @@ const HITBOX = new URLSearchParams(location.search).has('hitbox'); // ?hitbox dr
 /** Weapon strips (art/dungeon/README.md): frame size + pivot. */
 const WEAPON_FRAME: Partial<Record<Weapon, { w: number; h: number; px: number; py: number }>> = {
   sword: { w: 44, h: 48, px: 16, py: 28 }, hammer: { w: 44, h: 48, px: 16, py: 28 }, spear: { w: 68, h: 48, px: 16, py: 28 },
-  staff: { w: 44, h: 48, px: 16, py: 28 }, bow: { w: 44, h: 48, px: 16, py: 28 }, shield: { w: 44, h: 48, px: 16, py: 28 }, // Art's gear-*.png
+  staff: { w: 44, h: 48, px: 16, py: 28 }, bow: { w: 44, h: 48, px: 16, py: 28 }, shield: { w: 44, h: 48, px: 16, py: 28 }, dagger: { w: 44, h: 48, px: 16, py: 28 }, // Art's gear-*.png
 };
 /** Class hats in blob.ts CLASS_HATS (Krigare keeps the skin hat). */
 const CLASS_HAT: Partial<Record<HeroClass, number>> = { healer: 0, marksman: 1, tank: 2 }; // the rogue keeps the skin hat
@@ -81,7 +81,7 @@ export class DungeonScene extends Phaser.Scene {
     for (const n of ['coin-pile-s', 'coin-pile-m']) img('dg-' + n, `art/fx/${n}.png`);
     for (const w of ['sword', 'hammer', 'spear'] as Weapon[]) sheet('dg-weapon-' + w, `art/dungeon/weapon-${w}.png`, WEAPON_FRAME[w]!.w, WEAPON_FRAME[w]!.h);
     // Art's class gear strips; the Bågskytt carries a crossbow (weapon id stays 'bow': loaded, aim, shot, reload)
-    for (const w of ['staff', 'bow', 'shield'] as Weapon[]) sheet('dg-weapon-' + w, `art/dungeon/gear-${w === 'bow' ? 'crossbow' : w}.png`, 44, 48);
+    for (const w of ['staff', 'bow', 'shield', 'dagger'] as Weapon[]) sheet('dg-weapon-' + w, `art/dungeon/gear-${w === 'bow' ? 'crossbow' : w === 'dagger' ? 'daggers' : w}.png`, 44, 48);
     sheet('dg-ko-stars', 'art/dungeon/ko-stars.png', 20, 9);
     sheet('dg-revive', 'art/dungeon/revive.png', 16, 20);
     sheet('dg-shockwave', 'art/dungeon/shockwave.png', 48, 24);
