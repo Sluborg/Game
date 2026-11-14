@@ -208,3 +208,6 @@
 
 ## 2026-11-14 - v028c: wreath + beanie sit around the head (Art)
 - `wrap` flag per hat (Mössa 4 px, Blomkrans 5 px lower); overlap test keeps its own bound for them.
+
+## 2026-11-14 - v028d: discovery probe timing (Lead hotfix)
+- Stefan still could not find a game on the same Wi-Fi. Probes gave up after 2.5 s, real phones need 3-6 s for WebRTC (mDNS/TURN). Probe timeout 9 s, empty slots end immediately on the broker "peer-unavailable" for that id, and a found-but-connecting host shows "Hittade ett spel, ansluter...". 43 tests, lan-join e2e passed.

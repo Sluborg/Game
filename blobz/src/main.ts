@@ -201,10 +201,11 @@ function startScan() {
 }
 function stopScan() { scanGen++; clearTimeout(retryTimer); scanner?.stop(); scanner = null; }
 function renderRooms(rooms: FoundRoom[]) {
+  const connecting = scanner?.pending.size ?? 0;
   show('lan-status', rooms.length === 0);
-  emptyRounds = rooms.length ? 0 : emptyRounds + 1;
+  emptyRounds = rooms.length || connecting ? 0 : emptyRounds + 1;
   // ~10 s without a game: hint at the usual cause, still scanning
-  lanStatus(emptyRounds >= 3 ? NOTHING : SEARCHING, emptyRounds >= 3);
+  lanStatus(connecting && !rooms.length ? 'Hittade ett spel, ansluter...' : emptyRounds >= 3 ? NOTHING : SEARCHING, emptyRounds >= 3 && !connecting);
   $('lan-list').replaceChildren(...rooms.map((r) => {
     const li = document.createElement('li');
     const b = document.createElement('button');
