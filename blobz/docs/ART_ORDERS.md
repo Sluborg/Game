@@ -6,14 +6,14 @@ Owners: Art keeps the queue and statuses current; Lead reviews. Stefan only says
 
 ## For ChatGPT: how to work (read every time)
 1. Re-read this file at the start of every chat and every time Stefan writes "next" (it changes often).
-2. Orders with id D-* are small direction tests: Stefan answers them before any big A-order is READY.
-   Make the FIRST order in the queue with status **READY** that you have not already made in this chat
+2. Orders with id D-* are small direction tests: Stefan answers them before any big A-order is TO DO. Statuses: TO DO = not made yet, make it. DONE = Stefan delivered it. ON HOLD / CANCELLED = skip.
+   Make the FIRST order in the queue with status **TO DO** that you have not already made in this chat
    **in its current round** (an order whose title says "round N" higher than the one you made must be made again).
-   Skip WAITING and DONE orders.
-3. Start every reply with one line: "Order <id> - <N> READY orders left in the queue after this one."
+   Skip ON HOLD and DONE orders.
+3. Start every reply with one line: "Order <id> - <N> TO DO orders left in the queue after this one."
    Then ONE image per reply. Apply the style block below to every image.
-4. End every reply with one line: "<order id> done. Next READY: <order id or 'none'>. Type next."
-5. If Stefan writes "next all": make every remaining READY order one after another in the same chat, one image per
+4. End every reply with one line: "<order id> done. Next TO DO: <order id or 'none'>. Type next."
+5. If Stefan writes "next all": make every remaining TO DO order one after another in the same chat, one image per
    reply, without waiting for "next" between them, each starting with the line from rule 3.
 6. If Stefan writes "redo", make the same order again with his fixes.
 7. Reference images: when an order lists a reference URL, open it and match it.
@@ -36,19 +36,19 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status READY (N-2 is READY now). New orders only for pieces the pack lacks.**
+ChatGPT works only on N-orders with status TO DO (N-2, N-5..N-9 are TO DO now). New orders only for pieces the pack lacks.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
 | N-1 | DONE (C chosen) | Title header / logo in Ninja Adventure style | `art/logo.png` |
-| N-2 | READY | Start screen background, round 3: LANDSCAPE 16:9 ONLY (portrait approved 4/5; make it even if you made a landscape before) | `art/title.png` |
+| N-2 | TO DO | Start screen background, round 3: LANDSCAPE 16:9 ONLY (portrait approved 4/5; make it even if you made a landscape before) | `art/title.png` |
 | N-3 | DONE | Loading screen (portrait + landscape approved) | `art/loading.png`, `art/loading-landscape.png` |
 | N-4 | CANCELLED (switched to Ninja's own 16 px weapons) | Hovering weapons, round 2: crossbow with bolt further back | `dungeon/weapons/*.png` |
-| N-5 | READY | Class cards: Healer, Rogue, Tank, Marksman (4 cards on one sheet) | `dungeon/card-class-*.png` |
-| N-6 | READY | End screen: blobz cheering by the cottage with their haul (portrait) | `art/victory.png` |
-| N-7 | READY | App icon (square) | app/PWA icon |
-| N-8 | READY | Map picker pictures: Meadow and Snow (2 small scenes) | `art/map-meadow.png`, `art/map-snow.png` |
-| N-9 | READY | Bärregn mini game background (sunset meadow, portrait) | `mini/bg.png` |
+| N-5 | TO DO | Class cards: Healer, Rogue, Tank, Marksman (4 cards on one sheet) | `dungeon/card-class-*.png` |
+| N-6 | TO DO | End screen: blobz cheering by the cottage with their haul (portrait) | `art/victory.png` |
+| N-7 | TO DO | App icon (square) | app/PWA icon |
+| N-8 | TO DO | Map picker pictures: Meadow and Snow (2 small scenes) | `art/map-meadow.png`, `art/map-snow.png` |
+| N-9 | TO DO | Bärregn mini game background (sunset meadow, portrait) | `mini/bg.png` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
@@ -273,7 +273,7 @@ Same footprint and camera angle for both versions of a building. Order:
 Sizes relative to each other: watchtower tallest, bridge widest, well smallest.
 ```
 
-### A-6 Weapon cards (WAITING)
+### A-6 Weapon cards (ON HOLD)
 Rogue weapons: daggers, sword, hammer, spear.
 ```
 Order A-6: four upright weapon cards, 4 columns x 1 row, portrait 3:4, the same parchment card frame as the class
@@ -282,7 +282,7 @@ On each card the same neutral white blob, centred, holding the weapon: 1 two sho
 2 a sword raised, 3 a big hammer held over its shoulder, 4 a long spear held upright. Blobz wear no hats.
 ```
 
-### A-7 Meadow props (WAITING)
+### A-7 Meadow props (ON HOLD)
 ```
 Order I-4: meadow props, sheet 5 columns x 3 rows, in this order: 1 round green tree, 2 orange autumn tree,
 3 pine tree, 4 small rock, 5 big boulder, 6 berry bush full of red berries, 7 the same bush picked empty,
@@ -295,7 +295,7 @@ glow on items", or C "chunky bold: thick outlines, few colours, high contrast".]
 Also: the berry bush (full and picked) must look lush and appetising: fluffy round leaves, 6-8 big shiny red berries.
 ```
 
-### A-8 Buttons, enemies, skill icons, back arrow (WAITING)
+### A-8 Buttons, enemies, skill icons, back arrow (ON HOLD)
 The prompt is written after Stefan picks a variant on the decision board.
 Variant sheets on the board (A = today, B and C = new directions):
 `docs/art-review/variants-buttons.png` (dungeon buttons), `variants-goo.png` (goo small/medium/boss),
@@ -321,7 +321,7 @@ Art slices into `public/art/mini/` (bomb ~12x12, berries ~10x10, basket ~12x10, 
 16 px tiles) and tells Code the sizes.
 
 
-### A-10 Winter props (WAITING: same style as the picked A-7)
+### A-10 Winter props (ON HOLD: same style as the picked A-7)
 ```
 Order A-10: the snow-map versions of the meadow props, same style and pixel size as order A-7, sheet 5 columns x 2 rows:
 1 snowy round tree, 2 snowy pine tree, 3 small snowy pine, 4 bare winter tree, 5 snowy rock, 6 ice rock (blue,
