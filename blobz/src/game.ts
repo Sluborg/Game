@@ -36,14 +36,13 @@ const TOOL_FRAME = { w: 44, h: 48, px: 16, py: 28 }; // tool strip frame + pivot
 const OBSTACLE_ART: [string, number][] = [['pr-tree-green', 3], ['pr-tree-orange', 3], ['pr-tree-pine', 3], ['pr-rock', 3], ['pr-boulder', 3], ['g-bush-berries', 3]];
 /** Snow map: Art's winter props (art/props-winter), integer scales. Kinds without winter art yet use a
  *  cold-tinted meadow sprite; a dedicated file is picked up automatically once it exists (WINTER_WANTED). */
-const WINTER_ART: [string, number][] = [['w-tree-snow-round', 3], ['w-tree-snow-pine', 3], ['w-tree-snow-small', 4], ['w-rock-snow', 3], ['w-ice-rock', 3], ['w-bush-berries-snow', 3]];
+const WINTER_ART: [string, number][] = [['w-tree-snow-round', 3], ['w-tree-snow-pine', 3], ['w-tree-snow-small', 4], ['w-rock-snow', 3], ['w-ice-rock', 4], ['w-bush-berries-snow', 3]];
 const WINTER_SPENT: [string, number][] = [['w-stump-snow', 3], ['w-stump-snow', 3], ['w-stump-snow', 3], ['w-rubble-snow', 3], ['w-rubble-snow', 3], ['w-bush-empty-snow', 3]];
-/** Missing winter files and their tinted stand-ins (key -> [placeholder, tint]). */
+/** Winter files Art has not drawn yet and their tinted stand-ins (key -> [placeholder, tint]). */
 const WINTER_WANTED: Record<string, [string, number]> = {
-  'w-ice-rock': ['pr-boulder', 0xcfe6ff], 'w-bush-berries-snow': ['g-bush-berries', 0xdbeaff], 'w-bush-empty-snow': ['g-bush-empty', 0xdbeaff],
   'w-stump-snow': ['pr-stump', 0xe8f2ff], 'w-rubble-snow': ['g-rubble', 0xe8f2ff],
 };
-const WINTER = ['tree-snow-round', 'tree-snow-pine', 'tree-snow-small', 'rock-snow', 'snowman', 'igloo', 'ice', 'tree-bare', ...Object.keys(WINTER_WANTED).map((k) => k.slice(2))];
+const WINTER = ['tree-snow-round', 'tree-snow-pine', 'tree-snow-small', 'rock-snow', 'ice-rock', 'bush-berries-snow', 'bush-empty-snow', 'snowman', 'igloo', 'ice', 'tree-bare', ...Object.keys(WINTER_WANTED).map((k) => k.slice(2))];
 
 /** Look of a used-up node: stump, rubble, picked bush. */
 const SPENT_ART: [string, number][] = [['pr-stump', 3], ['pr-stump', 3], ['pr-stump', 3], ['g-rubble', 3], ['g-rubble', 3], ['g-bush-empty', 3]];
@@ -159,6 +158,7 @@ export class GameScene extends Phaser.Scene {
     if (this.s.biome === 'snow') {
       this.load.on('loaderror', () => { /* winter art not drawn yet: tinted stand-ins below */ });
       for (const n of WINTER) this.load.image('w-' + n, `art/props-winter/${n}.png`);
+      this.load.spritesheet('w-pond', 'art/props-winter/pond-frozen-tiles.png', { frameWidth: 16, frameHeight: 16 });
     }
   }
 
@@ -225,7 +225,7 @@ export class GameScene extends Phaser.Scene {
     this.baseG = this.add.graphics().setDepth(-900);
     this.add.ellipse(BASE.x, BASE.y + 26, 110, 26, 0x000000, 0.18).setDepth(-880);
     // cottage (Art's base set, level 1-3), integer scale 2, anchored bottom centre
-    this.cottageImg = this.add.image(BASE.x, BASE.y + 30, 'b-cottage-1').setScale(2).setOrigin(0.5, 1).setDepth(BASE.y - 40);
+    this.cottageImg = this.add.image(BASE.x, BASE.y + 30, this.s.biome === 'snow' ? 'w-igloo' : 'b-cottage-1').setScale(this.s.biome === 'snow' ? 4 : 2).setOrigin(0.5, 1).setDepth(BASE.y - 40);
     // the water corner (an L of water around a seeded corner; the bridge opens it)
     const water = makeWater(this.s.seed);
     this.water = water;
@@ -271,11 +271,16 @@ export class GameScene extends Phaser.Scene {
     }
     if (this.s.biome === 'snow') {
       // frozen ponds (slippery in the sim) + an igloo or two
-      for (const i of ice) this.add.image(i.x, i.y, 'w-ice').setScale(5).setDepth(-650);
-      for (let i = 0, placed = 0; i < 40 && placed < 2; i++) {
+      // frozen ponds from Art's 3x3 autotile: 4x2 tiles at 2x = 128x64, the sim's ice ellipse
+      for (const i of ice) {
+        const frames = [[0, 1, 1, 2], [6, 7, 7, 8]];
+        frames.forEach((row, ry) => row.forEach((f, cx) => this.add.image(i.x - 64 + cx * 32, i.y - 32 + ry * 32, 'w-pond', f).setOrigin(0).setScale(2).setDepth(-650)));
+      }
+      // a few small ice patches as decor
+      for (let i = 0, placed = 0; i < 40 && placed < 3; i++) {
         const x = 120 + r() * (WORLD_W - 240), y = 120 + r() * (WORLD_H - 240);
-        if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 220 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 80) || inZone(x, y, 40)) continue;
-        this.add.image(x, y, 'w-igloo').setScale(3).setOrigin(0.5, 0.9).setDepth(y); placed++;
+        if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 220 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 60) || inZone(x, y, 30)) continue;
+        this.add.image(x, y, 'w-ice').setScale(2).setDepth(-655); placed++;
       }
     }
 
@@ -563,8 +568,10 @@ export class GameScene extends Phaser.Scene {
 
   private drawBuilds(v: View, now: number) {
     if (!v.builds || !v.cottage) return;
-    const ck = 'b-cottage-' + Math.max(1, Math.min(3, v.cottage.level));
-    if (this.cottageImg.texture.key !== ck) this.cottageImg.setTexture(ck);
+    // snow map: the igloo is the level-1 base (Art: cottage footprint); upgrades use the cottage art
+    const lvl = Math.max(1, Math.min(3, v.cottage.level));
+    const ck = this.s.biome === 'snow' && lvl === 1 ? 'w-igloo' : 'b-cottage-' + lvl;
+    if (this.cottageImg.texture.key !== ck) this.cottageImg.setTexture(ck).setScale(ck === 'w-igloo' ? 4 : 2);
     const pads = [
       ...v.builds.map((b) => ({ kind: b.kind as BuildKind | 'cottage', at: BUILD_SPOTS[b.kind], state: b.state, paid: b.paid, buy: b.buy, cost: BUILD_COST[b.kind] as Res | null, title: BUILD_NAMES[b.kind], effect: BUILD_EFFECT[b.kind] })),
       { kind: 'cottage' as const, at: COTTAGE_PAD, state: v.cottage.state as 0 | 1 | 2, paid: v.cottage.paid, buy: v.cottage.buy,
