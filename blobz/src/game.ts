@@ -11,6 +11,7 @@ import { makeIce } from './sim';
 import { ARENA, BOMB_R, DROP_HEIGHT } from './mini';
 import type { PuzzleLayout, Res, Tool } from './sim';
 import type { FxEvent, Input, ItemKind, PlayerInfo, View } from './sim';
+import { t } from './i18n';
 
 export interface Session {
   role: 'host' | 'client';
@@ -244,7 +245,7 @@ export class GameScene extends Phaser.Scene {
       }
       this.buildBase();
     }
-    this.add.text(BASE.x, BASE.y + 52, 'BAS', { fontFamily: "'Nunito', sans-serif", fontSize: '20px', color: '#fff7e6', fontStyle: 'bold', stroke: '#3f2631', strokeThickness: 5 }).setOrigin(0.5).setDepth(-800);
+    this.add.text(BASE.x, BASE.y + 52, t('hud.base'), { fontFamily: "'Nunito', sans-serif", fontSize: '20px', color: '#fff7e6', fontStyle: 'bold', stroke: '#3f2631', strokeThickness: 5 }).setOrigin(0.5).setDepth(-800);
 
     // resource nodes (same layout as the host sim, from the shared seed); textures swap when used up
     this.nodes = makeTrees(this.s.seed).map((t) => {

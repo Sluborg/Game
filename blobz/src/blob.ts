@@ -418,8 +418,43 @@ function drawHood(set: Setter, fill: string, shade: string, dino: boolean, trim?
 }
 
 /** Pixel grid of CSS colors (null = transparent). */
-/** `classHat`: index into CLASS_HATS; replaces the skin hat (dungeon class gear). */
-export function blobGrid(look: BlobLook, classHat?: number): (string | null)[][] {
+/** Where a blob looks: dx, dy in -1..1 (0, 0 = straight ahead / standing still). */
+export interface Face { dx: number; dy: number }
+/** The 9 pre-bakeable look directions: index 0 = centre, then N, NE, E, SE, S, SW, W, NW. */
+export const FACE_DIRS: Face[] = [
+  { dx: 0, dy: 0 }, { dx: 0, dy: -1 }, { dx: 1, dy: -1 }, { dx: 1, dy: 0 }, { dx: 1, dy: 1 },
+  { dx: 0, dy: 1 }, { dx: -1, dy: 1 }, { dx: -1, dy: 0 }, { dx: -1, dy: -1 },
+];
+/** Velocity -> index into FACE_DIRS (0 when slower than `dead`, in the same units as vx/vy). */
+export function faceIndex(vx: number, vy: number, dead = 0.15): number {
+  if (Math.hypot(vx, vy) < dead) return 0;
+  const oct = Math.round(Math.atan2(vx, -vy) / (Math.PI / 4)); // 0 = up (N), clockwise
+  return 1 + ((oct % 8) + 8) % 8;
+}
+
+/** Pupils (K/w next to eye white) moved one px inside the eye; cells that would leave the white stay put. */
+function shiftPupils(rows: string[], pdx: number, pdy: number) {
+  if ((!pdx && !pdy) || !rows.some((r) => r.includes('W'))) return rows;
+  const g = rows.map((r) => [...r]);
+  const h = g.length, w = g[0].length;
+  const at = (x: number, y: number) => (x >= 0 && x < w && y >= 0 && y < h ? g[y][x] : '.');
+  // a pupil cell is K or w with eye white within 2 px (so the w highlight inside a dark pupil moves with it)
+  const pupil = (x: number, y: number) => (g[y][x] === 'K' || g[y][x] === 'w')
+    && [-2, -1, 0, 1, 2].some((dy) => [-2, -1, 0, 1, 2].some((dx) => at(x + dx, y + dy) === 'W'));
+  const cells: [number, number, string][] = [];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (pupil(x, y)) cells.push([x, y, g[y][x]]);
+  const inside = (c: string) => c === 'W' || c === 'K' || c === 'w';
+  if (!cells.every(([x, y]) => inside(at(x + pdx, y + pdy)))) return rows; // pupil would leave the eye: keep it centred
+  const out = g.map((r) => [...r]);
+  for (const [x, y] of cells) out[y][x] = 'W';
+  for (const [x, y, c] of cells) out[y + pdy][x + pdx] = c;
+  return out.map((r) => r.join(''));
+}
+
+/** `classHat`: index into CLASS_HATS; replaces the skin hat (dungeon class gear).
+ *  `face`: look direction; eyes + mouth shift up to 2 px (x) / 1 px (y) towards it and the pupils 1 px more,
+ *  reduced per shape so the face never leaves the body. */
+export function blobGrid(look: BlobLook, classHat?: number, face?: Face): (string | null)[][] {
   const g: (string | null)[][] = Array.from({ length: GRID_H }, () => Array<string | null>(GRID_W).fill(null));
   const set = (x: number, y: number, col: string | null) => { if (x >= 0 && x < GRID_W && y >= 0 && y < GRID_H && col) g[y][x] = col; };
   curShape = look.shape;
@@ -449,14 +484,25 @@ export function blobGrid(look: BlobLook, classHat?: number): (string | null)[][]
   }));
   const eye = EYE_PARTS[look.eyes] ?? EYE_PARTS[0];
   const ew = eye.rows[0].length, ex = eye.x ?? 8, ey = eye.y ?? 23;
-  if (eye.wide) paint(eye.rows, GRID_W / 2 - ew / 2, ey);
-  else {
-    paint(eye.rows, ex, ey);
-    if (eye.right) paint(eye.right, GRID_W - ex - eye.right[0].length, ey);
-    else paint(eye.rows, GRID_W - ex - ew, ey, true);
-  }
   const mouth = MOUTH_PARTS[look.mouth] ?? MOUTH_PARTS[0];
-  paint(mouth.rows, GRID_W / 2 - Math.floor(mouth.rows[0].length / 2), 33 + (mouth.dy ?? 0));
+  const fdx = Math.sign(Math.round((face?.dx ?? 0) * 2) / 2), fdy = Math.sign(Math.round((face?.dy ?? 0) * 2) / 2);
+  // face pieces: [rows, x, y, mirrored]
+  const pieces: [string[], number, number, boolean][] = [];
+  if (eye.wide) pieces.push([shiftPupils(eye.rows, fdx, fdy), GRID_W / 2 - ew / 2, ey, false]);
+  else {
+    pieces.push([shiftPupils(eye.rows, fdx, fdy), ex, ey, false]);
+    if (eye.right) pieces.push([shiftPupils(eye.right, fdx, fdy), GRID_W - ex - eye.right[0].length, ey, false]);
+    else pieces.push([shiftPupils(eye.rows, -fdx, fdy), GRID_W - ex - ew, ey, true]);
+  }
+  pieces.push([mouth.rows, GRID_W / 2 - Math.floor(mouth.rows[0].length / 2), 33 + (mouth.dy ?? 0), false]);
+  // biggest shift (2 px sideways, 1 px up/down) that keeps every face pixel on the body
+  const fits = (sx: number, sy: number) => pieces.every(([rows, x0, y0, mirror]) => rows.every((row, ry) => [...row].every((ch, rx) =>
+    ch === '.' || inBody((mirror ? x0 + row.length - 1 - rx : x0 + rx) + sx, y0 + ry + sy))));
+  let sx = fdx * 2, sy = fdy;
+  while ((sx || sy) && !fits(sx, sy)) {
+    if (Math.abs(sx) >= Math.abs(sy) && sx) sx -= Math.sign(sx); else sy -= Math.sign(sy);
+  }
+  for (const [rows, x0, y0, mirror] of pieces) paint(rows, x0 + sx, y0 + sy, mirror);
   const cls = classHat !== undefined ? CLASS_HAT_PARTS[classHat] : undefined;
   const hat = cls ?? HAT_PARTS[look.hat] ?? HAT_PARTS[0];
   const hatKey = cls ? 1000 + classHat! : look.hat;
@@ -510,11 +556,11 @@ export function blobSvg(look: BlobLook): string {
 }
 
 /** Canvas at integer scale (Phaser textures, previews). */
-export function blobCanvas(look: BlobLook, scale = 1, classHat?: number): HTMLCanvasElement {
+export function blobCanvas(look: BlobLook, scale = 1, classHat?: number, face?: Face): HTMLCanvasElement {
   const c = document.createElement('canvas');
   c.width = GRID_W * scale; c.height = GRID_H * scale;
   const ctx = c.getContext('2d')!;
-  blobGrid(look, classHat).forEach((row, y) => row.forEach((col, x) => {
+  blobGrid(look, classHat, face).forEach((row, y) => row.forEach((col, x) => {
     if (!col) return;
     ctx.fillStyle = col;
     ctx.fillRect(x * scale, y * scale, scale, scale);

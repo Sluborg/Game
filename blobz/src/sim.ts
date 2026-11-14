@@ -124,17 +124,10 @@ export const BUILD_LOCK = 1; // seconds between two builds (one build at a time)
 // saved on the host and continues next round ----
 export type BuildKind = 'bridge' | 'watchtower' | 'garden' | 'workshop' | 'storage' | 'well';
 export const BUILD_KINDS: BuildKind[] = ['bridge', 'watchtower', 'garden', 'workshop', 'storage', 'well'];
-export const BUILD_NAMES: Record<BuildKind, string> = {
-  bridge: 'Bro', watchtower: 'Utkikstorn', garden: 'Odling', workshop: 'Verkstad', storage: 'Förråd', well: 'Brunn',
-};
+// Building names and effect lines are UI text: see i18n.ts ('build.name.*', 'build.eff.*').
 export const BUILD_COST: Record<BuildKind, Res> = {
   storage: res(6, 0, 0), workshop: res(8, 4, 0), garden: res(6, 0, 4),
   well: res(0, 6, 0), watchtower: res(10, 6, 0), bridge: res(12, 8, 0),
-};
-/** One line per building for the sign / report (Swedish, kid-short). */
-export const BUILD_EFFECT: Record<BuildKind, string> = {
-  storage: 'Bär 4 saker', workshop: 'Färre slag, snabbare', garden: 'Mer bär', well: 'Dubbla bär hemma',
-  watchtower: 'Pilar till resurser', bridge: 'Nytt hörn med resurser',
 };
 /** Six fixed spots in a ring ~180 px around the cottage, one building each. */
 export const BUILD_RING = 180;
@@ -146,8 +139,7 @@ export const BUILD_SPOTS = Object.fromEntries(RING_ORDER.map((k, i) => {
 export const COTTAGE_PAD = { x: BASE.x, y: BASE.y + 124 };
 export const COTTAGE_COST: Res[] = [res(20, 15, 10), res(40, 30, 20)]; // to level 2, to level 3
 export const COTTAGE_MAX = 3;
-/** Team bonus per cottage level (besides +20% quest): level 2 carries one more, level 3 regrows faster. */
-export const COTTAGE_BONUS = ['', 'Bär 1 sak till', 'Snabbare återväxt'];
+// cottage team bonus (besides +20% quest): level 2 carries one more, level 3 regrows faster
 export const BUILD_R = 30; // stand this close to a spot to build
 /** state: 0 = empty spot, 2 = built (1 is unused: buildings are bought at once, like totems). */
 export interface Build { kind: BuildKind; state: 0 | 1 | 2; paid: Res; buy: number; armed: boolean }

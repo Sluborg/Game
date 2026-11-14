@@ -6,7 +6,7 @@ const LANDSCAPE = { width: 844, height: 390 };
 const ok = (cond, msg) => { if (!cond) throw new Error('FAIL: ' + msg); console.log('ok -', msg); };
 
 async function phone(browser, name, size = PORTRAIT) {
-  const ctx = await browser.newContext({ viewport: size, hasTouch: true, isMobile: true });
+  const ctx = await browser.newContext({ locale: 'sv-SE', viewport: size, hasTouch: true, isMobile: true });
   await ctx.addInitScript((n) => { localStorage.setItem('blobz.name', n); }, name);
   const page = await ctx.newPage();
   page.on('pageerror', (e) => console.log(`[${name}] pageerror`, e.message));

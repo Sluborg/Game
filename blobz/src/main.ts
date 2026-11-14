@@ -8,10 +8,11 @@ import { Controls } from './controls';
 import { dungeonUi, setPicker } from './dungeonUi'; // [dungeon hook]
 import { GameScene, type Session } from './game';
 import { ClientNet, HostNet, friendlyError, type ToClient } from './net';
+import { applyI18n, lang, lookName, setLang, t, type Key } from './i18n';
 import { lanNamespace, Scanner, type FoundRoom } from './discovery';
 import { sfx, unlockAudio } from './sfx';
 import {
-  addPlayer, atHome, BUILD_EFFECT, BUILD_KINDS, COTTAGE_BONUS, COTTAGE_COST, COTTAGE_MAX, requestBuild, type BuildKind, BUILDING_ENABLED, finishMini, cleanBiome, type Biome, BUILD_COST, BUILD_NAMES, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, pickWeapon, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
+  addPlayer, atHome, BUILD_KINDS, COTTAGE_COST, COTTAGE_MAX, requestBuild, type BuildKind, BUILDING_ENABLED, finishMini, cleanBiome, type Biome, BUILD_COST, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, pickWeapon, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
   toolNode, viewFromSnapshot, viewFromState,
 } from './sim';
 import type { FxEvent, Input, PlayerInfo, Snapshot, State, View } from './sim';
@@ -80,7 +81,7 @@ function renderPicker() {
     $('opts').replaceChildren(...COLORS.map((c) => {
       const b = document.createElement('button');
       b.className = 'opt swatch-opt' + (c === profile.look.color ? ' on' : '');
-      b.setAttribute('aria-label', 'Färg');
+      b.setAttribute('aria-label', t('design.color'));
       const i = document.createElement('i');
       i.style.background = '#' + c.toString(16).padStart(6, '0');
       b.append(i);
@@ -89,7 +90,8 @@ function renderPicker() {
     }));
   } else {
     const key = part;
-    $('opts').replaceChildren(...PART_OPTS[key].map((label, i) => {
+    $('opts').replaceChildren(...PART_OPTS[key].map((svLabel, i) => {
+      const label = lookName(key, i, svLabel);
       const b = document.createElement('button');
       b.className = 'opt' + (profile.look[key] === i ? ' on' : '');
       b.append(blobEl({ ...profile.look, [key]: i }));
@@ -170,8 +172,8 @@ let scanner: Scanner | null = null;
 let scanGen = 0;
 let emptyRounds = 0;
 let retryTimer = 0;
-const SEARCHING = 'Letar efter spel på ditt Wi-Fi...';
-const NOTHING = 'Hittar inga spel. Är ni på samma Wi-Fi?';
+const SEARCHING = (): string => t('join.searching');
+const NOTHING = (): string => t('join.nothing');
 function lanStatus(text: string, rescan = false) {
   $('lan-status').textContent = text;
   $('lan-status').classList.toggle('static', rescan);
@@ -183,17 +185,17 @@ function startScan() {
   emptyRounds = 0;
   $('lan-list').replaceChildren();
   show('lan-status');
-  lanStatus(SEARCHING);
+  lanStatus(SEARCHING());
   const tryNs = () => void lanNamespace().then((ns) => {
     if (gen !== scanGen) return; // left the panel meanwhile
     if (!ns) {
       // no public IP yet (strict NAT, no UDP): say so, keep trying in the background
-      lanStatus(NOTHING, true);
+      lanStatus(NOTHING(), true);
       retryTimer = window.setTimeout(tryNs, 5000);
       return;
     }
 
-    lanStatus(SEARCHING);
+    lanStatus(SEARCHING());
     scanner = new Scanner(ns, clampLook);
     scanner.onUpdate = renderRooms;
     scanner.start();
@@ -206,7 +208,7 @@ function renderRooms(rooms: FoundRoom[]) {
   show('lan-status', rooms.length === 0);
   emptyRounds = rooms.length || connecting ? 0 : emptyRounds + 1;
   // ~10 s without a game: hint at the usual cause, still scanning
-  lanStatus(connecting && !rooms.length ? 'Hittade ett spel, ansluter...' : emptyRounds >= 3 ? NOTHING : SEARCHING, emptyRounds >= 3 && !connecting);
+  lanStatus(connecting && !rooms.length ? t('join.connectingFound') : emptyRounds >= 3 ? NOTHING() : SEARCHING(), emptyRounds >= 3 && !connecting);
   $('lan-list').replaceChildren(...rooms.map((r) => {
     const li = document.createElement('li');
     const b = document.createElement('button');
@@ -218,15 +220,15 @@ function renderRooms(rooms: FoundRoom[]) {
     const txt = document.createElement('span');
     txt.className = 'lantext';
     const title = document.createElement('b');
-    title.textContent = 'Joina ' + r.name;
+    title.textContent = t('join.room', { name: r.name });
     const sub = document.createElement('span');
     sub.className = 'lansub';
     sub.textContent = otherVersion
-      ? `Annan version (${r.v || 'gammal'}), ladda om sidan`
-      : `${r.players}/${r.max}` + (full ? ' · fullt' : r.started ? ' · pågår' : '');
+      ? t('join.otherVersion', { v: r.v || t('join.old') })
+      : `${r.players}/${r.max}` + (full ? ' · ' + t('join.full') : r.started ? ' · ' + t('join.playing') : '');
     txt.append(title, sub);
     b.append(blobEl(r.look), txt);
-    b.setAttribute('aria-label', `Joina ${r.name}, ${r.players} av ${r.max}` + (full ? ', fullt' : r.started ? ', pågår' : ''));
+    b.setAttribute('aria-label', t('join.roomAria', { name: r.name, n: r.players, max: r.max }) + (full ? ', ' + t('join.full') : r.started ? ', ' + t('join.playing') : ''));
     b.onclick = () => void joinGame(r.peerId, b);
     li.append(b);
     return li;
@@ -260,6 +262,18 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => { /* optional */ });
 const versionText = () => __APP_VERSION__ + (matchMedia('(prefers-color-scheme: dark)').matches ? ' D' : '');
 $('version').textContent = versionText();
+// language: SV | EN chip on the home card (each phone keeps its own language)
+function renderLang() {
+  applyI18n();
+  document.querySelectorAll<HTMLButtonElement>('#lang-toggle button').forEach((b) => {
+    const on = b.dataset.lang === lang();
+    b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
+  });
+}
+document.querySelectorAll<HTMLButtonElement>('#lang-toggle button').forEach((b) => {
+  b.onclick = () => { setLang(b.dataset.lang === 'en' ? 'en' : 'sv'); renderLang(); renderPicker(); };
+});
+renderLang();
 // Wi-Fi code next to the version: two phones must show the same code to find each other (a VPN changes it)
 void lanNamespace().then((ns) => { if (ns) $('version').textContent = `${versionText()} (${ns.slice(0, 4).toUpperCase()})`; });
 $('version').title = __APP_COMMIT__;
@@ -309,11 +323,11 @@ function startScene(session: Session) {
   }
   loading(true, 0.1);
   loadPending = true;
-  $('loading-text').textContent = 'Laddar spelet...';
+  $('loading-text').textContent = t('menu.loadingGame');
   const hook = (scene: GameScene) => {
     scene.onView = onView;
     scene.load.off('progress', onLoadProgress).on('progress', onLoadProgress);
-    scene.events.once('create', () => { $('loading-text').textContent = 'Laddar...'; loading(false); });
+    scene.events.once('create', () => { $('loading-text').textContent = t('menu.loading'); loading(false); });
   };
   game.scene.start('game', { session });
   const sc = game.scene.getScene('game') as GameScene | null;
@@ -345,6 +359,7 @@ let treesFor = { seed: -1, trees: [] as ReturnType<typeof makeTrees> };
 let sendBuild: (k: BuildKind | 'cottage') => void = () => {};
 let panelOpen = false;
 const COST_ICON: Record<string, string> = { wood: 'art/gather/hud-wood.png', stone: 'art/gather/hud-stone.png', berry: 'art/gather/hud-berries.png' };
+const buildName = (k: BuildKind) => t(`build.name.${k}` as Key);
 function buildCard(kind: BuildKind | 'cottage'): HTMLButtonElement {
   const b = document.createElement('button');
   b.type = 'button'; b.className = 'bcard'; b.dataset.kind = kind;
@@ -372,9 +387,9 @@ function renderBuildPanel(v: View) {
     const lvl = v.cottage?.level ?? 1;
     const built = isCot ? lvl >= COTTAGE_MAX : v.builds.find((b) => b.kind === kind)?.state === 2;
     const cost = isCot ? (lvl >= COTTAGE_MAX ? null : COTTAGE_COST[lvl - 1]) : BUILD_COST[kind];
-    const name = isCot ? (lvl >= COTTAGE_MAX ? 'Stuga nivå 3' : `Stuga nivå ${lvl + 1}`) : BUILD_NAMES[kind];
+    const name = isCot ? t('build.cottage', { lvl: Math.min(COTTAGE_MAX, lvl + 1) }) : buildName(kind);
     const img = isCot ? `art/base/cottage-${Math.min(3, lvl + (lvl >= COTTAGE_MAX ? 0 : 1))}.png` : `art/base/${kind}.png`;
-    const eff = isCot ? (COTTAGE_BONUS[lvl] || 'Klar!') : BUILD_EFFECT[kind];
+    const eff = isCot ? (lvl < COTTAGE_MAX ? t(`build.eff.cottage${lvl + 1}` as Key) : t('build.done')) : t(`build.eff.${kind}` as Key);
     const can = !built && !!cost && canAfford(v.bank, cost);
     const key = `${built}|${can}|${name}|${cost ? RES.map((k) => cost[k] + ':' + (v.bank[k] >= cost[k] ? 1 : 0)).join(',') : ''}`;
     if (card.dataset.key === key) return;
@@ -384,7 +399,7 @@ function renderBuildPanel(v: View) {
     card.classList.toggle('can', can);
     card.querySelector('img')!.src = img;
     card.querySelector('.bname')!.textContent = name;
-    card.querySelector('.beff')!.textContent = built ? 'Byggd ✓' : eff;
+    card.querySelector('.beff')!.textContent = built ? t('build.built') : eff;
     card.querySelector('.bcost')!.replaceChildren(...(built || !cost ? [] : RES.filter((k) => cost[k] > 0).map((k) => {
       const s = document.createElement('span');
       s.className = 'c ' + (v.bank[k] >= cost[k] ? 'ok' : 'no');
@@ -402,7 +417,7 @@ function renderBuildGoal(v: View) {
   const doneK = v.builtNow?.[v.builtNow.length - 1];
   const next = !doneK ? v.builds?.find((b) => b.state !== 2 && canAfford(v.bank, RES.reduce((o, k) => ({ ...o, [k]: BUILD_COST[b.kind][k] - b.paid[k] }), {}))) : undefined;
   // the hint points to the house, where the build panel is
-  const text = doneK ? 'Byggt: ' + BUILD_NAMES[doneK] : next ? 'Bygg ' + BUILD_NAMES[next.kind] + ' vid huset' : '';
+  const text = doneK ? t('build.goalDone', { name: buildName(doneK) }) : next ? t('build.goal', { name: buildName(next.kind) }) : '';
   show('q-build', !!text);
   if (!text) return;
   const span = row.querySelector('span')!;
@@ -419,7 +434,9 @@ function villageText() {
   const v = loadVillage();
   const n = Object.values(v.builds).filter(Boolean).length;
   const bank = v.bank.wood + v.bank.stone + v.bank.berry;
-  return n || v.cottage > 1 || bank ? `Din by: stuga nivå ${v.cottage} · ${n} ${n === 1 ? 'byggnad' : 'byggnader'} · förråd ${v.bank.wood}/${v.bank.stone}/${v.bank.berry}` : '';
+  return n || v.cottage > 1 || bank
+    ? t('lobby.village', { lvl: v.cottage, n, what: t(n === 1 ? 'lobby.building1' : 'lobby.buildingN'), w: v.bank.wood, s: v.bank.stone, b: v.bank.berry })
+    : '';
 }
 
 /** Bärregn HUD: basket counter, goal bar with 3 stars, time left; the host gets "Hoppa över". */
@@ -523,7 +540,7 @@ async function hostGame() {
   unlockAudio();
   isHost = true;
   const net = new HostNet();
-  $('menu-msg').textContent = 'Skapar rum...';
+  $('menu-msg').textContent = t('menu.creating');
   try { await net.open(); } catch (e) { $('menu-msg').textContent = friendlyError(String(e)); return; }
   const myId = net.peer.id;
   infos = new Map([[myId, { id: myId, ...myInfo() }]]);
@@ -538,7 +555,7 @@ async function hostGame() {
     if (net.peer.destroyed) return;
     const ns = await lanNamespace();
     const slot = ns ? await net.openSlot(ns) : 0;
-    $('lobby-lan').innerHTML = slot ? LAN_OK : 'Letar efter ditt Wi-Fi... Kompisarna ser inte spelet än.';
+    $('lobby-lan').innerHTML = slot ? LAN_OK : t('lobby.noWifi');
     $('lobby-lan').classList.toggle('warn', !slot);
     if (!slot) setTimeout(() => void advertise(), 5000);
   };
@@ -633,7 +650,7 @@ async function hostGame() {
   $('btn-newvillage-yes').onclick = () => {
     try { localStorage.removeItem('blobz.village'); } catch { /* private mode */ }
     show('newvillage-ask', false); show('btn-newvillage');
-    $('lobby-village').textContent = 'Ny by! Allt börjar om från början.';
+    $('lobby-village').textContent = t('lobby.newVillageDone');
   };
   $('btn-again').onclick = () => newRound();
 }
@@ -647,7 +664,7 @@ async function joinGame(target: string, row?: HTMLButtonElement) {
   joining = true;
   isHost = false;
   const net = new ClientNet();
-  $('join-msg').textContent = 'Ansluter...';
+  $('join-msg').textContent = t('join.connecting');
   row?.classList.add('busy');
   stopScan(); // free the probing peer; a failed join restarts the list
   let latest: Snapshot | null = null;
@@ -688,7 +705,7 @@ async function joinGame(target: string, row?: HTMLButtonElement) {
       startScene(session);
     }
   };
-  net.onClose = () => { alert('Värden lämnade spelet.'); location.reload(); };
+  net.onClose = () => { alert(t('err.hostLeft')); location.reload(); };
   setPicker((w) => net.send({ t: 'pick', w })); // [dungeon hook]
 
   try {
@@ -696,9 +713,9 @@ async function joinGame(target: string, row?: HTMLButtonElement) {
   } catch (e) {
     joining = false;
     const why = String(e);
-    const msg = why.startsWith('version:') ? `Värden kör ${why.slice(8)}, du kör ${__APP_VERSION__}. Ladda om sidan på den som är äldst.`
-      : why === 'full' ? 'Spelet är fullt (max 5).'
-      : why === 'timeout' ? 'Ingen svarade. Försök igen.'
+    const msg = why.startsWith('version:') ? t('err.version', { host: why.slice(8), me: __APP_VERSION__ })
+      : why === 'full' ? t('err.full')
+      : why === 'timeout' ? t('err.timeout')
       : friendlyError(why);
     startScan(); // panel('join') would clear the message, so restart the list directly
     $('join-msg').textContent = msg;

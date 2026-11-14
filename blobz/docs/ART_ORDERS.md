@@ -19,7 +19,8 @@ Owners: Art keeps the queue and statuses current; Lead reviews. Stefan only says
 You are the pixel artist for "Blobz", a cozy co-op party game for phones (kids 8+ and adults). Players are cute slime
 blobz (shapes: dome, ball, tall, flat, pear, cube) with big white eyes, dark plum outline and black pupils.
 STYLE: Kenney "Tiny Town" look, crisp pixel art, one consistent pixel size per image, nearest-neighbour, no blur,
-no anti-aliasing, no gradients. 1px dark plum outline #3f2631 around every object. Flat colours with one highlight
+no anti-aliasing, no gradients. FINE PIXEL GRID: small pixels and plenty of detail, like a blob that is 36 pixels
+wide; a tree is about 40-50 pixels tall, a house about 90-100 pixels wide. 1px dark plum outline #3f2631 around every object. Flat colours with one highlight
 (top-left) and one shadow (bottom-right). Palette: grass #6cbf45, cream #fff7e6, plum #3f2631, orange #ff8a3d,
 blue #3fa9f5, yellow #ffc93c, pink #ff6b8b, purple #b18cff, red #e63946, wood #ba7640, stone #a39fa8.
 Top-down 3/4 view. No text, letters or numbers. No people or humans, only blobz.
@@ -40,6 +41,7 @@ Make ONE image per reply and wait for "next".
 | A-7 | WAITING (style pick on the board) | Meadow props incl. berry bush | `props/*`, `gather/bush-*` |
 | A-8 | WAITING (variants on the board) | Dungeon buttons, goo enemies, skill icons, back arrow | `dungeon/btn-*`, `enemies/*`, `dungeon/skills/*`, `icons/back.png` |
 | A-9 | READY | Bärregn mini game: bomb, falling berries, basket, plop, fence | `mini/bomb.png`, `mini/berries.png`, `mini/basket.png`, `mini/plop.png`, `mini/fence-*.png` |
+| A-10 | WAITING (after A-7 style pick) | Winter props in the same style as A-7 | `props-winter/*` |
 
 ### A-1 Class cards, round 3
 Classes (EN / SV): Healer / Helare, Rogue / Rogue, Tank / Riddare, Marksman / Skytt. Theme colours follow the common
@@ -121,6 +123,8 @@ Order I-4: meadow props, sheet 5 columns x 3 rows, in this order: 1 round green 
 3 pine tree, 4 small rock, 5 big boulder, 6 berry bush full of red berries, 7 the same bush picked empty,
 8 tree stump, 9 rock rubble (broken stones), 10 small flower patch, 11 wood log item, 12 stone item,
 13 berries item, 14 small pond, 15 grass tuft. Items (11-13) a bit bigger and very readable for kids.
+Second sheet (4 columns x 2 rows): 1 pressure plate up, 2 pressure plate pressed down, 3 wooden gate closed,
+4 wooden gate open, 5 gate post, 6 wooden fence piece, 7 treasure chest closed, 8 treasure chest open.
 [Add the chosen direction here: A "polished current", B "cozy storybook: warmer colours, soft light, light outline
 glow on items", or C "chunky bold: thick outlines, few colours, high contrast".]
 Also: the berry bush (full and picked) must look lush and appetising: fluffy round leaves, 6-8 big shiny red berries.
@@ -150,6 +154,16 @@ Fence pieces must line up so they can be repeated in a row around a square arena
 ```
 Art slices into `public/art/mini/` (bomb ~12x12, berries ~10x10, basket ~12x10, plop 3 frames, fence pieces as
 16 px tiles) and tells Code the sizes.
+
+
+### A-10 Winter props (WAITING: same style as the picked A-7)
+```
+Order A-10: the snow-map versions of the meadow props, same style and pixel size as order A-7, sheet 5 columns x 2 rows:
+1 snowy round tree, 2 snowy pine tree, 3 small snowy pine, 4 bare winter tree, 5 snowy rock, 6 ice rock (blue,
+crystal-like, glinting), 7 winter berry bush with snow on top and red berries, 8 the same bush picked empty,
+9 snowy tree stump, 10 snowman with a carrot nose.
+```
+Art slices into `public/art/props-winter/` (same names as today).
 
 ## For Stefan: delivering images
 Save each image as PNG and send it to the Lead session in Claude Code with the order id ("A-1").
