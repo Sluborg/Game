@@ -205,3 +205,6 @@
 
 ## 2026-11-14 - v028b: loading screen (Lead)
 - Stefan art (order 80) as loading screen on app start and while a round loads (Phaser loader progress), logo + pixel bar, min 0.6 s so it never flashes. Landscape is a stopgap (portrait art on the right) until order 81 arrives. Board: picture options for graphic questions, followups.
+
+## 2026-11-14 - v028c: wreath + beanie sit around the head (Art)
+- `wrap` flag per hat (Mössa 4 px, Blomkrans 5 px lower); overlap test keeps its own bound for them.
