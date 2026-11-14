@@ -16,7 +16,7 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
   const { browser, pages } = await startGame(base, ['Stefan', 'Ada', 'Bo'], [undefined, undefined, LANDSCAPE]);
   const [host, ada, bo] = pages;
   try {
-    const ent = await host.evaluate(() => { const s = window.__blobz.state; return { x: s.players.length && 640, y: 244 }; });
+    const ent = await host.evaluate(() => window.__blobz.state.entrance);
     // two of three on the entrance: bubble shows 2/3, nothing happens
     await place(host, 0, ent.x - 14, ent.y);
     await place(host, 1, ent.x + 14, ent.y);

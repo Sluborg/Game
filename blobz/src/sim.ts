@@ -220,8 +220,19 @@ const GARDEN_EVERY = 12; // the garden grows a berry this often (max 3 waiting)
 // ---- test dungeon v1: everyone stands on the entrance, picks a weapon, goes down together ----
 /** Dungeon (handed off to Code 2, WIP): OFF = no entrance on the meadow, nothing of it shows. */
 export const DUNGEON_ENABLED = true;
-export const ENTRANCE = { x: BASE.x, y: BASE.y - 236 };
 export const ENTRANCE_R = 46;
+/** Where the cave entrance goes on this map: the first of four spots around the base (west, east, south,
+ *  north) that is clear of the puzzle pens, the water corner, build spots and totem pads. Seeded, so every
+ *  phone puts it in the same place. */
+export function entranceOf(seed: number): { x: number; y: number } {
+  const zones = makePuzzles(seed).map((l) => l.zone);
+  if (BUILDING_ENABLED) { const w = makeWater(seed); zones.push(w.area, ...w.water); }
+  const spots = [[BASE.x - 330, BASE.y], [BASE.x + 330, BASE.y], [BASE.x, BASE.y + 330], [BASE.x, BASE.y - 300]].map(([x, y]) => ({ x, y }));
+  const clear = (p: { x: number; y: number }) => !zones.some((z) => inRect(z, p.x, p.y, ENTRANCE_R + 20))
+    && !(BUILDING_ENABLED && Object.values(BUILD_SPOTS).some((b) => Math.hypot(b.x - p.x, b.y - p.y) < 120))
+    && !TOTEM_PADS.some((t) => Math.hypot(t.x - p.x, t.y - p.y) < 100);
+  return spots.find(clear) ?? spots[0];
+}
 export const PICK_SECONDS = 20; // unpicked blobz get the sword after this
 export type Mode = 'meadow' | 'pick' | 'dungeon';
 export const MODES: Mode[] = ['meadow', 'pick', 'dungeon'];
@@ -262,6 +273,7 @@ export interface State {
   phase: 'play' | 'end';
   time: number; // seconds of daylight left
   seed: number;
+  entrance: { x: number; y: number }; // dungeon cave on the meadow (entranceOf(seed))
   mode: Mode;
   entry: number; // seconds every blob has stood on the dungeon entrance
   picks: Record<string, Weapon>; // weapon chosen per blob (pick screen)
@@ -321,7 +333,8 @@ export function makeTrees(seed: number): Tree[] {
     trees.push({ x, y, kind, cd: 0, left: 0, hits: 0, regrow: 0 });
   }
   // [dungeon hook, Code 2] keep the cave entrance clear (filtered afterwards so the seeded layout stays the same)
-  if (DUNGEON_ENABLED) for (let i = trees.length - 1; i >= 0; i--) if (Math.hypot(trees[i].x - ENTRANCE.x, trees[i].y - ENTRANCE.y) < 80) trees.splice(i, 1);
+  const ent = entranceOf(seed);
+  if (DUNGEON_ENABLED) for (let i = trees.length - 1; i >= 0; i--) if (Math.hypot(trees[i].x - ent.x, trees[i].y - ent.y) < 80) trees.splice(i, 1);
   // every map gets ~8 berry bushes and enough stone: turn trees (from the end of the list) into them
   const count = (f: (k: number) => boolean) => trees.filter((t) => f(t.kind)).length;
   for (let i = trees.length - 1; i >= 0; i--) {
@@ -355,7 +368,7 @@ export function createState(infos: PlayerInfo[], seed: number, village: Village 
   const water = makeWater(seed);
   const s: State = {
     phase: 'play', time: ROUND_SECONDS,
-    seed, mode: 'meadow', entry: 0, picks: {}, pickT: 0, runs: 0, dg: null,
+    seed, entrance: entranceOf(seed), mode: 'meadow', entry: 0, picks: {}, pickT: 0, runs: 0, dg: null,
     bank: { ...vil.bank }, delivered: res(), quest: questTargets(infos.length, vil.cottage),
     builds: BUILD_KINDS.map((kind) => ({ kind, state: vil.builds[kind] ? 2 : 0, paid: res(), buy: 0, armed: true })),
     cottage: { level: vil.cottage, state: 0, paid: res(), buy: 0, armed: true }, water,
@@ -394,7 +407,7 @@ function freeSpot(s: State, minBase = 60): { x: number; y: number } {
     if (s.layout.some((l) => inRect(l.zone, x, y, 20))) continue;
     if (TOTEM_PADS.some((p) => Math.hypot(p.x - x, p.y - y) < PAD_R + 30)) continue;
     if ([...Object.values(BUILD_SPOTS), COTTAGE_PAD].some((p) => Math.hypot(p.x - x, p.y - y) < BUILD_R + 40)) continue;
-    if (DUNGEON_ENABLED && Math.hypot(ENTRANCE.x - x, ENTRANCE.y - y) < ENTRANCE_R + 40) continue; // [dungeon hook]
+    if (DUNGEON_ENABLED && Math.hypot(s.entrance.x - x, s.entrance.y - y) < ENTRANCE_R + 40) continue; // [dungeon hook]
     if (BUILDING_ENABLED && [s.water.area, ...s.water.water].some((r) => inRect(r, x, y, 30))) continue;
     return { x, y };
   }
@@ -461,7 +474,7 @@ function enterDungeon(s: State) {
 function leaveDungeon(s: State) {
   const done = !!s.dg && s.dg.done !== 0;
   s.mode = 'meadow'; s.dg = null; s.entry = 0; s.picks = {};
-  s.players.forEach((p, i) => { p.x = ENTRANCE.x - 40 + i * 20; p.y = ENTRANCE.y + 70; p.vx = 0; p.vy = 0; });
+  s.players.forEach((p, i) => { p.x = s.entrance.x - 40 + i * 20; p.y = s.entrance.y + 70; p.vx = 0; p.vy = 0; });
   s.fx.push({ t: 'leave', done });
 }
 
@@ -531,7 +544,7 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
   }
 
   // --- dungeon entrance: everyone on it for 1.5 s ---
-  if (DUNGEON_ENABLED && s.players.length && s.players.every((p) => Math.hypot(p.x - ENTRANCE.x, p.y - ENTRANCE.y) < ENTRANCE_R)) {
+  if (DUNGEON_ENABLED && s.players.length && s.players.every((p) => Math.hypot(p.x - s.entrance.x, p.y - s.entrance.y) < ENTRANCE_R)) {
     s.entry += dt;
     if (s.entry >= READY_SECONDS) { s.entry = 0; s.mode = 'pick'; s.picks = {}; s.pickT = PICK_SECONDS; s.fx.push({ t: 'enter' }); return; }
   } else s.entry = 0;

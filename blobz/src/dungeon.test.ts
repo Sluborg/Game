@@ -3,7 +3,7 @@ import {
   DONE_SECONDS, DT, dsnap, dview, ENEMY_HP, FLOORS, GH, GW, inSwing, isWall, KO_SECONDS, LEVEL_XP, makeFloor, newRun, SLAM_DMG, START_HEARTS,
   stepDungeon, TOUCH_DMG, WEAPON_STATS, type DFx, type DState,
 } from './dungeon';
-import { createState, DUNGEON_ENABLED, ENTRANCE, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
+import { createState, DUNGEON_ENABLED, ENTRANCE_R, entranceOf, makePuzzles, makeTrees, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
 
 const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 });
 type B = { id: string; x: number; y: number; vx: number; vy: number; dashT: number; lastDash: number };
@@ -218,10 +218,26 @@ describe('dungeon v1', () => {
     expect(go(d.map.stairs.x, d.map.stairs.y, DONE_SECONDS + 0.2).r).toBe('out');
   });
 
+  it('the cave entrance is seeded, the same every time, and clear of pens, trees and the world edge', () => {
+    const used = new Set<string>();
+    for (let seed = 1; seed < 400; seed++) {
+      const e = entranceOf(seed);
+      expect(entranceOf(seed)).toEqual(e);
+      used.add(`${e.x},${e.y}`);
+      for (const l of makePuzzles(seed)) {
+        const z = l.zone, pad = ENTRANCE_R + 20;
+        expect(e.x > z.x0 - pad && e.x < z.x1 + pad && e.y > z.y0 - pad && e.y < z.y1 + pad).toBe(false);
+      }
+      if (DUNGEON_ENABLED) for (const t of makeTrees(seed)) expect(Math.hypot(t.x - e.x, t.y - e.y)).toBeGreaterThanOrEqual(80);
+      expect(e.x).toBeGreaterThan(100); expect(e.y).toBeGreaterThan(100);
+    }
+    expect(used.size).toBeGreaterThan(1); // it moves when a pen is in the way
+  });
+
   it.skipIf(!DUNGEON_ENABLED)('meadow: all on the entrance -> weapon cards -> down together; the sun waits underground', () => {
     const s = createState([P('a'), P('b')], 11);
     const idle = new Map<string, Input>();
-    for (const p of s.players) Object.assign(p, { x: ENTRANCE.x, y: ENTRANCE.y, vx: 0, vy: 0 });
+    for (const p of s.players) Object.assign(p, { x: s.entrance.x, y: s.entrance.y, vx: 0, vy: 0 });
     for (let i = 0; i < 100; i++) step(s, idle, 1 / 60);
     expect(s.mode).toBe('pick');
     pickWeapon(s, 'a', 'hammer');

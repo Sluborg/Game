@@ -6,7 +6,7 @@ import { blobCanvas, BODY_CY, clampLook } from './blob';
 import { DT, ENEMY_R, FLOORS, GH, GW, makeFloor, SLAM_R, STAIRS_R, type DFx, type Floor, type Weapon } from './dungeon';
 import type { Session } from './game';
 import { sfx } from './sfx';
-import { ENTRANCE, ENTRANCE_R, DUNGEON_ENABLED, type View } from './sim';
+import { entranceOf, ENTRANCE_R, DUNGEON_ENABLED, type View } from './sim';
 
 const BLOB_SCALE = 1.45; // same as the meadow (game.ts)
 const FONT = "'Nunito', sans-serif"; // same as the meadow
@@ -379,7 +379,7 @@ export class DungeonScene extends Phaser.Scene {
 }
 
 // ---------- the hook GameScene calls every frame ----------
-interface EntranceGfx { img: Phaser.GameObjects.Image; ring: Phaser.GameObjects.Graphics; bubble: Phaser.GameObjects.Text }
+interface EntranceGfx { seed: number; at: { x: number; y: number }; img: Phaser.GameObjects.Image; ring: Phaser.GameObjects.Graphics; bubble: Phaser.GameObjects.Text }
 const entrances = new WeakMap<Phaser.Scene, EntranceGfx>();
 
 /** Called by GameScene.update after onView. Returns true while the dungeon scene draws (the meadow
@@ -395,14 +395,16 @@ export function dungeonFrame(scene: Phaser.Scene, v: View, session: Session): bo
   }
   if (mgr.isActive('dungeon') || mgr.isPaused('dungeon')) mgr.stop('dungeon');
   scene.cameras.main.setVisible(true);
-  if (DUNGEON_ENABLED) drawEntrance(scene, v);
+  if (DUNGEON_ENABLED) drawEntrance(scene, v, session.seed);
   return false;
 }
 
 /** The cave mouth on the meadow, a ring that fills while everyone stands on it, and an "n/N" bubble. */
-function drawEntrance(scene: Phaser.Scene, v: View) {
+function drawEntrance(scene: Phaser.Scene, v: View, seed: number) {
   let g = entrances.get(scene);
-  if (!g || !g.img.active) {
+  if (!g || !g.img.active || g.seed !== seed) {
+    if (g) for (const o of [g.img, g.ring, g.bubble]) o.destroy();
+    const ENTRANCE = entranceOf(seed);
     if (!scene.textures.exists('dg-entrance')) {
       // loaded on first use (keeps the meadow's preload untouched); shown as soon as it is there
       const im = new Image();
@@ -410,12 +412,14 @@ function drawEntrance(scene: Phaser.Scene, v: View) {
       im.src = 'art/dungeon/entrance.png';
     }
     g = {
+      seed, at: ENTRANCE,
       img: scene.add.image(ENTRANCE.x, ENTRANCE.y + 30, scene.textures.exists('dg-entrance') ? 'dg-entrance' : '__MISSING').setScale(2).setOrigin(0.5, 1).setDepth(ENTRANCE.y - 60).setVisible(scene.textures.exists('dg-entrance')),
       ring: scene.add.graphics().setDepth(ENTRANCE.y - 50),
       bubble: scene.add.text(ENTRANCE.x, ENTRANCE.y - 66, '', { fontFamily: FONT, fontSize: '22px', color: '#3f2631', fontStyle: 'bold', backgroundColor: '#fff7e6', padding: { x: 8, y: 2 } }).setOrigin(0.5, 1).setDepth(4000),
     };
     entrances.set(scene, g);
   }
+  const ENTRANCE = g.at;
   if (!g.img.visible && scene.textures.exists('dg-entrance')) g.img.setTexture('dg-entrance').setVisible(true);
   const on = v.players.filter((p) => Math.hypot(p.x - ENTRANCE.x, p.y - ENTRANCE.y) < ENTRANCE_R).length;
   g.ring.clear();
