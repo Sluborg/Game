@@ -735,3 +735,10 @@ body { font-weight: 500; } /* Fredoka (Stefan's pick on the board) */
   #loading-logo { width: 70%; }
   #loading-text { font-size: 16px; }
 }
+
+/* N-1 logo C (castle, ~3:2): taller than the old wordmark, so cap it where space is tight */
+@media (orientation: portrait) {
+  #menu .home .logo-img { max-width: 180px; }
+  #loading-logo { width: 74%; }
+}
+@media (orientation: landscape) and (max-height: 520px) { .home .logo-img { max-height: 92px; } }
