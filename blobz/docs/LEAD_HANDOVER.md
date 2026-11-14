@@ -14,6 +14,7 @@ live state; update it at the end of every Lead session.
 | Art | session_019PjhQv7Xfjv9fRCZgvquZ1 | `claude/blobz-art` |
 | Code (base/meadow, i18n) | session_019PjhQvNgzNv3LAiBBHLhoY | `claude/blobz-code` |
 | Code 2 (dungeon) | session_019PjhQxMPAQdpZt3g1GZEuX | `claude/blobz-dungeon` |
+| Merge (integrator) | session_019PjhQwcqpJeXJKcCs9ZYQg | deploy branch: Lead sends "merge <branch> as vNNN"; it merges, tests, pushes, waits for live, reports |
 Lead merges into `claude/mobile-game-5-players-8qthjq` (deploy), bumps `blobz/VERSION` (commit it!), pushes.
 Merge routine: fetch, merge each branch, resolve, `npx tsc --noEmit && npm test && npm run build && npm run e2e`, commit, push.
 
