@@ -36,11 +36,11 @@ const TOOL_FRAME = { w: 44, h: 48, px: 16, py: 28 }; // tool strip frame + pivot
 const OBSTACLE_ART: [string, number][] = [['pr-tree-green', 3], ['pr-tree-orange', 3], ['pr-tree-pine', 3], ['pr-rock', 3], ['pr-boulder', 3], ['g-bush-berries', 3]];
 /** Snow map: Art's winter props (art/props-winter), integer scales. Kinds without winter art yet use a
  *  cold-tinted meadow sprite; a dedicated file is picked up automatically once it exists (WINTER_WANTED). */
-const WINTER_ART: [string, number][] = [['w-tree-snow-round', 3], ['w-tree-snow-pine', 3], ['w-tree-snow-small', 4], ['w-rock-snow', 3], ['w-ice-rock', 3], ['w-bush-winter-berries', 3]];
-const WINTER_SPENT: [string, number][] = [['w-stump-snow', 3], ['w-stump-snow', 3], ['w-stump-snow', 3], ['w-rubble-snow', 3], ['w-rubble-snow', 3], ['w-bush-winter-empty', 3]];
+const WINTER_ART: [string, number][] = [['w-tree-snow-round', 3], ['w-tree-snow-pine', 3], ['w-tree-snow-small', 4], ['w-rock-snow', 3], ['w-ice-rock', 3], ['w-bush-berries-snow', 3]];
+const WINTER_SPENT: [string, number][] = [['w-stump-snow', 3], ['w-stump-snow', 3], ['w-stump-snow', 3], ['w-rubble-snow', 3], ['w-rubble-snow', 3], ['w-bush-empty-snow', 3]];
 /** Missing winter files and their tinted stand-ins (key -> [placeholder, tint]). */
 const WINTER_WANTED: Record<string, [string, number]> = {
-  'w-ice-rock': ['pr-boulder', 0xcfe6ff], 'w-bush-winter-berries': ['g-bush-berries', 0xdbeaff], 'w-bush-winter-empty': ['g-bush-empty', 0xdbeaff],
+  'w-ice-rock': ['pr-boulder', 0xcfe6ff], 'w-bush-berries-snow': ['g-bush-berries', 0xdbeaff], 'w-bush-empty-snow': ['g-bush-empty', 0xdbeaff],
   'w-stump-snow': ['pr-stump', 0xe8f2ff], 'w-rubble-snow': ['g-rubble', 0xe8f2ff],
 };
 const WINTER = ['tree-snow-round', 'tree-snow-pine', 'tree-snow-small', 'rock-snow', 'snowman', 'igloo', 'ice', 'tree-bare', ...Object.keys(WINTER_WANTED).map((k) => k.slice(2))];
