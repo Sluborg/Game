@@ -8,6 +8,7 @@ import { canAfford, isSolid, PAD_R, RES, TOTEM_KINDS, TOTEM_MAX, TOTEM_PADS, tot
 import { BUILDING_ENABLED, BUILD_COST, BUILD_EFFECT, BUILD_KINDS, BUILD_NAMES, BUILD_R, BUILD_SPOTS, COTTAGE_BONUS, COTTAGE_COST, COTTAGE_MAX, COTTAGE_PAD, makeWater, nodeRes } from './sim';
 import type { Biome, BuildKind } from './sim';
 import { makeIce } from './sim';
+import { ARENA, BOMB_R, DROP_HEIGHT } from './mini';
 import type { PuzzleLayout, Res, Tool, TotemKind } from './sim';
 import type { FxEvent, Input, ItemKind, PlayerInfo, View } from './sim';
 
@@ -102,6 +103,11 @@ export class GameScene extends Phaser.Scene {
   private gems = new Map<number, { g: Phaser.GameObjects.Graphics; img: Phaser.GameObjects.Image; t: Phaser.GameObjects.Image[]; x: number; y: number }>();
   private powers = new Map<number, Phaser.GameObjects.Container>();
   private pz: PuzzleGfx[] = [];
+  // Bärregn: the field is drawn over the base; blobz + drops get a depth boost to stay on top of it
+  private dB = 0;
+  private miniCenterY = 0;
+  private miniG?: Phaser.GameObjects.Graphics;
+  private drops = new Map<number, { item: Phaser.GameObjects.Image; mark: Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse }>();
   private bgfx = new Map<BuildKind | 'cottage', { img: Phaser.GameObjects.Image; spot: Phaser.GameObjects.Image; tag: Phaser.GameObjects.Container; key: string }>();
   private cottageImg!: Phaser.GameObjects.Image;
   private water!: ReturnType<typeof makeWater>;
@@ -134,7 +140,7 @@ export class GameScene extends Phaser.Scene {
   init(data: { session: Session }) {
     this.s = data.session;
     this.registry.set('biome', this.s.biome ?? 'meadow'); // read by the dungeon entrance (snowy cave)
-    this.blobs.clear(); this.items.clear(); this.gems.clear(); this.powers.clear();
+    this.blobs.clear(); this.items.clear(); this.gems.clear(); this.powers.clear(); this.drops.clear(); this.dB = 0; this.miniG = undefined;
     this.lastView = null;
     this.lastClock = 0;
   }
@@ -150,6 +156,10 @@ export class GameScene extends Phaser.Scene {
     this.load.spritesheet('fx-dust', 'art/fx/dust.png', { frameWidth: 14, frameHeight: 12 });
     this.load.spritesheet('fx-sparkle', 'art/fx/coin-sparkle.png', { frameWidth: 11, frameHeight: 11 });
     this.load.image('fx-plate-glow', 'art/fx/plate-glow.png');
+    // Bärregn placeholders from existing sprites (real art via the board later)
+    this.load.spritesheet('mini-ko', 'art/dungeon/ko-stars.png', { frameWidth: 20, frameHeight: 9 });
+    this.load.image('mini-warn', 'art/dungeon/slam-warning.png');
+    this.load.spritesheet('mini-wave', 'art/dungeon/shockwave.png', { frameWidth: 48, frameHeight: 24 });
     for (const n of ['cottage-1', 'cottage-2', 'cottage-3', 'build-spot', ...BUILD_KINDS.flatMap((k) => [k, k + '-site'])]) this.load.image('b-' + n, `art/base/${n}.png`);
     const sheet = (key: string, dir: string) => this.load.spritesheet(key, `assets/${dir}/tilemap_packed.png`, { frameWidth: 16, frameHeight: 16 });
     sheet('town', 'kenney-tiny-town');
@@ -301,6 +311,8 @@ export class GameScene extends Phaser.Scene {
     this.pile = this.add.container(BASE.x + 52, BASE.y + 40).setDepth(BASE.y + 40);
     // dusk: warm tint over the world in the last 20 s of daylight
     this.dusk = this.add.rectangle(WORLD_W / 2, WORLD_H / 2, WORLD_W * 3, WORLD_H * 3, 0xff7a2f, 0).setDepth(8000);
+    if (!this.anims.exists('mini-ko')) this.anims.create({ key: 'mini-ko', frames: this.anims.generateFrameNumbers('mini-ko', { start: 0, end: 1 }), frameRate: 6, repeat: -1 });
+    if (!this.anims.exists('mini-wave')) this.anims.create({ key: 'mini-wave', frames: this.anims.generateFrameNumbers('mini-wave', { start: 0, end: 2 }), frameRate: 12 });
     if (!this.anims.exists('dust')) this.anims.create({ key: 'dust', frames: this.anims.generateFrameNumbers('fx-dust', { start: 0, end: 3 }), frameRate: 10 });
     if (!this.anims.exists('sparkle')) this.anims.create({ key: 'sparkle', frames: this.anims.generateFrameNumbers('fx-sparkle', { frames: [0, 1, 2, 1, 0] }), frameRate: 16 });
     if (!this.anims.exists('levelup')) this.anims.create({ key: 'levelup', frames: this.anims.generateFrameNumbers('fx-levelup', { start: 0, end: 3 }), frameRate: 10 });
@@ -317,6 +329,17 @@ export class GameScene extends Phaser.Scene {
 
   private fitCamera() {
     const w = this.scale.width, h = this.scale.height;
+    if (this.miniG) {
+      // Bärregn: the whole field on screen, below the mini HUD (~top 120 px) and above the buttons
+      const top = 124, bottom = 24;
+      const z = Math.min(w / (ARENA.x1 - ARENA.x0 + 40), (h - top - bottom) / (ARENA.y1 - ARENA.y0 + 30));
+      this.cameras.main.setZoom(z);
+      this.miniCenterY = (ARENA.y0 + ARENA.y1) / 2 - (top - bottom) / 2 / z;
+      this.cameras.main.removeBounds();
+      this.cameras.main.centerOn((ARENA.x0 + ARENA.x1) / 2, this.miniCenterY);
+      return;
+    }
+    this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
     const z = Math.max(0.55, Math.min(2.2, Math.min(Math.max(w, h) / 820, Math.min(w, h) / 430)));
     this.cameras.main.setZoom(z);
   }
@@ -397,6 +420,9 @@ export class GameScene extends Phaser.Scene {
     // ---- dusk ----
     this.dusk.setFillStyle(v.phase === 'end' ? 0x4a2a6a : 0xff7a2f, v.phase === 'end' ? 0.38 : v.time >= 20 ? 0 : 0.1 + Math.min(1, (20 - v.time) / 20) * 0.25);
 
+    // ---- Bärregn mini game ----
+    this.drawMini(v);
+
     // ---- co-op puzzles ----
     v.puzzles?.forEach((z, i) => this.drawPuzzle(this.pz[i], z, now));
 
@@ -465,9 +491,10 @@ export class GameScene extends Phaser.Scene {
     // ---- fx ----
     for (const f of this.s.drainFx()) this.playFx(f);
 
-    // camera follows my blob
+    // camera follows my blob (Bärregn: fixed on the field)
     const me = this.blobs.get(this.s.myId);
-    if (me) { this.camTarget.x = me.x; this.camTarget.y = me.y; }
+    if (this.miniG) { this.camTarget.x = (ARENA.x0 + ARENA.x1) / 2; this.camTarget.y = this.miniCenterY; }
+    else if (me) { this.camTarget.x = me.x; this.camTarget.y = me.y; }
     const cam = this.cameras.main;
     cam.centerOn(cam.midPoint.x + (this.camTarget.x - cam.midPoint.x) * Math.min(1, dt * 6), cam.midPoint.y + (this.camTarget.y - cam.midPoint.y) * Math.min(1, dt * 6));
   }
@@ -497,8 +524,8 @@ export class GameScene extends Phaser.Scene {
     for (const t of b.trail) this.trailG.fillStyle(color, t.a).fillCircle(t.x, t.y, 4 + t.a * 10);
 
     const stretch = Math.min(0.18, sp / 1600);
-    b.shadow.setPosition(b.x, b.y + 12).setDepth(b.y - 20).setScale(1 - hover * 0.03, 1);
-    b.body.setPosition(b.x, b.y - 4 + hover).setDepth(b.y);
+    b.shadow.setPosition(b.x, b.y + 12).setDepth(this.dB + b.y - 20).setScale(1 - hover * 0.03, 1);
+    b.body.setPosition(b.x, b.y - 4 + hover).setDepth(this.dB + b.y);
     b.body.setScale(b.baseScale * (1 + stretch) / breath, b.baseScale * (1 - stretch * 0.6) * breath);
     this.drawTool(b, dt);
     b.body.setRotation(Phaser.Math.Clamp(b.vx / 1400, -0.18, 0.18));
@@ -509,7 +536,7 @@ export class GameScene extends Phaser.Scene {
     const blink = b.blinkT < 0.12;
     if (b.blinkT < 0) b.blinkT = 2 + Math.random() * 4;
     const ex = b.x + b.look.x * 4, ey = b.y - 10 + hover + b.look.y * 3;
-    b.eyes.clear().setDepth(b.y + 0.5);
+    b.eyes.clear().setDepth(this.dB + b.y + 0.5);
     if (!b.pixel) for (const s of [-1, 1]) {
       if (blink) { b.eyes.fillStyle(0x222222, 1).fillRect(ex + s * 6 - 4, ey - 1, 8, 2); continue; }
       b.eyes.fillStyle(0xffffff, 1).fillEllipse(ex + s * 6, ey, 9, 11);
@@ -517,13 +544,13 @@ export class GameScene extends Phaser.Scene {
     }
 
     // power-up aura
-    b.aura.clear().setDepth(b.y - 1);
+    b.aura.clear().setDepth(this.dB + b.y - 1);
     if (p.boostT > 0) b.aura.lineStyle(3, 0xffc93c, 0.8).strokeCircle(b.x, b.y - 4 + hover, 26 + Math.sin(now / 60) * 2);
     if (p.magnetT > 0) b.aura.lineStyle(2, 0xff6b8b, 0.5).strokeCircle(b.x, b.y, 60 + Math.sin(now / 200) * 6);
     if (p.shield > 0) b.aura.fillStyle(0x5ec8ff, 0.16).fillCircle(b.x, b.y - 6 + hover, 30).lineStyle(2, 0x8fd3ff, 0.7).strokeCircle(b.x, b.y - 6 + hover, 30);
     if (isMe) b.aura.fillStyle(0xffffff, 0.9).fillTriangle(b.x - 6, b.y - 60 + hover, b.x + 6, b.y - 60 + hover, b.x, b.y - 52 + hover);
 
-    b.label.setPosition(b.x, b.y + 24).setDepth(b.y + 2);
+    b.label.setPosition(b.x, b.y + 24).setDepth(this.dB + b.y + 2);
 
     // carried items stack
     while (b.carry.length < p.carry.length) b.carry.push(this.add.image(0, 0, 'ic-log').setScale(1));
@@ -531,7 +558,7 @@ export class GameScene extends Phaser.Scene {
     p.carry.forEach((k, i) => {
       const img = b.carry[i];
       img.setTexture(ITEM_ICON[k] ?? 'ic-log').setScale(CARRY_SCALE[k] ?? 1);
-      img.setPosition(b.x + (i - (p.carry.length - 1) / 2) * 14, b.y - 44 + hover - Math.abs(i - 1) * 2).setDepth(b.y + 3);
+      img.setPosition(b.x + (i - (p.carry.length - 1) / 2) * 14, b.y - 44 + hover - Math.abs(i - 1) * 2).setDepth(this.dB + b.y + 3);
     });
   }
 
@@ -756,6 +783,51 @@ export class GameScene extends Phaser.Scene {
     b.swingT = 0.32;
   }
 
+  /** Bärregn: a fenced field over the base, falling berries/bombs with their landing marks; the camera frames it. */
+  private drawMini(v: View) {
+    const on = v.phase === 'mini' && !!v.mini;
+    this.dB = on ? 10000 : 0;
+    if (on && !this.miniG) {
+      const a = ARENA, g = this.add.graphics().setDepth(9000);
+      // dim everything around the field so eyes go to the rain
+      g.fillStyle(0x1b1018, 0.72).fillRect(a.x0 - 3000, a.y0 - 3000, a.x1 - a.x0 + 6000, a.y1 - a.y0 + 6000);
+      g.fillStyle(0x3f2631, 1).fillRect(a.x0 - 10, a.y0 - 10, a.x1 - a.x0 + 20, a.y1 - a.y0 + 20);
+      g.fillStyle(0x8a5a3c, 1).fillRect(a.x0 - 6, a.y0 - 6, a.x1 - a.x0 + 12, a.y1 - a.y0 + 12);
+      g.fillStyle(this.s.biome === 'snow' ? 0xe6f1f8 : 0x86cf5a, 1).fillRect(a.x0, a.y0, a.x1 - a.x0, a.y1 - a.y0);
+      const r = rng(7);
+      for (let i = 0; i < 90; i++) g.fillStyle(this.s.biome === 'snow' ? 0xcfe1ee : 0x6fbd47, 1).fillRect(a.x0 + r() * (a.x1 - a.x0 - 8), a.y0 + r() * (a.y1 - a.y0 - 4), 8, 3);
+      this.miniG = g;
+      this.trailG.setDepth(9500);
+      this.fitCamera();
+    } else if (!on && this.miniG) {
+      this.miniG.destroy(); this.miniG = undefined;
+      this.trailG.setDepth(-400);
+      for (const d of this.drops.values()) { d.item.destroy(); d.mark.destroy(); }
+      this.drops.clear();
+      this.fitCamera();
+    }
+    if (!on) return;
+    const seen = new Set<number>();
+    for (const d of v.mini!.drops) {
+      seen.add(d.id);
+      let e = this.drops.get(d.id);
+      if (!e) {
+        const bomb = d.kind === 'bomb';
+        e = {
+          // bombs: Art's red slam ring marks the blast area; berries: a plain shadow
+          mark: bomb ? this.add.image(d.x, d.y, 'mini-warn').setDisplaySize(BOMB_R * 2, BOMB_R).setDepth(9100) : this.add.ellipse(d.x, d.y + 4, 30, 10, 0x000000, 0.25).setDepth(9100),
+          item: bomb ? this.add.image(d.x, d.y, 'pr-rock').setScale(3).setTint(0x2e2a3a).setDepth(10000 + d.y + 5) : this.add.image(d.x, d.y, 'g-item-berries').setScale(3).setDepth(10000 + d.y + 5),
+        };
+        this.drops.set(d.id, e);
+      }
+      const k = 1 - d.z / DROP_HEIGHT; // 0 when it appears, 1 when it lands
+      e.item.setPosition(d.x, d.y - d.z - 6);
+      if (e.mark instanceof Phaser.GameObjects.Ellipse) e.mark.setScale(0.5 + 0.5 * k).setAlpha(0.2 + 0.5 * k);
+      else e.mark.setAlpha(0.25 + 0.7 * k);
+    }
+    for (const [id, e] of this.drops) if (!seen.has(id)) { e.item.destroy(); e.mark.destroy(); this.drops.delete(id); }
+  }
+
   /** Fenced pen (static) + gate, plates, count bubbles and the bonus chest. */
   private buildPuzzle(l: PuzzleLayout): PuzzleGfx {
     const S = 3;
@@ -862,6 +934,28 @@ export class GameScene extends Phaser.Scene {
       sfx.bump();
       this.burst(f.x, f.y - 20, 0x5aa83a, 8);
       this.cameras.main.shake(80, 0.003);
+    } else if (f.t === 'catch') {
+      sfx.pick();
+      const sp = this.add.sprite(f.x, f.y - 20, 'fx-sparkle', 0).setScale(3).setDepth(20000);
+      sp.play('sparkle'); sp.once('animationcomplete', () => sp.destroy());
+      const t = this.add.text(f.x, f.y - 40, '+1', { fontFamily: "'Nunito', sans-serif", fontSize: '24px', color: '#ffe08a', fontStyle: 'bold', stroke: '#6b4a2a', strokeThickness: 5 }).setOrigin(0.5).setDepth(20000);
+      this.tweens.add({ targets: t, y: f.y - 80, alpha: 0, duration: 700, onComplete: () => t.destroy() });
+    } else if (f.t === 'miss') {
+      this.burst(f.x, f.y, 0xc0392b, 5);
+    } else if (f.t === 'boom') {
+      sfx.bump();
+      const w = this.add.sprite(f.x, f.y, 'mini-wave', 0).setDisplaySize(BOMB_R * 2.2, BOMB_R * 1.1).setDepth(20000);
+      w.play('mini-wave'); w.once('animationcomplete', () => w.destroy());
+      this.burst(f.x, f.y - 10, 0xffa040, 10);
+      this.cameras.main.shake(120, 0.004);
+    } else if (f.t === 'stun') {
+      const b = this.blobs.get(f.id);
+      if (b) {
+        const st = this.add.sprite(b.x, b.y - 46, 'mini-ko', 0).setScale(2).setDepth(20001);
+        st.play('mini-ko');
+        const follow = this.time.addEvent({ delay: 16, loop: true, callback: () => st.setPosition(b.x, b.y - 46) });
+        this.time.delayedCall(1000, () => { follow.remove(); st.destroy(); });
+      }
     } else if (f.t === 'build') {
       sfx.power();
       const fx = this.add.sprite(f.x, f.y - 10, 'fx-levelup').setScale(f.done ? 4 : 3).setDepth(4500);
@@ -905,7 +999,7 @@ export class GameScene extends Phaser.Scene {
   private burst(x: number, y: number, color: number, n: number) {
     for (let i = 0; i < n; i++) {
       const a = (i / n) * Math.PI * 2;
-      const d = this.add.circle(x, y, 3, color).setDepth(5000);
+      const d = this.add.circle(x, y, 3, color).setDepth(this.dB ? 20000 : 5000);
       this.tweens.add({ targets: d, x: x + Math.cos(a) * 26, y: y + Math.sin(a) * 26, alpha: 0, duration: 350, onComplete: () => d.destroy() });
     }
   }
