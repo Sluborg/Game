@@ -85,6 +85,23 @@ export function makePuzzles(seed: number): PuzzleLayout[] {
   });
 }
 
+// ---- base totems: spend the team bank on team-wide upgrades ----
+export type TotemKind = 'speed' | 'magnet' | 'shield' | 'double';
+export const TOTEM_KINDS: TotemKind[] = ['speed', 'magnet', 'shield', 'double'];
+export const TOTEM_PRICES: Record<TotemKind, [number, number, number]> = {
+  speed: [15, 30, 50], magnet: [15, 30, 50], shield: [15, 30, 50], double: [20, 30, 40],
+};
+export const TOTEM_MAX = 3;
+export const PAD_R = 30; // stand this close to the pad in front of a totem to buy
+export const BUY_SECONDS = 1;
+export const DOUBLE_SECONDS = 20;
+export const SHIELD_RECHARGE = 8;
+/** Pads on the four diagonals around the cottage (same order as TOTEM_KINDS). */
+export const TOTEM_PADS = [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([dx, dy]) => ({ x: BASE.x + dx * 112, y: BASE.y + dy * 104 }));
+export interface Totem { kind: TotemKind; level: number; buy: number; armed: boolean }
+export const totemPrice = (t: { kind: TotemKind; level: number }) => (t.level >= TOTEM_MAX ? 0 : TOTEM_PRICES[t.kind][t.level]);
+const totemLevel = (s: State, k: TotemKind) => s.totems.find((t) => t.kind === k)?.level ?? 0;
+
 /** Plates per puzzle: 2 and 3, but never more than the players at round start (min 1). */
 export function puzzleNeeds(players: number): number[] {
   const n = Math.max(1, players);
@@ -95,6 +112,7 @@ export interface PlayerInfo { id: string; name: string; color: number; shape: nu
 export interface Player extends PlayerInfo {
   x: number; y: number; vx: number; vy: number;
   carry: ItemKind[];
+  shield: number; shieldT: number; // shield totem charges (protect carried items from goo)
   dashCd: number; dashT: number; boostT: number; magnetT: number;
   lastDash: number; // last dash counter seen from input
 }
@@ -108,7 +126,8 @@ export type FxEvent =
   | { t: 'pick'; x: number; y: number }
   | { t: 'bump'; x: number; y: number }
   | { t: 'power'; x: number; y: number; kind: PowerKind }
-  | { t: 'gate'; x: number; y: number };
+  | { t: 'gate'; x: number; y: number }
+  | { t: 'totem'; x: number; y: number; kind: TotemKind; level: number };
 
 export interface State {
   phase: 'play' | 'end';
@@ -121,6 +140,9 @@ export interface State {
   trees: Tree[];
   layout: PuzzleLayout[];
   puzzles: Puzzle[];
+  bank: number; // team coins for totems (score is never spent)
+  totems: Totem[];
+  doubleT: number; // seconds of 2x points left
   stars: [number, number, number];
   fx: FxEvent[]; // events since last snapshot (cleared by caller)
   nextId: number;
@@ -159,6 +181,7 @@ export function makeTrees(seed: number): Tree[] {
     const y = 70 + r() * (WORLD_H - 130);
     if (nearBase(x, y, 90)) continue;
     if (zones.some((z) => inRect(z, x, y, 40))) continue;
+    if (TOTEM_PADS.some((p) => Math.hypot(p.x - x, p.y - y) < 70)) continue;
     if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < 70)) continue;
     const roll = r();
     trees.push({ x, y, kind: roll < 0.78 ? Math.floor(r() * 3) : roll < 0.9 ? 3 : 4, cd: 0 });
@@ -174,6 +197,7 @@ export function createState(infos: PlayerInfo[], seed: number): State {
     phase: 'play', time: ROUND_SECONDS, score: 0,
     players: [], items: [], gems: [], powers: [], trees,
     layout, puzzles: layout.map((_, i) => ({ need: needs[i], mask: 0, open: false, taken: false })),
+    bank: 0, totems: TOTEM_KINDS.map((kind) => ({ kind, level: 0, buy: 0, armed: true })), doubleT: 0,
     stars: starThresholds(infos.length), fx: [], nextId: 1,
     spawnT: 0, gemT: 8, powerT: 10,
   };
@@ -187,7 +211,7 @@ export function addPlayer(s: State, p: PlayerInfo, slot = s.players.length) {
   const a = (slot / MAX_PLAYERS) * Math.PI * 2;
   s.players.push({
     ...p, x: BASE.x + Math.cos(a) * 50, y: BASE.y + Math.sin(a) * 50, vx: 0, vy: 0,
-    carry: [], dashCd: 0, dashT: 0, boostT: 0, magnetT: 0, lastDash: 0,
+    carry: [], shield: 0, shieldT: 0, dashCd: 0, dashT: 0, boostT: 0, magnetT: 0, lastDash: 0,
   });
   s.stars = starThresholds(s.players.length);
 }
@@ -203,6 +227,7 @@ function freeSpot(s: State, minBase = 60): { x: number; y: number } {
     if (nearBase(x, y, minBase)) continue;
     if (s.trees.some((t) => Math.hypot(t.x - x, t.y - y) < 34)) continue;
     if (s.layout.some((l) => inRect(l.zone, x, y, 20))) continue;
+    if (TOTEM_PADS.some((p) => Math.hypot(p.x - x, p.y - y) < PAD_R + 30)) continue;
     return { x, y };
   }
   return { x: 80, y: 80 };
@@ -215,8 +240,15 @@ function spawnItem(s: State, at?: { x: number; y: number }, kind?: ItemKind) {
   s.items.push({ id: s.nextId++, kind: k, x: p.x, y: p.y });
 }
 
-function clampSpeed(p: Player) {
-  const max = (p.boostT > 0 ? BOOST_SPEED : MAX_SPEED) * (p.dashT > 0 ? 1.7 : 1);
+/** Add points to the team score and the same amount to the bank (2x while the double totem runs). */
+function award(s: State, x: number, y: number, base: number) {
+  const pts = s.doubleT > 0 ? base * 2 : base;
+  s.score += pts; s.bank += pts;
+  s.fx.push({ t: 'score', x, y, pts });
+}
+
+function clampSpeed(p: Player, speedMul: number) {
+  const max = (p.boostT > 0 ? BOOST_SPEED : MAX_SPEED) * speedMul * (p.dashT > 0 ? 1.7 : 1);
   const sp = Math.hypot(p.vx, p.vy);
   if (sp > max) { p.vx *= max / sp; p.vy *= max / sp; }
 }
@@ -224,6 +256,10 @@ function clampSpeed(p: Player) {
 export function step(s: State, inputs: Map<string, Input>, dt: number) {
   if (s.phase !== 'play') return;
   s.time = Math.max(0, s.time - dt);
+  s.doubleT = Math.max(0, s.doubleT - dt);
+  const speedMul = 1 + 0.1 * totemLevel(s, 'speed');
+  const pickR = PICKUP_R + 10 * totemLevel(s, 'magnet');
+  const shieldMax = totemLevel(s, 'shield');
 
   // --- players: glide physics ---
   for (const p of s.players) {
@@ -231,8 +267,10 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     let ix = inp.x, iy = inp.y;
     const il = Math.hypot(ix, iy);
     if (il > 1) { ix /= il; iy /= il; }
-    p.vx += ix * ACCEL * dt;
-    p.vy += iy * ACCEL * dt;
+    p.vx += ix * ACCEL * speedMul * dt;
+    p.vy += iy * ACCEL * speedMul * dt;
+    // shield charges refill one at a time
+    if (p.shield < shieldMax) { p.shieldT += dt; if (p.shieldT >= SHIELD_RECHARGE) { p.shield++; p.shieldT = 0; } } else p.shieldT = 0;
     const drag = Math.exp(-DRAG * dt);
     p.vx *= drag; p.vy *= drag;
     p.dashCd = Math.max(0, p.dashCd - dt);
@@ -250,7 +288,7 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
         p.dashCd = DASH_COOLDOWN; p.dashT = 0.3;
       }
     }
-    clampSpeed(p);
+    clampSpeed(p, speedMul);
     p.x += p.vx * dt; p.y += p.vy * dt;
     // world edges: soft bounce
     if (p.x < BLOB_R) { p.x = BLOB_R; p.vx = Math.abs(p.vx) * 0.6; }
@@ -317,7 +355,7 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
       }
     }
     if (p.carry.length < CARRY_MAX) {
-      const idx = s.items.findIndex((it) => Math.hypot(p.x - it.x, p.y - it.y) < PICKUP_R);
+      const idx = s.items.findIndex((it) => Math.hypot(p.x - it.x, p.y - it.y) < pickR);
       if (idx >= 0) {
         const it = s.items[idx];
         p.carry.push(it.kind);
@@ -335,8 +373,7 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     // deposit at base
     if (p.carry.length && nearBase(p.x, p.y, -10)) {
       const pts = p.carry.reduce((sum, k) => sum + ITEM_POINTS[k], 0) + (p.carry.length === CARRY_MAX ? 2 : 0);
-      s.score += pts;
-      s.fx.push({ t: 'score', x: p.x, y: p.y - 30, pts });
+      award(s, p.x, p.y - 30, pts);
       p.carry = [];
     }
   }
@@ -356,8 +393,7 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     }
     if (pz.open && !pz.taken && s.players.some((p) => Math.hypot(p.x - l.chest.x, p.y - l.chest.y) < CHEST_R)) {
       pz.taken = true;
-      s.score += CHEST_POINTS;
-      s.fx.push({ t: 'score', x: l.chest.x, y: l.chest.y - 30, pts: CHEST_POINTS });
+      award(s, l.chest.x, l.chest.y - 30, CHEST_POINTS);
     }
   });
 
@@ -377,12 +413,28 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     g.x = Math.min(WORLD_W - GEM_R, Math.max(GEM_R, g.x + g.vx * dt));
     g.y = Math.min(WORLD_H - GEM_R, Math.max(GEM_R, g.y + g.vy * dt));
     if (nearBase(g.x, g.y, -20)) {
-      s.score += GEM_POINTS;
-      s.fx.push({ t: 'score', x: g.x, y: g.y - 30, pts: GEM_POINTS });
+      award(s, g.x, g.y - 30, GEM_POINTS);
       s.gems.splice(gi, 1);
       s.gemT = 6;
     }
   }
+
+  // --- totems: stand on a pad for a second to buy the next level; step off before buying again ---
+  s.totems.forEach((t, i) => {
+    const pad = TOTEM_PADS[i];
+    const on = s.players.some((p) => Math.hypot(p.x - pad.x, p.y - pad.y) < PAD_R);
+    if (!on) { t.buy = 0; t.armed = true; return; }
+    const price = totemPrice(t);
+    if (!t.armed || t.level >= TOTEM_MAX || s.bank < price) { t.buy = 0; return; }
+    t.buy = Math.min(1, t.buy + dt / BUY_SECONDS);
+    if (t.buy >= 1) {
+      s.bank -= price;
+      t.level++; t.buy = 0; t.armed = false;
+      if (t.kind === 'double') s.doubleT = DOUBLE_SECONDS;
+      if (t.kind === 'shield') for (const p of s.players) p.shield = Math.max(p.shield, t.level); // first charge right away
+      s.fx.push({ t: 'totem', x: pad.x, y: pad.y, kind: t.kind, level: t.level });
+    }
+  });
 
   // --- spawners ---
   s.spawnT -= dt;
@@ -426,11 +478,12 @@ function collideBox(p: Player, b: Rect) {
 // ---- network snapshot (compact, rounded) ----
 export interface Snapshot {
   ph: State['phase']; tm: number; sc: number; st: [number, number, number];
-  p: [string, number, number, number, number, string, number, number, number][]; // id,x,y,vx,vy,carry,boost,magnet,dashCd
+  p: [string, number, number, number, number, string, number, number, number, number?][]; // id,x,y,vx,vy,carry,boost,magnet,dashCd,shield
   i: [number, string, number, number][];
   g: [number, number, number, number][];
   w: [number, string, number, number][];
   z: [number, number, number, number][]; // puzzles: need, plate mask, open, chest taken
+  b: number; k: [number, number][]; d: number; // bank, totems [level, buy%], double seconds left
   fx: FxEvent[];
 }
 
@@ -441,11 +494,12 @@ const CODE_KIND: Record<string, ItemKind> = { w: 'wood', s: 'shroom', c: 'coin' 
 export function snapshot(s: State): Snapshot {
   return {
     ph: s.phase, tm: r1(s.time), sc: s.score, st: s.stars,
-    p: s.players.map((p) => [p.id, r1(p.x), r1(p.y), r1(p.vx), r1(p.vy), p.carry.map((k) => KIND_CODE[k]).join(''), r1(p.boostT), r1(p.magnetT), r1(p.dashCd)]),
+    p: s.players.map((p) => [p.id, r1(p.x), r1(p.y), r1(p.vx), r1(p.vy), p.carry.map((k) => KIND_CODE[k]).join(''), r1(p.boostT), r1(p.magnetT), r1(p.dashCd), p.shield]),
     i: s.items.map((i) => [i.id, KIND_CODE[i.kind], r1(i.x), r1(i.y)]),
     g: s.gems.map((g) => [g.id, r1(g.x), r1(g.y), g.holders]),
     w: s.powers.map((w) => [w.id, w.kind, r1(w.x), r1(w.y)]),
     z: s.puzzles.map((z) => [z.need, z.mask, +z.open, +z.taken]),
+    b: s.bank, k: s.totems.map((t) => [t.level, Math.round(t.buy * 100)]), d: r1(s.doubleT),
     fx: s.fx,
   };
 }
@@ -453,26 +507,29 @@ export function snapshot(s: State): Snapshot {
 /** View model shared by host (from State) and clients (from Snapshot). */
 export interface View {
   phase: State['phase']; time: number; score: number; stars: [number, number, number];
-  players: { id: string; x: number; y: number; vx: number; vy: number; carry: ItemKind[]; boostT: number; magnetT: number; dashCd: number }[];
+  players: { id: string; x: number; y: number; vx: number; vy: number; carry: ItemKind[]; boostT: number; magnetT: number; dashCd: number; shield: number }[];
   items: Item[]; gems: { id: number; x: number; y: number; holders: number }[]; powers: Power[];
   puzzles: Puzzle[];
+  bank: number; totems: { kind: TotemKind; level: number; buy: number }[]; doubleT: number;
 }
 
 export function viewFromState(s: State): View {
   return {
     phase: s.phase, time: s.time, score: s.score, stars: s.stars,
-    players: s.players.map((p) => ({ id: p.id, x: p.x, y: p.y, vx: p.vx, vy: p.vy, carry: p.carry, boostT: p.boostT, magnetT: p.magnetT, dashCd: p.dashCd })),
+    players: s.players.map((p) => ({ id: p.id, x: p.x, y: p.y, vx: p.vx, vy: p.vy, carry: p.carry, boostT: p.boostT, magnetT: p.magnetT, dashCd: p.dashCd, shield: p.shield })),
     items: s.items, gems: s.gems, powers: s.powers, puzzles: s.puzzles,
+    bank: s.bank, totems: s.totems, doubleT: s.doubleT,
   };
 }
 
 export function viewFromSnapshot(n: Snapshot): View {
   return {
     phase: n.ph, time: n.tm, score: n.sc, stars: n.st,
-    players: n.p.map(([id, x, y, vx, vy, c, b, m, d]) => ({ id, x, y, vx, vy, carry: c.split('').filter(Boolean).map((k) => CODE_KIND[k]), boostT: b, magnetT: m, dashCd: d })),
+    players: n.p.map(([id, x, y, vx, vy, c, b, m, d, sh]) => ({ id, x, y, vx, vy, carry: c.split('').filter(Boolean).map((k) => CODE_KIND[k]), boostT: b, magnetT: m, dashCd: d, shield: sh ?? 0 })),
     items: n.i.map(([id, k, x, y]) => ({ id, kind: CODE_KIND[k], x, y })),
     gems: n.g.map(([id, x, y, h]) => ({ id, x, y, holders: h })),
     powers: n.w.map(([id, k, x, y]) => ({ id, kind: k as PowerKind, x, y })),
     puzzles: (n.z ?? []).map(([need, mask, open, taken]) => ({ need, mask, open: !!open, taken: !!taken })),
+    bank: n.b ?? 0, totems: TOTEM_KINDS.map((kind, i) => ({ kind, level: n.k?.[i]?.[0] ?? 0, buy: (n.k?.[i]?.[1] ?? 0) / 100 })), doubleT: n.d ?? 0,
   };
 }
