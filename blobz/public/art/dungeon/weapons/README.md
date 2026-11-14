@@ -20,6 +20,18 @@ Blobz have no hands: weapons HOVER beside the blob (gentle bob + small shadow, d
 | `shield.png` | 19x19 | (9, 9) | centre |
 
 `daggers.png` is the crossed pair as drawn; `dagger-1.png` / `dagger-2.png` are the two daggers on their own (rogue
-holds one on each side). `spear.png` is kept for later. Crossbow: coming in a later ChatGPT round.
+holds one on each side). `spear.png` is kept for later. The ChatGPT crossbow round is cancelled.
 
 Size check: the sword is 27 px long next to a 16 px wide blob, i.e. ~1.7x the blob's width.
+
+## Ninja-size set (16 px grid)
+
+The game now uses Ninja Adventure's own `Items/Weapons/*/Sprite.png` (16 px). Ninja has no shield or crossbow, so
+these two are hand-drawn in Ninja style (Ninja palette, 1 px outline `#141b1b`) by `scripts/ninja_weapons.py`:
+
+| File | Size | Pivot | Note |
+|---|---|---|---|
+| `ninja-shield.png` | 12x12 | (6, 6) | centre; round wood planks, steel rim and boss |
+| `ninja-crossbow.png` | 16x10 | (2, 5) | butt end; points right, bolt nocked at the string |
+
+Preview: `docs/art-review/ninja-weapons.png` (next to Ninja refs), `docs/art-review/ninja-weapons-blob.png` (next to a blob).
