@@ -36,7 +36,7 @@ const openPanel = async (page) => { await page.waitForSelector('#btn-build:not(.
     await ada.click('#btn-build-close');
     await ada.waitForSelector('#q-build:not(.hidden)', { timeout: 3000 });
     await ada.waitForFunction(() => document.getElementById('q-build').getAttribute('aria-label') === 'Byggt: Förråd', null, { timeout: 3000 });
-    ok((await ada.getAttribute('#q-build .qbimg', 'src')).endsWith('base/storage.png') && (await ada.getAttribute('#q-build .qbico', 'src')).endsWith('icons/check.png'),
+    ok((await ada.getAttribute('#q-build .qbimg', 'src')).endsWith('ninja/storage.png') && (await ada.getAttribute('#q-build .qbico', 'src')).endsWith('icons/check.png'),
       'quest card shows the storage picture + a check (aria "Byggt: Förråd")');
 
     // Bo (landscape) builds the bridge from his own panel; then walks over the water
