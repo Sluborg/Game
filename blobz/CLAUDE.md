@@ -41,6 +41,7 @@ Stefan works phone-only; replies in Swedish or English, docs and code in English
 - This session is **Lead**: talks with Stefan, tests, reviews, merges Art/Code branches into the deploy
   branch, bumps `VERSION`, deploys. Art and Code run in separate Claude Code sessions.
 - Roles, branches, file ownership and definition of done: [`docs/TEAM.md`](./docs/TEAM.md).
+- **New Lead chat:** start by reading [`docs/LEAD_HANDOVER.md`](./docs/LEAD_HANDOVER.md) (live state, session ids); update it before ending.
 - Decision board (artifact): https://claude.ai/artifact/7pHh1Z6QmDvtAYWweGvkAL (source `docs/decisions/`). Post questions/options as
   `questions/<id>` docs (ArtifactData), read his picks/comments from `answers/<id>`, and set `decision` on the question when acted on.
   Graphic questions always come with picture options. After reading an answer set `decision` (moves it to the archive) or
