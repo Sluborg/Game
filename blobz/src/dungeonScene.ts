@@ -5,7 +5,6 @@ import Phaser from 'phaser';
 import { blobCanvas, BLOB_FRAMES, BODY_CY, clampLook, facingFromVelocity, type Facing } from './blob';
 import { AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, GH, GW, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
 /** Weapons without Art's strip yet: a Kenney Tiny Dungeon tile in hand (bow: drawn in code). */
-const WEAPON_TILE: Partial<Record<Weapon, number>> = { staff: 130, shield: 102, dagger: 103 }; // dagger tile: blade up
 import type { Session } from './game';
 import { sfx } from './sfx';
 import { t, tItem, tSkill } from './dungeonText';
@@ -13,7 +12,6 @@ import { entranceOf, ENTRANCE_R, DUNGEON_ENABLED, type View } from './sim';
 
 const BLOB_SCALE = 3; // blobz v2: 16x18 grid at the Ninja world scale, same as the meadow (game.ts)
 const FACE_DEAD = 40; // px/s, same as the meadow: slower = idle frame, facing kept
-const WEAPON_SCALE = 1.45; // Art's weapon strips keep their size; only the blob grew to the Ninja scale
 // held-weapon anchors in screen px from the body centre (body edge 22 px out, a little low)
 const EDGE_X = 22, EDGE_Y = 13, DROP = 3;
 // hovering weapons (no hands): they float this far beyond the body edge, bob gently and lunge out on each attack
@@ -23,21 +21,25 @@ const LUNGE: Record<Weapon, number> = { sword: 4, hammer: 4, spear: 20, staff: 4
 // (the Riddare's id stays 'shield', but it slashes with a sword: the shield hovers on the other side as its guard)
 const SLASH: Partial<Record<Weapon, { sweep: number; slam?: boolean }>> = { sword: { sweep: 120 }, hammer: { sweep: 130, slam: true }, staff: { sweep: 100 }, shield: { sweep: 110 } };
 const DAGGER_SPREAD = 0.6, DAGGER_STAB = 13;
-const WSCALE = 2; // Stefan: 3x (= blob scale) was too large; weapons draw at 2x (sword ~54 px next to the 48 px blob)
-/** Art's hovering weapon sprites (art/dungeon/weapons/README.md): drawn at WSCALE,
- *  pointing right, pivot = grip (shield: centre). The crossbow keeps its old strip until its sprite arrives. */
-const WIMG: Record<string, { w: number; h: number; px: number; py: number }> = {
-  sword: { w: 27, h: 11, px: 2, py: 5 }, 'dagger-1': { w: 16, h: 6, px: 2, py: 2 }, 'dagger-2': { w: 16, h: 7, px: 2, py: 4 },
-  hammer: { w: 20, h: 13, px: 2, py: 6 }, staff: { w: 29, h: 9, px: 2, py: 4 }, shield: { w: 19, h: 19, px: 9, py: 9 }, spear: { w: 38, h: 8, px: 2, py: 4 },
-}; // two Ninja sai, one each side of the aim; stabs alternate left / right
+const NA = 'assets/ninja-adventure/';
+const WSCALE = 3; // 1 art px = 1 blob px (BLOB_SCALE): the weapons' pixels match the blobz exactly
+/** Hovering weapon sprites, drawn at WSCALE. Ninja Adventure's own weapons (Items/Weapons/<Name>/Sprite.png) point UP
+ *  with the grip at the bottom (`up`); Art's Ninja-style shield (pivot = centre) and crossbow (points right, pivot = butt)
+ *  are in art/dungeon/weapons/ (README). The ChatGPT sprites there stay in the repo, unused. */
+const WIMG: Record<string, { src: string; w: number; h: number; px: number; py: number; up?: boolean }> = {
+  sword: { src: NA + 'Items/Weapons/Sword/Sprite.png', w: 6, h: 17, px: 3, py: 14, up: true },
+  sai: { src: NA + 'Items/Weapons/Sai/Sprite.png', w: 7, h: 13, px: 3.5, py: 11, up: true },
+  hammer: { src: NA + 'Items/Weapons/Hammer/Sprite.png', w: 9, h: 16, px: 4.5, py: 14, up: true },
+  wand: { src: NA + 'Items/Weapons/MagicWand/Sprite.png', w: 5, h: 18, px: 2.5, py: 16, up: true },
+  lance: { src: NA + 'Items/Weapons/Lance/Sprite.png', w: 6, h: 23, px: 3, py: 20, up: true },
+  shield: { src: 'art/dungeon/weapons/ninja-shield.png', w: 12, h: 12, px: 6, py: 6 },
+  crossbow: { src: 'art/dungeon/weapons/ninja-crossbow.png', w: 16, h: 10, px: 2, py: 5 },
+};
+/** which sprite each weapon id draws (the Riddare, id 'shield', slashes with the sword) */
+const WART: Record<Weapon, string> = { sword: 'sword', shield: 'sword', dagger: 'sai', hammer: 'hammer', staff: 'wand', spear: 'lance', bow: 'crossbow' };
 const FONT = "'Fredoka', sans-serif"; // same as the meadow
 const DEBUG = new URLSearchParams(location.search).has('debug');
 const HITBOX = new URLSearchParams(location.search).has('hitbox'); // ?hitbox draws the sim's circles
-/** Weapon strips (art/dungeon/README.md): frame size + pivot. */
-const WEAPON_FRAME: Partial<Record<Weapon, { w: number; h: number; px: number; py: number }>> = {
-  sword: { w: 44, h: 48, px: 16, py: 28 }, hammer: { w: 44, h: 48, px: 16, py: 28 }, spear: { w: 68, h: 48, px: 16, py: 28 },
-  staff: { w: 44, h: 48, px: 16, py: 28 }, bow: { w: 44, h: 48, px: 16, py: 28 }, shield: { w: 44, h: 48, px: 16, py: 28 }, dagger: { w: 44, h: 48, px: 16, py: 28 }, // Art's gear-*.png
-};
 /** Class hats in blob.ts CLASS_HATS (Krigare keeps the skin hat). */
 const CLASS_HAT: Partial<Record<HeroClass, number>> = { healer: 0, marksman: 1, tank: 2 }; // the rogue keeps the skin hat
 const WORLD = { w: GW * DT, h: GH * DT };
@@ -73,7 +75,6 @@ interface GooGfx {
 }
 interface LifeBar { u: Phaser.GameObjects.Image; p: Phaser.GameObjects.Image }
 // ---- Ninja Adventure monsters (CC0, docs/ART_MAP.md): sheet, frame size, origin = centre of the visible body ----
-const NA = 'assets/ninja-adventure/';
 const MON = [
   { key: 'na-bat', file: 'Actor/Monster/BlueBat/SpriteSheet.png', ox: 0.5, oy: 7.5 / 16 },
   { key: 'na-slime', file: 'Actor/Monster/Slime3/Slime3.png', ox: 0.5, oy: 9 / 16 },
@@ -135,9 +136,6 @@ export class DungeonScene extends Phaser.Scene {
     sheet('dg-floor', 'art/fine/tiles/dungeon-floor.png', 32, 32);
     sheet('na-arc', 'assets/ninja-adventure/FX/Slash/SpriteSheetArc.png', 38, 34); // Ninja slash arc (CC0) for slashing weapons
     sheet('dg-wall', 'art/fine/tiles/dungeon-wall.png', 32, 32);
-    for (const w of ['sword', 'hammer', 'spear'] as Weapon[]) sheet('dg-weapon-' + w, `art/dungeon/weapon-${w}.png`, WEAPON_FRAME[w]!.w, WEAPON_FRAME[w]!.h);
-    // Art's class gear strips; the Bågskytt carries a crossbow (weapon id stays 'bow': loaded, aim, shot, reload)
-    for (const w of ['staff', 'bow', 'shield', 'dagger'] as Weapon[]) sheet('dg-weapon-' + w, `art/dungeon/gear-${w === 'bow' ? 'crossbow' : w === 'dagger' ? 'daggers' : w}.png`, 44, 48);
     sheet('dg-ko-stars', 'art/fine/dungeon/ko-stars.png', 40, 18);
     sheet('dg-revive', 'art/fine/dungeon/revive.png', 32, 40);
     sheet('dg-shockwave', 'art/fine/dungeon/shockwave.png', 96, 48);
@@ -152,7 +150,7 @@ export class DungeonScene extends Phaser.Scene {
     img('dg-potion', 'art/fine/dungeon/potion.png');
     sheet('dg-sparkle', 'art/fine/fx/coin-sparkle.png', 22, 22); // own key: the meadow still uses the 11 px one
     sheet('dungeon', 'assets/kenney-tiny-dungeon/tilemap_packed.png', 16, 16);
-    for (const k of Object.keys(WIMG)) img('w-' + k, `art/dungeon/weapons/${k}.png`);
+    for (const [k, m] of Object.entries(WIMG)) img('w-' + k, m.src);
     // Ninja Adventure dungeon art (docs/ART_MAP.md section 12 + loot): floor, walls, stairs, chest, coins, potion, bars
     img('na-floor', NA + 'Backgrounds/Tilesets/Interior/TilesetInteriorFloor.png');
     img('na-walls', NA + 'Backgrounds/Tilesets/Interior/TilesetWallSimple.png');
@@ -192,15 +190,6 @@ export class DungeonScene extends Phaser.Scene {
     anim('dg-wall', 'dg-fx-wall', [0, 1, 2], 10);
     anim('dg-block', 'dg-fx-block', [0, 1, 2], 14);
     anim('dg-sparkle', 'dg-sparkle', [0, 1, 2, 1, 0], 16);
-    if (!this.textures.exists('dg-bow-ph')) {
-      // placeholder bow until Art's weapon-bow.png: brown arc + string, 16x16 pixels
-      const c = document.createElement('canvas'); c.width = 16; c.height = 16;
-      const g = c.getContext('2d')!;
-      g.fillStyle = '#3f2631'; for (let y = 1; y < 15; y++) { const x = 4 + Math.round(4 * Math.sin((y / 15) * Math.PI)); g.fillRect(x - 1, y, 3, 1); }
-      g.fillStyle = '#a0643c'; for (let y = 2; y < 14; y++) { const x = 4 + Math.round(4 * Math.sin((y / 15) * Math.PI)); g.fillRect(x, y, 1, 1); }
-      g.fillStyle = '#fff7e6'; g.fillRect(4, 2, 1, 12);
-      this.textures.addCanvas('dg-bow-ph', c)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
-    }
     this.auraG = this.add.graphics().setDepth(-300);
     this.hitG = this.add.graphics().setDepth(9000);
     this.ringG = this.add.graphics().setDepth(4000);
@@ -415,7 +404,7 @@ export class DungeonScene extends Phaser.Scene {
           shadow: this.add.ellipse(p.x, p.y, 34, 12, 0x000000, 0.3),
           body: this.add.image(p.x, p.y, texKey).setOrigin(0.5, BODY_CY).setScale(BLOB_SCALE),
           label: this.add.text(p.x, p.y, info.name, { fontFamily: FONT, fontSize: '13px', color: '#ffffff', fontStyle: 'bold', stroke: '#000000', strokeThickness: 3 }).setOrigin(0.5),
-          weapon: this.add.sprite(p.x, p.y, WEAPON_FRAME[w] ? 'dg-weapon-' + w : 'dg-bow-ph', 0),
+          weapon: this.add.sprite(p.x, p.y, 'w-' + WART[w]),
           stars: this.add.sprite(p.x, p.y, 'dg-ko-stars', 0).setScale(1).setVisible(false),
           me: this.add.triangle(p.x, p.y, 0, 0, 12, 0, 6, 8, 0xffffff, 0.9).setVisible(p.id === this.s.myId),
           texKey, x: p.x, y: p.y, vx: 0, vy: 0, id: p.id, facing, swingT: 0, swingDur: 0.3, swingA: 0, swings: 0, spin: 0,
@@ -502,41 +491,16 @@ export class DungeonScene extends Phaser.Scene {
 
   /** Weapon in hand: idle = first frame; a swing plays the 4-frame strip; the spin special whirls it. */
   private drawWeapon(b: HeroGfx, w: Weapon, face: number, ko: boolean, dt: number, guard = false) {
-    const fr = WEAPON_FRAME[w];
     b.swingT = Math.max(0, b.swingT - dt);
     b.spin = Math.max(0, b.spin - dt);
-    const sc = WEAPON_SCALE;
     const cx = b.body.x, cy = b.body.y; // the body's origin (BODY_CY) is its centre
-    if (!fr) {
-      // placeholder until Art's strip: a Kenney tile (blade up) held at the body edge, pointed at the target and
-      // jabbing forward on each attack; the dagger gets its twin in the other hand
-      const tile = WEAPON_TILE[w];
-      if (tile !== undefined) { if (b.weapon.texture.key !== 'dungeon' || Number(b.weapon.frame.name) !== tile) b.weapon.setTexture('dungeon', tile); }
-      else if (b.weapon.texture.key !== 'dg-bow-ph') b.weapon.setTexture('dg-bow-ph');
-      const twin = w === 'dagger';
-      if (twin && !b.weapon2) b.weapon2 = this.add.sprite(0, 0, 'dungeon', tile ?? 103).setScale(2).setOrigin(0.5, 0.8);
-      b.weapon2?.setVisible(twin && !ko);
-      if (ko) { b.weapon.setVisible(false); return; }
-      const swinging = b.swingT > 0;
-      const A = swinging ? b.swingA : face;
-      const jab = swinging ? Math.sin((1 - b.swingT / b.swingDur) * Math.PI) * 8 : 0;
-      const px = cx + Math.cos(A) * (EDGE_X + jab), py = cy + Math.sin(A) * (EDGE_Y + jab) + DROP;
-      b.weapon.setVisible(true).setScale(2).setFlipX(false).setOrigin(0.5, 0.8).setPosition(px, py)
-        .setDepth(b.body.depth + (Math.sin(A) < -0.35 ? -1 : 1)).setRotation(A + Math.PI / 2);
-      if (twin && b.weapon2) {
-        const B = A + (Math.cos(A) < 0 ? -0.9 : 0.9); // the off-hand dagger, a little to the side
-        b.weapon2.setPosition(cx + Math.cos(B) * (EDGE_X - 3), cy + Math.sin(B) * (EDGE_Y - 1) + DROP).setRotation(B + Math.PI / 2).setDepth(b.body.depth + (Math.sin(B) < -0.35 ? -1 : 1));
-      }
-      if (DEBUG) ((window as unknown as { __dgWeapon?: Record<string, unknown> }).__dgWeapon ??= {})[b.id] = { a: Math.atan2(Math.sin(A), Math.cos(A)), swing: swinging, n: b.swings, x: px, y: py, bx: cx, by: cy, w };
-      return;
-    }
     // the Riddare slashes with a sword; its shield is a separate guard on the other side
-    const art = w === 'shield' ? 'sword' : w === 'dagger' ? 'dagger-1' : w; // the Riddare slashes with the sword
-    const tex = WIMG[art] ? 'w-' + art : 'dg-weapon-' + w;
+    const art = WART[w];
+    const tex = 'w-' + art;
     if (b.weapon.texture.key !== tex) b.weapon.setTexture(tex, 0);
     if (!b.wshadow) b.wshadow = this.add.ellipse(0, 0, 18, 6, 0x000000, 0.22);
     const two = w === 'dagger' || w === 'shield';
-    if (two && !b.weapon2) b.weapon2 = this.add.sprite(0, 0, 'w-dagger-2');
+    if (two && !b.weapon2) b.weapon2 = this.add.sprite(0, 0, 'w-sai');
     b.weapon2?.setVisible(two && !ko);
     if (ko) { b.weapon.setVisible(false); b.wshadow.setVisible(false); return; }
     // Hovers beside the blob (blobz have no hands): a few px beyond the body edge toward the target (or the way it
@@ -555,12 +519,11 @@ export class DungeonScene extends Phaser.Scene {
         const g = spot(aim + side * DAGGER_SPREAD * (1 - (out / DAGGER_STAB) * 0.6), 0);
         return { x: g.x + Math.cos(aim) * out, y: g.y + Math.sin(aim) * out * 0.7 + bob * (i ? -1 : 1), gy: g.y };
       });
-      const DL = Math.cos(aim) < 0;
-      if (b.weapon2!.texture.key !== 'w-dagger-2') b.weapon2!.setTexture('w-dagger-2');
+      if (b.weapon2!.texture.key !== 'w-sai') b.weapon2!.setTexture('w-sai');
+      const im = WIMG.sai;
       [b.weapon, b.weapon2!].forEach((spr, i) => {
-        const im = WIMG[i ? 'dagger-2' : 'dagger-1'];
-        spr.setVisible(true).setFlipX(DL).setScale(WSCALE).setOrigin((DL ? im.w - im.px : im.px) / im.w, im.py / im.h)
-          .setPosition(pts[i].x, pts[i].y).setRotation(DL ? aim - Math.PI : aim).setDepth(b.body.depth + (Math.sin(aim) < -0.35 ? -1 : 1));
+        spr.setVisible(true).setFlipX(i === 1).setScale(WSCALE).setOrigin(im.px / im.w, im.py / im.h)
+          .setPosition(pts[i].x, pts[i].y).setRotation(aim + Math.PI / 2).setDepth(b.body.depth + (Math.sin(aim) < -0.35 ? -1 : 1));
       });
       b.wshadow.setVisible(true).setPosition(cx + Math.cos(aim) * (EDGE_X + HOVER + 6), Math.max(pts[0].gy, cy) + 22).setDepth(b.body.depth - 2).setScale(1.3, 1);
       const a = Math.atan2(Math.sin(aim), Math.cos(aim));
@@ -589,7 +552,7 @@ export class DungeonScene extends Phaser.Scene {
       if (prog >= 0.08 && b.arcFor !== b.swings) {
         b.arcFor = b.swings;
         if (!this.anims.exists('na-arc')) this.anims.create({ key: 'na-arc', frames: this.anims.generateFrameNumbers('na-arc', {}), frameRate: 22 });
-        const blade = (WIMG[art]?.w ?? 27) * WSCALE, r = EDGE_X + HOVER + blade * 0.35, sweepT = b.swingDur * 0.6 * (1 - 0.08 / 0.6);
+        const blade = (WIMG[art].up ? WIMG[art].h : WIMG[art].w) * WSCALE, r = EDGE_X + HOVER + blade * 0.35, sweepT = b.swingDur * 0.6 * (1 - 0.08 / 0.6);
         const arc = this.add.sprite(cx + Math.cos(aim) * r, cy + Math.sin(aim) * r * 0.75, 'na-arc', 0).setScale(Math.max(0.9, (blade * 1.15) / 38))
           .setRotation(aim).setFlipY(dir < 0).setDepth(b.body.depth + 3);
         arc.play({ key: 'na-arc', frameRate: 6 / Math.max(0.1, sweepT) }).once('animationcomplete', () => arc.destroy());
@@ -599,16 +562,16 @@ export class DungeonScene extends Phaser.Scene {
     const g = spot(A, out);
     const px = g.x, py = g.y + bob;
     const im = WIMG[art];
-    const fw = im ?? WEAPON_FRAME[w]!; // Art's sprite (one frame), else the old strip (crossbow)
-    const frame = !im && swinging ? Math.min(3, Math.floor(prog * 4)) : 0;
-    const rot = (L ? A - Math.PI : A) + (b.spin > 0 ? (1 - b.spin / 0.35) * Math.PI * 2 * (L ? -1 : 1) : 0);
-    if (!im) b.weapon.setFrame(frame);
-    b.weapon.setVisible(true).setScale(im ? WSCALE : sc).setFlipX(L)
-      .setOrigin((L ? fw.w - fw.px : fw.px) / fw.w, fw.py / fw.h)
+    const spin = b.spin > 0 ? (1 - b.spin / 0.35) * Math.PI * 2 * (L ? -1 : 1) : 0;
+    // upright Ninja weapons turn by +90 deg (up -> the aim); the right-pointing crossbow mirrors when facing left
+    const rot = im.up ? A + Math.PI / 2 + spin : (L ? A - Math.PI : A) + spin;
+    const fl = !im.up && L;
+    b.weapon.setVisible(true).setScale(WSCALE).setFlipX(fl)
+      .setOrigin((fl ? im.w - im.px : im.px) / im.w, im.py / im.h)
       .setPosition(px, py).setDepth(b.body.depth + (Math.sin(A) < -0.35 ? -1 : 1))
       .setRotation(rot);
     // the crossbow's tip: bolts start there
-    if (w === 'bow') b.tip = { x: px + Math.cos(A) * (fw.w - fw.px) * sc * 0.9, y: py + Math.sin(A) * (fw.w - fw.px) * sc * 0.9 };
+    if (w === 'bow') b.tip = { x: px + Math.cos(A) * (im.w - im.px) * WSCALE, y: py + Math.sin(A) * (im.w - im.px) * WSCALE };
     // the Riddare's shield: hovers on the far side from the sword; raised in front on a sidestep or the shield wall
     if (w === 'shield' && b.weapon2) {
       if (b.weapon2.texture.key !== 'w-shield') b.weapon2.setTexture('w-shield');
@@ -621,7 +584,7 @@ export class DungeonScene extends Phaser.Scene {
     b.wshadow.setVisible(true).setPosition(g.x + Math.cos(A) * 10, Math.max(g.y, cy) + 22).setDepth(b.body.depth - 2)
       .setScale(1 - bob / 12, 1);
     // e2e: which way the weapon really points (flipped sprites point left)
-    const point = b.weapon.flipX ? rot + Math.PI : rot;
+    const point = im.up ? rot - Math.PI / 2 - spin : b.weapon.flipX ? rot + Math.PI : rot;
     dbg({ a: Math.atan2(Math.sin(point), Math.cos(point)), slash: !!sl, x: px, y: py });
   }
 
