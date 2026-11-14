@@ -26,7 +26,7 @@ export type PowerKind = 'speed' | 'magnet';
 export const ITEM_POINTS: Record<ItemKind, number> = { wood: 1, shroom: 2, coin: 3 };
 export const GEM_POINTS = 15;
 
-export interface PlayerInfo { id: string; name: string; color: number; eyes: number; mouth: number; hat: number }
+export interface PlayerInfo { id: string; name: string; color: number; shape: number; eyes: number; mouth: number; hat: number }
 export interface Player extends PlayerInfo {
   x: number; y: number; vx: number; vy: number;
   carry: ItemKind[];

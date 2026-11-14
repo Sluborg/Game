@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
+import '@fontsource/pixelify-sans/400.css';
+import '@fontsource/pixelify-sans/700.css';
 import { loadArt, pixelText, tileCanvas } from './art';
-import { blobEl, clampLook, COLORS, EYES, HATS, MOUTHS, randomLook, type BlobLook } from './blob';
+import { blobEl, clampLook, COLORS, EYES, HATS, MOUTHS, randomLook, SHAPES, type BlobLook } from './blob';
 import { Controls } from './controls';
 import { GameScene, type Session } from './game';
 import { ClientNet, HostNet, friendlyError, type ToClient } from './net';
@@ -38,9 +40,9 @@ function myInfo(): Omit<PlayerInfo, 'id'> {
 }
 
 // ---------- blob designer ----------
-type Part = 'color' | 'eyes' | 'mouth' | 'hat';
-let part: Part = 'color';
-const PART_OPTS: Record<Exclude<Part, 'color'>, string[]> = { eyes: EYES, mouth: MOUTHS, hat: HATS };
+type Part = 'shape' | 'color' | 'eyes' | 'mouth' | 'hat';
+let part: Part = 'shape';
+const PART_OPTS: Record<Exclude<Part, 'color'>, string[]> = { shape: SHAPES, eyes: EYES, mouth: MOUTHS, hat: HATS };
 
 function renderPicker() {
   $('preview').replaceChildren(blobEl(profile.look));

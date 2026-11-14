@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { BASE, createState, starThresholds, step, type Input } from './sim';
 
-const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, eyes: 0, mouth: 0, hat: 0 });
+const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 });
 
 describe('sim', () => {
   it('blob glides: keeps moving after input stops, then slows down', () => {

@@ -37,3 +37,13 @@
 - Stefan's art: new app icon (`icon-192/512.png`) and victory background on the end screen.
 - Removed the old canvas blob/slime code from `src/art.ts` (now only Kenney loader + pixel font).
 - Verified: 9 tests (4 new blob tests), build green, designer at 390x844 and 844x390, 3-player run.
+
+## 2026-11-14 - Pixel UI theme, body shapes, render fixes, art orders
+- Fixed: black lines between ground tiles (ground is now one baked canvas) and dark slivers beside trees
+  (every tile frame gets its own padded texture; camera rounds pixels). Removed decor tiles that read as dirt.
+- Blob designer: new "Form" tab with 6 body shapes (Kupol, Boll, Lång, Platt, Päron, Kub); hats follow the head.
+- Pixel UI theme everywhere: stepped-corner plum outlines, bevelled buttons, tabs, inputs, HUD boxes,
+  square dash button, Pixelify Sans font (OFL, `@fontsource/pixelify-sans`) in menus and in-game labels.
+  Chest helper marker is now a mini blob instead of the old slime tile.
+- `docs/ART_ORDERS.md`: 7 art orders + one self-contained ChatGPT prompt ("go" / "next").
+- Verified: 9 tests, build, 390x844 + 844x390 screenshots, 3-player run, seams checked at 2x zoom.
