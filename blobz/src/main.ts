@@ -17,6 +17,19 @@ import type { FxEvent, Input, PlayerInfo, Snapshot, State, View } from './sim';
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const show = (id: string, on = true) => $(id).classList.toggle('hidden', !on);
 
+// ---------- loading screen ----------
+let loadingSince = performance.now();
+function loading(on: boolean, progress = 0) {
+  const el = $('loading');
+  if (on) { loadingSince = performance.now(); el.classList.remove('hidden', 'out'); setLoad(progress); return; }
+  setLoad(1);
+  const wait = Math.max(0, 600 - (performance.now() - loadingSince)); // never just flash
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.classList.add('hidden'), 400); }, wait);
+}
+const onLoadProgress = (p: number) => setLoad(0.1 + p * 0.85);
+function setLoad(p: number) { $('loadfill').style.width = Math.round(Math.max(0, Math.min(1, p)) * 100) + '%'; }
+setLoad(0.15);
+
 // ---------- profile (name / color / hat) ----------
 const store = {
   get(k: string) { try { return localStorage.getItem('blobz.' + k); } catch { return null; } },
@@ -248,6 +261,8 @@ $('version').title = __APP_COMMIT__;
 renderPicker();
 // First visit: pick your blob before anything else.
 if (!store.get('name')) panel('custom');
+Promise.all([loadArt().then(() => setLoad(0.7)), new Promise((r) => (document.readyState === 'complete' ? r(null) : window.addEventListener('load', () => r(null), { once: true })))])
+  .then(() => loading(false));
 void loadArt().then(() => { renderPicker(); renderLobby(); renderIcons(); });
 
 // ---------- shared game plumbing ----------
@@ -286,10 +301,17 @@ function startScene(session: Session) {
     });
     game.scene.add('game', GameScene, false);
   }
+  loading(true, 0.1);
+  $('loading-text').textContent = 'Laddar spelet...';
+  const hook = (scene: GameScene) => {
+    scene.onView = onView;
+    scene.load.off('progress', onLoadProgress).on('progress', onLoadProgress);
+    scene.events.once('create', () => { $('loading-text').textContent = 'Laddar...'; loading(false); });
+  };
   game.scene.start('game', { session });
   const sc = game.scene.getScene('game') as GameScene | null;
-  if (sc) sc.onView = onView;
-  else game.events.once('ready', () => { (game!.scene.getScene('game') as GameScene).onView = onView; });
+  if (sc) hook(sc);
+  else game.events.once('ready', () => hook(game!.scene.getScene('game') as GameScene));
 }
 
 function fmtTime(t: number) {

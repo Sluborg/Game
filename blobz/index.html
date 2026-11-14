@@ -19,6 +19,14 @@
   </head>
   <body>
     <div id="game"></div>
+    <!-- Loading screen (Stefan's ChatGPT art, order 80): app start and every round start -->
+    <div id="loading" role="status" aria-live="polite">
+      <div class="load-ui">
+        <img id="loading-logo" src="./art/logo.png" alt="Blobz" />
+        <div class="loadbar" aria-hidden="true"><i id="loadfill"></i></div>
+        <p id="loading-text">Laddar...</p>
+      </div>
+    </div>
 
     <!-- Menu: three small panels instead of one crowded form -->
     <section id="menu" class="screen">

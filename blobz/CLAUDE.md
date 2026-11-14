@@ -43,6 +43,8 @@ Stefan works phone-only; replies in Swedish or English, docs and code in English
 - Roles, branches, file ownership and definition of done: [`docs/TEAM.md`](./docs/TEAM.md).
 - Decision board (artifact): https://claude.ai/artifact/7pHh1Z6QmDvtAYWweGvkAL (source `docs/decisions/`). Post questions/options as
   `questions/<id>` docs (ArtifactData), read his picks/comments from `answers/<id>`, and set `decision` on the question when acted on.
+  Graphic questions always come with picture options. After reading an answer set `decision` (moves it to the archive) or
+  `followup` (a clarifying question, keeps it open). Keep `work` (Pågående) and `backlog` up to date; read `prio` + `comments`.
 - When a decision or clarification from Stefan is needed (or he drifts to a new topic while a question is open), ask with the AskUserQuestion tool instead of waiting in prose.
 - Every message that announces a new version includes the link https://sluborg.github.io/Game/ and the version number.
 - Reporting to Stefan: only when a whole batch is merged and live (Art: a full part set; Code: a whole

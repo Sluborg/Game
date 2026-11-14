@@ -92,6 +92,7 @@ textarea:focus, input[type=text]:focus { outline: 3px solid var(--blue); outline
 .status.ok { color: var(--green); font-weight: 700; }
 .status.err { color: var(--red); font-weight: 700; }
 .decision { background: #e6f5dc; padding: 10px 12px; box-shadow: 0 0 0 2px var(--plum); font-size: 15px; }
+.followup { background: #fff0b8; padding: 10px 12px; box-shadow: 0 0 0 3px var(--plum); font-size: 15px; font-weight: 700; }
 .seg { display: inline-flex; gap: 0; box-shadow: 0 0 0 3px var(--plum); }
 .seg button { font-family: var(--display); font-size: 15px; border: 0; padding: 6px 12px; background: #fff; color: var(--muted); cursor: pointer; }
 .seg button + button { box-shadow: inset 3px 0 0 0 var(--plum); }
@@ -207,7 +208,7 @@ function renderQuestion(q) {
   const d = draftFor(q);
   const card = el('article', { class: 'card', id: 'q-' + q.id });
   card.append(el('div', { class: 'meta' },
-    q.decision ? el('span', { class: 'tag done', text: 'Avgjord' }) : a ? el('span', { class: 'tag wait', text: 'Besvarad, Claude jobbar' }) : el('span', { class: 'tag new', text: 'Obesvarad' }),
+    q.decision ? el('span', { class: 'tag done', text: 'Avgjord' }) : q.followup ? el('span', { class: 'tag new', text: 'Claude undrar' }) : a ? el('span', { class: 'tag wait', text: 'Besvarad, Claude läser' }) : el('span', { class: 'tag new', text: 'Obesvarad' }),
     q.area ? el('span', { text: q.area }) : null,
     a && a.at ? el('span', { text: 'Ditt svar: ' + fmt(a.at) }) : null));
   card.append(el('h2', { text: q.title }));
@@ -243,6 +244,7 @@ function renderQuestion(q) {
     finally { send.disabled = false; }
   });
   card.append(el('div', { class: 'row' }, send, status));
+  if (q.followup && !q.decision) card.append(el('div', { class: 'followup', text: 'Claude undrar: ' + q.followup }));
   if (q.decision) card.append(el('div', { class: 'decision', text: 'Beslut: ' + q.decision }));
   return card;
 }

@@ -455,3 +455,22 @@ button.link .icon { height: 18px; margin-right: 6px; vertical-align: -3px; }
   .opt .blob { width: 36px; height: 48px; }
   .opt.swatch-opt { height: 64px; }
 }
+
+/* ---------- loading screen ---------- */
+#loading {
+  position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-start; justify-content: center;
+  padding-top: max(10vh, env(safe-area-inset-top)); image-rendering: pixelated;
+  background: #3ea7f6 url('/art/loading.png') center bottom / cover no-repeat;
+  transition: opacity 0.35s ease;
+}
+#loading.out { opacity: 0; pointer-events: none; }
+#loading.hidden { display: none !important; }
+@media (orientation: landscape) {
+  #loading { background: linear-gradient(#3ea7f6 0 55%, #78c04b 55% 100%); align-items: center; justify-content: flex-start; padding-left: 6vw; }
+  #loading::after { content: ''; position: absolute; right: 0; bottom: 0; top: 0; width: 56.25vh; background: url('/art/loading.png') center bottom / contain no-repeat; image-rendering: pixelated; }
+}
+.load-ui { position: relative; z-index: 1; width: min(78vw, 340px); display: flex; flex-direction: column; align-items: center; gap: 14px; }
+#loading-logo { width: 100%; height: auto; image-rendering: auto; filter: drop-shadow(0 4px 0 #3f263155); }
+.loadbar { width: 82%; height: 18px; background: #fff7e6; box-shadow: 0 -3px 0 0 var(--plum), 0 3px 0 0 var(--plum), -3px 0 0 0 var(--plum), 3px 0 0 0 var(--plum); padding: 3px; }
+.loadbar i { display: block; height: 100%; width: 0; background: var(--orange); box-shadow: inset 0 -3px 0 0 var(--orange-lo), inset 0 3px 0 0 var(--orange-hi); transition: width 0.25s steps(8); }
+#loading-text { margin: 0; font-family: var(--font); font-weight: 700; font-size: 20px; color: #fff7e6; text-shadow: 0 2px 0 var(--plum), 2px 0 0 var(--plum), -2px 0 0 var(--plum), 0 -2px 0 var(--plum); }
