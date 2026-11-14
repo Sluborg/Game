@@ -9,7 +9,7 @@ const lan = 'e2e-' + Math.random().toString(36).slice(2);
 const url = (extra = '') => `${base}?lan=${lan}&t=40${extra}`;
 
 async function phone(browser, name, size = { width: 390, height: 844 }) {
-  const ctx = await browser.newContext({ viewport: size, hasTouch: true, isMobile: true });
+  const ctx = await browser.newContext({ locale: 'sv-SE', viewport: size, hasTouch: true, isMobile: true });
   await ctx.addInitScript((n) => { localStorage.setItem('blobz.name', n); }, name);
   const page = await ctx.newPage();
   page.on('pageerror', (e) => console.log(`[${name}] pageerror`, e.message));

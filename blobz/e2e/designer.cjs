@@ -16,7 +16,7 @@ const tab = (p) => p.getAttribute('.tab.on', 'data-part');
 (async () => {
   const browser = await chromium.launch();
   try {
-    const ctx = await browser.newContext({ viewport: PORTRAIT, isMobile: true, hasTouch: true });
+    const ctx = await browser.newContext({ locale: 'sv-SE', viewport: PORTRAIT, isMobile: true, hasTouch: true });
     const p = await ctx.newPage();
     await p.goto(base);
     await p.waitForSelector('#custom:not(.hidden)');
@@ -44,7 +44,7 @@ const tab = (p) => p.getAttribute('.tab.on', 'data-part');
     await p.waitForSelector('#custom:not(.hidden)');
     ok(await tab(p) === 'hat', 'last tab (Hatt) remembered after reload');
 
-    const lp = await (await browser.newContext({ viewport: LANDSCAPE, isMobile: true, hasTouch: true })).newPage();
+    const lp = await (await browser.newContext({ locale: 'sv-SE', viewport: LANDSCAPE, isMobile: true, hasTouch: true })).newPage();
     await lp.goto(base);
     await lp.waitForSelector('#custom:not(.hidden)');
     await lp.click('.tab[data-part="hat"]');

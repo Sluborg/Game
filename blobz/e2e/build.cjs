@@ -85,7 +85,7 @@ const openPanel = async (page) => { await page.waitForSelector('#btn-build:not(.
   const { chromium } = require('playwright');
   const b2 = await chromium.launch();
   try {
-    const p = await (await b2.newContext({ viewport: { width: 390, height: 844 } })).newPage();
+    const p = await (await b2.newContext({ locale: 'sv-SE', viewport: { width: 390, height: 844 } })).newPage();
     await p.addInitScript(() => {
       localStorage.setItem('blobz.name', 'Stefan');
       if (!sessionStorage.getItem('seeded')) {
