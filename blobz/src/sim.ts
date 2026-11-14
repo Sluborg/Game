@@ -477,7 +477,7 @@ export function pickWeapon(s: State, id: string, w: string) {
 }
 
 function enterDungeon(s: State) {
-  for (const p of s.players) s.picks[p.id] ??= 'sword';
+  for (const p of s.players) s.picks[p.id] ??= 'dagger'; // [dungeon hook] unpicked = Rogue with two daggers
   s.runs++;
   s.dg = newRun(s.seed * 7919 + s.runs * 104729, s.picks);
   s.mode = 'dungeon';

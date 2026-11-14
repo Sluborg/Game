@@ -5,7 +5,7 @@ import Phaser from 'phaser';
 import { blobCanvas, BODY_CY, clampLook } from './blob';
 import { DT, ENEMY_R, FLOORS, GH, GW, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
 /** Weapons without Art's strip yet: a Kenney Tiny Dungeon tile in hand (bow: drawn in code). */
-const WEAPON_TILE: Partial<Record<Weapon, number>> = { staff: 130, shield: 102 };
+const WEAPON_TILE: Partial<Record<Weapon, number>> = { staff: 130, shield: 102, dagger: 103 }; // dagger tile: blade up
 import type { Session } from './game';
 import { sfx } from './sfx';
 import { entranceOf, ENTRANCE_R, DUNGEON_ENABLED, type View } from './sim';
@@ -19,7 +19,7 @@ const WEAPON_FRAME: Partial<Record<Weapon, { w: number; h: number; px: number; p
   staff: { w: 44, h: 48, px: 16, py: 28 }, bow: { w: 44, h: 48, px: 16, py: 28 }, shield: { w: 44, h: 48, px: 16, py: 28 }, // Art's gear-*.png
 };
 /** Class hats in blob.ts CLASS_HATS (Krigare keeps the skin hat). */
-const CLASS_HAT: Partial<Record<HeroClass, number>> = { prast: 0, bagskytt: 1, riddare: 2 };
+const CLASS_HAT: Partial<Record<HeroClass, number>> = { healer: 0, marksman: 1, tank: 2 }; // the rogue keeps the skin hat
 const GOO = ['goo-small', 'goo-medium', 'goo-boss'];
 const GOO_SCALE = [2, 2, 3];
 const WORLD = { w: GW * DT, h: GH * DT };
@@ -41,7 +41,8 @@ interface HeroGfx {
   swingT: number; swingDur: number; swingA: number; swings: number; // swing angle from the attack event (exact, not the 15 Hz facing)
   spin: number; // seconds left of a spin special (weapon whirls around)
   fx?: { spr: Phaser.GameObjects.Sprite; kind: 'spin' | 'charge'; a: number }; // special fx that rides along with the blob
-  dome?: Phaser.GameObjects.Sprite; // knight's shield wall (Art's fx-wall)
+  dome?: Phaser.GameObjects.Sprite;
+  weapon2?: Phaser.GameObjects.Sprite; // the rogue's off-hand dagger // knight's shield wall (Art's fx-wall)
 }
 interface GooGfx { img: Phaser.GameObjects.Image; shadow: Phaser.GameObjects.Ellipse; warn?: Phaser.GameObjects.Image; bar?: Phaser.GameObjects.Graphics; x: number; y: number; flash: number; kind: number }
 
@@ -304,7 +305,7 @@ export class DungeonScene extends Phaser.Scene {
         else b.fx.spr.setPosition(b.x - Math.cos(b.fx.a) * 12, cy - Math.sin(b.fx.a) * 12).setDepth(b.y - 1);
       }
     }
-    for (const [id, b] of this.heroes) if (!seenP.has(id)) { for (const o of [b.shadow, b.body, b.label, b.weapon, b.stars, b.me]) o.destroy(); b.fx?.spr.destroy(); b.dome?.destroy(); this.heroes.delete(id); }
+    for (const [id, b] of this.heroes) if (!seenP.has(id)) { for (const o of [b.shadow, b.body, b.label, b.weapon, b.stars, b.me]) o.destroy(); b.fx?.spr.destroy(); b.dome?.destroy(); b.weapon2?.destroy(); this.heroes.delete(id); }
 
     // ---- stairs: progress ring + "2/3" bubble when someone stands on them ----
     this.bubble.setVisible(false);
@@ -343,16 +344,30 @@ export class DungeonScene extends Phaser.Scene {
     const gx = b.body.x - 18 * sc, gy = b.body.y - BODY_CY * 48 * sc;
     const hx = gx + (left ? 2 : 33) * sc, hy = gy + 33 * sc;
     if (!fr) {
-      // placeholder: one tile in the hand, tilts forward on each attack
+      // placeholder until Art's strip: a Kenney tile (blade up) held at the body edge, pointed at the target and
+      // jabbing forward on each attack; the dagger gets its twin in the other hand
       const tile = WEAPON_TILE[w];
       if (tile !== undefined) { if (b.weapon.texture.key !== 'dungeon' || Number(b.weapon.frame.name) !== tile) b.weapon.setTexture('dungeon', tile); }
       else if (b.weapon.texture.key !== 'dg-bow-ph') b.weapon.setTexture('dg-bow-ph');
+      const twin = w === 'dagger';
+      if (twin && !b.weapon2) b.weapon2 = this.add.sprite(0, 0, 'dungeon', tile ?? 103).setScale(2).setOrigin(0.5, 0.8);
+      b.weapon2?.setVisible(twin && !ko);
       if (ko) { b.weapon.setVisible(false); return; }
-      const tilt = b.swingT > 0 ? Math.sin((1 - b.swingT / b.swingDur) * Math.PI) * 0.9 : 0;
-      b.weapon.setVisible(true).setScale(2).setFlipX(left).setOrigin(0.5, 0.75)
-        .setPosition(hx, hy).setDepth(b.body.depth + 1).setRotation((left ? -1 : 1) * (w === 'bow' ? 0 : 0.3 + tilt));
+      const swinging = b.swingT > 0;
+      const A = swinging ? b.swingA : face;
+      const cx = b.body.x, cy = gy + 31 * sc;
+      const jab = swinging ? Math.sin((1 - b.swingT / b.swingDur) * Math.PI) * 8 : 0;
+      const px = cx + Math.cos(A) * (15 * sc + jab), py = cy + Math.sin(A) * (9 * sc + jab) + 2 * sc;
+      b.weapon.setVisible(true).setScale(2).setFlipX(false).setOrigin(0.5, 0.8).setPosition(px, py)
+        .setDepth(b.body.depth + (Math.sin(A) < -0.35 ? -1 : 1)).setRotation(A + Math.PI / 2);
+      if (twin && b.weapon2) {
+        const B = A + (Math.cos(A) < 0 ? -0.9 : 0.9); // the off-hand dagger, a little to the side
+        b.weapon2.setPosition(cx + Math.cos(B) * 13 * sc, cy + Math.sin(B) * 8 * sc + 2 * sc).setRotation(B + Math.PI / 2).setDepth(b.body.depth + (Math.sin(B) < -0.35 ? -1 : 1));
+      }
+      if (DEBUG) ((window as unknown as { __dgWeapon?: Record<string, unknown> }).__dgWeapon ??= {})[b.id] = { a: Math.atan2(Math.sin(A), Math.cos(A)), swing: swinging, n: b.swings, x: px, y: py, bx: cx, by: cy, w };
       return;
     }
+    b.weapon2?.setVisible(false);
     const key = 'dg-weapon-' + w;
     if (b.weapon.texture.key !== key) b.weapon.setTexture(key, 0);
     if (ko) { b.weapon.setVisible(false); return; }

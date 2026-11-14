@@ -29,18 +29,18 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     for (const p of pages) await p.waitForSelector('#weapon-pick:not(.hidden)', { timeout: 6000 });
     ok(true, 'everyone on the entrance 1.5 s -> class cards on all 3 phones');
     // Stefan: Krigare -> weapon step -> Svärd; Ada: Präst; Bo: Bågskytt (one weapon each, picked at once)
-    await host.click('.wcard[data-w="krigare"]');
+    await host.click('.wcard[data-w="rogue"]');
     await host.waitForSelector('.wcard[data-w="sword"]', { timeout: 3000 });
     if (shots) { await ada.screenshot({ path: `${shots}/dg-class-portrait.png` }); await host.screenshot({ path: `${shots}/dg-weapon-portrait.png` }); await bo.screenshot({ path: `${shots}/dg-class-landscape.png` }); }
     await host.click('.wcard[data-w="sword"]');
-    await ada.click('.wcard[data-w="prast"]');
-    await bo.click('.wcard[data-w="bagskytt"]');
+    await ada.click('.wcard[data-w="healer"]');
+    await bo.click('.wcard[data-w="marksman"]');
     for (const p of pages) await p.waitForFunction(() => window.__blobzView.mode === 'dungeon' && !!window.__blobzView.dungeon, null, { timeout: 6000 });
     for (const p of pages) await p.waitForSelector('#hud-dg:not(.hidden)', { timeout: 6000 });
     const ids = await host.evaluate(() => window.__blobz.state.players.map((p) => p.id));
     let d = await dg(bo);
     const hs = ids.map((id) => d.heroes[id]);
-    ok(d.floor === 1 && hs[0].cls === 'krigare' && hs[0].weapon === 'sword' && hs[1].cls === 'prast' && hs[2].cls === 'bagskytt',
+    ok(d.floor === 1 && hs[0].cls === 'rogue' && hs[0].weapon === 'sword' && hs[1].cls === 'healer' && hs[2].cls === 'marksman',
       'down together: Krigare (svärd) / Präst / Bågskytt on every phone');
     ok(hs[2].maxHearts === 4 && hs[0].maxHearts === 5, 'hearts follow the class (Bågskytt 4, Krigare 5)');
     ok(d.bossMax === 30, `boss HP scales with 3 players (${d.bossMax})`);
@@ -94,7 +94,7 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     await gooAt(host, 0, 0, 34, 0);
     for (const p of pages) await p.waitForSelector('#dg-cards:not(.hidden) .skcard', { timeout: 6000 });
     const offers = (await dg(bo)).heroes;
-    ok(offers[ids[0]].offer.every((x) => x.startsWith('krigare-')) && offers[ids[1]].offer.every((x) => x.startsWith('prast-')) && offers[ids[2]].offer.every((x) => x.startsWith('bagskytt-')),
+    ok(offers[ids[0]].offer.every((x) => x.startsWith('rogue-')) && offers[ids[1]].offer.every((x) => x.startsWith('healer-')) && offers[ids[2]].offer.every((x) => x.startsWith('marksman-')),
       'level 2: 3 cards per phone from the own class pool');
     if (shots) { await ada.screenshot({ path: `${shots}/dg-skills-portrait.png` }); await bo.screenshot({ path: `${shots}/dg-skills-landscape.png` }); }
     for (const p of pages) await p.click('#dg-cards .skcard');

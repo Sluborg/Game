@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { blobGrid, blobSvg, CLASS_HATS, clampLook, COLORS, EYES, GRID_H, GRID_W, HAT_OVERHANG, HAT_REST_OVERLAP, HATS, MOUTHS, PART_TABLES, SHAPES } from './blob';
+import { blobGrid, blobSvg, CLASS_HATS, clampLook, COLORS, FACE_DIRS, faceIndex, EYES, GRID_H, GRID_W, HAT_OVERHANG, HAT_REST_OVERLAP, HATS, MOUTHS, PART_TABLES, SHAPES } from './blob';
 
 const diff = (a: (string | null)[][], b: (string | null)[][]) => {
   const out: [number, number][] = [];
@@ -131,6 +131,29 @@ describe('blob', () => {
       expect(d.length, `${CLASS_HATS[c]} on ${SHAPES[s]}`).toBeGreaterThan(20);
       expect(d.filter(([x, y]) => y >= 23 && y <= 40 && x >= 7 && x <= 28), `${CLASS_HATS[c]} on ${SHAPES[s]}`).toEqual([]);
     }
+  });
+
+  it('face direction: every shape/eye/mouth in all 9 directions stays on the body', () => {
+    const opaque = (g: (string | null)[][]) => g.flatMap((r, y) => r.map((c, x) => (c ? `${x},${y}` : ''))).filter(Boolean);
+    for (let s = 0; s < SHAPES.length; s++) for (let e = 0; e < EYES.length; e++) for (let m = 0; m < MOUTHS.length; m += 3) {
+      const look = { color: COLORS[(e + m) % COLORS.length], shape: s, eyes: e, mouth: m, hat: 0 };
+      const centre = new Set(opaque(blobGrid(look)));
+      for (const f of FACE_DIRS) {
+        const out = opaque(blobGrid(look, undefined, f)).filter((k) => !centre.has(k));
+        expect(out, `${SHAPES[s]} ${EYES[e]} ${MOUTHS[m]} ${f.dx},${f.dy}`).toEqual([]);
+      }
+    }
+  });
+
+  it('face direction actually moves the face, and faceIndex maps velocities', () => {
+    const look = { color: COLORS[0], shape: 0, eyes: 0, mouth: 1, hat: 0 };
+    const c = JSON.stringify(blobGrid(look));
+    for (const f of FACE_DIRS.slice(1)) expect(JSON.stringify(blobGrid(look, undefined, f))).not.toBe(c);
+    expect(JSON.stringify(blobGrid(look, undefined, { dx: 0, dy: 0 }))).toBe(c);
+    expect(faceIndex(0, 0)).toBe(0);
+    expect(FACE_DIRS[faceIndex(1, 0)]).toEqual({ dx: 1, dy: 0 });
+    expect(FACE_DIRS[faceIndex(0, -1)]).toEqual({ dx: 0, dy: -1 });
+    expect(FACE_DIRS[faceIndex(-1, 1)]).toEqual({ dx: -1, dy: 1 });
   });
 
   it('the bare body is left/right symmetric', () => {
