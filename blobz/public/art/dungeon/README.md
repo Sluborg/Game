@@ -77,6 +77,7 @@ All three are head-shaped hoods, so they fit every body shape. Krigare keeps the
 |---|---|---|
 | `gear-staff.png` | raised, wind-down, cast forward, follow-through (swing like the sword) | Präst |
 | `gear-bow.png` | idle, drawing, full draw with arrow, release (fixed, pointing forward) | Bågskytt |
+| `gear-crossbow.png` | loaded, aim (slightly raised), fire (bolt gone), reload — alternative to gear-bow (Stefan: crossbow reads better) | Bågskytt |
 | `gear-shield.png` | resting low, raising, block (in front), hold (shield moves, never rotates) | Riddare |
 | `weapon-sword/hammer/spear.png` | see above | Krigare |
 
@@ -106,3 +107,6 @@ Ids were proposed to Code 2; if the dungeon code uses other names, Art renames t
 | `fx-block.png` | 3 x 16x16 | White-gold spark where a hit lands on a shield |
 | `item-ring/helm/gloves/amulet/cape/stone.png` | 16x16 | Loot (ring with red gem, steel helm, mitten, blue amulet, red cape, purple rune stone) |
 | `potion.png` | 16x16 | Red health flask lying on the ground |
+
+`icon-crossbow.png` (20x20, cream): crossbow icon for buttons, alternative to the bow.
+Class-card style variants for the board: `docs/art-review/class-cards-A.png` (blob in action) and `class-cards-B.png` (big symbol), made by `scripts/class_cards.py`; the chosen variant replaces `card-class-*.png`.
