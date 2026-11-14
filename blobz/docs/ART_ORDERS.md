@@ -40,6 +40,7 @@ ChatGPT works only on N-orders (READY ones). New orders only for pieces the pack
 | N-1 | WAITING (game name on the board) | Title header / logo in Ninja Adventure style | `art/logo.png` |
 | N-2 | READY | Start screen background, round 2: LANDSCAPE ONLY (portrait approved 4/5) | `art/title.png` |
 | N-3 | READY | Loading screen, round 4: LANDSCAPE ONLY (portrait round 3 approved) | `art/loading.png`, `art/loading-landscape.png` |
+| N-4 | READY | Hovering weapons sheet (7 weapons) in Ninja style | `dungeon/weapons/*.png` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
@@ -63,6 +64,20 @@ no blur, no anti-aliasing. Reference images (open them): https://raw.githubuserc
 https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/assets/ninja-adventure/preview-part-2.png https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/ninja-overview.png
 The heroes are "blobz": small soft jelly blobs on the same 16 px grid, seen in 3/4 view, two big white eyes, a small
 mouth, optional hat, bright body colours (blue, pink, green, yellow, purple, orange). Reference: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/blobz-v2.png
+```
+
+### N-4 Hovering weapons (7)
+```
+One sprite sheet, 7 columns x 1 row, transparent background (or flat magenta #ff00ff), in the Ninja Adventure style
+(see the style block): crisp pixel art, dark near-black outline, warm colours, no blur, no text.
+These weapons FLOAT beside a small jelly blob (no hands), so draw each one on its own, clear silhouette, no hand grip
+wrapping, each pointing to the RIGHT (horizontal), about 20-28 game pixels long except where noted, same pixel size:
+1 sword (steel blade, gold crossguard), 2 a pair of daggers (two small blades side by side), 3 war hammer (short
+handle, big square head), 4 spear (long, about 32 px, leaf-shaped tip), 5 magic staff (wooden staff with a glowing
+blue gem), 6 crossbow (wooden stock, steel bow, loaded bolt), 7 round shield (wood with a steel rim, seen from the front,
+about 18 px wide).
+Reference for scale and style: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/assets/ninja-adventure/preview-part-1.png and the blobz:
+https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/blobz-v2-final.png
 ```
 
 ### N-1 Title header / logo
