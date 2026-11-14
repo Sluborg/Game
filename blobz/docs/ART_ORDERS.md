@@ -38,9 +38,10 @@ Make ONE image per reply and wait for "next".
 | A-6 | WAITING (Rogue weapon decision) | Weapon cards | `dungeon/card-sword.png`, `card-hammer.png`, `card-spear.png` |
 | A-7 | WAITING (style pick on the board) | Meadow props incl. berry bush | `props/*`, `gather/bush-*` |
 | A-8 | WAITING (variants on the board) | Dungeon buttons, goo enemies, skill icons, back arrow | `dungeon/btn-*`, `enemies/*`, `dungeon/skills/*`, `icons/back.png` |
+| A-9 | READY | Bärregn mini game: bomb, falling berries, basket, plop, fence | `mini/bomb.png`, `mini/berries.png`, `mini/basket.png`, `mini/plop.png`, `mini/fence-*.png` |
 
 ### A-1 Class cards, round 2
-Classes: Healer, Rogue, Tank, Archer.
+Classes: Healer, Rogue, Tank, Archer (final names for now).
 ```
 Redo the 4 class cards with these changes. Keep everything else from the last image: the same parchment card
 frame, cute round blobz with big white eyes and small smiles, crisp pixel art, 1px dark plum outline, no text.
@@ -121,6 +122,25 @@ The prompt is written after Stefan picks a variant on the decision board.
 Variant sheets on the board (A = today, B and C = new directions):
 `docs/art-review/variants-buttons.png` (dungeon buttons), `variants-goo.png` (goo small/medium/boss),
 `variants-skills.png` (skill icon style, 4 examples), `variants-back.png` (lobby/back arrow).
+
+
+### A-9 Bärregn mini game sheet
+Small game objects, they are shown small on a phone: big clear shapes, thick plum outline, high contrast.
+```
+Order A-9: objects for a mini game where berries and bombs rain down on a fenced meadow and the blobz catch the
+berries. One sheet, 4 columns x 2 rows, in this order:
+1 a round black cartoon bomb with a short fuse and a bright spark on the fuse tip (small, about the size of a coin),
+2 a cluster of three shiny red berries on a tiny green stem, falling (no motion lines),
+3 a small woven wicker basket full of red berries, seen from the front (for a score counter),
+4 a small blue water "plop" splash on the ground (where a missed berry lands), 3 frames side by side growing then fading,
+5 a short straight wooden fence piece, horizontal (posts and two rails),
+6 a short straight wooden fence piece, vertical (seen from above at 3/4, same wood),
+7 a wooden fence corner piece,
+8 a closed wooden fence gate.
+Fence pieces must line up so they can be repeated in a row around a square arena.
+```
+Art slices into `public/art/mini/` (bomb ~12x12, berries ~10x10, basket ~12x10, plop 3 frames, fence pieces as
+16 px tiles) and tells Code the sizes.
 
 ## For Stefan: delivering images
 Save each image as PNG and send it to the Lead session in Claude Code with the order id ("A-1").
