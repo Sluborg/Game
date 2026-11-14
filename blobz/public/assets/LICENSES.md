@@ -36,3 +36,4 @@ Blobz are drawn in code (`src/blob.ts`) as pixel SVG/canvas: color, eyes, mouth 
 | `art/props-winter/tree-snow-round.png`, `ice.png`, `igloo.png` | Own art (CC0) by `scripts/winter_props.py`; snowy round tree is `art/props/tree-green.png` with a snow cap | Snow map props, igloo = base (same 19x17 footprint as `icons/house.png`) |
 | `art/gather/*.png` | Own art (CC0) by `scripts/gather_art.py` | Tools, action icons, berry bush, rubble, chips, items, HUD (resources, sun, day bar, stars, quest card) |
 | `art/base/*.png` | Own art (CC0) by `scripts/base_art.py` | Base cottage (3 levels), base buildings (site + finished), build spot marker |
+| `art/dungeon/*.png` | Own art (CC0) by `scripts/dungeon_art.py` (hit flashes are recoloured `art/enemies/goo-*.png`) | Weapons, picker cards, attack icon, entrance and stairs, hearts, XP bar, level badge, KO/revive, slam warning, shockwave, chest |
