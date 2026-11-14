@@ -12,7 +12,7 @@ deploy branch `claude/mobile-game-5-players-8qthjq` (cd8ceb3) plus the heads of 
 - Owner = who swaps the reference: Code (meadow, UI, `game.ts`/`main.ts`/`style.css`/`index.html`), Code 2 (`dungeon*`).
 - Tick the box when the game no longer loads the old file.
 
-**Counts: 209 total / 169 mapped to Ninja / 22 Ninja stand-ins / 4 pending Art rating / 3 gaps / 11 done.**
+**Counts: 209 total / 169 mapped to Ninja / 22 Ninja stand-ins / 4 pending Art rating / 0 gaps / 14 done.**
 
 
 ## Screens
@@ -45,7 +45,7 @@ deploy branch `claude/mobile-game-5-players-8qthjq` (cd8ceb3) plus the heads of 
 | [ ] | `art/ui/stick-base.png` | joystick base #stick | Code | Ui/Receptacle/Receptacle Sphere/BackgroundWood.png 32x32 (substitute, no real stick) |
 | [ ] | `art/ui/stick-knob.png` | joystick knob #knob | Code | Ui/Receptacle/Receptacle Sphere/ProgressYellow.png 22x22 |
 | [ ] | `art/icons/back.png` | back buttons (data-icon, dungeonUi) | Code + Code 2 | Ui/Theme/Theme Wood/arrow_left.png 16x16 |
-| [ ] | `art/icons/check.png` | done button, checked option (data-icon, style.css), Bärregn intro | Code | GAP: ChatGPT N-10 (no check mark in Ninja; YesButton.png has English text) |
+| [x] | `art/icons/check.png` | done button, checked option (data-icon, style.css), Bärregn intro | Code | DONE: ChatGPT N-10 (19x16, scripts/slice_n_orders.py) |
 | [ ] | `art/icons/dice.png` | random skin button (data-icon) | Code | Items/Object/Dice 6.png |
 | [ ] | `art/icons/dash-arrow.png` | dash button icon (data-icon, controls.ts, dungeonUi) | Code + Code 2 | Ui/Skill Icon/Items & Weapon/Boot.png 24x24 (or Ui/Theme/Theme Wood/arrow_right.png) |
 | [ ] | `art/icons/house.png` | new-village chip, home edge arrow, house marker (game.ts ic-house) | Code | STAND-IN: Backgrounds/Tilesets/TilesetHouse.png round straw hut 48,128,47,32 (small, reads as home) |
@@ -64,8 +64,8 @@ deploy branch `claude/mobile-game-5-players-8qthjq` (cd8ceb3) plus the heads of 
 | [ ] | `art/gather/daybar-fill.png` | day bar fill | Code | Ui/Receptacle/LifeBarMiniProgress.png recoloured yellow #ffe18d |
 | [ ] | `art/gather/bar-fill-green.png` | quest bar fill | Code | Ui/Receptacle/LifeBarMiniProgress.png recoloured green |
 | [ ] | `art/gather/sun.png` | day bar sun, end screen sun | Code | Ui/Skill Icon/Meteo/Sun.png 24x24 |
-| [ ] | `art/gather/star.png` | quest / Bärregn / end stars (main.ts) | Code | GAP: ChatGPT N-10 (Ninja has only a dark star in a speech bubble, emote29, too weak for score stars) |
-| [ ] | `art/gather/star-empty.png` | empty stars (index.html, main.ts) | Code | GAP: ChatGPT N-10 (with star.png) |
+| [x] | `art/gather/star.png` | quest / Bärregn / end stars (main.ts) | Code | DONE: ChatGPT N-10 (19x17; old was 11x11, check CSS size) |
+| [x] | `art/gather/star-empty.png` | empty stars (index.html, main.ts) | Code | DONE: ChatGPT N-10 (19x17) |
 | [ ] | `art/fine/icons/quest-home.png` | quest title "bring home" (index.html) | Code | STAND-IN: Backgrounds/Tilesets/TilesetHouse.png round straw hut 48,128,47,32 |
 | [ ] | `art/gather/btn-axe.png` | action button with axe (controls.ts) | Code | Ui/Skill Icon/Job & Action/Harvest.png 24x24 (or Items/Tool/Axe.png) |
 | [ ] | `art/gather/btn-pickaxe.png` | action button with pickaxe | Code | Ui/Skill Icon/Job & Action/Mine.png 24x24 |
