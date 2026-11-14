@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { KEYS } from './i18n';
 import {
   bossHp, CLASS_HP, CLASSES, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, GH, GW,
@@ -359,7 +359,9 @@ describe('dungeon', () => {
         if (key === 'killHeal') {
           const x = mod; x.d.heroes.a.hp = 10;
           goo(x.d, 0, x.st.x + 30, x.st.y, { ...still, hp: 1, mx: 1 });
+          const rnd = vi.spyOn(Math, 'random').mockReturnValue(0.99); // no potion drop (4 %) to heal on top
           run1(x.d, [x.a]);
+          rnd.mockRestore();
           expect(x.d.heroes.a.hp).toBe(10 + val);
           continue;
         }

@@ -12,6 +12,9 @@ const base = process.argv[2] || 'http://localhost:4173/';
       ?? window.__blobzView.players[1].id);
     // hold Ada in a steady glide on the host (position + velocity every 5 ms), read her face on Ada's phone
     await host.evaluate(() => {
+      // nothing to bounce off around the test spot (a seeded tree there flips vx on a collision)
+      const st = window.__blobz.state;
+      st.trees = st.trees.filter((t) => Math.hypot(t.x - 640, t.y - 680) > 160);
       window.__hold = null;
       setInterval(() => { const h = window.__hold; if (h) Object.assign(window.__blobz.state.players[1], { x: 640, y: 680, vx: h[0], vy: h[1] }); }, 5);
     });

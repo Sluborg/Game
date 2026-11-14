@@ -51,13 +51,14 @@ const angDiff = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)))
         if (shots) await p.screenshot({ path: `${shots}/dg-attack-${w}-${i ? 'landscape' : 'portrait'}.png` });
       }
     }
-    // Art's face direction: the eyes follow the glide (FACE_DIRS: 3 = east, 7 = west, 5 = south, 0 = still)
-    for (const [vx, vy, want] of [[160, 0, 3], [-160, 0, 7], [0, 160, 5], [0, 0, 0]]) {
+    // blobz v2: the body mirrors with the glide (left = flipX), keeps its facing when gliding straight down or
+    // standing still, and shows the glide frame (1) while moving, the idle frame (0) when still
+    for (const [vx, vy, facing, frame] of [[160, 0, 'right', 1], [-160, 0, 'left', 1], [0, 160, 'left', 1], [0, 0, 'left', 0], [160, 0, 'right', 1]]) {
       await sim(host, (s) => { s.dg.enemies = []; s.players.forEach((q) => { const h = s.dg.heroes[q.id]; h.atkCd = 1e9; }); });
       for (let k = 0; k < 8; k++) { await sim(host, (s, a) => { const q = s.players[0]; q.x = s.dg.map.start.x; q.y = s.dg.map.start.y; q.vx = a.vx; q.vy = a.vy; }, { vx, vy }); await host.waitForTimeout(40); }
       const f = await host.evaluate((id) => window.__dgFace?.[id], ids[0]);
       const g = await ada.evaluate((id) => window.__dgFace?.[id], ids[0]);
-      ok(f === want && g === want, `blob face looks ${['still', '', '', 'east', '', 'south', '', 'west'][want]} (host ${f}, joiner ${g})`);
+      ok(f?.facing === facing && g?.facing === facing && f?.frame === frame && g?.frame === frame, `blob v${vx},${vy}: faces ${facing}, frame ${frame} (host ${JSON.stringify(f)}, joiner ${JSON.stringify(g)})`);
     }
     console.log('\ndungeon weapons e2e passed');
   } catch (e) {

@@ -699,3 +699,39 @@ body { font-weight: 500; } /* Fredoka (Stefan's pick on the board) */
   #lobby-list .blob { width: 32px; height: 36px; }
   .lanrow .blob { width: 32px; height: 36px; }
 }
+
+/* start screen in portrait (ChatGPT N-2, Stefan 4/5): the village at the bottom, the empty sky holds the card.
+   Landscape keeps title.png until the landscape version arrives. */
+@media (orientation: portrait) {
+  #menu.screen { background: #45b2fc url('/art/start-portrait.png') center bottom / cover no-repeat; }
+}
+/* portrait start: a compact card that stays in the sky so the village in the art shows below */
+@media (orientation: portrait) {
+  #menu .home { display: flex; flex-flow: row wrap; justify-content: center; align-items: center; row-gap: 8px; column-gap: 6px; padding-bottom: 6px; }
+  #menu .home > * { flex: 1 1 100%; }
+  #menu .home .logo-img { max-width: 220px; margin-top: -8px; }
+  #menu .home .me { padding-top: 0; padding-bottom: 0; }
+  #menu .home .me .blob { width: 48px; height: 54px; }
+  #menu .home .actions { gap: 8px; }
+  #menu .home .actions .msg { min-height: 0; }
+  #menu .home .version, #menu .home .langtog { flex: 0 0 auto; margin: 0; }
+}
+
+/* loading screen in portrait (ChatGPT N-3 r3, approved): the cave + blobz on top, logo + bar in the calm lower
+   third. Landscape keeps loading.png until the landscape version arrives. */
+@media (orientation: portrait) {
+  #loading { background: #263f24 url('/art/loading-portrait.png') 58% top / cover no-repeat;
+    align-items: flex-end; padding-top: 0; padding-bottom: max(9vh, env(safe-area-inset-bottom)); }
+}
+
+/* loading screen in landscape (ChatGPT N-3 landscape, Stefan 4/5): the cave scene fills the screen, a small logo +
+   bar sit in the calm grass at the bottom */
+@media (orientation: landscape) {
+  #loading { background: #213e1f url('/art/loading-landscape.png') center bottom / cover no-repeat;
+    align-items: flex-end; justify-content: flex-end;
+    padding: 0 max(5vw, env(safe-area-inset-right)) max(3vh, env(safe-area-inset-bottom)) 0; }
+  #loading::after { content: none; }
+  #loading .load-ui { width: min(34vw, 260px); gap: 4px; }
+  #loading-logo { width: 70%; }
+  #loading-text { font-size: 16px; }
+}

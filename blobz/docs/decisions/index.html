@@ -263,7 +263,8 @@ function renderQuestion(q) {
         const bad = f.flagged.includes(c.id);
         const b = el('button', { type: 'button', 'aria-pressed': String(bad), title: c.label || c.id,
           style: 'position:relative;padding:2px;border:0;cursor:pointer;background:' + (bad ? '#f6c9c4' : '#fff7e6') + ';box-shadow:0 0 0 3px ' + (bad ? '#e0574f' : 'var(--cream-2)') + ' inset' });
-        b.append(el('img', { src: c.img, alt: c.label || c.id, style: 'width:100%;height:auto;image-rendering:pixelated;display:block' }));
+        if (q.sheet) b.append(el('div', { role: 'img', 'aria-label': c.label || c.id, style: 'width:100%;aspect-ratio:1;image-rendering:pixelated;background:url(' + q.sheet.src + ') no-repeat;background-size:' + (q.sheet.cols * 100) + '% ' + (q.sheet.rows * 100) + '%;background-position:' + (q.sheet.cols > 1 ? c.col / (q.sheet.cols - 1) * 100 : 0) + '% ' + (q.sheet.rows > 1 ? c.row / (q.sheet.rows - 1) * 100 : 0) + '%' }));
+        else b.append(el('img', { src: c.img, alt: c.label || c.id, style: 'width:100%;height:auto;image-rendering:pixelated;display:block' }));
         if (bad) b.append(el('span', { text: '✕', style: 'position:absolute;top:0;right:4px;color:#e0574f;font:700 20px var(--display)' }));
         b.addEventListener('click', () => { const fl = new Set(f.flagged); bad ? fl.delete(c.id) : fl.add(c.id); f.flagged = [...fl]; state.flags[q.id] = f; renderQuestions(); save({ flagged: f.flagged, notes: f.notes }, st); });
         line.append(b);

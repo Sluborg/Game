@@ -10,10 +10,13 @@ Owners: Art keeps the queue and statuses current; Lead reviews. Stefan only says
    Make the FIRST order in the queue with status **READY** that you have not already made in this chat
    **in its current round** (an order whose title says "round N" higher than the one you made must be made again).
    Skip WAITING and DONE orders.
-3. ONE image per reply. Apply the style block below to every image.
+3. Start every reply with one line: "Order <id> - <N> READY orders left in the queue after this one."
+   Then ONE image per reply. Apply the style block below to every image.
 4. End every reply with one line: "<order id> done. Next READY: <order id or 'none'>. Type next."
-5. If Stefan writes "redo", make the same order again with his fixes.
-6. Reference images: when an order lists a reference URL, open it and match it.
+5. If Stefan writes "next all": make every remaining READY order one after another in the same chat, one image per
+   reply, without waiting for "next" between them, each starting with the line from rule 3.
+6. If Stefan writes "redo", make the same order again with his fixes.
+7. Reference images: when an order lists a reference URL, open it and match it.
 
 ## Style block (applies to every order)
 ```
@@ -33,13 +36,14 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. All orders below are cancelled.
-ChatGPT has no READY order. New orders only for pieces the pack lacks.**
+ChatGPT works only on N-orders (READY ones). New orders only for pieces the pack lacks.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
-| N-1 | WAITING (game name on the board) | Title header / logo in Ninja Adventure style | `art/logo.png` |
-| N-2 | WAITING (after N-1 is rated 4-5) | Start screen background (portrait + landscape) | `art/title.png` |
-| N-3 | WAITING (after N-2 is rated 4-5) | Loading screen (portrait + landscape) | `art/loading.png`, `art/loading-landscape.png` |
+| N-1 | DONE (C chosen) | Title header / logo in Ninja Adventure style | `art/logo.png` |
+| N-2 | READY | Start screen background, round 2: LANDSCAPE ONLY (portrait approved 4/5) | `art/title.png` |
+| N-3 | DONE | Loading screen (portrait + landscape approved) | `art/loading.png`, `art/loading-landscape.png` |
+| N-4 | READY | Hovering weapons, round 2: CROSSBOW ONLY (bolt further back) | `dungeon/weapons/*.png` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
@@ -65,15 +69,34 @@ The heroes are "blobz": small soft jelly blobs on the same 16 px grid, seen in 3
 mouth, optional hat, bright body colours (blue, pink, green, yellow, purple, orange). Reference: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/blobz-v2.png
 ```
 
+### N-4 Hovering weapons (7)
+Round 2 (do this): redraw ONLY the crossbow from your weapons sheet, same style, size and direction (pointing right),
+with ONE change: the bolt sits further back, nocked at the string/stock, its tip just past the front of the bow
+(not sticking far out). Reference: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n4-weapons.png
+```
+One sprite sheet, 7 columns x 1 row, transparent background (or flat magenta #ff00ff), in the Ninja Adventure style
+(see the style block): crisp pixel art, dark near-black outline, warm colours, no blur, no text.
+These weapons FLOAT beside a small jelly blob (no hands), so draw each one on its own, clear silhouette, no hand grip
+wrapping, each pointing to the RIGHT (horizontal), about 20-28 game pixels long except where noted, same pixel size:
+1 sword (steel blade, gold crossguard), 2 a pair of daggers (two small blades side by side), 3 war hammer (short
+handle, big square head), 4 spear (long, about 32 px, leaf-shaped tip), 5 magic staff (wooden staff with a glowing
+blue gem), 6 crossbow (wooden stock, steel bow, loaded bolt), 7 round shield (wood with a steel rim, seen from the front,
+about 18 px wide).
+Reference for scale and style: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/assets/ninja-adventure/preview-part-1.png and the blobz:
+https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/blobz-v2-final.png
+```
+
 ### N-1 Title header / logo
 ```
-A game logo for a cozy co-op adventure called "<NAME>" (the exact word is in this file's queue note once chosen).
+A game logo with the title "Blobz" and, smaller underneath, the subtitle "Fantasy Co-op".
 Chunky rounded pixel letters in the Ninja Adventure style, warm orange/cream letters with the dark outline and a
 small drop shadow, one small blob peeking over a letter. Transparent background (or flat magenta #ff00ff).
 Wide format 3:1. Make 3 variants side by side on one image so Stefan can pick.
 ```
 
 ### N-2 Start screen background
+Round 2: make ONLY the landscape 16:9 version of the approved portrait image (same village, cottage, blobz, path,
+pond). Reference: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n2-start-portrait.png
 ```
 A cozy scene for the start screen, made only of Ninja Adventure style tiles and props: a sunny village meadow with a
 small orange-roofed cottage, trees, a path, flowers, a pond. 4-5 blobz having fun (one waving, one carrying wood, one
@@ -82,6 +105,13 @@ scene landscape 16:9 with key content in the central 60%. No text.
 ```
 
 ### N-3 Loading screen
+Round 4 (do this, after N-2 landscape): make ONLY the landscape 16:9 version of the approved portrait (reference below):
+same skull entrance, dusk, torches with soft light, blobz with weapons on the path, calm lower third.
+Reference: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n3-loading-portrait-r3.png
+Round 2 (do this): redo the portrait image you made for N-3 (reference below) with ONE change: the stone face above
+the dungeon entrance must look SCARY and ANGRY (frowning heavy brows, glowing red eyes, jagged teeth or a snarl), not
+happy. Keep everything else the same: dusk sky, torches, blobz with their weapons on the path, calm lower third.
+Reference: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n3-loading-portrait.png
 ```
 Same world as N-2, a different moment: blobz walking toward a dungeon entrance at dusk with lanterns, or gathering
 around a campfire. Calm lower third for a progress bar. Portrait 9:16 and landscape 16:9. No text.
