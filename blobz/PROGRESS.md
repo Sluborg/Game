@@ -9,4 +9,5 @@
   3-minute round, team score with 1-3 stars, skins (8 colors x 5 hats), sound blips.
 - Verified: `npm run build` green, 5 vitest tests, headless Chromium with 3 players (host + 2 joiners):
   lobby, sync, movement, pickup, end screen. Screenshots in `docs/screenshots/`.
+- 2026-11-14: switched to Kenney pixel art: Tiny Dungeon slime recolored per skin + pixel hats, potions as power-ups, treasure chest as co-op carry, Tiny Farm decor, Tiny Battle flags at base. Packs added: Tiny Dungeon, Farm, Battle, Ski (CC0).
 - Open: real-phone test on home Wi-Fi; tune star thresholds after first family session.

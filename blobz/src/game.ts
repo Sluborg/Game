@@ -1,6 +1,6 @@
 // Phaser scene: renders a View (from the host sim or from network snapshots).
 import Phaser from 'phaser';
-import { blobCanvas } from './art';
+import { blobCanvas, pixelBlob, PIXEL_H } from './art';
 import { sfx } from './sfx';
 import { BASE, makeTrees, rng, WORLD_H, WORLD_W } from './sim';
 import type { FxEvent, Input, ItemKind, PlayerInfo, View } from './sim';
@@ -19,6 +19,9 @@ export interface Session {
 const T = 32; // rendered tile size (16px tiles at 2x)
 const ITEM_FRAME: Record<ItemKind, number> = { wood: 106, shroom: 29, coin: 93 };
 const TREE_FRAMES = [16, 28, 27];
+const BLOB_SCALE = 3.2;
+// decorations from Tiny Farm (sheet 'farm') and Tiny Town ('town')
+const DECOR: [string, number][] = [['farm', 39], ['farm', 52], ['farm', 53], ['farm', 83], ['farm', 64], ['town', 5], ['town', 17], ['farm', 78]];
 
 interface BlobGfx {
   shadow: Phaser.GameObjects.Ellipse;
@@ -32,13 +35,15 @@ interface BlobGfx {
   trail: { x: number; y: number; a: number }[];
   texKey: string;
   blinkT: number;
+  baseScale: number;
+  pixel: boolean;
 }
 
 export class GameScene extends Phaser.Scene {
   private s!: Session;
   private blobs = new Map<string, BlobGfx>();
   private items = new Map<number, Phaser.GameObjects.Image>();
-  private gems = new Map<number, { g: Phaser.GameObjects.Graphics; t: Phaser.GameObjects.Text; x: number; y: number }>();
+  private gems = new Map<number, { g: Phaser.GameObjects.Graphics; img: Phaser.GameObjects.Image; t: Phaser.GameObjects.Text; x: number; y: number }>();
   private powers = new Map<number, Phaser.GameObjects.Container>();
   private trailG!: Phaser.GameObjects.Graphics;
   private baseG!: Phaser.GameObjects.Graphics;
@@ -56,11 +61,15 @@ export class GameScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.spritesheet('town', 'assets/kenney-tiny-town/tilemap_packed.png', { frameWidth: 16, frameHeight: 16 });
+    const sheet = (key: string, dir: string) => this.load.spritesheet(key, `assets/${dir}/tilemap_packed.png`, { frameWidth: 16, frameHeight: 16 });
+    sheet('town', 'kenney-tiny-town');
+    sheet('dungeon', 'kenney-tiny-dungeon');
+    sheet('farm', 'kenney-tiny-farm');
+    sheet('battle', 'kenney-tiny-battle');
   }
 
   create() {
-    this.textures.get('town').setFilter(Phaser.Textures.FilterMode.NEAREST);
+    for (const k of ['town', 'dungeon', 'farm', 'battle']) this.textures.get(k).setFilter(Phaser.Textures.FilterMode.NEAREST);
     const r = rng(this.s.seed * 7 + 3);
 
     // ground: grass with variety + dirt yard around base
@@ -92,12 +101,22 @@ export class GameScene extends Phaser.Scene {
     house.forEach((row, ry) => row.forEach((f, rx) => {
       this.add.image(BASE.x - T + rx * T, BASE.y - 2.2 * T + ry * T, 'town', f).setScale(2).setDepth(BASE.y - 40);
     }));
+    for (const sx of [-1, 1]) this.add.image(BASE.x + sx * 62, BASE.y - 40, 'battle', 70).setScale(2.5).setOrigin(0.5, 0.9).setDepth(BASE.y - 40);
     this.add.text(BASE.x, BASE.y + 52, 'BAS', { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '18px', color: '#fffaf0', fontStyle: 'bold', stroke: '#6b4a2a', strokeThickness: 4 }).setOrigin(0.5).setDepth(-800);
 
     // trees (same layout as the host sim, from the shared seed)
     for (const t of makeTrees(this.s.seed)) {
       this.add.ellipse(t.x, t.y + 6, 34, 12, 0x000000, 0.18).setDepth(-500);
       this.add.image(t.x, t.y + 8, 'town', TREE_FRAMES[t.kind]).setScale(3).setOrigin(0.5, 0.85).setDepth(t.y);
+    }
+
+    // flat decorations (no collision), from the same seed on every phone
+    const trees = makeTrees(this.s.seed);
+    for (let i = 0; i < 46; i++) {
+      const x = 30 + r() * (WORLD_W - 60), y = 30 + r() * (WORLD_H - 60);
+      const [key, f] = DECOR[Math.floor(r() * DECOR.length)];
+      if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 30 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 40)) continue;
+      this.add.image(x, y, key, f).setScale(2).setDepth(-600);
     }
 
     this.trailG = this.add.graphics().setDepth(-400);
@@ -161,15 +180,16 @@ export class GameScene extends Phaser.Scene {
       seenG.add(g.id);
       let e = this.gems.get(g.id);
       if (!e) {
-        e = { g: this.add.graphics(), t: this.add.text(0, 0, '', { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '16px', color: '#fff', fontStyle: 'bold', stroke: '#1d4f7a', strokeThickness: 4 }).setOrigin(0.5), x: g.x, y: g.y };
+        e = { g: this.add.graphics(), img: this.add.image(g.x, g.y, 'dungeon', 89).setScale(3.4), t: this.add.text(0, 0, '', { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '16px', color: '#fff', fontStyle: 'bold', stroke: '#1d4f7a', strokeThickness: 4 }).setOrigin(0.5), x: g.x, y: g.y };
         this.gems.set(g.id, e);
       }
       e.x += (g.x - e.x) * (smooth ? k : 1);
       e.y += (g.y - e.y) * (smooth ? k : 1);
       this.drawGem(e.g, e.x, e.y, g.holders, now);
+      e.img.setPosition(e.x, e.y - 4 + (g.holders >= 2 ? Math.sin(now / 90) * 2 : 0)).setDepth(e.y);
       e.t.setPosition(e.x, e.y - 44).setText(g.holders >= 2 ? '💪 ' + g.holders : '👥 ' + g.holders + '/2').setDepth(e.y + 1000);
     }
-    for (const [id, e] of this.gems) if (!seenG.has(id)) { e.g.destroy(); e.t.destroy(); this.gems.delete(id); }
+    for (const [id, e] of this.gems) if (!seenG.has(id)) { e.g.destroy(); e.img.destroy(); e.t.destroy(); this.gems.delete(id); }
 
     // ---- power-ups ----
     const seenW = new Set<number>();
@@ -177,8 +197,8 @@ export class GameScene extends Phaser.Scene {
       seenW.add(w.id);
       let c = this.powers.get(w.id);
       if (!c) {
-        const bg = this.add.circle(0, 0, 17, w.kind === 'speed' ? 0xffc93c : 0xff6b8b).setStrokeStyle(3, 0xffffff);
-        const ic = this.add.text(0, 0, w.kind === 'speed' ? '⚡' : '🧲', { fontSize: '20px' }).setOrigin(0.5);
+        const bg = this.add.circle(0, 0, 18, w.kind === 'speed' ? 0x5ec8ff : 0xff6b8b, 0.35).setStrokeStyle(2, 0xffffff, 0.8);
+        const ic = this.add.image(0, -2, 'dungeon', w.kind === 'speed' ? 116 : 115).setScale(2.4);
         c = this.add.container(w.x, w.y, [bg, ic]);
         this.powers.set(w.id, c);
       }
@@ -195,15 +215,21 @@ export class GameScene extends Phaser.Scene {
       const info = infos.get(p.id) ?? { id: p.id, name: '?', color: 0xcccccc, hat: 0 };
       let b = this.blobs.get(p.id);
       const texKey = `blob-${info.color}-${info.hat}`;
-      if (!this.textures.exists(texKey)) this.textures.addCanvas(texKey, blobCanvas(info.color, info.hat, 96));
+      if (!this.textures.exists(texKey)) {
+        const px = pixelBlob(info.color, info.hat);
+        this.textures.addCanvas(texKey, px ?? blobCanvas(info.color, info.hat, 96));
+        if (px) this.textures.get(texKey).setFilter(Phaser.Textures.FilterMode.NEAREST);
+      }
+      const pixel = this.textures.get(texKey).getSourceImage().width === 16;
+      const baseScale = pixel ? BLOB_SCALE : 0.6;
       if (!b) {
         b = {
           shadow: this.add.ellipse(p.x, p.y, 34, 12, 0x000000, 0.22),
           aura: this.add.graphics(),
-          body: this.add.image(p.x, p.y, texKey).setOrigin(0.5, 0.62).setScale(0.6),
+          body: this.add.image(p.x, p.y, texKey).setOrigin(0.5, pixel ? 14 / PIXEL_H : 0.62).setScale(baseScale),
           eyes: this.add.graphics(),
           label: this.add.text(p.x, p.y, info.name, { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '13px', color: '#ffffff', fontStyle: 'bold', stroke: '#000000', strokeThickness: 3 }).setOrigin(0.5),
-          carry: [], x: p.x, y: p.y, vx: 0, vy: 0, look: { x: 0, y: 1 }, trail: [], texKey, blinkT: 2 + Math.random() * 3,
+          carry: [], x: p.x, y: p.y, vx: 0, vy: 0, look: { x: 0, y: 1 }, trail: [], texKey, blinkT: 2 + Math.random() * 3, baseScale, pixel,
         };
         this.blobs.set(p.id, b);
       }
@@ -243,7 +269,7 @@ export class GameScene extends Phaser.Scene {
     const stretch = Math.min(0.18, sp / 1600);
     b.shadow.setPosition(b.x, b.y + 12).setDepth(b.y - 20).setScale(1 - hover * 0.03, 1);
     b.body.setPosition(b.x, b.y - 4 + hover).setDepth(b.y);
-    b.body.setScale(0.6 * (1 + stretch), 0.6 * (1 - stretch * 0.6));
+    b.body.setScale(b.baseScale * (1 + stretch), b.baseScale * (1 - stretch * 0.6));
     b.body.setRotation(Phaser.Math.Clamp(b.vx / 1400, -0.18, 0.18));
 
     // eyes follow movement direction
@@ -253,7 +279,7 @@ export class GameScene extends Phaser.Scene {
     if (b.blinkT < 0) b.blinkT = 2 + Math.random() * 4;
     const ex = b.x + b.look.x * 4, ey = b.y - 10 + hover + b.look.y * 3;
     b.eyes.clear().setDepth(b.y + 0.5);
-    for (const s of [-1, 1]) {
+    if (!b.pixel) for (const s of [-1, 1]) {
       if (blink) { b.eyes.fillStyle(0x222222, 1).fillRect(ex + s * 6 - 4, ey - 1, 8, 2); continue; }
       b.eyes.fillStyle(0xffffff, 1).fillEllipse(ex + s * 6, ey, 9, 11);
       b.eyes.fillStyle(0x222222, 1).fillCircle(ex + s * 6 + b.look.x * 2, ey + b.look.y * 2, 2.6);
@@ -263,7 +289,7 @@ export class GameScene extends Phaser.Scene {
     b.aura.clear().setDepth(b.y - 1);
     if (p.boostT > 0) b.aura.lineStyle(3, 0xffc93c, 0.8).strokeCircle(b.x, b.y - 4 + hover, 26 + Math.sin(now / 60) * 2);
     if (p.magnetT > 0) b.aura.lineStyle(2, 0xff6b8b, 0.5).strokeCircle(b.x, b.y, 60 + Math.sin(now / 200) * 6);
-    if (isMe) b.aura.fillStyle(0xffffff, 0.9).fillTriangle(b.x - 6, b.y - 52 + hover, b.x + 6, b.y - 52 + hover, b.x, b.y - 44 + hover);
+    if (isMe) b.aura.fillStyle(0xffffff, 0.9).fillTriangle(b.x - 6, b.y - 60 + hover, b.x + 6, b.y - 60 + hover, b.x, b.y - 52 + hover);
 
     b.label.setPosition(b.x, b.y + 24).setDepth(b.y + 2);
 
@@ -273,21 +299,16 @@ export class GameScene extends Phaser.Scene {
     p.carry.forEach((k, i) => {
       const img = b.carry[i];
       img.setFrame(ITEM_FRAME[k]);
-      img.setPosition(b.x + (i - (p.carry.length - 1) / 2) * 14, b.y - 38 + hover - Math.abs(i - 1) * 2).setDepth(b.y + 3);
+      img.setPosition(b.x + (i - (p.carry.length - 1) / 2) * 14, b.y - 44 + hover - Math.abs(i - 1) * 2).setDepth(b.y + 3);
     });
   }
 
   private drawGem(g: Phaser.GameObjects.Graphics, x: number, y: number, holders: number, now: number) {
-    const bob = Math.sin(now / 300) * 3;
-    g.clear().setDepth(y);
-    g.fillStyle(0x000000, 0.2).fillEllipse(x, y + 18, 40, 12);
-    if (holders >= 2) g.fillStyle(0x9be7ff, 0.25 + 0.15 * Math.sin(now / 100)).fillCircle(x, y + bob, 40);
-    else g.lineStyle(2, 0xffffff, 0.35).strokeCircle(x, y, 62);
-    const yy = y + bob - 6;
-    g.fillStyle(0x5ec8ff, 1).fillPoints([{ x: x, y: yy - 26 }, { x: x + 20, y: yy - 6 }, { x: x, y: yy + 22 }, { x: x - 20, y: yy - 6 }], true);
-    g.fillStyle(0xbdf0ff, 1).fillPoints([{ x: x, y: yy - 26 }, { x: x + 20, y: yy - 6 }, { x: x, y: yy - 2 }, { x: x - 20, y: yy - 6 }], true);
-    g.lineStyle(2, 0x1d6fa8, 1).strokePoints([{ x: x, y: yy - 26 }, { x: x + 20, y: yy - 6 }, { x: x, y: yy + 22 }, { x: x - 20, y: yy - 6 }], true);
-    g.fillStyle(0xffffff, 0.9).fillCircle(x - 6, yy - 12, 3);
+    // treasure chest (Tiny Dungeon) is a separate image; this draws its shadow + carry ring
+    g.clear().setDepth(y - 1);
+    g.fillStyle(0x000000, 0.22).fillEllipse(x, y + 20, 46, 12);
+    if (holders >= 2) g.fillStyle(0xffe08a, 0.25 + 0.15 * Math.sin(now / 100)).fillCircle(x, y, 40);
+    else g.lineStyle(2, 0xffffff, 0.4 + 0.2 * Math.sin(now / 300)).strokeCircle(x, y, 62);
   }
 
   private playFx(f: FxEvent) {

@@ -29,7 +29,7 @@ html, body {
 h2 { margin: 0; font-size: 30px; }
 .tag { margin: 0; color: var(--muted); font-size: 15px; }
 .tag.small { font-size: 13px; }
-#preview { align-self: center; width: 120px; height: 120px; }
+#preview { align-self: center; width: 120px; height: 120px; image-rendering: pixelated; }
 input {
   font: inherit; font-size: 20px; padding: 10px 12px; border-radius: 14px; border: 3px solid #e3dccb;
   text-align: center; width: 100%; background: #fff; color: var(--ink); touch-action: manipulation;
@@ -62,7 +62,7 @@ button.link { font: inherit; background: none; border: 0; color: var(--muted); t
 .code { font-size: 56px; font-weight: bold; letter-spacing: 8px; color: var(--accent); }
 #lobby-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
 #lobby-list li { display: flex; align-items: center; gap: 10px; padding: 6px 10px; background: #fff; border-radius: 12px; font-size: 18px; }
-#lobby-list canvas { width: 36px; height: 36px; }
+#lobby-list canvas { width: 48px; height: 48px; image-rendering: pixelated; }
 .stars { font-size: 56px; color: #f5b301; letter-spacing: 6px; }
 
 /* HUD */

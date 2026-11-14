@@ -109,3 +109,76 @@ export function previewInto(canvas: HTMLCanvasElement, color: number, hat: numbe
   drawBlob(ctx, s / 2, s * 0.62, s * 0.3, color, hat);
   drawEyes(ctx, s / 2, s * 0.62, s * 0.3);
 }
+
+// ---------- Pixel blob: Kenney Tiny Dungeon slime, recolored per skin ----------
+const SHEET_URL = 'assets/kenney-tiny-dungeon/tilemap_packed.png';
+const SLIME_TILE = 108; // 12 columns of 16px tiles
+const HEADROOM = 6; // rows above the slime for hats
+export const PIXEL_W = 16;
+export const PIXEL_H = 16 + HEADROOM;
+let sheet: HTMLImageElement | null = null;
+
+export function loadArt(): Promise<void> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => { sheet = img; resolve(); };
+    img.onerror = () => resolve(); // fall back to the drawn blob
+    img.src = SHEET_URL;
+  });
+}
+
+const OUT = '#3f2631';
+const HAT_PIX: { x: number; y: number; rows: string[] }[] = [
+  { x: 0, y: 0, rows: [] },
+  { x: 4, y: 4, rows: ['.O.OO.O.', 'OYOYYOYO', 'OYYYYYYO', 'OYYYYYYO', '.OOOOOO.'] }, // crown
+  { x: 4, y: 4, rows: ['..OOOO..', '.ORRRRO.', 'ORRRRRRO', 'OrrrrrrrrO', '.OOOOOOOO.'] }, // cap
+  { x: 9, y: 4, rows: ['.OWO.', 'OWYWO', '.OWO.', '..G..'] }, // flower
+  { x: 4, y: 3, rows: ['...YY...', '...OO...', '..OPPO..', '..OPYO..', '.OPPPPO.', '.OYPPPO.'] }, // party hat
+];
+const HAT_COL: Record<string, string> = { O: OUT, Y: '#ffd23f', R: '#e63946', r: '#a4161a', W: '#ffffff', G: '#5aa83a', P: '#b18cff' };
+
+function mix(c: number, f: number, toWhite = false) {
+  const ch = (v: number) => Math.round(toWhite ? v + (255 - v) * f : v * f);
+  return [ch((c >> 16) & 255), ch((c >> 8) & 255), ch(c & 255)];
+}
+
+/** 16x22 canvas: recolored slime + pixel hat. Null if the sheet failed to load. */
+export function pixelBlob(color: number, hat: number): HTMLCanvasElement | null {
+  if (!sheet) return null;
+  const c = document.createElement('canvas');
+  c.width = PIXEL_W; c.height = PIXEL_H;
+  const ctx = c.getContext('2d')!;
+  const sx = (SLIME_TILE % 12) * 16, sy = Math.floor(SLIME_TILE / 12) * 16;
+  ctx.drawImage(sheet, sx, sy, 16, 16, 0, HEADROOM, 16, 16);
+  const data = ctx.getImageData(0, 0, PIXEL_W, PIXEL_H);
+  const light = mix(color, 0.45, true), mid = mix(color, 1), dark = mix(color, 0.62);
+  for (let i = 0; i < data.data.length; i += 4) {
+    const r = data.data[i], g = data.data[i + 1], b = data.data[i + 2];
+    let to: number[] | null = null;
+    if (r === 105 && g === 255 && b === 212) to = light;
+    else if (r === 67 && g === 225 && b === 179) to = mid;
+    else if (r === 37 && g === 149 && b === 106) to = dark;
+    if (to) { data.data[i] = to[0]; data.data[i + 1] = to[1]; data.data[i + 2] = to[2]; }
+  }
+  ctx.putImageData(data, 0, 0);
+  const h = HAT_PIX[hat] ?? HAT_PIX[0];
+  h.rows.forEach((row, ry) => [...row].forEach((ch, rx) => {
+    if (ch === '.') return;
+    ctx.fillStyle = HAT_COL[ch];
+    ctx.fillRect(h.x + rx, h.y + ry, 1, 1);
+  }));
+  return c;
+}
+
+export function pixelPreviewInto(canvas: HTMLCanvasElement, color: number, hat: number) {
+  const px = pixelBlob(color, hat);
+  if (!px) { previewInto(canvas, color, hat); return; }
+  const ctx = canvas.getContext('2d')!;
+  const s = canvas.width;
+  const k = Math.floor(s / PIXEL_H);
+  ctx.clearRect(0, 0, s, s);
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = 'rgba(0,0,0,0.15)';
+  ctx.beginPath(); ctx.ellipse(s / 2, (s + PIXEL_H * k) / 2 - k * 2, k * 5, k * 1.4, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.drawImage(px, (s - PIXEL_W * k) / 2, (s - PIXEL_H * k) / 2, PIXEL_W * k, PIXEL_H * k);
+}

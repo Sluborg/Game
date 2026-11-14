@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { COLORS, HATS, previewInto } from './art';
+import { COLORS, HATS, loadArt, pixelPreviewInto as previewInto } from './art';
 import { Controls } from './controls';
 import { GameScene, type Session } from './game';
 import { ClientNet, HostNet, friendlyError, type ToClient } from './net';
@@ -49,6 +49,7 @@ function renderPicker() {
   }));
 }
 renderPicker();
+void loadArt().then(() => { renderPicker(); renderLobby(); });
 
 // ---------- shared game plumbing ----------
 const controls = new Controls();
