@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { KEYS } from './i18n';
 import {
   AIM_WARN, BITE_TIME, CLASS_WEAPONS, BITE_WARN, bossHp, BURST, BURST_DMG, BURST_GAP, BURST_SPREAD, CLASS_HP, CLASSES, DASH_TIME, DASH_WARN, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, GH, GW,
-  HEAL_HP, heroMods, refresh, inSwing, isWall, ITEMS, itemOf, KO_SECONDS, LEVEL_XP, LOOT_SECONDS, makeFloor, makeGoo, newRun, POTION_HP, REGEN_EVERY,
+  HEAL_BOLT, heroMods, refresh, inSwing, isWall, ITEMS, itemOf, KO_SECONDS, LEVEL_XP, LOOT_SECONDS, makeFloor, makeGoo, newRun, POTION_HP, REGEN_EVERY,
   skillIcon, skillOf, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
 } from './dungeon';
 import { createState, DUNGEON_ENABLED, ENTRANCE_R, entranceOf, makePuzzles, makeTrees, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
@@ -313,7 +313,7 @@ describe('dungeon', () => {
     expect(d.heroes.b.skills).toHaveLength(1);
   });
 
-  it('classes: health per class; marksman shoots in sight only; healer heals and revives; tank wall blocks', () => {
+  it('classes: health per class; marksman shoots in sight only; healer toggles and heals/revives with bolts; tank shield blocks the front', () => {
     const d = quiet(newRun(14, { k: 'sword', p: 'staff', b: 'bow', r: 'shield' }));
     expect(d.heroes.r.maxHp).toBe(CLASS_HP.tank);
     expect(d.heroes.b.maxHp).toBe(CLASS_HP.marksman);
@@ -326,21 +326,66 @@ describe('dungeon', () => {
     expect(d.enemies[0].hp).toBe(d.enemies[0].mx - WEAPON_STATS.bow.dmg);
     d.enemies = [];
     const p = body('p', st.x, st.y), k = body('k', st.x + 40, st.y), r = body('r', st.x - 40, st.y);
+    d.heroes.k.atkCd = 99; d.heroes.r.atkCd = 99;
+    // healer: a press toggles the wand to heal mode (the button's auto-repeat while held does not toggle back)
     run1(d, [p, k, r], new Map([['p', 0]]));
+    expect(d.heroes.p.mode).toBe(0);
+    const tg = run1(d, [p, k, r], new Map([['p', 1]])).fx;
+    expect(d.heroes.p.mode).toBe(1);
+    expect(tg.some((f) => f.t === 'mode')).toBe(true);
+    run1(d, [p, k, r], new Map([['p', 2]]), 0.3); // held: repeat
+    expect(d.heroes.p.mode).toBe(1);
+    // knocked-out friend first (wakes), then the hurt one
     d.heroes.k.hp = 30; d.heroes.r.hp = 0; d.heroes.r.ko = 4; d.heroes.r.kx = r.x; d.heroes.r.ky = r.y;
-    run1(d, [p, k, r], new Map([['p', 1]]));
-    expect(d.heroes.k.hp).toBe(30 + HEAL_HP);
+    d.heroes.p.atkCd = 0;
+    run1(d, [p, k, r]);
     expect(d.heroes.r.ko).toBe(0);
-    d.heroes.k.inv = 0; d.heroes.k.dodge = 0; d.heroes.r.inv = 0;
+    d.heroes.p.atkCd = 0;
+    run1(d, [p, k, r]);
+    expect(d.heroes.k.hp).toBe(30 + HEAL_BOLT);
+    // a fresh press later toggles back to damage
+    run1(d, [p, k, r], new Map([['p', 2]]), 0.6);
+    run1(d, [p, k, r], new Map([['p', 3]]));
+    expect(d.heroes.p.mode).toBe(0);
+    // knight: holding the big button raises the shield, it blocks a monster in front, not one behind
+    d.heroes.p.atkCd = 99; d.heroes.r.inv = 0; d.heroes.r.dodge = 0; d.heroes.r.shield = 0;
+    d.heroes.r.fx = 1; d.heroes.r.fy = 0;
     run1(d, [p, k, r], new Map([['r', 0]]));
     run1(d, [p, k, r], new Map([['r', 1]]));
-    expect(d.heroes.r.wallT).toBeGreaterThan(2);
-    const before = d.heroes.k.hp;
-    goo(d, 0, k.x + 25, k.y, { awake: true, stun: 0, hp: 999, mx: 999 });
-    d.heroes.k.atkCd = 99; d.heroes.p.atkCd = 99; d.heroes.r.atkCd = 99; d.heroes.k.inv = 0;
-    const r2 = run1(d, [p, k, r]);
-    expect(d.heroes.k.hp).toBe(before);
+    expect(d.heroes.r.guard).toBe(true);
+    const hp0 = d.heroes.r.hp;
+    goo(d, 0, r.x + 22, r.y, { awake: true, stun: 0, hp: 999, mx: 999 });
+    const r2 = run1(d, [p, k, r], new Map([['r', 2]]));
+    expect(d.heroes.r.hp).toBe(hp0);
     expect(r2.fx.some((f) => f.t === 'block')).toBe(true);
+    // released: the shield drops after a moment
+    run1(d, [p, k, r], new Map([['r', 2]]), 0.5);
+    expect(d.heroes.r.guard).toBe(false);
+  });
+
+  it('marksman shoots only while standing still', () => {
+    const d = quiet(newRun(14, { b: 'bow' }));
+    const st = d.map.start;
+    goo(d, 1, st.x + 60, st.y, { ...still, hp: 999, mx: 999 });
+    d.heroes.b.inv = 99;
+    const moving = body('b', st.x - 70, st.y); moving.vx = 120;
+    expect(run1(d, [moving]).fx.some((f) => f.t === 'shot')).toBe(false);
+    const standing = body('b', st.x - 70, st.y);
+    expect(run1(d, [standing]).fx.some((f) => f.t === 'shot')).toBe(true);
+  });
+
+  it('loot: 20 s to roll; a player who already wears the item passes automatically', () => {
+    expect(LOOT_SECONDS).toBe(20);
+    const d = quiet(newRun(15, { a: 'sword', b: 'bow' }));
+    d.heroes.b.item = 'helm';
+    d.lootQ.push('helm');
+    const bs = [body('a', d.map.start.x, d.map.start.y), body('b', d.map.start.x + 40, d.map.start.y)];
+    run1(d, bs);
+    expect(d.loot!.rolls.b).toBe(0);
+    expect(d.loot!.rolls.a).toBe(-1);
+    dungeonChoice(d, 'a', 'loot:roll');
+    run1(d, bs);
+    expect(d.heroes.a.item).toBe('helm');
   });
 
   it('loot alone: "Använd" takes it at once (no dice); with friends: roll/pass, highest roll wears it', () => {
@@ -384,6 +429,17 @@ describe('dungeon', () => {
     expect(d.lootQ.length + (d.loot ? 1 : 0)).toBe(1);
   });
 
+  /** The healer's wand in heal mode shoots one green bolt at a hurt friend; returns that friend. */
+  function healBolt(skill: string | null) {
+    const d = quiet(newRun(31, { a: 'staff', f: 'sword' }));
+    d.heroes.a.skills = skill ? [skill] : []; refresh(d.heroes.a);
+    d.heroes.a.mode = 1; d.heroes.f.hp = 10; d.heroes.f.atkCd = 999;
+    const st = d.map.start;
+    const fx = run1(d, [body('a', st.x, st.y), body('f', st.x + 80, st.y)]).fx;
+    expect(fx.some((x) => x.t === 'shot' && x.k === 1)).toBe(true);
+    return { f: d.heroes.f };
+  }
+
   // ---- every skill and item does what its card says (one check per id) ----
   const WEAPON_OF = { rogue: 'sword', healer: 'staff', marksman: 'bow', tank: 'shield' } as const;
   /** Measure the effect of a mod in play: damage per hit, swings per second, heal amount, health, etc. */
@@ -426,9 +482,8 @@ describe('dungeon', () => {
           continue;
         }
         if (key === 'heal') {
-          const healed = (x: typeof base) => { x.d.heroes.a.hp = 10; run1(x.d, [x.a], new Map([['a', 0]])); run1(x.d, [x.a], new Map([['a', 1]])); return x.d.heroes.a.hp - 10; };
-          expect(healed(mod)).toBe(Math.round(HEAL_HP * val));
-          expect(healed(base)).toBe(HEAL_HP);
+          expect(healBolt(sk.id).f.hp - 10).toBe(Math.round(HEAL_BOLT * val));
+          expect(healBolt(null).f.hp - 10).toBe(HEAL_BOLT);
           continue;
         }
         if (key === 'regen') {
@@ -447,8 +502,8 @@ describe('dungeon', () => {
           continue;
         }
         if (key === 'shieldAll') {
-          const x = mod; run1(x.d, [x.a], new Map([['a', 0]])); run1(x.d, [x.a], new Map([['a', 1]]));
-          expect(x.d.heroes.a.shield).toBe(val);
+          expect(healBolt(sk.id).f.shield).toBe(val);
+          expect(healBolt(null).f.shield).toBe(0);
           continue;
         }
         if (key === 'koFast') {

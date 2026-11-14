@@ -63,7 +63,7 @@ if (!process.env.BLOBZ_SNOW) { console.log('skipped: snow map archived (set BLOB
     const tree = await sim(host, (s) => s.trees.findIndex((t, j) => t.kind < 3 && s.trees.every((o, k) => k === j || Math.hypot(o.x - t.x, o.y - t.y) > 110)));
     const beside = () => sim(host, (s, n) => { const t = s.trees[n]; Object.assign(s.players[1], { x: t.x + 37, y: t.y, vx: 0, vy: 0 }); }, tree);
     await beside();
-    await ada.waitForFunction(() => document.querySelector('#dash img').src.includes('btn-axe'), null, { timeout: 5000 });
+    await ada.waitForFunction(() => document.querySelector('#dash img').src.includes('Harvest.png'), null, { timeout: 5000 });
     for (let h = 0; h < 3; h++) { await ada.locator('#dash').dispatchEvent('pointerdown'); await ada.locator('#dash').dispatchEvent('pointerup'); await ada.waitForTimeout(380); await beside(); }
     await ada.waitForFunction(() => window.__blobzView.players[1].carry.includes('wood'), null, { timeout: 5000 });
     await sim(host, (s) => Object.assign(s.players[1], { x: 640, y: 480, vx: 0, vy: 0 }));

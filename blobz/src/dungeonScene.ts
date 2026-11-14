@@ -16,11 +16,15 @@ const FACE_DEAD = 40; // px/s, same as the meadow: slower = idle frame, facing k
 const EDGE_X = 22, EDGE_Y = 13, DROP = 3;
 // hovering weapons (no hands): they float this far beyond the body edge, bob gently and lunge out on each attack
 const HOVER = 7, BOB_PX = 1.5, BOB_S = 1.5;
-const LUNGE: Record<Weapon, number> = { sword: 4, hammer: 4, spear: 20, staff: 4, bow: -6, shield: 10, dagger: 4 }; // spear thrusts, bow recoils, shield bashes
+const LUNGE: Record<Weapon, number> = { sword: 4, hammer: 4, spear: 20, staff: 3, bow: -3, shield: 10, dagger: 4 }; // spear thrusts, the crossbow kicks back a little
 // slashing weapons sweep in an arc around the blob across the aim line (deg); the hammer's arc speeds up into a slam
 // (the Riddare's id stays 'shield', but it slashes with a sword: the shield hovers on the other side as its guard)
-const SLASH: Partial<Record<Weapon, { sweep: number; slam?: boolean }>> = { sword: { sweep: 120 }, hammer: { sweep: 130, slam: true }, staff: { sweep: 100 }, shield: { sweep: 110 } };
-const DAGGER_SPREAD = 0.6, DAGGER_STAB = 13;
+const SLASH: Partial<Record<Weapon, { sweep: number; slam?: boolean }>> = { sword: { sweep: 120 }, hammer: { sweep: 130, slam: true }, shield: { sweep: 110 } };
+const DAGGER_STAB = 14; // the rogue's one dagger, held close: a fast stab straight out and back
+/** the wand's glow / bolt colours: damage red, heal green */
+const MODE_COL = [0xff4a3a, 0x5fe36a];
+/** small weapons draw smaller (the healer's wand) */
+const WSIZE: Partial<Record<Weapon, number>> = { staff: 2 };
 const NA = 'assets/ninja-adventure/';
 const WSCALE = 3; // 1 art px = 1 blob px (BLOB_SCALE): the weapons' pixels match the blobz exactly
 /** Hovering weapon sprites, drawn at WSCALE. Ninja Adventure's own weapons (Items/Weapons/<Name>/Sprite.png) point UP
@@ -65,6 +69,7 @@ interface HeroGfx {
   wshadow?: Phaser.GameObjects.Ellipse; // the hovering weapon's small shadow on the ground
   weapon2?: Phaser.GameObjects.Sprite; // the rogue's second dagger / the Riddare's guarding shield
   arcFor?: number; // which swing already has its slash fx
+  glow?: Phaser.GameObjects.Arc; mode?: number; // the wand's glow, its mode (from the snapshot)
   wa?: number; woff?: number; wsa?: number; lastSwing?: number; // smoothed weapon angle, slash offset, shield angle, time of the last swing
   tip?: { x: number; y: number }; // crossbow tip (bolts start there) // knight's shield wall (Art's fx-wall)
 }
@@ -159,7 +164,24 @@ export class DungeonScene extends Phaser.Scene {
     for (const [k, f, w, h] of NFX) sheet(k, NA + f, w, h);
   }
 
+  /** No bloody weapons (Stefan): the red pixels on the Ninja blades become steel grey (palette swap, same art). */
+  private steel(key: string) {
+    if (!this.textures.exists(key) || this.textures.get(key).getSourceImage() instanceof HTMLCanvasElement) return;
+    const im = this.textures.get(key).getSourceImage() as HTMLImageElement;
+    const c = document.createElement('canvas'); c.width = im.width; c.height = im.height;
+    const g = c.getContext('2d')!; g.drawImage(im, 0, 0);
+    const px = g.getImageData(0, 0, c.width, c.height), a = px.data;
+    for (let i = 0; i < a.length; i += 4) {
+      const r = a[i], gr = a[i + 1], bl = a[i + 2];
+      if (a[i + 3] && r - gr > 60 && r - bl > 40 && gr < 100) { const v = Math.round(0.6 * r + 0.3 * gr + 0.1 * bl); a[i] = v; a[i + 1] = v + 6; a[i + 2] = v + 12; }
+    }
+    g.putImageData(px, 0, 0);
+    this.textures.remove(key);
+    this.textures.addCanvas(key, c)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
+  }
+
   create() {
+    this.steel('w-sword'); this.steel('w-sai');
     const anim = (key: string, tex: string, frames: number[], rate: number, repeat = 0) => {
       if (!this.anims.exists(key)) this.anims.create({ key, frames: this.anims.generateFrameNumbers(tex, { frames }), frameRate: rate, repeat });
     };
@@ -431,7 +453,8 @@ export class DungeonScene extends Phaser.Scene {
       } else if (b.dome) { b.dome.destroy(); b.dome = undefined; }
       if (h && !ko && h.shield > 0) this.ringG.lineStyle(3, 0x8fd3ff, 0.9).strokeCircle(b.x, b.y - 6, 28);
       b.stars.setVisible(ko).setPosition(b.x, b.y - 30 + Math.sin(now / 200) * 3).setDepth(b.y + 4);
-      this.drawWeapon(b, w, h?.face ?? 0, ko, dt, !!h && (!!h.dodge || h.wallT > 0));
+      b.mode = h?.mode ?? 0;
+      this.drawWeapon(b, w, h?.face ?? 0, ko, dt, !!h && (h.guard || !!h.dodge || h.wallT > 0));
       // picking level-up cards: frozen and safe (a soft bubble so friends see why it stands still)
       if (h && !ko && h.offer.length) this.ringG.fillStyle(0xfff7e6, 0.25).fillCircle(b.x, b.y - 6, 30).lineStyle(3, 0xffe08a, 0.9).strokeCircle(b.x, b.y - 6, 30);
       if (b.fx) {
@@ -440,7 +463,7 @@ export class DungeonScene extends Phaser.Scene {
         else b.fx.spr.setPosition(b.x - Math.cos(b.fx.a) * 12, cy - Math.sin(b.fx.a) * 12).setDepth(b.y - 1);
       }
     }
-    for (const [id, b] of this.heroes) if (!seenP.has(id)) { for (const o of [b.shadow, b.body, b.label, b.weapon, b.stars, b.me]) o.destroy(); b.fx?.spr.destroy(); b.dome?.destroy(); b.weapon2?.destroy(); b.wshadow?.destroy(); b.hb?.u.destroy(); b.hb?.p.destroy(); this.heroes.delete(id); }
+    for (const [id, b] of this.heroes) if (!seenP.has(id)) { for (const o of [b.shadow, b.body, b.label, b.weapon, b.stars, b.me]) o.destroy(); b.fx?.spr.destroy(); b.dome?.destroy(); b.weapon2?.destroy(); b.glow?.destroy(); b.wshadow?.destroy(); b.hb?.u.destroy(); b.hb?.p.destroy(); this.heroes.delete(id); }
 
     // ---- stairs: progress ring + "2/3" bubble when someone stands on them ----
     this.bubble.setVisible(false);
@@ -489,10 +512,12 @@ export class DungeonScene extends Phaser.Scene {
     const tex = 'w-' + art;
     if (b.weapon.texture.key !== tex) b.weapon.setTexture(tex, 0);
     if (!b.wshadow) b.wshadow = this.add.ellipse(0, 0, 18, 6, 0x000000, 0.22);
-    const two = w === 'dagger' || w === 'shield';
-    if (two && !b.weapon2) b.weapon2 = this.add.sprite(0, 0, 'w-sai');
+    const two = w === 'shield';
+    if (two && !b.weapon2) b.weapon2 = this.add.sprite(0, 0, 'w-shield');
+    const ws = (WSIZE[w] ?? WSCALE) / WSCALE; // 1, or smaller for the wand
+    if (w !== 'staff') b.glow?.setVisible(false);
     b.weapon2?.setVisible(two && !ko);
-    if (ko) { b.weapon.setVisible(false); b.wshadow.setVisible(false); return; }
+    if (ko) { b.weapon.setVisible(false); b.wshadow.setVisible(false); b.glow?.setVisible(false); return; }
     // Hovers beside the blob (blobz have no hands): a few px beyond the body edge toward the target (or the way it
     // glides), turned to that angle, bobbing gently over its own small shadow.
     const swinging = b.swingT > 0;
@@ -511,23 +536,16 @@ export class DungeonScene extends Phaser.Scene {
     const spot = (ang: number, out: number) => ({ x: cx + Math.cos(ang) * (EDGE_X + HOVER + out), y: cy + Math.sin(ang) * (EDGE_Y + HOVER + 4 + out * 0.7) + DROP }); // vertical: clears the body top (hat) too
     const dbg = (extra: Record<string, unknown>) => { if (DEBUG) ((window as unknown as { __dgWeapon?: Record<string, unknown> }).__dgWeapon ??= {})[b.id] = { aim: wrap(swinging ? b.swingA : aim), prog, swing: swinging, n: b.swings, bx: cx, by: cy, w, bob, ...extra }; };
     if (w === 'dagger') {
-      // two sai, one each side of the aim, pointing along it; each attack stabs ONE of them straight out and back
-      // (alternating left / right); the other holds still
-      const stabber = b.swings % 2;
-      const pts = [0, 1].map((i) => {
-        const side = i === 0 ? 1 : -1, out = swinging && stabber === i ? Math.sin(prog * Math.PI) * DAGGER_STAB : 0;
-        const g = spot(aim + side * DAGGER_SPREAD, 0);
-        return { x: g.x + Math.cos(aim) * out, y: g.y + Math.sin(aim) * out * 0.7 + bob * (i ? -1 : 1), gy: g.y };
-      });
-      if (b.weapon2!.texture.key !== 'w-sai') b.weapon2!.setTexture('w-sai');
+      // ONE sai held close to the body, pointing along the aim; each attack stabs it straight out and back, fast
+      const out = swinging ? Math.sin(prog * Math.PI) * DAGGER_STAB : 0;
+      const g = spot(aim, -4);
+      const px = g.x + Math.cos(aim) * out, py = g.y + Math.sin(aim) * out * 0.7 + bob;
       const im = WIMG.sai;
-      [b.weapon, b.weapon2!].forEach((spr, i) => {
-        spr.setVisible(true).setFlipX(i === 1).setScale(WSCALE).setOrigin(im.px / im.w, im.py / im.h)
-          .setPosition(pts[i].x, pts[i].y).setRotation(aim + Math.PI / 2).setDepth(b.body.depth + (Math.sin(aim) < -0.35 ? -1 : 1));
-      });
-      b.wshadow.setVisible(true).setPosition(cx + Math.cos(aim) * (EDGE_X + HOVER + 6), Math.max(pts[0].gy, cy) + 22).setDepth(b.body.depth - 2).setScale(1.3, 1);
+      b.weapon.setVisible(true).setFlipX(Math.cos(aim) < 0).setScale(WSCALE).setOrigin(im.px / im.w, im.py / im.h)
+        .setPosition(px, py).setRotation(aim + Math.PI / 2).setDepth(b.body.depth + (Math.sin(aim) < -0.35 ? -1 : 1));
+      b.wshadow.setVisible(true).setPosition(cx + Math.cos(aim) * (EDGE_X + 2), Math.max(g.y, cy) + 22).setDepth(b.body.depth - 2).setScale(1, 1);
       const a = wrap(aim);
-      dbg({ a, a2: a, slash: false, x: pts[0].x, y: pts[0].y, x2: pts[1].x, y2: pts[1].y, stab: stabber });
+      dbg({ a, slash: false, x: px, y: py, stab: out });
       return;
     }
     // A = where the weapon points now. Slashing weapons sweep across the aim line and stop on the far side; the next
@@ -570,12 +588,20 @@ export class DungeonScene extends Phaser.Scene {
     // upright Ninja weapons turn by +90 deg (up -> the aim); the right-pointing crossbow mirrors when facing left
     const rot = im.up ? A + Math.PI / 2 + spin : (L ? A - Math.PI : A) + spin;
     const fl = !im.up && L;
-    b.weapon.setVisible(true).setScale(WSCALE).setFlipX(fl)
+    b.weapon.setVisible(true).setScale(WSCALE * ws).setFlipX(fl)
       .setOrigin((fl ? im.w - im.px : im.px) / im.w, im.py / im.h)
       .setPosition(px, py).setDepth(b.body.depth + (Math.sin(A) < -0.35 ? -1 : 1))
       .setRotation(rot);
     // the crossbow's tip: bolts start there
     if (w === 'bow') b.tip = { x: px + Math.cos(A) * (im.w - im.px) * WSCALE, y: py + Math.sin(A) * (im.w - im.px) * WSCALE };
+    // the healer's wand: its tip glows in the mode's colour (red = damage, green = heal); bolts start there
+    if (w === 'staff') {
+      const tl = im.py * WSCALE * ws;
+      b.tip = { x: px + Math.cos(A) * tl, y: py + Math.sin(A) * tl };
+      if (!b.glow) b.glow = this.add.circle(0, 0, 7, MODE_COL[0], 0.7).setBlendMode(Phaser.BlendModes.ADD);
+      const pulse = 1 + Math.sin(this.time.now / 160) * 0.18;
+      b.glow.setVisible(true).setFillStyle(MODE_COL[b.mode ?? 0], 0.75).setPosition(b.tip.x, b.tip.y).setScale(pulse).setDepth(b.weapon.depth + 1);
+    }
     // the Riddare's shield: hovers on the far side from the sword; raised in front on a sidestep or the shield wall
     if (w === 'shield' && b.weapon2) {
       if (b.weapon2.texture.key !== 'w-shield') b.weapon2.setTexture('w-shield');
@@ -584,7 +610,7 @@ export class DungeonScene extends Phaser.Scene {
       b.wsa = b.wsa === undefined ? sTarget : b.wsa + wrap(sTarget - b.wsa) * Math.min(1, dt * 14);
       const sa = b.wsa;
       const sg = spot(sa, guard ? 6 : -4);
-      b.weapon2.setVisible(true).setFlipX(Math.cos(sa) < 0).setScale(WSCALE * (guard ? 1.2 : 1)).setRotation(0).setOrigin(0.5, 0.5)
+      b.weapon2.setVisible(true).setFlipX(Math.cos(sa) < 0).setScale(WSCALE * (guard ? 1.35 : 1)).setRotation(0).setOrigin(0.5, 0.5)
         .setPosition(sg.x, sg.y - bob).setDepth(b.body.depth + (guard || Math.sin(sa) > -0.35 ? 2 : -1));
     }
     // the shadow sits on the ground under the weapon's middle and stays still while the weapon bobs
@@ -707,10 +733,10 @@ export class DungeonScene extends Phaser.Scene {
       case 'swing': {
         const b = this.heroes.get(f.id);
         if (b) {
-          b.swingDur = f.w === 'hammer' ? 0.4 : 0.26; b.swingT = b.swingDur; b.swingA = f.a; b.swings++; b.lastSwing = this.time.now;
+          b.swingDur = f.w === 'hammer' ? 0.4 : f.w === 'bow' ? 0.45 : f.w === 'dagger' ? 0.18 : 0.26; b.swingT = b.swingDur; b.swingA = f.a; b.swings++; b.lastSwing = this.time.now;
         }
         // a dagger stab: a small friendly spark at the stabbing sai's tip when it lands
-        if (b && f.w === 'dagger') this.time.delayedCall(b.swingDur * 450, () => { const s2 = b.swings % 2 === 0 ? b.weapon : b.weapon2; if (s2?.visible) this.nfx('nf-star', s2.x + Math.cos(f.a) * 18, s2.y + Math.sin(f.a) * 14, 1.1, 0xfff2b0); });
+        if (b && f.w === 'dagger') this.time.delayedCall(b.swingDur * 450, () => { if (b.weapon.visible) this.nfx('nf-star', b.weapon.x + Math.cos(f.a) * 18, b.weapon.y + Math.sin(f.a) * 14, 1.1, 0xfff2b0); });
         sfx.tool(f.w === 'hammer' || f.w === 'shield' ? 'axe' : f.w === 'spear' ? 'rake' : 'pickaxe', false);
         break;
       }
@@ -743,7 +769,7 @@ export class DungeonScene extends Phaser.Scene {
       case 'dodge': { const c = this.add.sprite(f.x, f.y + 14, 'dg-fx-sidestep', 0).setOrigin(0.5, 1).setScale(1.6).setDepth(f.y - 2); c.play('dg-sidestep'); c.once('animationcomplete', () => c.destroy()); sfx.dash(); break; }
       case 'hurt': { const g = this.goo.get(f.e); if (g) g.flash = 0.12; this.nfx('nf-star', f.x, f.y - 4, 1.6, 0xffffff); break; } // a friendly white spark on the monster
       case 'mdash': this.nfx('nf-dust', f.x, f.y + 14, 2.2); break;
-      case 'bite': { const l: Phaser.GameObjects.Sprite[] = []; const c = this.hostile(l, 'nf-claw', f.x + Math.cos(f.a) * 34, f.y + Math.sin(f.a) * 34, 2.2, HOSTILE.red, f.a, undefined, f.y + 20); c.once('animationcomplete', () => l.forEach((o) => o.destroy())); break; }
+      case 'bite': break; // no enemy slash fx (Stefan): the telegraph before it is the warning
       case 'kill': {
         // Ninja smoke puff + star (the boss explodes)
         if (f.kind === 2) this.nfx('nf-boom', f.x, f.y, 3);
@@ -755,7 +781,6 @@ export class DungeonScene extends Phaser.Scene {
       case 'ouch': {
         this.cameras.main.shake(90, 0.004); sfx.bump();
         const b = this.heroes.get(f.id); if (b) this.tweens.add({ targets: b.body, alpha: 0.3, yoyo: true, duration: 80 });
-        const l: Phaser.GameObjects.Sprite[] = []; const c = this.hostile(l, 'nf-claw', f.x, f.y - 8, 1.6, HOSTILE.red, 0, undefined, f.y + 30); c.once('animationcomplete', () => l.forEach((o) => o.destroy())); // an enemy hit: hostile red
         break;
       }
       case 'ko': this.floatText(f.x, f.y - 50, t('dg.ko'), '#ffffff', 22); break;
@@ -788,10 +813,18 @@ export class DungeonScene extends Phaser.Scene {
         let sx = f.x, sy = f.y - 10;
         for (const hb of this.heroes.values()) if (hb.tip && Math.hypot(hb.x - f.x, hb.y - f.y) < 40) { sx = hb.tip.x; sy = hb.tip.y; }
         const a = Math.atan2(f.ty - 6 - sy, f.tx - sx);
+        if (f.k !== undefined) {
+          // the healer's wand: a glowing bolt, red (damage) or green (heal)
+          const col = MODE_COL[f.k ?? 0];
+          const orb = this.add.circle(sx, sy, 6, col, 0.95).setDepth(4500), halo = this.add.circle(sx, sy, 11, col, 0.35).setBlendMode(Phaser.BlendModes.ADD).setDepth(4499);
+          this.tweens.add({ targets: [orb, halo], x: f.tx, y: f.ty - 6, duration: Math.max(80, Math.hypot(f.tx - sx, f.ty - sy) / 0.9), onComplete: () => { orb.destroy(); halo.destroy(); } });
+          break;
+        }
         const ar = this.add.image(sx, sy, 'dg-arrow').setScale(2.5).setRotation(a).setDepth(4500); // Ninja arrow points right
         this.tweens.add({ targets: ar, x: f.tx, y: f.ty - 6, duration: Math.max(60, Math.hypot(f.tx - sx, f.ty - sy) / 1.2), onComplete: () => ar.destroy() });
         break;
       }
+      case 'mode': { const b = this.heroes.get(f.id); if (b?.glow) this.burst(b.glow.x, b.glow.y, MODE_COL[f.m], 8, 20); sfx.pick(); break; }
       case 'heal': {
         const c = this.add.sprite(f.x, f.y - 6, 'dg-fx-heal', 0).setOrigin(0.5, 0.6).setScale(3).setDepth(f.y + 7);
         c.play('dg-heal'); c.once('animationcomplete', () => c.destroy());

@@ -28,11 +28,9 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     await place(host, 2, ent.x, ent.y + 16);
     for (const p of pages) await p.waitForSelector('#weapon-pick:not(.hidden)', { timeout: 6000 });
     ok(true, 'everyone on the entrance 1.5 s -> class cards on all 3 phones');
-    // Stefan: Krigare -> weapon step -> Svärd; Ada: Präst; Bo: Bågskytt (one weapon each, picked at once)
+    // Stefan: Rogue (dagger); Ada: Helare; Bo: Skytt (one weapon per class, picked at once)
+    if (shots) { await ada.screenshot({ path: `${shots}/dg-class-portrait.png` }); await bo.screenshot({ path: `${shots}/dg-class-landscape.png` }); }
     await host.click('.wcard[data-w="rogue"]');
-    await host.waitForSelector('.wcard[data-w="sword"]', { timeout: 3000 });
-    if (shots) { await ada.screenshot({ path: `${shots}/dg-class-portrait.png` }); await host.screenshot({ path: `${shots}/dg-weapon-portrait.png` }); await bo.screenshot({ path: `${shots}/dg-class-landscape.png` }); }
-    await host.click('.wcard[data-w="sword"]');
     await ada.click('.wcard[data-w="healer"]');
     await bo.click('.wcard[data-w="marksman"]');
     for (const p of pages) await p.waitForFunction(() => window.__blobzView.mode === 'dungeon' && !!window.__blobzView.dungeon, null, { timeout: 6000 });
@@ -40,8 +38,8 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     const ids = await host.evaluate(() => window.__blobz.state.players.map((p) => p.id));
     let d = await dg(bo);
     const hs = ids.map((id) => d.heroes[id]);
-    ok(d.floor === 1 && hs[0].cls === 'rogue' && hs[0].weapon === 'sword' && hs[1].cls === 'healer' && hs[2].cls === 'marksman',
-      'down together: Krigare (svärd) / Präst / Bågskytt on every phone');
+    ok(d.floor === 1 && hs[0].cls === 'rogue' && hs[0].weapon === 'dagger' && hs[1].cls === 'healer' && hs[2].cls === 'marksman',
+      'down together: Rogue (dagger) / Helare / Skytt on every phone');
     ok(hs[2].maxHp === 80 && hs[0].maxHp === 100, 'health follows the class (Skytt 80, Rogue 100)');
     ok(d.bossMax === 660, `boss health scales with 3 players (${d.bossMax})`);
     ok(await bo.isVisible('#attack') && await host.isVisible('#attack'), 'special button shows underground');
@@ -73,11 +71,11 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     await bo.waitForFunction((k) => window.__blobzView.dungeon.kills > k, k0, { timeout: 5000 });
     ok(true, 'Bågskytt: auto-arrow kills a goo at range');
 
-    // Präst special heals a hurt friend
+    // Helare: the big button switches the wand to heal mode; green bolts heal a hurt friend
     await sim(host, (s) => { const h = s.dg.heroes[s.players[0].id]; h.hp = 30; s.players[0].x = s.players[1].x + 40; s.players[0].y = s.players[1].y; });
     await ada.click('#attack');
     await bo.waitForFunction((id) => window.__blobzView.dungeon.heroes[id].hp > 30, ids[0], { timeout: 4000 });
-    ok(true, 'Präst special (Läkljus) heals Stefan on every phone');
+    ok(await ada.evaluate(() => document.getElementById('attack').dataset.mode) === 'heal', 'Helare: button switches the wand to heal mode (green), the bolt heals Stefan on every phone');
     await ada.waitForTimeout(120);
     if (shots) await ada.screenshot({ path: `${shots}/dg-heal-portrait.png` });
     // Bågskytt volley + Krigare spin
@@ -87,8 +85,8 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     if (shots) await bo.screenshot({ path: `${shots}/dg-volley-landscape.png` });
     await host.click('#attack');
     await host.click('#dash');
-    const sp = await bo.evaluate(() => Object.values(window.__blobzView.dungeon.heroes).map((h) => h.spCd > 0));
-    ok(sp.every(Boolean), 'all three class specials on cooldown (spin, heal, volley)');
+    const sp = await bo.evaluate((ids) => [ids[0], ids[2]].map((id) => window.__blobzView.dungeon.heroes[id].spCd > 0), ids);
+    ok(sp.every(Boolean), 'rogue + marksman specials on cooldown (the healer toggles instead)');
     await sim(host, (s) => { s.dg.enemies = []; });
 
     // level-up: 1 of 3 skill cards on every phone, from each one's own class

@@ -16,7 +16,7 @@ const shots = process.argv[3] || '';
     await ada.waitForFunction(() => getComputedStyle(document.querySelector('#edge-arrows [data-k="home"]')).display === 'flex'
       && !document.getElementById('edge-arrows').classList.contains('hidden'), null, { timeout: 4000 });
     ok(true, 'bank covers a building, house off-screen: an orange arrow points home');
-    ok((await ada.getAttribute('#q-build .qbimg', 'src')).endsWith('base/storage.png') && (await ada.getAttribute('#q-build .qbico', 'src')).endsWith('base/btn-build.png'),
+    ok((await ada.getAttribute('#q-build .qbimg', 'src')).endsWith('ninja/storage.png') && (await ada.getAttribute('#q-build .qbico', 'src')).includes('Repair.png'),
       'quest card: storage picture + hammer (no words)');
     ok(await ada.getAttribute('#hud-quest .qtitle', 'aria-label') === 'Samla till basen' && (await ada.textContent('#hud-quest .qtitle')).trim() === '',
       'quest header is a house icon (text only for screen readers)');

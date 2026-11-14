@@ -206,3 +206,30 @@
 
 /* gold: the round Ninja coin (frame 0 of the Coin2 strip) instead of the square GoldCoin */
 #dg-row img.icon, #dg-end .dgstat img.icon { object-fit: cover; object-position: 0 50%; aspect-ratio: 1; }
+
+/* ---- round Ninja buttons + Ninja joystick underground (Stefan: round action buttons, Ninja stick) ---- */
+#attack, #hud.dungeon #dash {
+  border: 0; border-image: none; border-radius: 50%;
+  background: url('/assets/ninja-adventure/Ui/Receptacle/Receptacle Sphere/BackgroundRed.png') center / 100% 100% no-repeat;
+  image-rendering: pixelated;
+}
+#attack:active, #hud.dungeon #dash:active { border-image: none; filter: brightness(0.8) drop-shadow(0 3px 0 #3f263140); transform: translateY(2px); }
+#attack .icon { height: 54px; }
+#attack::after { inset: 8px; }
+/* the healer's wand mode / the knight's raised shield light the button's ring */
+#attack[data-mode='dmg'] { box-shadow: 0 0 0 4px #ff4a3a99, 0 0 18px #ff4a3a88; }
+#attack[data-mode='heal'] { box-shadow: 0 0 0 4px #5fe36a99, 0 0 18px #5fe36a88; }
+#attack[data-mode='guard'] { box-shadow: 0 0 0 4px #8fd3ffaa, 0 0 18px #8fd3ff88; }
+#hud.dungeon #dash { width: 68px; height: 68px; }
+#hud.dungeon #stick { border: 0; border-radius: 50%; background: url('/assets/ninja-adventure/Ui/Receptacle/Receptacle Sphere/BackgroundWood.png') center / 100% 100% no-repeat; image-rendering: pixelated; opacity: 0.9; }
+#hud.dungeon #knob { border-radius: 50%; box-shadow: none; background: url('/assets/ninja-adventure/Ui/Receptacle/Receptacle Sphere/ProgressWhite.png') center / 100% 100% no-repeat; image-rendering: pixelated; }
+
+/* loot: the new item big first, what it replaces small underneath */
+#dg-loot-items { flex-direction: column; gap: 4px; }
+.lootnew { display: flex; align-items: center; gap: 10px; text-align: left; }
+.lootnew .dgicon { width: 56px; height: 56px; }
+.lootnew b { display: block; font-size: 19px; }
+.lootnew .skfx { font-size: 14px; font-weight: 800; color: #2f8a2f; }
+.lootrep { display: flex; align-items: center; gap: 6px; color: #8a7466; font-weight: 700; }
+.lootrep .dgicon { width: 24px; height: 24px; }
+@media (orientation: landscape) and (max-height: 500px) { .lootnew .dgicon { width: 44px; height: 44px; } }
