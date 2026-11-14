@@ -63,14 +63,39 @@ const FROZEN: Record<string, string> = {
   'Kaninöron/Boll': 'b38851ae',
   'Enhörning/Platt': '250d9b13',
   'Enhörning/Kub': '3d0ebaa9',
-  'Antenn/Kupol': '3112297f',
-  'Antenn/Boll': 'd58f7c1c',
-  'Antenn/Platt': '8bd17859',
-  'Antenn/Kub': '7309afa7',
   'Gloria/Kupol': '8f894c16',
   'Gloria/Boll': '2c069bc6',
   'Gloria/Platt': 'a467ca5',
   'Gloria/Kub': '5f2ee233',
+  'Krona/Kub': '45ef35d2', // round 2
+  'Rosett/Platt': '46e56ef5', // round 2
+  'Kattöron/Lång': '8e85fa38', // round 2
+  'Kattöron/Päron': '9cff2335', // round 2
+  'Kaninöron/Lång': 'c332f82', // round 2
+  'Kaninöron/Platt': '2ffb93e7', // round 2
+  'Kaninöron/Kub': 'f61336f7', // round 2
+  'Djävulshorn/Kupol': '4bf4f048', // round 2
+  'Djävulshorn/Boll': '9d98f752', // round 2
+  'Djävulshorn/Lång': 'f575095e', // round 2
+  'Djävulshorn/Platt': '1fb8f9a7', // round 2
+  'Djävulshorn/Päron': '556f4db7', // round 2
+  'Djävulshorn/Kub': '5bfdc4d7', // round 2
+  'Enhörning/Kupol': 'b0be8a2b', // round 2
+  'Enhörning/Boll': '90e83f88', // round 2
+  'Enhörning/Lång': '83a360f6', // round 2
+  'Enhörning/Päron': 'f870e59f', // round 2
+  'Gloria/Lång': 'c40c2d7e', // round 2
+  'Gloria/Päron': 'cb704c57', // round 2
+  'class:Prästluva/Kupol': 'dcfa7ab7', // round 2
+  'class:Prästluva/Boll': '62c23428', // round 2
+  'class:Prästluva/Lång': '46f42288', // round 2
+  'class:Prästluva/Päron': 'c2d61139', // round 2
+  'class:Prästluva/Kub': '8393e8b0', // round 2
+  'class:Fjädermössa/Kupol': 'f7c8f3af', // round 2
+  'class:Fjädermössa/Boll': 'cda1863c', // round 2
+  'class:Fjädermössa/Lång': '60a0698d', // round 2
+  'class:Fjädermössa/Päron': 'cb184630', // round 2
+  'class:Fjädermössa/Kub': 'f133f332', // round 2
 };
 const fnv = (s: string) => { let x = 2166136261 >>> 0; for (let i = 0; i < s.length; i++) { x ^= s.charCodeAt(i); x = Math.imul(x, 16777619) >>> 0; } return x.toString(16); };
 
@@ -116,7 +141,7 @@ describe('blobz v2 (16 px Ninja grid, one 3/4 view)', () => {
         if (onTop.includes(HATS[h])) for (const k of d) expect(L.mask.has(k), `${HATS[h]} inside ${SHAPES[s]}`).toBe(false);
         if (FITTED.includes(HATS[h])) for (const k of d) if (L.mask.has(k)) {
           // fitted hats cover the scalp only: at least one free row above the eyes
-          expect(Math.floor(k / GRID_W), `${HATS[h]} too low on ${SHAPES[s]}`).toBeLessThanOrEqual(L.eye[1] - 2);
+          expect(Math.floor(k / GRID_W), `${HATS[h]} too low on ${SHAPES[s]}`).toBeLessThanOrEqual(L.eye[1] - (HATS[h].endsWith('rona') ? 1 : 2)); // crowns: border row on short heads
         }
       }
     }
@@ -141,7 +166,8 @@ describe('blobz v2 (16 px Ninja grid, one 3/4 view)', () => {
   it('approved hat cells stay pixel-identical (frozen)', () => {
     for (const [cell, hash] of Object.entries(FROZEN)) {
       const [hat, shape] = cell.split('/');
-      const g = blobGrid({ color: 0x5ec8ff, shape: SHAPES.indexOf(shape), eyes: 0, mouth: 0, hat: HATS.indexOf(hat) });
+      const cls = hat.startsWith('class:') ? CLASS_HATS.indexOf(hat.slice(6)) : undefined;
+      const g = blobGrid({ color: 0x5ec8ff, shape: SHAPES.indexOf(shape), eyes: 0, mouth: 0, hat: cls === undefined ? HATS.indexOf(hat) : 0 }, cls);
       expect(fnv(JSON.stringify(g)), cell).toBe(hash);
     }
   });
