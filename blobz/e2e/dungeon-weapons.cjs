@@ -44,10 +44,12 @@ const angDiff = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)))
         }, [ids[i], w, n0], { timeout: 8000 }).then((h) => h.jsonValue());
         const want = await host.evaluate(([i]) => { const s = window.__blobz.state, q = s.players[i], e = s.dg.enemies[0]; return Math.atan2(e.y - q.y, e.x - q.x); }, [i]);
         // the shield stays upright: it must sit on the body's edge toward the goo; everything else must point at it
-        const got = w === 'shield' ? Math.atan2(res.y - res.by, res.x - res.bx) : res.a;
+        // slashing weapons sweep across the line: their swing is aimed at the goo and the blade stays within the arc
+        const got = w === 'shield' ? Math.atan2(res.y - res.by, res.x - res.bx) : res.slash ? res.aim : res.a;
         const off = (angDiff(got, want) * 180) / Math.PI;
+        const blade = (angDiff(res.a, want) * 180) / Math.PI;
         const held = Math.hypot(res.x - res.bx, res.y - res.by);
-        ok(off <= 30 && held <= 40, `${w} on ${i ? 'joiner (landscape)' : 'host (portrait)'}: ${w === 'shield' ? 'sits' : 'points'} ${off.toFixed(0)} deg off the goo (<= 30), held ${held.toFixed(0)} px from the body`);
+        ok(off <= 30 && (!res.slash || blade <= 75) && held >= 18 && held <= 56, `${w} on ${i ? 'joiner (landscape)' : 'host (portrait)'}: ${res.slash ? `slashes across the goo (aim ${off.toFixed(0)} deg off, blade ${blade.toFixed(0)} deg into its arc)` : `${w === 'shield' ? 'floats' : 'points'} ${off.toFixed(0)} deg off the goo`} (<= 30), hovering ${held.toFixed(0)} px from the body centre`);
         if (shots) await p.screenshot({ path: `${shots}/dg-attack-${w}-${i ? 'landscape' : 'portrait'}.png` });
       }
     }
