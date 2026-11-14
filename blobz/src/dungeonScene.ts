@@ -15,7 +15,10 @@ const BLOB_SCALE = 3; // blobz v2: 16x18 grid at the Ninja world scale, same as 
 const FACE_DEAD = 40; // px/s, same as the meadow: slower = idle frame, facing kept
 const WEAPON_SCALE = 1.45; // Art's weapon strips keep their size; only the blob grew to the Ninja scale
 // held-weapon anchors in screen px from the body centre (body edge 22 px out, a little low)
-const EDGE_X = 22, EDGE_Y = 13, DROP = 3, HAND_X = 21, HAND_Y = 3;
+const EDGE_X = 22, EDGE_Y = 13, DROP = 3;
+// hovering weapons (no hands): they float this far beyond the body edge, bob gently and lunge out on each attack
+const HOVER = 7, BOB_PX = 1.5, BOB_S = 1.5;
+const LUNGE: Record<Weapon, number> = { sword: 12, hammer: 10, spear: 20, staff: 10, bow: -5, shield: 9, dagger: 14 }; // bow recoils
 const FONT = "'Fredoka', sans-serif"; // same as the meadow
 const DEBUG = new URLSearchParams(location.search).has('debug');
 const HITBOX = new URLSearchParams(location.search).has('hitbox'); // ?hitbox draws the sim's circles
@@ -50,6 +53,7 @@ interface HeroGfx {
   spin: number; // seconds left of a spin special (weapon whirls around)
   fx?: { spr: Phaser.GameObjects.Sprite; kind: 'spin' | 'charge'; a: number }; // special fx that rides along with the blob
   dome?: Phaser.GameObjects.Sprite;
+  wshadow?: Phaser.GameObjects.Ellipse; // the hovering weapon's small shadow on the ground
   weapon2?: Phaser.GameObjects.Sprite; // the rogue's off-hand dagger // knight's shield wall (Art's fx-wall)
 }
 interface GooGfx { img: Phaser.GameObjects.Image; shadow: Phaser.GameObjects.Ellipse; warn?: Phaser.GameObjects.Image; bar?: Phaser.GameObjects.Graphics; x: number; y: number; flash: number; kind: number }
@@ -352,7 +356,7 @@ export class DungeonScene extends Phaser.Scene {
         else b.fx.spr.setPosition(b.x - Math.cos(b.fx.a) * 12, cy - Math.sin(b.fx.a) * 12).setDepth(b.y - 1);
       }
     }
-    for (const [id, b] of this.heroes) if (!seenP.has(id)) { for (const o of [b.shadow, b.body, b.label, b.weapon, b.stars, b.me]) o.destroy(); b.fx?.spr.destroy(); b.dome?.destroy(); b.weapon2?.destroy(); this.heroes.delete(id); }
+    for (const [id, b] of this.heroes) if (!seenP.has(id)) { for (const o of [b.shadow, b.body, b.label, b.weapon, b.stars, b.me]) o.destroy(); b.fx?.spr.destroy(); b.dome?.destroy(); b.weapon2?.destroy(); b.wshadow?.destroy(); this.heroes.delete(id); }
 
     // ---- stairs: progress ring + "2/3" bubble when someone stands on them ----
     this.bubble.setVisible(false);
@@ -396,10 +400,8 @@ export class DungeonScene extends Phaser.Scene {
     const fr = WEAPON_FRAME[w];
     b.swingT = Math.max(0, b.swingT - dt);
     b.spin = Math.max(0, b.spin - dt);
-    const left = Math.cos(face) < -0.2;
     const sc = WEAPON_SCALE;
     const cx = b.body.x, cy = b.body.y; // the body's origin (BODY_CY) is its centre
-    const hx = cx + (left ? -HAND_X : HAND_X), hy = cy + HAND_Y;
     if (!fr) {
       // placeholder until Art's strip: a Kenney tile (blade up) held at the body edge, pointed at the target and
       // jabbing forward on each attack; the dagger gets its twin in the other hand
@@ -426,26 +428,33 @@ export class DungeonScene extends Phaser.Scene {
     b.weapon2?.setVisible(false);
     const key = 'dg-weapon-' + w;
     if (b.weapon.texture.key !== key) b.weapon.setTexture(key, 0);
-    if (ko) { b.weapon.setVisible(false); return; }
-    // Held at the body's edge toward the target (or the way the blob moves) and turned to that angle.
-    // Art's strips point right on the strike frame, so rotating by the angle swings/thrusts along the line.
+    if (!b.wshadow) b.wshadow = this.add.ellipse(0, 0, 18, 6, 0x000000, 0.22);
+    if (ko) { b.weapon.setVisible(false); b.wshadow.setVisible(false); return; }
+    // Hovers beside the blob (blobz have no hands): a few px beyond the body edge toward the target (or the way it
+    // glides), turned to that angle, bobbing gently over its own small shadow. An attack lunges it out along the aim
+    // and back to its hover spot. Art's strips point right on the strike frame (pivot = grip), so the rotation aims it.
     const swinging = b.swingT > 0;
     const A = swinging ? b.swingA : face;
-    const aims = w === 'spear' || w === 'bow'; // always pointed: spear tip and crossbow follow the aim
-    const side = swinging || aims || w === 'shield';
     const L = Math.cos(A) < 0;
-    const px = side ? cx + Math.cos(A) * EDGE_X : hx; // body edge toward the target, else the hand
-    const py = side ? cy + Math.sin(A) * EDGE_Y + DROP : hy;
-    const frame = swinging ? Math.min(3, Math.floor((1 - b.swingT / b.swingDur) * 4)) : 0;
-    const rot = (side && w !== 'shield' ? (L ? A - Math.PI : A) : 0) + (b.spin > 0 ? (1 - b.spin / 0.35) * Math.PI * 2 * (L ? -1 : 1) : 0);
-    b.weapon.setVisible(true).setFrame(frame).setScale(sc).setFlipX(side ? L : left)
-      .setOrigin(((side ? L : left) ? fr.w - fr.px : fr.px) / fr.w, fr.py / fr.h)
-      .setPosition(px, py).setDepth(b.body.depth + (Math.sin(A) < -0.35 && side ? -1 : 1))
+    const prog = swinging ? 1 - b.swingT / b.swingDur : 0;
+    const out = swinging ? Math.sin(prog * Math.PI) * LUNGE[w] : 0;
+    const bob = Math.sin((this.time.now / 1000 / BOB_S) * Math.PI * 2 + (b.id.charCodeAt(0) % 7)) * BOB_PX;
+    const gx = cx + Math.cos(A) * (EDGE_X + HOVER + out), gy = cy + Math.sin(A) * (EDGE_Y + HOVER * 0.6 + out * 0.7) + DROP;
+    const px = gx, py = gy + bob;
+    const frame = swinging ? Math.min(3, Math.floor(prog * 4)) : 0;
+    const upright = w === 'shield'; // the shield floats upright, facing the target
+    const rot = (upright ? 0 : L ? A - Math.PI : A) + (b.spin > 0 ? (1 - b.spin / 0.35) * Math.PI * 2 * (L ? -1 : 1) : 0);
+    b.weapon.setVisible(true).setFrame(frame).setScale(sc).setFlipX(L)
+      .setOrigin((L ? fr.w - fr.px : fr.px) / fr.w, fr.py / fr.h)
+      .setPosition(px, py).setDepth(b.body.depth + (Math.sin(A) < -0.35 ? -1 : 1))
       .setRotation(rot);
+    // the shadow sits on the ground under the weapon's middle and stays still while the weapon bobs
+    b.wshadow.setVisible(true).setPosition(gx + Math.cos(A) * 10, Math.max(gy, cy) + 22).setDepth(b.body.depth - 2)
+      .setScale(1 - bob / 12, 1);
     if (DEBUG) {
       // e2e: which way the weapon really points (flipped sprites point left)
       const point = b.weapon.flipX ? rot + Math.PI : rot;
-      ((window as unknown as { __dgWeapon?: Record<string, unknown> }).__dgWeapon ??= {})[b.id] = { a: Math.atan2(Math.sin(point), Math.cos(point)), swing: swinging, n: b.swings, x: px, y: py, bx: cx, by: cy, w };
+      ((window as unknown as { __dgWeapon?: Record<string, unknown> }).__dgWeapon ??= {})[b.id] = { a: Math.atan2(Math.sin(point), Math.cos(point)), swing: swinging, n: b.swings, x: px, y: py, bx: cx, by: cy, w, bob };
     }
   }
 
