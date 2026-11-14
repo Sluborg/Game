@@ -13,8 +13,8 @@ const BLOB_R = 17;
 // ---- classes, weapons, specials, sidesteps, level-up skills, loot items (all data) ----
 export type HeroClass = 'rogue' | 'healer' | 'marksman' | 'tank';
 export const CLASSES: HeroClass[] = ['healer', 'rogue', 'tank', 'marksman'];
-/** Player-facing names (sv; en kept for the coming i18n table). "Smygare" may become "Skurk" (Stefan). */
-export const CLASS_NAMES: Record<HeroClass, string> = { healer: 'Helare', rogue: 'Smygare', tank: 'Riddare', marksman: 'Skytt' };
+/** Player-facing names (sv; en kept for the coming i18n table). "Rogue" may become "Skurk" (Stefan). */
+export const CLASS_NAMES: Record<HeroClass, string> = { healer: 'Helare', rogue: 'Rogue', tank: 'Riddare', marksman: 'Skytt' };
 export const CLASS_NAMES_EN: Record<HeroClass, string> = { healer: 'Healer', rogue: 'Rogue', tank: 'Tank', marksman: 'Marksman' };
 export const CLASS_HINT: Record<HeroClass, string> = { healer: 'Läker kompisar', rogue: 'Snabb, två dolkar', tank: 'Skyddar laget', marksman: 'Skjuter långt' };
 /** Art's file names still use the old class ids (card-class-<x>.png, skills/<x>-<id>.png) until Art renames them. */
