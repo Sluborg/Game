@@ -11,3 +11,12 @@
   lobby, sync, movement, pickup, end screen. Screenshots in `docs/screenshots/`.
 - 2026-11-14: switched to Kenney pixel art: Tiny Dungeon slime recolored per skin + pixel hats, potions as power-ups, treasure chest as co-op carry, Tiny Farm decor, Tiny Battle flags at base. Packs added: Tiny Dungeon, Farm, Battle, Ski (CC0).
 - Open: real-phone test on home Wi-Fi; tune star thresholds after first family session.
+
+## 2026-11-14 - Kenney-only UI + pixel intro
+- Removed every emoji and the custom SVG icon. Replacements, all Kenney CC0:
+  stars -> Pixel Platformer diamonds, dash -> Tiny Battle arrow, hat picker -> pixel blob previews,
+  chest helper label -> Tiny Dungeon slime icons, app icon -> recolored slime on Tiny Town grass (PNG).
+- New intro: animated Kenney meadow with gliding blobz behind the menu, logo and room code in the
+  Tiny Ski pixel font. Added pack: Pixel Platformer.
+- `docs/ART_PROMPTS.md`: prompts for title art, logo and app icon in the Kenney Tiny style.
+- Verified: build green, 5 tests, 3-player headless run, no page errors.

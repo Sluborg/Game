@@ -43,7 +43,7 @@ export class GameScene extends Phaser.Scene {
   private s!: Session;
   private blobs = new Map<string, BlobGfx>();
   private items = new Map<number, Phaser.GameObjects.Image>();
-  private gems = new Map<number, { g: Phaser.GameObjects.Graphics; img: Phaser.GameObjects.Image; t: Phaser.GameObjects.Text; x: number; y: number }>();
+  private gems = new Map<number, { g: Phaser.GameObjects.Graphics; img: Phaser.GameObjects.Image; t: Phaser.GameObjects.Image[]; x: number; y: number }>();
   private powers = new Map<number, Phaser.GameObjects.Container>();
   private trailG!: Phaser.GameObjects.Graphics;
   private baseG!: Phaser.GameObjects.Graphics;
@@ -180,16 +180,18 @@ export class GameScene extends Phaser.Scene {
       seenG.add(g.id);
       let e = this.gems.get(g.id);
       if (!e) {
-        e = { g: this.add.graphics(), img: this.add.image(g.x, g.y, 'dungeon', 89).setScale(3.4), t: this.add.text(0, 0, '', { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '16px', color: '#fff', fontStyle: 'bold', stroke: '#1d4f7a', strokeThickness: 4 }).setOrigin(0.5), x: g.x, y: g.y };
+        e = { g: this.add.graphics(), img: this.add.image(g.x, g.y, 'dungeon', 89).setScale(3.4), t: [0, 1].map(() => this.add.image(0, 0, 'dungeon', 108).setScale(1.6)), x: g.x, y: g.y };
         this.gems.set(g.id, e);
       }
       e.x += (g.x - e.x) * (smooth ? k : 1);
       e.y += (g.y - e.y) * (smooth ? k : 1);
       this.drawGem(e.g, e.x, e.y, g.holders, now);
       e.img.setPosition(e.x, e.y - 4 + (g.holders >= 2 ? Math.sin(now / 90) * 2 : 0)).setDepth(e.y);
-      e.t.setPosition(e.x, e.y - 44).setText(g.holders >= 2 ? '💪 ' + g.holders : '👥 ' + g.holders + '/2').setDepth(e.y + 1000);
+      // two slime icons over the chest: lit = a blob is helping (needs 2)
+      e.t.forEach((ic, n) => ic.setPosition(e!.x + (n - 0.5) * 24, e!.y - 46 + (g.holders >= 2 ? Math.sin(now / 120 + n) * 3 : 0))
+        .setAlpha(n < g.holders ? 1 : 0.35).setTint(n < g.holders ? 0xffffff : 0x666666).setDepth(e!.y + 1000));
     }
-    for (const [id, e] of this.gems) if (!seenG.has(id)) { e.g.destroy(); e.img.destroy(); e.t.destroy(); this.gems.delete(id); }
+    for (const [id, e] of this.gems) if (!seenG.has(id)) { e.g.destroy(); e.img.destroy(); e.t.forEach((ic) => ic.destroy()); this.gems.delete(id); }
 
     // ---- power-ups ----
     const seenW = new Set<number>();

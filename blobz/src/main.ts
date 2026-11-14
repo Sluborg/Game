@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { COLORS, HATS, loadArt, pixelPreviewInto as previewInto } from './art';
+import { COLORS, HATS, loadArt, pixelPreviewInto as previewInto, pixelText, tileCanvas } from './art';
+import { IntroBackdrop } from './intro';
 import { Controls } from './controls';
 import { GameScene, type Session } from './game';
 import { ClientNet, HostNet, friendlyError, type ToClient } from './net';
@@ -37,19 +38,47 @@ function renderPicker() {
     const b = document.createElement('button');
     b.className = 'swatch' + (c === profile.color ? ' on' : '');
     b.style.background = '#' + c.toString(16).padStart(6, '0');
-    b.onclick = () => { profile.color = c; store.set('color', String(c)); renderPicker(); };
+    b.onclick = () => { profile.color = c; store.set('color', String(c)); renderPicker(); renderIcons(); };
     return b;
   }));
   $('hats').replaceChildren(...HATS.map((h, i) => {
     const b = document.createElement('button');
     b.className = 'hatbtn' + (i === profile.hat ? ' on' : '');
-    b.textContent = h;
-    b.onclick = () => { profile.hat = i; store.set('hat', String(i)); renderPicker(); };
+    b.setAttribute('aria-label', h);
+    const c = document.createElement('canvas');
+    c.width = 88; c.height = 88; c.className = 'px';
+    previewInto(c, profile.color, i);
+    b.append(c);
+    b.onclick = () => { profile.hat = i; store.set('hat', String(i)); renderPicker(); renderIcons(); };
     return b;
   }));
 }
+// ---------- Kenney UI icons ----------
+const GEM = () => tileCanvas('pp', 67, 4); // Pixel Platformer diamond = "star"
+let roomCode = '';
+function renderIcons() {
+  const logo = $('logo');
+  logo.replaceChildren(pixelText('BLOBZ', 4));
+  const blob = document.createElement('canvas');
+  blob.width = 88; blob.height = 88; blob.className = 'px bounce';
+  previewInto(blob, profile.color, profile.hat);
+  logo.append(blob);
+  ['s1', 's2', 's3'].forEach((c) => document.querySelector('#starbar .' + c)!.replaceChildren(GEM()));
+  $('dash').replaceChildren(tileCanvas('battle', 43, 4)); // Tiny Battle arrow
+  $('hint-dash').replaceChildren(tileCanvas('battle', 43, 2));
+  if (roomCode) $('lobby-code').replaceChildren(pixelText(roomCode, 4, 0));
+}
+function setRoomCode(code: string) {
+  roomCode = code;
+  $('lobby-code').dataset.code = code;
+  $('lobby-code').setAttribute('aria-label', 'Rumskod ' + code.split('').join(' '));
+  $('lobby-code').replaceChildren(pixelText(code, 4, 0));
+}
+
+const intro = new IntroBackdrop($<HTMLCanvasElement>('intro-bg'));
+intro.start();
 renderPicker();
-void loadArt().then(() => { renderPicker(); renderLobby(); });
+void loadArt().then(() => { renderPicker(); renderLobby(); renderIcons(); intro.refresh(); });
 
 // ---------- shared game plumbing ----------
 const controls = new Controls();
@@ -83,6 +112,7 @@ function renderLobby() {
 function startScene(session: Session) {
   endShown = false; lastStars = 0;
   show('menu', false); show('lobby', false); show('end', false); show('hud');
+  intro.stop(); show('intro-bg', false);
   try { (navigator as Navigator & { wakeLock?: { request(t: string): Promise<unknown> } }).wakeLock?.request('screen').catch(() => {}); } catch { /* optional */ }
   if (!game) {
     game = new Phaser.Game({
@@ -123,7 +153,7 @@ function onView(v: View) {
   controls.setCooldown(!!me && me.dashCd > 0);
   if (v.phase === 'end' && !endShown) {
     endShown = true;
-    $('end-stars').textContent = '★'.repeat(st) + '☆'.repeat(3 - st);
+    $('end-stars').replaceChildren(...[0, 1, 2].map((i) => { const g = GEM(); g.classList.add(i < st ? 'on' : 'off'); return g; }));
     $('end-score').textContent = `Lagets poäng: ${v.score}`;
     show('btn-again', isHost); show('end-wait', !isHost);
     show('end');
@@ -205,7 +235,7 @@ async function hostGame() {
     startScene(session);
   };
 
-  $('lobby-code').textContent = code;
+  setRoomCode(code);
   $('hud-code').textContent = 'Kod ' + code;
   renderLobby();
   show('btn-start'); show('lobby-wait', false);
@@ -267,7 +297,7 @@ async function joinGame() {
     $('menu-msg').textContent = why === 'full' ? 'Rummet är fullt (max 5).' : why === 'timeout' ? 'Ingen svarade. Rätt kod?' : friendlyError(why);
     return;
   }
-  $('lobby-code').textContent = code;
+  setRoomCode(code);
   $('hud-code').textContent = '';
   show('btn-start', false); show('lobby-wait');
   show('menu', false); show('lobby');
