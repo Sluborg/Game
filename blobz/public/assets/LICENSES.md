@@ -32,3 +32,5 @@ Blobz are drawn in code (`src/blob.ts`) as pixel SVG/canvas: color, eyes, mouth 
 | File | Source | Note |
 |---|---|---|
 | `art/fx/*.png` | Drawn in code by `scripts/fx_sheet.py` (Blobz Art) | Effects: dust, goo splat, coin sparkle, totem level-up, coin piles, plate glow |
+| `art/props-winter/tree-snow-pine.png`, `tree-snow-small.png`, `tree-bare.png`, `snowman.png`, `rock-snow.png` | Kenney Tiny Ski (CC0), cut from `assets/kenney-tiny-ski/tilemap_packed.png` by `scripts/winter_props.py` (outline thinned to 1 px) | Snow map props |
+| `art/props-winter/tree-snow-round.png`, `ice.png`, `igloo.png` | Own art (CC0) by `scripts/winter_props.py`; snowy round tree is `art/props/tree-green.png` with a snow cap | Snow map props, igloo = base (same 19x17 footprint as `icons/house.png`) |
