@@ -85,7 +85,7 @@ saveLook();
 // ---------- Kenney UI icons ----------
 /** ChatGPT order 20 icon (public/art/icons/NAME.png), crisp at any size. */
 const icon = (name: string, cls = '') => { const i = new Image(); i.src = `art/icons/${name}.png`; i.alt = ''; i.className = 'icon ' + cls; i.draggable = false; return i; };
-const GEM = (on = true) => icon(on ? 'diamond' : 'diamond-empty');
+const GEM = (on = true) => icon(on ? 'gem' : 'gem-empty');
 document.querySelectorAll<HTMLElement>('[data-icon]').forEach((el) => el.replaceWith(icon(el.dataset.icon!)));
 let roomCode = '';
 function renderIcons() {
@@ -95,7 +95,7 @@ function renderIcons() {
   img.src = 'art/logo.png'; img.alt = 'Blobz'; img.className = 'logo-img';
   img.onerror = () => logo.replaceChildren(pixelText('BLOBZ', 4));
   logo.replaceChildren(img);
-  ['s1', 's2', 's3'].forEach((c) => document.querySelector('#starbar .' + c)!.replaceChildren(GEM()));
+  ['s1', 's2', 's3'].forEach((c) => document.querySelector('#gems .' + c)!.replaceChildren(GEM(false)));
   if (roomCode) $('lobby-code').replaceChildren(pixelText(roomCode, 2, 0));
 }
 function setRoomCode(code: string) {
@@ -184,8 +184,7 @@ function onView(v: View) {
   $('starfill').style.width = Math.min(100, (v.score / max) * 100) + '%';
   const st = starsFor(v.score, v.stars);
   ['s1', 's2', 's3'].forEach((c, i) => {
-    const el = document.querySelector<HTMLElement>('#starbar .' + c)!;
-    el.style.left = (v.stars[i] / max) * 100 + '%';
+    const el = document.querySelector<HTMLElement>('#gems .' + c)!;
     const on = st > i;
     if (el.classList.contains('on') !== on || !el.dataset.init) {
       el.dataset.init = '1';
