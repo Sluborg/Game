@@ -47,6 +47,8 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     ok(await bo.isVisible('#attack') && await host.isVisible('#attack'), 'special button shows underground');
 
     // quiet floor around the start: remove goo, keep everyone at the start
+    // no level-up before the card step below (an open card freezes that blob until it picks)
+    await sim(host, (s) => { s.dg.xp = -1000; });
     await sim(host, (s) => { s.dg.enemies = []; s.players.forEach((p, i) => { p.x = s.dg.map.start.x - 40 + i * 40; p.y = s.dg.map.start.y; p.vx = 0; p.vy = 0; }); });
     // auto-attack: a small goo next to Stefan dies without any button
     await gooAt(host, 0, 0, 34, 0);
@@ -90,13 +92,20 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     await sim(host, (s) => { s.dg.enemies = []; });
 
     // level-up: 1 of 3 skill cards on every phone, from each one's own class
-    await sim(host, (s) => { s.dg.xp = 4; });
+    await sim(host, (s) => { s.dg.xp = 4; s.dg.level = 1; });
     await gooAt(host, 0, 0, 34, 0);
     for (const p of pages) await p.waitForSelector('#dg-cards:not(.hidden) .skcard', { timeout: 6000 });
     const offers = (await dg(bo)).heroes;
     ok(offers[ids[0]].offer.every((x) => x.startsWith('rogue-')) && offers[ids[1]].offer.every((x) => x.startsWith('healer-')) && offers[ids[2]].offer.every((x) => x.startsWith('marksman-')),
       'level 2: 3 cards per phone from the own class pool');
     if (shots) { await ada.screenshot({ path: `${shots}/dg-skills-portrait.png` }); await bo.screenshot({ path: `${shots}/dg-skills-landscape.png` }); }
+    // no timer: after 11 s the cards are still open; the blob stands still and takes no damage
+    const before = await host.evaluate(() => { const s = window.__blobz.state, p = s.players[1]; return { x: p.x, y: p.y, h: s.dg.heroes[p.id].hearts }; });
+    await sim(host, (s) => { const p = s.players[1]; s.dg.enemies.push({ id: s.dg.nextId++, kind: 0, x: p.x + 20, y: p.y, vx: 0, vy: 0, hp: 99, awake: true, stun: 0, slamT: 99, slam: null }); });
+    await ada.waitForTimeout(11000);
+    const after = await host.evaluate(() => { const s = window.__blobz.state, p = s.players[1]; return { x: p.x, y: p.y, h: s.dg.heroes[p.id].hearts, open: s.dg.heroes[p.id].offer.length }; });
+    ok(after.open === 3 && Math.hypot(after.x - before.x, after.y - before.y) < 1 && after.h === before.h, 'cards wait with no timer; the picking blob is frozen and safe from goo');
+    await sim(host, (s) => { s.dg.enemies = []; });
     for (const p of pages) await p.click('#dg-cards .skcard');
     await bo.waitForFunction((ids) => ids.every((id) => window.__blobzView.dungeon.heroes[id].skills.length === 1), ids, { timeout: 4000 });
     for (const p of pages) await p.waitForSelector('#dg-cards', { state: 'hidden', timeout: 3000 });

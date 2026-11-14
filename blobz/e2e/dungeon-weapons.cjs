@@ -11,7 +11,7 @@ const DIRS = { dagger: -80, sword: 30, hammer: 150, spear: -35, staff: 200, bow:
 const angDiff = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
 
 (async () => {
-  const { browser, pages } = await startGame(base, ['Stefan', 'Ada'], [undefined, LANDSCAPE]);
+  const { browser, pages } = await startGame(base, ['Stefan', 'Ada'], [undefined, LANDSCAPE], '&hitbox'); // screenshots show the sim's circles
   const [host, ada] = pages;
   try {
     await host.evaluate(() => { const s = window.__blobz.state; s.players.forEach((p, i) => { p.x = s.entrance.x + i * 10; p.y = s.entrance.y; }); });

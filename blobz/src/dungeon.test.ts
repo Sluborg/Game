@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  bossHp, CLASS_HEARTS, SKILLS, skillIcon, dungeonChoice, LOOT_SECONDS, OFFER_SECONDS, skillOf,
+  bossHp, CLASS_HEARTS, SKILLS, skillIcon, dungeonChoice, LOOT_SECONDS, skillOf, ENEMY_R, WEAPON_STATS as WS, TOUCH_DMG as TD,
   DONE_SECONDS, DT, dsnap, dview, ENEMY_HP, FLOORS, GH, GW, inSwing, isWall, KO_SECONDS, LEVEL_XP, makeFloor, newRun, SLAM_DMG, START_HEARTS,
   stepDungeon, TOUCH_DMG, WEAPON_STATS, type DFx, type DState,
 } from './dungeon';
@@ -66,12 +66,13 @@ describe('dungeon v1', () => {
       for (let t = 0; t < 60 * 30 && d.enemies.length; t++) {
         const e = d.enemies[0]; e.x = st.x + 40; e.y = st.y; e.stun = 9; e.vx = 0; e.vy = 0;
         a.x = st.x; a.y = st.y; a.vx = 0; a.vy = 0; d.heroes.a.inv = 99;
-        swings += run1(d, [a]).fx.filter((f) => f.t === 'swing').length;
+        swings += run1(d, [a]).fx.filter((f) => f.t === "swing").length;
       }
       expect(d.enemies).toHaveLength(0);
       expect(swings).toBe(hits);
       expect(d.kills).toBe(1);
       expect(d.coins.length).toBeGreaterThan(0);
+      d.heroes.a.offer = []; d.heroes.a.pending = 0; // a level-up card (frozen blob) would keep it from the coins
       const gold = d.gold + d.coins.reduce((g, c) => g + c.v, 0); // some coins land right under the blob
       for (const c of [...d.coins]) { a.x = c.x; a.y = c.y; run1(d, [a]); }
       expect(d.gold).toBe(gold);
@@ -169,7 +170,16 @@ describe('dungeon v1', () => {
     expect(d.heroes.a.maxHearts).toBe(CLASS_HEARTS.rogue + 1);
     dungeonChoice(d, 'a', 'skill:rogue-power'); // not offered any more: ignored
     expect(d.heroes.a.skills).toHaveLength(1);
-    run1(d, bs, undefined, OFFER_SECONDS + 0.2);
+    // no timer: b's cards stay open; b is frozen in place and goo can't hurt it
+    const bx = bs[1].x, hb = d.heroes.b.hearts;
+    d.enemies.push({ id: 5, kind: 0, x: bs[1].x + 20, y: bs[1].y, vx: 0, vy: 0, hp: 9, awake: true, stun: 0, slamT: 99, slam: null });
+    bs[1].vx = 200;
+    run1(d, bs, undefined, 15);
+    expect(d.heroes.b.offer).toHaveLength(3);
+    expect(d.heroes.b.skills).toHaveLength(0);
+    expect(bs[1].x).toBe(bx);
+    expect(d.heroes.b.hearts).toBe(hb);
+    dungeonChoice(d, 'b', 'skill:' + d.heroes.b.offer[0]);
     expect(d.heroes.b.skills).toHaveLength(1);
     expect(d.heroes.b.offer).toHaveLength(0);
   });
@@ -238,6 +248,31 @@ describe('dungeon v1', () => {
       const ids = SKILLS.filter((k) => k.cls === c).map((k) => k.id);
       expect(ids).toHaveLength(6);
       for (const id of ids) { expect(id.startsWith(c + '-')).toBe(true); expect(ART_SKILLS).toContain(skillIcon(id).split('/').pop()); }
+    }
+  });
+
+  it('hitboxes are the drawn goo: a hit just inside the sprite lands, just outside misses (melee, arrow, contact)', () => {
+    expect(ENEMY_R).toEqual([13, 20, 44]);
+    for (const kind of [0, 1, 2] as const) for (const w of ['sword', 'spear', 'bow'] as const) for (const [gap, hits] of [[-2, true], [2, false]] as [number, boolean][]) {
+      const d = quiet(newRun(21, { a: w }));
+      const st = d.map.start, a = body('a', st.x, st.y);
+      // goo straight to the right so its sprite edge sits `gap` px beyond the weapon's reach (arrows need a long room: use 60 px reach)
+      const reach = w === 'bow' ? 60 : WS[w].reach;
+      if (w === 'bow') WS.bow.reach = 60;
+      d.enemies.push({ id: 1, kind, x: st.x + reach + ENEMY_R[kind] + gap, y: st.y, vx: 0, vy: 0, hp: 99, awake: false, stun: 99, slamT: 99, slam: null });
+      d.heroes.a.fx = 1; d.heroes.a.fy = 0; d.heroes.a.inv = 99;
+      const { fx } = run1(d, [a]);
+      if (w === 'bow') WS.bow.reach = 250;
+      expect(fx.some((f) => f.t === 'swing'), `${w} vs goo ${kind} at gap ${gap}`).toBe(hits);
+    }
+    // contact: touching the sprite hurts, a hair outside does not
+    for (const kind of [0, 1, 2] as const) for (const [gap, hurts] of [[-1, true], [1, false]] as [number, boolean][]) {
+      const d = quiet(newRun(22, { a: 'staff' }));
+      const st = d.map.start, a = body('a', st.x, st.y);
+      d.heroes.a.atkCd = 99;
+      d.enemies.push({ id: 1, kind, x: st.x, y: st.y + 17 + ENEMY_R[kind] + gap, vx: 0, vy: 0, hp: 99, awake: true, stun: 99, slamT: 99, slam: null });
+      run1(d, [a]);
+      expect(d.heroes.a.hearts, `contact goo ${kind} gap ${gap}`).toBe(hurts ? CLASS_HEARTS.healer - TD : CLASS_HEARTS.healer);
     }
   });
 
