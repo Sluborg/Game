@@ -181,3 +181,6 @@
 
 ## 2026-11-14 - v025b: gather art (Art batch merged, not wired)
 - `public/art/gather/`: tool swing strips (axe/pickaxe/rake), button icons, berry bush full/empty, rubble, chips, stone/berries items, HUD resource icons, sun + day bar, star, quest card. Review sheet `docs/art-review/gather-sheet.png`.
+
+## 2026-11-14 - v026: hats fit every shape (Art batch merged)
+- Head profile per shape; wide hats squeezed by whole pixel columns to stay within 2 px of the head; cat/bunny ears placed from the head edges (pear fixed); new test guards hat overhang (brims whitelisted). 32 tests, build, lan-join e2e passed.
