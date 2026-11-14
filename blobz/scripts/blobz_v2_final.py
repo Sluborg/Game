@@ -37,7 +37,7 @@ def render(reqs):
 
 
 def main(scale=6):
-    hats = ['none', 'cap', 'crown', 'sprout', 'beanie', 'wizard', 'bow', 'headphones', 'cat-ears', 'unicorn', 'bunny-ears', 'devil-horns', 'antenna', 'halo']
+    hats = ['none', 'cap', 'crown', 'sprout', 'beanie', 'wizard', 'bow', 'headphones', 'cat-ears', 'unicorn', 'bunny-ears', 'devil-horns', 'antenna', 'halo', 'queen-crown']
     shapes = ['dome', 'ball', 'tall', 'flat', 'pear', 'cube']
     reqs, labels = [], []
     for h in range(len(hats)):
