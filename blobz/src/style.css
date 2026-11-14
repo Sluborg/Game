@@ -524,3 +524,11 @@ h2, button.big, .tab, .chip, .edit, #score, #hud-time, .me-text b, .lantext b, #
   .lobbycard .mapcard b { font-size: 17px; }
   .lobbycard button.big { min-height: 52px; }
 }
+
+/* Nunito sits higher than the pixel font did: move text down a few px, and keep the 5 designer tabs inside the card */
+button.big { padding: 4px 6px 0; }
+.chip, .edit { padding: 2px 4px 0; }
+.tab { padding: 3px 0 0; }
+.tabs { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.tab { font-size: 14px; min-width: 0; overflow: hidden; letter-spacing: -0.2px; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
