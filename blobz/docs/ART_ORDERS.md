@@ -39,7 +39,7 @@ ChatGPT works only on N-orders (READY ones). New orders only for pieces the pack
 |---|---|---|---|
 | N-1 | WAITING (game name on the board) | Title header / logo in Ninja Adventure style | `art/logo.png` |
 | N-2 | READY | Start screen background, round 2: LANDSCAPE ONLY (portrait approved 4/5) | `art/title.png` |
-| N-3 | READY | Loading screen, round 4: LANDSCAPE ONLY (portrait round 3 approved) | `art/loading.png`, `art/loading-landscape.png` |
+| N-3 | DONE | Loading screen (portrait + landscape approved) | `art/loading.png`, `art/loading-landscape.png` |
 | N-4 | READY | Hovering weapons sheet (7 weapons) in Ninja style | `dungeon/weapons/*.png` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
