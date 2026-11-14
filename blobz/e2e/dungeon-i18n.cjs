@@ -45,11 +45,8 @@ async function phone(browser, name, locale, size = PORTRAIT) {
     ok((await sv.textContent('#weapon-pick h2')).trim() === 'Välj klass' && (await sv.textContent('#weapon-cards')).includes('Helare'), 'SV joiner class cards ("Välj klass", "Helare")');
     await noSwedish(en, 'class cards');
     if (shots) await en.screenshot({ path: `${shots}/dg-i18n-class-en.png` });
-    await en.click('.wcard[data-w="rogue"]');
-    await en.waitForSelector('.wcard[data-w="dagger"]');
-    ok((await en.textContent('#weapon-cards')).includes('Two daggers'), 'EN weapon cards ("Two daggers")');
-    await noSwedish(en, 'weapon cards');
-    await en.click('.wcard[data-w="dagger"]');
+    ok((await en.textContent('#weapon-cards')).includes('Fast, one dagger'), 'EN class hint ("Fast, one dagger")');
+    await en.click('.wcard[data-w="rogue"]'); // one weapon per class: the dagger is picked at once
     await sv.click('.wcard[data-w="tank"]');
     for (const p of [en, sv]) await p.waitForSelector('#hud-dg:not(.hidden)', { timeout: 8000 });
 

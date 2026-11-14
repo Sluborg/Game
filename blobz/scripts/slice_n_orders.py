@@ -143,12 +143,62 @@ def n10(src):
     review(src, 'n10-icons.png')
 
 
+def n5b(src):
+    """One rogue card (N-5b) -> public/art/dungeon/card-class-rogue.png on its art-pixel grid, like the other 3 cards."""
+    a = np.array(Image.open(src).convert('RGBA')).astype(float)
+    al = a[:, :, 3] > 128
+    ys, xs = np.where(al)
+    reg, m = a[ys.min():ys.max() + 1, xs.min():xs.max() + 1, :3], al[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+    target = 54  # the other cards are 53-55 art px wide
+    p0 = reg.shape[1] / target
+    best = None
+    for p in np.arange(p0 * 0.92, p0 * 1.08, 0.25):
+        for ox in np.arange(0, p, 3.0):
+            for oy in np.arange(0, p, 3.0):
+                g, sp = grid(reg, m, p, ox, oy)
+                n = (g[:, :, 3] > 0).sum()
+                if n and (best is None or sp / n < best[0]):
+                    best = (sp / n, g, p)
+    g = best[1]
+    ys, xs = np.where(g[:, :, 3] > 0)
+    g = g[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+    Image.fromarray(g).save(os.path.join(ART, 'dungeon', 'card-class-rogue.png'))
+    print('card-class-rogue', g.shape[1], 'x', g.shape[0], 'pitch', round(best[2], 2))
+
+
+def n7b(src, bg=(255, 207, 107)):
+    """App icon without background (N-7b): clear the faint haze left by background removal (alpha < 100 -> 0, the rest
+    opaque), crop to the icon with a small margin; plain icons stay transparent, maskable ones sit at 72% on a warm colour."""
+    im = Image.open(src).convert('RGBA')
+    a = np.array(im)
+    keep = a[:, :, 3] >= 100
+    a[~keep] = 0
+    a[keep, 3] = 255
+    ys, xs = np.where(keep)
+    icon = Image.fromarray(a[ys.min():ys.max() + 1, xs.min():xs.max() + 1])
+    side = int(max(icon.size) * 1.06)
+    sq = Image.new('RGBA', (side, side))
+    sq.alpha_composite(icon, ((side - icon.width) // 2, (side - icon.height) // 2))
+    out = os.path.join(ART, 'app-icon')
+    os.makedirs(out, exist_ok=True)
+    for name, s in (('icon-512', 512), ('icon-192', 192), ('apple-touch-icon', 180)):
+        sq.resize((s, s), Image.LANCZOS).save(os.path.join(out, name + '.png'), optimize=True)
+    for name, s in (('icon-maskable-512', 512), ('icon-maskable-192', 192)):
+        m = Image.new('RGBA', (s, s), (*bg, 255))
+        k = int(s * 0.72)
+        m.alpha_composite(sq.resize((k, k), Image.LANCZOS), ((s - k) // 2, (s - k) // 2))
+        m.convert('RGB').save(os.path.join(out, name + '.png'), optimize=True)
+    print('app icons: plain transparent, maskable on', bg)
+
+
 def main():
     ap = argparse.ArgumentParser()
+    for k in ('n5b', 'n7b'):
+        ap.add_argument('--' + k)
     for k in ('n7', 'n8', 'n9', 'n10'):
         ap.add_argument('--' + k)
     args = ap.parse_args()
-    for k in ('n7', 'n8', 'n9', 'n10'):
+    for k in ('n5b', 'n7b', 'n7', 'n8', 'n9', 'n10'):
         if getattr(args, k):
             globals()[k](getattr(args, k))
             print(k, 'ok')

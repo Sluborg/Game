@@ -11,13 +11,13 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
   image / CSS background or border image / canvas icon, or a WebGL texture bound at a Phaser draw call); CODE ONLY =
   referenced but never shown in the run (remove the reference and the file); UNUSED = no reference and never shown.
 
-**Runtime run:** 2026-11-14, e2e 15/16 scripts passed (failed: dungeon-weapons.cjs, a swing-angle timing check slowed by the hook). **Own files:** CODE ONLY 79 / IN GAME 60 / UNUSED 33.
+**Runtime run:** 2026-11-14, e2e 15/16 scripts passed (failed: dungeon-weapons.cjs, a swing-angle timing check slowed by the hook). **Own files:** CODE ONLY 79 / IN GAME 60 / UNUSED 29.
 
 **Claude-drawn still IN GAME** (38): `art/base/bridge.png`, `art/base/btn-build.png`, `art/base/cottage-2.png`, `art/base/cottage-3.png`, `art/base/garden.png`, `art/base/storage.png`, `art/base/watchtower.png`, `art/base/well.png`, `art/base/workshop.png`, `art/dungeon/ko-stars.png`, `art/dungeon/weapons/ninja-crossbow.png`, `art/dungeon/weapons/ninja-shield.png`, `art/fine/dungeon/ko-stars.png`, `art/fine/dungeon/shockwave.png`, `art/fine/dungeon/slam-warning.png`, `art/fine/fx/coin-sparkle.png`, `art/fine/fx/dust.png`, `art/fine/fx/levelup.png`, `art/fine/fx/plate-glow.png`, `art/fine/gather/chips-stone.png`, `art/fine/gather/chips-wood.png`, `art/fine/icons/base-marker.png`, `art/fine/icons/magnet.png`, `art/fine/icons/quest-home.png`, `art/fine/icons/speed.png`, `art/gather/bar-fill-green.png`, `art/gather/btn-axe.png`, `art/gather/btn-pickaxe.png`, `art/gather/btn-rake.png`, `art/gather/daybar-fill.png`, `art/gather/daybar-frame.png`, `art/gather/hud-berries.png`, `art/gather/hud-stone.png`, `art/gather/hud-wood.png`, `art/gather/item-berries.png`, `art/gather/quest-card.png`, `art/gather/sun.png`, `art/props/berry-bush-ninja.png`
 
 **Kenney still IN GAME** (0): none
 
-**Counts by source:** ChatGPT 83 / Claude-drawn 64 / Kenney 11 / Ninja 2037 / other 14 (Ninja: 120 referenced by code). **Own files:** 172, 41 delete candidates.
+**Counts by source:** ChatGPT 79 / Claude-drawn 64 / Kenney 11 / Ninja 2037 / other 14 (Ninja: 123 referenced by code). **Own files:** 168, 41 delete candidates.
 
 ## Own files (art, Kenney, app icons)
 
@@ -46,23 +46,19 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/base/well.png` | 28x36 | Claude-drawn: scripts/base_art.py | Own art (CC0) | IN GAME | src/game.ts:227 | replace (see OLD_ART_CHECKLIST) |
 | `art/base/workshop-site.png` | 44x38 | Claude-drawn: scripts/base_art.py | Own art (CC0) | CODE ONLY | src/game.ts:227 | replace (see OLD_ART_CHECKLIST) |
 | `art/base/workshop.png` | 44x38 | Claude-drawn: scripts/base_art.py | Own art (CC0) | IN GAME | src/game.ts:227 | replace (see OLD_ART_CHECKLIST) |
-| `art/dungeon/card-class-healer.png` | 55x61 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:62 | keep |
-| `art/dungeon/card-class-marksman.png` | 54x60 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:62 | keep |
-| `art/dungeon/card-class-rogue.png` | 53x59 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:62 | keep |
-| `art/dungeon/card-class-tank.png` | 53x59 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:62 | keep |
+| `art/dungeon/card-class-healer.png` | 55x61 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:64 | keep |
+| `art/dungeon/card-class-marksman.png` | 54x60 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:64 | keep |
+| `art/dungeon/card-class-rogue.png` | 55x57 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:64 | keep |
+| `art/dungeon/card-class-tank.png` | 53x59 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:64 | keep |
 | `art/dungeon/ko-stars.png` | 40x9 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | IN GAME | UNUSED | delete |
-| `art/dungeon/potion.png` | 16x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | CODE ONLY | src/dungeonScene.ts:807 | replace (see OLD_ART_CHECKLIST) |
-| `art/dungeon/revive.png` | 48x20 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | CODE ONLY | src/dungeonScene.ts:762 | replace (see OLD_ART_CHECKLIST) |
-| `art/dungeon/weapons/dagger-1.png` | 16x6 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/dungeon/weapons/dagger-2.png` | 16x7 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/dungeon/weapons/daggers.png` | 16x14 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/dungeon/weapons/hammer.png` | 20x13 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:39, src/dungeonScene.ts:710, src/dungeonScene.ts:714 | keep |
-| `art/dungeon/weapons/ninja-crossbow.png` | 16x10 | Claude-drawn: scripts/ninja_weapons.py (Ninja palette) | Own art (CC0) | IN GAME | src/dungeonScene.ts:36 | keep (pending Stefan rating) |
-| `art/dungeon/weapons/ninja-shield.png` | 12x12 | Claude-drawn: scripts/ninja_weapons.py (Ninja palette) | Own art (CC0) | IN GAME | src/dungeonScene.ts:35 | keep (pending Stefan rating) |
-| `art/dungeon/weapons/shield.png` | 19x19 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:21, src/dungeonScene.ts:38, src/dungeonScene.ts:492 (+2) | keep |
-| `art/dungeon/weapons/spear.png` | 38x8 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:714 | keep |
-| `art/dungeon/weapons/staff.png` | 29x9 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/dungeon/weapons/sword.png` | 27x11 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:39, src/dungeonScene.ts:392 | keep |
+| `art/dungeon/potion.png` | 16x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | CODE ONLY | src/dungeonScene.ts:840 | replace (see OLD_ART_CHECKLIST) |
+| `art/dungeon/revive.png` | 48x20 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | CODE ONLY | src/dungeonScene.ts:787 | replace (see OLD_ART_CHECKLIST) |
+| `art/dungeon/weapons/hammer.png` | 20x13 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:43, src/dungeonScene.ts:736, src/dungeonScene.ts:740 | keep |
+| `art/dungeon/weapons/ninja-crossbow.png` | 16x10 | Claude-drawn: scripts/ninja_weapons.py (Ninja palette) | Own art (CC0) | IN GAME | src/dungeonScene.ts:40 | keep (pending Stefan rating) |
+| `art/dungeon/weapons/ninja-shield.png` | 12x12 | Claude-drawn: scripts/ninja_weapons.py (Ninja palette) | Own art (CC0) | IN GAME | src/dungeonScene.ts:39 | keep (pending Stefan rating) |
+| `art/dungeon/weapons/shield.png` | 19x19 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:21, src/dungeonScene.ts:42, src/dungeonScene.ts:515 (+2) | keep |
+| `art/dungeon/weapons/spear.png` | 38x8 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:740 | keep |
+| `art/dungeon/weapons/sword.png` | 27x11 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:43, src/dungeonScene.ts:414 | keep |
 | `art/fine/dungeon/ko-stars.png` | 80x18 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | IN GAME | src/game.ts:224 | replace (see OLD_ART_CHECKLIST) |
 | `art/fine/dungeon/shockwave.png` | 288x48 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | IN GAME | src/game.ts:226 | replace (see OLD_ART_CHECKLIST) |
 | `art/fine/dungeon/slam-warning.png` | 96x48 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | IN GAME | src/game.ts:225 | replace (see OLD_ART_CHECKLIST) |
@@ -97,13 +93,13 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/gather/star-empty.png` | 19x17 | ChatGPT N-10, sliced by scripts/slice_n_orders.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/ninjaArt.ts:13, index.html:110, index.html:111 (+2) | keep |
 | `art/gather/star.png` | 19x17 | ChatGPT N-10, sliced by scripts/slice_n_orders.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/ninjaArt.ts:13 | keep |
 | `art/gather/sun.png` | 13x13 | Claude-drawn: scripts/gather_art.py | Own art (CC0) | IN GAME | index.html:115 | replace (see OLD_ART_CHECKLIST) |
-| `art/icons/back.png` | 13x9 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:70, index.html:80, index.html:87 | replace (see OLD_ART_CHECKLIST) |
+| `art/icons/back.png` | 13x9 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:72, index.html:80, index.html:87 | replace (see OLD_ART_CHECKLIST) |
 | `art/icons/boot.png` | 17x17 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
 | `art/icons/check.png` | 19x16 | ChatGPT N-10, sliced by scripts/slice_n_orders.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/ninjaArt.ts:12, src/style.css:306, index.html:69 (+1) | keep |
 | `art/icons/chest.png` | 18x15 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
 | `art/icons/clock.png` | 17x18 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
 | `art/icons/coin.png` | 16x16 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
-| `art/icons/dash-arrow.png` | 14x10 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/ninjaArt.ts:33, src/dungeonUi.ts:258, index.html:147 | replace (see OLD_ART_CHECKLIST) |
+| `art/icons/dash-arrow.png` | 14x10 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/ninjaArt.ts:33, src/dungeonUi.ts:265, index.html:147 | replace (see OLD_ART_CHECKLIST) |
 | `art/icons/dash.png` | 19x14 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | index.html:147 | replace (see OLD_ART_CHECKLIST) |
 | `art/icons/diamond-empty.png` | 16x14 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
 | `art/icons/diamond.png` | 16x14 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
@@ -275,6 +271,9 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `assets/ninja-adventure/Ui/Receptacle/IconHeart.png` | 14x12 | Ninja Adventure | CC0 1.0 | CODE ONLY (loaded, not shown) | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Receptacle/LifeBarMiniProgress.png` | 18x4 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Receptacle/LifeBarMiniUnder.png` | 18x4 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
+| `assets/ninja-adventure/Ui/Receptacle/Receptacle Sphere/BackgroundRed.png` | 32x32 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
+| `assets/ninja-adventure/Ui/Receptacle/Receptacle Sphere/BackgroundWood.png` | 32x32 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
+| `assets/ninja-adventure/Ui/Receptacle/Receptacle Sphere/ProgressWhite.png` | 22x22 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Amulet.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Armor.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Arrow.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
@@ -329,10 +328,165 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `assets/ninja-adventure/Backgrounds/**` | 61 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 7 referenced (rows above) | keep (the art source) |
 | `assets/ninja-adventure/FX/**` | 105 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 28 referenced (rows above) | keep (the art source) |
 | `assets/ninja-adventure/Items/**` | 142 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 22 referenced (rows above) | keep (the art source) |
-| `assets/ninja-adventure/Ui/**` | 360 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 50 referenced (rows above) | keep (the art source) |
+| `assets/ninja-adventure/Ui/**` | 360 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 53 referenced (rows above) | keep (the art source) |
 | `assets/ninja-adventure/Palette.png` | 10x9 | Ninja Adventure (pack preview / palette) | CC0 1.0 | UNUSED | keep (reference) |
 | `assets/ninja-adventure/preview-part-1.png` | 641x417 | Ninja Adventure (pack preview / palette) | CC0 1.0 | UNUSED | keep (reference) |
 | `assets/ninja-adventure/preview-part-2.png` | 641x417 | Ninja Adventure (pack preview / palette) | CC0 1.0 | UNUSED | keep (reference) |
+
+## Archived (`blobz/archive/`, not shipped): 148 files
+
+See `archive/README.md`.
+
+| Path | Size | Source | License | Status |
+|---|---|---|---|---|
+| `archive/art/dungeon/arrow.png` | 13x5 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/btn-attack.png` | 20x20 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/btn-dash-small.png` | 8x5 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/btn-sidestep.png` | 20x20 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/btn-special-bow.png` | 20x20 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/btn-special-dagger.png` | 20x20 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/btn-special-hammer.png` | 20x20 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/btn-special-shield.png` | 20x20 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/btn-special-spear.png` | 20x20 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/btn-special-staff.png` | 20x20 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/btn-special-sword.png` | 20x20 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/card-dagger.png` | 48x64 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/card-hammer.png` | 48x64 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/card-spear.png` | 48x64 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/card-sword.png` | 48x64 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/chest-closed.png` | 18x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/chest-open.png` | 18x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/entrance-snow.png` | 48x40 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/entrance.png` | 48x40 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/flash-goo-boss.png` | 29x29 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/flash-goo-medium.png` | 22x18 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/flash-goo-small.png` | 14x12 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/fx-block.png` | 48x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/fx-charge.png` | 144x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/fx-heal.png` | 160x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/fx-sidestep.png` | 72x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/fx-slam.png` | 224x28 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/fx-spin.png` | 192x40 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/fx-wall.png` | 144x40 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/gear-bow.png` | 176x48 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/gear-crossbow.png` | 176x48 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/gear-daggers.png` | 176x48 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/gear-shield.png` | 176x48 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/gear-staff.png` | 176x48 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/heart-empty.png` | 7x7 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/heart-full.png` | 7x7 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/heart-half.png` | 7x7 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/icon-crossbow.png` | 20x20 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/item-amulet.png` | 16x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/item-cape.png` | 16x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/item-gloves.png` | 16x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/item-helm.png` | 16x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/item-ring.png` | 16x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/item-stone.png` | 16x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/level-badge.png` | 15x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/shockwave.png` | 144x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/healer-bubble.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/healer-cleanse.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/healer-heal.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/healer-holy.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/healer-regen.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/healer-revive.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/marksman-crit.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/marksman-multishot.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/marksman-pierce.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/marksman-poison.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/marksman-speed.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/marksman-trap.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/rogue-extraheart.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/rogue-knockback.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/rogue-lifesteal.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/rogue-power.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/rogue-rage.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/rogue-whirlwind.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/tank-armor.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/tank-block.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/tank-charge.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/tank-guard.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/tank-stun.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/tank-taunt.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/slam-warning.png` | 48x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/stairs-down.png` | 32x32 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/stairs-up.png` | 32x32 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/weapon-hammer.png` | 176x48 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/weapon-spear.png` | 272x48 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/weapon-sword.png` | 176x48 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/weapons/dagger-1.png` | 16x6 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/weapons/dagger-2.png` | 16x7 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/weapons/daggers.png` | 16x14 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/weapons/staff.png` | 29x9 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/xp-fill.png` | 40x6 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/xp-frame.png` | 42x8 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/enemies/goo-boss.png` | 29x29 | ChatGPT order 50 (goo enemies), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/enemies/goo-medium.png` | 22x18 | ChatGPT order 50 (goo enemies), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/enemies/goo-small.png` | 14x12 | ChatGPT order 50 (goo enemies), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/enemies/goo-splat.png` | 21x13 | ChatGPT order 50 (goo enemies), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/fine/base/build-spot.png` | 80x60 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/dungeon/chest-closed.png` | 36x32 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/dungeon/chest-open.png` | 36x32 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/dungeon/fx-block.png` | 96x32 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/dungeon/fx-charge.png` | 288x32 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/dungeon/fx-heal.png` | 320x48 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/dungeon/fx-sidestep.png` | 144x48 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/dungeon/fx-slam.png` | 448x56 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/dungeon/fx-spin.png` | 384x80 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/dungeon/fx-wall.png` | 288x80 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/dungeon/potion.png` | 32x32 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/dungeon/revive.png` | 96x40 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/dungeon/stairs-down.png` | 64x64 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/dungeon/stairs-up.png` | 64x64 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/fx/coin-pile-l.png` | 46x38 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/fx/coin-pile-m.png` | 34x30 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/fx/coin-pile-s.png` | 24x22 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/fx/splat.png` | 160x32 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/icons/arrow-to-resource.png` | 32x32 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/icons/berry-plus.png` | 32x32 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/icons/berry-x2-home.png` | 32x32 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/icons/carry-4.png` | 32x32 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/icons/carry-plus-1.png` | 32x32 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/icons/hit-minus.png` | 32x32 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/icons/new-corner.png` | 32x32 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/icons/regrow-fast.png` | 32x32 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/icons/village-badge.png` | 32x32 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/tiles/dirt.png` | 64x32 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/tiles/dungeon-floor.png` | 96x32 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/tiles/dungeon-wall.png` | 64x32 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fine/tiles/grass.png` | 96x32 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fx/coin-pile-l.png` | 23x19 | Claude-drawn: scripts/fx_sheet.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fx/coin-pile-m.png` | 17x15 | Claude-drawn: scripts/fx_sheet.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fx/coin-pile-s.png` | 12x11 | Claude-drawn: scripts/fx_sheet.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fx/coin-sparkle.png` | 33x11 | Claude-drawn: scripts/fx_sheet.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fx/dust.png` | 56x12 | Claude-drawn: scripts/fx_sheet.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fx/levelup.png` | 128x22 | Claude-drawn: scripts/fx_sheet.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fx/plate-glow.png` | 21x16 | Claude-drawn: scripts/fx_sheet.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/fx/splat.png` | 80x16 | Claude-drawn: scripts/fx_sheet.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/gather/bush-empty.png` | 18x16 | Claude-drawn: scripts/gather_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/gather/chips-stone.png` | 32x12 | Claude-drawn: scripts/gather_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/gather/chips-wood.png` | 32x12 | Claude-drawn: scripts/gather_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/gather/item-stone.png` | 10x8 | Claude-drawn: scripts/gather_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/gather/rubble.png` | 15x10 | Claude-drawn: scripts/gather_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/gather/tool-axe.png` | 176x48 | Claude-drawn: scripts/gather_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/gather/tool-pickaxe.png` | 176x48 | Claude-drawn: scripts/gather_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/gather/tool-rake.png` | 176x48 | Claude-drawn: scripts/gather_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/totems/totem-double-1.png` | 17x24 | ChatGPT order 40 (totems), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/totems/totem-double-2.png` | 20x31 | ChatGPT order 40 (totems), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/totems/totem-double-3.png` | 26x37 | ChatGPT order 40 (totems), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/totems/totem-magnet-1.png` | 16x24 | ChatGPT order 40 (totems), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/totems/totem-magnet-2.png` | 20x31 | ChatGPT order 40 (totems), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/totems/totem-magnet-3.png` | 26x37 | ChatGPT order 40 (totems), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/totems/totem-shield-1.png` | 17x24 | ChatGPT order 40 (totems), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/totems/totem-shield-2.png` | 20x31 | ChatGPT order 40 (totems), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/totems/totem-shield-3.png` | 26x37 | ChatGPT order 40 (totems), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/totems/totem-speed-1.png` | 16x24 | ChatGPT order 40 (totems), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/totems/totem-speed-2.png` | 20x31 | ChatGPT order 40 (totems), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/totems/totem-speed-3.png` | 26x37 | ChatGPT order 40 (totems), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/icon-512.png` | 512x512 | ChatGPT app icon (old, before N-7) | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/icon-maskable-192.png` | 192x192 | ChatGPT app icon (old, before N-7) | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/icon-maskable-512.png` | 512x512 | ChatGPT app icon (old, before N-7) | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
 
 ## Delete candidates (UNUSED, Lead decides)
 

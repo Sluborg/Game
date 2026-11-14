@@ -35,6 +35,8 @@ const SPECIAL_ICON: Record<Weapon, string> = {
   sword: 'Ui/Skill Icon/Spell/Cut.png', hammer: 'Ui/Skill Icon/Spell/Explosion.png', spear: 'Ui/Skill Icon/Spell/MagicWeapon.png', staff: 'Ui/Skill Icon/Spell/Heal.png',
   bow: 'Ui/Skill Icon/Items & Weapon/Kunai.png', shield: 'Ui/Skill Icon/Spell/DefenseUpgrade.png', dagger: 'Ui/Skill Icon/Items & Weapon/Shuriken.png',
 };
+/** the healer's button shows the wand's current mode: damage (red orb) / heal (green) */
+const HEALER_ICON = ['Ui/Skill Icon/Spell/OrbFire.png', 'Ui/Skill Icon/Spell/Heal.png'];
 /** Ninja weapon sprites on the rogue's weapon cards. */
 const WEAPON_CARD: Partial<Record<Weapon, string>> = { sword: 'Items/Weapons/Sword/Sprite.png', hammer: 'Items/Weapons/Hammer/Sprite.png', dagger: 'Items/Weapons/Sai/Sprite.png', spear: 'Items/Weapons/Lance/Sprite.png' };
 
@@ -130,14 +132,17 @@ function renderHud(d: DView, myId: string) {
   // special button: cooldown ring (fills up again), dim while cooling down
   const btn = $('attack');
   const max = h ? specialOf(h.cls, h.weapon).cd * heroMods(h).spCd : 1;
-  const left = h ? Math.max(0, Math.min(1, h.spCd / max)) : 0;
+  // the healer's button toggles the wand, the knight's raises the shield (held): no cooldown on either
+  const noCd = h?.cls === 'healer' || h?.cls === 'tank';
+  const left = h && !noCd ? Math.max(0, Math.min(1, h.spCd / max)) : 0;
+  btn.dataset.mode = h?.cls === 'healer' ? (h.mode ? 'heal' : 'dmg') : h?.guard ? 'guard' : '';
   btn.style.setProperty('--cd', String(left));
   btn.classList.toggle('cd', left > 0);
   btn.setAttribute('aria-label', h ? tSpecial(h.weapon) : t('dg.special'));
   // Art's icon per weapon special (spin / slam / charge)
   const spIcon = document.getElementById('attack-icon') as HTMLImageElement | null;
   // Art's special icon per weapon (spin / slam / charge / heal / volley / wall)
-  const src = encodeURI(NAU + SPECIAL_ICON[h?.weapon ?? 'sword']);
+  const src = encodeURI(NAU + (h?.cls === 'healer' ? HEALER_ICON[h.mode ? 1 : 0] : SPECIAL_ICON[h?.weapon ?? 'sword']));
   if (spIcon && !spIcon.src.endsWith(src)) spIcon.src = src;
   // my loot item next to the gold
   const key = h?.item ?? '';
@@ -189,16 +194,18 @@ function renderLoot(d: DView, myId: string, nameOf: (id: string) => string) {
     if (key !== lootKey) {
       lootKey = key;
       sfx.power();
-      const side = (label: string, x: typeof it | undefined) => {
-        const col = document.createElement('div');
-        col.className = 'lootside';
-        col.insertAdjacentHTML('beforeend', `<small>${label}</small>`);
-        col.append(x ? icon(encodeURI(ITEM_ICON[x.id]), x.icon, 4) : document.createElement('i'));
-        col.insertAdjacentHTML('beforeend', `<b>${x ? tItem(x.id) : t('dg.lootNone')}</b>${x ? `<small class="skfx">${tEffects(x.mod)}</small>` : ''}`);
-        return col;
-      };
-      const arrow = document.createElement('span'); arrow.className = 'lootarrow'; arrow.textContent = '→';
-      $('dg-loot-items').replaceChildren(side(t('dg.lootMine'), mine), arrow, side(t('dg.lootNew'), it));
+      // the new item big and first; under it a small line with what it would replace (Stefan: Din -> Ny read backwards)
+      const main = document.createElement('div');
+      main.className = 'lootnew';
+      main.append(icon(encodeURI(ITEM_ICON[it.id]), it.icon, 4));
+      main.insertAdjacentHTML('beforeend', `<div><b>${tItem(it.id)}</b><small class="skfx">${tEffects(it.mod)}</small></div>`);
+      const rep = document.createElement('div');
+      rep.className = 'lootrep';
+      if (mine) {
+        rep.insertAdjacentHTML('beforeend', `<small>${t(mine.id === it.id ? 'dg.lootHave' : 'dg.lootReplaces')}</small>`);
+        if (mine.id !== it.id) { rep.append(icon(encodeURI(ITEM_ICON[mine.id]), mine.icon, 2)); rep.insertAdjacentHTML('beforeend', `<small>${tItem(mine.id)}</small>`); }
+      }
+      $('dg-loot-items').replaceChildren(main, ...(mine ? [rep] : []));
     }
     const my = v.rolls[myId] ?? 0;
     show('dg-loot-btns', my === -1);
