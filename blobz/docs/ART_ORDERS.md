@@ -43,7 +43,7 @@ ChatGPT works only on N-orders (READY ones). New orders only for pieces the pack
 | N-1 | DONE (C chosen) | Title header / logo in Ninja Adventure style | `art/logo.png` |
 | N-2 | READY | Start screen background, round 2: LANDSCAPE ONLY (portrait approved 4/5) | `art/title.png` |
 | N-3 | DONE | Loading screen (portrait + landscape approved) | `art/loading.png`, `art/loading-landscape.png` |
-| N-4 | READY | Hovering weapons sheet (7 weapons) in Ninja style | `dungeon/weapons/*.png` |
+| N-4 | READY | Hovering weapons, round 2: CROSSBOW ONLY (bolt further back) | `dungeon/weapons/*.png` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
@@ -70,6 +70,9 @@ mouth, optional hat, bright body colours (blue, pink, green, yellow, purple, ora
 ```
 
 ### N-4 Hovering weapons (7)
+Round 2 (do this): redraw ONLY the crossbow from your weapons sheet, same style, size and direction (pointing right),
+with ONE change: the bolt sits further back, nocked at the string/stock, its tip just past the front of the bow
+(not sticking far out). Reference: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n4-weapons.png
 ```
 One sprite sheet, 7 columns x 1 row, transparent background (or flat magenta #ff00ff), in the Ninja Adventure style
 (see the style block): crisp pixel art, dark near-black outline, warm colours, no blur, no text.
