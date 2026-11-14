@@ -12,6 +12,7 @@ export type ToHost =
   | { t: 'hello'; info: Omit<PlayerInfo, 'id'>; v?: string }
   | { t: 'info?' }
   | { t: 'pick'; w: string }
+  | { t: 'build'; k: string }
   | { t: 'in'; x: number; y: number; dash: number; atk?: number };
 export type ToClient =
   | { t: 'welcome'; id: string }
@@ -47,6 +48,7 @@ export class HostNet {
   onInput: (id: string, inp: Input) => void = () => {};
   onLeave: (id: string) => void = () => {};
   onPick: (id: string, w: string) => void = () => {};
+  onBuild: (id: string, kind: string) => void = () => {};
   onInfo: () => RoomInfo | null = () => null;
   /** Second peer on `blobz-v2-<ns>-<slot>` so same-Wi-Fi phones find the room without a code. */
   slotPeer: Peer | null = null;
@@ -107,6 +109,8 @@ export class HostNet {
         c.send({ t: 'welcome', id: c.peer } satisfies ToClient);
       } else if (m.t === 'in') {
         this.onInput(c.peer, { x: +m.x || 0, y: +m.y || 0, dash: +m.dash || 0, atk: +(m.atk ?? 0) || 0 });
+      } else if (m.t === 'build') {
+        this.onBuild(c.peer, String(m.k));
       } else if (m.t === 'pick') {
         this.onPick(c.peer, String(m.w));
       }

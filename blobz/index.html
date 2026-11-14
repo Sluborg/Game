@@ -123,7 +123,11 @@
         <div class="mtime"><div id="mini-time"></div></div>
       </div>
       <button id="btn-skip-mini" class="chip hidden" type="button">Hoppa över</button>
-      <div id="hud-double" class="hidden"><b>2x</b><span id="double-t"></span></div>
+      <button id="btn-build" class="chip hidden" type="button" aria-label="Bygg"><img src="art/dungeon/btn-special-hammer.png" alt="" /> Bygg</button>
+      <div id="build-panel" class="hidden" role="dialog" aria-label="Bygg">
+        <div class="bphead"><b>Bygg</b><button id="btn-build-close" class="chip" type="button" aria-label="Stäng">✕</button></div>
+        <div id="build-cards" class="bcards"></div>
+      </div>
       <div id="stick"><div id="knob"></div></div>
       <button id="attack" class="hidden" aria-label="Attack"><img src="art/icons/dash-arrow.png" alt="" class="icon" id="attack-icon" /></button>
       <div id="hud-dg" class="hidden">

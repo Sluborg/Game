@@ -11,7 +11,7 @@ import { ClientNet, HostNet, friendlyError, type ToClient } from './net';
 import { lanNamespace, Scanner, type FoundRoom } from './discovery';
 import { sfx, unlockAudio } from './sfx';
 import {
-  addPlayer, BUILDING_ENABLED, finishMini, cleanBiome, type Biome, BUILD_COST, BUILD_NAMES, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, pickWeapon, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
+  addPlayer, atHome, BUILD_EFFECT, BUILD_KINDS, COTTAGE_BONUS, COTTAGE_COST, COTTAGE_MAX, requestBuild, type BuildKind, BUILDING_ENABLED, finishMini, cleanBiome, type Biome, BUILD_COST, BUILD_NAMES, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, pickWeapon, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
   toolNode, viewFromSnapshot, viewFromState,
 } from './sim';
 import type { FxEvent, Input, PlayerInfo, Snapshot, State, View } from './sim';
@@ -321,11 +321,6 @@ function startScene(session: Session) {
   else game.events.once('ready', () => hook(game!.scene.getScene('game') as GameScene));
 }
 
-function fmtTime(t: number) {
-  const s = Math.ceil(t);
-  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
-}
-
 /** Fill the 3 quest rows (icon, bar, n/target, star) inside `root`. */
 function renderQuestRows(root: ParentNode, v: View) {
   root.querySelectorAll<HTMLElement>('.qrow').forEach((row) => {
@@ -346,13 +341,68 @@ const QUEST_ROWS = () => $('hud-quest').innerHTML.split('<div class="qrow"').sli
 let savedAt = 0;
 let treesFor = { seed: -1, trees: [] as ReturnType<typeof makeTrees> };
 
+// ---------- build panel: the one place to build (hammer button when your blob is at home) ----------
+let sendBuild: (k: BuildKind | 'cottage') => void = () => {};
+let panelOpen = false;
+const COST_ICON: Record<string, string> = { wood: 'art/gather/hud-wood.png', stone: 'art/gather/hud-stone.png', berry: 'art/gather/hud-berries.png' };
+function buildCard(kind: BuildKind | 'cottage'): HTMLButtonElement {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'bcard'; b.dataset.kind = kind;
+  b.innerHTML = '<span class="bimg"><img alt="" /></span><b class="bname"></b><span class="beff"></span><span class="bcost"></span>';
+  b.onclick = () => { if (!b.disabled) { b.classList.remove('tap'); void b.offsetWidth; b.classList.add('tap'); sendBuild(kind); } };
+  return b;
+}
+function setupBuildPanel() {
+  const grid = $('build-cards');
+  if (grid.childElementCount) return;
+  grid.append(...[...BUILD_KINDS, 'cottage' as const].map(buildCard));
+  $('btn-build').onclick = () => { panelOpen = true; show('build-panel'); };
+  $('btn-build-close').onclick = () => { panelOpen = false; show('build-panel', false); };
+}
+function renderBuildPanel(v: View) {
+  const me = v.players.find((p) => p.id === session?.myId);
+  const home = BUILDING_ENABLED && v.phase === 'play' && v.mode === 'meadow' && !!me && atHome(me.x, me.y);
+  setupBuildPanel(); // idempotent: wires the button + cards once
+  show('btn-build', home);
+  if (!home && panelOpen) { panelOpen = false; show('build-panel', false); }
+  if (!panelOpen) return;
+  document.querySelectorAll<HTMLButtonElement>('#build-cards .bcard').forEach((card) => {
+    const kind = card.dataset.kind as BuildKind | 'cottage';
+    const isCot = kind === 'cottage';
+    const lvl = v.cottage?.level ?? 1;
+    const built = isCot ? lvl >= COTTAGE_MAX : v.builds.find((b) => b.kind === kind)?.state === 2;
+    const cost = isCot ? (lvl >= COTTAGE_MAX ? null : COTTAGE_COST[lvl - 1]) : BUILD_COST[kind];
+    const name = isCot ? (lvl >= COTTAGE_MAX ? 'Stuga nivå 3' : `Stuga nivå ${lvl + 1}`) : BUILD_NAMES[kind];
+    const img = isCot ? `art/base/cottage-${Math.min(3, lvl + (lvl >= COTTAGE_MAX ? 0 : 1))}.png` : `art/base/${kind}.png`;
+    const eff = isCot ? (COTTAGE_BONUS[lvl] || 'Klar!') : BUILD_EFFECT[kind];
+    const can = !built && !!cost && canAfford(v.bank, cost);
+    const key = `${built}|${can}|${name}|${cost ? RES.map((k) => cost[k] + ':' + (v.bank[k] >= cost[k] ? 1 : 0)).join(',') : ''}`;
+    if (card.dataset.key === key) return;
+    card.dataset.key = key;
+    card.disabled = built || !can;
+    card.classList.toggle('built', !!built);
+    card.classList.toggle('can', can);
+    card.querySelector('img')!.src = img;
+    card.querySelector('.bname')!.textContent = name;
+    card.querySelector('.beff')!.textContent = built ? 'Byggd ✓' : eff;
+    card.querySelector('.bcost')!.replaceChildren(...(built || !cost ? [] : RES.filter((k) => cost[k] > 0).map((k) => {
+      const s = document.createElement('span');
+      s.className = 'c ' + (v.bank[k] >= cost[k] ? 'ok' : 'no');
+      const i = new Image(); i.src = COST_ICON[k]; i.alt = '';
+      s.append(i, document.createTextNode(String(cost[k])));
+      return s;
+    })));
+  });
+}
+
 /** Building goal on the quest card: "Byggt: X" after a build this round, else "Bygg X" when the bank covers one. */
 function renderBuildGoal(v: View) {
   const row = $('q-build');
   if (!BUILDING_ENABLED) { show('q-build', false); return; }
   const doneK = v.builtNow?.[v.builtNow.length - 1];
   const next = !doneK ? v.builds?.find((b) => b.state !== 2 && canAfford(v.bank, RES.reduce((o, k) => ({ ...o, [k]: BUILD_COST[b.kind][k] - b.paid[k] }), {}))) : undefined;
-  const text = doneK ? 'Byggt: ' + BUILD_NAMES[doneK] : next ? 'Bygg ' + BUILD_NAMES[next.kind] : '';
+  // the hint points to the house, where the build panel is
+  const text = doneK ? 'Byggt: ' + BUILD_NAMES[doneK] : next ? 'Bygg ' + BUILD_NAMES[next.kind] + ' vid huset' : '';
   show('q-build', !!text);
   if (!text) return;
   const span = row.querySelector('span')!;
@@ -420,8 +470,7 @@ function onView(v: View) {
     if ($('bank-' + k).textContent !== t) { $('bank-' + k).textContent = t; changed = true; }
   }
   if (changed) { $('hud-bank').classList.remove('pop'); void $('hud-bank').offsetWidth; $('hud-bank').classList.add('pop'); }
-  show('hud-double', (v.doubleT ?? 0) > 0);
-  if (v.doubleT > 0) $('double-t').textContent = fmtTime(v.doubleT);
+  renderBuildPanel(v);
   const me = v.players.find((p) => p.id === session?.myId);
   // action button: the tool of the nearest node in reach, else dash
   if (session && treesFor.seed !== session.seed) treesFor = { seed: session.seed, trees: makeTrees(session.seed) };
@@ -514,6 +563,8 @@ async function hostGame() {
   };
   net.onInput = (id, inp) => inputs.set(id, inp);
   net.onPick = (id, w) => { if (state) pickWeapon(state, id, w); }; // [dungeon hook]
+  net.onBuild = (id, k) => { if (state) requestBuild(state, id, k as BuildKind | 'cottage'); };
+  sendBuild = (k) => { if (state) requestBuild(state, myId, k); };
   setPicker((w) => { if (state) pickWeapon(state, myId, w); });
   net.onLeave = (id) => {
     infos.delete(id); inputs.delete(id);
@@ -608,6 +659,7 @@ async function joinGame(target: string, row?: HTMLButtonElement) {
       fx.push(...m.s.fx);
     } else if (m.t === 'start') {
       latest = null; fx.length = 0;
+      sendBuild = (k) => net.send({ t: 'build', k });
       session = {
         role: 'client', myId: net.id, seed: m.seed, biome: cleanBiome(m.map),
         infos: () => infos,
