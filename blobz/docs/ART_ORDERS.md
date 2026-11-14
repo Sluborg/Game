@@ -33,7 +33,7 @@ Make ONE image per reply and wait for "next".
 ## Queue
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
-| D-1 | READY | Direction test 1: small style probe (one tiny scene) | nothing, a test |
+| D-1 | WAITING (paused: pack comparison) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | WAITING (Stefan's verdict on D-1) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | WAITING (after D-2) | Direction test 3: one enemy in 3 poses | nothing, a test |
 | D-4 | WAITING (after D-3) | Direction test 4: one base building | nothing, a test |
