@@ -361,6 +361,16 @@ button.link .icon { height: 18px; margin-right: 6px; vertical-align: -3px; }
 #dash .icon { height: 44px; }
 #hint { left: max(12px, env(safe-area-inset-left)); right: 124px; width: auto; transform: none; }
 
+/* ---------- gem row (v020b): three slots beside the score, thin progress bar below ---------- */
+#hud-score { width: auto; min-width: 150px; }
+.scorerow { display: inline-flex; vertical-align: middle; }
+#gems { display: inline-flex; gap: 4px; vertical-align: middle; margin-left: 10px; }
+#gems i { display: block; }
+#gems .icon { height: 22px; width: auto; display: block; image-rendering: pixelated; }
+#gems i.on .icon { animation: pop 0.45s ease-out both; filter: drop-shadow(0 2px 0 #3f263155); }
+#starbar { height: 8px; margin: 6px 2px 2px; }
+#starbar i { display: none; }
+
 /* ---------- Joina: rooms on this Wi-Fi ---------- */
 .lanlist { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
 .lanlist:empty { display: none; }
@@ -388,12 +398,20 @@ button.link .icon { height: 18px; margin-right: 6px; vertical-align: -3px; }
 }
 #btn-rescan { align-self: center; min-width: 200px; }
 #lobby-lan.warn { color: #c0392b; }
-/* ---------- gem row (v020b): three slots beside the score, thin progress bar below ---------- */
-#hud-score { width: auto; min-width: 150px; }
-.scorerow { display: inline-flex; vertical-align: middle; }
-#gems { display: inline-flex; gap: 4px; vertical-align: middle; margin-left: 10px; }
-#gems i { display: block; }
-#gems .icon { height: 22px; width: auto; display: block; image-rendering: pixelated; }
-#gems i.on .icon { animation: pop 0.45s ease-out both; filter: drop-shadow(0 2px 0 #3f263155); }
-#starbar { height: 8px; margin: 6px 2px 2px; }
-#starbar i { display: none; }
+
+/* ---------- team bank + 2x badge (milestone 40), under the clock ---------- */
+#hud-bank, #hud-double {
+  position: absolute; right: max(12px, env(safe-area-inset-right)); display: flex; align-items: center; gap: 6px;
+  background: none; font-weight: 700; font-size: 26px; color: var(--plum); padding: 0 4px;
+  border-style: solid; border-width: 12px; border-image: url('/art/ui/panel.png') 4 fill / 12px stretch;
+  image-rendering: pixelated; filter: drop-shadow(0 6px 0 #3f263140);
+}
+#hud-bank { top: calc(max(14px, env(safe-area-inset-top)) + 70px); }
+#hud-bank .icon { height: 28px; }
+#hud-bank.pop { animation: pop 0.4s ease-out; }
+#hud-double { top: calc(max(14px, env(safe-area-inset-top)) + 132px); border-image-source: url('/art/ui/btn-yellow.png'); border-image-slice: 3 fill; font-size: 22px; }
+#hud-double b { font-size: 26px; color: #d62839; }
+@media (orientation: landscape) and (max-height: 520px) {
+  #hud-bank { top: auto; bottom: max(130px, env(safe-area-inset-bottom)); }
+  #hud-double { top: auto; bottom: max(192px, env(safe-area-inset-bottom)); }
+}

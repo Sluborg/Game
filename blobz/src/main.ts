@@ -247,6 +247,13 @@ function onView(v: View) {
   if (st > lastStars) { sfx.star(); lastStars = st; }
   $('time').textContent = fmtTime(v.time);
   $('hud-time').classList.toggle('low', v.time < 20);
+  const bank = String(v.bank ?? 0);
+  if ($('bank').textContent !== bank) {
+    $('bank').textContent = bank;
+    $('hud-bank').classList.remove('pop'); void $('hud-bank').offsetWidth; $('hud-bank').classList.add('pop');
+  }
+  show('hud-double', (v.doubleT ?? 0) > 0);
+  if (v.doubleT > 0) $('double-t').textContent = fmtTime(v.doubleT);
   const me = v.players.find((p) => p.id === session?.myId);
   controls.setCooldown(!!me && me.dashCd > 0);
   if (v.phase === 'end' && !endShown) {
