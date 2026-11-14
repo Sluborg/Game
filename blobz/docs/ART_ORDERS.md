@@ -118,6 +118,9 @@ Also: the berry bush (full and picked) must look lush and appetising: fluffy rou
 
 ### A-8 Buttons, enemies, skill icons, back arrow (WAITING)
 The prompt is written after Stefan picks a variant on the decision board.
+Variant sheets on the board (A = today, B and C = new directions):
+`docs/art-review/variants-buttons.png` (dungeon buttons), `variants-goo.png` (goo small/medium/boss),
+`variants-skills.png` (skill icon style, 4 examples), `variants-back.png` (lobby/back arrow).
 
 ## For Stefan: delivering images
 Save each image as PNG and send it to the Lead session in Claude Code with the order id ("A-1").
