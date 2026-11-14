@@ -422,6 +422,15 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
     const push = (min - dd) / 2, nx = dx / dd, ny = dy / dd;
     p.x -= nx * push; p.y -= ny * push; q.x += nx * push; q.y += ny * push;
   }
+  // blobz don't stack either (the meadow's bouncy bumps are off underground)
+  for (let i = 0; i < alive.length; i++) for (let j = i + 1; j < alive.length; j++) {
+    const p = alive[i], q = alive[j];
+    const dx = q.x - p.x, dy = q.y - p.y, dd = Math.hypot(dx, dy), min = BLOB_R * 2 - 4;
+    if (dd >= min) continue;
+    const nx = dd > 0.001 ? dx / dd : 1, ny = dd > 0.001 ? dy / dd : 0, push = (min - dd) / 2;
+    p.x -= nx * push; p.y -= ny * push; q.x += nx * push; q.y += ny * push;
+    collideWalls(f, p, BLOB_R); collideWalls(f, q, BLOB_R);
+  }
   // coins (slide to a near blob) + chests
   for (const c of d.coins) {
     let tb: Body | null = null, bd = COIN_MAGNET;

@@ -2,6 +2,7 @@
 import Phaser from 'phaser';
 import { blobCanvas, BODY_CY, clampLook } from './blob';
 import { sfx } from './sfx';
+import { dungeonFrame } from './dungeonScene'; // [dungeon hook]
 import { BASE, GATE_W, makePuzzles, makeTrees, PLATE_R, rng, WORLD_H, WORLD_W } from './sim';
 import { canAfford, isSolid, PAD_R, RES, TOTEM_KINDS, TOTEM_MAX, TOTEM_PADS, totemPrice } from './sim';
 import { BRIDGE_Y, BUILDING_ENABLED, BUILD_COST, BUILD_KINDS, BUILD_NAMES, BUILD_R, BUILD_SPOTS, COTTAGE_COST, COTTAGE_MAX, COTTAGE_PAD, nodeRes, RIVER } from './sim';
@@ -262,6 +263,7 @@ export class GameScene extends Phaser.Scene {
     if (!v) return;
     this.lastView = v;
     this.onView(v);
+    if (dungeonFrame(this, v, this.s)) return; // [dungeon hook, Code 2] underground the dungeon scene draws
     const smooth = this.s.role === 'client';
     const k = Math.min(1, dt * 14);
     const now = this.time.now;

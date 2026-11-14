@@ -4,12 +4,13 @@ import '@fontsource/pixelify-sans/700.css';
 import { loadArt, pixelText } from './art';
 import { blobEl, clampLook, COLORS, EYES, HATS, MOUTHS, randomLook, SHAPES, type BlobLook } from './blob';
 import { Controls } from './controls';
+import { dungeonUi, setPicker } from './dungeonUi'; // [dungeon hook]
 import { GameScene, type Session } from './game';
 import { ClientNet, HostNet, friendlyError, type ToClient } from './net';
 import { lanNamespace, Scanner, type FoundRoom } from './discovery';
 import { sfx, unlockAudio } from './sfx';
 import {
-  addPlayer, BUILDING_ENABLED, BUILD_COST, BUILD_NAMES, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
+  addPlayer, BUILDING_ENABLED, BUILD_COST, BUILD_NAMES, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, pickWeapon, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
   toolNode, viewFromSnapshot, viewFromState,
 } from './sim';
 import type { FxEvent, Input, PlayerInfo, Snapshot, State, View } from './sim';
@@ -368,6 +369,7 @@ function villageText() {
 
 function onView(v: View) {
   if (DEBUG) (window as unknown as { __blobzView: View }).__blobzView = v;
+  if (dungeonUi(v, session?.myId, controls)) return; // [dungeon hook, Code 2] pick cards / dungeon HUD
   renderQuestRows($('hud-quest'), v);
   renderBuildGoal(v);
   const st = starsFor(v.delivered, v.quest);
@@ -454,6 +456,8 @@ async function hostGame() {
     return true;
   };
   net.onInput = (id, inp) => inputs.set(id, inp);
+  net.onPick = (id, w) => { if (state) pickWeapon(state, id, w); }; // [dungeon hook]
+  setPicker((w) => { if (state) pickWeapon(state, myId, w); });
   net.onLeave = (id) => {
     infos.delete(id); inputs.delete(id);
     if (state) removePlayer(state, id);
@@ -561,6 +565,7 @@ async function joinGame(target: string, row?: HTMLButtonElement) {
     }
   };
   net.onClose = () => { alert('Värden lämnade spelet.'); location.reload(); };
+  setPicker((w) => net.send({ t: 'pick', w })); // [dungeon hook]
 
   try {
     await net.join(target, myInfo());

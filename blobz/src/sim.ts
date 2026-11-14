@@ -199,7 +199,7 @@ const WELL_NEAR = 260; // team speed buff near the base with a well
 
 // ---- test dungeon v1: everyone stands on the entrance, picks a weapon, goes down together ----
 /** Dungeon (handed off to Code 2, WIP): OFF = no entrance on the meadow, nothing of it shows. */
-export const DUNGEON_ENABLED = false;
+export const DUNGEON_ENABLED = true;
 export const ENTRANCE = { x: BASE.x, y: BASE.y - 236 };
 export const ENTRANCE_R = 46;
 export const PICK_SECONDS = 20; // unpicked blobz get the sword after this
