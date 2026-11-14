@@ -8,6 +8,7 @@ import { DT, ENEMY_R, GOO_ART, GOO_SCALE, WEAPON_STATS, FLOORS, GH, GW, heroMods
 const WEAPON_TILE: Partial<Record<Weapon, number>> = { staff: 130, shield: 102, dagger: 103 }; // dagger tile: blade up
 import type { Session } from './game';
 import { sfx } from './sfx';
+import { t, tItem, tSkill } from './dungeonText';
 import { entranceOf, ENTRANCE_R, DUNGEON_ENABLED, type View } from './sim';
 
 const BLOB_SCALE = 1.45; // same as the meadow (game.ts)
@@ -182,9 +183,9 @@ export class DungeonScene extends Phaser.Scene {
     this.chests = f.chests.map((c) => this.add.image(c.x, c.y + 8, 'dg-chest-closed').setScale(3).setOrigin(0.5, 1).setDepth(c.y));
     this.mapObjs.push(...this.chests);
     // a big floor banner
-    const t = this.add.text(f.start.x, f.start.y - 90, floor === FLOORS ? `Våning ${floor} - Bossen!` : `Våning ${floor}`, { fontFamily: FONT, fontSize: '34px', color: '#ffe08a', fontStyle: 'bold', stroke: '#3f2631', strokeThickness: 7 })
+    const banner = this.add.text(f.start.x, f.start.y - 90, t(floor === FLOORS ? 'dg.floorBoss' : 'dg.floorBanner', { n: floor }), { fontFamily: FONT, fontSize: '34px', color: '#ffe08a', fontStyle: 'bold', stroke: '#3f2631', strokeThickness: 7 })
       .setOrigin(0.5).setDepth(7000);
-    this.tweens.add({ targets: t, y: t.y - 30, alpha: 0, delay: 1400, duration: 900, onComplete: () => t.destroy() });
+    this.tweens.add({ targets: banner, y: banner.y - 30, alpha: 0, delay: 1400, duration: 900, onComplete: () => banner.destroy() });
     // the camera jumps to the arrival point
     this.camTarget = { ...f.start };
     this.cameras.main.centerOn(f.start.x, f.start.y);
@@ -478,7 +479,7 @@ export class DungeonScene extends Phaser.Scene {
         break;
       }
       case 'ouch': { this.cameras.main.shake(90, 0.004); sfx.bump(); const b = this.heroes.get(f.id); if (b) this.tweens.add({ targets: b.body, alpha: 0.3, yoyo: true, duration: 80 }); break; }
-      case 'ko': this.floatText(f.x, f.y - 50, 'Knockad!', '#ffffff', 22); break;
+      case 'ko': this.floatText(f.x, f.y - 50, t('dg.ko'), '#ffffff', 22); break;
       case 'revive': { const r = this.add.sprite(f.x, f.y - 16, 'dg-revive', 0).setScale(3).setDepth(5000); r.play('dg-revive'); r.once('animationcomplete', () => r.destroy()); sfx.power(); break; }
       case 'coin': {
         const s = this.add.sprite(f.x, f.y - 8, 'fx-sparkle', 0).setScale(3).setDepth(5000);
@@ -489,7 +490,7 @@ export class DungeonScene extends Phaser.Scene {
       case 'chest': this.floatText(f.x, f.y - 40, '+' + f.n, '#ffe08a', 28); this.burst(f.x, f.y - 10, 0xffe08a, 12, 40); sfx.score(); break;
       case 'level': {
         const me = this.heroes.get(this.s.myId);
-        this.floatText(me?.x ?? 0, (me?.y ?? 0) - 80, `Nivå ${f.level}!`, '#8fd3ff', 30);
+        this.floatText(me?.x ?? 0, (me?.y ?? 0) - 80, t('dg.level', { n: f.level }), '#8fd3ff', 30);
         sfx.star();
         break;
       }
@@ -519,9 +520,9 @@ export class DungeonScene extends Phaser.Scene {
         sfx.tool('pickaxe', false);
         break;
       }
-      case 'potion': this.floatText(f.x, f.y - 30, '+1 hjärta åt alla', '#ff8a8a', 22); sfx.score(); break;
-      case 'skill': { const b = this.heroes.get(f.id); const sk = skillOf(f.s); if (b && sk) this.floatText(b.x, b.y - 70, sk.name, '#ffe08a', 20); break; }
-      case 'loot': { const b = f.win ? this.heroes.get(f.win) : undefined; const it = itemOf(f.item); if (b && it) { this.floatText(b.x, b.y - 70, it.name, '#c58bff', 22); this.burst(b.x, b.y - 10, 0xc58bff, 10, 36); } break; }
+      case 'potion': this.floatText(f.x, f.y - 30, t('dg.potion'), '#ff8a8a', 22); sfx.score(); break;
+      case 'skill': { const b = this.heroes.get(f.id); const sk = skillOf(f.s); if (b && sk) this.floatText(b.x, b.y - 70, tSkill(sk.id), '#ffe08a', 20); break; }
+      case 'loot': { const b = f.win ? this.heroes.get(f.win) : undefined; const it = itemOf(f.item); if (b && it) { this.floatText(b.x, b.y - 70, tItem(it.id), '#c58bff', 22); this.burst(b.x, b.y - 10, 0xc58bff, 10, 36); } break; }
     }
   }
 }

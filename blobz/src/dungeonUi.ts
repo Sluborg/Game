@@ -6,17 +6,17 @@ import './dungeon.css';
 import { tileCanvas } from './art';
 import type { Controls } from './controls';
 import {
-  ART_CLASS, CLASS_HINT, CLASS_NAMES, skillIcon, CLASS_WEAPONS, CLASSES, FLOORS, heroMods, itemOf, LEVEL_XP, LOOT_SECONDS, skillOf, specialOf, WEAPON_NAMES,
+  ART_CLASS, skillIcon, CLASS_WEAPONS, CLASSES, FLOORS, heroMods, itemOf, LEVEL_XP, LOOT_SECONDS, skillOf, specialOf,
   type DView, type HeroClass, type Weapon,
 } from './dungeon';
 import { sfx } from './sfx';
+import { t, tClass, tClassHint, tItem, tSkill, tSpecial, tWeapon, tWeaponHint } from './dungeonText';
+import { applyI18n } from './i18n';
 import type { View } from './sim';
 
 const $ = (id: string) => document.getElementById(id)!;
 const show = (id: string, on: boolean) => document.getElementById(id)?.classList.toggle('hidden', !on);
 const setText = (el: HTMLElement, t: string) => { if (el.textContent !== t) el.textContent = t; };
-/** Short picture-first hints on the cards (kids 8+: the picture and the name carry it). */
-const WEAPON_HINT: Record<Weapon, string> = { dagger: 'Supersnabb', sword: 'Snabb', hammer: 'Stark, slår runt', spear: 'Långt, rakt', staff: '', bow: '', shield: '' };
 /** Kenney Tiny Dungeon tiles standing in for class cards until Art's card-<class>.png exists. */
 const CLASS_TILE: Record<HeroClass, number> = { rogue: 88, healer: 84, marksman: 87, tank: 96 };
 
@@ -54,19 +54,19 @@ function buildCards() {
   };
   const h2 = $('weapon-pick').querySelector('h2');
   if (!pickClass) {
-    if (h2) h2.textContent = 'Välj klass';
-    root.replaceChildren(...CLASSES.map((c) => card(c, icon(`art/dungeon/card-class-${ART_CLASS[c]}.png`, CLASS_TILE[c], 6, 'cardimg'), CLASS_NAMES[c], CLASS_HINT[c], () => {
+    if (h2) h2.textContent = t('dg.pickClass');
+    root.replaceChildren(...CLASSES.map((c) => card(c, icon(`art/dungeon/card-class-${ART_CLASS[c]}.png`, CLASS_TILE[c], 6, 'cardimg'), tClass(c), tClassHint(c), () => {
       const ws = CLASS_WEAPONS[c];
       if (ws.length === 1) { myPick = ws[0]; pickClass = c; sendPick(ws[0]); markCards(); return; }
       pickClass = c; buildCards();
     })));
   } else if (!myPick) {
-    if (h2) h2.textContent = 'Välj vapen';
+    if (h2) h2.textContent = t('dg.pickWeapon');
     const arrow = document.createElement('span'); arrow.className = 'cardimg back'; arrow.textContent = '←';
-    const back = card('back', arrow, 'Tillbaka', '', () => { pickClass = null; buildCards(); });
+    const back = card('back', arrow, t('dg.back'), '', () => { pickClass = null; buildCards(); });
     root.replaceChildren(...CLASS_WEAPONS[pickClass].map((w) => {
       const img = icon(`art/dungeon/card-${w}.png`, 103, 6, 'cardimg'); // daggers: Kenney tile until Art's card-dagger.png
-      return card(w, img, WEAPON_NAMES[w], WEAPON_HINT[w], () => { myPick = w; sendPick(w); markCards(); });
+      return card(w, img, tWeapon(w), tWeaponHint(w), () => { myPick = w; sendPick(w); markCards(); });
     }), back);
   }
   markCards();
@@ -111,7 +111,7 @@ function renderHud(d: DView, myId: string) {
   const h = d.heroes[myId];
   if (h) renderHearts(h.hearts, h.maxHearts);
   setText($('dg-gold'), String(d.gold));
-  setText($('dg-floor'), `Våning ${d.floor}/${FLOORS}`);
+  setText($('dg-floor'), t('dg.floor', { n: d.floor, max: FLOORS }));
   setText($('dg-time'), fmt(d.time));
   $('dg-time').classList.toggle('low', d.time <= 30);
   setText($('dg-level'), String(d.level));
@@ -127,7 +127,7 @@ function renderHud(d: DView, myId: string) {
   const left = h ? Math.max(0, Math.min(1, h.spCd / max)) : 0;
   btn.style.setProperty('--cd', String(left));
   btn.classList.toggle('cd', left > 0);
-  btn.setAttribute('aria-label', h ? specialOf(h.cls, h.weapon).name : 'Special');
+  btn.setAttribute('aria-label', h ? tSpecial(h.weapon) : t('dg.special'));
   // Art's icon per weapon special (spin / slam / charge)
   const spIcon = document.getElementById('attack-icon') as HTMLImageElement | null;
   // Art's special icon per weapon (spin / slam / charge / heal / volley / wall)
@@ -140,7 +140,7 @@ function renderHud(d: DView, myId: string) {
     slot.dataset.k = key;
     const it = itemOf(key);
     slot.replaceChildren(...(it ? [icon(`art/dungeon/item-${it.id}.png`, it.icon, 2)] : []));
-    slot.title = it?.name ?? '';
+    slot.title = it ? tItem(it.id) : '';
     slot.classList.toggle('hidden', !it);
   }
 }
@@ -160,13 +160,13 @@ function renderOffer(d: DView, myId: string) {
       const b = document.createElement('button');
       b.className = 'skcard'; b.type = 'button'; b.dataset.s = id;
       b.append(icon(skillIcon(id), sk.icon, 3));
-      b.insertAdjacentHTML('beforeend', `<b>${sk.name}</b>`);
+      b.insertAdjacentHTML('beforeend', `<b>${tSkill(sk.id)}</b>`);
       b.onclick = () => { sfx.pick(); sendPick('skill:' + id); b.classList.add('on'); };
       return b;
     }));
   }
   if (offer.length) {
-    setText($('dg-cards-title'), `Nivå ${d.level}! Välj en`);
+    setText($('dg-cards-title'), t('dg.levelPick', { n: d.level }));
   }
 }
 
@@ -188,17 +188,17 @@ function renderLoot(d: DView, myId: string, nameOf: (id: string) => string) {
         col.className = 'lootside';
         col.insertAdjacentHTML('beforeend', `<small>${label}</small>`);
         col.append(x ? icon(`art/dungeon/item-${x.id}.png`, x.icon, 4) : document.createElement('i'));
-        col.insertAdjacentHTML('beforeend', `<b>${x?.name ?? 'Inget'}</b>`);
+        col.insertAdjacentHTML('beforeend', `<b>${x ? tItem(x.id) : t('dg.lootNone')}</b>`);
         return col;
       };
       const arrow = document.createElement('span'); arrow.className = 'lootarrow'; arrow.textContent = '→';
-      $('dg-loot-items').replaceChildren(side('Din', mine), arrow, side('Ny!', it));
+      $('dg-loot-items').replaceChildren(side(t('dg.lootMine'), mine), arrow, side(t('dg.lootNew'), it));
     }
     const my = v.rolls[myId] ?? 0;
     show('dg-loot-btns', my === -1);
-    const others = Object.entries(v.rolls).map(([id, r]) => `${nameOf(id)}: ${r === -1 ? '...' : r === 0 ? 'passar' : r}`).join(' · ');
+    const others = Object.entries(v.rolls).map(([id, r]) => `${nameOf(id)}: ${r === -1 ? '...' : r === 0 ? t('dg.passes') : r}`).join(' · ');
     setText($('dg-loot-msg'), `${others} · ${Math.max(0, Math.ceil(v.t))} s`);
-    setText($('dg-loot-title'), 'Ny skatt!');
+    setText($('dg-loot-title'), t('dg.lootTitle'));
   } else if (last) {
     const key = 'l:' + last.item + ':' + last.win;
     if (key !== lootKey) {
@@ -206,8 +206,8 @@ function renderLoot(d: DView, myId: string, nameOf: (id: string) => string) {
       const it = itemOf(last.item)!;
       $('dg-loot-items').replaceChildren(icon(`art/dungeon/item-${it.id}.png`, it.icon, 4));
       show('dg-loot-btns', false);
-      setText($('dg-loot-title'), last.win ? `${nameOf(last.win)} fick ${it.name}!` : `Ingen tog ${it.name}`);
-      setText($('dg-loot-msg'), last.win ? `Rullade ${last.roll}` : '');
+      setText($('dg-loot-title'), last.win ? t('dg.lootWon', { name: nameOf(last.win), item: tItem(it.id) }) : t('dg.lootNobody', { item: tItem(it.id) }));
+      setText($('dg-loot-msg'), last.win ? t('dg.rolled', { n: last.roll }) : '');
       if (last.win === myId) sfx.star();
     }
   }
@@ -219,12 +219,14 @@ function buildOverlays() {
   const stop = (el: HTMLElement) => { el.addEventListener('pointerdown', (e) => e.stopPropagation()); return el; };
   const cards = document.createElement('div');
   cards.id = 'dg-cards'; cards.className = 'hidden';
-  cards.innerHTML = '<div id="dg-cards-title"></div><div id="dg-cards-row"></div><div id="dg-cards-safe">Du är skyddad tills du väljer</div>';
+  cards.innerHTML = '<div id="dg-cards-title"></div><div id="dg-cards-row"></div><div id="dg-cards-safe" data-i18n="dg.safe"></div>';
   hud.append(stop(cards));
+  applyI18n(cards);
   const loot = document.createElement('div');
   loot.id = 'dg-loot'; loot.className = 'hidden';
-  loot.innerHTML = '<div id="dg-loot-title"></div><div id="dg-loot-items"></div><div id="dg-loot-btns"><button type="button" id="dg-roll">Rulla</button><button type="button" id="dg-pass">Passa</button></div><div id="dg-loot-msg"></div>';
+  loot.innerHTML = '<div id="dg-loot-title"></div><div id="dg-loot-items"></div><div id="dg-loot-btns"><button type="button" id="dg-roll" data-i18n="dg.roll"></button><button type="button" id="dg-pass" data-i18n="dg.pass"></button></div><div id="dg-loot-msg"></div>';
   hud.append(stop(loot));
+  applyI18n(loot);
   $('dg-roll').onclick = () => { sfx.pick(); sendPick('loot:roll'); };
   $('dg-pass').onclick = () => { sfx.pick(); sendPick('loot:pass'); };
   const item = document.createElement('span');
@@ -252,7 +254,8 @@ export function dungeonUi(v: View, myId: string | undefined, controls: Controls,
   show('weapon-pick', mode === 'pick');
   if (mode === 'pick') {
     const picked = v.picked?.length ?? 0;
-    setText($('pick-wait'), myPick ? `Väntar på kompisar ${picked}/${v.players.length} · ${Math.max(0, Math.ceil(v.pickT))} s` : `${pickClass ? 'Tryck på ett vapen' : 'Tryck på en klass'} · ${Math.max(0, Math.ceil(v.pickT))} s`);
+    const secs = Math.max(0, Math.ceil(v.pickT));
+    setText($('pick-wait'), myPick ? t('dg.waitFriends', { n: picked, max: v.players.length, s: secs }) : t(pickClass ? 'dg.tapWeapon' : 'dg.tapClass', { s: secs }));
     return true;
   }
   if (mode !== 'dungeon' || !v.dungeon) return false;
@@ -263,7 +266,7 @@ export function dungeonUi(v: View, myId: string | undefined, controls: Controls,
     setText($('dg-end-gold'), String(d.gold));
     setText($('dg-end-level'), String(d.level));
     setText($('dg-end-kills'), String(d.kills));
-    setText($('dg-end-why'), d.why === 'boss' ? 'Ni besegrade bossen!' : d.why === 'time' ? 'Tiden tog slut.' : 'Ni klev upp ur grottan.');
+    setText($('dg-end-why'), t(d.why === 'boss' ? 'dg.whyBoss' : d.why === 'time' ? 'dg.whyTime' : 'dg.whyExit'));
     show('dg-end', true);
     sfx.star();
   }

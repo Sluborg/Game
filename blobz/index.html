@@ -130,13 +130,13 @@
         <div id="build-cards" class="bcards"></div>
       </div>
       <div id="stick"><div id="knob"></div></div>
-      <button id="attack" class="hidden" aria-label="Attack"><img src="art/icons/dash-arrow.png" alt="" class="icon" id="attack-icon" /></button>
+      <button id="attack" class="hidden" data-i18n-aria="dg.special"><img src="art/icons/dash-arrow.png" alt="" class="icon" id="attack-icon" /></button>
       <div id="hud-dg" class="hidden">
-        <div id="dg-hearts" aria-label="Hjärtan"></div>
-        <div id="dg-row"><img src="art/icons/coin.png" alt="Guld" class="icon" /><span id="dg-gold">0</span><span id="dg-floor">Våning 1</span></div>
-        <div id="dg-xp"><span id="dg-level">Nivå 1</span><div class="xpbar"><div id="dg-xpfill"></div></div></div>
+        <div id="dg-hearts" data-i18n-aria="dg.hearts"></div>
+        <div id="dg-row"><img src="art/icons/coin.png" alt="" data-i18n-alt="dg.gold" class="icon" /><span id="dg-gold">0</span><span id="dg-floor"></span></div>
+        <div id="dg-xp"><span id="dg-level">1</span><div class="xpbar"><div id="dg-xpfill"></div></div></div>
       </div>
-      <div id="dg-ko" class="hidden">Knockad! Tillbaka om <b id="dg-ko-t">5</b></div>
+      <div id="dg-ko" class="hidden"><span data-i18n="dg.koBack"></span> <b id="dg-ko-t">5</b></div>
       <button id="dash" aria-label="Fart" data-i18n-aria="hud.dash"><i data-icon="dash-arrow"></i></button>
       <div id="hint"></div>
     </div>
@@ -144,7 +144,7 @@
     <!-- Dungeon: weapon cards before going down -->
     <section id="weapon-pick" class="screen hidden">
       <div class="card">
-        <h2>Välj vapen</h2>
+        <h2 data-i18n="dg.pickClass"></h2>
         <div id="weapon-cards" class="wcards"></div>
         <p id="pick-wait" class="msg"></p>
       </div>
@@ -153,11 +153,11 @@
     <!-- Dungeon done -->
     <section id="dg-end" class="screen hidden">
       <div class="card">
-        <h2>Dungeon klar!</h2>
-        <p class="dgstat"><img src="art/icons/coin.png" alt="" class="icon" /> Guld: <b id="dg-end-gold">0</b></p>
-        <p class="dgstat">Nivå: <b id="dg-end-level">1</b></p>
-        <p class="dgstat">Goo splattade: <b id="dg-end-kills">0</b></p>
-        <p class="tag">Tillbaka till ängen...</p>
+        <h2 data-i18n="dg.endTitle"></h2>
+        <p class="dgstat"><img src="art/icons/coin.png" alt="" class="icon" /> <span data-i18n="dg.endGold"></span> <b id="dg-end-gold">0</b></p>
+        <p class="dgstat"><span data-i18n="dg.endLevel"></span> <b id="dg-end-level">1</b></p>
+        <p class="dgstat"><span data-i18n="dg.endKills"></span> <b id="dg-end-kills">0</b></p>
+        <p class="tag" data-i18n="dg.endBack"></p>
       </div>
     </section>
 
