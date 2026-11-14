@@ -171,6 +171,7 @@ details.archive[open] summary { margin-bottom: 12px; }
 
 <script>
 const $ = (s) => document.querySelector(s);
+const flagPending = {}, flagTimer = {};
 const state = { flags: {}, flagNotes: {}, questions: [], answers: {}, drafts: {}, work: [], backlog: [], prio: {}, comments: [], commentDrafts: {}, art: [], artctl: {} };
 let db = null;
 const TABS = ['fragor', 'pagaende', 'backlog', 'art'];
@@ -241,7 +242,17 @@ function renderQuestion(q) {
   }
   if (Array.isArray(q.flagRows)) {
     const f = state.flags[q.id] || { flagged: [], notes: {} };
-    const save = async (next, st) => { if (!needDb(st)) return; try { await db.doc('flags/' + q.id).set({ ...next, at: new Date().toISOString() }); } catch (e) { st.textContent = 'Kunde inte spara (' + (e && e.code || 'fel') + ').'; st.className = 'status err'; } };
+    // local copy wins while edits are pending; writes are debounced and sent one at a time
+    const save = (next, st) => {
+      if (!needDb(st)) return;
+      flagPending[q.id] = next; clearTimeout(flagTimer[q.id]);
+      flagTimer[q.id] = setTimeout(async () => {
+        const data = flagPending[q.id];
+        try { await db.doc('flags/' + q.id).set({ ...data, at: new Date().toISOString() }); }
+        catch (e) { st.textContent = 'Kunde inte spara (' + (e && e.code || 'fel') + ').'; st.className = 'status err'; }
+        if (flagPending[q.id] === data) delete flagPending[q.id];
+      }, 700);
+    };
     for (const row of q.flagRows) {
       const box = el('div', { style: 'border-top:2px solid var(--cream-2);padding-top:8px;display:flex;flex-direction:column;gap:6px' });
       box.append(el('b', { text: row.label }));
@@ -506,7 +517,7 @@ renderAll();
   db.collection('backlog').onSnapshot((s) => { state.backlog = rows(s); renderBacklog(); }, fail('backloggen'));
   db.collection('prio').onSnapshot((s) => { const p = {}; for (const d of s.docs) p[d.id] = d.data().level; state.prio = p; renderBacklog(); }, () => {});
   db.collection('comments').onSnapshot((s) => { state.comments = rows(s); renderBacklog(); renderArt(); }, () => {});
-  db.collection('flags').onSnapshot((s) => { const m = {}; for (const d of s.docs) m[d.id] = d.data(); state.flags = m; renderQuestions(); }, () => {});
+  db.collection('flags').onSnapshot((s) => { const m = {}; for (const d of s.docs) m[d.id] = flagPending[d.id] ? state.flags[d.id] : d.data(); for (const k of Object.keys(flagPending)) if (!m[k]) m[k] = state.flags[k]; state.flags = m; renderQuestions(); }, () => {});
   db.collection('art').onSnapshot((s) => { state.art = rows(s); renderArt(); }, () => {});
   db.collection('artctl').onSnapshot((s) => { const m = {}; for (const d of s.docs) m[d.id] = d.data(); state.artctl = m; renderArt(); }, () => {});
 })();
