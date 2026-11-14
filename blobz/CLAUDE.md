@@ -48,6 +48,7 @@ Stefan works phone-only; replies in Swedish or English, docs and code in English
   `followup` (a clarifying question, keeps it open). Keep `work` (Pågående) and `backlog` up to date; read `prio` + `comments`.
 - When a decision or clarification from Stefan is needed (or he drifts to a new topic while a question is open), ask with the AskUserQuestion tool instead of waiting in prose.
 - Every message that announces a new version includes the link https://sluborg.github.io/Game/ and the version number.
+- **Board card rule (Stefan):** whenever anything waits for Stefan on the board, end the reply with an `Artifact` action "open" on the board URL so he gets a tappable card. Never just paste the link when items are waiting.
 - Every reply where the decision board has something new (a new question, a followup, a changed Pågående row Stefan should see) includes the board link https://claude.ai/artifact/7pHh1Z6QmDvtAYWweGvkAL.
 - Art made in code is only for simple shapes (icons, tiles, UI, small fx, blob parts). Illustrations (class cards,
   buildings, characters, scenes) are ordered from ChatGPT with a prompt Stefan can paste (see docs/TEAM.md).
