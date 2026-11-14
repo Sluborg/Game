@@ -495,3 +495,4 @@ h2, button.big, .tab, .chip, .edit, #score, #hud-time, .me-text b, .lantext b, #
 .ask { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .ask p { margin: 0; font-weight: 700; font-size: 18px; color: #b3261e; }
 .askrow { display: flex; gap: 14px; }
+#hint:empty { display: none; }
