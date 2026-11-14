@@ -13,7 +13,8 @@ export const EYES = ['Glada', 'Runda', 'Stora', 'Nöjda', 'Sömniga', 'Coola', '
   'Blink', 'Tårar', 'Snurr', 'Förvånad', 'Cyklop', 'Nörd'];
 export const MOUTHS = ['Öppen', 'Leende', 'Tunga', 'Tänder', 'Oj', 'Lugn', 'Skratt', 'Vampyr', 'Mustasch', 'Ledsen', 'Katt', 'Visslar'];
 export const HATS = ['Ingen', 'Krona', 'Keps', 'Blomma', 'Partyhatt', 'Mössa', 'Rosett', 'Halmhatt',
-  'Pirat', 'Trollkarl', 'Viking', 'Kock', 'Lurar', 'Kanin', 'Katt', 'Gloria', 'Cylinder', 'Bandana', 'Antenn', 'Grodd', 'Tomteluva'];
+  'Pirat', 'Trollkarl', 'Viking', 'Kock', 'Lurar', 'Kanin', 'Katt', 'Gloria', 'Cylinder', 'Bandana', 'Antenn', 'Grodd', 'Tomteluva',
+  'Ninja', 'Dino', 'Astronaut', 'Blomkrans', 'Propeller', 'Enhörning'];
 
 /** Fine pixels per design unit. */
 const S = 2;
@@ -29,7 +30,7 @@ const PAL: Record<string, string> = {
   Y: '#ffd23f', y: '#e0a81e', o: '#fff1a8', e: '#e63946', c: '#a4161a', k: '#2b2b33', g: '#5a5f6b',
   a: '#a7adb8', i: '#d6f1ff', N: '#ff8fab', n: '#e05780', P: '#b18cff', p: '#7d5fd6', B: '#3d6bff',
   b: '#2a4bb8', S: '#f2cf6b', s: '#c99a3e', L: '#7ccf4a', l: '#3f8f2f', G: '#2f7a2a', O: '#ff8a3d',
-  Q: '#ffc08a', v: '#f3ead8', x: '#c9b48e', T: '#7fd3ff', q: '#2e86c1', d: '#6b4226', D: '#9a6a44',
+  Q: '#ffc08a', z: '#ffe3ea', v: '#f3ead8', x: '#c9b48e', T: '#7fd3ff', q: '#2e86c1', d: '#6b4226', D: '#9a6a44',
 };
 
 /** Mirror a left half into a full symmetric row set (`odd`: the last column is the shared centre). */
@@ -55,9 +56,9 @@ const EYE_PARTS: EyePart[] = [
   { y: 24, rows: ['.UU.UU.', 'UHwUHHU', 'UHHHHHU', 'UHHHHrU', '.UHHrU.', '..UrU..', '...U...'] }, // Kär
   { x: 7, y: 22, rows: ['....K....', '...KYK...', '...KoK...', 'KKKKYKKKK', 'KYYoYYYYK', '.KYYYYYK.', '..KYYYK..', '.KYYKYyK.', '.KyK.KyK.', '.KK...KK.'] }, // Stjärnor
   { y: 21, rows: ['KK.....', '.KKKK..', '...KKKK', '.....KK', '.UUUUU.', 'UWWKKKU', 'UWWKwKU', 'UWWKKKU', '.UWWWU.', '..UUU..'] }, // Arga
-  { x: 6, rows: [ // Rosiga (blush)
+  { x: 6, rows: [ // Rosiga (blush: dark rose rim + light pink, reads on red and pink bodies too)
     '....UUU..', '...UWWWU.', '..UWWWWWU', '..UWWKKKU', '..UWWKwKU', '..UWWKKKU', '...UWWWU.', '....UUU..',
-    '.........', 'NrNrNr...', '.NrNrNr..'] },
+    '..cccc...', '.cNzNNc..', '..cccc...'] },
   { rows: ['..UUU..', '.UWWWU.', 'UWWWWWU', 'UWWKKKU', 'UWWKwKU', 'UWWKKKU', '.UWWWU.', '..UUU..'], // Blink
     right: ['.......', '.....KK', '...KKK.', '.KKK...', 'KK.....', '.KKK...', '...KKK.', '.....KK'] },
   { y: 23, rows: ['..UUU..', '.UWWWU.', 'UWWWWWU', 'UWWKKKU', 'UTWKwKU', 'qTTKKKU', 'qTTqUU.', 'qTTq...', '.qq....'] }, // Tårar
@@ -96,7 +97,7 @@ const MOUTH_PARTS: MouthPart[] = [
 
 // Hats: centred on x = 18 (+ dx); bottom row on fine row min(top + 2, 11) * S - 1 (+ drop).
 // `float`: hovers above the real head top (halo). `proc`: drawn procedurally to hug the body shape.
-interface HatPart { rows: string[]; dx?: number; float?: boolean; proc?: 'phones' | 'bandana' }
+interface HatPart { rows: string[]; dx?: number; float?: boolean; proc?: 'phones' | 'bandana' | 'ninja' | 'dino' }
 const HAT_PARTS: HatPart[] = [
   { rows: [] }, // Ingen
   { rows: ['U......UU......U', 'UYU...UYYU...UYU', 'UYYU.UYYYYU.UYYU', 'UYYYUYYYYYYUYYYU', 'UYYYYYYeeYYYYYYU',
@@ -154,6 +155,21 @@ const HAT_PARTS: HatPart[] = [
     '......UeeeeeeeUU....', '.....UeeeeeeeeU.....', '.....UeeeeeeeecU....', '....UeeeeeeeeeecU...',
     '....UeeeeeeeeeeecU..', '..UUWWWWWWWWWWWWWUU.', '..UWWWWWWWWWWWWWWWU.', '..UaWaaWaaWaaWaaWaU.',
     '..UUUUUUUUUUUUUUUUU.'] },
+  { proc: 'ninja', rows: [] }, // Ninja
+  { proc: 'dino', rows: [] }, // Dino
+  { rows: sym([ // Astronaut (visor flipped up above the eyes)
+    '.........U', '........Ue', '.........U', '.....UUUUa', '...UUWWWWW', '..UWWWWWWW', '.UWiWWWWWW', '.UWUUUUUUU',
+    'UaUqqqqqqq', 'UaUqTqqqqq', 'UaUUqqqqqq', '.UWUUUUUUU', '.UUUUUUUUU']) },
+  { rows: [ // Blomkrans
+    '.UUU..UUU..UUU..UUU.', 'UNYNUUWYWUUPYPUUNYNU', '.UNU..UWU..UPU..UNU.', 'ULLGLLLGLLLGLLLGLLLU',
+    '.UUUUUUUUUUUUUUUUUU.'] },
+  { rows: [ // Propeller
+    '..UUUU....UUUU..', '.UeeeeUUUUBBBBU.', '..UUUUUaaUUUUU..', '.......UU.......', '.....UUUUUU.....',
+    '...UUeeeYYYUU...', '..UeeeeeYYYYYU..', '.UeWeeeeYYYYYYU.', '.UBBBBBBLLLLLLU.', '.UBBBBBBLLLLLLU.',
+    '.UUUUUUUUUUUUUU.'] },
+  { rows: [ // Enhörning
+    '...UU...', '..UoWU..', '..UNNU..', '..UooU..', '.UNNNoU.', '.UooWoU.', '.UNNNNU.', 'UoooWooU', 'UNNNNNNU',
+    'UoooooyU', 'UUUUUUUU'] },
 ];
 
 /** Part tables, exported for tests only. */
@@ -228,20 +244,52 @@ function drawPhones(set: Setter) {
   }));
 }
 /** Bandana: a dotted red band across the forehead (inside the body, above the eyes) and a knot. */
-function drawBandana(set: Setter, color: number) {
+function drawBandana(set: Setter, color: number, ninja = false) {
   const [r, g] = rgb(color);
-  const band = r > 180 && g < 150 ? PAL.B : PAL.e; // blue on red/pink/orange bodies, else red
+  const band = ninja ? PAL.k : r > 180 && g < 150 ? PAL.B : PAL.e; // red bandana is blue on red/pink/orange bodies
   const y1 = headTop() >= 18 ? 22 : 21, y0 = y1 - 4; // flat heads: one row lower so it stays visible
   let right = 0;
   for (let y = y0; y <= y1; y++) for (let x = 0; x < GRID_W; x++) {
     if (!inBody(x, y)) continue;
     const edge = y === y0 || y === y1 || !inBody(x, y - 1);
-    set(x, y, edge ? OUT : (y === y0 + 2 && x % 4 === 1) || (y === y0 + 3 && x % 4 === 3) ? PAL.W : band);
+    const dot = !ninja && ((y === y0 + 2 && x % 4 === 1) || (y === y0 + 3 && x % 4 === 3));
+    set(x, y, edge ? OUT : dot ? PAL.W : band);
     if (y === y0 + 2) right = Math.max(right, x);
   }
-  const knot = ['UUU...', 'UeeUU.', 'UeUUeU', 'UUU.UU'];
+  if (ninja) { // metal forehead plate with a slit, and long tails flying out to the right
+    ['UUUUUUUU', 'UaaaaaaU', 'UagggaaU', 'UaaaaaaU', 'UUUUUUUU'].forEach((row, ry) => [...row].forEach((ch, rx) => set(14 + rx, y0 + ry, PAL[ch])));
+  }
+  const knot = ninja ? ['UUU.UUU', 'UeeUeeU', 'UeUUUeU', 'UU...UU'] : ['UUU...', 'UeeUU.', 'UeUUeU', 'UUU.UU'];
   const kx = Math.min(right - 1, GRID_W - knot[0].length);
   knot.forEach((row, ry) => [...row].forEach((ch, rx) => { if (ch !== '.') set(kx + rx, y0 + 1 + ry, ch === 'e' ? band : PAL[ch]); }));
+}
+
+/** Dino hood: covers the head above the eyes, white teeth on the rim, spikes along the top. */
+function drawDino(set: Setter, color: number) {
+  const [r, g, b] = rgb(color);
+  const greenBody = g > r + 30 && g > b;
+  const [fill, shade] = greenBody ? [PAL.P, PAL.p] : [PAL.L, PAL.l];
+  const rim = 20, lift = 3; // the hood is the head top raised by `lift` px, so flat heads get a hood too
+  const hood = (x: number, y: number) => y <= rim && (inBody(x, y) || inBody(x, y + lift));
+  for (let y = 0; y <= rim; y++) for (let x = 0; x < GRID_W; x++) {
+    if (!hood(x, y)) continue;
+    const edge = y === rim || [[1, 0], [-1, 0], [0, -1]].some(([dx, dy]) => !hood(x + dx, y + dy));
+    set(x, y, edge ? OUT : !hood(x + 3, y) || !hood(x, y + 1) ? shade : fill);
+  }
+  for (let x = 0; x < GRID_W; x++) { // teeth hang into the gap row above the eyes (rows 21-22)
+    const t = x % 5;
+    if (!inBody(x, 22) || x < 6 || x > 29) continue;
+    if (t === 0 || t === 3) set(x, 21, OUT);
+    else if (t === 1 || t === 2) { set(x, 21, PAL.W); set(x, 22, OUT); }
+  }
+  for (const cx of [11, 18, 25]) { // spikes sitting on the silhouette
+    let ty = 0;
+    while (ty < GRID_H && !hood(cx, ty)) ty++;
+    if (ty > rim - 2) continue;
+    ['..U..', '.UYU.', 'UYYyU'].forEach((row, ry) => [...row].forEach((ch, rx) => {
+      if (ch !== '.') set(cx - 2 + rx, ty - 2 + ry, PAL[ch]);
+    }));
+  }
 }
 
 /** Pixel grid of CSS colors (null = transparent). */
@@ -286,6 +334,8 @@ export function blobGrid(look: BlobLook): (string | null)[][] {
   const hat = HAT_PARTS[look.hat] ?? HAT_PARTS[0];
   if (hat.proc === 'phones') drawPhones(set);
   else if (hat.proc === 'bandana') drawBandana(set, look.color);
+  else if (hat.proc === 'ninja') drawBandana(set, look.color, true);
+  else if (hat.proc === 'dino') drawDino(set, look.color);
   else if (hat.rows.length) {
     // the hat's bottom row sits just above the eyes (row 23) on every shape; tall hats clip at the top
     const bottom = hat.float ? headTop() - 3 : Math.min(top + 2, 11) * S - 1;

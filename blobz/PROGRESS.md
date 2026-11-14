@@ -161,3 +161,16 @@
 
 ## 2026-11-14 - v022b: fx sprites (Art batch merged, not wired yet)
 - `public/art/fx/`: dust, splat, coin sparkle, level-up ring, coin piles s/m/l, plate glow (own CC0, `scripts/fx_sheet.py`). For Code to use in milestones 30-50.
+
+## 2026-11-14 - v023: milestone 30 co-op puzzles (Code batch merged)
+- Two fenced pens per map (seeded corners, gate facing the base). Pressure plates 2 and 3 (capped by player count), all held at once opens the gate (stays open); bonus chest +25 once. "n/need" bubbles, plate/plate-down and gate/gate-open art. Host-authoritative, snapshot field `z`.
+- Lead review: 25 tests, build, e2e puzzles.cjs + lan-join.cjs ALL PASSED, screenshots checked (portrait + landscape).
+
+## 2026-11-14 - v023b: art cleanup (Art batch merged)
+- `scripts/clean_art.py`: hard alpha + merged generation-noise colors on all sliced ChatGPT sprites (props, icons, enemies, totems); before/after in `docs/art-review/clean-before-after.png`. Review notes for Code in `docs/ART_REVIEW.md` (unify prop scales, integer scales, rock vs boulder, wire fx).
+
+## 2026-11-14 - v023c: blush fix (Art)
+- "Rosiga" cheeks: dark-rose edge + light-pink core, readable on all 12 body colors.
+
+## 2026-11-14 - v024: 6 new hats + winter props (Art batch merged)
+- Hats 21-26: Ninja, Dino, Astronaut, Blomkrans, Propeller, Enhörning (27 hat choices). Winter props in `public/art/props-winter/` (not wired). 25 tests, build, lan-join e2e passed.
