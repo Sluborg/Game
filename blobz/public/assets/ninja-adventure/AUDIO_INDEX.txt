@@ -1,0 +1,188 @@
+./Jingles/GameOver.wav
+./Jingles/GameOver2.wav
+./Jingles/GameOver3.wav
+./Jingles/GameOver4.wav
+./Jingles/LevelUp1.wav
+./Jingles/LevelUp2.wav
+./Jingles/LevelUp3.wav
+./Jingles/Secret1.wav
+./Jingles/Secret2.wav
+./Jingles/Secret3.wav
+./Jingles/Secret4.wav
+./Jingles/Success1.wav
+./Jingles/Success2.wav
+./Jingles/Success3.wav
+./Jingles/Success4.wav
+./Musics/1 - Adventure Begin.ogg
+./Musics/10 - Dark Castle.ogg
+./Musics/11 - Clearing.ogg
+./Musics/12 - Temple.ogg
+./Musics/13 - Mystical.ogg
+./Musics/14 - Curse.ogg
+./Musics/15 - Credit Theme.ogg
+./Musics/16 - Melancholia.ogg
+./Musics/17 - Fight.ogg
+./Musics/18 - Aquatic.ogg
+./Musics/19 - Ascension.ogg
+./Musics/2 - The Cave.ogg
+./Musics/20 - Good Time.ogg
+./Musics/21 - Dungeon.ogg
+./Musics/22 - Dream.ogg
+./Musics/23 - Road.ogg
+./Musics/24 - Final Area.ogg
+./Musics/25 - End Theme 2.ogg
+./Musics/26 - Lost Village.ogg
+./Musics/27 - Chill.ogg
+./Musics/28 - Tension.ogg
+./Musics/29 - Lament.ogg
+./Musics/3 - Revelation.ogg
+./Musics/30 - Ruins.ogg
+./Musics/31 - Sunny.ogg
+./Musics/32 - Manor.ogg
+./Musics/33 - Calm Village.ogg
+./Musics/34  - Fight.ogg
+./Musics/35 - Adventure.ogg
+./Musics/36 - Village.ogg
+./Musics/37 - Dark Forest.ogg
+./Musics/38 - Intro.ogg
+./Musics/39 - Boat.ogg
+./Musics/4 - Village.ogg
+./Musics/40 - Crypt.ogg
+./Musics/5 - Peaceful.ogg
+./Musics/6 - Story (Short).ogg
+./Musics/6 - Story.ogg
+./Musics/7 - Sad Theme.ogg
+./Musics/8 - End Theme.ogg
+./Musics/9 - Quiet.ogg
+./Sounds/Alert/Alert.wav
+./Sounds/Alert/Alert2.wav
+./Sounds/Alert/Alert3.wav
+./Sounds/Alert/Alert4.wav
+./Sounds/Alert/Alert5.wav
+./Sounds/Alert/Alert6.wav
+./Sounds/Ambient/Rain.wav
+./Sounds/Ambient/Rain2.wav
+./Sounds/Ambient/Rain3.wav
+./Sounds/Ambient/River.wav
+./Sounds/Ambient/Storm.wav
+./Sounds/Ambient/Wave.wav
+./Sounds/Ambient/WaveFar.wav
+./Sounds/Ambient/Wind.wav
+./Sounds/Ambient/Wind2.wav
+./Sounds/Bonus/Bonus.wav
+./Sounds/Bonus/Bonus2.wav
+./Sounds/Bonus/Bonus3.wav
+./Sounds/Bonus/Coin.wav
+./Sounds/Bonus/Coin2.wav
+./Sounds/Bonus/Coin3.wav
+./Sounds/Bonus/Gold1.wav
+./Sounds/Bonus/Gold2.wav
+./Sounds/Bonus/PowerUp1.wav
+./Sounds/Bonus/PowerUp2.wav
+./Sounds/Creature/Bird.wav
+./Sounds/Creature/Dog.wav
+./Sounds/Creature/Duck.wav
+./Sounds/Creature/Wings.wav
+./Sounds/Creature/Wings2.wav
+./Sounds/Elemental/Bubble.wav
+./Sounds/Elemental/Bubble2.wav
+./Sounds/Elemental/Explosion.wav
+./Sounds/Elemental/Explosion2.wav
+./Sounds/Elemental/Explosion3.wav
+./Sounds/Elemental/Explosion4.wav
+./Sounds/Elemental/Explosion5.wav
+./Sounds/Elemental/Explosion6.wav
+./Sounds/Elemental/Fire.wav
+./Sounds/Elemental/Fire2.wav
+./Sounds/Elemental/Fire3.wav
+./Sounds/Elemental/Fireball.wav
+./Sounds/Elemental/Fireball2.wav
+./Sounds/Elemental/Grass.wav
+./Sounds/Elemental/Grass2.wav
+./Sounds/Elemental/Water1.wav
+./Sounds/Elemental/Water10.wav
+./Sounds/Elemental/Water2.wav
+./Sounds/Elemental/Water3.wav
+./Sounds/Elemental/Water4.wav
+./Sounds/Elemental/Water5.wav
+./Sounds/Elemental/Water6.wav
+./Sounds/Elemental/Water7.wav
+./Sounds/Elemental/Water8.wav
+./Sounds/Elemental/Water9.wav
+./Sounds/Elemental/WaterDrop.wav
+./Sounds/Hit & Impact/Hit1.wav
+./Sounds/Hit & Impact/Hit2.wav
+./Sounds/Hit & Impact/Hit3.wav
+./Sounds/Hit & Impact/Hit5.wav
+./Sounds/Hit & Impact/Hit6.wav
+./Sounds/Hit & Impact/Hit7.wav
+./Sounds/Hit & Impact/Hit8.wav
+./Sounds/Hit & Impact/Hit9.wav
+./Sounds/Hit & Impact/Impact.wav
+./Sounds/Hit & Impact/Impact2.wav
+./Sounds/Hit & Impact/Impact3.wav
+./Sounds/Hit & Impact/Impact4.wav
+./Sounds/Hit & Impact/Impact5.wav
+./Sounds/Jump & Bounce/Bounce.wav
+./Sounds/Jump & Bounce/Bounce2.wav
+./Sounds/Jump & Bounce/Bounce3.wav
+./Sounds/Jump & Bounce/Bounce4.wav
+./Sounds/Jump & Bounce/Bounce5.wav
+./Sounds/Jump & Bounce/Jump.wav
+./Sounds/Jump & Bounce/Jump2.wav
+./Sounds/Jump & Bounce/Jump3.wav
+./Sounds/Magic & Skill/Fx.wav
+./Sounds/Magic & Skill/Heal.wav
+./Sounds/Magic & Skill/Heal2.wav
+./Sounds/Magic & Skill/Heal3.wav
+./Sounds/Magic & Skill/Magic1.wav
+./Sounds/Magic & Skill/Magic2.wav
+./Sounds/Magic & Skill/Magic3.wav
+./Sounds/Magic & Skill/Magic4.wav
+./Sounds/Magic & Skill/Magic5.wav
+./Sounds/Magic & Skill/Spirit.wav
+./Sounds/Magic & Skill/Strange.wav
+./Sounds/Menu/Accept.wav
+./Sounds/Menu/Accept2.wav
+./Sounds/Menu/Accept3.wav
+./Sounds/Menu/Accept4.wav
+./Sounds/Menu/Accept5.wav
+./Sounds/Menu/Accept6.wav
+./Sounds/Menu/Accept7.wav
+./Sounds/Menu/Accept8.wav
+./Sounds/Menu/Accept9.wav
+./Sounds/Menu/Cancel.wav
+./Sounds/Menu/Cancel2.wav
+./Sounds/Menu/Menu10.wav
+./Sounds/Menu/Menu11.wav
+./Sounds/Menu/Menu12.wav
+./Sounds/Menu/Menu5.wav
+./Sounds/Menu/Menu6.wav
+./Sounds/Menu/Menu8.wav
+./Sounds/Menu/Move1.wav
+./Sounds/Menu/Move2.wav
+./Sounds/Menu/Move3.wav
+./Sounds/Menu/Move4.wav
+./Sounds/Menu/Move5.wav
+./Sounds/Menu/Move6.wav
+./Sounds/Menu/Move7.wav
+./Sounds/Menu/Move8.wav
+./Sounds/Voice/Voice1.wav
+./Sounds/Voice/Voice10.wav
+./Sounds/Voice/Voice2.wav
+./Sounds/Voice/Voice3.wav
+./Sounds/Voice/Voice4.wav
+./Sounds/Voice/Voice5.wav
+./Sounds/Voice/Voice6.wav
+./Sounds/Voice/Voice7.wav
+./Sounds/Voice/Voice8.wav
+./Sounds/Voice/Voice9.wav
+./Sounds/Whoosh & Slash/Launch.wav
+./Sounds/Whoosh & Slash/Slash.wav
+./Sounds/Whoosh & Slash/Slash2.wav
+./Sounds/Whoosh & Slash/Slash3.wav
+./Sounds/Whoosh & Slash/Slash4.wav
+./Sounds/Whoosh & Slash/Slash5.wav
+./Sounds/Whoosh & Slash/Sword2.wav
+./Sounds/Whoosh & Slash/Whoosh.wav
+./Sounds/Whoosh & Slash/Whoosh2.wav

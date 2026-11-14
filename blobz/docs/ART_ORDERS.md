@@ -31,22 +31,26 @@ Make ONE image per reply and wait for "next".
 ```
 
 ## Queue
+
+**2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. All orders below are cancelled.
+ChatGPT has no READY order. New orders only for pieces the pack lacks.**
+
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
-| D-1 | WAITING (paused: pack comparison) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
-| D-2 | WAITING (paused: pack comparison) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
-| D-3 | WAITING (paused: pack comparison) | Direction test 3: one enemy in 3 poses | nothing, a test |
-| D-4 | WAITING (paused: pack comparison) | Direction test 4: one base building | nothing, a test |
-| A-1 | WAITING (paused: art direction first, see D-orders) | Class cards, round 3 | `dungeon/card-class-*.png` |
-| A-2 | WAITING (paused: art direction first, see D-orders) | Cottage level 2 and 3 + snow igloo, matching the loading-screen house | `base/cottage-2.png`, `cottage-3.png`, `props-winter/igloo.png` |
-| A-3 | WAITING (paused: art direction first, see D-orders) | Landscape loading screen | `art/loading-landscape.png` |
-| A-4 | WAITING (paused: art direction first, see D-orders) | Dungeon entrance, meadow + snow | `dungeon/entrance.png`, `entrance-snow.png` |
-| A-5 | WAITING (paused: art direction first, see D-orders) | Base buildings (build menu picture cards + on the map) | `base/*` buildings |
-| A-6 | WAITING (Rogue weapon decision) | Weapon cards: daggers, sword, hammer, spear | `dungeon/card-dagger.png`, `card-sword.png`, `card-hammer.png`, `card-spear.png` |
-| A-7 | WAITING (paused: art direction first, see D-orders) | Meadow props incl. berry bush (cozy storybook style) | `props/*`, `gather/bush-*` |
-| A-8 | WAITING (variants on the board) | Dungeon buttons, goo enemies, skill icons, back arrow | `dungeon/btn-*`, `enemies/*`, `dungeon/skills/*`, `icons/back.png` |
-| A-9 | WAITING (paused: art direction first, see D-orders) | Bärregn mini game: bomb, falling berries, basket, plop, fence | `mini/bomb.png`, `mini/berries.png`, `mini/basket.png`, `mini/plop.png`, `mini/fence-*.png` |
-| A-10 | WAITING (after A-7 style pick) | Winter props in the same style as A-7 | `props-winter/*` |
+| D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
+| D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
+| D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
+| D-4 | CANCELLED (Ninja Adventure chosen) | Direction test 4: one base building | nothing, a test |
+| A-1 | CANCELLED (Ninja Adventure chosen) | Class cards, round 3 | `dungeon/card-class-*.png` |
+| A-2 | CANCELLED (Ninja Adventure chosen) | Cottage level 2 and 3 + snow igloo, matching the loading-screen house | `base/cottage-2.png`, `cottage-3.png`, `props-winter/igloo.png` |
+| A-3 | CANCELLED (Ninja Adventure chosen) | Landscape loading screen | `art/loading-landscape.png` |
+| A-4 | CANCELLED (Ninja Adventure chosen) | Dungeon entrance, meadow + snow | `dungeon/entrance.png`, `entrance-snow.png` |
+| A-5 | CANCELLED (Ninja Adventure chosen) | Base buildings (build menu picture cards + on the map) | `base/*` buildings |
+| A-6 | CANCELLED (Ninja Adventure chosen) | Weapon cards: daggers, sword, hammer, spear | `dungeon/card-dagger.png`, `card-sword.png`, `card-hammer.png`, `card-spear.png` |
+| A-7 | CANCELLED (Ninja Adventure chosen) | Meadow props incl. berry bush (cozy storybook style) | `props/*`, `gather/bush-*` |
+| A-8 | CANCELLED (Ninja Adventure chosen) | Dungeon buttons, goo enemies, skill icons, back arrow | `dungeon/btn-*`, `enemies/*`, `dungeon/skills/*`, `icons/back.png` |
+| A-9 | CANCELLED (Ninja Adventure chosen) | Bärregn mini game: bomb, falling berries, basket, plop, fence | `mini/bomb.png`, `mini/berries.png`, `mini/basket.png`, `mini/plop.png`, `mini/fence-*.png` |
+| A-10 | CANCELLED (Ninja Adventure chosen) | Winter props in the same style as A-7 | `props-winter/*` |
 
 ### D-1 Direction test 1: style probe (small)
 Goal: lock the art direction with ONE small image before any big order. Stefan judges it and Art writes the next test.
