@@ -211,3 +211,6 @@
 
 ## 2026-11-14 - v028d: discovery probe timing (Lead hotfix)
 - Stefan still could not find a game on the same Wi-Fi. Probes gave up after 2.5 s, real phones need 3-6 s for WebRTC (mDNS/TURN). Probe timeout 9 s, empty slots end immediately on the broker "peer-unavailable" for that id, and a found-but-connecting host shows "Hittade ett spel, ansluter...". 43 tests, lan-join e2e passed.
+
+## 2026-11-14 - v028e: Wi-Fi code on the start card
+- The 4-char Wi-Fi code moved from the Joina/lobby text to the version line ("v028e (8C7F)"); both phones must show the same code. A VPN changes it (Stefan had VPN on). TEAM.md: Stefan can hand ChatGPT art straight to Art.

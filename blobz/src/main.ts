@@ -170,9 +170,8 @@ let emptyRounds = 0;
 let retryTimer = 0;
 const SEARCHING = 'Letar efter spel på ditt Wi-Fi...';
 const NOTHING = 'Hittar inga spel. Är ni på samma Wi-Fi?';
-let netCode = '';
 function lanStatus(text: string, rescan = false) {
-  $('lan-status').textContent = netCode ? `${text} (nät ${netCode})` : text;
+  $('lan-status').textContent = text;
   $('lan-status').classList.toggle('static', rescan);
   show('btn-rescan', rescan);
 }
@@ -191,7 +190,7 @@ function startScan() {
       retryTimer = window.setTimeout(tryNs, 5000);
       return;
     }
-    netCode = ns.slice(0, 4).toUpperCase();
+
     lanStatus(SEARCHING);
     scanner = new Scanner(ns, clampLook);
     scanner.onUpdate = renderRooms;
@@ -257,7 +256,10 @@ async function checkForNewVersion() {
 void checkForNewVersion();
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && $('hud').classList.contains('hidden')) void checkForNewVersion(); });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => { /* optional */ });
-$('version').textContent = __APP_VERSION__ + (matchMedia('(prefers-color-scheme: dark)').matches ? ' D' : '');
+const versionText = () => __APP_VERSION__ + (matchMedia('(prefers-color-scheme: dark)').matches ? ' D' : '');
+$('version').textContent = versionText();
+// Wi-Fi code next to the version: two phones must show the same code to find each other (a VPN changes it)
+void lanNamespace().then((ns) => { if (ns) $('version').textContent = `${versionText()} (${ns.slice(0, 4).toUpperCase()})`; });
 $('version').title = __APP_COMMIT__;
 renderPicker();
 // First visit: pick your blob before anything else.
@@ -399,8 +401,7 @@ async function hostGame() {
     if (net.peer.destroyed) return;
     const ns = await lanNamespace();
     const slot = ns ? await net.openSlot(ns) : 0;
-    const code = ns ? ` <span class="netcode">(nät ${ns.slice(0, 4).toUpperCase()})</span>` : '';
-    $('lobby-lan').innerHTML = (slot ? LAN_OK : 'Letar efter ditt Wi-Fi... Kompisarna ser inte spelet än.') + code;
+    $('lobby-lan').innerHTML = slot ? LAN_OK : 'Letar efter ditt Wi-Fi... Kompisarna ser inte spelet än.';
     $('lobby-lan').classList.toggle('warn', !slot);
     if (!slot) setTimeout(() => void advertise(), 5000);
   };
