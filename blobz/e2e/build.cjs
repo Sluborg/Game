@@ -4,57 +4,69 @@ const { LANDSCAPE, ok, startGame, sim, place, view } = require('./helpers.cjs');
 const base = process.argv[2] || 'http://localhost:4173/';
 const shots = process.argv[3] || '';
 
-const spot = (host, k) => sim(host, (s, k) => {
-  const i = ['workshop', 'storage', 'garden', 'well', 'watchtower', 'bridge'].indexOf(k), a = (i * 60 * Math.PI) / 180;
-  return { x: Math.round(640 + Math.cos(a) * 180), y: Math.round(480 + Math.sin(a) * 180) };
-}, k);
+const card = (page, k) => page.locator(`#build-cards .bcard[data-kind="${k}"]`);
+const goHome = (host, i) => sim(host, (s, i) => Object.assign(s.players[i], { x: 640 + (i - 1) * 30, y: 520, vx: 0, vy: 0 }), i);
+const openPanel = async (page) => { await page.waitForSelector('#btn-build:not(.hidden)', { timeout: 5000 }); await page.click('#btn-build'); await page.waitForSelector('#build-panel:not(.hidden)'); };
 
 (async () => {
   const { browser, pages } = await startGame(base, ['Stefan', 'Ada', 'Bo'], [undefined, undefined, LANDSCAPE]);
   const [host, ada, bo] = pages;
   try {
-    await sim(host, (s) => { s.players.forEach((p, i) => Object.assign(p, { x: 600 + i * 40, y: 380, vx: 0, vy: 0 })); });
+    // a clean map: nothing to stand on around the cottage, no ghosts or price signs
+    await sim(host, (s) => { s.players.forEach((p, i) => Object.assign(p, { x: 600 + i * 40, y: 330, vx: 0, vy: 0 })); });
     await ada.waitForTimeout(1200);
-    if (shots) await ada.screenshot({ path: `${shots}/base-ring-portrait.png` });
+    ok(await ada.isHidden('#btn-build'), 'away from the cottage: no "Bygg" button');
+    if (shots) await ada.screenshot({ path: `${shots}/base-clean-portrait.png` });
 
-    // Ada stands on Förråd with too little: nothing; with enough: built on every phone
-    const st = await spot(host, 'storage');
+    // Ada at home -> hammer button -> panel with picture cards; 5 of 6 wood: Förråd is red and disabled
     await sim(host, (s) => { s.bank = { wood: 5, stone: 0, berry: 0 }; });
-    await place(host, 1, st.x, st.y);
-    await ada.waitForTimeout(1600);
-    ok((await view(ada)).builds.find((b) => b.kind === 'storage').state === 0, 'Förråd: 5 of 6 wood -> not built');
+    await goHome(host, 1);
+    await openPanel(ada);
+    ok(await card(ada, 'storage').isDisabled(), 'build panel: Förråd needs 6 wood, the bank has 5 -> card disabled, cost red');
+    ok((await ada.locator('#build-cards .bcard').count()) === 7, 'build panel: 6 buildings + the cottage upgrade');
     await sim(host, (s) => { s.bank.wood = 7; });
-    await ada.waitForTimeout(250);
-    if (shots) await ada.screenshot({ path: `${shots}/base-affordable-portrait.png` });
+    await ada.waitForFunction(() => !document.querySelector('#build-cards .bcard[data-kind="storage"]').disabled, null, { timeout: 4000 });
+    if (shots) await ada.screenshot({ path: `${shots}/base-panel-portrait.png` });
+    await card(ada, 'storage').click();
     await bo.waitForFunction(() => window.__blobzView.builds.find((b) => b.kind === 'storage').state === 2, null, { timeout: 5000 });
     const v = await view(bo);
-    ok(v.bank.wood === 1 && v.builtNow.includes('storage'), 'stand 1 s with 6 wood: Förråd built on every phone, bank 7 -> 1');
+    ok(v.bank.wood === 1 && v.builtNow.includes('storage'), 'tap the card: Förråd built on every phone, bank 7 -> 1');
+    await ada.waitForFunction(() => document.querySelector('#build-cards .bcard[data-kind="storage"]').classList.contains('built'), null, { timeout: 3000 });
+    ok(true, 'the card now says "Byggd"');
+    await ada.click('#btn-build-close');
     await ada.waitForSelector('#q-build:not(.hidden)', { timeout: 3000 });
     ok((await ada.textContent('#q-build span')) === 'Byggt: Förråd', 'quest card shows "Byggt: Förråd"');
 
-    // Bo builds the bridge; the water corner opens
-    const br = await spot(host, 'bridge');
+    // Bo (landscape) builds the bridge from his own panel; then walks over the water
     await sim(host, (s) => { s.bank = { wood: 12, stone: 8, berry: 0 }; });
-    await place(host, 2, br.x, br.y);
+    await goHome(host, 2);
+    await openPanel(bo);
+    if (shots) await bo.screenshot({ path: `${shots}/base-panel-landscape.png` });
+    await card(bo, 'bridge').click();
     await bo.waitForFunction(() => window.__blobzView.builds.find((b) => b.kind === 'bridge').state === 2, null, { timeout: 5000 });
-    ok(true, 'Bro built (12 wood + 8 stone)');
+    ok(true, 'Bro built from the panel (12 wood + 8 stone)');
+    await bo.click('#btn-build-close');
     const w = await sim(host, (s) => s.water);
     await place(host, 2, w.bridge.x + (w.area.x0 === 0 ? 70 : -70), w.bridge.y);
     await bo.waitForTimeout(900);
     if (shots) await bo.screenshot({ path: `${shots}/base-bridge-landscape.png` });
 
-    // cottage level 2
     await sim(host, (s) => { s.bank = { wood: 20, stone: 15, berry: 10 }; });
-    await place(host, 0, 640, 604);
+
+    // cottage level 2 from the host's own panel
+    await goHome(host, 0);
+    await openPanel(host);
+    await card(host, 'cottage').click();
     await ada.waitForFunction(() => window.__blobzView.cottage.level === 2, null, { timeout: 5000 });
-    ok(true, 'cottage level 2 (20/15/10)');
-    await sim(host, (s) => { s.bank = { wood: 4, stone: 3, berry: 2 }; s.players.forEach((p, i) => Object.assign(p, { x: 600 + i * 40, y: 380, vx: 0, vy: 0 })); });
+    ok(true, 'cottage level 2 from the panel (20/15/10)');
+    await host.click('#btn-build-close');
+    await sim(host, (s) => { s.bank = { wood: 4, stone: 3, berry: 2 }; s.players.forEach((p, i) => Object.assign(p, { x: 600 + i * 40, y: 330, vx: 0, vy: 0 })); });
     await ada.waitForTimeout(1200);
     if (shots) await ada.screenshot({ path: `${shots}/base-built-portrait.png` });
+    if (shots) await bo.screenshot({ path: `${shots}/base-built-landscape.png` });
 
-    // sunset, then "Spela igen": the village + bank continue, the quest restarts
+    // sunset, Bärregn skipped, then "Spela igen": the village + bank continue, the quest restarts
     await sim(host, (s) => { s.villageDirty = true; s.time = 0.05; });
-    // sunset starts Bärregn; the host skips it to reach the end screen
     await host.waitForSelector('#btn-skip-mini:not(.hidden)', { timeout: 5000 });
     await host.click('#btn-skip-mini');
     await host.waitForSelector('#end:not(.hidden)', { timeout: 5000 });
