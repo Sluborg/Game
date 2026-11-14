@@ -456,7 +456,7 @@ export class DungeonScene extends Phaser.Scene {
     }
     const L = Math.cos(A) < 0;
     const bob = Math.sin((this.time.now / 1000 / BOB_S) * Math.PI * 2 + (b.id.charCodeAt(0) % 7)) * BOB_PX;
-    const gx = cx + Math.cos(A) * (EDGE_X + HOVER + out), gy = cy + Math.sin(A) * (EDGE_Y + HOVER * 0.6 + out * 0.7) + DROP;
+    const gx = cx + Math.cos(A) * (EDGE_X + HOVER + out), gy = cy + Math.sin(A) * (EDGE_Y + HOVER + 4 + out * 0.7) + DROP; // vertical: clears the body top (hat) too
     const px = gx, py = gy + bob;
     const frame = swinging ? Math.min(3, Math.floor(prog * 4)) : 0;
     const upright = w === 'shield'; // the shield floats upright, facing the target

@@ -49,7 +49,7 @@ const angDiff = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)))
         const off = (angDiff(got, want) * 180) / Math.PI;
         const blade = (angDiff(res.a, want) * 180) / Math.PI;
         const held = Math.hypot(res.x - res.bx, res.y - res.by);
-        ok(off <= 30 && (!res.slash || blade <= 75) && held >= 12 && held <= 56, `${w} on ${i ? 'joiner (landscape)' : 'host (portrait)'}: ${res.slash ? `slashes across the goo (aim ${off.toFixed(0)} deg off, blade ${blade.toFixed(0)} deg into its arc)` : `${w === 'shield' ? 'floats' : 'points'} ${off.toFixed(0)} deg off the goo`} (<= 30), hovering ${held.toFixed(0)} px from the body centre`);
+        ok(off <= 30 && (!res.slash || blade <= 75) && held >= 18 && held <= 56, `${w} on ${i ? 'joiner (landscape)' : 'host (portrait)'}: ${res.slash ? `slashes across the goo (aim ${off.toFixed(0)} deg off, blade ${blade.toFixed(0)} deg into its arc)` : `${w === 'shield' ? 'floats' : 'points'} ${off.toFixed(0)} deg off the goo`} (<= 30), hovering ${held.toFixed(0)} px from the body centre`);
         if (shots) await p.screenshot({ path: `${shots}/dg-attack-${w}-${i ? 'landscape' : 'portrait'}.png` });
       }
     }
