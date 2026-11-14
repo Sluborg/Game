@@ -11,7 +11,7 @@ import { ClientNet, HostNet, friendlyError, type ToClient } from './net';
 import { lanNamespace, Scanner, type FoundRoom } from './discovery';
 import { sfx, unlockAudio } from './sfx';
 import {
-  addPlayer, BUILDING_ENABLED, BUILD_COST, BUILD_NAMES, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, pickWeapon, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
+  addPlayer, BUILDING_ENABLED, cleanBiome, type Biome, BUILD_COST, BUILD_NAMES, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, pickWeapon, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
   toolNode, viewFromSnapshot, viewFromState,
 } from './sim';
 import type { FxEvent, Input, PlayerInfo, Snapshot, State, View } from './sim';
@@ -292,6 +292,7 @@ function renderLobby() {
 }
 
 function startScene(session: Session) {
+  if (DEBUG) (window as unknown as { __blobzBiome?: string }).__blobzBiome = session.biome ?? 'meadow';
   endShown = false; lastStars = 0;
   show('menu', false); show('lobby', false); show('end', false); show('hud');
   try { (navigator as Navigator & { wakeLock?: { request(t: string): Promise<unknown> } }).wakeLock?.request('screen').catch(() => {}); } catch { /* optional */ }
@@ -412,6 +413,18 @@ function onView(v: View) {
 
 let session: Session | null = null;
 
+// ---------- map pick (lobby): two big picture cards; only the host can choose ----------
+function renderMapPick(chosen: Biome, isHostPick: boolean, onPick?: (b: Biome) => void) {
+  document.querySelectorAll<HTMLButtonElement>('#map-pick .mapcard').forEach((c) => {
+    const b = cleanBiome(c.dataset.map);
+    c.classList.toggle('on', b === chosen);
+    c.setAttribute('aria-pressed', String(b === chosen));
+    c.disabled = !isHostPick;
+    if (onPick) c.onclick = () => onPick(b);
+  });
+  show('map-pick');
+}
+
 // ---------- host ----------
 async function hostGame() {
   unlockAudio();
@@ -444,7 +457,10 @@ async function hostGame() {
   let netFx: FxEvent[] = [];
   let acc = 0, netAcc = 0;
 
-  const lobbyMsg = (): ToClient => ({ t: 'lobby', players: [...infos.values()] });
+  // map: the host picks Äng / Snö in the lobby (remembered on this phone), joiners see the choice
+  let biome: Biome = cleanBiome(store.get('map'));
+  const lobbyMsg = (): ToClient => ({ t: 'lobby', players: [...infos.values()], map: biome });
+  renderMapPick(biome, true, (b) => { biome = b; store.set('map', b); renderMapPick(biome, true); net.broadcast(lobbyMsg()); });
   net.onHello = (id, info) => {
     if (!infos.has(id) && infos.size >= MAX_PLAYERS) return false;
     const p = sanitize(id, info);
@@ -454,7 +470,7 @@ async function hostGame() {
     renderLobby();
     setTimeout(() => {
       net.broadcast(lobbyMsg());
-      if (state) { addPlayer(state, p); net.conns.get(id)?.send({ t: 'start', seed } satisfies ToClient); }
+      if (state) { addPlayer(state, p); net.conns.get(id)?.send({ t: 'start', seed, map: state.biome } satisfies ToClient); }
     }, 50);
     return true;
   };
@@ -470,14 +486,14 @@ async function hostGame() {
 
   const newRound = () => {
     seed = Math.floor(Math.random() * 1e9);
-    state = createState([...infos.values()], seed, loadVillage());
+    state = createState([...infos.values()], seed, loadVillage(), biome);
     // Test hook (?debug): lets Playwright place blobz on plates etc. Never set in normal play.
     if (DEBUG) (window as unknown as { __blobz: unknown }).__blobz = { state };
     if (roundSecs) state.time = roundSecs;
     acc = 0; netAcc = 0; localFx.length = 0; netFx = [];
-    net.broadcast({ t: 'start', seed });
+    net.broadcast({ t: 'start', seed, map: biome });
     session = {
-      role: 'host', myId, seed,
+      role: 'host', myId, seed, biome,
       infos: () => infos,
       readInput: () => controls.read(),
       tick(dt, input) {
@@ -545,6 +561,7 @@ async function joinGame(target: string, row?: HTMLButtonElement) {
 
   net.onMessage = (m) => {
     if (m.t === 'lobby') {
+      if (m.map) renderMapPick(cleanBiome(m.map), false);
       infos = new Map(m.players.map((p) => [p.id, p]));
       renderLobby();
     } else if (m.t === 's') {
@@ -553,7 +570,7 @@ async function joinGame(target: string, row?: HTMLButtonElement) {
     } else if (m.t === 'start') {
       latest = null; fx.length = 0;
       session = {
-        role: 'client', myId: net.id, seed: m.seed,
+        role: 'client', myId: net.id, seed: m.seed, biome: cleanBiome(m.map),
         infos: () => infos,
         readInput: () => controls.read(),
         tick(dt, input) {
