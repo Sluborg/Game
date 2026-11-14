@@ -51,6 +51,8 @@ const WINTER = ['tree-snow-round', 'tree-snow-pine', 'tree-snow-small', 'rock-sn
 /** Look of a used-up node: stump, rubble, picked bush. */
 const SPENT_ART: [string, number][] = [['pr-stump', 3], ['pr-stump', 3], ['pr-stump', 3], ['g-rubble', 3], ['g-rubble', 3], ['g-bush-empty', 3]];
 const PROPS = ['tree-green', 'tree-orange', 'tree-pine', 'rock', 'boulder', 'bush', 'flowers', 'stump', 'pond', 'fence', 'sign', 'plate', 'plate-down', 'gate', 'gate-open', 'gate-post'];
+/** The organic dirt yard around the cottage and under buildings. false = plain grass everywhere ("no ground" test). */
+export const YARD_ENABLED = true;
 const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.search).has('debug');
 /** Below this speed (px/s) the face looks straight ahead. */
 const FACE_DEAD = 40;
@@ -104,6 +106,8 @@ export class GameScene extends Phaser.Scene {
   private dB = 0;
   private miniCenterY = 0;
   private miniG?: Phaser.GameObjects.Graphics;
+  private yardImg?: Phaser.GameObjects.Image;
+  private yardKey = '';
   private miniDeco: Phaser.GameObjects.GameObject[] = [];
   private drops = new Map<number, { item: Phaser.GameObjects.Image; mark: Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse }>();
   private bgfx = new Map<BuildKind, { img: Phaser.GameObjects.Image; built: boolean }>();
@@ -208,7 +212,6 @@ export class GameScene extends Phaser.Scene {
     const TP = snow ? 16 : 32; // art px per tile: Art's fine grass (32 px) is drawn at scale 1
     if (!this.textures.exists(groundKey)) {
       const grass = this.textures.get('f-grass').getSourceImage() as HTMLImageElement;
-      const dirt = this.textures.get('f-dirt').getSourceImage() as HTMLImageElement;
       const gc = document.createElement('canvas');
       gc.width = cols * TP; gc.height = rows * TP;
       const gx = gc.getContext('2d')!;
@@ -226,29 +229,16 @@ export class GameScene extends Phaser.Scene {
       } else {
         // grass frames 0 plain, 1 tufts, 2 flowers (same odds as the old Tiny Town tiles)
         data.forEach((row, ty) => row.forEach((f, tx) => gx.drawImage(grass, f * 32, 0, 32, 32, tx * 32, ty * 32, 32, 32)));
-        // the yard: a dark rim, then Art's dirt tiles (plain / pebbles) inside the circle
-        gx.fillStyle = '#8a5a3c'; gx.beginPath(); gx.arc(BASE.x, BASE.y, BASE.r + 4, 0, Math.PI * 2); gx.fill();
-        gx.save(); gx.beginPath(); gx.arc(BASE.x, BASE.y, BASE.r, 0, Math.PI * 2); gx.clip();
-        for (let ty = Math.floor((BASE.y - BASE.r) / 32); ty <= Math.floor((BASE.y + BASE.r) / 32); ty++) {
-          for (let tx = Math.floor((BASE.x - BASE.r) / 32); tx <= Math.floor((BASE.x + BASE.r) / 32); tx++) gx.drawImage(dirt, r() < 0.7 ? 0 : 32, 0, 32, 32, tx * 32, ty * 32, 32, 32);
-        }
-        gx.strokeStyle = 'rgba(90, 55, 30, 0.25)'; gx.lineWidth = 8; gx.beginPath(); gx.arc(BASE.x, BASE.y, BASE.r - 4, 0, Math.PI * 2); gx.stroke();
-        gx.restore();
       }
       this.textures.addCanvas(groundKey, gc)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
     this.add.image(0, 0, groundKey).setOrigin(0).setScale(32 / TP).setDepth(-1000);
 
     // base: round dirt yard with the cottage in the middle + glowing drop-off ring
-    // meadow: the dirt-tile yard is baked into the ground above; snow: packed snow drawn here
-    if (snow) {
-      const yard = this.add.graphics().setDepth(-950);
-      const [edge, fill, shade] = [0x7d93a8, 0xdfeaf3, 0xc9d9e6];
-      yard.fillStyle(edge, 1).fillCircle(BASE.x, BASE.y, BASE.r + 4);
-      yard.fillStyle(fill, 1).fillCircle(BASE.x, BASE.y, BASE.r);
-      yard.fillStyle(shade, 1).fillCircle(BASE.x, BASE.y + 6, BASE.r - 14);
-      yard.fillStyle(fill, 1).fillCircle(BASE.x, BASE.y, BASE.r - 18);
-    }
+    // the yard: an organic patch of dirt (packed snow on the snow map) that grows with the cottage and spreads
+    // under every building as it is built; redrawn in drawYard() when that changes
+    this.yardImg = undefined; this.yardKey = '';
+    this.drawYard(1, []);
     this.baseG = this.add.graphics().setDepth(-900);
     this.add.ellipse(BASE.x, BASE.y + 26, 110, 26, 0x000000, 0.18).setDepth(-880);
     // cottage (Art's base set, level 1-3), integer scale 2, anchored bottom centre
@@ -603,7 +593,72 @@ export class GameScene extends Phaser.Scene {
       const on = b.state === 2;
       if (on !== g.built) { g.built = on; g.img.setVisible(on); }
     }
+    this.drawYard(lvl, v.builds.filter((b) => b.state === 2 && b.kind !== 'bridge').map((b) => b.kind));
     this.drawArrows(v);
+  }
+
+  /** Organic yard (Stefan: dynamic size and shape, brown ground under new buildings, no hard outline): a blob
+   *  around the cottage (bigger per cottage level) plus a small patch under each built building, each with a wobbly
+   *  seeded edge that dithers softly into the grass. Pixels are Art's dirt tiles (meadow) or packed snow. */
+  private drawYard(level: number, built: BuildKind[]) {
+    if (!YARD_ENABLED) return;
+    const key = `yard-${this.s.biome ?? 'meadow'}-${this.s.seed}-${level}-${[...built].sort().join(',')}`;
+    if (key === this.yardKey) return;
+    const pad = 300, x0 = BASE.x - pad, y0 = BASE.y - pad, W = pad * 2, H = pad * 2;
+    if (!this.textures.exists(key)) {
+      const rand = rng(this.s.seed * 31 + 5);
+      // blobs: centre, radii, and a few sine wobbles on the edge
+      const blob = (x: number, y: number, rx: number, ry: number) => ({
+        x, y, rx, ry, w: [0, 1, 2].map((i) => ({ k: 2 + i * 2 + Math.floor(rand() * 2), a: 0.05 + rand() * 0.05 / (i + 1), p: rand() * Math.PI * 2 })),
+      });
+      const blobs = [blob(BASE.x, BASE.y + 4, 80 + 12 * level, 70 + 10 * level)];
+      for (const k of built) { const at = BUILD_SPOTS[k]; blobs.push(blob(at.x, at.y - 30, 46, 30)); }
+      const snow = this.s.biome === 'snow';
+      // dirt colours sampled from Art's tile (frame 0 plain 70%, frame 1 pebbles)
+      let dirtPx: Uint8ClampedArray | null = null;
+      if (!snow) {
+        const dc = document.createElement('canvas'); dc.width = 64; dc.height = 32;
+        const dx = dc.getContext('2d')!; dx.drawImage(this.textures.get('f-dirt').getSourceImage() as HTMLImageElement, 0, 0);
+        dirtPx = dx.getImageData(0, 0, 64, 32).data;
+      }
+      const tileFrame = (tx: number, ty: number) => (((tx * 73856093) ^ (ty * 19349663)) >>> 0) % 10 < 7 ? 0 : 1;
+      const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+      const c = document.createElement('canvas'); c.width = W; c.height = H;
+      const cx = c.getContext('2d')!;
+      const img = cx.createImageData(W, H), d = img.data;
+      const FEATHER = 10; // px of dithered edge
+      for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) {
+        const wx = x0 + px, wy = y0 + py;
+        let best = -Infinity; // signed distance-ish: >0 inside
+        for (const b of blobs) {
+          const ex = (wx - b.x) / b.rx, ey = (wy - b.y) / b.ry;
+          if (ex > 1.4 || ex < -1.4 || ey > 1.4 || ey < -1.4) continue; // far outside this blob
+          const a = Math.atan2(ey, ex);
+          let rr = 1; for (const w of b.w) rr += w.a * Math.sin(w.k * a + w.p);
+          const v = (rr - Math.hypot(ex, ey)) * Math.min(b.rx, b.ry);
+          if (v > best) best = v;
+        }
+        if (best < -FEATHER / 2) continue;
+        const t = Math.min(1, (best + FEATHER / 2) / FEATHER); // 0 at the outer edge, 1 inside
+        if (t < 1 && t * 16 <= BAYER[(py % 4) * 4 + (px % 4)]) continue;
+        const o = (py * W + px) * 4;
+        if (dirtPx) {
+          const f = tileFrame(Math.floor(wx / 32), Math.floor(wy / 32));
+          const s2 = ((wy % 32) * 64 + f * 32 + (wx % 32)) * 4;
+          d[o] = dirtPx[s2]; d[o + 1] = dirtPx[s2 + 1]; d[o + 2] = dirtPx[s2 + 2]; d[o + 3] = 255;
+        } else {
+          const speck = (((wx * 2654435761) ^ (wy * 40503)) >>> 0) % 23 === 0;
+          d[o] = speck ? 0xb8 : 0xd3; d[o + 1] = speck ? 0xcf : 0xe2; d[o + 2] = speck ? 0xe3 : 0xee; d[o + 3] = 255;
+        }
+      }
+      cx.putImageData(img, 0, 0);
+      this.textures.addCanvas(key, c)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    }
+    const old = this.yardKey;
+    if (!this.yardImg) this.yardImg = this.add.image(x0, y0, key).setOrigin(0).setDepth(-950);
+    else this.yardImg.setTexture(key);
+    this.yardKey = key;
+    if (old && old !== key && this.textures.exists(old)) this.textures.remove(old);
   }
 
   /** Edge arrows: with the watchtower, one per resource to the nearest node off-screen; and (no reading needed)
