@@ -41,6 +41,8 @@ Stefan works phone-only; replies in Swedish or English, docs and code in English
 - This session is **Lead**: talks with Stefan, tests, reviews, merges Art/Code branches into the deploy
   branch, bumps `VERSION`, deploys. Art and Code run in separate Claude Code sessions.
 - Roles, branches, file ownership and definition of done: [`docs/TEAM.md`](./docs/TEAM.md).
+- Reporting to Stefan: only when a whole batch is merged and live (Art: a full part set; Code: a whole
+  feature), or when a decision from him blocks work. No progress pings about single images or steps.
 
 ## 30. Workflow (light: changes go straight into the live game)
 build -> verify -> push = live
