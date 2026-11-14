@@ -18,6 +18,62 @@ const spritePts = (s: { rows: string[]; ax: number; ay: number }, ax: number, ay
   return out;
 };
 
+/** Cells Stefan approved on the board (2026-11-14, sheet from 502dae7): frozen pixel for pixel (FNV-1a of the grid). */
+const FROZEN: Record<string, string> = {
+  'Ingen/Kupol': 'ebe76a92',
+  'Ingen/Boll': '94a208a2',
+  'Ingen/Lång': 'd3b103ea',
+  'Ingen/Platt': '906d2579',
+  'Ingen/Päron': '891f638b',
+  'Ingen/Kub': '24f69827',
+  'Keps/Kupol': '2441e2b4',
+  'Keps/Boll': '187100a7',
+  'Keps/Lång': '9def6cea',
+  'Keps/Platt': 'c42b930b',
+  'Keps/Päron': '818cc486',
+  'Keps/Kub': 'fca1d6f0',
+  'Grodd/Kupol': '71ee8bde',
+  'Grodd/Boll': '8704fd46',
+  'Grodd/Lång': '5eb4415e',
+  'Grodd/Platt': 'a1528d3',
+  'Grodd/Päron': '118e05b7',
+  'Grodd/Kub': 'd4068e71',
+  'Mössa/Kupol': '4856bf',
+  'Mössa/Boll': '7df338ba',
+  'Mössa/Lång': 'e8051c75',
+  'Mössa/Platt': 'ee3b61c',
+  'Mössa/Päron': '473bfbc0',
+  'Mössa/Kub': 'f1f27c78',
+  'Trollkarl/Kupol': '272e8b18',
+  'Trollkarl/Boll': '1aee77ae',
+  'Trollkarl/Lång': '5dcf7d5a',
+  'Trollkarl/Platt': '7588019b',
+  'Trollkarl/Päron': '9a9ce5d7',
+  'Trollkarl/Kub': '8c3a9c53',
+  'Drottningkrona/Kupol': '60145497',
+  'Drottningkrona/Boll': '895cf172',
+  'Drottningkrona/Lång': '68ae0fd7',
+  'Drottningkrona/Päron': '27bd760e',
+  'Drottningkrona/Kub': '9256ed28',
+  'Kattöron/Kupol': 'd374b6b8',
+  'Kattöron/Boll': '6bfccf2e',
+  'Kattöron/Platt': '8a040e55',
+  'Kattöron/Kub': 'a99ec01d',
+  'Kaninöron/Kupol': 'eecd2610',
+  'Kaninöron/Boll': 'b38851ae',
+  'Enhörning/Platt': '250d9b13',
+  'Enhörning/Kub': '3d0ebaa9',
+  'Antenn/Kupol': '3112297f',
+  'Antenn/Boll': 'd58f7c1c',
+  'Antenn/Platt': '8bd17859',
+  'Antenn/Kub': '7309afa7',
+  'Gloria/Kupol': '8f894c16',
+  'Gloria/Boll': '2c069bc6',
+  'Gloria/Platt': 'a467ca5',
+  'Gloria/Kub': '5f2ee233',
+};
+const fnv = (s: string) => { let x = 2166136261 >>> 0; for (let i = 0; i < s.length; i++) { x ^= s.charCodeAt(i); x = Math.imul(x, 16777619) >>> 0; } return x.toString(16); };
+
 describe('blobz v2 (16 px Ninja grid, one 3/4 view)', () => {
   it('every look x frame x class hat renders a 16x18 grid with a body', () => {
     for (let s = 0; s < SHAPES.length; s++) for (let e = 0; e < EYES.length; e++) for (let m = 0; m < MOUTHS.length; m++)
@@ -79,6 +135,14 @@ describe('blobz v2 (16 px Ninja grid, one 3/4 view)', () => {
     for (let s = 0; s < SHAPES.length; s++) for (let h = 0; h < HATS.length; h++) for (let f = 0; f < BLOB_FRAMES; f++) {
       const g = blobGrid(look({ shape: s, hat: h }), undefined, undefined, f);
       for (const c of g[0]) if (c) expect(c.toLowerCase()).toBe('#141b1b');
+    }
+  });
+
+  it('approved hat cells stay pixel-identical (frozen)', () => {
+    for (const [cell, hash] of Object.entries(FROZEN)) {
+      const [hat, shape] = cell.split('/');
+      const g = blobGrid({ color: 0x5ec8ff, shape: SHAPES.indexOf(shape), eyes: 0, mouth: 0, hat: HATS.indexOf(hat) });
+      expect(fnv(JSON.stringify(g)), cell).toBe(hash);
     }
   });
 

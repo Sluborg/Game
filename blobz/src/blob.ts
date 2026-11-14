@@ -99,8 +99,8 @@ const TOPS: Record<string, Top> = {
   // devil horns: wide base on the head, curving out and up to a tip
   Djävulshorn: { kind: 'pair', sizes: [sp(['R..', 'Rr.', '.rR'], 0, 2), sp(['R...', 'R...', 'Rr..', '.rRR'], 0, 3), sp(['R....', 'R....', 'Rr...', '.Rr..', '..rRR'], 0, 4)] },
   // unicorn: a white spiral horn pointing forward (toward the face)
-  Enhörning: { kind: 'centre', sizes: [sp(['..W', '.Wt', 'WW.'], 0, 2), sp(['...W', '..Wt', '.tW.', 'WWt.'], 0, 3), sp(['....W', '...Wt', '..tW.', '.Wt..', 'WWt..'], 0, 4)] },
-  Antenn: { kind: 'centre', sizes: [0, 1, 2].map(() => sp(['RR', 'RR', '.K', '.K'], 1, 3)) },
+  Enhörning: { kind: 'centre', sizes: [sp(['..W', '.Wt', 'WW.'], 0, 2), sp(['...W', '..Wt', '.tW.', 'WWt.'], 0, 3), sp(['..Y', '.Yy', '.yY', 'Yy.', 'YYy'], 1, 4)] }, // L: approved as is (frozen)
+  Antenn: { kind: 'centre', sizes: [sp(['RR', 'RR', '.K', '.K'], 1, 3), sp(['RR', 'RR', '.K', '.K'], 1, 3), sp(['RR.', 'RR.', '.K.', '.K.', '.K.'], 1, 4)] }, // M, L frozen
   Gloria: { kind: 'float', sizes: [sp(['.YYYY.', 'Y....Y', '.YYYY.'], 3, 2), sp(['.YYYY.', 'Y....Y', '.YYYY.'], 3, 2), sp(['.YYYYYY.', 'Y......Y', '.YYYYYY.'], 4, 2)] },
 };
 
@@ -375,7 +375,15 @@ export function blobGrid(look: BlobLook, classHat?: number, face?: Face, frame =
     const parts: Px[] = [];
     if (t.kind === 'pair' || t.kind === 'fixed') { // at the ends of the second row (or fixed spacing), on each column's outline
       const half = t.kind === 'fixed' ? 4 : L.rows[1] >> 1, xl = 8 - half, xr = 8 + half - 1;
-      parts.push(spritePx(spr, xl, topOutline(L.mask, xl), own), spritePx(spr, xr, topOutline(L.mask, xr), own, true));
+      if (t.kind === 'fixed' && L.rows[1] < 8) { // narrow head (Lång, Päron): full-length ears from the highest point, legs reach down
+        for (const [x, mir] of [[xl, false], [xr, true]] as [number, boolean][]) {
+          const cols = [x, mir ? x - 1 : x + 1];
+          const y = Math.min(...cols.map((c) => topOutline(L.mask, c)));
+          const piece = spritePx(spr, x, y, own, mir);
+          for (const c of cols) for (let yy = y + 1; yy <= topOutline(L.mask, c); yy++) piece.set(key(c, yy), own.M);
+          parts.push(piece);
+        }
+      } else parts.push(spritePx(spr, xl, topOutline(L.mask, xl), own), spritePx(spr, xr, topOutline(L.mask, xr), own, true));
     } else if (t.kind === 'centre') parts.push(spritePx(spr, 9, oy, own));
     else parts.push(spritePx(spr, 8, oy - 1, own)); // halo: one free row above the head
     const all = new Map(parts.flatMap((p) => [...p]).filter(([k]) => !L.mask.has(k))); // grows out of, never into, the head
