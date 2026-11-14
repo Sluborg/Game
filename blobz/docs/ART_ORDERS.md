@@ -6,7 +6,8 @@ Owners: Art keeps the queue and statuses current; Lead reviews. Stefan only says
 
 ## For ChatGPT: how to work (read every time)
 1. Re-read this file at the start of every chat and every time Stefan writes "next" (it changes often).
-2. Make the FIRST order in the queue with status **READY** that you have not already made in this chat.
+2. Make the FIRST order in the queue with status **READY** that you have not already made in this chat
+   **in its current round** (an order whose title says "round N" higher than the one you made must be made again).
    Skip WAITING and DONE orders.
 3. ONE image per reply. Apply the style block below to every image.
 4. End every reply with one line: "<order id> done. Next READY: <order id or 'none'>. Type next."
