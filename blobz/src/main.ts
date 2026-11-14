@@ -123,6 +123,7 @@ codeInput.addEventListener('input', () => {
 });
 
 $('version').textContent = __APP_VERSION__;
+$('version').title = __APP_COMMIT__;
 renderPicker();
 // First visit: pick your blob before anything else.
 if (!store.get('name')) panel('custom');

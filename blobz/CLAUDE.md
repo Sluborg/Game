@@ -45,6 +45,8 @@ build -> verify -> push = live
    (Blobz temporarily borrows the Pages host; Asset Report main moves to `/Game/asset-report/`).
    No PR, no Codex, no review gates unless Stefan asks for them.
 4. Big design changes (new mode, new milestone): one short plan reply first.
+5. **Version:** `blobz/VERSION` is shown on the start screen. Bump it in every push: new feature or
+   art = next number (`v017` -> `v018`), mini fix = add a letter (`v018` -> `v018b` -> `v018c`).
 
 ## 40. Milestones
 | Order | Milestone | Done when |
