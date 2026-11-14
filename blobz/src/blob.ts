@@ -163,6 +163,45 @@ function topOutline(mask: Set<number>, x: number) {
 /** Hat size by head width (second body row): S below 8 px, M 8-10, L 11+. */
 export function hatSize(headW: number) { return headW < 8 ? 0 : headW <= 10 ? 1 : 2; }
 
+/** Fitted hats follow the head's curve: the hat body is the scalp (head rows above the eyes) plus the outline ring
+ *  around it, so its bottom edge hugs the head and wraps a little down the sides; the decoration goes on top. */
+export const FITTED = ['Keps', 'Krona', 'Mössa', 'Trollkarl'];
+function fittedHat(name: string, L: BodyLayout, size: number): { px: Px; line: Set<number> } {
+  const depth = Math.max(0, Math.min(2, L.eye[1] - L.top - 2)); // scalp rows covered; leaves >= 1 row above the eyes
+  const ring = outlineOf(L.mask);
+  const body = new Set<number>();
+  for (const k of [...L.mask, ...ring]) if (Math.floor(k / GRID_W) < L.top + depth) body.add(k);
+  const xs = [...body].map((k) => k % GRID_W), x0 = Math.min(...xs), x1 = Math.max(...xs);
+  const col = { Keps: ['R', 'r'], Krona: ['Y', 'y'], Mössa: ['B', 'b'], Trollkarl: ['V', 'v'] }[name]!;
+  const px: Px = new Map();
+  for (const k of body) px.set(k, PAL[(k % GRID_W) > x0 + ((x1 - x0) * 2) / 3 ? col[1] : col[0]]);
+  const topY = Math.min(...[...body].map((k) => Math.floor(k / GRID_W)));
+  const at = (x: number, y: number, c: string) => px.set(key(x, y), PAL[c]);
+  const cx = (x0 + x1) >> 1;
+  if (name === 'Keps') { // rounded crown above the scalp + a bill sticking out toward the face (right)
+    const w = x1 - x0 + 1;
+    for (let x = x0 + 2; x <= x1 - 2; x++) at(x, topY - 1, x > x0 + (w * 2) / 3 ? 'r' : 'R');
+    const billY = topY + depth, bx = x1;
+    for (let i = 1; i <= 2 + size; i++) at(bx + i, billY - (depth ? 1 : 0), 'r');
+  } else if (name === 'Mössa') { // knit band + pompom
+    for (let x = x0 + 2; x <= x1 - 2; x++) at(x, topY - 1, 'B');
+    at(cx, topY - 2, 'W'); at(cx + 1, topY - 2, 'W');
+  } else if (name === 'Krona') { // points on the band
+    for (let x = x0 + 1; x <= x1 - 1; x += 2) { at(x, topY - 1, 'Y'); if (size > 0 && (x - x0) % 4 === 1) at(x, topY - 2, 'Y'); }
+    at(cx, topY - 1, 'R');
+  } else if (name === 'Trollkarl') { // cone, leaning toward the face
+    const h = Math.min(3 + size, topY - 1); // the tip's outline still fits in row 0
+    for (let j = 1; j <= h; j++) {
+      const half = Math.max(0, Math.round(((x1 - x0) / 2 - 1) * (1 - j / (h + 1))));
+      for (let x = cx - half + (j > h - 2 ? 1 : 0); x <= cx + half + (j > h - 2 ? 1 : 0); x++) at(x, topY - j, x > cx ? 'v' : 'V');
+    }
+  }
+  // the dividing line between hat and head: the head row right under the scalp
+  const line = new Set<number>();
+  for (const k of L.mask) if (Math.floor(k / GRID_W) === L.top + depth && depth > 0) line.add(k);
+  return { px, line };
+}
+
 // ---------------------------------------------------------------- look direction (compat + new)
 /** Where a blob looks. Only dx's sign matters now (dx < 0 = facing left = mirrored); dy is ignored. */
 export interface Face { dx: number; dy: number }
@@ -197,8 +236,9 @@ export function blobGrid(look: BlobLook, classHat?: number, face?: Face, frame =
   const px: Px = new Map();
   let mask = new Set(L.mask);
   const hatName = classHat === undefined ? HATS[look.hat] ?? 'Ingen' : '';
-  const sized = HAT_SIZES[hatName];
+  const sized = FITTED.includes(hatName) ? undefined : HAT_SIZES[hatName];
   let hat: Px | null = null;
+  const fitted = FITTED.includes(hatName) ? fittedHat(hatName, L, hatSize(L.headW)) : null;
   if (sized) {
     // brim ON the head's top outline row at the crown's centre; never inside the head
     const spr = sized[hatSize(L.headW)];
@@ -235,7 +275,12 @@ export function blobGrid(look: BlobLook, classHat?: number, face?: Face, frame =
   for (const [k, c] of spritePx(EYE_SPRITES[look.eyes] ?? EYE_SPRITES[0], L.eye[0], L.eye[1])) if (inBody(k)) px.set(k, c);
   for (const [k, c] of spritePx(MOUTH_SPRITES[look.mouth] ?? MOUTH_SPRITES[0], L.mouth[0], L.mouth[1])) if (inBody(k)) px.set(k, c);
   // hats
-  if (hat) {
+  if (fitted) {
+    const keys = new Set(fitted.px.keys());
+    for (const k of outlineOf(keys)) if (!L.mask.has(k)) px.set(k, INK);
+    for (const k of fitted.line) px.set(k, INK);
+    for (const [k, c] of fitted.px) px.set(k, c);
+  } else if (hat) {
     for (const k of outlineOf(new Set(hat.keys()))) if (!mask.has(k)) px.set(k, INK); // the hat's own outline, never over the head
     for (const [k, c] of hat) px.set(k, c);
   } else if (hatName === 'Rosett') { // a bow ON the head's top-right outline (its bottom row is the outline row)

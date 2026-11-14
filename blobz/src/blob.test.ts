@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  BLOB_FRAMES, blobGrid, blobSvg, bodyLayout, CLASS_HATS, clampLook, EYES, faceIndex, FACE_DIRS, facingFromVelocity, GRID_H, GRID_W,
+  BLOB_FRAMES, blobGrid, FITTED, blobSvg, bodyLayout, CLASS_HATS, clampLook, EYES, faceIndex, FACE_DIRS, facingFromVelocity, GRID_H, GRID_W,
   hatSize, HATS, MOUTHS, PART_TABLES, SHAPES, type BlobLook,
 } from './blob';
 
@@ -47,8 +47,8 @@ describe('blobz v2 (16 px Ninja grid, one 3/4 view)', () => {
     }
   });
 
-  it('hats sit on top of or around the head: never over the face, head-top hats never inside the head', () => {
-    const onTop = ['Keps', 'Krona', 'Grodd', 'Mössa', 'Trollkarl', 'Rosett', 'Lurar', 'Kattöron', 'Enhörning', 'Kaninöron', 'Djävulshorn', 'Antenn', 'Gloria'];
+  it('hats sit on top of, around or fitted to the head: never over the face, toppers never inside the head', () => {
+    const onTop = ['Grodd', 'Rosett', 'Lurar', 'Kattöron', 'Enhörning', 'Kaninöron', 'Djävulshorn', 'Antenn', 'Gloria'];
     for (let s = 0; s < SHAPES.length; s++) for (let f = 0; f < BLOB_FRAMES; f++) {
       const L = bodyLayout(s, f);
       const bare = blobGrid(look({ shape: s }), undefined, undefined, f);
@@ -58,6 +58,10 @@ describe('blobz v2 (16 px Ninja grid, one 3/4 view)', () => {
         expect(d.length, `${HATS[h]} on ${SHAPES[s]}`).toBeGreaterThan(0);
         for (const k of d) expect(face.has(k), `${HATS[h]} over the face of ${SHAPES[s]}`).toBe(false);
         if (onTop.includes(HATS[h])) for (const k of d) expect(L.mask.has(k), `${HATS[h]} inside ${SHAPES[s]}`).toBe(false);
+        if (FITTED.includes(HATS[h])) for (const k of d) if (L.mask.has(k)) {
+          // fitted hats cover the scalp only: at least one free row above the eyes
+          expect(Math.floor(k / GRID_W), `${HATS[h]} too low on ${SHAPES[s]}`).toBeLessThanOrEqual(L.eye[1] - 2);
+        }
       }
     }
   });
