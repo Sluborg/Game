@@ -51,6 +51,7 @@ const WINTER = ['tree-snow-round', 'tree-snow-pine', 'tree-snow-small', 'rock-sn
 /** Look of a used-up node: stump, rubble, picked bush. */
 const SPENT_ART: [string, number][] = [['pr-stump', 3], ['pr-stump', 3], ['pr-stump', 3], ['g-rubble', 3], ['g-rubble', 3], ['g-bush-empty', 3]];
 const PROPS = ['tree-green', 'tree-orange', 'tree-pine', 'rock', 'boulder', 'bush', 'flowers', 'stump', 'pond', 'fence', 'sign', 'plate', 'plate-down', 'gate', 'gate-open', 'gate-post'];
+const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.search).has('debug');
 /** Below this speed (px/s) the face looks straight ahead. */
 const FACE_DEAD = 40;
 const BLOB_SCALE = 1.45; // 36x48 blob grid // 18x24 pixel blob grid
@@ -141,6 +142,7 @@ export class GameScene extends Phaser.Scene {
   preload() {
     const art = (path: string) => `art/${FINE.includes(path) ? 'fine/' : ''}${path}.png`;
     for (const n of ['log', 'chest', 'boot', 'magnet', 'house']) this.load.image('ic-' + n, art(`icons/${n}`));
+    this.load.image('m-base-marker', 'art/fine/icons/base-marker.png');
     this.load.spritesheet('f-grass', 'art/fine/tiles/grass.png', { frameWidth: 32, frameHeight: 32 });
     this.load.spritesheet('f-dirt', 'art/fine/tiles/dirt.png', { frameWidth: 32, frameHeight: 32 });
     for (const n of GATHER) this.load.image('g-' + n, art(`gather/${n}`));
@@ -269,8 +271,8 @@ export class GameScene extends Phaser.Scene {
       }
       this.buildBase();
     }
-    // "this is home": a house icon on the yard (no reading needed; was the word BAS)
-    this.add.image(BASE.x, BASE.y + 56, 'ic-house').setScale(2).setDepth(-800).setAlpha(0.9);
+    // "this is home": Art's base-marker sign (post foot = anchor), beside the drop-off (no reading needed; was BAS)
+    this.add.image(BASE.x + 58, BASE.y + 62, 'm-base-marker').setOrigin(0.5, 1).setScale(1).setDepth(BASE.y + 62);
 
     // resource nodes (same layout as the host sim, from the shared seed); textures swap when used up
     this.nodes = makeTrees(this.s.seed).map((t) => {
@@ -471,7 +473,9 @@ export class GameScene extends Phaser.Scene {
         this.textures.addCanvas(`${lookKey}-f${i}`, blobCanvas(look, 1, undefined, f));
         this.textures.get(`${lookKey}-f${i}`).setFilter(Phaser.Textures.FilterMode.NEAREST);
       });
-      const texKey = `${lookKey}-f${faceIndex(p.vx, p.vy, FACE_DEAD)}`;
+      const face = faceIndex(p.vx, p.vy, FACE_DEAD);
+      const texKey = `${lookKey}-f${face}`;
+      if (DEBUG) ((window as unknown as { __blobzFace?: Record<string, number> }).__blobzFace ??= {})[p.id] = face; // e2e
       const pixel = true;
       const baseScale = BLOB_SCALE;
       if (!b) {
