@@ -186,7 +186,12 @@ function onView(v: View) {
   ['s1', 's2', 's3'].forEach((c, i) => {
     const el = document.querySelector<HTMLElement>('#starbar .' + c)!;
     el.style.left = (v.stars[i] / max) * 100 + '%';
-    el.classList.toggle('on', st > i);
+    const on = st > i;
+    if (el.classList.contains('on') !== on || !el.dataset.init) {
+      el.dataset.init = '1';
+      el.classList.toggle('on', on);
+      el.replaceChildren(GEM(on)); // filled diamond when reached, outline before
+    }
   });
   if (st > lastStars) { sfx.star(); lastStars = st; }
   $('time').textContent = fmtTime(v.time);

@@ -126,3 +126,11 @@
 - "Starta" (no !), back arrow top-left replaces "Lämna", compact code chip with "Kod" label, player list first.
 - Landscape: compact rows so Starta stays on screen with 3+ players (checked in the 3-player run).
 - Proposed next (v019, awaiting go): code-free join list ("Joina Stefan") via public-IP-scoped PeerJS slots.
+
+## 2026-11-14 - v019: readable world + HUD
+- Base: round dirt yard with the ChatGPT cottage centred, no flags, no square dirt tiles.
+- Readability: pickups bob on a pulsing white ring with a shadow (= "take me"); decor halved and stumps
+  removed; trees/rocks remain the only solid things.
+- Smoke puffs on sharp turns and dashes.
+- HUD: score box left, timer right, room code under the timer (no overlap at 390 px), bigger numbers;
+  star diamonds are outlines until reached, then filled. New white ">>" dash icon; hint sits left of it.

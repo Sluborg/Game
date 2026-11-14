@@ -345,3 +345,18 @@ button.link .icon { height: 18px; margin-right: 6px; vertical-align: -3px; }
   .lobbycard h2 { font-size: 22px; }
   .lobbycard { gap: 6px; }
 }
+
+/* ---------- HUD v019: no overlap on narrow phones, bigger readable numbers ---------- */
+#hud-score { left: max(12px, env(safe-area-inset-left)); transform: none; min-width: 0; width: 176px; padding: 0 8px 4px; }
+#score { font-size: 34px; font-weight: 700; color: var(--plum); letter-spacing: 1px; }
+.scorerow .icon { height: 30px; }
+#starbar { height: 12px; margin: 10px 6px 4px; }
+#starbar i { filter: none; top: -15px; }
+#starbar i .icon { height: 26px; }
+#starbar i.on { filter: drop-shadow(0 2px 0 var(--plum)); }
+#hud-time { right: max(12px, env(safe-area-inset-right)); font-size: 30px; padding: 0 6px 2px; }
+#hud-time .icon { height: 28px; }
+#hud-code { left: auto; right: max(12px, env(safe-area-inset-right)); top: calc(max(14px, env(safe-area-inset-top)) + 70px); font-size: 17px; padding: 0 4px; }
+#hud-time.low { color: #d62839; }
+#dash .icon { height: 44px; }
+#hint { left: max(12px, env(safe-area-inset-left)); right: 124px; width: auto; transform: none; }

@@ -23,7 +23,7 @@ const OBSTACLE_ART: [string, number][] = [['pr-tree-green', 2.8], ['pr-tree-oran
 const PROPS = ['tree-green', 'tree-orange', 'tree-pine', 'rock', 'boulder', 'bush', 'flowers', 'stump', 'pond', 'fence', 'sign', 'plate', 'plate-down', 'gate', 'gate-open', 'gate-post'];
 const BLOB_SCALE = 2.9; // 18x24 pixel blob grid
 // decorations from Tiny Farm (sheet 'farm') and Tiny Town ('town')
-const DECOR: [string, number][] = [['pr-bush', 2], ['pr-flowers', 2], ['pr-stump', 2], ['pr-flowers', 2], ['pr-bush', 2]];
+const DECOR: [string, number][] = [['pr-bush', 2], ['pr-flowers', 2], ['pr-flowers', 2], ['pr-bush', 2]];
 
 interface BlobGfx {
   shadow: Phaser.GameObjects.Ellipse;
@@ -37,6 +37,9 @@ interface BlobGfx {
   trail: { x: number; y: number; a: number }[];
   texKey: string;
   blinkT: number;
+  lastDir?: number;
+  lastSp?: number;
+  puffCd?: number;
   baseScale: number;
   pixel: boolean;
 }
@@ -48,6 +51,7 @@ export class GameScene extends Phaser.Scene {
   private gems = new Map<number, { g: Phaser.GameObjects.Graphics; img: Phaser.GameObjects.Image; t: Phaser.GameObjects.Image[]; x: number; y: number }>();
   private powers = new Map<number, Phaser.GameObjects.Container>();
   private trailG!: Phaser.GameObjects.Graphics;
+  private pickG!: Phaser.GameObjects.Graphics;
   private baseG!: Phaser.GameObjects.Graphics;
   private camTarget = { x: BASE.x, y: BASE.y };
   private lastView: View | null = null;
@@ -63,18 +67,6 @@ export class GameScene extends Phaser.Scene {
     return 'mini-blob';
   }
 
-  /** One padded texture per tile frame: avoids bleeding from neighbouring tiles at fractional zoom. */
-  private tex(sheet: string, frame: number): string {
-    const key = `${sheet}#${frame}`;
-    if (this.textures.exists(key)) return key;
-    const src = this.textures.get(sheet).getSourceImage() as HTMLImageElement;
-    const cols = Math.floor(src.width / 16);
-    const c = document.createElement('canvas');
-    c.width = 18; c.height = 18;
-    c.getContext('2d')!.drawImage(src, (frame % cols) * 16, Math.floor(frame / cols) * 16, 16, 16, 1, 1, 16, 16);
-    this.textures.addCanvas(key, c)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
-    return key;
-  }
 
   init(data: { session: Session }) {
     this.s = data.session;
@@ -84,7 +76,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   preload() {
-    for (const n of ['log', 'mushroom', 'coin', 'chest', 'boot', 'magnet']) this.load.image('ic-' + n, `art/icons/${n}.png`);
+    for (const n of ['log', 'mushroom', 'coin', 'chest', 'boot', 'magnet', 'house']) this.load.image('ic-' + n, `art/icons/${n}.png`);
     for (const n of PROPS) this.load.image('pr-' + n, `art/props/${n}.png`);
     const sheet = (key: string, dir: string) => this.load.spritesheet(key, `assets/${dir}/tilemap_packed.png`, { frameWidth: 16, frameHeight: 16 });
     sheet('town', 'kenney-tiny-town');
@@ -105,10 +97,8 @@ export class GameScene extends Phaser.Scene {
       const row: number[] = [];
       for (let x = 0; x < cols; x++) {
         const dx = x - bc, dy = y - br;
-        if (dx >= -3 && dx <= 2 && dy >= -3 && dy <= 2) {
-          const cx = dx === -3 ? 0 : dx === 2 ? 2 : 1;
-          const cy = dy === -3 ? 0 : dy === 2 ? 2 : 1;
-          row.push([12, 24, 36][cy] + cx);
+        if (dx === 99 && dy === 99) {
+          row.push(0);
         } else {
           const v = r();
           row.push(v < 0.72 ? 0 : v < 0.92 ? 1 : 2);
@@ -128,14 +118,16 @@ export class GameScene extends Phaser.Scene {
     }
     this.add.image(0, 0, groundKey).setOrigin(0).setScale(2).setDepth(-1000);
 
-    // base: glowing drop-off ring + cottage
+    // base: round dirt yard with the cottage in the middle + glowing drop-off ring
+    const yard = this.add.graphics().setDepth(-950);
+    yard.fillStyle(0x8a5a3c, 1).fillCircle(BASE.x, BASE.y, BASE.r + 4);
+    yard.fillStyle(0xe2b27a, 1).fillCircle(BASE.x, BASE.y, BASE.r);
+    yard.fillStyle(0xd09a62, 1).fillCircle(BASE.x, BASE.y + 6, BASE.r - 14);
+    yard.fillStyle(0xe2b27a, 1).fillCircle(BASE.x, BASE.y, BASE.r - 18);
     this.baseG = this.add.graphics().setDepth(-900);
-    const house = [[52, 53, 54], [64, 65, 66], [72, 74, 75]];
-    house.forEach((row, ry) => row.forEach((f, rx) => {
-      this.add.image(BASE.x - T + rx * T, BASE.y - 2.2 * T + ry * T, this.tex('town', f)).setScale(2).setDepth(BASE.y - 40);
-    }));
-    for (const sx of [-1, 1]) this.add.image(BASE.x + sx * 62, BASE.y - 40, this.tex('battle', 70)).setScale(2.5).setOrigin(0.5, 0.9).setDepth(BASE.y - 40);
-    this.add.text(BASE.x, BASE.y + 52, 'BAS', { fontFamily: "'Pixelify Sans', sans-serif", fontSize: '18px', color: '#fffaf0', fontStyle: 'bold', stroke: '#6b4a2a', strokeThickness: 4 }).setOrigin(0.5).setDepth(-800);
+    this.add.ellipse(BASE.x, BASE.y + 26, 110, 26, 0x000000, 0.18).setDepth(-880);
+    this.add.image(BASE.x, BASE.y + 30, 'ic-house').setScale(5.2).setOrigin(0.5, 1).setDepth(BASE.y - 40);
+    this.add.text(BASE.x, BASE.y + 52, 'BAS', { fontFamily: "'Pixelify Sans', sans-serif", fontSize: '20px', color: '#fff7e6', fontStyle: 'bold', stroke: '#3f2631', strokeThickness: 5 }).setOrigin(0.5).setDepth(-800);
 
     // trees (same layout as the host sim, from the shared seed)
     for (const t of makeTrees(this.s.seed)) {
@@ -146,7 +138,7 @@ export class GameScene extends Phaser.Scene {
 
     // flat decorations (no collision), from the same seed on every phone
     const trees = makeTrees(this.s.seed);
-    for (let i = 0; i < 46; i++) {
+    for (let i = 0; i < 22; i++) {
       const x = 30 + r() * (WORLD_W - 60), y = 30 + r() * (WORLD_H - 60);
       const [key, sc] = DECOR[Math.floor(r() * DECOR.length)];
       if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 30 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 46)) continue;
@@ -160,6 +152,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.trailG = this.add.graphics().setDepth(-400);
+    this.pickG = this.add.graphics().setDepth(-450);
     this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
     this.cameras.main.setRoundPixels(true);
     this.cameras.main.setBackgroundColor('#2b6b3a');
@@ -198,8 +191,9 @@ export class GameScene extends Phaser.Scene {
     this.baseG.fillStyle(0xffe08a, 0.18 + 0.1 * pulse).fillCircle(BASE.x, BASE.y, BASE.r);
     this.baseG.lineStyle(4, 0xffe08a, 0.7).strokeCircle(BASE.x, BASE.y, BASE.r - 2 + pulse * 3);
 
-    // ---- items ----
+    // ---- items: pickups bob and sit on a pulsing light ring so they read as "take me" ----
     const seenI = new Set<number>();
+    this.pickG.clear();
     for (const it of v.items) {
       seenI.add(it.id);
       let img = this.items.get(it.id);
@@ -208,10 +202,12 @@ export class GameScene extends Phaser.Scene {
         this.tweens.add({ targets: img, scale: 1.8, duration: 250, ease: 'Back.Out' });
         this.items.set(it.id, img);
       }
-      img.x += (it.x - img.x) * (smooth ? k : 1);
-      img.y += (it.y - img.y) * (smooth ? k : 1);
-      img.setDepth(img.y - 10);
-      img.setAngle(Math.sin(now / 400 + it.id) * 6);
+      const bob = Math.abs(Math.sin(now / 260 + it.id)) * 5;
+      img.x = it.x; img.y = it.y - 4 - bob;
+      img.setDepth(it.y - 10);
+      const pr = 15 + Math.sin(now / 300 + it.id) * 2;
+      this.pickG.fillStyle(0x000000, 0.18).fillEllipse(it.x, it.y + 9, 22 - bob, 7);
+      this.pickG.lineStyle(2, 0xffffff, 0.75).strokeEllipse(it.x, it.y + 6, pr * 2, pr);
     }
     for (const [id, img] of this.items) if (!seenI.has(id)) { img.destroy(); this.items.delete(id); }
 
@@ -301,6 +297,16 @@ export class GameScene extends Phaser.Scene {
 
   private drawBlob(b: BlobGfx, p: View['players'][number], now: number, dt: number, isMe: boolean) {
     const sp = Math.hypot(b.vx, b.vy);
+    // smoke puffs when the blob turns sharply or bursts forward (dash)
+    b.puffCd = Math.max(0, (b.puffCd ?? 0) - dt);
+    if (sp > 70) {
+      const dir = Math.atan2(b.vy, b.vx);
+      const turn = b.lastDir === undefined ? 0 : Math.abs(Phaser.Math.Angle.Wrap(dir - b.lastDir));
+      const burst = sp - (b.lastSp ?? sp) > 120;
+      if ((turn > 0.7 || burst) && b.puffCd <= 0) { this.puff(b.x, b.y + 12, b.vx, b.vy, burst ? 8 : 5); b.puffCd = 0.15; }
+      b.lastDir = dir;
+    }
+    b.lastSp = sp;
     const hover = Math.sin(now / 180 + b.x * 0.01) * 2; // they hover-glide, never roll
     // trail of little glide puffs
     if (sp > 90) b.trail.push({ x: b.x, y: b.y + 8, a: Math.min(0.5, sp / 600) });
@@ -370,6 +376,16 @@ export class GameScene extends Phaser.Scene {
       sfx.power();
       const c = this.add.circle(f.x, f.y, 10, f.kind === 'speed' ? 0xffc93c : 0xff6b8b, 0.6).setDepth(5000);
       this.tweens.add({ targets: c, scale: 5, alpha: 0, duration: 400, onComplete: () => c.destroy() });
+    }
+  }
+
+  /** Little white dust puffs behind the blob, drifting against its motion. */
+  private puff(x: number, y: number, vx: number, vy: number, n: number) {
+    const sp = Math.hypot(vx, vy) || 1;
+    for (let i = 0; i < n; i++) {
+      const a = Math.atan2(-vy / sp, -vx / sp) + (Math.random() - 0.5) * 1.6;
+      const c = this.add.circle(x + (Math.random() - 0.5) * 12, y, 6 + Math.random() * 4, 0xffffff, 0.95).setStrokeStyle(2, 0xd8d0c0, 0.9).setDepth(y - 15);
+      this.tweens.add({ targets: c, x: c.x + Math.cos(a) * 22, y: c.y + Math.sin(a) * 14 - 6, scale: 2.2, alpha: 0, duration: 420 + Math.random() * 200, ease: 'Cubic.Out', onComplete: () => c.destroy() });
     }
   }
 
