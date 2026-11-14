@@ -6,14 +6,14 @@ Owners: Art keeps the queue and statuses current; Lead reviews. Stefan only says
 
 ## For ChatGPT: how to work (read every time)
 1. Re-read this file at the start of every chat and every time Stefan writes "next" (it changes often).
-2. Orders with id D-* are small direction tests: Stefan answers them before any big A-order is READY.
-   Make the FIRST order in the queue with status **READY** that you have not already made in this chat
+2. Orders with id D-* are small direction tests: Stefan answers them before any big A-order is TO DO. Statuses: TO DO = not made yet, make it. DONE = Stefan delivered it. ON HOLD / CANCELLED = skip.
+   Make the FIRST order in the queue with status **TO DO** that you have not already made in this chat
    **in its current round** (an order whose title says "round N" higher than the one you made must be made again).
-   Skip WAITING and DONE orders.
-3. Start every reply with one line: "Order <id> - <N> READY orders left in the queue after this one."
+   Skip ON HOLD and DONE orders.
+3. Start every reply with one line: "Order <id> - <N> TO DO orders left in the queue after this one."
    Then ONE image per reply. Apply the style block below to every image.
-4. End every reply with one line: "<order id> done. Next READY: <order id or 'none'>. Type next."
-5. If Stefan writes "next all": make every remaining READY order one after another in the same chat, one image per
+4. End every reply with one line: "<order id> done. Next TO DO: <order id or 'none'>. Type next."
+5. If Stefan writes "next all": make every remaining TO DO order one after another in the same chat, one image per
    reply, without waiting for "next" between them, each starting with the line from rule 3.
 6. If Stefan writes "redo", make the same order again with his fixes.
 7. Reference images: when an order lists a reference URL, open it and match it.
@@ -36,14 +36,19 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status READY (N-2 is READY now). New orders only for pieces the pack lacks.**
+ChatGPT works only on N-orders with status TO DO (N-2, N-5..N-9 are TO DO now). New orders only for pieces the pack lacks.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
 | N-1 | DONE (C chosen) | Title header / logo in Ninja Adventure style | `art/logo.png` |
-| N-2 | READY | Start screen background, round 3: LANDSCAPE 16:9 ONLY (portrait approved 4/5; make it even if you made a landscape before) | `art/title.png` |
+| N-2 | TO DO | Start screen background, round 3: LANDSCAPE 16:9 ONLY (portrait approved 4/5; make it even if you made a landscape before) | `art/title.png` |
 | N-3 | DONE | Loading screen (portrait + landscape approved) | `art/loading.png`, `art/loading-landscape.png` |
-| N-4 | DONE (round 2 received, awaiting rating) | Hovering weapons, round 2: crossbow with bolt further back | `dungeon/weapons/*.png` |
+| N-4 | CANCELLED (switched to Ninja's own 16 px weapons) | Hovering weapons, round 2: crossbow with bolt further back | `dungeon/weapons/*.png` |
+| N-5 | TO DO | Class cards: Healer, Rogue, Tank, Marksman (4 cards on one sheet) | `dungeon/card-class-*.png` |
+| N-6 | TO DO | End screen: blobz cheering by the cottage with their haul (portrait) | `art/victory.png` |
+| N-7 | TO DO | App icon (square) | app/PWA icon |
+| N-8 | TO DO | Map picker pictures: Meadow and Snow (2 small scenes) | `art/map-meadow.png`, `art/map-snow.png` |
+| N-9 | TO DO | Bärregn mini game background (sunset meadow, portrait) | `mini/bg.png` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
@@ -58,6 +63,48 @@ ChatGPT works only on N-orders with status READY (N-2 is READY now). New orders 
 | A-8 | CANCELLED (Ninja Adventure chosen) | Dungeon buttons, goo enemies, skill icons, back arrow | `dungeon/btn-*`, `enemies/*`, `dungeon/skills/*`, `icons/back.png` |
 | A-9 | CANCELLED (Ninja Adventure chosen) | Bärregn mini game: bomb, falling berries, basket, plop, fence | `mini/bomb.png`, `mini/berries.png`, `mini/basket.png`, `mini/plop.png`, `mini/fence-*.png` |
 | A-10 | CANCELLED (Ninja Adventure chosen) | Winter props in the same style as A-7 | `props-winter/*` |
+
+### N-5 Class cards (4)
+```
+One sheet, 4 cards side by side, each a square card with a small rounded frame, Ninja Adventure style (style block).
+Each card shows ONE blob hero, big and centred, with its class hat and its weapon FLOATING beside it (blobz have no hands):
+1 Healer: green blob, small white hood, floating wooden wand with a glowing blue gem, soft green sparkles.
+2 Rogue: purple blob, dark bandana, two small floating daggers (sai) crossed in front.
+3 Tank: orange blob, steel helmet with small horns, a floating short sword on one side and a round wood+steel shield on the other.
+4 Marksman: blue blob, green feathered cap, a small floating crossbow pointing right.
+Simple background per card: dungeon stone floor in soft dusk light. No text, no letters.
+```
+
+### N-6 End screen
+```
+Portrait 9:16, Ninja Adventure style (style block). Evening on the meadow outside the orange-roofed cottage
+(same village as the start screen: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n2-start-portrait.png).
+4-5 blobz cheering and jumping around three neat piles: logs of wood, grey stones and a basket of red berries.
+A few fireflies and confetti stars. NO coins, NO gems. Keep the top 35% calm (sky) for the score and stars. No text.
+```
+
+### N-7 App icon
+```
+Square 1:1, 512x512, Ninja Adventure style (style block). One happy blue blob, big and centred, peeking over the
+top of a small stone castle wall with a tiny orange flag (like the chosen logo:
+https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n1-logo-C.png).
+Warm sunny green background, thick dark outline, readable at 48 px. No text.
+```
+
+### N-8 Map picker pictures (2)
+```
+Two small square scenes side by side, Ninja Adventure style (style block), seen from above in 3/4 view:
+1 Meadow: green grass, a pond, a few trees, a tiny cottage, one blob gliding.
+2 Snow: snowy ground, frozen pond, snowy pine trees, a small igloo, one blob in a woolly hat sliding on the ice.
+Same framing and size for both, so they work as two buttons. No text.
+```
+
+### N-9 Bärregn mini game background
+```
+Portrait 9:16, Ninja Adventure style (style block). A meadow at sunset seen from the side-top: a low wooden fence
+along the bottom, a few berry bushes, warm orange-pink sky with soft clouds. The middle 70% must be calm and open
+(berries and bombs fall there and a blob catches them with a basket at the bottom). No blobz, no text.
+```
 
 ## Ninja style block (for N-orders)
 ```
@@ -226,7 +273,7 @@ Same footprint and camera angle for both versions of a building. Order:
 Sizes relative to each other: watchtower tallest, bridge widest, well smallest.
 ```
 
-### A-6 Weapon cards (WAITING)
+### A-6 Weapon cards (ON HOLD)
 Rogue weapons: daggers, sword, hammer, spear.
 ```
 Order A-6: four upright weapon cards, 4 columns x 1 row, portrait 3:4, the same parchment card frame as the class
@@ -235,7 +282,7 @@ On each card the same neutral white blob, centred, holding the weapon: 1 two sho
 2 a sword raised, 3 a big hammer held over its shoulder, 4 a long spear held upright. Blobz wear no hats.
 ```
 
-### A-7 Meadow props (WAITING)
+### A-7 Meadow props (ON HOLD)
 ```
 Order I-4: meadow props, sheet 5 columns x 3 rows, in this order: 1 round green tree, 2 orange autumn tree,
 3 pine tree, 4 small rock, 5 big boulder, 6 berry bush full of red berries, 7 the same bush picked empty,
@@ -248,7 +295,7 @@ glow on items", or C "chunky bold: thick outlines, few colours, high contrast".]
 Also: the berry bush (full and picked) must look lush and appetising: fluffy round leaves, 6-8 big shiny red berries.
 ```
 
-### A-8 Buttons, enemies, skill icons, back arrow (WAITING)
+### A-8 Buttons, enemies, skill icons, back arrow (ON HOLD)
 The prompt is written after Stefan picks a variant on the decision board.
 Variant sheets on the board (A = today, B and C = new directions):
 `docs/art-review/variants-buttons.png` (dungeon buttons), `variants-goo.png` (goo small/medium/boss),
@@ -274,7 +321,7 @@ Art slices into `public/art/mini/` (bomb ~12x12, berries ~10x10, basket ~12x10, 
 16 px tiles) and tells Code the sizes.
 
 
-### A-10 Winter props (WAITING: same style as the picked A-7)
+### A-10 Winter props (ON HOLD: same style as the picked A-7)
 ```
 Order A-10: the snow-map versions of the meadow props, same style and pixel size as order A-7, sheet 5 columns x 2 rows:
 1 snowy round tree, 2 snowy pine tree, 3 small snowy pine, 4 bare winter tree, 5 snowy rock, 6 ice rock (blue,
