@@ -389,31 +389,36 @@ def tile(bg):
 
 
 def tuft(c, x, y):
-    for (dx, dy) in ((0, 0), (1, 1), (2, 0), (3, 1), (4, 0)):
+    """Three grass blades (7x4), dark with a light tip on the middle one."""
+    for (dx, dy) in ((0, 1), (1, 2), (1, 3), (3, 0), (3, 1), (3, 2), (3, 3), (5, 2), (5, 3), (6, 1)):
         c.set(x + dx, y + dy, GRASS_LO)
-    c.set(x + 2, y - 1, GRASS_HI)
+    c.set(x + 3, y - 1, GRASS_HI)
+    c.set(x + 2, y + 3, GRASS_LO)
+    c.set(x + 4, y + 3, GRASS_LO)
 
 
 def flower(c, x, y, col, shade):
-    for dy in range(-2, 3):
-        for dx in range(-2, 3):
-            if 0 < dx * dx + dy * dy <= 4 and abs(dx) + abs(dy) < 4:
+    """7x7 flower: four round petals around a yellow centre, shaded bottom-right."""
+    for dy in range(-3, 4):
+        for dx in range(-3, 4):
+            d2 = dx * dx + dy * dy
+            if 1 <= d2 <= 9 and not (abs(dx) == abs(dy) and abs(dx) >= 2) and not (abs(dx) == 3 and dy != 0) and not (abs(dy) == 3 and dx != 0):
                 c.set(x + dx, y + dy, shade if dx + dy >= 2 else col)
-    c.set(x, y, ba.rgb(255, 214, 90))
-    c.set(x + 1, y + 3, GRASS_LO)
+    for (dx, dy) in ((0, 0), (1, 0), (0, 1), (1, 1)):
+        c.set(x + dx - (dx and 0), y + dy - (dy and 0), ba.rgb(255, 214, 90) if (dx, dy) != (1, 1) else ba.rgb(227, 160, 40))
+    c.set(x + 1, y + 4, GRASS_LO)
 
 
 def grass_tiles():
     a = tile(GRASS)
     b = tile(GRASS)
-    for (x, y) in ((4, 6), (19, 4), (11, 17), (22, 24), (5, 26)):
+    for (x, y) in ((3, 5), (19, 4), (11, 16), (22, 24), (4, 25)):
         tuft(b, x, y)
     for (x, y) in ((25, 13), (13, 9)):
         b.set(x, y, GRASS_HI)
     f = tile(GRASS)
-    flower(f, 9, 9, ba.rgb(255, 255, 255), ba.rgb(214, 220, 236))
+    flower(f, 8, 8, ba.rgb(255, 255, 255), ba.rgb(214, 220, 236))
     flower(f, 22, 21, ba.rgb(253, 190, 83), ba.rgb(227, 134, 40))
-    flower(f, 25, 7, ba.rgb(255, 150, 190), ba.rgb(222, 100, 150))
     tuft(f, 5, 24)
     return fx.strip([a.image(), b.image(), f.image()])
 
