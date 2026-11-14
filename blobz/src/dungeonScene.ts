@@ -33,6 +33,7 @@ interface HeroGfx {
   x: number; y: number; vx: number; vy: number;
   swingT: number; swingDur: number;
   spin: number; // seconds left of a spin special (weapon whirls around)
+  fx?: { spr: Phaser.GameObjects.Sprite; kind: 'spin' | 'charge'; a: number }; // special fx that rides along with the blob
 }
 interface GooGfx { img: Phaser.GameObjects.Image; shadow: Phaser.GameObjects.Ellipse; warn?: Phaser.GameObjects.Image; bar?: Phaser.GameObjects.Graphics; x: number; y: number; flash: number; kind: number }
 
@@ -70,6 +71,10 @@ export class DungeonScene extends Phaser.Scene {
     sheet('dg-ko-stars', 'art/dungeon/ko-stars.png', 20, 9);
     sheet('dg-revive', 'art/dungeon/revive.png', 16, 20);
     sheet('dg-shockwave', 'art/dungeon/shockwave.png', 48, 24);
+    sheet('dg-fx-spin', 'art/dungeon/fx-spin.png', 48, 40);
+    sheet('dg-fx-slam', 'art/dungeon/fx-slam.png', 56, 28);
+    sheet('dg-fx-charge', 'art/dungeon/fx-charge.png', 48, 16);
+    sheet('dg-fx-sidestep', 'art/dungeon/fx-sidestep.png', 24, 24);
     sheet('fx-sparkle', 'art/fx/coin-sparkle.png', 11, 11);
     sheet('dungeon', 'assets/kenney-tiny-dungeon/tilemap_packed.png', 16, 16);
   }
@@ -82,6 +87,10 @@ export class DungeonScene extends Phaser.Scene {
     anim('dg-ko', 'dg-ko-stars', [0, 1], 4, -1);
     anim('dg-revive', 'dg-revive', [0, 1, 2], 8);
     anim('dg-shock', 'dg-shockwave', [0, 1, 2], 12);
+    anim('dg-spin', 'dg-fx-spin', [0, 1, 2, 3], 12);
+    anim('dg-slam', 'dg-fx-slam', [0, 1, 2, 3], 12);
+    anim('dg-charge', 'dg-fx-charge', [0, 1, 2], 10);
+    anim('dg-sidestep', 'dg-fx-sidestep', [0, 1, 2], 10);
     anim('sparkle', 'fx-sparkle', [0, 1, 2, 1, 0], 16);
     this.ringG = this.add.graphics().setDepth(4000);
     this.bubble = this.add.text(0, 0, '', { fontFamily: FONT, fontSize: '22px', color: '#3f2631', fontStyle: 'bold', backgroundColor: '#fff7e6', padding: { x: 8, y: 2 } })
@@ -250,8 +259,13 @@ export class DungeonScene extends Phaser.Scene {
       b.me.setPosition(b.x, b.y - 58).setDepth(b.y + 3);
       b.stars.setVisible(ko).setPosition(b.x, b.y - 30).setDepth(b.y + 4);
       this.drawWeapon(b, w, h?.face ?? 0, ko, dt);
+      if (b.fx) {
+        const sc = BLOB_SCALE, cy = b.body.y - BODY_CY * 48 * sc + 31 * sc; // body centre on the blob grid
+        if (b.fx.kind === 'spin') b.fx.spr.setPosition(b.x, cy).setDepth(b.y + 5);
+        else b.fx.spr.setPosition(b.x - Math.cos(b.fx.a) * 12, cy - Math.sin(b.fx.a) * 12).setDepth(b.y - 1);
+      }
     }
-    for (const [id, b] of this.heroes) if (!seenP.has(id)) { for (const o of [b.shadow, b.body, b.label, b.weapon, b.stars, b.me]) o.destroy(); this.heroes.delete(id); }
+    for (const [id, b] of this.heroes) if (!seenP.has(id)) { for (const o of [b.shadow, b.body, b.label, b.weapon, b.stars, b.me]) o.destroy(); b.fx?.spr.destroy(); this.heroes.delete(id); }
 
     // ---- stairs: progress ring + "2/3" bubble when someone stands on them ----
     this.ringG.clear();
@@ -300,14 +314,21 @@ export class DungeonScene extends Phaser.Scene {
       .setRotation(b.spin > 0 ? (1 - b.spin / 0.35) * Math.PI * 2 * (left ? -1 : 1) : 0);
   }
 
+  /** A special fx sprite that follows its blob until the animation ends. */
+  private ride(b: HeroGfx, tex: string, anim: string, kind: 'spin' | 'charge', a: number, ox: number, oy: number, sc: number) {
+    b.fx?.spr.destroy();
+    const left = Math.cos(a) < 0;
+    const spr = this.add.sprite(b.x, b.y, tex, 0).setScale(sc);
+    if (kind === 'charge') spr.setFlipX(left).setOrigin(left ? 0 : 1, oy).setRotation(left ? a - Math.PI : a);
+    else spr.setOrigin(ox, oy);
+    b.fx = { spr, kind, a };
+    spr.play(anim);
+    spr.once('animationcomplete', () => { spr.destroy(); if (b.fx?.spr === spr) b.fx = undefined; });
+  }
+
   private floatText(x: number, y: number, text: string, color = '#ffe08a', size = 24) {
     const t = this.add.text(x, y, text, { fontFamily: FONT, fontSize: size + 'px', color, fontStyle: 'bold', stroke: '#3f2631', strokeThickness: 5 }).setOrigin(0.5).setDepth(7000);
     this.tweens.add({ targets: t, y: y - 50, alpha: 0, duration: 1000, ease: 'Cubic.Out', onComplete: () => t.destroy() });
-  }
-
-  private ring(x: number, y: number, r: number, color: number) {
-    const c = this.add.circle(x, y, r * 0.3, color, 0.25).setStrokeStyle(4, color, 0.9).setDepth(4500);
-    this.tweens.add({ targets: c, scale: 3.3, alpha: 0, duration: 380, ease: 'Cubic.Out', onComplete: () => c.destroy() });
   }
 
   private burst(x: number, y: number, color: number, n: number, dist = 26) {
@@ -328,21 +349,23 @@ export class DungeonScene extends Phaser.Scene {
       }
       case 'special': {
         const b = this.heroes.get(f.id);
-        if (f.k === 'spin') { if (b) b.spin = 0.35; this.ring(f.x, f.y, f.r, 0xfff7e6); sfx.dash(); }
-        else if (f.k === 'slam') {
-          const sw = this.add.sprite(f.x, f.y + 10, 'dg-shockwave', 0).setScale((f.r * 2) / 48).setDepth(-400);
-          sw.play('dg-shock'); sw.once('animationcomplete', () => sw.destroy());
+        if (f.k === 'spin') {
+          // Art's slash arc sweeping around the blob (centre 24,22 on the body)
+          if (b) { b.spin = 0.35; this.ride(b, 'dg-fx-spin', 'dg-spin', 'spin', f.a, 24 / 48, 22 / 40, 3); }
+          sfx.dash();
+        } else if (f.k === 'slam') {
+          const sw = this.add.sprite(f.x, f.y + 10, 'dg-fx-slam', 0).setOrigin(28 / 56, 15 / 28).setScale(4).setDepth(-400);
+          sw.play('dg-slam'); sw.once('animationcomplete', () => sw.destroy());
           if (b) { b.swingDur = 0.4; b.swingT = 0.4; }
           this.cameras.main.shake(160, 0.006); sfx.bump();
         } else if (f.k === 'lunge') {
-          if (b) { b.swingDur = 0.35; b.swingT = 0.35; }
-          const streak = this.add.rectangle(f.x, f.y, 150, 10, 0xfff7e6, 0.6).setOrigin(0, 0.5).setRotation(f.a).setDepth(4000);
-          this.tweens.add({ targets: streak, alpha: 0, scaleY: 0.2, duration: 380, onComplete: () => streak.destroy() });
+          // speed streaks behind the blob: right edge at its back, flipped when it charges left
+          if (b) { b.swingDur = 0.35; b.swingT = 0.35; this.ride(b, 'dg-fx-charge', 'dg-charge', 'charge', f.a, 1, 0.5, 2); }
           sfx.dash();
         }
         break;
       }
-      case 'dodge': { const c = this.add.circle(f.x, f.y, 18, 0xffffff, 0.35).setDepth(4000); this.tweens.add({ targets: c, scale: 2, alpha: 0, duration: 300, onComplete: () => c.destroy() }); sfx.dash(); break; }
+      case 'dodge': { const c = this.add.sprite(f.x, f.y + 14, 'dg-fx-sidestep', 0).setOrigin(0.5, 1).setScale(2).setDepth(f.y - 2); c.play('dg-sidestep'); c.once('animationcomplete', () => c.destroy()); sfx.dash(); break; }
       case 'hurt': { const g = this.goo.get(f.e); if (g) g.flash = 0.12; this.burst(f.x, f.y, 0x8be36b, 4, 16); break; }
       case 'kill': {
         const sp = this.add.image(f.x, f.y + 6, 'dg-goo-splat').setScale(GOO_SCALE[f.kind]).setDepth(-600);

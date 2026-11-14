@@ -62,6 +62,18 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     if (shots) await ada.screenshot({ path: `${shots}/dg-special-portrait.png` });
     await sim(host, (s) => { s.dg.heroes[s.players[1].id].atkCd = 0; });
 
+    // spear charge (Bo) and sword spin (Stefan) + Stefan's sidestep: Art's fx sprites show
+    await gooAt(host, 2, 0, 90, 0);
+    await bo.click('#attack');
+    await bo.waitForTimeout(120);
+    if (shots) await bo.screenshot({ path: `${shots}/dg-charge-landscape.png` });
+    await host.click('#attack');
+    await host.click('#dash');
+    await host.waitForTimeout(120);
+    if (shots) await host.screenshot({ path: `${shots}/dg-spin-portrait.png` });
+    const sp = await bo.evaluate((id) => Object.values(window.__blobzView.dungeon.heroes).map((h) => h.spCd > 0), ids);
+    ok(sp.every(Boolean), 'all three specials on cooldown (spin, slam, charge)');
+
     // a mini boss for Bo (spear): telegraphed slam ring shows
     await gooAt(host, 2, 2, 150, 0);
     await sim(host, (s) => { const e = s.dg.enemies.find((q) => q.kind === 2); e.slamT = 0.1; });
