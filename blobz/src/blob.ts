@@ -18,10 +18,7 @@ export const MOUTHS = ['Leende', 'Öppen', 'Lugn', 'Flin', 'Katt'];
 export const HATS = ['Ingen', 'Keps', 'Krona', 'Grodd', 'Mössa', 'Trollkarl', 'Rosett', 'Lurar',
   'Kattöron', 'Enhörning', 'Kaninöron', 'Djävulshorn', 'Antenn', 'Gloria', 'Drottningkrona'];
 /** Dungeon class gear, worn instead of the skin hat (blobGrid's `classHat`). */
-export const CLASS_HATS = ['Prästluva', 'Fjädermössa', 'Riddarhjälm', 'Bandana'];
-/** Class hat look: 1 = approved round 2 (frozen), 2 = after the N-5 class cards (white hood with trim, white feather,
- *  cream horns, rogue bandana). Mock only until Stefan rates it; Bandana always draws in style 2. */
-export const CLASS_HAT_STYLE = { v: 1 };
+export const CLASS_HATS = ['Prästluva', 'Fjädermössa', 'Riddarhjälm'];
 
 /** Frame 20x20: the body (up to 16 wide incl. outline) centred at x = 10 with a 2 px margin on each side for muffs,
  *  ears and brims, and 2 extra rows of hat room on top. */
@@ -315,10 +312,8 @@ function gear(px: Px, L: BodyLayout, classHat: number) {
       body = new Set([...ring, ...ring2].filter((k) => Math.floor(k / GRID_W) < L.top + 1 && Math.floor(k / GRID_W) <= L.earY && inX(k)));
       line = new Set([...L.mask].filter((k) => Math.floor(k / GRID_W) === L.top));
     }
-  } else ({ body, line } = headBand(L, classHat === 0 && (CLASS_HAT_STYLE.v === 2) ? 3 : 2, L.eye[1] - (classHat === 0 && CLASS_HAT_STYLE.v === 2 ? 2 : 3)));
-  const v2 = CLASS_HAT_STYLE.v === 2 || classHat === 3;
-  const [fill, sh] = classHat === 0 ? (v2 ? [PAL.W, '#c8d0dc'] : [PAL.C, '#e2cfb2']) : classHat === 1 ? [PAL.G, PAL.g]
-    : classHat === 2 ? [PAL.T, PAL.t] : ['#5a4a86', '#3e3263'];
+  } else ({ body, line } = headBand(L, 2, L.eye[1] - 3));
+  const [fill, sh] = classHat === 0 ? [PAL.C, '#e2cfb2'] : classHat === 1 ? [PAL.G, PAL.g] : [PAL.T, PAL.t];
   const xs = [...body].map((k) => k % GRID_W), x0 = Math.min(...xs), x1 = Math.max(...xs), cx = (x0 + x1) >> 1;
   const ys = [...body].map((k) => Math.floor(k / GRID_W)), topY = Math.min(...ys), botY = Math.max(...ys.filter((y) => y < L.eye[1]));
   const extra: Px = new Map();
@@ -326,42 +321,21 @@ function gear(px: Px, L: BodyLayout, classHat: number) {
   if (classHat === 1) { // archer cap: peak pointing forward, feather in the middle pointing up and back
     for (let x = cx; x <= x1 + 1; x++) at(x, topY - 1, x > cx + 2 ? PAL.g : PAL.G);
     at(x1 + 1, topY, PAL.g); if (x1 + 2 <= GRID_W - 2) at(x1 + 2, topY, PAL.g);
-    if (v2) { // a white feather at the back of the cap, pointing up and back
-      const len = Math.min(4, topY - 3);
-      for (let i = 0; i < len; i++) { const fx = x0 + 2 - (i >> 1); if (fx >= 2) at(fx, topY - 1 - i, i === len - 1 ? '#c8d0dc' : PAL.W); }
-    } else {
-      const len = Math.min(4, topY - 4);
-      for (let i = 1; i <= len; i++) at(cx - (i >> 1), topY - 1 - i, i === len ? PAL.r : PAL.R);
-    }
+    const len = Math.min(4, topY - 4);
+    for (let i = 1; i <= len; i++) at(cx - (i >> 1), topY - 1 - i, i === len ? PAL.r : PAL.R);
   } else if (classHat === 2) { // viking helm: steel cap on the head's curve, a raised dome, rivets, two yellow horns
     for (let x = x0 + 2; x <= x1 - 2; x++) at(x, topY - 1, x > x0 + ((x1 - x0) * 2) / 3 ? PAL.t : PAL.T); // the dome rises
     for (let x = x0 + 1; x <= x1 - 1; x += 3) if (body.has(key(x, botY))) at(x, botY, '#f4f7fa'); // rivets on the rim
-    const [hY, hy] = v2 ? ['#f2e6c8', '#cbb98e'] : [PAL.Y, PAL.y]; // style 2: cream horns like the tank card
     for (const [hx, dir] of [[x0, 1], [x1, -1]] as [number, number][]) { // horns: out from the cap, up, tips curling in
-      at(hx + dir, topY - 1, hy); at(hx, topY - 1, hY); at(hx, topY - 2, hY); at(hx + dir, topY - 3, hY);
+      at(hx + dir, topY - 1, PAL.y); at(hx, topY - 1, PAL.Y); at(hx, topY - 2, PAL.Y); at(hx + dir, topY - 3, PAL.Y);
     }
-    if (v2) for (let y = topY - 1; y <= botY; y++) if (!extra.has(key(cx, y)) || y === topY - 1) at(cx, y, PAL.t); // centre ridge
-  } else if (classHat === 0 && v2) { // hood: a soft raised top, then it falls down the back of the head (left)
-    for (let x = x0 + 1; x <= x1 - 2; x++) at(x, topY - 1, x > x0 + ((x1 - x0) * 2) / 3 ? sh : fill);
-    for (let y = botY + 1; y <= Math.min(L.eye[1] + 2, L.bottom - 2); y++) {
-      let xl = GRID_W; for (let x = 0; x < GRID_W; x++) if (L.mask.has(key(x, y))) { xl = x; break; }
-      if (xl >= GRID_W || xl >= FACE_X - 2) continue;
-      at(xl, y, sh); if (xl - 1 >= 2) at(xl - 1, y, fill);
-    }
-  } else if (classHat === 3) { // bandana: knot at the back, two tails flying back
-    const ky = botY;
-    for (const [dx, dy, c] of [[-1, 0, '#6a5296'], [-2, 0, '#6a5296'], [-2, 1, '#6a5296'], [-3, 1, fill], [-3, 2, fill], [-1, 1, sh]] as [number, number, string][])
-      if (x0 + dx >= 2) at(x0 + dx, ky + dy, c);
   }
   const all = new Set([...body, ...extra.keys()]);
   for (const k of outlineOf(all)) if (!L.mask.has(k) || Math.floor(k / GRID_W) < L.eye[1] - 1) if (!line.has(k)) px.set(k, INK);
   for (const k of line) if (Math.floor(k / GRID_W) < L.eye[1]) px.set(k, INK);
   for (const k of body) px.set(k, (k % GRID_W) > x0 + ((x1 - x0) * 2) / 3 ? sh : fill);
   for (const [k, c] of extra) px.set(k, c);
-  if (classHat === 0 && v2) { // hood trim: a tan edge where the hood meets the face
-    for (const k of body) { const b = k + GRID_W; if (L.mask.has(b) && !body.has(b) && !extra.has(b)) px.set(k, '#e8a050'); }
-  }
-  if (classHat === 0 && !v2) { // priest: a raised cream badge with a red cross, front-middle of the hood
+  if (classHat === 0) { // priest: a raised cream badge with a red cross, front-middle of the hood
     const bx = FACE_X - 1, by = Math.min(topY + 1, L.eye[1] - 3);
     for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
       const edge = Math.abs(dx) === 2 || Math.abs(dy) === 2;
