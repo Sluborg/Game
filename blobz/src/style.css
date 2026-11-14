@@ -275,3 +275,6 @@ button.link .icon { height: 18px; margin-right: 6px; vertical-align: -3px; }
 #starbar i.on { filter: drop-shadow(0 2px 0 var(--plum)); }
 .stars .icon { height: 64px; }
 .stars .icon.off { filter: none; opacity: 0.9; }
+
+.version { margin: 0; font-size: 12px; color: var(--muted); opacity: 0.8; letter-spacing: 0.3px; }
+@media (orientation: landscape) and (max-height: 520px) { .home .version { grid-column: 1 / -1; } }
