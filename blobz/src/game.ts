@@ -21,7 +21,7 @@ const ITEM_ICON: Record<ItemKind, string> = { wood: 'ic-log', shroom: 'ic-mushro
 // Obstacles (sim kinds 0-4) and decor from ChatGPT order 30 (public/art/props)
 const OBSTACLE_ART: [string, number][] = [['pr-tree-green', 2.8], ['pr-tree-orange', 2.8], ['pr-tree-pine', 2.8], ['pr-rock', 2.6], ['pr-boulder', 2.4]];
 const PROPS = ['tree-green', 'tree-orange', 'tree-pine', 'rock', 'boulder', 'bush', 'flowers', 'stump', 'pond', 'fence', 'sign', 'plate', 'plate-down', 'gate', 'gate-open', 'gate-post'];
-const BLOB_SCALE = 2.9; // 18x24 pixel blob grid
+const BLOB_SCALE = 1.45; // 36x48 blob grid // 18x24 pixel blob grid
 // decorations from Tiny Farm (sheet 'farm') and Tiny Town ('town')
 const DECOR: [string, number][] = [['pr-bush', 2], ['pr-bush', 2], ['pr-flowers', 2]];
 
@@ -216,7 +216,7 @@ export class GameScene extends Phaser.Scene {
       seenG.add(g.id);
       let e = this.gems.get(g.id);
       if (!e) {
-        e = { g: this.add.graphics(), img: this.add.image(g.x, g.y, 'ic-chest').setScale(3), t: [0, 1].map(() => this.add.image(0, 0, this.miniBlob()).setScale(1.6)), x: g.x, y: g.y };
+        e = { g: this.add.graphics(), img: this.add.image(g.x, g.y, 'ic-chest').setScale(3), t: [0, 1].map(() => this.add.image(0, 0, this.miniBlob()).setScale(0.8)), x: g.x, y: g.y };
         this.gems.set(g.id, e);
       }
       e.x += (g.x - e.x) * (smooth ? k : 1);

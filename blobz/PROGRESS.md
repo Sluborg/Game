@@ -138,3 +138,10 @@
 ## 2026-11-14 - v019b: calmer world
 - Pickups: bob only, ring is static. Flower grass tiles ~1%, flower patches rarer. Base glow ring removed (dirt yard marks the zone).
 - Slime trail ~2x longer (distance-based points, slower fade). Puffs spawn behind the blob and drift straight back, also on starts.
+
+## 2026-11-14 - v020: 2x blob body
+- Blob grid 18x24 -> 36x48 (`S = 2` fine pixels per design unit). Shapes are continuous functions sampled
+  at 2x: smoother outline, rounded cube corners, soft upper-left shine + sparkle, 2-px shade band.
+- Existing eyes/mouths/hats are 2x-upscaled design-unit maps (placeholders) until the ChatGPT part sheets
+  (orders 80-110, `docs/chatgpt-parts-prompt.txt`) arrive; then parts are sliced to native pixels and
+  anchored per shape. In-game scale 2.9 -> 1.45 (same on-screen size).

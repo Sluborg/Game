@@ -1,4 +1,5 @@
-// Procedural pixel blobz: a round ball (like the title art) on an 18x24 pixel grid.
+// Procedural pixel blobz on a 36x48 pixel grid (2x the original 18x24 design units).
+// Shapes are defined in design units and sampled at 2x; current parts are 2x-upscaled pixel maps.
 // Every part (color, eyes, mouth, hat) is a choice, rendered to SVG (DOM) or canvas (Phaser).
 
 export interface BlobLook { color: number; shape: number; eyes: number; mouth: number; hat: number }
@@ -13,10 +14,12 @@ export const MOUTHS = ['Öppen', 'Leende', 'Tunga', 'Tänder', 'Oj', 'Lugn'];
 export const HATS = ['Ingen', 'Krona', 'Keps', 'Blomma', 'Partyhatt', 'Mössa', 'Rosett', 'Halmhatt',
   'Pirat', 'Trollkarl', 'Viking', 'Kock', 'Lurar', 'Kanin', 'Katt', 'Gloria', 'Cylinder', 'Bandana', 'Antenn', 'Grodd'];
 
-export const GRID_W = 18;
-export const GRID_H = 24;
+/** Fine pixels per design unit. */
+const S = 2;
+export const GRID_W = 18 * S;
+export const GRID_H = 24 * S;
 /** Vertical center of the ball, as a fraction of the grid height (sprite origin). */
-export const BODY_CY = 15.5 / GRID_H;
+export const BODY_CY = 15.5 / 24;
 
 const OUT = '#3f2631';
 const PAL: Record<string, string> = {
@@ -85,9 +88,10 @@ function tone(c: number, f: number) {
 // so every shape keeps those rows wide enough. TOP[] is the first body row (hats sit on it).
 const SHAPE_TOP = [8, 8, 6, 10, 7, 8];
 const BOTTOM = 21;
-function halfWidth(shape: number, y: number) {
+/** Half-width (design units) of the body at continuous height yc (design units). */
+function halfWidth(shape: number, yc: number) {
   const top = SHAPE_TOP[shape] ?? 8;
-  const t = (y + 0.5 - top) / (BOTTOM + 1 - top);
+  const t = (yc - top) / (BOTTOM + 1 - top);
   if (t < 0 || t > 1) return -1;
   const ease = (k: number) => Math.sin(Math.min(1, k) * Math.PI / 2);
   switch (shape) {
@@ -95,14 +99,18 @@ function halfWidth(shape: number, y: number) {
     case 2: return t > 0.9 ? 6.5 - ((t - 0.9) / 0.1) * 2 : 2.5 + 4 * ease(t / 0.35); // tall
     case 3: return t > 0.8 ? 8 - ((t - 0.8) / 0.2) * 2.2 : 4.5 + 3.5 * ease(t / 0.45); // flat/wide
     case 4: return t > 0.88 ? 8 - ((t - 0.88) / 0.12) * 2.6 : 2.5 + 2 * ease(t / 0.3) + 3.5 * ease(Math.max(0, t - 0.35) / 0.4); // pear
-    case 5: return t < 0.08 || t > 0.93 ? 6 : 7.5; // cube with soft corners
+    case 5: { // cube with rounded corners
+      const ty = Math.min(yc - top, BOTTOM + 1 - yc), r = 2;
+      return ty >= r ? 7.5 : 7.5 - r + Math.sqrt(Math.max(0, r * r - (r - ty) ** 2));
+    }
     default: return t > 0.86 ? 8 - ((t - 0.86) / 0.14) * 2.6 : 3 + 5 * ease(t / 0.62); // dome
   }
 }
 let curShape = 0;
+/** Is fine pixel (x, y) inside the body? */
 function inBody(x: number, y: number) {
-  const w = halfWidth(curShape, y);
-  return w > 0 && Math.abs(x + 0.5 - 9) <= w;
+  const w = halfWidth(curShape, (y + 0.5) / S);
+  return w > 0 && Math.abs((x + 0.5) / S - 9) <= w;
 }
 
 /** Pixel grid of CSS colors (null = transparent). */
@@ -112,33 +120,41 @@ export function blobGrid(look: BlobLook): (string | null)[][] {
   curShape = look.shape;
   const top = SHAPE_TOP[look.shape] ?? 8;
   const mid = tone(look.color, 1), light = tone(look.color, 1.45), dark = tone(look.color, 0.68);
+  const sparkle = '#ffffff';
   for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) {
     if (inBody(x, y)) {
       let col = mid;
-      if (!inBody(x, y + 2) || !inBody(x + 2, y + 1)) col = dark; // bottom/right shade
-      // diagonal shine stripe top-left, like the art
-      const d = (x - 3.5) + (y - 9.5);
-      if (y >= top + 1 && y <= top + 4 && x >= 2 && x <= 7 && d >= 1.5 + (top - 8) && d <= 4 + (top - 8) && inBody(x - 1, y) && inBody(x, y - 1)) col = light;
+      if (!inBody(x, y + 4) || !inBody(x + 4, y + 2)) col = dark; // bottom/right shade band
+      // soft shine on the upper-left, plus a tiny white sparkle
+      const xc = (x + 0.5) / S, yc = (y + 0.5) / S;
+      const hx = (xc - 5.4) / 2.4, hy = (yc - (top + 2.6)) / 1.3;
+      if (hx * hx + hy * hy <= 1 && inBody(x - 2, y) && inBody(x, y - 2)) col = light;
       set(x, y, col);
     } else if (inBody(x - 1, y) || inBody(x + 1, y) || inBody(x, y - 1) || inBody(x, y + 1)) {
       set(x, y, OUT);
     }
   }
+  const spx = Math.round(4.2 * S), spy = Math.round((top + 2.2) * S);
+  if (inBody(spx, spy)) { set(spx, spy, sparkle); set(spx + 1, spy, sparkle); set(spx, spy + 1, sparkle); }
 
+  // parts are drawn in design units; each design pixel becomes an S x S block
   const paint = (rows: string[], x0: number, y0: number, mirror = false) => rows.forEach((row, ry) => [...row].forEach((ch, rx) => {
     if (ch === '.') return;
-    set(mirror ? x0 + row.length - 1 - rx : x0 + rx, y0 + ry, ch === 'M' ? mid : ch === 'm' ? dark : PAL[ch]);
+    const col = ch === 'M' ? mid : ch === 'm' ? dark : PAL[ch];
+    const ux = mirror ? x0 + row.length - 1 - rx : x0 + rx;
+    for (let dy = 0; dy < S; dy++) for (let dx = 0; dx < S; dx++) set(ux * S + dx, (y0 + ry) * S + dy, col);
   }));
+  const UW = GRID_W / S;
   const eye = EYE_PIX[look.eyes] ?? EYE_PIX[0];
   const ey = 12 + (eye.dy ?? 0);
   if (eye.wide) paint(eye.rows, 3, ey);
-  else { paint(eye.rows, 4, ey); paint(eye.rows, GRID_W - 4 - eye.rows[0].length, ey, eye.mirror); }
+  else { paint(eye.rows, 4, ey); paint(eye.rows, UW - 4 - eye.rows[0].length, ey, eye.mirror); }
   const mouth = MOUTH_PIX[look.mouth] ?? MOUTH_PIX[0];
   paint(mouth, 9 - mouth[0].length / 2, 17);
   const hat = HAT_PIX[look.hat] ?? HAT_PIX[0];
   const hatBottom = Math.min(top + 2 + (hat.drop ?? 0), 11) - (hat.lift ?? 0); // never over the eyes (row 12)
   paint(hat.rows, hat.x, Math.max(0, hatBottom - hat.rows.length));
-  if (hat.side) { paint(hat.side.rows, hat.side.x, hat.side.y); paint(hat.side.rows, GRID_W - hat.side.x - hat.side.rows[0].length, hat.side.y, true); }
+  if (hat.side) { paint(hat.side.rows, hat.side.x, hat.side.y); paint(hat.side.rows, UW - hat.side.x - hat.side.rows[0].length, hat.side.y, true); }
   return g;
 }
 
@@ -180,7 +196,7 @@ const pngCache = new Map<string, string>();
 export function blobEl(look: BlobLook, cls = 'blob') {
   const key = JSON.stringify(look);
   let url = pngCache.get(key);
-  if (!url) { url = blobCanvas(look, 6).toDataURL('image/png'); pngCache.set(key, url); }
+  if (!url) { url = blobCanvas(look, 3).toDataURL('image/png'); pngCache.set(key, url); }
   const s = document.createElement('span');
   s.className = cls;
   const img = new Image();
