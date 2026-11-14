@@ -5,9 +5,9 @@
 const { LANDSCAPE, ok, startGame, sim } = require('./helpers.cjs');
 const base = process.argv[2] || 'http://localhost:4173/';
 const shots = process.argv[3] || '';
-const CLS = { sword: 'krigare', hammer: 'krigare', spear: 'krigare', staff: 'prast', bow: 'bagskytt', shield: 'riddare' };
+const CLS = { dagger: 'rogue', sword: 'rogue', hammer: 'rogue', spear: 'rogue', staff: 'healer', bow: 'marksman', shield: 'tank' };
 // goo direction per weapon (deg, screen y down) so every one is checked at a different angle
-const DIRS = { sword: 30, hammer: 150, spear: -35, staff: 200, bow: -140, shield: 90 };
+const DIRS = { dagger: -80, sword: 30, hammer: 150, spear: -35, staff: 200, bow: -140, shield: 90 };
 const angDiff = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
 
 (async () => {
@@ -16,7 +16,7 @@ const angDiff = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)))
   try {
     await host.evaluate(() => { const s = window.__blobz.state; s.players.forEach((p, i) => { p.x = s.entrance.x + i * 10; p.y = s.entrance.y; }); });
     for (const p of pages) await p.waitForSelector('#weapon-pick:not(.hidden)', { timeout: 6000 });
-    for (const p of pages) { await p.click('.wcard[data-w="krigare"]'); await p.click('.wcard[data-w="sword"]'); }
+    for (const p of pages) { await p.click('.wcard[data-w="rogue"]'); await p.click('.wcard[data-w="sword"]'); }
     for (const p of pages) await p.waitForFunction(() => window.__blobzView.mode === 'dungeon', null, { timeout: 6000 });
     const ids = await host.evaluate(() => window.__blobz.state.players.map((p) => p.id));
     await host.waitForTimeout(2200); // floor banner gone

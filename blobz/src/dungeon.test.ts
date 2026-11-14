@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  bossHp, CLASS_HEARTS, SKILLS, dungeonChoice, LOOT_SECONDS, OFFER_SECONDS, skillOf,
+  bossHp, CLASS_HEARTS, SKILLS, skillIcon, dungeonChoice, LOOT_SECONDS, OFFER_SECONDS, skillOf,
   DONE_SECONDS, DT, dsnap, dview, ENEMY_HP, FLOORS, GH, GW, inSwing, isWall, KO_SECONDS, LEVEL_XP, makeFloor, newRun, SLAM_DMG, START_HEARTS,
   stepDungeon, TOUCH_DMG, WEAPON_STATS, type DFx, type DState,
 } from './dungeon';
@@ -161,13 +161,13 @@ describe('dungeon v1', () => {
     expect(d.level).toBe(2);
     expect(fx.some((f) => f.t === 'level')).toBe(true);
     expect(d.heroes.a.offer).toHaveLength(3);
-    expect(d.heroes.a.offer.every((id) => skillOf(id)!.cls === 'krigare')).toBe(true);
-    expect(d.heroes.b.offer.every((id) => skillOf(id)!.cls === 'prast')).toBe(true);
-    d.heroes.a.offer = ['krigare-extraheart', 'krigare-power', 'krigare-rage'];
-    dungeonChoice(d, 'a', 'skill:krigare-extraheart');
-    expect(d.heroes.a.skills).toEqual(['krigare-extraheart']);
-    expect(d.heroes.a.maxHearts).toBe(CLASS_HEARTS.krigare + 1);
-    dungeonChoice(d, 'a', 'skill:krigare-power'); // not offered any more: ignored
+    expect(d.heroes.a.offer.every((id) => skillOf(id)!.cls === 'rogue')).toBe(true);
+    expect(d.heroes.b.offer.every((id) => skillOf(id)!.cls === 'healer')).toBe(true);
+    d.heroes.a.offer = ['rogue-extraheart', 'rogue-power', 'rogue-rage'];
+    dungeonChoice(d, 'a', 'skill:rogue-extraheart');
+    expect(d.heroes.a.skills).toEqual(['rogue-extraheart']);
+    expect(d.heroes.a.maxHearts).toBe(CLASS_HEARTS.rogue + 1);
+    dungeonChoice(d, 'a', 'skill:rogue-power'); // not offered any more: ignored
     expect(d.heroes.a.skills).toHaveLength(1);
     run1(d, bs, undefined, OFFER_SECONDS + 0.2);
     expect(d.heroes.b.skills).toHaveLength(1);
@@ -176,8 +176,8 @@ describe('dungeon v1', () => {
 
   it('classes: hearts per class; archer shoots in sight only; priest heals and revives; knight wall blocks', () => {
     const d = quiet(newRun(14, { k: 'sword', p: 'staff', b: 'bow', r: 'shield' }));
-    expect(d.heroes.r.maxHearts).toBe(CLASS_HEARTS.riddare);
-    expect(d.heroes.b.maxHearts).toBe(CLASS_HEARTS.bagskytt);
+    expect(d.heroes.r.maxHearts).toBe(CLASS_HEARTS.tank);
+    expect(d.heroes.b.maxHearts).toBe(CLASS_HEARTS.marksman);
     const st = d.map.start;
     // archer: a goo 150 px away in the open gets an arrow
     const b = body('b', st.x - 70, st.y);
@@ -234,10 +234,10 @@ describe('dungeon v1', () => {
   });
 
   it('skills: 6 per class, ids match Art\'s icons', () => {
-    for (const c of ['krigare', 'prast', 'bagskytt', 'riddare'] as const) {
+    for (const c of ['rogue', 'healer', 'marksman', 'tank'] as const) {
       const ids = SKILLS.filter((k) => k.cls === c).map((k) => k.id);
       expect(ids).toHaveLength(6);
-      for (const id of ids) { expect(id.startsWith(c + '-')).toBe(true); expect(ART_SKILLS).toContain(`${id}.png`); }
+      for (const id of ids) { expect(id.startsWith(c + '-')).toBe(true); expect(ART_SKILLS).toContain(skillIcon(id).split('/').pop()); }
     }
   });
 

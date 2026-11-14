@@ -6,7 +6,7 @@ import './dungeon.css';
 import { tileCanvas } from './art';
 import type { Controls } from './controls';
 import {
-  CLASS_HINT, CLASS_NAMES, CLASS_WEAPONS, CLASSES, FLOORS, heroMods, itemOf, LEVEL_XP, LOOT_SECONDS, OFFER_SECONDS, skillOf, specialOf, WEAPON_NAMES,
+  ART_CLASS, CLASS_HINT, CLASS_NAMES, skillIcon, CLASS_WEAPONS, CLASSES, FLOORS, heroMods, itemOf, LEVEL_XP, LOOT_SECONDS, OFFER_SECONDS, skillOf, specialOf, WEAPON_NAMES,
   type DView, type HeroClass, type Weapon,
 } from './dungeon';
 import { sfx } from './sfx';
@@ -16,9 +16,9 @@ const $ = (id: string) => document.getElementById(id)!;
 const show = (id: string, on: boolean) => document.getElementById(id)?.classList.toggle('hidden', !on);
 const setText = (el: HTMLElement, t: string) => { if (el.textContent !== t) el.textContent = t; };
 /** Short picture-first hints on the cards (kids 8+: the picture and the name carry it). */
-const WEAPON_HINT: Record<Weapon, string> = { sword: 'Snabb', hammer: 'Stark, slår runt', spear: 'Långt, rakt', staff: '', bow: '', shield: '' };
+const WEAPON_HINT: Record<Weapon, string> = { dagger: 'Supersnabb', sword: 'Snabb', hammer: 'Stark, slår runt', spear: 'Långt, rakt', staff: '', bow: '', shield: '' };
 /** Kenney Tiny Dungeon tiles standing in for class cards until Art's card-<class>.png exists. */
-const CLASS_TILE: Record<HeroClass, number> = { krigare: 87, prast: 84, bagskytt: 88, riddare: 96 };
+const CLASS_TILE: Record<HeroClass, number> = { rogue: 88, healer: 84, marksman: 87, tank: 96 };
 
 let sendPick: (w: string) => void = () => {};
 /** main.ts tells the UI how a pick reaches the host (host: straight into the sim; joiner: over the net).
@@ -55,7 +55,7 @@ function buildCards() {
   const h2 = $('weapon-pick').querySelector('h2');
   if (!pickClass) {
     if (h2) h2.textContent = 'Välj klass';
-    root.replaceChildren(...CLASSES.map((c) => card(c, icon(`art/dungeon/card-class-${c}.png`, CLASS_TILE[c], 6, 'cardimg'), CLASS_NAMES[c], CLASS_HINT[c], () => {
+    root.replaceChildren(...CLASSES.map((c) => card(c, icon(`art/dungeon/card-class-${ART_CLASS[c]}.png`, CLASS_TILE[c], 6, 'cardimg'), CLASS_NAMES[c], CLASS_HINT[c], () => {
       const ws = CLASS_WEAPONS[c];
       if (ws.length === 1) { myPick = ws[0]; pickClass = c; sendPick(ws[0]); markCards(); return; }
       pickClass = c; buildCards();
@@ -65,7 +65,7 @@ function buildCards() {
     const arrow = document.createElement('span'); arrow.className = 'cardimg back'; arrow.textContent = '←';
     const back = card('back', arrow, 'Tillbaka', '', () => { pickClass = null; buildCards(); });
     root.replaceChildren(...CLASS_WEAPONS[pickClass].map((w) => {
-      const img = new Image(); img.src = `art/dungeon/card-${w}.png`; img.alt = ''; img.className = 'cardimg';
+      const img = icon(`art/dungeon/card-${w}.png`, 103, 6, 'cardimg'); // daggers: Kenney tile until Art's card-dagger.png
       return card(w, img, WEAPON_NAMES[w], WEAPON_HINT[w], () => { myPick = w; sendPick(w); markCards(); });
     }), back);
   }
@@ -159,7 +159,7 @@ function renderOffer(d: DView, myId: string) {
       const sk = skillOf(id)!;
       const b = document.createElement('button');
       b.className = 'skcard'; b.type = 'button'; b.dataset.s = id;
-      b.append(icon(`art/dungeon/skills/${id}.png`, sk.icon, 3));
+      b.append(icon(skillIcon(id), sk.icon, 3));
       b.insertAdjacentHTML('beforeend', `<b>${sk.name}</b>`);
       b.onclick = () => { sfx.pick(); sendPick('skill:' + id); b.classList.add('on'); };
       return b;
