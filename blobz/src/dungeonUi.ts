@@ -65,8 +65,6 @@ function ensureExtras() {
     p.id = 'dg-end-why'; p.className = 'tag';
     $('dg-end').querySelector('h2')?.after(p);
   }
-  const icon = document.getElementById('attack-icon') as HTMLImageElement | null;
-  if (icon && !icon.src.endsWith('btn-attack.png')) icon.src = 'art/dungeon/btn-attack.png';
 }
 
 const fmt = (t: number) => Math.floor(t / 60) + ':' + String(Math.max(0, Math.floor(t % 60))).padStart(2, '0');
@@ -92,6 +90,10 @@ function renderHud(d: DView, myId: string) {
   btn.style.setProperty('--cd', String(left));
   btn.classList.toggle('cd', left > 0);
   btn.setAttribute('aria-label', h ? specialOf('krigare', h.weapon).name : 'Special');
+  // Art's icon per weapon special (spin / slam / charge)
+  const icon = document.getElementById('attack-icon') as HTMLImageElement | null;
+  const src = `art/dungeon/btn-special-${h?.weapon ?? 'sword'}.png`;
+  if (icon && !icon.src.endsWith(src)) icon.src = src;
 }
 
 /** Called first thing in main.ts onView. Returns true when the meadow HUD/end logic should be skipped. */
@@ -102,6 +104,9 @@ export function dungeonUi(v: View, myId: string | undefined, controls: Controls)
     if (mode === 'pick') { myPick = null; buildCards(); markCards(); }
     if (mode === 'dungeon') { endShown = false; heartsKey = ''; controls.setTool(null); }
     controls.setDungeon(mode === 'dungeon');
+    // the small button: sidestep icon underground, the dash arrow again on the meadow
+    const dashImg = controls.dashBtn.querySelector('img');
+    if (dashImg && !controls.tool) dashImg.src = mode === 'dungeon' ? 'art/dungeon/btn-sidestep.png' : 'art/icons/dash-arrow.png';
     show('hud-dg', mode === 'dungeon');
     if (mode !== 'dungeon') { show('dg-ko', false); show('dg-end', false); }
     lastMode = mode;
