@@ -91,8 +91,8 @@ Reference for wiring art. **One art source:** CC0 "Ninja Adventure" pack, vendor
 | Boulder, teal | TilesetNature.png | 0,192,32,32 | Small teal rocks 96,192 / 112,192 / 128,192. |
 | Big cliff rocks | TilesetNature.png | grey 240,208,112,80 area; brown 240,160,128,48 area | Free-form, not autotiled. |
 | Pebbles | TilesetNature.png | 240,288,64,16 (4 tiles) | Sand-coloured decor. |
-| **Berry bush (small)** | TilesetNature.png | 64,224 / 80,224 / 96,224 and rows y240,y256,y272 (16x16 each) | 12 small bushes with coloured berries (red, blue, pink, orange). |
-| **Berry bush (big)** | TilesetNature.png | grey-green 112,224,32,32; brown 144,224,32,32; blue 112,256,32,32; orange 144,256,32,32 | Best berry node. |
+| **Berry bush** | `public/art/props/berry-bush-ninja.png` 32x32 / `berry-bush-ninja-s.png` 16x16 (Art, not in the Ninja folder) | | Ninja has NO berry bush. Red berries drawn on Ninja's round bush (Nature 256,0,32,32) and small bush (Nature 96,160,16,16) by `scripts/berry_bush.py`. Picked clean = the plain source rects. |
+| **Ore rocks (crystal / stone node)** | TilesetNature.png | small 16x16: cols x64,80,96 rows y224 (grey), y240 (brown), y256 (blue), y272 (orange); big 32x32: grey 112,224; brown 144,224; blue 112,256; orange 144,256 | Rocks with coloured gems. **Not berry bushes** (an earlier version of this map said so; fixed). Big = crystal node, small = rubble / gem chips. |
 | Bush (plain) | TilesetNature.png | 160,128 / 160,144 (16x16) | |
 | Stump | TilesetNature.png | dark 0,128,32,32; orange 32,128,32,32; small 64,128,16,16 | Tree-cut state. Stump tops 64,208 / 80,208 / 96,208. |
 | Log (small) | TilesetNature.png | 80,128,16,16 | |
@@ -100,7 +100,7 @@ Reference for wiring art. **One art source:** CC0 "Ninja Adventure" pack, vendor
 | Log lying (big) | Backgrounds/Tilesets/tileset_camp.png | 0,0,32,16 brown; 32,0,32,16 birch; 16,32,32,16; upright 48,16,16,32 | |
 | Wood pile | tileset_camp.png | 0,16,48,32 | Stack of logs. |
 | Big stump table | tileset_camp.png | 16,80,32,32 | |
-| Crystal node | TilesetNature.png | small gems 0,240 / 16,240 / 32,240 / 48,240; big crystal blocks 0,256 / 16,256 / 32,256 / 48,256 (16x16) | Orange, blue, pink, green. |
+| Crystal node | TilesetNature.png | crystal clusters 0,224 / 16,224 / 32,224 / 48,224 (orange, blue, pink, green, 16x16); cut gems 0,240..48,240; big gem blocks 0,256..48,256 (16x16) | Or the ore rocks above for a rock-with-crystals node. |
 | Bamboo | TilesetNature.png | 176,128,16,32 | |
 
 ## 5. Base + the 6 buildings
@@ -140,8 +140,8 @@ Reference for wiring art. **One art source:** CC0 "Ninja Adventure" pack, vendor
 | Energy / box pips | Ui/Receptacle/Heart2.png | 4 frames 16x16 (0-3 bars) | Heart3.png = triangle pips. |
 | Mini HP bar (over enemies) | Ui/Receptacle/LifeBarMiniUnder.png + LifeBarMiniProgress.png | 18x4 each | Scale the progress bar's width. |
 | Coin (spinning) | Items/Treasure/Coin2.png | 4 frames 10x10 | Static: GoldCoin.png 7x7, SilverCoin.png 6x6. |
-| Panel 9-slice | Ui/Theme/Theme Wood/nine_path_panel.png | 16x16 (slice 4-5 px) | Also nine_path_panel_2 / _3 / _interior, nine_path_bg. More skins in Ui/Theme/Wip/*/nine_path_panel.png. |
-| Button | Ui/Theme/Theme Wood/button_normal / _hover / _pressed / _disabled.png | 16x8, 9-slice | |
+| Panel 9-slice | Ui/Theme/Theme Wood/nine_path_panel.png | 16x16, slice L6 T6 R5 B5 | Orange wood frame with an inner rim; the fill is the inner colour. _2 (purple-grey fill) and _3 (white fill, for text) use the same slices; _disabled greyed. More skins: Ui/Theme/Wip/*/nine_path_panel.png (not slice-checked). |
+| Button normal / hover / pressed / disabled | Ui/Theme/Theme Wood/button_normal / _hover / _pressed / _disabled.png | 16x8, slice 2 px all sides | **Pressed** has a thicker top (T3 B1): move the label down 1 px while pressed. Toggle buttons: button_checked / _unchecked 26x14. |
 | Arrows (back / next / play) | Ui/Theme/Theme Wood/arrow_left.png / arrow_right.png (+ _hover) | 16x16 | Use arrow_right as "play". |
 | Close (X) | Ui/Theme/Theme Wood/checked.png | 16x16 | An X in a box. |
 | Yes / No | Ui/Dialog/YesButton.png / NoButton.png | 26x16 | Text baked in (English). |
@@ -149,12 +149,20 @@ Reference for wiring art. **One art source:** CC0 "Ninja Adventure" pack, vendor
 | Home / settings / pause icons | MISSING | | Art draws in code (16 px). |
 | Joystick base + knob | Ui/Receptacle/Receptacle Sphere/BackgroundWood.png (32x32) + ProgressYellow.png (22x22) | | MISSING a real on-screen stick; this pairing is a substitute. Gamepad stick icon: Ui/Input/Gamepad/JoystickLeft.png 15x18. |
 | Action button | Ui/Receptacle/Receptacle Sphere/BackgroundRed.png 32x32 with a skill icon inside, or Ui/Input/Gamepad/ButtonA/{Idle,Pressed}.png 16x15 | | ButtonA has a baked "A". |
-| Dialog / info box | Ui/Dialog/DialogBox.png 300x58, ChoiceBox.png 64x20, DialogInfo.png 80x16 | | |
+| Dialog box | Ui/Dialog/DialogBox.png 300x58 (slice L6 T14 R6 B6, title tab on top); DialogueBoxSimple.png 316x60 (slice 6); DialogBoxFaceset.png 300x58 + FacesetBox.png 48x48 (portrait frame) | | Use DialogueBoxSimple for short no-reading hints with an icon. |
+| Choice / info strip | Ui/Dialog/ChoiceBox.png 64x20 (slice 5), DialogInfo.png 80x16 | | |
+| HP bar (players, horizontal) | Ui/Receptacle/LifeBarMiniUnder.png (track) + LifeBarMiniProgress.png (red fill) | 18x4 each | Scale integer x2-x3 in the HUD; crop the fill's width to the HP fraction (do not stretch). |
+| XP / build-progress bar | Track: LifeBarMiniUnder.png; fill: LifeBarMiniProgress.png **recoloured** (yellow #ffe18d or green) | 18x4 | MISSING a dedicated XP bar; recolour is allowed. Long bars: 9-slice nine_path_bg (slice 1) as track and slider_progress.png (16x16, slice 2) as fill. |
+| Big HP / mana gauge (vertical) | Ui/Receptacle/Receptacle Rectangle/BackgroundWood.png 34x56 + ProgressHealth.png / ProgressWhite.png 22x40 | | Fill from the bottom by cropping. Other frames: BackgroundBag, Bamboo, Bottle, Scroll. Round gauge: Receptacle Sphere Background*.png 32x32 + Progress*.png 22x22 (+ Over.png glass). |
+| Resource counters (HUD) | Wood Items/Resource/Branch.png, Stone Rock.png, Berry Items/Food/Nut2.png, Gold Items/Treasure/Coin2.png (frame 0) or GoldCoin.png 7x7, Crystal Items/Resource/GemPurple.png | 16x16 (coin 10x10) | Same sprites as the carry items in section 6, drawn x2 next to the number. Skill-style 24x24 alt for gold: Ui/Skill Icon/Items & Weapon/Money.png. |
+| Tabs | Ui/Theme/Theme Wood/tab.png / tab_selected / tab_hover / tab_unselected / tab_disabled | 16x12, slice L4 T4 R6, open bottom | |
+| Checkbox / radio / slider | unchecked / checked, radio_unchecked / radio_checked 16x16; h_slidder_grabber 13x11 | | |
+| Focus ring | Ui/Theme/Theme Wood/nine_path_focus.png | 8x8, slice 3 | Selected slot / button highlight. |
 | Inventory slot | Ui/Theme/Theme Wood/inventory_cell.png | 16x16 | |
 | Font | Ui/Font/NormalFont.ttf; bitmap font8x8.png (120x64), font24x30.png (360x240) | | |
 | Emotes (speech bubbles) | Ui/Emote/emote1..30.png | 14x13 each | 1 shout, 11 smile, 21 "!", 22 red "!", 23 "?", 25 red "?", 26 broken heart, 27 heart, 28 "zz", 29 star, 30 cross. |
 
-**Skill / action icons** (24x24, `Ui/Skill Icon/...`):
+**Skill / action icons** (24x24, `Ui/Skill Icon/...`; every icon has an `XDisabled.png` grey twin for cooldown / locked):
 | Action | File | Notes |
 |---|---|---|
 | Heal | Spell/Heal.png | Heart with plus. |
@@ -181,8 +189,8 @@ Reference for wiring art. **One art source:** CC0 "Ninja Adventure" pack, vendor
 | Spear | Items/Weapons/Lance/Sprite.png; Lance2; Fork | 6x23; 7x21; 7x16 | |
 | Healer staff | Items/Weapons/MagicWand/Sprite.png | 5x18 | Plain staff: Stick 3x16. Book 9x9 for a tome. |
 | Marksman bow | Items/Weapons/Bow/Sprite.png (+ Arrow.png 13x5); Bow2 | 15x7 | No in-hand sprite. Flying arrow: FX/Projectile/Arrow.png 13x5. |
-| Crossbow | MISSING | | Use Bow, or Art draws in code. |
-| Shield | MISSING (no item sprite) | | Icon: Ui/Skill Icon/Spell/DefenseUpgrade.png 24x24; bubble FX: FX/Magic/Shield. Art draws a 16 px shield in code. |
+| Crossbow | `public/art/dungeon/weapons/ninja-crossbow.png` (Art, not in the Ninja folder) | 16x10, pivot 2,5 | Hand-drawn Ninja-style, points right, bolt nocked. |
+| Shield | `public/art/dungeon/weapons/ninja-shield.png` (Art, not in the Ninja folder) | 12x12, pivot 6,6 | Hand-drawn Ninja-style. Icon: Ui/Skill Icon/Spell/DefenseUpgrade.png 24x24; bubble FX: FX/Magic/Shield. |
 | Gather tools | Items/Tool/Axe.png, Pickaxe.png, Hammer.png, Shovel.png, Sickle.png, WateringCan.png | 16x16 | |
 | Weapon swing overlays | Actor/CharacterAnimated/Weapon/{Katana,Axe,Hammer,Pickaxe,Net}.png | 256x256, 32x32 cells | Built for Actor/CharacterAnimated/NinjaGreen only; positions will not match blobz. Skip unless Art aligns by hand. |
 
@@ -253,10 +261,11 @@ Reference for wiring art. **One art source:** CC0 "Ninja Adventure" pack, vendor
 | Door | TilesetHouse.png | wooden doors 400,304,16,16 / 416,304,16,16 | MISSING a dungeon gate: use the stone arch, or Art draws in code. |
 
 ## Gaps summary (MISSING)
-- Berry item: Items/Food/Nut2.png is the closest; berry bushes do exist.
-- Shield item and crossbow: draw in code (shield icon and FX exist).
+- Berry item: Items/Food/Nut2.png is the closest. Berry bush: none in the pack; Art's `public/art/props/berry-bush-ninja*.png` fill it.
+- Shield item and crossbow: DONE, hand-drawn Ninja-style at `public/art/dungeon/weapons/ninja-shield.png` (12x12) and `ninja-crossbow.png` (16x10), see that folder's README.
 - Spin / sidestep skill icons: substitutes listed; draw in code if they read badly.
 - Check, home, settings, pause UI icons: draw in code.
 - On-screen joystick: Receptacle Sphere substitute.
+- XP bar: recolour LifeBarMiniProgress (no dedicated XP bar in the pack).
 - Large well (only 16 px wells), dungeon gate.
 - "Medium goo": no 32 px slime; scale Slime3 x2 or use GiantSlime (62x52) as a mini-boss.

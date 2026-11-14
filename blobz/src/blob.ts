@@ -20,12 +20,15 @@ export const HATS = ['Ingen', 'Keps', 'Krona', 'Grodd', 'Mössa', 'Trollkarl', '
 /** Dungeon class gear, worn instead of the skin hat (blobGrid's `classHat`). */
 export const CLASS_HATS = ['Prästluva', 'Fjädermössa', 'Riddarhjälm'];
 
-export const GRID_W = 16;
-export const GRID_H = 18;
+/** Frame 20x20: the body (up to 16 wide incl. outline) centred at x = 10 with a 2 px margin on each side for muffs,
+ *  ears and brims, and 2 extra rows of hat room on top. */
+export const GRID_W = 20;
+export const GRID_H = 20;
+const CX = GRID_W / 2; // body centre column
 /** Frames per look: 0 = idle, 1 = glide (squashed). */
 export const BLOB_FRAMES = 2;
 /** Vertical centre of the body as a fraction of the grid height (sprite origin). */
-export const BODY_CY = 11 / 18;
+export const BODY_CY = 13 / 20;
 
 const INK = '#141b1b'; // Ninja Adventure outline
 const PAL: Record<string, string> = {
@@ -43,7 +46,7 @@ const BODY_ROWS: number[][] = [
   [4, 6, 6, 8, 8, 10, 12, 12, 14, 14, 14, 12], // Päron
   [10, 12, 12, 12, 12, 12, 12, 12, 12, 12, 10], // Kub
 ];
-const FACE_X = 9; // 3/4 view: the face sits right of the body centre (8)
+const FACE_X = CX + 1; // 3/4 view: the face sits right of the body centre
 
 type Px = Map<number, string>; // key = y * GRID_W + x
 const key = (x: number, y: number) => y * GRID_W + x;
@@ -123,7 +126,7 @@ export function bodyLayout(shape: number, frame = 0): BodyLayout {
   }
   const bottom = GRID_H - 2, h = ws.length, top = bottom - h + 1;
   const mask = new Set<number>();
-  ws.forEach((w, i) => { for (let x = 8 - (w >> 1); x < 8 - (w >> 1) + w; x++) mask.add(key(x, top + i)); });
+  ws.forEach((w, i) => { for (let x = CX - (w >> 1); x < CX - (w >> 1) + w; x++) mask.add(key(x, top + i)); });
   // eyes start ~28% down, on rows at least 10 wide; the mouth sits under the TALLEST eyes + a gap of 2 (1 if short)
   let r = Math.max(1, Math.round(h * 0.28));
   while (r < h && Array.from({ length: MAX_EYE }, (_, k) => ws[Math.min(h - 1, r + k)]).some((w) => w < 10)) r++;
@@ -217,7 +220,7 @@ function fittedHat(name: string, L: BodyLayout, size: number): { px: Px; line: S
     const w = x1 - x0 + 1;
     for (let x = x0 + 2; x <= x1 - 2; x++) at(x, topY - 1, x > x0 + (w * 2) / 3 ? 'r' : 'R');
     const billY = Math.max(...[...body].map((k) => Math.floor(k / GRID_W))), bx = Math.max(...[...body].filter((k) => Math.floor(k / GRID_W) === billY).map((k) => k % GRID_W));
-    for (let i = 1; i <= 2 + size; i++) at(bx + i, billY, 'r'); // the bill leaves the band's lowest front pixel
+    for (let i = 1; i <= 2 + size && bx + i <= GRID_W - 2; i++) at(bx + i, billY, 'r'); // the bill (its outline stays in the frame)
   } else if (name === 'Mössa') { // knit band + pompom
     for (let x = x0 + 2; x <= x1 - 2; x++) at(x, topY - 1, 'B');
     at(cx, topY - 2, 'W'); at(cx + 1, topY - 2, 'W');
@@ -236,7 +239,7 @@ function fittedHat(name: string, L: BodyLayout, size: number): { px: Px; line: S
     for (let x = x0 + 1; x <= x1 - 1; x += 2) { at(x, topY - 1, 'Y'); if (size > 0 && (x - x0) % 4 === 1) at(x, topY - 2, 'Y'); }
     at(cx, topY - 1, 'R');
   } else if (name === 'Trollkarl') { // cone, leaning toward the face
-    const h = Math.min(3 + size, topY - 1); // the tip's outline still fits in row 0
+    const h = Math.min(3 + size, topY - 3); // approved height (as in the old 16x18 frame, 2 rows lower)
     for (let j = 1; j <= h; j++) {
       const half = Math.max(0, Math.round(((x1 - x0) / 2 - 1) * (1 - j / (h + 1))));
       for (let x = cx - half + (j > h - 2 ? 1 : 0); x <= cx + half + (j > h - 2 ? 1 : 0); x++) at(x, topY - j, x > cx ? 'v' : 'V');
@@ -281,7 +284,7 @@ function shade(c: number, f: number) {
 /** The classic crown ("Tre Kronor"): straight walls, a flat band, three spikes of equal height, sitting ON the head with
  *  the head's top outline row as its dark bottom border. */
 function classicCrown(L: BodyLayout): Px {
-  const xa = 8 - (L.rows[0] >> 1) - 1, xb = 8 + (L.rows[0] >> 1), y = L.top - 2, w = xb - xa + 1;
+  const xa = CX - (L.rows[0] >> 1) - 1, xb = CX + (L.rows[0] >> 1), y = L.top - 2, w = xb - xa + 1;
   const px: Px = new Map();
   const mid = w % 2 ? [xa + (w >> 1)] : [xa + (w >> 1) - 1, xa + (w >> 1)];
   for (let x = xa; x <= xb; x++) {
@@ -300,7 +303,7 @@ function gear(px: Px, L: BodyLayout, classHat: number) {
   let body: Set<number>, line: Set<number>;
   if (short) { // a band around the head instead: outline ring + one more ring outside, the head's top row as the border
     const ring2 = outlineOf(new Set([...L.mask, ...ring]));
-    const lx = 8 - (L.rows[0] >> 1) - 1, rx = 8 + (L.rows[0] >> 1); // no wider than the head's top row + its outline
+    const lx = CX - (L.rows[0] >> 1) - 1, rx = CX + (L.rows[0] >> 1); // no wider than the head's top row + its outline
     const inX = (k: number) => k % GRID_W >= lx && k % GRID_W <= rx;
     if (classHat === 0) { // priest: the hood ends on a full dark line along the head's top row (outline columns included)
       body = new Set([...ring, ...ring2].filter((k) => Math.floor(k / GRID_W) < L.top && inX(k)));
@@ -317,8 +320,8 @@ function gear(px: Px, L: BodyLayout, classHat: number) {
   const at = (x: number, y: number, c: string) => extra.set(key(x, y), c);
   if (classHat === 1) { // archer cap: peak pointing forward, feather in the middle pointing up and back
     for (let x = cx; x <= x1 + 1; x++) at(x, topY - 1, x > cx + 2 ? PAL.g : PAL.G);
-    at(x1 + 2, topY, PAL.g); at(x1 + 1, topY, PAL.g);
-    const len = Math.min(4, topY - 2);
+    at(x1 + 1, topY, PAL.g); if (x1 + 2 <= GRID_W - 2) at(x1 + 2, topY, PAL.g);
+    const len = Math.min(4, topY - 4);
     for (let i = 1; i <= len; i++) at(cx - (i >> 1), topY - 1 - i, i === len ? PAL.r : PAL.R);
   } else if (classHat === 2) { // viking helm: steel cap on the head's curve, a raised dome, rivets, two yellow horns
     for (let x = x0 + 2; x <= x1 - 2; x++) at(x, topY - 1, x > x0 + ((x1 - x0) * 2) / 3 ? PAL.t : PAL.T); // the dome rises
@@ -357,7 +360,7 @@ export function blobGrid(look: BlobLook, classHat?: number, face?: Face, frame =
   if (sized) {
     // brim ON the head's top outline row at the crown's centre; never inside the head
     const spr = sized[hatSize(L.headW)];
-    const cx = 8;
+    const cx = CX;
     hat = spritePx(spr, cx, topOutline(mask, cx));
     for (const k of hat.keys()) mask.delete(k); // a pointy top under a hat is covered, not poking through
   }
@@ -369,7 +372,7 @@ export function blobGrid(look: BlobLook, classHat?: number, face?: Face, frame =
     px.set(k, edge ? dark : base);
   }
   for (const k of outlineOf(mask)) px.set(k, INK);
-  const gy = L.top + 1, gx = 8 - (L.rows[1] >> 1) + 1; // glint on the back (left) side
+  const gy = L.top + 1, gx = CX - (L.rows[1] >> 1) + 1; // glint on the back (left) side
   for (const [x, y] of [[gx, gy], [gx + 1, gy], [gx, gy + 1]]) if (mask.has(key(x, y))) px.set(key(x, y), white);
   // class hoods / helmets wrap the head above the eyes
   if (classHat !== undefined) gear(px, L, classHat);
@@ -400,20 +403,14 @@ export function blobGrid(look: BlobLook, classHat?: number, face?: Face, frame =
     const band = new Set([...outlineOf(new Set([...L.mask, ...ring]))].filter((k) => Math.floor(k / GRID_W) < L.earY));
     for (const k of outlineOf(band)) if (!L.mask.has(k) && !ring.has(k)) px.set(k, INK);
     for (const k of band) px.set(k, '#2c3038'); // black headband with a dark grey shade
-    const row = L.rows[L.earY - L.top], xl = 8 - (row >> 1) - 1, xr = 8 + (row >> 1);
+    const row = L.rows[L.earY - L.top], xl = CX - (row >> 1) - 1, xr = CX + (row >> 1);
     const cups = new Set<number>();
     const big = look.shape !== 1; // Boll: approved as is
-    const xsC = big ? [xl - 2, xl - 1, xl, xr, xr + 1, xr + 2] : [xl - 1, xl, xr, xr + 1];
+    // 3-wide muffs; on the widest heads the outer column gives way so the muff's outline stays inside the frame
+    const xsC = (big ? [xl - 2, xl - 1, xl, xr, xr + 1, xr + 2] : [xl - 1, xl, xr, xr + 1]).filter((x) => x >= 1 && x <= GRID_W - 2);
     const dys = big ? [-2, -1, 0, 1, 2] : [-1, 0, 1];
-    const clip = big && (xl - 2 < 0 || xr + 2 > GRID_W - 1); // the frame would cut the muffs (Kupol, Platt, Kub)
-    if (clip) { // two 3-wide muffs kept fully inside the frame: on wide bodies they cover the head's side (never the face)
-      const lx0 = Math.max(0, xl - 2), rx1 = Math.min(GRID_W - 1, xr + 2);
-      for (const x of [lx0, lx0 + 1, lx0 + 2, rx1 - 2, rx1 - 1, rx1]) for (const dy of dys) {
-        const k = key(x, L.earY + dy);
-        if (x <= xl || x >= xr || !L.mask.has(k)) cups.add(k);
-      }
-    } else for (const x of xsC) for (const dy of dys) if (x >= 0 && x < GRID_W && !L.mask.has(key(x, L.earY + dy))) cups.add(key(x, L.earY + dy));
-    for (const k of outlineOf(cups)) if (!L.mask.has(k) || (clip && (k % GRID_W < 8 ? k % GRID_W <= xl + 1 : k % GRID_W >= xr - 1))) px.set(k, INK);
+    for (const x of xsC) for (const dy of dys) if (x >= 0 && x < GRID_W && !L.mask.has(key(x, L.earY + dy))) cups.add(key(x, L.earY + dy));
+    for (const k of outlineOf(cups)) if (!L.mask.has(k)) px.set(k, INK);
     for (const k of cups) px.set(k, Math.floor(k / GRID_W) === L.earY - 1 ? '#4a505a' : '#2c3038');
   } else if (TOPS[hatName]) { // top changers: grow out of the head's top outline row (pairs at both ends of the top row)
     const t = TOPS[hatName], spr = t.sizes[hatSize(L.headW)];
@@ -421,9 +418,9 @@ export function blobGrid(look: BlobLook, classHat?: number, face?: Face, frame =
     const oy = L.top - 1; // the top outline row: the pieces' bottom row replaces it, so they grow out of the head
     const parts: Px[] = [];
     if (t.kind === 'pair' || t.kind === 'fixed') { // at the ends of the second row (or fixed spacing), on each column's outline
-      const half = t.kind === 'fixed' ? 4 : L.rows[1] >> 1, xl = 8 - half, xr = 8 + half - 1;
+      const half = t.kind === 'fixed' ? 4 : L.rows[1] >> 1, xl = CX - half, xr = CX + half - 1;
       if (t.kind === 'fixed' && L.rows[2] < 8) { // Päron: ears on the shoulders of the pointy top, the dome/ball length, no legs
-        parts.push(spritePx(spr, 5, topOutline(L.mask, 6), own), spritePx(spr, 10, topOutline(L.mask, 9), own, true));
+        parts.push(spritePx(spr, CX - 3, topOutline(L.mask, CX - 2), own), spritePx(spr, CX + 2, topOutline(L.mask, CX + 1), own, true));
       } else if (t.kind === 'fixed' && L.rows[1] < 8) { // narrow head (Lång): full-length ears from the highest point, legs reach down
         for (const [x, mir] of [[xl, false], [xr, true]] as [number, boolean][]) {
           const cols = [x, mir ? x - 1 : x + 1];
@@ -433,8 +430,8 @@ export function blobGrid(look: BlobLook, classHat?: number, face?: Face, frame =
           parts.push(piece);
         }
       } else parts.push(spritePx(spr, xl, topOutline(L.mask, xl), own), spritePx(spr, xr, topOutline(L.mask, xr), own, true));
-    } else if (t.kind === 'centre') parts.push(spritePx(spr, 9, oy, own));
-    else parts.push(spritePx(spr, 8, oy - 1, own)); // halo: one free row above the head
+    } else if (t.kind === 'centre') parts.push(spritePx(spr, FACE_X, oy, own));
+    else parts.push(spritePx(spr, CX, oy - 1, own)); // halo: one free row above the head
     const all = new Map(parts.flatMap((p) => [...p]).filter(([k]) => !L.mask.has(k))); // grows out of, never into, the head
     for (const k of outlineOf(new Set(all.keys()))) if (!L.mask.has(k)) px.set(k, INK);
     for (const [k, c] of all) px.set(k, c);

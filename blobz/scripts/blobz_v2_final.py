@@ -26,7 +26,7 @@ def render(reqs):
     grids = json.loads(subprocess.run(['node', '--input-type=module', '-e', js], capture_output=True, text=True, check=True).stdout)
     out = []
     for g in grids:
-        im = Image.new('RGBA', (16, 18))
+        im = Image.new('RGBA', (20, 20))
         for y, row in enumerate(g):
             for x, c in enumerate(row):
                 if c:
@@ -50,7 +50,7 @@ def main(scale=6):
         for fr, face in ((0, None), (1, None), (0, {'dx': -1, 'dy': 0}), (1, {'dx': -1, 'dy': 0})):
             reqs.append({'look': {'color': COLS[s], 'shape': s, 'eyes': 1, 'mouth': 0, 'hat': 1}, 'face': face, 'frame': fr})
     ims = render(reqs)
-    cell = 19 * scale
+    cell = 21 * scale
     lab_w = 120
     rows = len(hats) + 3 + 6
     w = lab_w + 6 * cell + 10
@@ -66,7 +66,7 @@ def main(scale=6):
     for h in hats:
         d.text((10, y + cell // 2 - 10), h, fill=(255, 255, 255, 255), font_size=16)
         for s in range(6):
-            out.alpha_composite(ims[k].resize((16 * scale, 18 * scale), Image.NEAREST), (lab_w + s * cell, y))
+            out.alpha_composite(ims[k].resize((20 * scale, 20 * scale), Image.NEAREST), (lab_w + s * cell, y))
             k += 1
         y += cell
     cells = os.path.join(ROOT, 'docs', 'art-review', 'hats')
@@ -74,30 +74,30 @@ def main(scale=6):
     for hi, h in enumerate(hats):
         for si, sh in enumerate(shapes):
             tile = Image.new('RGBA', (cell, cell), (98, 150, 72, 255))
-            tile.alpha_composite(ims[hi * 6 + si].resize((16 * scale, 18 * scale), Image.NEAREST), ((cell - 16 * scale) // 2, 0))
+            tile.alpha_composite(ims[hi * 6 + si].resize((20 * scale, 20 * scale), Image.NEAREST), ((cell - 20 * scale) // 2, 0))
             tile.save(os.path.join(cells, f'{h}-{sh}.png'))
     for ci, name in enumerate(('priest-hood', 'archer-cap', 'knight-helm')):
         for si, sh in enumerate(shapes):
             tile = Image.new('RGBA', (cell, cell), (98, 150, 72, 255))
-            tile.alpha_composite(ims[len(hats) * 6 + ci * 6 + si].resize((16 * scale, 18 * scale), Image.NEAREST), ((cell - 16 * scale) // 2, 0))
+            tile.alpha_composite(ims[len(hats) * 6 + ci * 6 + si].resize((20 * scale, 20 * scale), Image.NEAREST), ((cell - 20 * scale) // 2, 0))
             tile.save(os.path.join(cells, f'{name}-{sh}.png'))
     for name in ('priest hood', 'archer cap', 'knight helm'):
         d.text((10, y + cell // 2 - 10), name, fill=(255, 255, 255, 255), font_size=16)
         for s in range(6):
-            out.alpha_composite(ims[k].resize((16 * scale, 18 * scale), Image.NEAREST), (lab_w + s * cell, y))
+            out.alpha_composite(ims[k].resize((20 * scale, 20 * scale), Image.NEAREST), (lab_w + s * cell, y))
             k += 1
         y += cell
     d.text((10, y + 4), 'Idle, glide, mirrored (left) idle, glide', fill=(255, 255, 255, 255), font_size=16)
     y += 28
     for s in range(6):
         for j in range(4):
-            out.alpha_composite(ims[k].resize((16 * scale, 18 * scale), Image.NEAREST), (10 + (s % 3) * 4 * cell + j * cell, y + (s // 3) * cell))
+            out.alpha_composite(ims[k].resize((20 * scale, 20 * scale), Image.NEAREST), (10 + (s % 3) * 4 * cell + j * cell, y + (s // 3) * cell))
             k += 1
     y += 2 * cell + 10
     x = 10
     for path in ('Actor/Character/Boy/SpriteSheet.png', 'Actor/Monster/Slime/Slime.png', 'Actor/Monster/Skull/SpriteSheet.png', 'Actor/Monster/Mushroom/mushroom.png'):
         t = Image.open(os.path.join(NA, path)).convert('RGBA').crop((0, 0, 16, 16))
-        out.alpha_composite(t.resize((16 * scale, 16 * scale), Image.NEAREST), (x, y + 2 * scale))
+        out.alpha_composite(t.resize((16 * scale, 16 * scale), Image.NEAREST), (x + 2 * scale, y + 4 * scale))
         x += cell
     y += cell + 10
     out.crop((0, 0, w, y)).save(OUT)
