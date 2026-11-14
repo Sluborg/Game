@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { KEYS } from './i18n';
 import {
-  bossHp, CLASS_HEARTS, SKILLS, skillIcon, dungeonChoice, LOOT_SECONDS, skillOf, ENEMY_R, WEAPON_STATS as WS, TOUCH_DMG as TD,
+  bossHp, CLASS_HEARTS, CLASSES, ITEMS, SKILLS, WEAPONS, skillIcon, dungeonChoice, LOOT_SECONDS, skillOf, ENEMY_R, WEAPON_STATS as WS, TOUCH_DMG as TD,
   DONE_SECONDS, DT, dsnap, dview, ENEMY_HP, FLOORS, GH, GW, inSwing, isWall, KO_SECONDS, LEVEL_XP, makeFloor, newRun, SLAM_DMG, START_HEARTS,
   stepDungeon, TOUCH_DMG, WEAPON_STATS, type DFx, type DState,
 } from './dungeon';
@@ -274,6 +275,15 @@ describe('dungeon v1', () => {
       run1(d, [a]);
       expect(d.heroes.a.hearts, `contact goo ${kind} gap ${gap}`).toBe(hurts ? CLASS_HEARTS.healer - TD : CLASS_HEARTS.healer);
     }
+  });
+
+  it('i18n: every class, weapon, special, skill and item has a dg.* key in sv and en', () => {
+    const keys = new Set<string>(KEYS);
+    const camel = (id: string) => id.replace(/-(\w)/g, (_, c: string) => c.toUpperCase());
+    for (const c of CLASSES) { expect(keys.has(`dg.class.${c}`)).toBe(true); expect(keys.has(`dg.classHint.${c}`)).toBe(true); }
+    for (const w of WEAPONS) { expect(keys.has(`dg.weapon.${w}`), w).toBe(true); expect(keys.has(`dg.special.${w}`), w).toBe(true); }
+    for (const k of SKILLS) expect(keys.has(`dg.skill.${camel(k.id)}`), k.id).toBe(true);
+    for (const i of ITEMS) expect(keys.has(`dg.item.${i.id}`), i.id).toBe(true);
   });
 
   it('boss HP grows with the team', () => {
