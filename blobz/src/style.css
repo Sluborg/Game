@@ -82,7 +82,6 @@ input {
 }
 input::placeholder { color: #c9b9a2; }
 input:focus { outline: none; box-shadow: var(--o4), inset 0 4px 0 0 #e9dfc9, 0 0 0 8px #3fa9f566; }
-.codebox { font-size: 48px; font-weight: 700; letter-spacing: 16px; text-transform: uppercase; padding: 8px 0 8px 16px; }
 
 /* ---------- home ---------- */
 .logo { margin: 0; display: flex; justify-content: center; align-items: flex-end; }
@@ -125,8 +124,6 @@ input:focus { outline: none; box-shadow: var(--o4), inset 0 4px 0 0 #e9dfc9, 0 0
 .opt.swatch-opt i { display: block; width: 100%; height: 100%; box-shadow: inset 0 -5px 0 0 #0003, inset 0 4px 0 0 #fff5; }
 
 /* ---------- lobby ---------- */
-.code { display: flex; justify-content: center; margin: 4px 0; }
-.code canvas { background: var(--blue); padding: 8px 12px 12px; box-shadow: var(--o4), inset 0 -5px 0 0 var(--blue-lo), inset 0 4px 0 0 var(--blue-hi); }
 #lobby-list { list-style: none; padding: 0; margin: 4px; display: flex; flex-direction: column; gap: 10px; }
 #lobby-list li { display: flex; align-items: center; gap: 12px; padding: 4px 12px; background: #fff; font-size: 22px; box-shadow: var(--o3), inset 0 -3px 0 0 #efe4cd; }
 #lobby-list .blob { width: 36px; height: 48px; }
@@ -143,20 +140,12 @@ input:focus { outline: none; box-shadow: var(--o4), inset 0 4px 0 0 #e9dfc9, 0 0
 
 /* ---------- HUD ---------- */
 #hud { position: fixed; inset: 0; z-index: 5; pointer-events: none; }
-.hudbox, #hud-score, #hud-time, #hud-code {
+.hudbox, #hud-score, #hud-time {
   position: absolute; top: max(14px, env(safe-area-inset-top)); background: var(--cream); font-weight: 700;
   box-shadow: var(--o4), inset 0 -4px 0 0 var(--cream-2), 0 6px 0 0 #3f263140;
 }
 #hud-score { left: 50%; transform: translateX(-50%); padding: 2px 16px 12px; text-align: center; min-width: 170px; }
-#score { font-size: 30px; line-height: 1.1; }
-#starbar { position: relative; height: 10px; margin: 6px 4px 2px; background: #e3d5b6; box-shadow: var(--o3); }
-#starfill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--yellow); box-shadow: inset 0 3px 0 0 var(--yellow-hi); transition: width 0.3s; }
-#starbar i { position: absolute; top: -13px; transform: translateX(-50%); filter: brightness(0) opacity(0.3); }
-#starbar i canvas { width: 30px; height: 30px; display: block; }
-#starbar i.on { filter: drop-shadow(0 2px 0 var(--plum)); }
 #hud-time { right: 14px; padding: 6px 12px 9px; font-size: 22px; }
-#hud-code { left: 14px; padding: 6px 10px 9px; font-size: 16px; }
-#hud-code:empty { display: none; }
 #hud-time.low { color: #e63946; }
 #stick { position: absolute; width: 120px; height: 120px; border-radius: 50%; background: #ffffff2e; border: 4px solid #ffffff80; display: none; transform: translate(-50%, -50%); }
 #knob { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px; border-radius: 50%; background: #fffd; box-shadow: 0 4px 0 #3f263155; }
@@ -205,17 +194,17 @@ input:focus { outline: none; box-shadow: var(--o4), inset 0 4px 0 0 #e9dfc9, 0 0
 /* ---------- UI kit skin (art/ui/*.png, ChatGPT order 10, snapped to its pixel grid) ----------
    9-slice via border-image: corners keep their pixels, edges/centre stretch. 1 art pixel = 4 CSS px
    (3 for small controls). Falls back to the outline recipe above if an image is missing. */
-.card, .hudbox, #hud-score, #hud-time, #hud-code, button.big, .chip, .edit, input, .tab, .opt, .me, #lobby-list li, .code canvas, #dash {
+.card, .hudbox, #hud-score, #hud-time, button.big, .chip, .edit, input, .tab, .opt, .me, #lobby-list li, #dash {
   border-style: solid; border-color: var(--plum); image-rendering: pixelated;
 }
-.card, #hud-score, #hud-time, #hud-code {
+.card, #hud-score, #hud-time {
   box-shadow: none; background: none; border-width: 16px;
   border-image: url('/art/ui/panel.png') 4 fill / 16px stretch;
   filter: drop-shadow(0 8px 0 #3f263140);
 }
 .card { padding: 4px 2px; margin: 0; }
 #hud-score { padding: 0 6px 2px; }
-#hud-time, #hud-code { padding: 0 2px; border-width: 12px; border-image-width: 12px; }
+#hud-time { padding: 0 2px; border-width: 12px; border-image-width: 12px; }
 button.big {
   box-shadow: none; background: none; margin: 0; border-width: 16px; padding: 0 6px 4px; min-height: 64px;
   border-image: url('/art/ui/btn-orange.png') 4 fill / 16px stretch;
@@ -249,7 +238,6 @@ input:focus { box-shadow: none; filter: drop-shadow(0 0 0 #3fa9f5) drop-shadow(0
 .opt.swatch-opt { padding: 0; }
 .me { margin: 0; width: 100%; padding: 0 6px 2px 2px; border-width: 12px; border-image-width: 12px; }
 #lobby-list li { padding: 0 6px; }
-.code canvas { box-shadow: none; background: none; padding: 0 4px 4px; border-width: 12px; border-image: url('/art/ui/btn-blue.png') 4 fill / 12px stretch; }
 #dash {
   box-shadow: none; background: none; border-width: 16px;
   border-image: url('/art/ui/btn-orange.png') 4 fill / 16px stretch;
@@ -265,15 +253,10 @@ input:focus { box-shadow: none; filter: drop-shadow(0 0 0 #3fa9f5) drop-shadow(0
 button .icon { height: 28px; margin-right: 10px; vertical-align: -6px; filter: drop-shadow(0 2px 0 #3f263160); }
 .chip .icon { height: 20px; margin-right: 6px; vertical-align: -4px; }
 button.link .icon { height: 18px; margin-right: 6px; vertical-align: -3px; }
-.scorerow { display: inline-flex; align-items: center; gap: 8px; }
-.scorerow .icon { height: 26px; }
 #hud-time { display: flex; align-items: center; gap: 6px; }
 #hud-time .icon { height: 24px; }
 #dash .icon { height: 46px; margin: 0; filter: none; }
 #hint .icon { height: 18px; vertical-align: -3px; }
-#starbar i .icon { height: 28px; display: block; }
-#starbar i { filter: grayscale(1) brightness(0.55) opacity(0.6); }
-#starbar i.on { filter: drop-shadow(0 2px 0 var(--plum)); }
 .stars .icon { height: 64px; }
 .stars .icon.off { filter: none; opacity: 0.9; }
 
@@ -333,10 +316,6 @@ button.link .icon { height: 18px; margin-right: 6px; vertical-align: -3px; }
 }
 .backbtn .icon { height: 30px; margin: 0; filter: drop-shadow(0 2px 0 #3f263160); }
 .backbtn:active { transform: translateY(2px); }
-.coderow { display: flex; align-items: center; justify-content: center; gap: 10px; }
-.codelbl { font-weight: 700; font-size: 18px; color: var(--muted); }
-.coderow .code { margin: 0; }
-.coderow .code canvas { border-width: 9px; border-image-width: 9px; padding: 0 2px 2px; }
 @media (orientation: landscape) and (max-height: 520px) {
   #lobby-list { gap: 6px; }
   #lobby-list li { font-size: 17px; border-width: 7px; border-image-width: 7px; }
@@ -348,28 +327,14 @@ button.link .icon { height: 18px; margin-right: 6px; vertical-align: -3px; }
 
 /* ---------- HUD v019: no overlap on narrow phones, bigger readable numbers ---------- */
 #hud-score { left: max(12px, env(safe-area-inset-left)); transform: none; min-width: 0; width: 176px; padding: 0 8px 4px; }
-#score { font-size: 34px; font-weight: 700; color: var(--plum); letter-spacing: 1px; }
-.scorerow .icon { height: 30px; }
-#starbar { height: 12px; margin: 10px 6px 4px; }
-#starbar i { filter: none; top: -15px; }
-#starbar i .icon { height: 26px; }
-#starbar i.on { filter: drop-shadow(0 2px 0 var(--plum)); }
 #hud-time { right: max(12px, env(safe-area-inset-right)); font-size: 30px; padding: 0 6px 2px; }
 #hud-time .icon { height: 28px; }
-#hud-code { left: auto; right: max(12px, env(safe-area-inset-right)); top: calc(max(14px, env(safe-area-inset-top)) + 70px); font-size: 17px; padding: 0 4px; }
 #hud-time.low { color: #d62839; }
 #dash .icon { height: 44px; }
 #hint { left: max(12px, env(safe-area-inset-left)); right: 124px; width: auto; transform: none; }
 
 /* ---------- gem row (v020b): three slots beside the score, thin progress bar below ---------- */
 #hud-score { width: auto; min-width: 150px; }
-.scorerow { display: inline-flex; vertical-align: middle; }
-#gems { display: inline-flex; gap: 4px; vertical-align: middle; margin-left: 10px; }
-#gems i { display: block; }
-#gems .icon { height: 22px; width: auto; display: block; image-rendering: pixelated; }
-#gems i.on .icon { animation: pop 0.45s ease-out both; filter: drop-shadow(0 2px 0 #3f263155); }
-#starbar { height: 8px; margin: 6px 2px 2px; }
-#starbar i { display: none; }
 
 /* ---------- Joina: rooms on this Wi-Fi ---------- */
 .lanlist { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
@@ -415,3 +380,55 @@ button.link .icon { height: 18px; margin-right: 6px; vertical-align: -3px; }
   #hud-bank { top: auto; bottom: max(130px, env(safe-area-inset-bottom)); }
   #hud-double { top: auto; bottom: max(192px, env(safe-area-inset-bottom)); }
 }
+
+/* ---------- gathering HUD (batch A): quest card left, day bar right, bank under it ---------- */
+#hud-score, #hud-time { display: none; }
+#hud-quest {
+  position: absolute; top: max(10px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left));
+  width: 190px; padding: 0 2px 2px; image-rendering: pixelated;
+  border-style: solid; border-width: 15px; border-image: url('/art/gather/quest-card.png') 5 fill / 15px stretch;
+  filter: drop-shadow(0 6px 0 #3f263140);
+}
+.qtitle { margin: -11px 0 4px; font-size: 15px; font-weight: 700; color: #fff; text-shadow: 0 2px 0 #b5531c; text-align: center; white-space: nowrap; }
+.qrow { display: flex; align-items: center; gap: 5px; height: 26px; }
+.qicon { width: 30px; height: 21px; object-fit: contain; image-rendering: pixelated; flex: none; }
+.qbar, .dbar { position: relative; flex: 1; height: 18px; border-style: solid; border-width: 0 6px; border-image: url('/art/gather/daybar-frame.png') 0 3 fill / 0 6px stretch; image-rendering: pixelated; }
+.qbar { border-image: url('/art/gather/daybar-frame.png') 3 fill / 6px stretch; border-width: 6px; height: 20px; }
+.qfill, .dfill { position: absolute; inset: 0; background: url('/art/gather/bar-fill-green.png') left / 100% 100% no-repeat; image-rendering: pixelated; clip-path: inset(0 100% 0 0); transition: clip-path 0.3s; }
+.dfill { background-image: url('/art/gather/daybar-fill.png'); transition: none; }
+.qnum { width: 44px; font-size: 17px; font-weight: 700; color: var(--plum); text-align: right; flex: none; }
+.qstar { width: 24px; height: 24px; image-rendering: pixelated; flex: none; }
+.qrow.done .qstar { animation: pop 0.45s ease-out both; }
+.qrow.done .qnum { color: #2f8a2f; }
+#hud-day {
+  position: absolute; top: max(16px, env(safe-area-inset-top)); right: max(14px, env(safe-area-inset-right));
+  width: 150px; height: 46px; display: flex; align-items: center;
+}
+#hud-day .dbar { flex: 1; height: 24px; border-width: 9px; border-image: url('/art/gather/daybar-frame.png') 3 fill / 9px stretch; filter: drop-shadow(0 4px 0 #3f263140); }
+#hud-day .sun { position: absolute; top: -2px; width: 42px; height: 42px; margin-left: -21px; image-rendering: pixelated; filter: drop-shadow(0 3px 0 #3f263160); }
+#hud-day.dusk .sun { filter: drop-shadow(0 0 6px #ff7a2f) drop-shadow(0 3px 0 #3f263160); }
+#hud-bank { top: calc(max(14px, env(safe-area-inset-top)) + 54px); font-size: 22px; gap: 4px; }
+#hud-bank img { height: 21px; width: auto; image-rendering: pixelated; }
+#hud-bank span { margin-right: 6px; min-width: 14px; }
+#hud-double { top: calc(max(14px, env(safe-area-inset-top)) + 116px); }
+#dash.tool .icon { height: 52px; }
+.endrows { display: flex; flex-direction: column; gap: 6px; margin: 0 auto; width: 240px; }
+.endrows .qrow { height: 32px; }
+.endrows .qnum { font-size: 20px; width: 56px; }
+.stars .star { width: 64px; height: 64px; image-rendering: pixelated; }
+.stars .star.on { animation: pop 0.5s ease-out both; }
+.stars .star.on:nth-child(2) { animation-delay: 0.25s; }
+.stars .star.on:nth-child(3) { animation-delay: 0.5s; }
+@media (orientation: landscape) and (max-height: 520px) {
+  #hud-quest { width: 176px; }
+  .qrow { height: 22px; }
+  .qbar { height: 16px; }
+  #hud-bank { top: calc(max(14px, env(safe-area-inset-top)) + 54px); bottom: auto; }
+  #hud-double { top: calc(max(14px, env(safe-area-inset-top)) + 112px); bottom: auto; }
+  .endrows .qrow { height: 26px; }
+}
+/* portrait phones: compact bank so it fits right of the quest card */
+#hud-bank { font-size: 19px; gap: 3px; padding: 0 2px; border-width: 10px; border-image-width: 10px; }
+#hud-bank img { height: 17px; }
+#hud-bank span { margin-right: 3px; }
+#hud-day { width: 140px; }

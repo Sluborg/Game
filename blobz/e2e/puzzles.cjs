@@ -40,12 +40,12 @@ const shots = process.argv[3] || '';
     if (shots) await ada.screenshot({ path: `${shots}/m30-gate-open-portrait.png` });
     if (shots) await bo.screenshot({ path: `${shots}/m30-gate-open-landscape.png` });
 
-    // Bo glides into the pen to the chest: +25 for the team, once
-    const before = (await view(bo)).score;
+    // Bo glides into the pen to the chest: +3 of each resource, once
     await place(host, 2, l.chest.x, l.chest.y);
     await bo.waitForFunction(() => window.__blobzView.puzzles[0].taken, null, { timeout: 5000 });
-    const sc = (await view(bo)).score;
-    ok(sc - before >= 25, `chest gives the team +25 (${before} -> ${sc})`);
+    await bo.waitForFunction(() => window.__blobzView.bank.wood >= 3, null, { timeout: 5000 });
+    const b = (await view(bo)).bank;
+    ok(b.wood >= 3 && b.stone >= 3 && b.berry >= 3, `chest gives the team +3 of each (${JSON.stringify(b)})`);
     await bo.waitForTimeout(250);
     if (shots) await bo.screenshot({ path: `${shots}/m30-chest-landscape.png` });
 

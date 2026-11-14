@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  BASE, CHEST_POINTS, createState, makePuzzles, makeTrees, puzzleNeeds, snapshot, step, viewFromSnapshot,
+  BASE, CHEST_BUNDLE, createState, makePuzzles, makeTrees, puzzleNeeds, snapshot, step, viewFromSnapshot,
   WORLD_H, WORLD_W, type Input, type State,
 } from './sim';
 
@@ -57,7 +57,7 @@ describe('co-op puzzles', () => {
     expect(s.puzzles[1].open).toBe(true);
   });
 
-  it('closed gate blocks the way in; open gate lets a blob reach the chest for +25 once', () => {
+  it('closed gate blocks the way in; open gate lets a blob reach the chest for a bundle once', () => {
     const s = createState(['a', 'b'].map(P), 11);
     const l = s.layout[0];
     clear(s);
@@ -69,13 +69,13 @@ describe('co-op puzzles', () => {
     for (let i = 0; i < 120; i++) step(s, push, 1 / 60);
     const a = s.players.find((p) => p.id === 'a')!;
     expect(l.gateDown ? a.y > l.gate.y0 : a.y < l.gate.y1).toBe(true); // still outside
-    expect(s.score).toBe(0);
+    expect(s.delivered.wood).toBe(0);
     s.puzzles[0].open = true;
     for (let i = 0; i < 180 && !s.puzzles[0].taken; i++) step(s, push, 1 / 60);
     expect(s.puzzles[0].taken).toBe(true);
-    expect(s.score).toBe(CHEST_POINTS);
+    expect(s.bank).toEqual({ wood: CHEST_BUNDLE, stone: CHEST_BUNDLE, berry: CHEST_BUNDLE });
     for (let i = 0; i < 30; i++) step(s, push, 1 / 60);
-    expect(s.score).toBe(CHEST_POINTS);
+    expect(s.delivered.wood).toBe(CHEST_BUNDLE);
   });
 
   it('puzzle state survives the network snapshot', () => {
@@ -85,10 +85,10 @@ describe('co-op puzzles', () => {
     expect(v.puzzles).toEqual(s.puzzles);
   });
 
-  it('items never spawn inside pens or on plates', () => {
+  it('gems and power-ups never spawn inside pens or on plates', () => {
     const s = createState(['a', 'b'].map(P), 5);
     for (let i = 0; i < 600; i++) step(s, idle, 1 / 10);
-    for (const it of s.items) for (const l of s.layout) {
+    for (const it of [...s.gems, ...s.powers]) for (const l of s.layout) {
       expect(it.x > l.zone.x0 && it.x < l.zone.x1 && it.y > l.zone.y0 && it.y < l.zone.y1).toBe(false);
     }
   });

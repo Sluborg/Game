@@ -9,7 +9,8 @@ import { ClientNet, HostNet, friendlyError, type ToClient } from './net';
 import { lanNamespace, Scanner, type FoundRoom } from './discovery';
 import { sfx, unlockAudio } from './sfx';
 import {
-  addPlayer, createState, MAX_PLAYERS, removePlayer, snapshot, starsFor, step, viewFromSnapshot, viewFromState,
+  addPlayer, createState, makeTrees, MAX_PLAYERS, nodeTool, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
+  toolNode, viewFromSnapshot, viewFromState,
 } from './sim';
 import type { FxEvent, Input, PlayerInfo, Snapshot, State, View } from './sim';
 
@@ -86,7 +87,6 @@ saveLook();
 // ---------- Kenney UI icons ----------
 /** ChatGPT order 20 icon (public/art/icons/NAME.png), crisp at any size. */
 const icon = (name: string, cls = '') => { const i = new Image(); i.src = `art/icons/${name}.png`; i.alt = ''; i.className = 'icon ' + cls; i.draggable = false; return i; };
-const GEM = (on = true) => icon(on ? 'gem' : 'gem-empty');
 document.querySelectorAll<HTMLElement>('[data-icon]').forEach((el) => el.replaceWith(icon(el.dataset.icon!)));
 function renderIcons() {
   const logo = $('logo');
@@ -95,7 +95,6 @@ function renderIcons() {
   img.src = 'art/logo.png'; img.alt = 'Blobz'; img.className = 'logo-img';
   img.onerror = () => logo.replaceChildren(pixelText('BLOBZ', 4));
   logo.replaceChildren(img);
-  ['s1', 's2', 's3'].forEach((c) => document.querySelector('#gems .' + c)!.replaceChildren(GEM(false)));
 }
 
 // ---------- menu panels: home -> (customize | join) ----------
@@ -229,37 +228,57 @@ function fmtTime(t: number) {
   return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
 }
 
-function onView(v: View) {
-  if (DEBUG) (window as unknown as { __blobzView: View }).__blobzView = v;
-  $('score').textContent = String(v.score);
-  const max = v.stars[2];
-  $('starfill').style.width = Math.min(100, (v.score / max) * 100) + '%';
-  const st = starsFor(v.score, v.stars);
-  ['s1', 's2', 's3'].forEach((c, i) => {
-    const el = document.querySelector<HTMLElement>('#gems .' + c)!;
-    const on = st > i;
-    if (el.classList.contains('on') !== on || !el.dataset.init) {
-      el.dataset.init = '1';
-      el.classList.toggle('on', on);
-      el.replaceChildren(GEM(on)); // filled diamond when reached, outline before
+/** Fill the 3 quest rows (icon, bar, n/target, star) inside `root`. */
+function renderQuestRows(root: ParentNode, v: View) {
+  root.querySelectorAll<HTMLElement>('.qrow').forEach((row) => {
+    const k = row.dataset.k as keyof View['delivered'];
+    const got = v.delivered[k], need = Math.max(1, v.quest[k]);
+    const done = got >= need;
+    row.querySelector<HTMLElement>('.qfill')!.style.clipPath = `inset(0 ${100 - Math.min(100, (got / need) * 100)}% 0 0)`;
+    const txt = `${Math.min(got, need)}/${need}`;
+    const num = row.querySelector('.qnum')!;
+    if (num.textContent !== txt) num.textContent = txt;
+    if (row.classList.contains('done') !== done) {
+      row.classList.toggle('done', done);
+      row.querySelector<HTMLImageElement>('.qstar')!.src = `art/gather/star${done ? '' : '-empty'}.png`;
     }
   });
+}
+const QUEST_ROWS = () => $('hud-quest').innerHTML.split('<div class="qrow"').slice(1).map((r) => '<div class="qrow"' + r).join('');
+let treesFor = { seed: -1, trees: [] as ReturnType<typeof makeTrees> };
+
+function onView(v: View) {
+  if (DEBUG) (window as unknown as { __blobzView: View }).__blobzView = v;
+  renderQuestRows($('hud-quest'), v);
+  const st = starsFor(v.delivered, v.quest);
   if (st > lastStars) { sfx.star(); lastStars = st; }
-  $('time').textContent = fmtTime(v.time);
-  $('hud-time').classList.toggle('low', v.time < 20);
-  const bank = String(v.bank ?? 0);
-  if ($('bank').textContent !== bank) {
-    $('bank').textContent = bank;
-    $('hud-bank').classList.remove('pop'); void $('hud-bank').offsetWidth; $('hud-bank').classList.add('pop');
+  // day bar: the sun rides left -> right; dusk in the last 20 s
+  const day = Math.max(0, Math.min(1, 1 - v.time / ROUND_SECONDS));
+  document.querySelector<HTMLElement>('#hud-day .dfill')!.style.clipPath = `inset(0 ${100 - day * 100}% 0 0)`;
+  document.querySelector<HTMLElement>('#hud-day .sun')!.style.left = `calc(9px + (100% - 18px) * ${day.toFixed(4)})`;
+  $('hud-day').classList.toggle('dusk', v.time < 20);
+  let changed = false;
+  for (const k of RES) {
+    const t = String(v.bank[k]);
+    if ($('bank-' + k).textContent !== t) { $('bank-' + k).textContent = t; changed = true; }
   }
+  if (changed) { $('hud-bank').classList.remove('pop'); void $('hud-bank').offsetWidth; $('hud-bank').classList.add('pop'); }
   show('hud-double', (v.doubleT ?? 0) > 0);
   if (v.doubleT > 0) $('double-t').textContent = fmtTime(v.doubleT);
   const me = v.players.find((p) => p.id === session?.myId);
+  // action button: the tool of the nearest node in reach, else dash
+  if (session && treesFor.seed !== session.seed) treesFor = { seed: session.seed, trees: makeTrees(session.seed) };
+  const node = me ? toolNode(treesFor.trees, (i) => v.nodes[i] ?? 0, me.x, me.y) : -1;
+  controls.setTool(node >= 0 ? nodeTool(treesFor.trees[node].kind) : null);
   controls.setCooldown(!!me && me.dashCd > 0);
   if (v.phase === 'end' && !endShown) {
     endShown = true;
-    $('end-stars').replaceChildren(...[0, 1, 2].map((i) => { const g = GEM(i < st); g.classList.add(i < st ? 'on' : 'off'); return g; }));
-    $('end-score').textContent = `Lagets poäng: ${v.score}`;
+    $('end-stars').replaceChildren(...[0, 1, 2].map((i) => {
+      const img = new Image(); img.src = `art/gather/star${i < st ? '' : '-empty'}.png`; img.alt = ''; img.className = 'star' + (i < st ? ' on' : '');
+      return img;
+    }));
+    $('end-rows').innerHTML = QUEST_ROWS();
+    renderQuestRows($('end-rows'), v);
     show('btn-again', isHost); show('end-wait', !isHost);
     show('end');
     if (st) sfx.star();

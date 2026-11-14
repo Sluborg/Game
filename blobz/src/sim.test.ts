@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BASE, createState, starThresholds, step, type Input } from './sim';
+import { BASE, createState, questTargets, step, type Input } from './sim';
 
 const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 });
 
@@ -16,14 +16,15 @@ describe('sim', () => {
     expect(Math.abs(s.players[0].vx)).toBeLessThan(10);
   });
 
-  it('carried items score when the blob reaches the base', () => {
+  it('carried items fill the team bank and the quest when the blob reaches the base', () => {
     const s = createState([P('a')], 2);
     s.items = [];
     const p = s.players[0];
-    p.carry = ['coin', 'wood'];
+    p.carry = ['stone', 'wood', 'wood'];
     p.x = BASE.x; p.y = BASE.y;
     step(s, new Map(), 1 / 60);
-    expect(s.score).toBe(4);
+    expect(s.bank).toEqual({ wood: 2, stone: 1, berry: 0 });
+    expect(s.delivered).toEqual({ wood: 2, stone: 1, berry: 0 });
     expect(p.carry).toHaveLength(0);
   });
 
@@ -47,7 +48,9 @@ describe('sim', () => {
     expect(s.phase).toBe('end');
   });
 
-  it('star thresholds grow with team size', () => {
-    expect(starThresholds(5)[2]).toBeGreaterThan(starThresholds(1)[2]);
+  it('quest targets grow with team size', () => {
+    expect(questTargets(2)).toEqual({ wood: 10, stone: 6, berry: 5 });
+    expect(questTargets(1)).toEqual(questTargets(2));
+    expect(questTargets(5).wood).toBeGreaterThan(questTargets(1).wood);
   });
 });
