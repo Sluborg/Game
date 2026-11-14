@@ -75,7 +75,8 @@ export class DungeonScene extends Phaser.Scene {
     for (const n of [...GOO, 'goo-splat']) img('dg-' + n, `art/enemies/${n}.png`);
     for (const n of ['coin-pile-s', 'coin-pile-m']) img('dg-' + n, `art/fx/${n}.png`);
     for (const w of ['sword', 'hammer', 'spear'] as Weapon[]) sheet('dg-weapon-' + w, `art/dungeon/weapon-${w}.png`, WEAPON_FRAME[w]!.w, WEAPON_FRAME[w]!.h);
-    for (const w of ['staff', 'bow', 'shield'] as Weapon[]) sheet('dg-weapon-' + w, `art/dungeon/gear-${w}.png`, 44, 48); // Art's class gear strips
+    // Art's class gear strips; the Bågskytt carries a crossbow (weapon id stays 'bow': loaded, aim, shot, reload)
+    for (const w of ['staff', 'bow', 'shield'] as Weapon[]) sheet('dg-weapon-' + w, `art/dungeon/gear-${w === 'bow' ? 'crossbow' : w}.png`, 44, 48);
     sheet('dg-ko-stars', 'art/dungeon/ko-stars.png', 20, 9);
     sheet('dg-revive', 'art/dungeon/revive.png', 16, 20);
     sheet('dg-shockwave', 'art/dungeon/shockwave.png', 48, 24);

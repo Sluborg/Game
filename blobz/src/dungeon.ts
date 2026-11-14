@@ -21,7 +21,7 @@ export type Weapon = 'sword' | 'hammer' | 'spear' | 'staff' | 'bow' | 'shield';
 export const WEAPONS: Weapon[] = ['sword', 'hammer', 'spear', 'staff', 'bow', 'shield'];
 export const CLASS_WEAPONS: Record<HeroClass, Weapon[]> = { krigare: ['sword', 'hammer', 'spear'], prast: ['staff'], bagskytt: ['bow'], riddare: ['shield'] };
 export const classOf = (w: Weapon): HeroClass => CLASSES.find((c) => CLASS_WEAPONS[c].includes(w)) ?? 'krigare';
-export const WEAPON_NAMES: Record<Weapon, string> = { sword: 'Svärd', hammer: 'Hammare', spear: 'Spjut', staff: 'Stav', bow: 'Båge', shield: 'Sköld' };
+export const WEAPON_NAMES: Record<Weapon, string> = { sword: 'Svärd', hammer: 'Hammare', spear: 'Spjut', staff: 'Stav', bow: 'Armborst', shield: 'Sköld' }; // 'bow' = the crossbow (id kept for the snapshot)
 /** Auto-attack: reach (px from the blob centre to the goo's edge), half-arc (radians, PI = all around),
  *  damage, seconds between attacks, knockback; ranged = an arrow at the nearest goo in sight. */
 export const WEAPON_STATS: Record<Weapon, { reach: number; arc: number; dmg: number; cd: number; kb: number; ranged?: boolean }> = {
