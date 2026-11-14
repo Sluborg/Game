@@ -165,3 +165,6 @@
 ## 2026-11-14 - v023: milestone 30 co-op puzzles (Code batch merged)
 - Two fenced pens per map (seeded corners, gate facing the base). Pressure plates 2 and 3 (capped by player count), all held at once opens the gate (stays open); bonus chest +25 once. "n/need" bubbles, plate/plate-down and gate/gate-open art. Host-authoritative, snapshot field `z`.
 - Lead review: 25 tests, build, e2e puzzles.cjs + lan-join.cjs ALL PASSED, screenshots checked (portrait + landscape).
+
+## 2026-11-14 - v023b: art cleanup (Art batch merged)
+- `scripts/clean_art.py`: hard alpha + merged generation-noise colors on all sliced ChatGPT sprites (props, icons, enemies, totems); before/after in `docs/art-review/clean-before-after.png`. Review notes for Code in `docs/ART_REVIEW.md` (unify prop scales, integer scales, rock vs boulder, wire fx).
