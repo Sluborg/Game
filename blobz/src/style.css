@@ -15,7 +15,7 @@
   --o4: 0 -4px 0 0 var(--plum), 0 4px 0 0 var(--plum), -4px 0 0 0 var(--plum), 4px 0 0 0 var(--plum);
   --o3: 0 -3px 0 0 var(--plum), 0 3px 0 0 var(--plum), -3px 0 0 0 var(--plum), 3px 0 0 0 var(--plum);
   --drop: 0 10px 0 0 #3f263140;
-  --font: 'Nunito', 'Trebuchet MS', system-ui, sans-serif;
+  --font: 'Fredoka', 'Trebuchet MS', system-ui, sans-serif;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body {
@@ -675,3 +675,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 @keyframes miko { 50% { background-position: -40px 0; } }
 .mi-mark { align-self: center; height: 28px; image-rendering: pixelated; }
 .mi-mark.x { font-size: 34px; line-height: 1; color: #d2342c; text-align: center; font-weight: 900; }
+body { font-weight: 500; } /* Fredoka (Stefan's pick on the board) */
+/* (e) end screen title is a picture (setting sun + stars); the words stay for screen readers only */
+.sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+#end .endsun { width: 84px; margin: 0 auto 2px; }
