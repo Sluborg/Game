@@ -2,7 +2,7 @@
 // is underground; the meadow scene keeps ticking the session (sim / network) and hides its camera.
 // Also draws the dungeon entrance on the meadow (dungeonFrame is the one hook GameScene calls).
 import Phaser from 'phaser';
-import { blobCanvas, BODY_CY, clampLook, FACE_DIRS, faceIndex } from './blob';
+import { blobCanvas, BLOB_FRAMES, BODY_CY, clampLook, facingFromVelocity, type Facing } from './blob';
 import { DT, ENEMY_R, GOO_ART, GOO_SCALE, WEAPON_STATS, FLOORS, GH, GW, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
 /** Weapons without Art's strip yet: a Kenney Tiny Dungeon tile in hand (bow: drawn in code). */
 const WEAPON_TILE: Partial<Record<Weapon, number>> = { staff: 130, shield: 102, dagger: 103 }; // dagger tile: blade up
@@ -11,7 +11,11 @@ import { sfx } from './sfx';
 import { t, tItem, tSkill } from './dungeonText';
 import { entranceOf, ENTRANCE_R, DUNGEON_ENABLED, type View } from './sim';
 
-const BLOB_SCALE = 1.45; // same as the meadow (game.ts)
+const BLOB_SCALE = 3; // blobz v2: 16x18 grid at the Ninja world scale, same as the meadow (game.ts)
+const FACE_DEAD = 40; // px/s, same as the meadow: slower = idle frame, facing kept
+const WEAPON_SCALE = 1.45; // Art's weapon strips keep their size; only the blob grew to the Ninja scale
+// held-weapon anchors in screen px from the body centre (body edge 22 px out, a little low)
+const EDGE_X = 22, EDGE_Y = 13, DROP = 3, HAND_X = 21, HAND_Y = 3;
 const FONT = "'Fredoka', sans-serif"; // same as the meadow
 const DEBUG = new URLSearchParams(location.search).has('debug');
 const HITBOX = new URLSearchParams(location.search).has('hitbox'); // ?hitbox draws the sim's circles
@@ -33,6 +37,7 @@ const TP = 32; // baked px per tile
 
 interface HeroGfx {
   id: string;
+  facing: Facing; // blobz v2: mirrored (flipX) when facing left
   shadow: Phaser.GameObjects.Ellipse;
   body: Phaser.GameObjects.Image;
   label: Phaser.GameObjects.Text;
@@ -285,15 +290,15 @@ export class DungeonScene extends Phaser.Scene {
       const look = clampLook(info);
       const ch = h ? CLASS_HAT[h.cls] : undefined; // Prästluva / Fjädermössa / Riddarhjälm replace the skin hat underground
       const base = `blob-${look.color}-${look.shape}-${look.eyes}-${look.mouth}-${look.hat}` + (ch !== undefined ? `-c${ch}` : '');
-      // Art's face direction: 9 pre-baked looks per blob + class hat; eyes follow the glide, or the target
-      // while it stands still and attacks; centre when knocked out
-      if (!this.textures.exists(base + '-f0')) FACE_DIRS.forEach((fd, i) => this.textures.addCanvas(`${base}-f${i}`, blobCanvas(look, 1, ch, fd))!.setFilter(Phaser.Textures.FilterMode.NEAREST));
+      // blobz v2: one 3/4 view, frame 0 idle / 1 glide, mirrored when facing left; the class hat is baked in
+      if (!this.textures.exists(base + '-0')) for (let fr = 0; fr < BLOB_FRAMES; fr++) this.textures.addCanvas(`${base}-${fr}`, blobCanvas(look, 1, ch, undefined, fr))!.setFilter(Phaser.Textures.FilterMode.NEAREST);
       const prev = this.heroes.get(p.id);
-      let fi = faceIndex(p.vx, p.vy, 30);
-      if (fi === 0 && prev && prev.swingT > 0) fi = faceIndex(Math.cos(prev.swingA), Math.sin(prev.swingA), 0.1);
-      if ((h?.ko ?? 0) > 0) fi = 0;
-      const texKey = `${base}-f${fi}`;
-      if (DEBUG) ((window as unknown as { __dgFace?: Record<string, number> }).__dgFace ??= {})[p.id] = fi;
+      const ko0 = (h?.ko ?? 0) > 0;
+      const frame = !ko0 && Math.hypot(p.vx, p.vy) >= FACE_DEAD ? 1 : 0;
+      // facing: the glide direction; while attacking it turns to the target
+      const facing: Facing = prev && prev.swingT > 0 ? (Math.cos(prev.swingA) < 0 ? 'left' : 'right') : facingFromVelocity(p.vx, p.vy, FACE_DEAD, prev?.facing ?? 'right');
+      const texKey = `${base}-${frame}`;
+      if (DEBUG) ((window as unknown as { __dgFace?: Record<string, { facing: Facing; frame: number }> }).__dgFace ??= {})[p.id] = { facing, frame };
       let b = this.heroes.get(p.id);
       const w = h?.weapon ?? 'sword';
       if (!b) {
@@ -304,12 +309,14 @@ export class DungeonScene extends Phaser.Scene {
           weapon: this.add.sprite(p.x, p.y, WEAPON_FRAME[w] ? 'dg-weapon-' + w : 'dg-bow-ph', 0),
           stars: this.add.sprite(p.x, p.y, 'dg-ko-stars', 0).setScale(1).setVisible(false),
           me: this.add.triangle(p.x, p.y, 0, 0, 12, 0, 6, 8, 0xffffff, 0.9).setVisible(p.id === this.s.myId),
-          texKey, x: p.x, y: p.y, vx: 0, vy: 0, id: p.id, swingT: 0, swingDur: 0.3, swingA: 0, swings: 0, spin: 0,
+          texKey, x: p.x, y: p.y, vx: 0, vy: 0, id: p.id, facing, swingT: 0, swingDur: 0.3, swingA: 0, swings: 0, spin: 0,
         };
         b.stars.play('dg-ko');
         this.heroes.set(p.id, b);
       }
       if (b.texKey !== texKey) { b.body.setTexture(texKey); b.texKey = texKey; }
+      b.facing = facing;
+      b.body.setFlipX(facing === 'left');
       if (smooth) { b.x += (p.x + p.vx * 0.06 - b.x) * k; b.y += (p.y + p.vy * 0.06 - b.y) * k; } else { b.x = p.x; b.y = p.y; }
       b.vx = p.vx; b.vy = p.vy;
       const ko = (h?.ko ?? 0) > 0;
@@ -322,9 +329,9 @@ export class DungeonScene extends Phaser.Scene {
         .setTint(ko ? 0x888888 : 0xffffff)
         .setAlpha(h?.dodge ? 0.45 : h?.inv && !ko ? (Math.floor(now / 90) % 2 ? 0.4 : 1) : 1);
       b.label.setPosition(b.x, b.y + 24).setDepth(b.y + 2);
-      b.me.setPosition(b.x, b.y - 58).setDepth(b.y + 3);
+      b.me.setPosition(b.x, b.y - 50).setDepth(b.y + 3);
       if (h && !ko && p.id !== this.s.myId) {
-        const w = 36, x = b.x - w / 2, y = b.y - 52, fr = Math.max(0, Math.min(1, h.hp / Math.max(1, h.maxHp)));
+        const w = 36, x = b.x - w / 2, y = b.y - 46, fr = Math.max(0, Math.min(1, h.hp / Math.max(1, h.maxHp)));
         this.ringG.fillStyle(0x1b1018, 0.9).fillRect(x - 1, y - 1, w + 2, 6).fillStyle(fr <= 0.3 ? 0xff3b3b : 0x6cc644, 1).fillRect(x, y, w * fr, 4);
       }
       if (h && !ko && h.wallT > 0) {
@@ -335,12 +342,12 @@ export class DungeonScene extends Phaser.Scene {
         b.dome.setPosition(b.x, b.y + 16).setScale(Math.max(1, Math.round((r * 2) / 96))).setDepth(b.y + 6).setAlpha(h.wallT < 0.6 ? h.wallT / 0.6 : 1);
       } else if (b.dome) { b.dome.destroy(); b.dome = undefined; }
       if (h && !ko && h.shield > 0) this.ringG.lineStyle(3, 0x8fd3ff, 0.9).strokeCircle(b.x, b.y - 6, 28);
-      b.stars.setVisible(ko).setPosition(b.x, b.y - 30).setDepth(b.y + 4);
+      b.stars.setVisible(ko).setPosition(b.x, b.y - 28).setDepth(b.y + 4);
       this.drawWeapon(b, w, h?.face ?? 0, ko, dt);
       // picking level-up cards: frozen and safe (a soft bubble so friends see why it stands still)
       if (h && !ko && h.offer.length) this.ringG.fillStyle(0xfff7e6, 0.25).fillCircle(b.x, b.y - 6, 30).lineStyle(3, 0xffe08a, 0.9).strokeCircle(b.x, b.y - 6, 30);
       if (b.fx) {
-        const sc = BLOB_SCALE, cy = b.body.y - BODY_CY * 48 * sc + 31 * sc; // body centre on the blob grid
+        const cy = b.body.y; // the body's origin is its centre
         if (b.fx.kind === 'spin') b.fx.spr.setPosition(b.x, cy).setDepth(b.y + 5);
         else b.fx.spr.setPosition(b.x - Math.cos(b.fx.a) * 12, cy - Math.sin(b.fx.a) * 12).setDepth(b.y - 1);
       }
@@ -390,9 +397,9 @@ export class DungeonScene extends Phaser.Scene {
     b.swingT = Math.max(0, b.swingT - dt);
     b.spin = Math.max(0, b.spin - dt);
     const left = Math.cos(face) < -0.2;
-    const sc = BLOB_SCALE;
-    const gx = b.body.x - 18 * sc, gy = b.body.y - BODY_CY * 48 * sc;
-    const hx = gx + (left ? 2 : 33) * sc, hy = gy + 33 * sc;
+    const sc = WEAPON_SCALE;
+    const cx = b.body.x, cy = b.body.y; // the body's origin (BODY_CY) is its centre
+    const hx = cx + (left ? -HAND_X : HAND_X), hy = cy + HAND_Y;
     if (!fr) {
       // placeholder until Art's strip: a Kenney tile (blade up) held at the body edge, pointed at the target and
       // jabbing forward on each attack; the dagger gets its twin in the other hand
@@ -405,14 +412,13 @@ export class DungeonScene extends Phaser.Scene {
       if (ko) { b.weapon.setVisible(false); return; }
       const swinging = b.swingT > 0;
       const A = swinging ? b.swingA : face;
-      const cx = b.body.x, cy = gy + 31 * sc;
       const jab = swinging ? Math.sin((1 - b.swingT / b.swingDur) * Math.PI) * 8 : 0;
-      const px = cx + Math.cos(A) * (15 * sc + jab), py = cy + Math.sin(A) * (9 * sc + jab) + 2 * sc;
+      const px = cx + Math.cos(A) * (EDGE_X + jab), py = cy + Math.sin(A) * (EDGE_Y + jab) + DROP;
       b.weapon.setVisible(true).setScale(2).setFlipX(false).setOrigin(0.5, 0.8).setPosition(px, py)
         .setDepth(b.body.depth + (Math.sin(A) < -0.35 ? -1 : 1)).setRotation(A + Math.PI / 2);
       if (twin && b.weapon2) {
         const B = A + (Math.cos(A) < 0 ? -0.9 : 0.9); // the off-hand dagger, a little to the side
-        b.weapon2.setPosition(cx + Math.cos(B) * 13 * sc, cy + Math.sin(B) * 8 * sc + 2 * sc).setRotation(B + Math.PI / 2).setDepth(b.body.depth + (Math.sin(B) < -0.35 ? -1 : 1));
+        b.weapon2.setPosition(cx + Math.cos(B) * (EDGE_X - 3), cy + Math.sin(B) * (EDGE_Y - 1) + DROP).setRotation(B + Math.PI / 2).setDepth(b.body.depth + (Math.sin(B) < -0.35 ? -1 : 1));
       }
       if (DEBUG) ((window as unknown as { __dgWeapon?: Record<string, unknown> }).__dgWeapon ??= {})[b.id] = { a: Math.atan2(Math.sin(A), Math.cos(A)), swing: swinging, n: b.swings, x: px, y: py, bx: cx, by: cy, w };
       return;
@@ -428,9 +434,8 @@ export class DungeonScene extends Phaser.Scene {
     const aims = w === 'spear' || w === 'bow'; // always pointed: spear tip and crossbow follow the aim
     const side = swinging || aims || w === 'shield';
     const L = Math.cos(A) < 0;
-    const cx = b.body.x, cy = gy + 31 * sc; // body centre on the blob grid
-    const px = side ? cx + Math.cos(A) * 15 * sc : hx; // body edge toward the target, else the hand
-    const py = side ? cy + Math.sin(A) * 9 * sc + 2 * sc : hy;
+    const px = side ? cx + Math.cos(A) * EDGE_X : hx; // body edge toward the target, else the hand
+    const py = side ? cy + Math.sin(A) * EDGE_Y + DROP : hy;
     const frame = swinging ? Math.min(3, Math.floor((1 - b.swingT / b.swingDur) * 4)) : 0;
     const rot = (side && w !== 'shield' ? (L ? A - Math.PI : A) : 0) + (b.spin > 0 ? (1 - b.spin / 0.35) * Math.PI * 2 * (L ? -1 : 1) : 0);
     b.weapon.setVisible(true).setFrame(frame).setScale(sc).setFlipX(side ? L : left)
