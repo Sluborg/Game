@@ -3,7 +3,7 @@
 // Also draws the dungeon entrance on the meadow (dungeonFrame is the one hook GameScene calls).
 import Phaser from 'phaser';
 import { blobCanvas, BODY_CY, clampLook } from './blob';
-import { DT, ENEMY_R, FLOORS, GH, GW, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
+import { DT, ENEMY_R, GOO_ART, GOO_SCALE, WEAPON_STATS, FLOORS, GH, GW, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
 /** Weapons without Art's strip yet: a Kenney Tiny Dungeon tile in hand (bow: drawn in code). */
 const WEAPON_TILE: Partial<Record<Weapon, number>> = { staff: 130, shield: 102, dagger: 103 }; // dagger tile: blade up
 import type { Session } from './game';
@@ -13,6 +13,7 @@ import { entranceOf, ENTRANCE_R, DUNGEON_ENABLED, type View } from './sim';
 const BLOB_SCALE = 1.45; // same as the meadow (game.ts)
 const FONT = "'Nunito', sans-serif"; // same as the meadow
 const DEBUG = new URLSearchParams(location.search).has('debug');
+const HITBOX = new URLSearchParams(location.search).has('hitbox'); // ?hitbox draws the sim's circles
 /** Weapon strips (art/dungeon/README.md): frame size + pivot. */
 const WEAPON_FRAME: Partial<Record<Weapon, { w: number; h: number; px: number; py: number }>> = {
   sword: { w: 44, h: 48, px: 16, py: 28 }, hammer: { w: 44, h: 48, px: 16, py: 28 }, spear: { w: 68, h: 48, px: 16, py: 28 },
@@ -21,7 +22,6 @@ const WEAPON_FRAME: Partial<Record<Weapon, { w: number; h: number; px: number; p
 /** Class hats in blob.ts CLASS_HATS (Krigare keeps the skin hat). */
 const CLASS_HAT: Partial<Record<HeroClass, number>> = { healer: 0, marksman: 1, tank: 2 }; // the rogue keeps the skin hat
 const GOO = ['goo-small', 'goo-medium', 'goo-boss'];
-const GOO_SCALE = [2, 2, 3];
 const WORLD = { w: GW * DT, h: GH * DT };
 // Kenney Tiny Dungeon frames (12 per row)
 const FLOOR_TILES = [48, 48, 48, 48, 49, 49, 42];
@@ -58,6 +58,7 @@ export class DungeonScene extends Phaser.Scene {
   private coins = new Map<number, Phaser.GameObjects.Image>();
   private ringG!: Phaser.GameObjects.Graphics;
   private auraG!: Phaser.GameObjects.Graphics;
+  private hitG!: Phaser.GameObjects.Graphics;
   private bubble!: Phaser.GameObjects.Text;
   private lastClock = 0;
   private camTarget = { x: 0, y: 0 };
@@ -122,6 +123,7 @@ export class DungeonScene extends Phaser.Scene {
       this.textures.addCanvas('dg-bow-ph', c)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
     this.auraG = this.add.graphics().setDepth(-300);
+    this.hitG = this.add.graphics().setDepth(9000);
     this.ringG = this.add.graphics().setDepth(4000);
     this.bubble = this.add.text(0, 0, '', { fontFamily: FONT, fontSize: '22px', color: '#3f2631', fontStyle: 'bold', backgroundColor: '#fff7e6', padding: { x: 8, y: 2 } })
       .setOrigin(0.5, 1).setDepth(6000).setVisible(false);
@@ -225,7 +227,7 @@ export class DungeonScene extends Phaser.Scene {
       seenE.add(e.id);
       let g = this.goo.get(e.id);
       if (!g) {
-        g = { img: this.add.image(e.x, e.y, 'dg-' + GOO[e.kind]).setScale(GOO_SCALE[e.kind]).setOrigin(0.5, 0.8), shadow: this.add.ellipse(e.x, e.y, ENEMY_R[e.kind] * 2, ENEMY_R[e.kind] * 0.7, 0x000000, 0.3), x: e.x, y: e.y, flash: 0, kind: e.kind };
+        g = { img: this.add.image(e.x, e.y, 'dg-' + GOO[e.kind]).setScale(GOO_SCALE[e.kind]).setOrigin(0.5, 0.5), shadow: this.add.ellipse(e.x, e.y, ENEMY_R[e.kind] * 2, ENEMY_R[e.kind] * 0.6, 0x000000, 0.3), x: e.x, y: e.y, flash: 0, kind: e.kind };
         if (e.kind === 2) { g.warn = this.add.image(0, 0, 'dg-slam-warning').setVisible(false); g.bar = this.add.graphics(); }
         this.goo.set(e.id, g);
       }
@@ -234,15 +236,16 @@ export class DungeonScene extends Phaser.Scene {
       const tex = 'dg-' + (g.flash > 0 ? 'flash-' : '') + GOO[e.kind];
       if (g.img.texture.key !== tex) g.img.setTexture(tex);
       const sq = 1 + Math.sin(now / 160 + e.id) * 0.06;
-      g.img.setPosition(g.x, g.y + ENEMY_R[e.kind] * 0.5).setScale(GOO_SCALE[e.kind] * sq, GOO_SCALE[e.kind] / sq).setDepth(g.y);
-      g.shadow.setPosition(g.x, g.y + ENEMY_R[e.kind] * 0.45).setDepth(g.y - 30);
+      // the sprite is centred on the hitbox (dungeon.ts ENEMY_R is the drawn size), squash from the centre
+      g.img.setPosition(g.x, g.y).setScale(GOO_SCALE[e.kind] * sq, GOO_SCALE[e.kind] / sq).setDepth(g.y);
+      g.shadow.setPosition(g.x, g.y + (GOO_ART[e.kind][1] * GOO_SCALE[e.kind]) / 2 - 2).setDepth(g.y - 30);
       if (g.warn) {
         g.warn.setVisible(!!e.slam);
         if (e.slam) g.warn.setPosition(e.slam.x, e.slam.y).setScale((SLAM_R * 2) / 48 * (1 + Math.max(0, e.slam.t) * 0.15)).setDepth(-500).setAlpha(0.55 + Math.sin(now / 60) * 0.35);
       }
       if (g.bar) {
         g.bar.clear().setDepth(5000);
-        const w = 80, x = g.x - w / 2, y = g.y - 74;
+        const w = 80, x = g.x - w / 2, y = g.y - ENEMY_R[e.kind] - 22;
         g.bar.fillStyle(0x3f2631, 1).fillRect(x - 3, y - 3, w + 6, 12).fillStyle(0xb3261e, 1).fillRect(x, y, w * Math.min(1, Math.max(0, e.hp) / Math.max(1, d.bossMax)), 6);
       }
     }
@@ -299,6 +302,8 @@ export class DungeonScene extends Phaser.Scene {
       if (h && !ko && h.shield > 0) this.ringG.lineStyle(3, 0x8fd3ff, 0.9).strokeCircle(b.x, b.y - 6, 28);
       b.stars.setVisible(ko).setPosition(b.x, b.y - 30).setDepth(b.y + 4);
       this.drawWeapon(b, w, h?.face ?? 0, ko, dt);
+      // picking level-up cards: frozen and safe (a soft bubble so friends see why it stands still)
+      if (h && !ko && h.offer.length) this.ringG.fillStyle(0xfff7e6, 0.25).fillCircle(b.x, b.y - 6, 30).lineStyle(3, 0xffe08a, 0.9).strokeCircle(b.x, b.y - 6, 30);
       if (b.fx) {
         const sc = BLOB_SCALE, cy = b.body.y - BODY_CY * 48 * sc + 31 * sc; // body centre on the blob grid
         if (b.fx.kind === 'spin') b.fx.spr.setPosition(b.x, cy).setDepth(b.y + 5);
@@ -324,6 +329,16 @@ export class DungeonScene extends Phaser.Scene {
       this.bubble.setText(`${on}/${alive.length}`).setPosition(s.at.x, s.at.y - STAIRS_R - 6).setVisible(true);
     }
 
+    // ---- ?hitbox: what the sim really uses (goo circles, blob circles, my weapon reach) ----
+    if (HITBOX) {
+      this.hitG.clear();
+      for (const e of d.enemies) this.hitG.lineStyle(2, 0xff3b3b, 1).strokeCircle(e.x, e.y, ENEMY_R[e.kind]);
+      for (const p of v.players) {
+        this.hitG.lineStyle(2, 0x39ff6a, 1).strokeCircle(p.x, p.y, 17);
+        const h = d.heroes[p.id];
+        if (h && p.id === this.s.myId) this.hitG.lineStyle(1, 0xffe08a, 0.8).strokeCircle(p.x, p.y, WEAPON_STATS[h.weapon].reach + heroMods(h).reach);
+      }
+    }
     // ---- fx ----
     for (const fx of this.s.drainFx()) this.playFx(fx as DFx);
 

@@ -94,7 +94,7 @@
 #dg-item { display: inline-flex; padding: 1px; background: #fff7e630; box-shadow: 0 0 0 2px #ffe08a; }
 #dg-item .dgicon { width: 24px; height: 24px; }
 
-/* level-up: 1 of 3 skill cards (the game keeps going; 10 s then the first card is taken) */
+/* level-up: 1 of 3 skill cards (no timer; my blob is frozen and safe until I pick) */
 #dg-cards, #dg-loot {
   position: absolute; left: 50%; transform: translateX(-50%); pointer-events: auto; z-index: 8;
   background: #fff7e6; box-shadow: var(--o3), 0 6px 0 0 #3f263140; padding: 8px 10px; font-family: var(--font); color: #3f2631; text-align: center;
@@ -133,3 +133,5 @@
 @media (orientation: landscape) and (max-height: 500px) {
   #dg-loot { bottom: auto; top: 8px; left: auto; right: 140px; transform: none; width: 300px; }
 }
+
+#dg-cards-safe { margin-top: 6px; font-size: 13px; font-weight: 700; color: #2f8a2f; }

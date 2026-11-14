@@ -82,17 +82,17 @@ All three are head-shaped hoods, so they fit every body shape. Krigare keeps the
 | `weapon-sword/hammer/spear.png` | see above | Krigare |
 
 **Class cards** (48x64, same parchment card as the weapon cards, ribbon in the class colour):
-`card-class-prast.png` (gold, staff), `card-class-bagskytt.png` (green, bow), `card-class-krigare.png` (red, sword),
-`card-class-riddare.png` (blue, shield).
+`card-class-healer.png` (red, staff), `card-class-marksman.png` (green, bow), `card-class-rogue.png` (yellow, sword),
+`card-class-tank.png` (blue, shield). Temporary code-drawn cards until ChatGPT order A-1.
 
 ## Skill icons (`skills/<class>-<id>.png`, 24x24)
 Round badge in the class colour with a cream symbol and plum outline; readable at 1x in a 48 px button.
 | Class | Ids |
 |---|---|
-| prast | heal, regen, bubble, revive, holy, cleanse |
-| bagskytt | multishot, pierce, crit, speed, poison, trap |
-| krigare | rage, knockback, whirlwind, extraheart, lifesteal, power |
-| riddare | block, taunt, armor, charge, stun, guard |
+| healer | heal, regen, bubble, revive, holy, cleanse |
+| marksman | multishot, pierce, crit, speed, poison, trap |
+| rogue | rage, knockback, whirlwind, extraheart, lifesteal, power |
+| tank | block, taunt, armor, charge, stun, guard |
 Ids were proposed to Code 2; if the dungeon code uses other names, Art renames the files.
 
 ## Class specials, loot and class fx
@@ -110,3 +110,9 @@ Ids were proposed to Code 2; if the dungeon code uses other names, Art renames t
 
 `icon-crossbow.png` (20x20, cream): crossbow icon for buttons, alternative to the bow.
 Class-card style variants for the board: `docs/art-review/class-cards-A.png` (blob in action) and `class-cards-B.png` (big symbol), made by `scripts/class_cards.py`; the chosen variant replaces `card-class-*.png`.
+
+## Rogue daggers
+`gear-daggers.png` (4 x 44x48, pivot (16, 28), two daggers, swings like the sword), `card-dagger.png` (48x64,
+temporary until ChatGPT A-6), `btn-special-dagger.png` (20x20 cream, crossed daggers).
+Class ids are now healer / rogue / tank / marksman (files renamed 2026-11-14); class colours: healer red, rogue
+yellow, tank blue, marksman green.

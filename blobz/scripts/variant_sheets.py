@@ -158,7 +158,7 @@ def goos():
 
 
 # ---------------------------------------------------------------- (c) skill icon style
-EXAMPLES = [('prast', 'heal'), ('bagskytt', 'crit'), ('riddare', 'block'), ('krigare', 'whirlwind')]
+EXAMPLES = [('healer', 'heal'), ('marksman', 'crit'), ('tank', 'block'), ('rogue', 'whirlwind')]
 
 
 def skill_tile(cls, name):
