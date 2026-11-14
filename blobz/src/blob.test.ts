@@ -117,7 +117,8 @@ describe('blob', () => {
         }
         let worst = 0;
         for (const [x, y] of low) if (headTop(x) < 23) worst = Math.max(worst, y - headTop(x) + 1);
-        expect(worst, `${HATS[h]} on ${SHAPES[s]}`).toBeLessThanOrEqual(HAT_REST_OVERLAP);
+        // wrapping hats (wreath, beanie) have their own, deeper bound
+        expect(worst, `${HATS[h]} on ${SHAPES[s]}`).toBeLessThanOrEqual(HAT_REST_OVERLAP + (PART_TABLES.hats[h].wrap ?? 0));
       }
     }
   });
