@@ -55,3 +55,8 @@
   orange/blue/yellow buttons with pressed states, tabs, inputs, option tiles, lobby rows, room code, dash
   button, thumbstick. Old outline recipe stays as fallback.
 - Verified: build, 390x844 + 844x390 screenshots, 3-player run with HUD/lobby/end screens.
+
+## 2026-11-14 - Readable faces
+- Eyes and mouths drawn in near-black #1b1018 (was plum, read as grey on darker bodies); every eye type
+  has white around the pupil, bigger mouths, "Pärlor" became "Runda". Brown/grey body colors lightened.
+  In-game blob scale 2.6 -> 2.9.

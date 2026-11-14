@@ -5,10 +5,10 @@ export interface BlobLook { color: number; shape: number; eyes: number; mouth: n
 
 export const COLORS = [
   0x5ec8ff, 0xff6b8b, 0x7ddc5a, 0xffc93c, 0xb18cff, 0xff9248,
-  0x4fe0c3, 0xf2f2f2, 0xe63946, 0x3d6bff, 0x8a5a3c, 0x555a66,
+  0x4fe0c3, 0xf2f2f2, 0xe63946, 0x3d6bff, 0xc08850, 0x9aa0b4,
 ];
 export const SHAPES = ['Kupol', 'Boll', 'Lång', 'Platt', 'Päron', 'Kub'];
-export const EYES = ['Glada', 'Pärlor', 'Stora', 'Nöjda', 'Sömniga', 'Coola'];
+export const EYES = ['Glada', 'Runda', 'Stora', 'Nöjda', 'Sömniga', 'Coola'];
 export const MOUTHS = ['Öppen', 'Leende', 'Tunga', 'Tänder', 'Oj', 'Lugn'];
 export const HATS = ['Ingen', 'Krona', 'Keps', 'Blomma', 'Partyhatt', 'Mössa', 'Rosett', 'Halmhatt'];
 
@@ -19,7 +19,7 @@ export const BODY_CY = 15.5 / GRID_H;
 
 const OUT = '#3f2631';
 const PAL: Record<string, string> = {
-  K: OUT, W: '#ffffff', R: '#e84a5f', Y: '#ffd23f', y: '#e0a81e', C: '#e63946', c: '#a4161a',
+  K: '#1b1018', W: '#ffffff', R: '#ff5a6e', Y: '#ffd23f', y: '#e0a81e', C: '#e63946', c: '#a4161a',
   G: '#5aa83a', P: '#b18cff', p: '#7d5fd6', B: '#3d6bff', b: '#2a4bb8', S: '#e9c46a', s: '#c99a3e', N: '#ff8fab',
 };
 
@@ -27,20 +27,20 @@ const PAL: Record<string, string> = {
 // A pattern with `wide` spans both eyes (x=3..14).
 const EYE_PIX: { rows: string[]; wide?: boolean; mirror?: boolean }[] = [
   { rows: ['WWW', 'WKK', 'WKK'] }, // happy (like the art)
-  { rows: ['.K.', '.K.'] }, // beady
-  { rows: ['WWW', 'WWK', 'WKK', 'WWW'], mirror: true }, // big
-  { rows: ['.K.', 'K.K'] }, // content ^^
-  { rows: ['KKK', 'WKK'] }, // sleepy
-  { rows: ['KKKKKKKKKKKK', '.KWKKK.KWKKK', '..KKK...KKK.'], wide: true }, // cool shades
+  { rows: ['WWW', 'WKW', 'WKW', 'WWW'] }, // round, centred pupil
+  { rows: ['WWWW', 'WWKK', 'WWKK', 'WWWW'], mirror: true }, // big
+  { rows: ['.KK.', 'K..K', 'K..K'] }, // content ^^ (thick arcs)
+  { rows: ['KKKK', 'WWKK', 'WWKK'] }, // sleepy
+  { rows: ['KKKKKKKKKKKK', 'KWWKKKKWWKKK', '.KKKK..KKKK.'], wide: true }, // cool shades
 ];
-// Mouth patterns, centered (even widths), top row y=17.
+// Mouth patterns, centered (even widths), top row y=17. Near-black outline + red/white inside.
 const MOUTH_PIX: string[][] = [
   ['KKKK', 'KRRK', '.KK.'], // open
-  ['K..K', '.KK.'], // smile
-  ['KKKK', '.RR.', '.RR.'], // tongue
+  ['K....K', '.KKKK.'], // smile
+  ['KKKK', 'KRRK', '.RR.'], // tongue
   ['KKKK', 'KWWK', '.KK.'], // teeth
-  ['KK', 'KK'], // oh
-  ['KKKK'], // calm
+  ['.KK.', 'KRRK', '.KK.'], // oh
+  ['.KKKK.'], // calm
 ];
 // Hats: x offset, bottom row lands on the top of the head (y=9).
 const HAT_PIX: { x: number; rows: string[] }[] = [

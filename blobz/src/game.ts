@@ -19,7 +19,7 @@ export interface Session {
 const T = 32; // rendered tile size (16px tiles at 2x)
 const ITEM_FRAME: Record<ItemKind, number> = { wood: 106, shroom: 29, coin: 93 };
 const TREE_FRAMES = [16, 28, 27];
-const BLOB_SCALE = 2.6; // 18x24 pixel blob grid
+const BLOB_SCALE = 2.9; // 18x24 pixel blob grid
 // decorations from Tiny Farm (sheet 'farm') and Tiny Town ('town')
 const DECOR: [string, number][] = [['farm', 39], ['farm', 83], ['farm', 78], ['town', 5], ['town', 2], ['farm', 39]];
 
