@@ -83,6 +83,76 @@ def snowy_round_tree():
     return im
 
 
+def snow_cap(path, cap_rows=0.62, depth=2):
+    """Any prop with a snow cap on its top edge (2-3 px under the outline)."""
+    im = Image.open(path).convert('RGBA')
+    w, h = im.size
+    px = im.load()
+    bottom = int(h * cap_rows)
+    for x in range(w):
+        y = 0
+        while y < bottom and (not px[x, y][3] or is_plum(px[x, y])):
+            y += 1
+        if y >= bottom:
+            continue
+        d = depth + (1 if (x % 4) in (1, 2) else 0)
+        for k in range(d):
+            if y + k < bottom and px[x, y + k][3] and not is_plum(px[x, y + k]):
+                px[x, y + k] = SNOW if k < d - 1 else SNOW_SHADE
+    return im
+
+
+def ice_rock():
+    """Mineable ice block: faceted blue crystal rock with glints, 16x14."""
+    w, h = 16, 14
+    mask = ellipse(8, 9, 7, 4.5) | {(x, y) for (x, y) in ellipse(8, 7, 5, 6) if y >= 2}
+    def col(x, y, m):
+        if (x - 1, y) not in m or (x, y - 1) not in m:
+            return ICE_HI
+        if (x + 1, y) not in m or (x, y + 1) not in m:
+            return ICE_LO
+        if x - y in (0, 1) and 4 <= x <= 9:
+            return ICE_HI  # facet glint
+        if x + y == 20:
+            return ICE_LO  # facet edge
+        return ICE
+    return trim(draw(mask, w, h, col))
+
+
+def frozen_pond_tiles():
+    """3x3 autotile sheet (48x48, 16 px tiles): corners, edges, centre of a frozen pond with a snowy rim.
+    Tile order (row-major): TL, T, TR, L, C, R, BL, B, BR. The centre tile repeats seamlessly."""
+    S = 48
+    im = Image.new('RGBA', (S, S), (0, 0, 0, 0))
+    px = im.load()
+    def inside(x, y):
+        # rounded square with 6 px corner radius
+        r = 6
+        cx = min(max(x + 0.5, r), S - r)
+        cy = min(max(y + 0.5, r), S - r)
+        return (x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2 <= r * r
+    for y in range(S):
+        for x in range(S):
+            if not inside(x, y):
+                continue
+            edge = not all(inside(x + dx, y + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+            d = min(x, y, S - 1 - x, S - 1 - y)
+            if edge:
+                c = PLUM
+            elif d <= 2 or not all(inside(x + dx, y + dy) for dx in (-3, 3) for dy in (-3, 3)):
+                c = SNOW if d <= 1 else SNOW_SHADE  # snowy rim
+            else:
+                lx, ly = x % 16, y % 16  # periodic so the centre tile tiles
+                if lx - ly in (2, 3) and 3 <= lx <= 9:
+                    c = ICE_HI
+                elif (lx + ly) % 16 == 13 and 8 <= lx <= 14:
+                    c = ICE_LO
+                else:
+                    c = ICE
+            px[x, y] = c
+    return im
+
+
 def ellipse(cx, cy, rx, ry):
     return {(x, y) for y in range(int(cy - ry) - 1, int(cy + ry) + 2) for x in range(int(cx - rx) - 1, int(cx + rx) + 2)
             if ((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2 <= 1}
@@ -164,6 +234,10 @@ def main():
         'rock-snow.png': ski_tiles(sheet, [81]),
         'ice.png': ice_patch(),
         'igloo.png': igloo(),
+        'bush-berries-snow.png': snow_cap(os.path.join(ROOT, 'public', 'art', 'gather', 'bush-berries.png'), 0.7, 2),
+        'bush-empty-snow.png': snow_cap(os.path.join(ROOT, 'public', 'art', 'gather', 'bush-empty.png'), 0.7, 2),
+        'ice-rock.png': ice_rock(),
+        'pond-frozen-tiles.png': frozen_pond_tiles(),
     }
     os.makedirs(OUT_DIR, exist_ok=True)
     for name, im in outputs.items():
