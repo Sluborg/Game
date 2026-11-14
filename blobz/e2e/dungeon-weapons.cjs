@@ -53,7 +53,7 @@ const angDiff = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)))
         const where = i ? 'joiner (landscape)' : 'host (portrait)';
         if (w === 'dagger') {
           const off2 = (angDiff(res.a2, want) * 180) / Math.PI, held2 = Math.hypot(res.x2 - res.bx, res.y2 - res.by);
-          ok(off <= 30 && off2 <= 30 && held >= 18 && held <= 56 && held2 >= 18 && held2 <= 56, `dagger on ${where}: two sai stab at the goo (${off.toFixed(0)} / ${off2.toFixed(0)} deg off, <= 30), hovering ${held.toFixed(0)} / ${held2.toFixed(0)} px, stab #${res.stab}`);
+          ok(off <= 30 && off2 <= 30 && held >= 18 && held <= 56 && held2 >= 18 && held2 <= 56, `dagger on ${where}: two daggers stab at the goo (${off.toFixed(0)} / ${off2.toFixed(0)} deg off, <= 30), hovering ${held.toFixed(0)} / ${held2.toFixed(0)} px, stab #${res.stab}`);
         } else {
           ok(off <= 30 && (!res.slash || blade <= 75) && held >= 18 && held <= 56, `${w} on ${where}: ${res.slash ? `slashes across the goo (aim ${off.toFixed(0)} deg off, blade ${blade.toFixed(0)} deg into its arc)` : `points ${off.toFixed(0)} deg off the goo`} (<= 30), hovering ${held.toFixed(0)} px from the body centre`);
         }

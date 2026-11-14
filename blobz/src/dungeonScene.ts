@@ -22,7 +22,13 @@ const LUNGE: Record<Weapon, number> = { sword: 4, hammer: 4, spear: 20, staff: 4
 // slashing weapons sweep in an arc around the blob across the aim line (deg); the hammer's arc speeds up into a slam
 // (the Riddare's id stays 'shield', but it slashes with a sword: the shield hovers on the other side as its guard)
 const SLASH: Partial<Record<Weapon, { sweep: number; slam?: boolean }>> = { sword: { sweep: 120 }, hammer: { sweep: 130, slam: true }, staff: { sweep: 100 }, shield: { sweep: 110 } };
-const DAGGER_SPREAD = 0.6, DAGGER_STAB = 13; // two Ninja sai, one each side of the aim; stabs alternate left / right
+const DAGGER_SPREAD = 0.6, DAGGER_STAB = 13;
+/** Art's hovering weapon sprites (art/dungeon/weapons/README.md): one art px = one blob px (drawn at BLOB_SCALE),
+ *  pointing right, pivot = grip (shield: centre). The crossbow keeps its old strip until its sprite arrives. */
+const WIMG: Record<string, { w: number; h: number; px: number; py: number }> = {
+  sword: { w: 27, h: 11, px: 2, py: 5 }, 'dagger-1': { w: 16, h: 6, px: 2, py: 2 }, 'dagger-2': { w: 16, h: 7, px: 2, py: 4 },
+  hammer: { w: 20, h: 13, px: 2, py: 6 }, staff: { w: 29, h: 9, px: 2, py: 4 }, shield: { w: 19, h: 19, px: 9, py: 9 }, spear: { w: 38, h: 8, px: 2, py: 4 },
+}; // two Ninja sai, one each side of the aim; stabs alternate left / right
 const FONT = "'Fredoka', sans-serif"; // same as the meadow
 const DEBUG = new URLSearchParams(location.search).has('debug');
 const HITBOX = new URLSearchParams(location.search).has('hitbox'); // ?hitbox draws the sim's circles
@@ -145,7 +151,7 @@ export class DungeonScene extends Phaser.Scene {
     img('dg-potion', 'art/fine/dungeon/potion.png');
     sheet('dg-sparkle', 'art/fine/fx/coin-sparkle.png', 22, 22); // own key: the meadow still uses the 11 px one
     sheet('dungeon', 'assets/kenney-tiny-dungeon/tilemap_packed.png', 16, 16);
-    img('na-sai', NA + 'Items/Weapons/Sai/Sprite.png'); // dagger (blade up, handle at the bottom)
+    for (const k of Object.keys(WIMG)) img('w-' + k, `art/dungeon/weapons/${k}.png`);
     for (const m of MON) sheet(m.key, NA + m.file, m.key === 'na-boss' ? 62 : 16, m.key === 'na-boss' ? 52 : 16);
     sheet('na-boss-jump', NA + 'Actor/Boss/GiantSlime/Jump.png', 62, 52);
     sheet('na-boss-hit', NA + 'Actor/Boss/GiantSlime/Hit.png', 62, 52);
@@ -497,11 +503,12 @@ export class DungeonScene extends Phaser.Scene {
       return;
     }
     // the Riddare slashes with a sword; its shield is a separate guard on the other side
-    const tex = w === 'dagger' ? 'na-sai' : w === 'shield' ? 'dg-weapon-sword' : 'dg-weapon-' + w;
+    const art = w === 'shield' ? 'sword' : w === 'dagger' ? 'dagger-1' : w; // the Riddare slashes with the sword
+    const tex = WIMG[art] ? 'w-' + art : 'dg-weapon-' + w;
     if (b.weapon.texture.key !== tex) b.weapon.setTexture(tex, 0);
     if (!b.wshadow) b.wshadow = this.add.ellipse(0, 0, 18, 6, 0x000000, 0.22);
     const two = w === 'dagger' || w === 'shield';
-    if (two && !b.weapon2) b.weapon2 = this.add.sprite(0, 0, 'na-sai');
+    if (two && !b.weapon2) b.weapon2 = this.add.sprite(0, 0, 'w-dagger-2');
     b.weapon2?.setVisible(two && !ko);
     if (ko) { b.weapon.setVisible(false); b.wshadow.setVisible(false); return; }
     // Hovers beside the blob (blobz have no hands): a few px beyond the body edge toward the target (or the way it
@@ -520,8 +527,13 @@ export class DungeonScene extends Phaser.Scene {
         const g = spot(aim + side * DAGGER_SPREAD * (1 - (out / DAGGER_STAB) * 0.6), 0);
         return { x: g.x + Math.cos(aim) * out, y: g.y + Math.sin(aim) * out * 0.7 + bob * (i ? -1 : 1), gy: g.y };
       });
-      [b.weapon, b.weapon2!].forEach((spr, i) => spr.setVisible(true).setFrame(0).setFlipX(false).setScale(2.4).setOrigin(0.5, 0.85)
-        .setPosition(pts[i].x, pts[i].y).setRotation(aim + Math.PI / 2).setDepth(b.body.depth + (Math.sin(aim) < -0.35 ? -1 : 1)));
+      const DL = Math.cos(aim) < 0;
+      if (b.weapon2!.texture.key !== 'w-dagger-2') b.weapon2!.setTexture('w-dagger-2');
+      [b.weapon, b.weapon2!].forEach((spr, i) => {
+        const im = WIMG[i ? 'dagger-2' : 'dagger-1'];
+        spr.setVisible(true).setFlipX(DL).setScale(BLOB_SCALE).setOrigin((DL ? im.w - im.px : im.px) / im.w, im.py / im.h)
+          .setPosition(pts[i].x, pts[i].y).setRotation(DL ? aim - Math.PI : aim).setDepth(b.body.depth + (Math.sin(aim) < -0.35 ? -1 : 1));
+      });
       b.wshadow.setVisible(true).setPosition(cx + Math.cos(aim) * (EDGE_X + HOVER + 6), Math.max(pts[0].gy, cy) + 22).setDepth(b.body.depth - 2).setScale(1.3, 1);
       const a = Math.atan2(Math.sin(aim), Math.cos(aim));
       dbg({ a, a2: a, slash: false, x: pts[0].x, y: pts[0].y, x2: pts[1].x, y2: pts[1].y, stab: stabber });
@@ -558,10 +570,12 @@ export class DungeonScene extends Phaser.Scene {
     const L = Math.cos(A) < 0;
     const g = spot(A, out);
     const px = g.x, py = g.y + bob;
-    const fw = w === 'shield' ? WEAPON_FRAME.sword! : WEAPON_FRAME[w]!;
-    const frame = swinging ? Math.min(3, Math.floor(prog * 4)) : 0;
+    const im = WIMG[art];
+    const fw = im ?? WEAPON_FRAME[w]!; // Art's sprite (one frame), else the old strip (crossbow)
+    const frame = !im && swinging ? Math.min(3, Math.floor(prog * 4)) : 0;
     const rot = (L ? A - Math.PI : A) + (b.spin > 0 ? (1 - b.spin / 0.35) * Math.PI * 2 * (L ? -1 : 1) : 0);
-    b.weapon.setVisible(true).setFrame(frame).setScale(sc).setFlipX(L)
+    if (!im) b.weapon.setFrame(frame);
+    b.weapon.setVisible(true).setScale(im ? BLOB_SCALE : sc).setFlipX(L)
       .setOrigin((L ? fw.w - fw.px : fw.px) / fw.w, fw.py / fw.h)
       .setPosition(px, py).setDepth(b.body.depth + (Math.sin(A) < -0.35 ? -1 : 1))
       .setRotation(rot);
@@ -569,12 +583,10 @@ export class DungeonScene extends Phaser.Scene {
     if (w === 'bow') b.tip = { x: px + Math.cos(A) * (fw.w - fw.px) * sc * 0.9, y: py + Math.sin(A) * (fw.w - fw.px) * sc * 0.9 };
     // the Riddare's shield: hovers on the far side from the sword; raised in front on a sidestep or the shield wall
     if (w === 'shield' && b.weapon2) {
-      if (b.weapon2.texture.key !== 'dg-weapon-shield') b.weapon2.setTexture('dg-weapon-shield', 0);
+      if (b.weapon2.texture.key !== 'w-shield') b.weapon2.setTexture('w-shield');
       const sa = guard ? aim : aim + (Math.cos(aim) < 0 ? 1 : -1) * 1.9;
       const sg = spot(sa, guard ? 6 : -4);
-      const sfr = WEAPON_FRAME.shield!;
-      b.weapon2.setVisible(true).setFrame(0).setFlipX(Math.cos(sa) < 0).setScale(sc * (guard ? 1.25 : 1)).setRotation(0)
-        .setOrigin((Math.cos(sa) < 0 ? sfr.w - sfr.px : sfr.px) / sfr.w, sfr.py / sfr.h)
+      b.weapon2.setVisible(true).setFlipX(Math.cos(sa) < 0).setScale(BLOB_SCALE * (guard ? 1.2 : 1)).setRotation(0).setOrigin(0.5, 0.5)
         .setPosition(sg.x, sg.y - bob).setDepth(b.body.depth + (guard || Math.sin(sa) > -0.35 ? 2 : -1));
     }
     // the shadow sits on the ground under the weapon's middle and stays still while the weapon bobs
