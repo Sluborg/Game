@@ -202,3 +202,6 @@
 ## 2026-11-14 - v028: smooth designer + visual polish (Code) + base art (Art)
 - Designer: bigger bouncing preview, swipe between tabs, remembers tab, scrolls selection into view, fixed 64 px tiles in landscape. Polish: integer scales for props, small rock collision 15, dust/coin-sparkle/plate-glow fx. Art: new cottage lv1-3 + 6 buildings + build spot in `public/art/base/` (wired by the base-building batch).
 - Lead review: version guard kept after merge, 43 tests, build, e2e lan-join/gather/totems/puzzles/designer ALL PASSED.
+
+## 2026-11-14 - v028b: loading screen (Lead)
+- Stefan art (order 80) as loading screen on app start and while a round loads (Phaser loader progress), logo + pixel bar, min 0.6 s so it never flashes. Landscape is a stopgap (portrait art on the right) until order 81 arrives. Board: picture options for graphic questions, followups.
