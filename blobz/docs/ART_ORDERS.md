@@ -43,7 +43,12 @@ ChatGPT works only on N-orders with status READY (N-2 is READY now). New orders 
 | N-1 | DONE (C chosen) | Title header / logo in Ninja Adventure style | `art/logo.png` |
 | N-2 | READY | Start screen background, round 3: LANDSCAPE 16:9 ONLY (portrait approved 4/5; make it even if you made a landscape before) | `art/title.png` |
 | N-3 | DONE | Loading screen (portrait + landscape approved) | `art/loading.png`, `art/loading-landscape.png` |
-| N-4 | DONE (round 2 received, awaiting rating) | Hovering weapons, round 2: crossbow with bolt further back | `dungeon/weapons/*.png` |
+| N-4 | CANCELLED (switched to Ninja's own 16 px weapons) | Hovering weapons, round 2: crossbow with bolt further back | `dungeon/weapons/*.png` |
+| N-5 | READY | Class cards: Healer, Rogue, Tank, Marksman (4 cards on one sheet) | `dungeon/card-class-*.png` |
+| N-6 | READY | End screen: blobz cheering by the cottage with their haul (portrait) | `art/victory.png` |
+| N-7 | READY | App icon (square) | app/PWA icon |
+| N-8 | READY | Map picker pictures: Meadow and Snow (2 small scenes) | `art/map-meadow.png`, `art/map-snow.png` |
+| N-9 | READY | Bärregn mini game background (sunset meadow, portrait) | `mini/bg.png` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
@@ -58,6 +63,48 @@ ChatGPT works only on N-orders with status READY (N-2 is READY now). New orders 
 | A-8 | CANCELLED (Ninja Adventure chosen) | Dungeon buttons, goo enemies, skill icons, back arrow | `dungeon/btn-*`, `enemies/*`, `dungeon/skills/*`, `icons/back.png` |
 | A-9 | CANCELLED (Ninja Adventure chosen) | Bärregn mini game: bomb, falling berries, basket, plop, fence | `mini/bomb.png`, `mini/berries.png`, `mini/basket.png`, `mini/plop.png`, `mini/fence-*.png` |
 | A-10 | CANCELLED (Ninja Adventure chosen) | Winter props in the same style as A-7 | `props-winter/*` |
+
+### N-5 Class cards (4)
+```
+One sheet, 4 cards side by side, each a square card with a small rounded frame, Ninja Adventure style (style block).
+Each card shows ONE blob hero, big and centred, with its class hat and its weapon FLOATING beside it (blobz have no hands):
+1 Healer: green blob, small white hood, floating wooden wand with a glowing blue gem, soft green sparkles.
+2 Rogue: purple blob, dark bandana, two small floating daggers (sai) crossed in front.
+3 Tank: orange blob, steel helmet with small horns, a floating short sword on one side and a round wood+steel shield on the other.
+4 Marksman: blue blob, green feathered cap, a small floating crossbow pointing right.
+Simple background per card: dungeon stone floor in soft dusk light. No text, no letters.
+```
+
+### N-6 End screen
+```
+Portrait 9:16, Ninja Adventure style (style block). Evening on the meadow outside the orange-roofed cottage
+(same village as the start screen: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n2-start-portrait.png).
+4-5 blobz cheering and jumping around three neat piles: logs of wood, grey stones and a basket of red berries.
+A few fireflies and confetti stars. NO coins, NO gems. Keep the top 35% calm (sky) for the score and stars. No text.
+```
+
+### N-7 App icon
+```
+Square 1:1, 512x512, Ninja Adventure style (style block). One happy blue blob, big and centred, peeking over the
+top of a small stone castle wall with a tiny orange flag (like the chosen logo:
+https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n1-logo-C.png).
+Warm sunny green background, thick dark outline, readable at 48 px. No text.
+```
+
+### N-8 Map picker pictures (2)
+```
+Two small square scenes side by side, Ninja Adventure style (style block), seen from above in 3/4 view:
+1 Meadow: green grass, a pond, a few trees, a tiny cottage, one blob gliding.
+2 Snow: snowy ground, frozen pond, snowy pine trees, a small igloo, one blob in a woolly hat sliding on the ice.
+Same framing and size for both, so they work as two buttons. No text.
+```
+
+### N-9 Bärregn mini game background
+```
+Portrait 9:16, Ninja Adventure style (style block). A meadow at sunset seen from the side-top: a low wooden fence
+along the bottom, a few berry bushes, warm orange-pink sky with soft clouds. The middle 70% must be calm and open
+(berries and bombs fall there and a blob catches them with a basket at the bottom). No blobz, no text.
+```
 
 ## Ninja style block (for N-orders)
 ```
