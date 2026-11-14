@@ -66,3 +66,20 @@ Replaces: `props/*.png`, `gather/bush-*.png`, `gather/rubble.png`, `icons/log.pn
 ## Keep code-drawn (simple shapes, no ChatGPT needed)
 Blob parts (eyes, mouths, hats, class hats), tools and weapons in hand, button icons, skill icons, HUD (hearts, bars,
 stars, quest card, sun), fx strips, frozen pond tiles, build-spot marker.
+
+## Class cards, round 2 (after Stefan's feedback on round 1, 2026-11-14)
+Paste in the same chat as round 1:
+```
+Redo the 4 class cards with these changes. Keep everything else from the last image: the same parchment card
+frame, cute round blobz with big white eyes and small smiles, crisp pixel art, 1px dark plum outline, no text.
+Cards in this order, evenly spaced, same size, transparent background (or solid magenta #ff00ff):
+1 HEALER: the same white blob in the white priest hood with the gold cross and the staff, but the card theme is
+  RED: a red ribbon at the bottom and ONE big red heart above the blob to show healing. No green, no plus signs.
+2 ROGUE (replaces the viking): a YELLOW blob wearing a black bandana tied on its head, holding a short dagger
+  in each hand, ready stance. Yellow ribbon.
+3 TANK: the blue blob with a steel knight helmet that sits centred and straight on its head (symmetrical, the
+  visor above the eyes so both eyes show), holding a plain round steel shield with rivets (grey metal, no cross,
+  no flag, no emblem). Blue ribbon.
+4 ARCHER: the same green blob with the green feathered cap, aiming the crossbow. Green ribbon.
+NO effects: no swing trails, no sparks or explosions, no flying arrows or bolts, no motion lines.
+```
