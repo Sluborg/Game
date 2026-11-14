@@ -699,3 +699,20 @@ body { font-weight: 500; } /* Fredoka (Stefan's pick on the board) */
   #lobby-list .blob { width: 32px; height: 36px; }
   .lanrow .blob { width: 32px; height: 36px; }
 }
+
+/* start screen in portrait (ChatGPT N-2, Stefan 4/5): the village at the bottom, the empty sky holds the card.
+   Landscape keeps title.png until the landscape version arrives. */
+@media (orientation: portrait) {
+  #menu.screen { background: #45b2fc url('/art/start-portrait.png') center bottom / cover no-repeat; }
+}
+/* portrait start: a compact card that stays in the sky so the village in the art shows below */
+@media (orientation: portrait) {
+  #menu .home { display: flex; flex-flow: row wrap; justify-content: center; align-items: center; row-gap: 8px; column-gap: 6px; padding-bottom: 6px; }
+  #menu .home > * { flex: 1 1 100%; }
+  #menu .home .logo-img { max-width: 220px; margin-top: -8px; }
+  #menu .home .me { padding-top: 0; padding-bottom: 0; }
+  #menu .home .me .blob { width: 48px; height: 54px; }
+  #menu .home .actions { gap: 8px; }
+  #menu .home .actions .msg { min-height: 0; }
+  #menu .home .version, #menu .home .langtog { flex: 0 0 auto; margin: 0; }
+}
