@@ -350,7 +350,9 @@ export function makeTrees(seed: number): Tree[] {
 // ---- biomes: the same loop on a green meadow or a snowy one with slippery frozen ponds ----
 export type Biome = 'meadow' | 'snow';
 export const BIOMES: Biome[] = ['meadow', 'snow'];
-export const cleanBiome = (b: unknown): Biome => (b === 'snow' ? 'snow' : 'meadow');
+/** Archived (Stefan 2026-11-14): the snow map code and art stay, but the game only offers the meadow. */
+export const SNOW_MAP_ENABLED = false;
+export const cleanBiome = (b: unknown): Biome => (SNOW_MAP_ENABLED && b === 'snow' ? 'snow' : 'meadow');
 export const ICE_RX = 64, ICE_RY = 34; // frozen pond ellipse (world px)
 const ICE_DRAG = 0.55; // on ice: long glide ...
 const ICE_GRIP = 0.4; // ... and little grip
