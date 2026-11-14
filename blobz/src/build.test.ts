@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   BASE, BUILD_COST, BUILD_KINDS, BUILD_RING, BUILD_SPOTS, BUILDING_ENABLED, cleanVillage, COTTAGE_COST, COTTAGE_PAD, createState,
-  DOUBLE_SECONDS, ENTRANCE, makePuzzles, makeTrees, makeWater, newVillage, NODE_HITS, puzzleCorners, questTargets, res,
+  DOUBLE_SECONDS, entranceOf, makePuzzles, makeTrees, makeWater, newVillage, NODE_HITS, puzzleCorners, questTargets, res,
   snapshot, step, TOTEM_PADS, viewFromSnapshot, villageOf,
   type BuildKind, type Input, type State,
 } from './sim';
@@ -16,7 +16,7 @@ const away = (s: State) => at(s, 0, 100, 480);
 
 describe.skipIf(!BUILDING_ENABLED)('base building', () => {
   it('six spots in a ring around the cottage, clear of totems, the cottage pad, the dungeon entrance and puzzles', () => {
-    const pads = [...TOTEM_PADS, COTTAGE_PAD, ENTRANCE];
+    const pads = [...TOTEM_PADS, COTTAGE_PAD, entranceOf(1), entranceOf(2), entranceOf(3)];
     for (const k of BUILD_KINDS) {
       const p = BUILD_SPOTS[k];
       const r = Math.hypot(p.x - BASE.x, p.y - BASE.y);

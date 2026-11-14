@@ -219,9 +219,20 @@ const GARDEN_EVERY = 12; // the garden grows a berry this often (max 3 waiting)
 
 // ---- test dungeon v1: everyone stands on the entrance, picks a weapon, goes down together ----
 /** Dungeon (handed off to Code 2, WIP): OFF = no entrance on the meadow, nothing of it shows. */
-export const DUNGEON_ENABLED = false;
-export const ENTRANCE = { x: BASE.x, y: BASE.y - 236 };
+export const DUNGEON_ENABLED = true;
 export const ENTRANCE_R = 46;
+/** Where the cave entrance goes on this map: the first of four spots around the base (west, east, south,
+ *  north) that is clear of the puzzle pens, the water corner, build spots and totem pads. Seeded, so every
+ *  phone puts it in the same place. */
+export function entranceOf(seed: number): { x: number; y: number } {
+  const zones = makePuzzles(seed).map((l) => l.zone);
+  if (BUILDING_ENABLED) { const w = makeWater(seed); zones.push(w.area, ...w.water); }
+  const spots = [[BASE.x - 330, BASE.y], [BASE.x + 330, BASE.y], [BASE.x, BASE.y + 330], [BASE.x, BASE.y - 300]].map(([x, y]) => ({ x, y }));
+  const clear = (p: { x: number; y: number }) => !zones.some((z) => inRect(z, p.x, p.y, ENTRANCE_R + 20))
+    && !(BUILDING_ENABLED && Object.values(BUILD_SPOTS).some((b) => Math.hypot(b.x - p.x, b.y - p.y) < 120))
+    && !TOTEM_PADS.some((t) => Math.hypot(t.x - p.x, t.y - p.y) < 100);
+  return spots.find(clear) ?? spots[0];
+}
 export const PICK_SECONDS = 20; // unpicked blobz get the sword after this
 export type Mode = 'meadow' | 'pick' | 'dungeon';
 export const MODES: Mode[] = ['meadow', 'pick', 'dungeon'];
@@ -262,6 +273,7 @@ export interface State {
   phase: 'play' | 'end';
   time: number; // seconds of daylight left
   seed: number;
+  entrance: { x: number; y: number }; // dungeon cave on the meadow (entranceOf(seed))
   mode: Mode;
   entry: number; // seconds every blob has stood on the dungeon entrance
   picks: Record<string, Weapon>; // weapon chosen per blob (pick screen)
@@ -293,7 +305,7 @@ export interface State {
 
 export { rng } from './rng';
 import { rng } from './rng';
-import { newRun, READY_SECONDS, stepDungeon, WEAPONS, type DFx, type DState, type Weapon } from './dungeon';
+import { dsnap, dview, newRun, READY_SECONDS, stepDungeon, WEAPONS, type DFx, type DSnap, type DState, type DView, type Weapon } from './dungeon';
 
 
 function nearBase(x: number, y: number, extra: number) {
@@ -320,6 +332,9 @@ export function makeTrees(seed: number): Tree[] {
     const kind = roll < 0.58 ? Math.floor(r() * 3) : roll < 0.7 ? 3 : roll < 0.8 ? 4 : 5;
     trees.push({ x, y, kind, cd: 0, left: 0, hits: 0, regrow: 0 });
   }
+  // [dungeon hook, Code 2] keep the cave entrance clear (filtered afterwards so the seeded layout stays the same)
+  const ent = entranceOf(seed);
+  if (DUNGEON_ENABLED) for (let i = trees.length - 1; i >= 0; i--) if (Math.hypot(trees[i].x - ent.x, trees[i].y - ent.y) < 80) trees.splice(i, 1);
   // every map gets ~8 berry bushes and enough stone: turn trees (from the end of the list) into them
   const count = (f: (k: number) => boolean) => trees.filter((t) => f(t.kind)).length;
   for (let i = trees.length - 1; i >= 0; i--) {
@@ -353,7 +368,7 @@ export function createState(infos: PlayerInfo[], seed: number, village: Village 
   const water = makeWater(seed);
   const s: State = {
     phase: 'play', time: ROUND_SECONDS,
-    seed, mode: 'meadow', entry: 0, picks: {}, pickT: 0, runs: 0, dg: null,
+    seed, entrance: entranceOf(seed), mode: 'meadow', entry: 0, picks: {}, pickT: 0, runs: 0, dg: null,
     bank: { ...vil.bank }, delivered: res(), quest: questTargets(infos.length, vil.cottage),
     builds: BUILD_KINDS.map((kind) => ({ kind, state: vil.builds[kind] ? 2 : 0, paid: res(), buy: 0, armed: true })),
     cottage: { level: vil.cottage, state: 0, paid: res(), buy: 0, armed: true }, water,
@@ -392,6 +407,7 @@ function freeSpot(s: State, minBase = 60): { x: number; y: number } {
     if (s.layout.some((l) => inRect(l.zone, x, y, 20))) continue;
     if (TOTEM_PADS.some((p) => Math.hypot(p.x - x, p.y - y) < PAD_R + 30)) continue;
     if ([...Object.values(BUILD_SPOTS), COTTAGE_PAD].some((p) => Math.hypot(p.x - x, p.y - y) < BUILD_R + 40)) continue;
+    if (DUNGEON_ENABLED && Math.hypot(s.entrance.x - x, s.entrance.y - y) < ENTRANCE_R + 40) continue; // [dungeon hook]
     if (BUILDING_ENABLED && [s.water.area, ...s.water.water].some((r) => inRect(r, x, y, 30))) continue;
     return { x, y };
   }
@@ -458,7 +474,7 @@ function enterDungeon(s: State) {
 function leaveDungeon(s: State) {
   const done = !!s.dg && s.dg.done !== 0;
   s.mode = 'meadow'; s.dg = null; s.entry = 0; s.picks = {};
-  s.players.forEach((p, i) => { p.x = ENTRANCE.x - 40 + i * 20; p.y = ENTRANCE.y + 70; p.vx = 0; p.vy = 0; });
+  s.players.forEach((p, i) => { p.x = s.entrance.x - 40 + i * 20; p.y = s.entrance.y + 70; p.vx = 0; p.vy = 0; });
   s.fx.push({ t: 'leave', done });
 }
 
@@ -528,7 +544,7 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
   }
 
   // --- dungeon entrance: everyone on it for 1.5 s ---
-  if (DUNGEON_ENABLED && s.players.length && s.players.every((p) => Math.hypot(p.x - ENTRANCE.x, p.y - ENTRANCE.y) < ENTRANCE_R)) {
+  if (DUNGEON_ENABLED && s.players.length && s.players.every((p) => Math.hypot(p.x - s.entrance.x, p.y - s.entrance.y) < ENTRANCE_R)) {
     s.entry += dt;
     if (s.entry >= READY_SECONDS) { s.entry = 0; s.mode = 'pick'; s.picks = {}; s.pickT = PICK_SECONDS; s.fx.push({ t: 'enter' }); return; }
   } else s.entry = 0;
@@ -850,39 +866,5 @@ export function viewFromSnapshot(n: Snapshot): View {
     dungeon: n.dg ? dview(n.dg) : null,
     builtNow: (n.bn ?? '').split(',').filter((k): k is BuildKind => (BUILD_KINDS as string[]).includes(k)),
     totems: TOTEM_KINDS.map((kind, i) => ({ kind, level: n.k?.[i]?.[0] ?? 0, buy: (n.k?.[i]?.[1] ?? 0) / 100 })), doubleT: n.d ?? 0,
-  };
-}
-
-// ---- dungeon snapshot / view ----
-export interface DSnap {
-  sd: number; f: number; g: number; xp: number; lv: number; k: number; rd: number; dn: number;
-  e: [number, number, number, number, number, number, number, number][]; // id, kind, x, y, hp, slam x, slam y, slam t (-1 none)
-  c: [number, number, number][]; // coin id, x, y
-  op: string; // opened chests '0101'
-  h: [string, number, number, number, number, number, number][]; // id, hearts, max, ko, weapon, facing (rad*100), swing (s*100)
-}
-export interface DView {
-  seed: number; floor: number; gold: number; xp: number; level: number; kills: number; ready: number; done: number;
-  enemies: { id: number; kind: 0 | 1 | 2; x: number; y: number; hp: number; slam: { x: number; y: number; t: number } | null }[];
-  coins: { id: number; x: number; y: number }[];
-  opened: boolean[];
-  heroes: Record<string, { hearts: number; maxHearts: number; ko: number; weapon: Weapon; face: number; swing: number }>;
-}
-function dsnap(d: DState, seed: number): DSnap {
-  return {
-    sd: seed, f: d.floor, g: d.gold, xp: d.xp, lv: d.level, k: d.kills, rd: Math.round((d.ready / READY_SECONDS) * 100), dn: r1(d.done),
-    e: d.enemies.map((e) => [e.id, e.kind, r1(e.x), r1(e.y), e.hp, e.slam ? r1(e.slam.x) : 0, e.slam ? r1(e.slam.y) : 0, e.slam ? r1(e.slam.t) : -1]),
-    c: d.coins.map((c) => [c.id, r1(c.x), r1(c.y)]),
-    op: d.opened.map((o) => (o ? '1' : '0')).join(''),
-    h: Object.entries(d.heroes).map(([id, h]) => [id, h.hearts, h.maxHearts, r1(h.ko), WEAPONS.indexOf(h.weapon), Math.round(Math.atan2(h.fy, h.fx) * 100), Math.round(h.swing * 100)]),
-  };
-}
-function dview(n: DSnap): DView {
-  return {
-    seed: n.sd, floor: n.f, gold: n.g, xp: n.xp, level: n.lv, kills: n.k, ready: n.rd / 100, done: n.dn,
-    enemies: n.e.map(([id, kind, x, y, hp, sx, sy, st]) => ({ id, kind: kind as 0 | 1 | 2, x, y, hp, slam: st >= 0 ? { x: sx, y: sy, t: st } : null })),
-    coins: n.c.map(([id, x, y]) => ({ id, x, y })),
-    opened: [...n.op].map((c) => c === '1'),
-    heroes: Object.fromEntries(n.h.map(([id, hearts, maxHearts, ko, w, face, swing]) => [id, { hearts, maxHearts, ko, weapon: WEAPONS[w] ?? 'sword', face: face / 100, swing: swing / 100 }])),
   };
 }
