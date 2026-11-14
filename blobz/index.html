@@ -73,14 +73,14 @@
 
     <!-- Lobby -->
     <section id="lobby" class="screen hidden">
-      <div class="card">
-        <p class="tag">Rumskod</p>
-        <div id="lobby-code" class="code" aria-live="polite">----</div>
-        <p class="tag small">Alla på samma Wi-Fi: öppna Blobz och skriv koden</p>
+      <div class="card lobbycard">
+        <button id="btn-leave" class="backbtn" aria-label="Tillbaka till menyn"><i data-icon="back"></i></button>
+        <h2>Lobby</h2>
         <ul id="lobby-list"></ul>
-        <button id="btn-start" class="big">Starta!</button>
+        <div class="coderow"><span class="codelbl">Kod</span><div id="lobby-code" class="code" aria-live="polite">----</div></div>
+        <p class="tag small">Kompisar på samma Wi-Fi trycker <b>Joina</b> och skriver koden</p>
+        <button id="btn-start" class="big">Starta</button>
         <p id="lobby-wait" class="msg">Väntar på att värden startar...</p>
-        <button id="btn-leave" class="link">Lämna</button>
       </div>
     </section>
 

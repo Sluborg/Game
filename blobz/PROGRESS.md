@@ -121,3 +121,8 @@
 ## 2026-11-14 - v018g: neutral selection marker
 - Designer selection no longer uses yellow (a pickable body color): white tile, thick plum frame, green check badge.
 - Star eyes get dark corners so they read on yellow blobz.
+
+## 2026-11-14 - v018i: lobby cleanup
+- "Starta" (no !), back arrow top-left replaces "Lämna", compact code chip with "Kod" label, player list first.
+- Landscape: compact rows so Starta stays on screen with 3+ players (checked in the 3-player run).
+- Proposed next (v019, awaiting go): code-free join list ("Joina Stefan") via public-IP-scoped PeerJS slots.

@@ -96,13 +96,13 @@ function renderIcons() {
   img.onerror = () => logo.replaceChildren(pixelText('BLOBZ', 4));
   logo.replaceChildren(img);
   ['s1', 's2', 's3'].forEach((c) => document.querySelector('#starbar .' + c)!.replaceChildren(GEM()));
-  if (roomCode) $('lobby-code').replaceChildren(pixelText(roomCode, 4, 0));
+  if (roomCode) $('lobby-code').replaceChildren(pixelText(roomCode, 2, 0));
 }
 function setRoomCode(code: string) {
   roomCode = code;
   $('lobby-code').dataset.code = code;
   $('lobby-code').setAttribute('aria-label', 'Rumskod ' + code.split('').join(' '));
-  $('lobby-code').replaceChildren(pixelText(code, 4, 0));
+  $('lobby-code').replaceChildren(pixelText(code, 2, 0));
 }
 
 // ---------- menu panels: home -> (customize | join) ----------
