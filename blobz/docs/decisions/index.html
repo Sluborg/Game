@@ -222,7 +222,19 @@ function renderQuestion(q) {
     a && a.at ? el('span', { text: 'Ditt svar: ' + fmt(a.at) }) : null));
   card.append(el('h2', { text: q.title }));
   if (q.body) card.append(el('p', { class: 'body', text: q.body }));
-  const options = Array.isArray(q.options) ? q.options : [];
+  if (q.rate) {
+    for (const src of (q.imgs || (q.img ? [q.img] : []))) card.append(el('img', { src, alt: q.title, style: 'width:100%;height:auto;image-rendering:pixelated;box-shadow:0 0 0 3px var(--plum)' }));
+    const RATE = [['1', '1 Dålig'], ['2', '2 Svag'], ['3', '3 Okej'], ['4', '4 Bra nog'], ['5', '5 Perfekt, mer av detta']];
+    const seg = el('div', { class: 'seg', role: 'radiogroup', 'aria-label': 'Betyg', style: 'flex-wrap:wrap' });
+    for (const [v, label] of RATE) {
+      const on = d.choice === v;
+      const b = el('button', { type: 'button', class: on ? 'on' : '', role: 'radio', 'aria-checked': String(on), text: label });
+      b.addEventListener('click', () => { d.choice = on ? null : v; renderQuestions(); });
+      seg.append(b);
+    }
+    card.append(el('div', { class: 'row' }, el('span', { class: 'lbl', text: 'Betyg' }), seg));
+  }
+  const options = (!q.rate && Array.isArray(q.options)) ? q.options : [];
   if (options.length) {
     const grid = el('div', { class: 'opts', role: 'radiogroup', 'aria-label': q.title });
     for (const o of options) {
@@ -236,15 +248,15 @@ function renderQuestion(q) {
     card.append(grid);
   }
   const taId = 'c-' + q.id;
-  const ta = el('textarea', { id: taId, placeholder: options.length ? 'Kommentar (valfritt)' : 'Ditt svar' });
+  const ta = el('textarea', { id: taId, placeholder: (options.length || q.rate) ? 'Kommentar (vad ska ändras?)' : 'Ditt svar' });
   ta.value = d.comment;
   ta.addEventListener('input', () => { d.comment = ta.value; });
-  card.append(el('label', { class: 'lbl', for: taId, text: options.length ? 'Kommentar' : 'Svar' }), ta);
+  card.append(el('label', { class: 'lbl', for: taId, text: (options.length || q.rate) ? 'Kommentar' : 'Svar' }), ta);
   const status = el('span', { class: 'status' });
   const send = el('button', { class: 'btn', type: 'button', text: a ? 'Uppdatera' : 'Skicka' });
   send.addEventListener('click', async () => {
     if (!needDb(status)) return;
-    if (!d.choice && !d.comment.trim()) { status.textContent = 'Välj ett alternativ eller skriv något först.'; status.className = 'status err'; return; }
+    if (!d.choice && !d.comment.trim()) { status.textContent = (q.rate ? 'Sätt ett betyg eller skriv något först.' : 'Välj ett alternativ eller skriv något först.'); status.className = 'status err'; return; }
     send.disabled = true; status.textContent = 'Sparar...'; status.className = 'status';
     try {
       await db.doc('answers/' + q.id).set({ choice: d.choice, comment: d.comment.trim(), at: new Date().toISOString() });

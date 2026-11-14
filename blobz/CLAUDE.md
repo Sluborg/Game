@@ -63,6 +63,9 @@ Stefan works phone-only; replies in Swedish or English, docs and code in English
   "✓ KLAR (vNNN)" / "◐ DELVIS" and a one-line outcome, and keep the Art tab (`art` collection) in sync with
   `docs/ART_ORDERS.md`; read `artctl/*` (Stefan's Kör/Pausa/Gör om) and `comments` with item `art-<id>` and apply them to
   ART_ORDERS.md.
+- **One thing at a time, rated (Stefan 2026-11-14):** every deliverable (art or feature) goes on the board as a rating
+  question (`rate: true`, `img`/`imgs`), Stefan rates 1-5 + comment. 4-5 = approved, 5 = "more of this". 1-3 = redo
+  with his comment. Only one step in flight per area; the next step starts after a 4-5.
 - Reporting to Stefan: only when a whole batch is merged and live (Art: a full part set; Code: a whole
   feature), or when a decision from him blocks work. No progress pings about single images or steps.
 
