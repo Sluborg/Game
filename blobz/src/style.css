@@ -432,3 +432,26 @@ button.link .icon { height: 18px; margin-right: 6px; vertical-align: -3px; }
 #hud-bank img { height: 17px; }
 #hud-bank span { margin-right: 3px; }
 #hud-day { width: 140px; }
+
+/* ---------- smooth designer (batch B) ---------- */
+#preview2 { width: 126px; height: 168px; }
+.boing { animation: boing 0.42s cubic-bezier(.3, 1.6, .5, 1) both; transform-origin: 50% 100%; }
+@keyframes boing {
+  0% { transform: scale(1, 1); } 25% { transform: scale(1.18, 0.82); } 55% { transform: scale(0.9, 1.12) translateY(-8px); }
+  80% { transform: scale(1.04, 0.97); } 100% { transform: scale(1, 1); }
+}
+.opts { position: relative; touch-action: pan-y; }
+.opts.from-right { animation: opts-r 0.22s ease-out; }
+.opts.from-left { animation: opts-l 0.22s ease-out; }
+@keyframes opts-r { from { transform: translateX(28px); opacity: 0.2; } to { transform: none; opacity: 1; } }
+@keyframes opts-l { from { transform: translateX(-28px); opacity: 0.2; } to { transform: none; opacity: 1; } }
+@media (orientation: landscape) and (max-height: 520px) {
+  .custom { grid-template-columns: 170px 1fr; }
+  #preview2 { width: 105px; height: 140px; }
+  /* readable tiles: fixed row height, 7 per row, the grid scrolls inside the card */
+  .opts { grid-template-columns: repeat(7, minmax(0, 1fr)); grid-auto-rows: 64px; gap: 8px;
+    max-height: max(120px, calc(100vh - 210px)); max-height: max(120px, calc(100dvh - 210px)); }
+  .opt { height: 64px; }
+  .opt .blob { width: 36px; height: 48px; }
+  .opt.swatch-opt { height: 64px; }
+}
