@@ -10,7 +10,7 @@ const shots = process.argv[3] || '';
   try {
     const pads = await host.evaluate(() => {
       const s = window.__blobz.state; // pads are fixed around the base: read from where blobz can stand
-      return s.totems.map((_, i) => [[-1, -1], [1, -1], [-1, 1], [1, 1]][i]).map(([dx, dy]) => ({ x: 640 + dx * 112, y: 480 + dy * 104 }));
+      return s.totems.map((_, i) => [[-1, -1], [1, -1], [-1, 1], [1, 1]][i]).map(([dx, dy]) => ({ x: 640 + dx * 88, y: 480 + dy * 88 }));
     });
     // deliver a full load at the base: bank and quest both go up
     await sim(host, (s) => { const p = s.players[1]; p.x = 640; p.y = 480; p.vx = 0; p.vy = 0; p.carry = ['wood', 'wood', 'stone']; });

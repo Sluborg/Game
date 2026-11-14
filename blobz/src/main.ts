@@ -1,15 +1,17 @@
 import Phaser from 'phaser';
-import '@fontsource/pixelify-sans/400.css';
-import '@fontsource/pixelify-sans/700.css';
+import '@fontsource/nunito/600.css';
+import '@fontsource/nunito/800.css';
+import '@fontsource/nunito/900.css';
 import { loadArt, pixelText } from './art';
 import { blobEl, clampLook, COLORS, EYES, HATS, MOUTHS, randomLook, SHAPES, type BlobLook } from './blob';
 import { Controls } from './controls';
+import { dungeonUi, setPicker } from './dungeonUi'; // [dungeon hook]
 import { GameScene, type Session } from './game';
 import { ClientNet, HostNet, friendlyError, type ToClient } from './net';
 import { lanNamespace, Scanner, type FoundRoom } from './discovery';
 import { sfx, unlockAudio } from './sfx';
 import {
-  addPlayer, createState, makeTrees, MAX_PLAYERS, nodeTool, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
+  addPlayer, BUILDING_ENABLED, BUILD_COST, BUILD_NAMES, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, pickWeapon, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
   toolNode, viewFromSnapshot, viewFromState,
 } from './sim';
 import type { FxEvent, Input, PlayerInfo, Snapshot, State, View } from './sim';
@@ -339,11 +341,40 @@ function renderQuestRows(root: ParentNode, v: View) {
   });
 }
 const QUEST_ROWS = () => $('hud-quest').innerHTML.split('<div class="qrow"').slice(1).map((r) => '<div class="qrow"' + r).join('');
+let savedAt = 0;
 let treesFor = { seed: -1, trees: [] as ReturnType<typeof makeTrees> };
+
+/** Building goal on the quest card: "Byggt: X" after a build this round, else "Bygg X" when the bank covers one. */
+function renderBuildGoal(v: View) {
+  const row = $('q-build');
+  if (!BUILDING_ENABLED) { show('q-build', false); return; }
+  const doneK = v.builtNow?.[v.builtNow.length - 1];
+  const next = !doneK ? v.builds?.find((b) => b.state !== 2 && canAfford(v.bank, RES.reduce((o, k) => ({ ...o, [k]: BUILD_COST[b.kind][k] - b.paid[k] }), {}))) : undefined;
+  const text = doneK ? 'Byggt: ' + BUILD_NAMES[doneK] : next ? 'Bygg ' + BUILD_NAMES[next.kind] : '';
+  show('q-build', !!text);
+  if (!text) return;
+  const span = row.querySelector('span')!;
+  if (span.textContent !== text) span.textContent = text;
+  row.classList.toggle('done', !!doneK);
+  const src = `art/gather/star${doneK ? '' : '-empty'}.png`;
+  const img = row.querySelector<HTMLImageElement>('img')!;
+  if (!img.src.endsWith(src)) img.src = src;
+}
+
+// ---------- the village: saved on the host between rounds ----------
+const loadVillage = () => { try { return cleanVillage(JSON.parse(store.get('village') ?? 'null')); } catch { return cleanVillage(null); } };
+function villageText() {
+  const v = loadVillage();
+  const n = Object.values(v.builds).filter(Boolean).length;
+  const bank = v.bank.wood + v.bank.stone + v.bank.berry;
+  return n || v.cottage > 1 || bank ? `Din by: stuga nivå ${v.cottage} · ${n} ${n === 1 ? 'byggnad' : 'byggnader'} · förråd ${v.bank.wood}/${v.bank.stone}/${v.bank.berry}` : '';
+}
 
 function onView(v: View) {
   if (DEBUG) (window as unknown as { __blobzView: View }).__blobzView = v;
+  if (dungeonUi(v, session?.myId, controls)) return; // [dungeon hook, Code 2] pick cards / dungeon HUD
   renderQuestRows($('hud-quest'), v);
+  renderBuildGoal(v);
   const st = starsFor(v.delivered, v.quest);
   if (st > lastStars) { sfx.star(); lastStars = st; }
   // day bar: the sun rides left -> right; dusk in the last 20 s
@@ -396,7 +427,7 @@ async function hostGame() {
     return { name: me.name, look: clampLook(me), players: infos.size, max: MAX_PLAYERS, started: !!state, v: __APP_VERSION__ };
   };
   // Show up in friends' Joina list. Keep retrying until it works (STUN can be slow or blocked).
-  const LAN_OK = 'Kompisar på samma Wi-Fi trycker <b>Joina</b> och väljer ditt namn';
+  const LAN_OK = '';
   const advertise = async () => {
     if (net.peer.destroyed) return;
     const ns = await lanNamespace();
@@ -428,6 +459,8 @@ async function hostGame() {
     return true;
   };
   net.onInput = (id, inp) => inputs.set(id, inp);
+  net.onPick = (id, w) => { if (state) pickWeapon(state, id, w); }; // [dungeon hook]
+  setPicker((w) => { if (state) pickWeapon(state, myId, w); });
   net.onLeave = (id) => {
     infos.delete(id); inputs.delete(id);
     if (state) removePlayer(state, id);
@@ -437,7 +470,7 @@ async function hostGame() {
 
   const newRound = () => {
     seed = Math.floor(Math.random() * 1e9);
-    state = createState([...infos.values()], seed);
+    state = createState([...infos.values()], seed, loadVillage());
     // Test hook (?debug): lets Playwright place blobz on plates etc. Never set in normal play.
     if (DEBUG) (window as unknown as { __blobz: unknown }).__blobz = { state };
     if (roundSecs) state.time = roundSecs;
@@ -453,6 +486,12 @@ async function hostGame() {
         acc += dt;
         while (acc >= 1 / 60) {
           step(state, inputs, 1 / 60);
+          // keep the village saved on this (host) phone whenever it changes
+          // (bank changes often: at most every 2 s, and always at sunset)
+          if (BUILDING_ENABLED && state.villageDirty && (performance.now() - savedAt > 2000 || state.phase === 'end')) {
+            state.villageDirty = false; savedAt = performance.now();
+            store.set('village', JSON.stringify(villageOf(state)));
+          }
           localFx.push(...state.fx); netFx.push(...state.fx); state.fx = [];
           acc -= 1 / 60;
         }
@@ -474,6 +513,16 @@ async function hostGame() {
   show('btn-start'); show('lobby-wait', false);
   show('menu', false); show('lobby');
   $('btn-start').onclick = () => { unlockAudio(); newRound(); };
+  $('lobby-village').textContent = BUILDING_ENABLED ? villageText() : '';
+  show('btn-newvillage', BUILDING_ENABLED);
+  // "Ny by": confirmed in the page (no browser dialog)
+  $('btn-newvillage').onclick = () => { show('newvillage-ask'); show('btn-newvillage', false); };
+  $('btn-newvillage-no').onclick = () => { show('newvillage-ask', false); show('btn-newvillage'); };
+  $('btn-newvillage-yes').onclick = () => {
+    try { localStorage.removeItem('blobz.village'); } catch { /* private mode */ }
+    show('newvillage-ask', false); show('btn-newvillage');
+    $('lobby-village').textContent = 'Ny by! Allt börjar om från början.';
+  };
   $('btn-again').onclick = () => newRound();
 }
 
@@ -509,9 +558,11 @@ async function joinGame(target: string, row?: HTMLButtonElement) {
         readInput: () => controls.read(),
         tick(dt, input) {
           sendAcc += dt;
-          const key = `${input.x},${input.y},${input.dash}`;
+          const key = `${input.x},${input.y},${input.dash},${input.atk ?? 0}`;
           if (key !== lastSent || sendAcc > 0.25) {
-            if (sendAcc >= 1 / 30 || input.dash !== Number(lastSent.split(',')[2])) {
+            const prev = lastSent.split(',');
+            // button presses go out at once; stick moves at most 30x a second
+            if (sendAcc >= 1 / 30 || input.dash !== Number(prev[2]) || (input.atk ?? 0) !== Number(prev[3])) {
               net.send({ t: 'in', ...input });
               lastSent = key; sendAcc = 0;
             }
@@ -524,6 +575,7 @@ async function joinGame(target: string, row?: HTMLButtonElement) {
     }
   };
   net.onClose = () => { alert('Värden lämnade spelet.'); location.reload(); };
+  setPicker((w) => net.send({ t: 'pick', w })); // [dungeon hook]
 
   try {
     await net.join(target, myInfo());

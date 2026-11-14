@@ -11,7 +11,8 @@ const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 export type ToHost =
   | { t: 'hello'; info: Omit<PlayerInfo, 'id'>; v?: string }
   | { t: 'info?' }
-  | { t: 'in'; x: number; y: number; dash: number };
+  | { t: 'pick'; w: string }
+  | { t: 'in'; x: number; y: number; dash: number; atk?: number };
 export type ToClient =
   | { t: 'welcome'; id: string }
   | { t: 'full' }
@@ -45,6 +46,7 @@ export class HostNet {
   onHello: (id: string, info: Omit<PlayerInfo, 'id'>) => boolean = () => true;
   onInput: (id: string, inp: Input) => void = () => {};
   onLeave: (id: string) => void = () => {};
+  onPick: (id: string, w: string) => void = () => {};
   onInfo: () => RoomInfo | null = () => null;
   /** Second peer on `blobz-v2-<ns>-<slot>` so same-Wi-Fi phones find the room without a code. */
   slotPeer: Peer | null = null;
@@ -104,7 +106,9 @@ export class HostNet {
         this.conns.set(c.peer, c);
         c.send({ t: 'welcome', id: c.peer } satisfies ToClient);
       } else if (m.t === 'in') {
-        this.onInput(c.peer, { x: +m.x || 0, y: +m.y || 0, dash: +m.dash || 0 });
+        this.onInput(c.peer, { x: +m.x || 0, y: +m.y || 0, dash: +m.dash || 0, atk: +(m.atk ?? 0) || 0 });
+      } else if (m.t === 'pick') {
+        this.onPick(c.peer, String(m.w));
       }
     });
     const leave = () => { if (this.conns.delete(c.peer)) this.onLeave(c.peer); };

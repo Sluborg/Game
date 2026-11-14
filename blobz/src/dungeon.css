@@ -1,0 +1,78 @@
+/* Dungeon UI (Code 2). Markup in index.html; logic in dungeonUi.ts. */
+
+/* underground: the meadow HUD steps aside */
+#hud.dungeon #hud-quest, #hud.dungeon #hud-day, #hud.dungeon #hud-bank, #hud.dungeon #hud-double,
+#hud.dungeon #hint, #hud.dungeon #edge-arrows { display: none !important; }
+
+/* big special button bottom-right; the dash button turns into a small sidestep button above-left of it */
+#attack {
+  position: absolute; right: max(18px, env(safe-area-inset-right)); bottom: max(22px, env(safe-area-inset-bottom));
+  width: 104px; height: 104px; padding: 0; pointer-events: auto; touch-action: none; border-style: solid; border-color: var(--plum);
+  display: flex; align-items: center; justify-content: center; image-rendering: pixelated;
+  border-width: 16px; background: none; border-image: url('/art/ui/btn-orange.png') 4 fill / 16px stretch;
+  filter: drop-shadow(0 6px 0 #3f263140); --cd: 0;
+}
+#attack .icon { height: 60px; width: auto; margin: 0; filter: none; position: relative; z-index: 1; }
+#attack:active { border-image-source: url('/art/ui/btn-orange-down.png'); }
+/* cooldown ring (Art's spec): plum #3f2631 at ~55% over the button, shrinking clockwise from 12 o'clock */
+#attack::after {
+  content: ''; position: absolute; inset: -10px; border-radius: 50%; pointer-events: none; z-index: 2;
+  background: conic-gradient(transparent calc((1 - var(--cd)) * 360deg), #3f26318c 0);
+}
+#attack.cd .icon { filter: saturate(0.2) brightness(0.85); }
+#hud.dungeon #dash {
+  width: 64px; height: 64px; border-width: 12px;
+  right: calc(max(18px, env(safe-area-inset-right)) + 104px); bottom: calc(max(22px, env(safe-area-inset-bottom)) + 92px);
+}
+#hud.dungeon #dash .icon, #hud.dungeon #dash img { height: 32px; width: auto; image-rendering: pixelated; }
+
+/* top-left: hearts, gold + floor + time, level badge + XP bar */
+#hud-dg {
+  position: absolute; left: max(10px, env(safe-area-inset-left)); top: max(10px, env(safe-area-inset-top));
+  display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; pointer-events: none;
+  background: #3f2631d0; box-shadow: var(--o3); color: #fff7e6; font-family: var(--font); font-weight: 700;
+}
+#dg-hearts { display: flex; flex-wrap: wrap; gap: 3px; max-width: 220px; }
+#dg-hearts img { width: 24px; height: 24px; image-rendering: pixelated; }
+#dg-row { display: flex; align-items: center; gap: 8px; font-size: 18px; }
+#dg-row .icon { height: 20px; vertical-align: 0; }
+#dg-floor, #dg-time { padding: 0 6px; background: #fff7e620; }
+#dg-time.low { color: #ff8a8a; }
+#dg-xp { display: flex; align-items: center; gap: 8px; }
+#dg-level {
+  display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 32px; padding-top: 2px;
+  background: url('/art/dungeon/level-badge.png') center / 100% 100% no-repeat; image-rendering: pixelated;
+  color: #3f2631; font-size: 16px;
+}
+#dg-xp .xpbar { width: 126px; height: 24px; padding: 3px 3px; background: url('/art/dungeon/xp-frame.png') center / 100% 100% no-repeat; image-rendering: pixelated; }
+#dg-xpfill { height: 100%; width: 0; background: url('/art/dungeon/xp-fill.png') left / 120px 100% no-repeat; image-rendering: pixelated; transition: width 0.3s steps(6); }
+
+#dg-ko {
+  position: absolute; left: 50%; top: 38%; transform: translate(-50%, -50%); padding: 10px 16px;
+  background: #3f2631e6; color: #fff; font-family: var(--font); font-size: 22px; box-shadow: var(--o3); white-space: nowrap;
+}
+#dg-ko b { color: #ffe08a; }
+
+/* weapon cards */
+#weapon-pick { z-index: 30; background: #1b1018b0; }
+#weapon-pick .card { max-width: min(96vw, 560px); }
+.wcards { display: flex; gap: 10px; justify-content: center; margin: 8px 0; }
+.wcard {
+  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 6px 8px; min-width: 0; flex: 1 1 0;
+  background: #fff7e6; border: 0; box-shadow: var(--o3), 0 6px 0 0 #3f263140; cursor: pointer; font-family: var(--font);
+}
+.wcard img { width: 96px; height: 128px; image-rendering: pixelated; max-width: 100%; object-fit: contain; }
+.wcard b { font-size: 18px; color: #3f2631; }
+.wcard small { font-size: 13px; color: #8a7466; }
+.wcard.on { background: #ffe08a; transform: translateY(-6px); box-shadow: 0 0 0 4px #6cc644, 0 10px 0 0 #3f263140; }
+.wcard.off { opacity: 0.45; }
+@media (orientation: landscape) and (max-height: 500px) {
+  #weapon-pick .card { padding-top: 4px; padding-bottom: 4px; }
+  #weapon-pick h2 { margin: 0; font-size: 22px; }
+  .wcard img { width: 66px; height: 88px; }
+}
+
+/* summary */
+#dg-end { z-index: 30; }
+#dg-end .dgstat { font-size: 20px; margin: 6px 0; }
+#dg-end .dgstat .icon { height: 22px; }

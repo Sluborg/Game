@@ -47,6 +47,7 @@ Stefan works phone-only; replies in Swedish or English, docs and code in English
   `followup` (a clarifying question, keeps it open). Keep `work` (Pågående) and `backlog` up to date; read `prio` + `comments`.
 - When a decision or clarification from Stefan is needed (or he drifts to a new topic while a question is open), ask with the AskUserQuestion tool instead of waiting in prose.
 - Every message that announces a new version includes the link https://sluborg.github.io/Game/ and the version number.
+- Every reply where the decision board has something new (a new question, a followup, a changed Pågående row Stefan should see) includes the board link https://claude.ai/artifact/7pHh1Z6QmDvtAYWweGvkAL.
 - Reporting to Stefan: only when a whole batch is merged and live (Art: a full part set; Code: a whole
   feature), or when a decision from him blocks work. No progress pings about single images or steps.
 
