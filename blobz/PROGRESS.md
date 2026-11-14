@@ -145,3 +145,7 @@
 - Existing eyes/mouths/hats are 2x-upscaled design-unit maps (placeholders) until the ChatGPT part sheets
   (orders 80-110, `docs/chatgpt-parts-prompt.txt`) arrive; then parts are sliced to native pixels and
   anchored per shape. In-game scale 2.9 -> 1.45 (same on-screen size).
+
+## 2026-11-14 - v020b: gem row
+- HUD stars: hand-drawn 11x9 pixel gems (`gem.png`, `gem-empty.png` = translucent slot) in a row beside the score, thin progress bar below (no icons sitting on the bar). End screen uses the same gems.
+- Team: Art (parts set) and Code (code-free join) running; queued next: milestone 30, 40, 50.
