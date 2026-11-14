@@ -2,6 +2,7 @@
    Every box uses the same recipe: 4 offset shadows = a plum outline with stepped (pixel) corners,
    plus inset light/dark rows for a chunky bevel. */
 :root {
+  color-scheme: only light;
   --plum: #3f2631;
   --cream: #fff7e6;
   --cream-2: #f1e4c6;

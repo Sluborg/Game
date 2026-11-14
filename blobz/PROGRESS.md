@@ -68,3 +68,8 @@
   score, clock by timer, diamonds for stars), button icons (house, team, dice, check, back), dash button,
   and in-game items (log, mushroom, coin), treasure chest and power-ups (winged boot, magnet).
 - ChatGPT prompt now ends each reply with a progress line ("Order 30 done - 3/7 complete. Next: ...").
+
+## 2026-11-14 - Opt out of Android auto dark mode
+- Stefan's phone (Chrome "auto dark mode for web contents") inverted the UI and blob faces. Added
+  `<meta name="color-scheme" content="only light">` + `color-scheme: only light` on :root.
+- Not reproducible in headless Chromium (forced dark is ignored there); verify on the phone.
