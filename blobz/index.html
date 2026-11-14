@@ -32,7 +32,7 @@
         <div class="actions">
           <button id="btn-host" class="big">Nytt spel</button>
           <button id="btn-show-join" class="big alt">Joina</button>
-          <p class="help">En startar <b>Nytt spel</b>. Kompisarna trycker <b>Joina</b> och skriver koden.</p>
+          <p class="help">En startar <b>Nytt spel</b>. Kompisarna på samma Wi-Fi trycker <b>Joina</b>.</p>
           <p id="menu-msg" class="msg"></p>
         </div>
         <p id="version" class="version"></p>
@@ -63,9 +63,9 @@
       <!-- Join -->
       <div id="join" class="card panel joinp hidden">
         <h2>Joina spel</h2>
-        <p class="help">Skriv koden som syns på värdens skärm</p>
-        <input id="code" class="codebox" maxlength="4" placeholder="ABCD" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" />
-        <button id="btn-join" class="big alt">Joina</button>
+        <p id="lan-status" class="help" aria-live="polite">Letar efter spel på ditt Wi-Fi...</p>
+        <ul id="lan-list" class="lanlist"></ul>
+        <button id="btn-rescan" class="big alt hidden" type="button">Leta igen</button>
         <p id="join-msg" class="msg"></p>
         <button id="btn-join-back" class="link"><i data-icon="back"></i>Tillbaka</button>
       </div>
@@ -77,8 +77,7 @@
         <button id="btn-leave" class="backbtn" aria-label="Tillbaka till menyn"><i data-icon="back"></i></button>
         <h2>Lobby</h2>
         <ul id="lobby-list"></ul>
-        <div class="coderow"><span class="codelbl">Kod</span><div id="lobby-code" class="code" aria-live="polite">----</div></div>
-        <p class="tag small">Kompisar på samma Wi-Fi trycker <b>Joina</b> och skriver koden</p>
+        <p id="lobby-lan" class="tag small">Kompisar på samma Wi-Fi trycker <b>Joina</b> och väljer ditt namn</p>
         <button id="btn-start" class="big">Starta</button>
         <p id="lobby-wait" class="msg">Väntar på att värden startar...</p>
       </div>
@@ -86,7 +85,6 @@
 
     <!-- HUD -->
     <div id="hud" class="hidden">
-      <div id="hud-code"></div>
       <div id="hud-score"><span class="scorerow"><i data-icon="coin"></i><span id="score">0</span></span><div id="gems"><i class="s1"></i><i class="s2"></i><i class="s3"></i></div><div id="starbar"><div id="starfill"></div></div></div>
       <div id="hud-time"><i data-icon="clock"></i><span id="time">3:00</span></div>
       <div id="stick"><div id="knob"></div></div>
