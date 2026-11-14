@@ -72,7 +72,6 @@ const sv = {
   'hud.wood': 'Trä',
   'hud.stone': 'Sten',
   'hud.berry': 'Bär',
-  'hud.base': 'BAS',
   'hud.dash': 'Fart',
   // tools (action button label)
   'tool.axe': 'Yxa',
@@ -106,8 +105,6 @@ const sv = {
   'mini.skip': 'Hoppa över',
   // end screen
   'end.title': 'Solen gick ner!',
-  'end.mini': 'Bärregn:',
-  'end.berries': 'bär',
   'end.good': 'Bra jobbat!',
   'end.again': 'Spela igen',
   'end.waitHost': 'Väntar på värden...',
@@ -273,7 +270,6 @@ const en: Record<Key, string> = {
   'hud.wood': 'Wood',
   'hud.stone': 'Stone',
   'hud.berry': 'Berries',
-  'hud.base': 'BASE',
   'hud.dash': 'Dash',
   'tool.axe': 'Axe',
   'tool.pickaxe': 'Pickaxe',
@@ -303,8 +299,6 @@ const en: Record<Key, string> = {
   'mini.name': 'Berry Rain',
   'mini.skip': 'Skip',
   'end.title': 'The sun went down!',
-  'end.mini': 'Berry Rain:',
-  'end.berries': 'berries',
   'end.good': 'Well done!',
   'end.again': 'Play again',
   'end.waitHost': 'Waiting for the host...',

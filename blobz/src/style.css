@@ -623,3 +623,55 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .langtog button { background: none; border: 0; padding: 6px 8px; font: inherit; color: inherit; cursor: pointer; border-radius: 6px; min-width: 36px; min-height: 32px; }
 .langtog button.on { background: var(--plum); color: #fff7e6; opacity: 1; }
 @media (orientation: landscape) and (max-height: 520px) { .home .langtog { grid-column: 1 / -1; } }
+
+/* ---- no reading needed: pictures instead of words ---- */
+/* (a) build cards: what it does, as an icon row; the text stays as a small second line */
+.bicons { display: flex; align-items: center; justify-content: center; gap: 3px; min-height: 20px; }
+.bicons img { height: 18px; width: auto; image-rendering: pixelated; }
+.bicons b { font-size: 15px; font-weight: 900; color: var(--plum); }
+@media (orientation: landscape) and (max-height: 520px) {
+  .bicons { min-height: 16px; gap: 2px; }
+  .bicons img { height: 14px; }
+  .bicons b { font-size: 12px; }
+  .beff { display: none; }
+}
+/* (d) quest header: a house instead of "Samla till basen" */
+.qtitle img { height: 20px; width: auto; image-rendering: pixelated; vertical-align: middle; filter: drop-shadow(0 2px 0 #b5531c); }
+/* (b) build goal: the building + hammer (pulsing), or + a check once built */
+.qbuild { gap: 4px; height: 30px; }
+.qbuild .qbimg { height: 28px; width: auto; image-rendering: pixelated; }
+.qbuild .qbico { height: 20px; width: auto; image-rendering: pixelated; }
+.qbuild:not(.done) .qbico { animation: hammer 0.9s ease-in-out infinite; transform-origin: 80% 80%; }
+@keyframes hammer { 0%, 60%, 100% { transform: rotate(0); } 75% { transform: rotate(-25deg); } 85% { transform: rotate(8deg); } }
+/* the button itself stays put (taps land), its glow and hammer pulse */
+#btn-build.can { animation: canbuild 1s ease-in-out infinite; }
+#btn-build.can img { animation: hammer 0.9s ease-in-out infinite; transform-origin: 80% 80%; }
+@keyframes canbuild { 0%, 100% { box-shadow: 0 0 0 0 #ffd23f00; } 50% { box-shadow: 0 0 0 6px #ffd23fcc; } }
+/* (c) the arrow home is orange so it stands out from the resource arrows */
+.edge.home { background: #ffd28a; }
+.edge.home img { height: 22px; }
+/* (g) lobby: the saved village as pictures */
+#lobby-village { display: flex; align-items: flex-end; justify-content: center; flex-wrap: wrap; gap: 4px 6px; }
+#lobby-village img { image-rendering: pixelated; width: auto; }
+#lobby-village .vcot { height: 40px; }
+#lobby-village .vb { height: 26px; }
+#lobby-village .vres { display: inline-flex; align-items: center; gap: 2px; font-weight: 800; color: var(--plum); }
+#lobby-village .vres img { height: 16px; }
+/* (e) end screen: a setting sun over the title */
+.endsun { display: block; width: 52px; height: auto; margin: -6px auto -4px; image-rendering: pixelated; clip-path: inset(0 0 35% 0); }
+/* (f) Bärregn intro: berry on your blob = good, bomb on your blob = dizzy */
+#mini-intro { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -40%); display: flex; flex-direction: column; gap: 10px;
+  padding: 12px 18px; background: #fff7e6f2; border-radius: 14px; box-shadow: 0 0 0 4px var(--plum), 0 8px 0 4px #3f263140; pointer-events: none; z-index: 5; }
+.mi-row { display: grid; grid-template-columns: 30px 60px 34px; align-items: end; gap: 8px; height: 76px; }
+.mi-drop { align-self: start; display: flex; justify-content: center; animation: mifall 1.2s ease-in infinite; }
+.mi-drop img { height: 24px; image-rendering: pixelated; }
+.mi-drop.bomb img { height: 22px; filter: brightness(0.35) sepia(1) hue-rotate(-30deg) saturate(3); }
+@keyframes mifall { 0% { transform: translate(18px, -6px); opacity: 0; } 10%, 80% { opacity: 1; } 75% { transform: translate(40px, 34px); } 100% { transform: translate(40px, 34px); opacity: 0; } }
+.mi-blob { position: relative; width: 60px; height: 72px; display: flex; align-items: flex-end; }
+.mi-blob .blob { width: 54px; height: 72px; }
+.mi-row.bad .mi-blob .blob { animation: midizzy 0.6s ease-in-out infinite alternate; }
+@keyframes midizzy { from { transform: rotate(-6deg); } to { transform: rotate(6deg); } }
+.mi-ko { position: absolute; left: 50%; top: -4px; width: 40px; height: 18px; margin-left: -20px; background: url('/art/dungeon/ko-stars.png') 0 0 / 80px 18px; image-rendering: pixelated; animation: miko 0.33s steps(1) infinite; }
+@keyframes miko { 50% { background-position: -40px 0; } }
+.mi-mark { align-self: center; height: 28px; image-rendering: pixelated; }
+.mi-mark.x { font-size: 34px; line-height: 1; color: #d2342c; text-align: center; font-weight: 900; }

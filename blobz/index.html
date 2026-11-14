@@ -104,11 +104,11 @@
     <!-- HUD -->
     <div id="hud" class="hidden">
       <div id="hud-quest" aria-label="Uppdrag: samla till basen" data-i18n-aria="hud.questAria">
-        <div class="qtitle" data-i18n="hud.quest">Samla till basen</div>
+        <div class="qtitle" role="img" aria-label="Samla till basen" data-i18n-aria="hud.quest"><img src="art/icons/house.png" alt="" /></div>
         <div class="qrow" data-k="wood"><img src="art/gather/hud-wood.png" alt="Trä" data-i18n-alt="hud.wood" class="qicon" /><div class="qbar"><div class="qfill"></div></div><span class="qnum">0/0</span><img src="art/gather/star-empty.png" alt="" class="qstar" /></div>
         <div class="qrow" data-k="stone"><img src="art/gather/hud-stone.png" alt="Sten" data-i18n-alt="hud.stone" class="qicon" /><div class="qbar"><div class="qfill"></div></div><span class="qnum">0/0</span><img src="art/gather/star-empty.png" alt="" class="qstar" /></div>
         <div class="qrow" data-k="berry"><img src="art/gather/hud-berries.png" alt="Bär" data-i18n-alt="hud.berry" class="qicon" /><div class="qbar"><div class="qfill"></div></div><span class="qnum">0/0</span><img src="art/gather/star-empty.png" alt="" class="qstar" /></div>
-        <div id="q-build" class="qbuild hidden"><img src="art/gather/star-empty.png" alt="" class="qstar" /><span></span></div>
+        <div id="q-build" class="qbuild hidden" role="img"><img class="qbimg" alt="" /><img class="qbico" alt="" /></div>
       </div>
       <div id="hud-day" aria-label="Dagen" data-i18n-aria="hud.day"><div class="dbar"><div class="dfill"></div></div><img src="art/gather/sun.png" alt="" class="sun" /></div>
       <div id="hud-bank" aria-label="Lagets förråd" data-i18n-aria="hud.bank"><img src="art/gather/hud-wood.png" alt="Trä" data-i18n-alt="hud.wood" /><span id="bank-wood">0</span><img src="art/gather/hud-stone.png" alt="Sten" data-i18n-alt="hud.stone" /><span id="bank-stone">0</span><img src="art/gather/hud-berries.png" alt="Bär" data-i18n-alt="hud.berry" /><span id="bank-berry">0</span></div>
@@ -116,12 +116,17 @@
         <div class="edge" data-k="wood"><i class="arr"></i><img src="art/gather/hud-wood.png" alt="Trä" data-i18n-alt="hud.wood" /></div>
         <div class="edge" data-k="stone"><i class="arr"></i><img src="art/gather/hud-stone.png" alt="Sten" data-i18n-alt="hud.stone" /></div>
         <div class="edge" data-k="berry"><i class="arr"></i><img src="art/gather/hud-berries.png" alt="Bär" data-i18n-alt="hud.berry" /></div>
+        <div class="edge home" data-k="home"><i class="arr"></i><img src="art/icons/house.png" alt="" /></div>
       </div>
       <div id="mini-hud" class="hidden" aria-label="Bärregn" data-i18n-aria="mini.name">
         <div class="mtitle"><img src="art/gather/item-berries.png" alt="" /> <span data-i18n="mini.title">Bärregn!</span></div>
         <div class="mrow"><span class="mbasket"><img src="art/gather/item-berries.png" alt="Bär" data-i18n-alt="hud.berry" /><b id="mini-caught">0</b></span>
           <div class="mbar"><div id="mini-fill" class="mfill"></div><img class="mstar" data-i="0" src="art/gather/star-empty.png" alt="" /><img class="mstar" data-i="1" src="art/gather/star-empty.png" alt="" /><img class="mstar" data-i="2" src="art/gather/star-empty.png" alt="" /></div></div>
         <div class="mtime"><div id="mini-time"></div></div>
+      </div>
+      <div id="mini-intro" class="hidden" role="img" aria-label="Bärregn" data-i18n-aria="mini.name">
+        <div class="mi-row good"><span class="mi-drop"><img src="art/gather/item-berries.png" alt="" /></span><span class="mi-blob"></span><img class="mi-mark" src="art/icons/check.png" alt="" /></div>
+        <div class="mi-row bad"><span class="mi-drop bomb"><img src="art/props/rock.png" alt="" /></span><span class="mi-blob"><i class="mi-ko"></i></span><b class="mi-mark x">✕</b></div>
       </div>
       <button id="btn-skip-mini" class="chip hidden" type="button" data-i18n="mini.skip">Hoppa över</button>
       <button id="btn-build" class="chip hidden" type="button" aria-label="Bygg" data-i18n-aria="build.button"><img src="art/base/btn-build.png" alt="" /> <span data-i18n="build.button">Bygg</span></button>
@@ -164,10 +169,11 @@
     <!-- End -->
     <section id="end" class="screen hidden">
       <div class="card">
+        <img class="endsun" src="art/gather/sun.png" alt="" />
         <h2 id="end-title" data-i18n="end.title">Solen gick ner!</h2>
         <div id="end-stars" class="stars"></div>
         <div id="end-rows" class="endrows"></div>
-        <p id="end-mini" class="endmini hidden"><img src="art/gather/item-berries.png" alt="" /> <span data-i18n="end.mini">Bärregn:</span> <b id="end-mini-n">0</b> <span data-i18n="end.berries">bär</span> <span id="end-mini-stars"></span></p>
+        <p id="end-mini" class="endmini hidden" aria-label="Bärregn" data-i18n-aria="mini.name"><img src="art/gather/item-berries.png" alt="" /> <b id="end-mini-n">0</b> <span id="end-mini-stars"></span></p>
         <p class="tag" data-i18n="end.good">Bra jobbat!</p>
         <button id="btn-again" class="big" data-i18n="end.again">Spela igen</button>
         <p id="end-wait" class="msg" data-i18n="end.waitHost">Väntar på värden...</p>

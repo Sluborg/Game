@@ -23,7 +23,7 @@ OUT = os.path.join(ROOT, 'docs', 'art-review')
 DUN = os.path.join(ROOT, 'public', 'art', 'dungeon')
 TMP = os.environ.get('TMPDIR', '/tmp')
 
-CLASSES = ['prast', 'krigare', 'riddare', 'bagskytt']
+CLASSES = ['healer', 'rogue', 'tank', 'marksman']
 COL = da.CLASS_COLORS
 HEALG = (ba.rgb(98, 196, 88), ba.rgb(190, 240, 160), ba.rgb(62, 140, 66))
 
@@ -34,10 +34,10 @@ def blobs():
     subprocess.run(['npx', 'esbuild', os.path.join(ROOT, 'src', 'blob.ts'), '--bundle', '--format=esm',
                     f'--outfile={mod}', '--log-level=error'], cwd=ROOT, check=True)
     looks = {
-        'prast': ({'color': 0xf2f2f2, 'shape': 0, 'eyes': 3, 'mouth': 1, 'hat': 0}, 0),
-        'krigare': ({'color': 0xff9248, 'shape': 1, 'eyes': 8, 'mouth': 6, 'hat': 10}, None),
-        'riddare': ({'color': 0x3d6bff, 'shape': 5, 'eyes': 0, 'mouth': 5, 'hat': 0}, 2),
-        'bagskytt': ({'color': 0x7ddc5a, 'shape': 4, 'eyes': 10, 'mouth': 1, 'hat': 0}, 1),
+        'healer': ({'color': 0xf2f2f2, 'shape': 0, 'eyes': 3, 'mouth': 1, 'hat': 0}, 0),
+        'rogue': ({'color': 0xff9248, 'shape': 1, 'eyes': 8, 'mouth': 6, 'hat': 10}, None),
+        'tank': ({'color': 0x3d6bff, 'shape': 5, 'eyes': 0, 'mouth': 5, 'hat': 0}, 2),
+        'marksman': ({'color': 0x7ddc5a, 'shape': 4, 'eyes': 10, 'mouth': 1, 'hat': 0}, 1),
     }
     js = (f"const {{ blobGrid }} = await import('{mod}'); const L = {json.dumps(looks)};"
           "const o = {}; for (const k in L) o[k] = blobGrid(L[k][0], L[k][1] ?? undefined); console.log(JSON.stringify(o));")
@@ -95,19 +95,19 @@ def card_a(cls, b):
     im = card_base(cls)
     scene = Image.new('RGBA', (48, 64))
     bx, by = 3, 46 - b.height  # blob stands on the ribbon line
-    if cls == 'prast':
+    if cls == 'healer':
         scene.alpha_composite(b, (bx + 1, by + 2))
         scene.alpha_composite(frame('gear-staff.png', 0), (bx + 13, by - 12))
         scene.alpha_composite(sparkles([(11, 10, True), (22, 8, False), (7, 20, False), (40, 30, False)], HEALG))
         heart = Canvas(48, 64)
         ba.comp(heart, da.heart_pts(36, 10, 3.2), ba.shaded(HEALG))
         scene.alpha_composite(heart.image())
-    elif cls == 'krigare':
+    elif cls == 'rogue':
         sw = Image.open(os.path.join(DUN, 'fx-spin.png')).convert('RGBA').crop((0, 0, 48, 40))
         scene.alpha_composite(sw, (8, by - 16))  # swoosh behind the blob
         scene.alpha_composite(b, (bx - 1, by + 2))
         scene.alpha_composite(frame('weapon-sword.png', 0), (bx + 12, by - 12))
-    elif cls == 'riddare':
+    elif cls == 'tank':
         scene.alpha_composite(b, (bx + 2, by))
         sh = da.shield_img()
         big = sh.resize((sh.width * 2, sh.height * 2), Image.NEAREST)
@@ -133,16 +133,16 @@ def card_a(cls, b):
 def card_b(cls):
     im = card_base(cls, parchment=False)
     c = Canvas(48, 64)
-    if cls == 'prast':
+    if cls == 'healer':
         ba.comp(c, da.heart_pts(24, 24, 8), ba.shaded(HEALG))
         ba.comp(c, ba.rect(22, 18, 25, 33) | ba.rect(16, 24, 31, 27), da.CREAM)
-    elif cls == 'krigare':
+    elif cls == 'rogue':
         for sgn in (1, -1):
             blade = {(24 + sgn * (k - 12) + d, 12 + k) for k in range(26) for d in (-1, 0, 1)}
             ba.comp(c, {p for p in blade if p[1] < 32}, ba.STONE[1])
             ba.comp(c, {p for p in blade if 34 <= p[1] < 38}, ba.WOOD[0])
             ba.comp(c, {(24 + sgn * (k - 12) + d, 12 + k) for k in (20, 21) for d in range(-3, 4)}, da.GOLD[0])
-    elif cls == 'riddare':
+    elif cls == 'tank':
         sh = da.shield_img()
         im2 = c.image()
         big = sh.resize((sh.width * 2, sh.height * 2), Image.NEAREST)

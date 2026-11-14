@@ -8,11 +8,12 @@ import { Controls } from './controls';
 import { dungeonUi, setPicker } from './dungeonUi'; // [dungeon hook]
 import { GameScene, type Session } from './game';
 import { ClientNet, HostNet, friendlyError, type ToClient } from './net';
+import { MINI_SECONDS } from './mini';
 import { applyI18n, lang, lookName, setLang, t, type Key } from './i18n';
 import { lanNamespace, Scanner, type FoundRoom } from './discovery';
 import { sfx, unlockAudio } from './sfx';
 import {
-  addPlayer, atHome, BUILD_KINDS, COTTAGE_COST, COTTAGE_MAX, requestBuild, type BuildKind, BUILDING_ENABLED, finishMini, cleanBiome, type Biome, BUILD_COST, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, pickWeapon, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
+  addPlayer, affordable, atHome, BUILD_KINDS, COTTAGE_COST, COTTAGE_MAX, requestBuild, type BuildKind, BUILDING_ENABLED, finishMini, cleanBiome, type Biome, BUILD_COST, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, pickWeapon, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
   toolNode, viewFromSnapshot, viewFromState,
 } from './sim';
 import type { FxEvent, Input, PlayerInfo, Snapshot, State, View } from './sim';
@@ -360,10 +361,29 @@ let sendBuild: (k: BuildKind | 'cottage') => void = () => {};
 let panelOpen = false;
 const COST_ICON: Record<string, string> = { wood: 'art/gather/hud-wood.png', stone: 'art/gather/hud-stone.png', berry: 'art/gather/hud-berries.png' };
 const buildName = (k: BuildKind) => t(`build.name.${k}` as Key);
+/** What each building does, as pictures (no reading): sprite paths and short symbols (+1, x2, -1).
+ *  Placeholders from existing art until Art's effect icons land (see the icon list sent to Lead). */
+const A = (p: string) => 'art/' + p + '.png';
+const BUILD_ICONS: Record<BuildKind | 'cottage2' | 'cottage3', string[]> = {
+  storage: [A('icons/log'), A('gather/item-stone'), A('gather/item-berries'), A('icons/log')], // carry 4 things
+  workshop: [A('gather/btn-axe'), '-1', A('icons/boot')], // one hit less, faster
+  garden: [A('gather/bush-berries'), '+'], // more berries
+  well: [A('gather/item-berries'), '×2', A('icons/house')], // berries count double at home
+  watchtower: [A('icons/dash-arrow'), A('props/tree-green')], // arrows to resources
+  bridge: [A('icons/dash-arrow'), A('icons/chest')], // a new corner with loot
+  cottage2: [A('icons/log'), '+1'], // carry one more
+  cottage3: [A('gather/bush-berries'), A('icons/clock')], // faster regrowth
+};
+function iconRow(items: string[]): Node[] {
+  return items.map((it) => {
+    if (!it.startsWith('art/')) { const b = document.createElement('b'); b.textContent = it; return b; }
+    const im = new Image(); im.src = it; im.alt = ''; return im;
+  });
+}
 function buildCard(kind: BuildKind | 'cottage'): HTMLButtonElement {
   const b = document.createElement('button');
   b.type = 'button'; b.className = 'bcard'; b.dataset.kind = kind;
-  b.innerHTML = '<span class="bimg"><img alt="" /></span><b class="bname"></b><span class="beff"></span><span class="bcost"></span>';
+  b.innerHTML = '<span class="bimg"><img alt="" /></span><b class="bname"></b><span class="bicons"></span><span class="beff"></span><span class="bcost"></span>';
   b.onclick = () => { if (!b.disabled) { b.classList.remove('tap'); void b.offsetWidth; b.classList.add('tap'); sendBuild(kind); } };
   return b;
 }
@@ -400,6 +420,9 @@ function renderBuildPanel(v: View) {
     card.querySelector('img')!.src = img;
     card.querySelector('.bname')!.textContent = name;
     card.querySelector('.beff')!.textContent = built ? t('build.built') : eff;
+    const icons = built ? [A('icons/check')] : BUILD_ICONS[isCot ? (lvl + 1 === 2 ? 'cottage2' : 'cottage3') : kind];
+    card.querySelector('.bicons')!.replaceChildren(...iconRow(icons));
+    card.setAttribute('aria-label', `${name}: ${built ? t('build.built') : eff}`);
     card.querySelector('.bcost')!.replaceChildren(...(built || !cost ? [] : RES.filter((k) => cost[k] > 0).map((k) => {
       const s = document.createElement('span');
       s.className = 'c ' + (v.bank[k] >= cost[k] ? 'ok' : 'no');
@@ -410,22 +433,25 @@ function renderBuildPanel(v: View) {
   });
 }
 
-/** Building goal on the quest card: "Byggt: X" after a build this round, else "Bygg X" when the bank covers one. */
+/** Building goal on the quest card, as pictures: the building + hammer when the bank covers it, + a check after it
+ *  was built this round. The Build button pulses while something is affordable. */
 function renderBuildGoal(v: View) {
   const row = $('q-build');
   if (!BUILDING_ENABLED) { show('q-build', false); return; }
-  const doneK = v.builtNow?.[v.builtNow.length - 1];
-  const next = !doneK ? v.builds?.find((b) => b.state !== 2 && canAfford(v.bank, RES.reduce((o, k) => ({ ...o, [k]: BUILD_COST[b.kind][k] - b.paid[k] }), {}))) : undefined;
-  // the hint points to the house, where the build panel is
-  const text = doneK ? t('build.goalDone', { name: buildName(doneK) }) : next ? t('build.goal', { name: buildName(next.kind) }) : '';
-  show('q-build', !!text);
-  if (!text) return;
-  const span = row.querySelector('span')!;
-  if (span.textContent !== text) span.textContent = text;
+  const lvl = v.cottage?.level ?? 1;
+  const doneK = v.builtNow?.[v.builtNow.length - 1] as BuildKind | undefined;
+  const next = v.phase === 'play' ? affordable(v.bank, v.builds ?? [], lvl) : null;
+  $('btn-build').classList.toggle('can', !!next);
+  const k = doneK ?? next;
+  show('q-build', !!k);
+  if (!k) return;
+  const name = k === 'cottage' ? t('build.cottage', { lvl: lvl + 1 }) : buildName(k);
+  const text = doneK ? t('build.goalDone', { name }) : t('build.goal', { name });
+  if (row.getAttribute('aria-label') === text) return;
+  row.setAttribute('aria-label', text); row.title = text;
   row.classList.toggle('done', !!doneK);
-  const src = `art/gather/star${doneK ? '' : '-empty'}.png`;
-  const img = row.querySelector<HTMLImageElement>('img')!;
-  if (!img.src.endsWith(src)) img.src = src;
+  row.querySelector<HTMLImageElement>('.qbimg')!.src = k === 'cottage' ? A(`base/cottage-${Math.min(COTTAGE_MAX, lvl + 1)}`) : A(`base/${k}`);
+  row.querySelector<HTMLImageElement>('.qbico')!.src = doneK ? A('icons/check') : A('base/btn-build');
 }
 
 // ---------- the village: saved on the host between rounds ----------
@@ -434,9 +460,21 @@ function villageText() {
   const v = loadVillage();
   const n = Object.values(v.builds).filter(Boolean).length;
   const bank = v.bank.wood + v.bank.stone + v.bank.berry;
-  return n || v.cottage > 1 || bank
-    ? t('lobby.village', { lvl: v.cottage, n, what: t(n === 1 ? 'lobby.building1' : 'lobby.buildingN'), w: v.bank.wood, s: v.bank.stone, b: v.bank.berry })
-    : '';
+  return n || v.cottage > 1 || bank ? t('lobby.village', { lvl: v.cottage, n, what: t(n === 1 ? 'lobby.building1' : 'lobby.buildingN'), w: v.bank.wood, s: v.bank.stone, b: v.bank.berry }) : '';
+}
+/** The saved village as pictures (no reading): cottage, the buildings it has, the bank. Text stays as aria-label. */
+function renderVillage(el: HTMLElement) {
+  const text = villageText();
+  el.setAttribute('aria-label', text);
+  if (!text) { el.replaceChildren(); return; }
+  const v = loadVillage();
+  const img = (src: string, cls: string) => { const im = new Image(); im.src = src; im.alt = ''; im.className = cls; return im; };
+  const res = (src: string, n: number) => { const s = document.createElement('span'); s.className = 'vres'; s.append(img(src, ''), String(n)); return s; };
+  el.replaceChildren(
+    img(A(`base/cottage-${v.cottage}`), 'vcot'),
+    ...BUILD_KINDS.filter((k) => v.builds[k]).map((k) => img(A(`base/${k}`), 'vb')),
+    res(A('gather/hud-wood'), v.bank.wood), res(A('gather/hud-stone'), v.bank.stone), res(A('gather/hud-berries'), v.bank.berry),
+  );
 }
 
 /** Bärregn HUD: basket counter, goal bar with 3 stars, time left; the host gets "Hoppa över". */
@@ -446,7 +484,7 @@ function renderMini(v: View) {
   $('hud').classList.toggle('mini', !!m);
   show('mini-hud', !!m);
   show('btn-skip-mini', !!m && isHost);
-  if (!m) { miniStarsShown = 0; return; }
+  if (!m) { miniStarsShown = 0; show('mini-intro', false); return; }
   controls.setTool(null);
   const c = String(m.caught);
   if ($('mini-caught').textContent !== c) {
@@ -465,7 +503,14 @@ function renderMini(v: View) {
   });
   const stars = m.goal.filter((g) => m.caught >= g).length;
   if (stars > miniStarsShown) { miniStarsShown = stars; sfx.star(); }
-  $('mini-time').style.width = `${(m.t / 40) * 100}%`;
+  $('mini-time').style.width = `${Math.min(1, m.t / MINI_SECONDS) * 100}%`;
+  // picture intro (no reading): berry on your blob = good, bomb = dizzy
+  const intro = m.t > MINI_SECONDS;
+  if (intro && $('mini-intro').classList.contains('hidden')) {
+    document.querySelectorAll('#mini-intro .mi-blob').forEach((el) => el.prepend(blobEl(profile.look)));
+  }
+  if (!intro) document.querySelectorAll('#mini-intro .mi-blob .blob').forEach((el) => el.remove());
+  show('mini-intro', intro);
   $('mini-hud').classList.toggle('hurry', m.t <= 10);
 }
 
@@ -642,7 +687,7 @@ async function hostGame() {
   show('menu', false); show('lobby');
   $('btn-start').onclick = () => { unlockAudio(); newRound(); };
   $('btn-skip-mini').onclick = () => { if (state) finishMini(state); };
-  $('lobby-village').textContent = BUILDING_ENABLED ? villageText() : '';
+  if (BUILDING_ENABLED) renderVillage($('lobby-village')); else $('lobby-village').replaceChildren();
   show('btn-newvillage', BUILDING_ENABLED);
   // "Ny by": confirmed in the page (no browser dialog)
   $('btn-newvillage').onclick = () => { show('newvillage-ask'); show('btn-newvillage', false); };
@@ -650,7 +695,10 @@ async function hostGame() {
   $('btn-newvillage-yes').onclick = () => {
     try { localStorage.removeItem('blobz.village'); } catch { /* private mode */ }
     show('newvillage-ask', false); show('btn-newvillage');
-    $('lobby-village').textContent = t('lobby.newVillageDone');
+    // a fresh little cottage with a sparkle = "new village"
+    const fresh = [A('base/cottage-1'), A('icons/sparkle')].map((src, i) => { const im = new Image(); im.src = src; im.alt = ''; im.className = i ? 'vb' : 'vcot'; return im; });
+    $('lobby-village').replaceChildren(...fresh);
+    $('lobby-village').setAttribute('aria-label', t('lobby.newVillageDone'));
   };
   $('btn-again').onclick = () => newRound();
 }
