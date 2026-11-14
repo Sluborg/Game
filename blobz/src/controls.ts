@@ -2,6 +2,7 @@
 // a big dash button, plus keyboard (WASD / arrows + space) for desktop.
 import type { Input } from './sim';
 import { t } from './i18n';
+import { NI } from './ninjaArt';
 
 export class Controls {
   private sx = 0; private sy = 0;
@@ -130,12 +131,12 @@ export class Controls {
 
   setCooldown(on: boolean) { this.dashBtn.classList.toggle('cd', on && !this.tool); }
 
-  /** Switch the action button between dash and a tool (icon from art/gather/btn-*.png). */
+  /** Switch the action button between dash and a tool (Ninja skill icons, ninjaArt.ts). */
   setTool(tool: Controls['tool']) {
     if (tool === this.tool) return;
     this.tool = tool;
     const img = this.dashBtn.querySelector('img');
-    if (img) img.src = tool ? `art/gather/btn-${tool}.png` : 'art/icons/dash-arrow.png'; // keep the original >> for dash
+    if (img) img.src = tool ? NI[tool] : NI.dash; // Ninja skill icons: harvest / mine / plant, boot = dash
     this.dashBtn.setAttribute('aria-label', t(tool === 'axe' ? 'tool.axe' : tool === 'pickaxe' ? 'tool.pickaxe' : tool === 'rake' ? 'tool.rake' : 'hud.dash'));
     this.dashBtn.classList.toggle('tool', !!tool);
   }

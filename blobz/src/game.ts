@@ -222,7 +222,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image('fx-plate-glow', 'art/fine/fx/plate-glow.png');
     // Bärregn placeholders from existing sprites (real art via the board later)
     // Ninja pieces instead of the old Claude-drawn ko-stars / shockwave (Code 2, Stefan: Ninja first); the warning ring is a plain shape
-    this.load.image('mini-ko', 'assets/ninja-adventure/Ui/Emote/emote29.png');
+    this.load.image('mini-ko', 'assets/ninja-adventure/Ui/Emote/emote3.png');
     this.load.spritesheet('mini-wave', 'assets/ninja-adventure/FX/Elemental/Explosion/SpriteSheet.png', { frameWidth: 40, frameHeight: 40 });
     for (const n of ['cottage-1', 'cottage-2', 'cottage-3', ...BUILD_KINDS]) img('b-' + n, `art/base/${n}.png`);
     if (this.s.biome === 'snow') {
