@@ -305,3 +305,8 @@ button.link .icon { height: 18px; margin-right: 6px; vertical-align: -3px; }
   html, body { background: #6cbf45; color: #3f2631; }
   input { background: #fff; color: #3f2631; }
 }
+
+/* option tiles: pictures only (names live in aria-label) */
+.opt { padding: 4px 0; justify-content: center; }
+.opt .blob { width: 45px; height: 60px; }
+@media (orientation: landscape) and (max-height: 520px) { .opt .blob { width: 33px; height: 44px; } }

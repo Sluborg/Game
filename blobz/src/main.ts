@@ -69,7 +69,8 @@ function renderPicker() {
     $('opts').replaceChildren(...PART_OPTS[key].map((label, i) => {
       const b = document.createElement('button');
       b.className = 'opt' + (profile.look[key] === i ? ' on' : '');
-      b.append(blobEl({ ...profile.look, [key]: i }), document.createTextNode(label));
+      b.append(blobEl({ ...profile.look, [key]: i }));
+      b.setAttribute('aria-label', label); b.title = label;
       b.onclick = () => choose({ [key]: i });
       return b;
     }));
