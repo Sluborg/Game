@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
-  bossHp, CLASS_HEARTS, dungeonChoice, LOOT_SECONDS, OFFER_SECONDS, skillOf,
+  bossHp, CLASS_HEARTS, SKILLS, dungeonChoice, LOOT_SECONDS, OFFER_SECONDS, skillOf,
   DONE_SECONDS, DT, dsnap, dview, ENEMY_HP, FLOORS, GH, GW, inSwing, isWall, KO_SECONDS, LEVEL_XP, makeFloor, newRun, SLAM_DMG, START_HEARTS,
   stepDungeon, TOUCH_DMG, WEAPON_STATS, type DFx, type DState,
 } from './dungeon';
 import { createState, DUNGEON_ENABLED, ENTRANCE_R, entranceOf, makePuzzles, makeTrees, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
 
+/** Art's skill icons in the repo (vite glob, no node fs types needed). */
+const ART_SKILLS = Object.keys(import.meta.glob('../public/art/dungeon/skills/*.png')).map((k) => k.split('/').pop());
 const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 });
 type B = { id: string; x: number; y: number; vx: number; vy: number; dashT: number; lastDash: number };
 const body = (id: string, x: number, y: number): B => ({ id, x, y, vx: 0, vy: 0, dashT: 0, lastDash: 0 });
@@ -161,11 +163,11 @@ describe('dungeon v1', () => {
     expect(d.heroes.a.offer).toHaveLength(3);
     expect(d.heroes.a.offer.every((id) => skillOf(id)!.cls === 'krigare')).toBe(true);
     expect(d.heroes.b.offer.every((id) => skillOf(id)!.cls === 'prast')).toBe(true);
-    d.heroes.a.offer = ['k-heart', 'k-dmg', 'k-rate'];
-    dungeonChoice(d, 'a', 'skill:k-heart');
-    expect(d.heroes.a.skills).toEqual(['k-heart']);
+    d.heroes.a.offer = ['krigare-extraheart', 'krigare-power', 'krigare-rage'];
+    dungeonChoice(d, 'a', 'skill:krigare-extraheart');
+    expect(d.heroes.a.skills).toEqual(['krigare-extraheart']);
     expect(d.heroes.a.maxHearts).toBe(CLASS_HEARTS.krigare + 1);
-    dungeonChoice(d, 'a', 'skill:k-dmg'); // not offered any more: ignored
+    dungeonChoice(d, 'a', 'skill:krigare-power'); // not offered any more: ignored
     expect(d.heroes.a.skills).toHaveLength(1);
     run1(d, bs, undefined, OFFER_SECONDS + 0.2);
     expect(d.heroes.b.skills).toHaveLength(1);
@@ -229,6 +231,14 @@ describe('dungeon v1', () => {
     run1(d, bs);
     expect(d.heroes.a.hearts).toBe(3);
     expect(d.heroes.b.hearts).toBe(2);
+  });
+
+  it('skills: 6 per class, ids match Art\'s icons', () => {
+    for (const c of ['krigare', 'prast', 'bagskytt', 'riddare'] as const) {
+      const ids = SKILLS.filter((k) => k.cls === c).map((k) => k.id);
+      expect(ids).toHaveLength(6);
+      for (const id of ids) { expect(id.startsWith(c + '-')).toBe(true); expect(ART_SKILLS).toContain(`${id}.png`); }
+    }
   });
 
   it('boss HP grows with the team', () => {

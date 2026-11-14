@@ -56,40 +56,44 @@ export const DODGE_T = 0.4; // krigare sidestep (see SIDESTEPS)
 export const WALL_T = 3;
 
 /** What skills and items change on a hero. Multipliers start at 1, the rest at 0. */
-export interface Mods { dmg: number; rate: number; reach: number; hearts: number; spCd: number; spR: number; heal: number; shieldAll: number; regen: number; arrows: number; pierce: number; thorns: number; wallT: number; taunt: number; killHeal: number }
-const NO_MODS: Mods = { dmg: 0, rate: 1, reach: 0, hearts: 0, spCd: 1, spR: 1, heal: 0, shieldAll: 0, regen: 0, arrows: 0, pierce: 0, thorns: 0, wallT: 0, taunt: 0, killHeal: 0 };
-const MULT: (keyof Mods)[] = ['rate', 'spCd', 'spR'];
-/** Level-up cards: 7 per class, picture + 2-3 words. `icon` = Kenney Tiny Dungeon tile until Art's skill-<id>.png exists. */
+export interface Mods {
+  dmg: number; rate: number; reach: number; hearts: number; spCd: number; spR: number; heal: number; shieldAll: number; regen: number;
+  arrows: number; pierce: number; thorns: number; wallT: number; taunt: number; killHeal: number;
+  kb: number; stun: number; crit: number; trap: number; dodge: number; koFast: number;
+}
+const NO_MODS: Mods = {
+  dmg: 0, rate: 1, reach: 0, hearts: 0, spCd: 1, spR: 1, heal: 0, shieldAll: 0, regen: 0, arrows: 0, pierce: 0, thorns: 0, wallT: 0, taunt: 0, killHeal: 0,
+  kb: 1, stun: 0, crit: 0, trap: 0, dodge: 0, koFast: 0,
+};
+const MULT: (keyof Mods)[] = ['rate', 'spCd', 'spR', 'kb'];
+/** Level-up cards: 6 per class, picture + 2-3 words. Ids match Art's icons art/dungeon/skills/<id>.png;
+ *  `icon` = Kenney Tiny Dungeon tile fallback. */
 export interface SkillDef { id: string; cls: HeroClass; name: string; icon: number; mod: Partial<Mods> }
 export const SKILLS: SkillDef[] = [
-  { id: 'k-dmg', cls: 'krigare', name: 'Starkare', icon: 104, mod: { dmg: 1 } },
-  { id: 'k-rate', cls: 'krigare', name: 'Snabbare slag', icon: 103, mod: { rate: 0.85 } },
-  { id: 'k-reach', cls: 'krigare', name: 'Längre räckvidd', icon: 107, mod: { reach: 14 } },
-  { id: 'k-heart', cls: 'krigare', name: 'Extra hjärta', icon: 115, mod: { hearts: 1 } },
-  { id: 'k-spcd', cls: 'krigare', name: 'Snabb special', icon: 116, mod: { spCd: 0.8 } },
-  { id: 'k-spr', cls: 'krigare', name: 'Större special', icon: 118, mod: { spR: 1.25 } },
-  { id: 'k-killheal', cls: 'krigare', name: 'Läk vid splat', icon: 127, mod: { killHeal: 1 } },
-  { id: 'p-heal', cls: 'prast', name: 'Mer läkning', icon: 115, mod: { heal: 0.5 } },
-  { id: 'p-spcd', cls: 'prast', name: 'Snabb bön', icon: 116, mod: { spCd: 0.8 } },
-  { id: 'p-spr', cls: 'prast', name: 'Större ljus', icon: 130, mod: { spR: 1.25 } },
-  { id: 'p-heart', cls: 'prast', name: 'Extra hjärta', icon: 127, mod: { hearts: 1 } },
-  { id: 'p-shield', cls: 'prast', name: 'Sköld åt alla', icon: 102, mod: { shieldAll: 1 } },
-  { id: 'p-dmg', cls: 'prast', name: 'Helig träff', icon: 129, mod: { dmg: 1 } },
-  { id: 'p-regen', cls: 'prast', name: 'Läk dig själv', icon: 114, mod: { regen: 1 } },
-  { id: 'b-arrows', cls: 'bagskytt', name: 'Fler pilar', icon: 131, mod: { arrows: 2 } },
-  { id: 'b-rate', cls: 'bagskytt', name: 'Snabba pilar', icon: 105, mod: { rate: 0.85 } },
-  { id: 'b-reach', cls: 'bagskytt', name: 'Längre skott', icon: 106, mod: { reach: 50 } },
-  { id: 'b-pierce', cls: 'bagskytt', name: 'Genomskott', icon: 107, mod: { pierce: 1 } },
-  { id: 'b-dmg', cls: 'bagskytt', name: 'Vassare pilar', icon: 104, mod: { dmg: 1 } },
-  { id: 'b-heart', cls: 'bagskytt', name: 'Extra hjärta', icon: 115, mod: { hearts: 1 } },
-  { id: 'b-spcd', cls: 'bagskytt', name: 'Snabb special', icon: 116, mod: { spCd: 0.8 } },
-  { id: 'r-armor', cls: 'riddare', name: 'Tjock rustning', icon: 101, mod: { hearts: 2 } },
-  { id: 'r-thorns', cls: 'riddare', name: 'Taggsköld', icon: 102, mod: { thorns: 1 } },
-  { id: 'r-wallt', cls: 'riddare', name: 'Lång mur', icon: 64, mod: { wallT: 1 } },
-  { id: 'r-spr', cls: 'riddare', name: 'Stor mur', icon: 65, mod: { spR: 1.3 } },
-  { id: 'r-taunt', cls: 'riddare', name: 'Lockar goo', icon: 108, mod: { taunt: 80 } },
-  { id: 'r-dmg', cls: 'riddare', name: 'Starkare', icon: 104, mod: { dmg: 1 } },
-  { id: 'r-spcd', cls: 'riddare', name: 'Snabb special', icon: 116, mod: { spCd: 0.8 } },
+  { id: 'krigare-rage', cls: 'krigare', name: 'Raseri', icon: 103, mod: { rate: 0.85 } },
+  { id: 'krigare-knockback', cls: 'krigare', name: 'Stor knuff', icon: 118, mod: { kb: 1.5 } },
+  { id: 'krigare-whirlwind', cls: 'krigare', name: 'Virvelvind', icon: 107, mod: { spR: 1.25, spCd: 0.85 } },
+  { id: 'krigare-extraheart', cls: 'krigare', name: 'Extra hjärta', icon: 115, mod: { hearts: 1 } },
+  { id: 'krigare-lifesteal', cls: 'krigare', name: 'Läk vid splat', icon: 127, mod: { killHeal: 1 } },
+  { id: 'krigare-power', cls: 'krigare', name: 'Kraft', icon: 104, mod: { dmg: 1 } },
+  { id: 'prast-heal', cls: 'prast', name: 'Mer läkning', icon: 115, mod: { heal: 0.5 } },
+  { id: 'prast-regen', cls: 'prast', name: 'Läk dig själv', icon: 114, mod: { regen: 1 } },
+  { id: 'prast-bubble', cls: 'prast', name: 'Sköldbubbla', icon: 102, mod: { shieldAll: 1 } },
+  { id: 'prast-revive', cls: 'prast', name: 'Snabb väckning', icon: 127, mod: { koFast: 2 } }, // knocked-out friends wake 2 s sooner
+  { id: 'prast-holy', cls: 'prast', name: 'Helig träff', icon: 129, mod: { dmg: 1 } },
+  { id: 'prast-cleanse', cls: 'prast', name: 'Större ljus', icon: 130, mod: { spR: 1.25, spCd: 0.85 } },
+  { id: 'bagskytt-multishot', cls: 'bagskytt', name: 'Fler pilar', icon: 131, mod: { arrows: 2 } },
+  { id: 'bagskytt-pierce', cls: 'bagskytt', name: 'Genomskott', icon: 107, mod: { pierce: 1 } },
+  { id: 'bagskytt-crit', cls: 'bagskytt', name: 'Fullträff', icon: 104, mod: { crit: 0.25 } }, // 1 in 4 arrows hits double
+  { id: 'bagskytt-speed', cls: 'bagskytt', name: 'Snabba pilar', icon: 105, mod: { rate: 0.85 } },
+  { id: 'bagskytt-poison', cls: 'bagskytt', name: 'Giftpilar', icon: 114, mod: { stun: 0.4 } }, // hit goo stand still longer
+  { id: 'bagskytt-trap', cls: 'bagskytt', name: 'Fälla', icon: 64, mod: { trap: 1.2 } }, // the volley freezes goo
+  { id: 'riddare-block', cls: 'riddare', name: 'Längre block', icon: 101, mod: { dodge: 0.3 } },
+  { id: 'riddare-taunt', cls: 'riddare', name: 'Lockar goo', icon: 108, mod: { taunt: 80 } },
+  { id: 'riddare-armor', cls: 'riddare', name: 'Tjock rustning', icon: 96, mod: { hearts: 2 } },
+  { id: 'riddare-charge', cls: 'riddare', name: 'Sköldknuff', icon: 102, mod: { kb: 1.5, dmg: 1 } },
+  { id: 'riddare-stun', cls: 'riddare', name: 'Bedöva', icon: 117, mod: { stun: 0.5 } },
+  { id: 'riddare-guard', cls: 'riddare', name: 'Lång mur', icon: 65, mod: { wallT: 1, spR: 1.2 } },
 ];
 export const skillOf = (id: string) => SKILLS.find((k) => k.id === id);
 /** Rare loot: one item slot per blob. `icon` = Kenney tile until Art's item-<id>.png exists. */
@@ -449,14 +453,14 @@ function special(d: DState, h: Hero, b: Body, bodies: Body[], m: Mods, fx: DFx[]
     const n = 3 + m.arrows;
     const targets = d.enemies.filter((e) => e.hp > 0 && Math.hypot(e.x - b.x, e.y - b.y) - ENEMY_R[e.kind] <= r && lineOfSight(d.map, b.x, b.y, e.x, e.y))
       .sort((p, q) => Math.hypot(p.x - b.x, p.y - b.y) - Math.hypot(q.x - b.x, q.y - b.y)).slice(0, n);
-    for (const e of targets) { fx.push({ t: 'shot', x: b.x, y: b.y, tx: e.x, ty: e.y }); hitEnemy(d, e, dmg, sp.kb, sp.stun, b.x, b.y, fx, b.id); }
+    for (const e of targets) { fx.push({ t: 'shot', x: b.x, y: b.y, tx: e.x, ty: e.y }); hitEnemy(d, e, dmg, sp.kb * m.kb, sp.stun + m.trap, b.x, b.y, fx, b.id); }
   } else if (sp.kind === 'wall') {
     // shield wall: goo inside are shoved out, friends inside take no damage while it stands
     h.wallT = WALL_T + m.wallT;
-    for (const e of d.enemies) if (e.hp > 0 && Math.hypot(e.x - b.x, e.y - b.y) - ENEMY_R[e.kind] <= r) hitEnemy(d, e, 0, sp.kb, sp.stun, b.x, b.y, fx, b.id);
+    for (const e of d.enemies) if (e.hp > 0 && Math.hypot(e.x - b.x, e.y - b.y) - ENEMY_R[e.kind] <= r) hitEnemy(d, e, 0, sp.kb * m.kb, sp.stun + m.stun, b.x, b.y, fx, b.id);
   } else {
     // spin (sword) and slam (hammer): everything around the blob
-    for (const e of d.enemies) if (e.hp > 0 && Math.hypot(e.x - b.x, e.y - b.y) - ENEMY_R[e.kind] <= r) hitEnemy(d, e, dmg, sp.kb, sp.stun, b.x, b.y, fx, b.id);
+    for (const e of d.enemies) if (e.hp > 0 && Math.hypot(e.x - b.x, e.y - b.y) - ENEMY_R[e.kind] <= r) hitEnemy(d, e, dmg, sp.kb * m.kb, sp.stun + m.stun, b.x, b.y, fx, b.id);
   }
   fx.push(at);
 }
@@ -470,10 +474,11 @@ function autoAttack(d: DState, h: Hero, b: Body, m: Mods, fx: DFx[]) {
   face(h, b, t.x, t.y);
   h.atkCd = st.cd * m.rate; h.swing = Math.min(0.3, h.atkCd * 0.8);
   fx.push({ t: 'swing', id: b.id, w: h.weapon, a: Math.atan2(h.fy, h.fx) });
-  const dmg = st.dmg + m.dmg;
+  const dmg = (st.dmg + m.dmg) * (m.crit > 0 && Math.random() < m.crit ? 2 : 1);
+  const kb = st.kb * m.kb;
   if (st.ranged) {
     fx.push({ t: 'shot', x: b.x, y: b.y, tx: t.x, ty: t.y });
-    hitEnemy(d, t, dmg, st.kb, 0.25, b.x, b.y, fx, b.id);
+    hitEnemy(d, t, dmg, kb, 0.25 + m.stun, b.x, b.y, fx, b.id);
     // pierce: the arrow flies on through the next goo in the line
     let left = m.pierce;
     for (const e of d.enemies) {
@@ -481,13 +486,13 @@ function autoAttack(d: DState, h: Hero, b: Body, m: Mods, fx: DFx[]) {
       if (e === t || e.hp <= 0) continue;
       const ex = e.x - b.x, ey = e.y - b.y, along = ex * h.fx + ey * h.fy;
       if (along <= 0 || along > reach + 40 || Math.abs(ex * h.fy - ey * h.fx) > ENEMY_R[e.kind] + 6) continue;
-      hitEnemy(d, e, dmg, st.kb, 0.25, b.x, b.y, fx, b.id); left--;
+      hitEnemy(d, e, dmg, kb, 0.25 + m.stun, b.x, b.y, fx, b.id); left--;
     }
     return;
   }
   for (const e of d.enemies) {
     if (e.hp <= 0 || !inSwing(h.weapon, b.x, b.y, h.fx, h.fy, e.x, e.y, ENEMY_R[e.kind], m.reach)) continue;
-    hitEnemy(d, e, dmg, st.kb, 0.35, b.x, b.y, fx, b.id);
+    hitEnemy(d, e, dmg, kb, 0.35 + m.stun, b.x, b.y, fx, b.id);
   }
 }
 
@@ -537,7 +542,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
       h.lastDash = b.lastDash;
       if (b.dashT > 0.25) {
         const ss = SIDESTEPS[h.cls];
-        h.dodge = ss.dodge;
+        h.dodge = ss.dodge + m.dodge;
         if (ss.heal) healHero(h, ss.heal);
         if (ss.hold) { b.vx *= 0.3; b.vy *= 0.3; }
         if (ss.away) {
@@ -736,7 +741,8 @@ function hurt(d: DState, b: Body, fromX: number, fromY: number, dmg: number, fx:
   h.hearts = Math.max(0, h.hearts - dmg); h.inv = HURT_INV;
   const dx = b.x - fromX, dy = b.y - fromY, dl = Math.hypot(dx, dy) || 1;
   b.vx = (dx / dl) * 260; b.vy = (dy / dl) * 260;
-  if (h.hearts <= 0) { h.ko = KO_SECONDS; h.kx = b.x; h.ky = b.y; fx.push({ t: 'ko', id: b.id, x: b.x, y: b.y }); }
+  const fast = Math.max(0, ...Object.values(d.heroes).map((o) => (o.ko > 0 ? 0 : heroMods(o).koFast)));
+  if (h.hearts <= 0) { h.ko = KO_SECONDS - fast; h.kx = b.x; h.ky = b.y; fx.push({ t: 'ko', id: b.id, x: b.x, y: b.y }); }
   else fx.push({ t: 'ouch', id: b.id, x: b.x, y: b.y });
   return true;
 }
