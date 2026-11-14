@@ -76,7 +76,9 @@ def eyes(face, top, bottom, kind):
     px = {}
     if face == 'up':
         return px
-    if face == 'down':
+    if face == 'q':
+        xs = [7, 11]
+    elif face == 'down':
         xs = [5, 10]
     elif face == 'right':
         xs = [11]
@@ -90,12 +92,17 @@ def eyes(face, top, bottom, kind):
             for dy in range(3 if kind == 'big' else 2):
                 px[(ex, ey + dy)] = EYE
                 px[(ex + 1, ey + dy)] = EYE
-            pdx = 1 if face == 'right' else 0 if face == 'left' else (1 if ex < 8 else 0)
+            pdx = 1 if face in ('right', 'q') else 0 if face == 'left' else (1 if ex < 8 else 0)
             px[(ex + pdx, ey + (2 if kind == 'big' else 1))] = INK
             if kind == 'big':
                 px[(ex + pdx, ey + 1)] = INK
     my = ey + (3 if kind == 'big' else 2) + 1
-    if face == 'down':
+    if face == 'q':
+        for x in (9, 10):
+            px[(x, my)] = INK
+        px[(8, my - 1)] = INK
+        px[(11, my - 1)] = INK
+    elif face == 'down':
         for x in (7, 8):
             px[(x, my)] = INK
         px[(6, my - 1)] = INK
@@ -134,7 +141,7 @@ def blob(shape, colour, face='down', frame=0, eye='normal', hat='none'):
         im.putpixel((x, y), c)
     paint(im, outline(m), INK)
     # highlight like the Ninja slime: a 2 px white glint top-left (top-right when facing right)
-    hx = {'right': 5, 'left': 9}.get(face, 4)  # glint on the back side when seen from the side
+    hx = {'right': 5, 'left': 9, 'q': 3}.get(face, 4)  # glint on the back side when seen from the side
     if face != 'up':
         paint(im, {(hx, top + 1), (hx + 1, top + 1), (hx, top + 2)} & m, WHITE)
     else:
@@ -162,45 +169,41 @@ def ninja(path, col, row, cols=4):
 
 
 def main(scale=6):
-    faces = ['down', 'up', 'left', 'right']
     shapes = list(SHAPES)
     pad = 6
     cell = (FW + 4) * scale
-    w = (1 + 4 * 2) * cell + 2 * pad
+    w = 9 * cell + 2 * pad
     out = Image.new('RGBA', (w, 1400), (98, 150, 72, 255))
     d = ImageDraw.Draw(out)
-    d.text((pad, 4), 'Blobz v2 on the Ninja 16 px grid: 6 shapes x 4 facings (idle + glide frame)', fill=(255, 255, 255, 255), font_size=22)
+    d.text((pad, 4), 'Blobz v2 round 2: ONE 3/4 view (facing right), left = mirrored. Idle + glide frame.', fill=(255, 255, 255, 255), font_size=22)
     y = 40
-    eyes_ = ['normal', 'big', 'happy', 'normal', 'big', 'normal']
+    eyes_ = ['normal', 'big', 'normal', 'normal', 'big', 'normal']
     for r, sh in enumerate(shapes):
         d.text((pad, y + cell // 2 - 10), sh, fill=(255, 255, 255, 255), font_size=18)
-        for i, f in enumerate(faces):
-            for k, fr in enumerate((0, 1)):
-                im = blob(sh, COLOURS[r], f, fr, eyes_[r])
-                out.alpha_composite(im.resize((FW * scale, FH * scale), Image.NEAREST), (pad + cell + (i * 2 + k) * cell, y))
+        frames = [blob(sh, COLOURS[r], 'q', fr, eyes_[r]) for fr in (0, 1)]
+        for k, im in enumerate(frames + [f.transpose(Image.FLIP_LEFT_RIGHT) for f in frames]):
+            out.alpha_composite(im.resize((FW * scale, FH * scale), Image.NEAREST), (pad + cell + k * cell + (cell // 2 if k >= 2 else 0), y))
         y += FH * scale + 10
-    d.text((pad + cell, y), 'down  (2 frames)      up                     left                    right', fill=(255, 255, 255, 255), font_size=16)
+    d.text((pad + cell, y), 'right: idle, glide            left (mirrored): idle, glide', fill=(255, 255, 255, 255), font_size=16)
     y += 30
-    d.text((pad, y), 'hats + Ninja actors at the same scale', fill=(255, 255, 255, 255), font_size=18)
+    d.text((pad, y), 'hats (same 3/4 view) + Ninja actors at the same scale', fill=(255, 255, 255, 255), font_size=18)
     y += 26
     x = pad
-    for k, h in enumerate(HATS):
-        for f in ('down', 'right'):
-            im = blob('dome', COLOURS[k % 6], f, 0, 'normal', h)
-            out.alpha_composite(im.resize((FW * scale, FH * scale), Image.NEAREST), (x, y))
-            x += cell
+    for k, h in enumerate(h for h in HATS if h != 'none'):
+        im = blob(['dome', 'ball', 'tall', 'pear', 'cube'][k], COLOURS[k], 'q', 0, 'normal', h)
+        out.alpha_composite(im.resize((FW * scale, FH * scale), Image.NEAREST), (x, y))
+        x += cell
     y += FH * scale + 16
     x = pad
     for path, col, row in (('Actor/Character/Boy/SpriteSheet.png', 0, 0), ('Actor/Character/Boy/SpriteSheet.png', 3, 0),
                            ('Actor/Monster/Slime/Slime.png', 0, 0), ('Actor/Monster/Skull/SpriteSheet.png', 0, 0),
                            ('Actor/Monster/Mushroom/mushroom.png', 0, 0)):
-        p = os.path.join(NA, path)
-        if not os.path.exists(p):
-            continue
         out.alpha_composite(ninja(path, col, row).resize((16 * scale, 16 * scale), Image.NEAREST), (x, y + 2 * scale))
         x += cell
     for k, sh in enumerate(('dome', 'ball', 'tall')):
-        im = blob(sh, COLOURS[k], 'down', 0, 'normal', ['cap', 'none', 'sprout'][k])
+        im = blob(sh, COLOURS[k], 'q', 0, 'normal', ['cap', 'none', 'sprout'][k])
+        if k == 1:
+            im = im.transpose(Image.FLIP_LEFT_RIGHT)
         out.alpha_composite(im.resize((FW * scale, FH * scale), Image.NEAREST), (x, y))
         x += cell
     y += FH * scale + 10
