@@ -29,7 +29,7 @@ const PAL: Record<string, string> = {
   Y: '#ffd23f', y: '#e0a81e', o: '#fff1a8', e: '#e63946', c: '#a4161a', k: '#2b2b33', g: '#5a5f6b',
   a: '#a7adb8', i: '#d6f1ff', N: '#ff8fab', n: '#e05780', P: '#b18cff', p: '#7d5fd6', B: '#3d6bff',
   b: '#2a4bb8', S: '#f2cf6b', s: '#c99a3e', L: '#7ccf4a', l: '#3f8f2f', G: '#2f7a2a', O: '#ff8a3d',
-  Q: '#ffc08a', v: '#f3ead8', x: '#c9b48e', T: '#7fd3ff', q: '#2e86c1', d: '#6b4226', D: '#9a6a44',
+  Q: '#ffc08a', z: '#ffe3ea', v: '#f3ead8', x: '#c9b48e', T: '#7fd3ff', q: '#2e86c1', d: '#6b4226', D: '#9a6a44',
 };
 
 /** Mirror a left half into a full symmetric row set (`odd`: the last column is the shared centre). */
@@ -55,9 +55,9 @@ const EYE_PARTS: EyePart[] = [
   { y: 24, rows: ['.UU.UU.', 'UHwUHHU', 'UHHHHHU', 'UHHHHrU', '.UHHrU.', '..UrU..', '...U...'] }, // Kär
   { x: 7, y: 22, rows: ['....K....', '...KYK...', '...KoK...', 'KKKKYKKKK', 'KYYoYYYYK', '.KYYYYYK.', '..KYYYK..', '.KYYKYyK.', '.KyK.KyK.', '.KK...KK.'] }, // Stjärnor
   { y: 21, rows: ['KK.....', '.KKKK..', '...KKKK', '.....KK', '.UUUUU.', 'UWWKKKU', 'UWWKwKU', 'UWWKKKU', '.UWWWU.', '..UUU..'] }, // Arga
-  { x: 6, rows: [ // Rosiga (blush)
+  { x: 6, rows: [ // Rosiga (blush: dark rose rim + light pink, reads on red and pink bodies too)
     '....UUU..', '...UWWWU.', '..UWWWWWU', '..UWWKKKU', '..UWWKwKU', '..UWWKKKU', '...UWWWU.', '....UUU..',
-    '.........', 'NrNrNr...', '.NrNrNr..'] },
+    '..cccc...', '.cNzNNc..', '..cccc...'] },
   { rows: ['..UUU..', '.UWWWU.', 'UWWWWWU', 'UWWKKKU', 'UWWKwKU', 'UWWKKKU', '.UWWWU.', '..UUU..'], // Blink
     right: ['.......', '.....KK', '...KKK.', '.KKK...', 'KK.....', '.KKK...', '...KKK.', '.....KK'] },
   { y: 23, rows: ['..UUU..', '.UWWWU.', 'UWWWWWU', 'UWWKKKU', 'UTWKwKU', 'qTTKKKU', 'qTTqUU.', 'qTTq...', '.qq....'] }, // Tårar
