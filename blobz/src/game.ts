@@ -221,9 +221,9 @@ export class GameScene extends Phaser.Scene {
     this.load.spritesheet('m-sparkle', 'art/fine/fx/coin-sparkle.png', { frameWidth: 22, frameHeight: 22 });
     this.load.image('fx-plate-glow', 'art/fine/fx/plate-glow.png');
     // Bärregn placeholders from existing sprites (real art via the board later)
-    this.load.spritesheet('mini-ko', 'art/fine/dungeon/ko-stars.png', { frameWidth: 40, frameHeight: 18 });
-    this.load.image('mini-warn', 'art/fine/dungeon/slam-warning.png');
-    this.load.spritesheet('mini-wave', 'art/fine/dungeon/shockwave.png', { frameWidth: 96, frameHeight: 48 });
+    // Ninja pieces instead of the old Claude-drawn ko-stars / shockwave (Code 2, Stefan: Ninja first); the warning ring is a plain shape
+    this.load.image('mini-ko', 'assets/ninja-adventure/Ui/Emote/emote29.png');
+    this.load.spritesheet('mini-wave', 'assets/ninja-adventure/FX/Elemental/Explosion/SpriteSheet.png', { frameWidth: 40, frameHeight: 40 });
     for (const n of ['cottage-1', 'cottage-2', 'cottage-3', ...BUILD_KINDS]) img('b-' + n, `art/base/${n}.png`);
     if (this.s.biome === 'snow') {
       this.load.on('loaderror', () => { /* winter art not drawn yet: tinted stand-ins below */ });
@@ -346,8 +346,7 @@ export class GameScene extends Phaser.Scene {
     this.pile = this.add.container(BASE.x + 52, BASE.y + 40).setDepth(BASE.y + 40);
     // dusk: warm tint over the world in the last 20 s of daylight
     this.dusk = this.add.rectangle(WORLD_W / 2, WORLD_H / 2, WORLD_W * 3, WORLD_H * 3, 0xff7a2f, 0).setDepth(8000);
-    if (!this.anims.exists('mini-ko')) this.anims.create({ key: 'mini-ko', frames: this.anims.generateFrameNumbers('mini-ko', { start: 0, end: 1 }), frameRate: 6, repeat: -1 });
-    if (!this.anims.exists('mini-wave')) this.anims.create({ key: 'mini-wave', frames: this.anims.generateFrameNumbers('mini-wave', { start: 0, end: 2 }), frameRate: 12 });
+    if (!this.anims.exists('mini-wave')) this.anims.create({ key: 'mini-wave', frames: this.anims.generateFrameNumbers('mini-wave', {}), frameRate: 18 });
     if (!this.anims.exists('dust')) this.anims.create({ key: 'dust', frames: this.anims.generateFrameNumbers('fx-dust', { start: 0, end: 3 }), frameRate: 10 });
     if (!this.anims.exists('m-sparkle')) this.anims.create({ key: 'm-sparkle', frames: this.anims.generateFrameNumbers('m-sparkle', { frames: [0, 1, 2, 1, 0] }), frameRate: 16 });
     if (!this.anims.exists('levelup')) this.anims.create({ key: 'levelup', frames: this.anims.generateFrameNumbers('fx-levelup', { start: 0, end: 3 }), frameRate: 10 });
@@ -859,7 +858,7 @@ export class GameScene extends Phaser.Scene {
         const bomb = d.kind === 'bomb';
         e = {
           // bombs: Art's red slam ring marks the blast area; berries: a plain shadow
-          mark: bomb ? this.add.image(d.x, d.y, 'mini-warn').setDisplaySize(BOMB_R * 2, BOMB_R).setDepth(9100) : this.add.ellipse(d.x, d.y + 4, 30, 10, 0x000000, 0.25).setDepth(9100),
+          mark: bomb ? this.add.ellipse(d.x, d.y, BOMB_R * 2, BOMB_R, 0xff3b2f, 0.22).setStrokeStyle(3, 0xff3b2f, 0.9).setDepth(9100) : this.add.ellipse(d.x, d.y + 4, 30, 10, 0x000000, 0.25).setDepth(9100),
           item: bomb ? this.add.image(d.x, d.y, 'pr-rock').setScale(1).setTint(0x2e2a3a).setDepth(10000 + d.y + 5) : this.add.image(d.x, d.y, 'g-item-berries').setScale(2).setDepth(10000 + d.y + 5),
         };
         this.drops.set(d.id, e);
@@ -997,15 +996,14 @@ export class GameScene extends Phaser.Scene {
       this.burst(f.x, f.y, 0xc0392b, 4);
     } else if (f.t === 'boom') {
       sfx.bump();
-      const w = this.add.sprite(f.x, f.y, 'mini-wave', 0).setDisplaySize(BOMB_R * 2.2, BOMB_R * 1.1).setDepth(20000);
+      const w = this.add.sprite(f.x, f.y - 10, 'mini-wave', 0).setDisplaySize(BOMB_R * 1.6, BOMB_R * 1.6).setDepth(20000);
       w.play('mini-wave'); w.once('animationcomplete', () => w.destroy());
       this.burst(f.x, f.y - 10, 0xffa040, 10);
       this.cameras.main.shake(120, 0.004);
     } else if (f.t === 'stun') {
       const b = this.blobs.get(f.id);
       if (b) {
-        const st = this.add.sprite(b.x, b.y - 46, 'mini-ko', 0).setScale(1).setDepth(20001);
-        st.play('mini-ko');
+        const st = this.add.image(b.x, b.y - 46, 'mini-ko').setScale(2).setDepth(20001);
         const follow = this.time.addEvent({ delay: 16, loop: true, callback: () => st.setPosition(b.x, b.y - 46) });
         const blink = this.tweens.add({ targets: b.body, alpha: 0.45, duration: 110, yoyo: true, repeat: -1 });
         this.time.delayedCall(1000, () => { follow.remove(); st.destroy(); blink.remove(); b.body.setAlpha(1); });

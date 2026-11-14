@@ -35,10 +35,12 @@ const SPECIAL_ICON: Record<Weapon, string> = {
   sword: 'Ui/Skill Icon/Spell/Cut.png', hammer: 'Ui/Skill Icon/Spell/Explosion.png', spear: 'Ui/Skill Icon/Spell/MagicWeapon.png', staff: 'Ui/Skill Icon/Spell/Heal.png',
   bow: 'Ui/Skill Icon/Items & Weapon/Kunai.png', shield: 'Ui/Skill Icon/Spell/DefenseUpgrade.png', dagger: 'Ui/Skill Icon/Items & Weapon/Shuriken.png',
 };
+/** the small button's class move icon (Ninja skill icons) */
+const MOVE_ICON: Record<string, string> = { rogue: 'Ui/Skill Icon/Spell/Camouflage.png', marksman: 'Ui/Skill Icon/Spell/Upgrade.png', tank: 'Ui/Skill Icon/Spell/Counter.png', healer: 'Ui/Skill Icon/Spell/Mist.png' };
 /** the healer's button shows the wand's current mode: damage (red orb) / heal (green) */
 const HEALER_ICON = ['Ui/Skill Icon/Spell/OrbFire.png', 'Ui/Skill Icon/Spell/Heal.png'];
 /** Ninja weapon sprites on the rogue's weapon cards. */
-const WEAPON_CARD: Partial<Record<Weapon, string>> = { sword: 'Items/Weapons/Sword/Sprite.png', hammer: 'Items/Weapons/Hammer/Sprite.png', dagger: 'Items/Weapons/Sai/Sprite.png', spear: 'Items/Weapons/Lance/Sprite.png' };
+const WEAPON_CARD: Partial<Record<Weapon, string>> = { sword: 'Items/Weapons/Sword/Sprite.png', hammer: 'Items/Weapons/Hammer/Sprite.png', dagger: 'Items/Weapons/Ninjaku/SpriteInHand.png', spear: 'Items/Weapons/Lance/Sprite.png' };
 
 let lastMode = 'meadow';
 let myPick: Weapon | null = null;
@@ -61,7 +63,7 @@ function buildCards() {
   const h2 = $('weapon-pick').querySelector('h2');
   if (!pickClass) {
     if (h2) h2.textContent = t('dg.pickClass');
-    root.replaceChildren(...CLASSES.map((c) => card(c, icon(`art/dungeon/card-class-${c}.png`, 0, 1, 'cardimg') /* GAP: ChatGPT N-5 class cards */, tClass(c), tClassHint(c), () => {
+    root.replaceChildren(...CLASSES.map((c) => card(c, icon(`art/dungeon/card-class-${c}.png`, 0, 1, 'cardimg') /* ChatGPT N-5 / N-5b class cards */, tClass(c), tClassHint(c), () => {
       const ws = CLASS_WEAPONS[c];
       if (ws.length === 1) { myPick = ws[0]; pickClass = c; sendPick(ws[0]); markCards(); return; }
       pickClass = c; buildCards();
@@ -144,6 +146,23 @@ function renderHud(d: DView, myId: string) {
   // Art's special icon per weapon (spin / slam / charge / heal / volley / wall)
   const src = encodeURI(NAU + (h?.cls === 'healer' ? HEALER_ICON[h.mode ? 1 : 0] : SPECIAL_ICON[h?.weapon ?? 'sword']));
   if (spIcon && !spIcon.src.endsWith(src)) spIcon.src = src;
+  // the small button = my class move: its icon, a radial sweep while recharging, the rogue's charge pips
+  const dash = document.getElementById('dash');
+  if (dash && h) {
+    const mvLeft = h.charges >= h.maxCharges ? 0 : Math.max(0, Math.min(1, h.mvCd / h.mvMax));
+    dash.style.setProperty('--cd', String(mvLeft));
+    dash.classList.toggle('cd', h.charges <= 0);
+    dash.dataset.cls = h.cls;
+    const di = dash.querySelector('img');
+    const dsrc = encodeURI(NAU + MOVE_ICON[h.cls]);
+    if (di && !di.src.endsWith(dsrc)) di.src = dsrc;
+    let pips = dash.querySelector('.dg-pips') as HTMLElement | null;
+    if (h.maxCharges > 1) {
+      if (!pips) { pips = document.createElement('span'); pips.className = 'dg-pips'; dash.append(pips); }
+      const want = String(h.charges);
+      if (pips.dataset.n !== want) { pips.dataset.n = want; pips.replaceChildren(...[...Array(h.maxCharges).keys()].map((i) => { const p = document.createElement('i'); if (i < h.charges) p.className = 'on'; return p; })); }
+    } else pips?.remove();
+  }
   // my loot item next to the gold
   const key = h?.item ?? '';
   const slot = $('dg-item');
@@ -264,7 +283,7 @@ export function dungeonUi(v: View, myId: string | undefined, controls: Controls,
     const dashImg = controls.dashBtn.querySelector('img');
     if (dashImg && !controls.tool) dashImg.src = mode === 'dungeon' ? encodeURI(NAU + 'Ui/Skill Icon/Spell/Camouflage.png') : 'art/icons/dash-arrow.png';
     show('hud-dg', mode === 'dungeon');
-    if (mode !== 'dungeon') { show('dg-ko', false); show('dg-end', false); show('dg-cards', false); show('dg-loot', false); offerKey = ''; lootKey = ''; }
+    if (mode !== 'dungeon') { controls.dashBtn.querySelector('.dg-pips')?.remove(); controls.dashBtn.style.removeProperty('--cd'); controls.dashBtn.classList.remove('cd'); show('dg-ko', false); show('dg-end', false); show('dg-cards', false); show('dg-loot', false); offerKey = ''; lootKey = ''; }
     lastMode = mode;
   }
   show('weapon-pick', mode === 'pick');
