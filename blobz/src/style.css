@@ -455,16 +455,3 @@ button.link .icon { height: 18px; margin-right: 6px; vertical-align: -3px; }
   .opt .blob { width: 36px; height: 48px; }
   .opt.swatch-opt { height: 64px; }
 }
-
-/* ---------- goo wave banner (milestone 50) ---------- */
-#wave-banner {
-  position: absolute; left: 50%; top: 30%; transform: translate(-50%, -50%); padding: 6px 22px 10px;
-  font-size: 40px; font-weight: 700; color: #fff; white-space: nowrap; letter-spacing: 1px;
-  text-shadow: 0 3px 0 #3f2631, 3px 0 0 #3f2631, -3px 0 0 #3f2631, 0 -3px 0 #3f2631;
-  background: #7a3fb0e6; box-shadow: 0 0 0 4px #3f2631, inset 0 -6px 0 0 #5a2a86, inset 0 4px 0 0 #b46bff;
-}
-#wave-banner.show { animation: wavein 2.4s ease-out both; }
-@keyframes wavein {
-  0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; } 12% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
-  20% { transform: translate(-50%, -50%) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -70%) scale(1); }
-}

@@ -87,7 +87,6 @@ export class GameScene extends Phaser.Scene {
   private gems = new Map<number, { g: Phaser.GameObjects.Graphics; img: Phaser.GameObjects.Image; t: Phaser.GameObjects.Image[]; x: number; y: number }>();
   private powers = new Map<number, Phaser.GameObjects.Container>();
   private pz: PuzzleGfx[] = [];
-  private goos = new Map<number, { img: Phaser.GameObjects.Image; shadow: Phaser.GameObjects.Ellipse; pips: Phaser.GameObjects.Graphics; loot: Phaser.GameObjects.Image[]; x: number; y: number; kind: number }>();
   private nodes: { img: Phaser.GameObjects.Image; kind: number; left: number; x: number; y: number; sc: number }[] = [];
   private dusk!: Phaser.GameObjects.Rectangle;
   private totems: TotemGfx[] = [];
@@ -115,7 +114,7 @@ export class GameScene extends Phaser.Scene {
 
   init(data: { session: Session }) {
     this.s = data.session;
-    this.blobs.clear(); this.items.clear(); this.gems.clear(); this.powers.clear(); this.goos.clear();
+    this.blobs.clear(); this.items.clear(); this.gems.clear(); this.powers.clear();
     this.lastView = null;
     this.lastClock = 0;
   }
@@ -131,9 +130,6 @@ export class GameScene extends Phaser.Scene {
     this.load.spritesheet('fx-dust', 'art/fx/dust.png', { frameWidth: 14, frameHeight: 12 });
     this.load.spritesheet('fx-sparkle', 'art/fx/coin-sparkle.png', { frameWidth: 11, frameHeight: 11 });
     this.load.image('fx-plate-glow', 'art/fx/plate-glow.png');
-    ['small', 'medium', 'boss'].forEach((n, i) => this.load.image('goo-' + i, `art/enemies/goo-${n}.png`));
-    this.load.image('goo-puddle', 'art/enemies/goo-splat.png');
-    this.load.spritesheet('fx-splat', 'art/fx/splat.png', { frameWidth: 20, frameHeight: 16 });
     const sheet = (key: string, dir: string) => this.load.spritesheet(key, `assets/${dir}/tilemap_packed.png`, { frameWidth: 16, frameHeight: 16 });
     sheet('town', 'kenney-tiny-town');
     sheet('dungeon', 'kenney-tiny-dungeon');
@@ -219,7 +215,6 @@ export class GameScene extends Phaser.Scene {
     this.pile = this.add.container(BASE.x + 52, BASE.y + 40).setDepth(BASE.y + 40);
     // dusk: warm tint over the world in the last 20 s of daylight
     this.dusk = this.add.rectangle(WORLD_W / 2, WORLD_H / 2, WORLD_W * 3, WORLD_H * 3, 0xff7a2f, 0).setDepth(8000);
-    if (!this.anims.exists('splat')) this.anims.create({ key: 'splat', frames: this.anims.generateFrameNumbers('fx-splat', { start: 0, end: 3 }), frameRate: 12 });
     if (!this.anims.exists('dust')) this.anims.create({ key: 'dust', frames: this.anims.generateFrameNumbers('fx-dust', { start: 0, end: 3 }), frameRate: 10 });
     if (!this.anims.exists('sparkle')) this.anims.create({ key: 'sparkle', frames: this.anims.generateFrameNumbers('fx-sparkle', { frames: [0, 1, 2, 1, 0] }), frameRate: 16 });
     if (!this.anims.exists('levelup')) this.anims.create({ key: 'levelup', frames: this.anims.generateFrameNumbers('fx-levelup', { start: 0, end: 3 }), frameRate: 10 });
@@ -317,9 +312,6 @@ export class GameScene extends Phaser.Scene {
 
     // ---- co-op puzzles ----
     v.puzzles?.forEach((z, i) => this.drawPuzzle(this.pz[i], z, now));
-
-    // ---- goo ----
-    this.drawGoos(v, now, smooth ? k : 1);
 
     // ---- totems + bank ----
     this.drawTotems(v, now);
@@ -451,45 +443,6 @@ export class GameScene extends Phaser.Scene {
       img.setTexture(ITEM_ICON[k] ?? 'ic-log').setScale(CARRY_SCALE[k] ?? 1);
       img.setPosition(b.x + (i - (p.carry.length - 1) / 2) * 14, b.y - 44 + hover - Math.abs(i - 1) * 2).setDepth(b.y + 3);
     });
-  }
-
-  /** Purple goo: wobbling body, hp pips (medium/boss), stolen loot riding on top. */
-  private drawGoos(v: View, now: number, k: number) {
-    const seen = new Set<number>();
-    for (const o of v.goos ?? []) {
-      seen.add(o.id);
-      let e = this.goos.get(o.id);
-      const sc = 3;
-      if (!e) {
-        e = {
-          img: this.add.image(o.x, o.y, 'goo-' + o.kind).setOrigin(0.5, 0.85).setScale(0.3),
-          shadow: this.add.ellipse(o.x, o.y, [30, 44, 66][o.kind], 10, 0x000000, 0.22),
-          pips: this.add.graphics(), loot: [], x: o.x, y: o.y, kind: o.kind,
-        };
-        this.tweens.add({ targets: e.img, scale: sc, duration: 260, ease: 'Back.Out' });
-        this.goos.set(o.id, e);
-      }
-      const dx = o.x - e.x;
-      e.x += (o.x - e.x) * k; e.y += (o.y - e.y) * k;
-      const wob = Math.sin(now / 120 + o.id) * 0.08;
-      if (e.img.scale >= sc * 0.99 || !this.tweens.isTweening(e.img)) e.img.setScale(sc * (1 + wob), sc * (1 - wob));
-      if (Math.abs(dx) > 0.3) e.img.setFlipX(dx < 0);
-      e.img.setPosition(e.x, e.y).setDepth(e.y);
-      e.shadow.setPosition(e.x, e.y + 2).setDepth(e.y - 20);
-      // hp pips over medium + boss
-      e.pips.clear().setDepth(e.y + 900);
-      const max = [1, 2, 5][o.kind];
-      if (max > 1) for (let i = 0; i < max; i++) {
-        const x = e.x + (i - (max - 1) / 2) * 12, y = e.y - [36, 52, 84][o.kind];
-        e.pips.fillStyle(0x3f2631, 1).fillCircle(x, y, 5).fillStyle(i < o.hp ? 0xb46bff : 0xe3d5b6, 1).fillCircle(x, y, 3.5);
-      }
-      // stolen items bob on top of the goo
-      while (e.loot.length < o.loot.length) e.loot.push(this.add.image(0, 0, 'ic-log'));
-      while (e.loot.length > o.loot.length) e.loot.pop()!.destroy();
-      o.loot.forEach((kd, i) => e!.loot[i].setTexture(ITEM_ICON[kd]).setScale(CARRY_SCALE[kd] ?? 1)
-        .setPosition(e!.x + (i - (o.loot.length - 1) / 2) * 14, e!.y - [30, 44, 74][o.kind] + Math.sin(now / 150 + i) * 2).setDepth(e!.y + 901));
-    }
-    for (const [id, e] of this.goos) if (!seen.has(id)) { e.img.destroy(); e.shadow.destroy(); e.pips.destroy(); e.loot.forEach((l) => l.destroy()); this.goos.delete(id); }
   }
 
   /** Totem on its pedestal, level pips below, price tag above (coin icon + number). */
@@ -708,34 +661,6 @@ export class GameScene extends Phaser.Scene {
       sfx.bump();
       this.burst(f.x, f.y - 20, 0x5aa83a, 8);
       this.cameras.main.shake(80, 0.003);
-    } else if (f.t === 'wave') {
-      sfx.wave(f.boss);
-      const el = document.getElementById('wave-banner');
-      if (el) {
-        el.textContent = f.boss ? 'Jätte-goo!' : 'Goo-våg!';
-        el.classList.remove('hidden', 'show'); void el.offsetWidth; el.classList.add('show');
-        setTimeout(() => el.classList.add('hidden'), 2400);
-      }
-    } else if (f.t === 'splat') {
-      sfx.splat();
-      const sp = this.add.sprite(f.x, f.y, 'fx-splat', 0).setScale(3 + f.kind).setDepth(f.y + 5);
-      sp.play('splat');
-      sp.once('animationcomplete', () => {
-        sp.destroy();
-        const pd = this.add.image(f.x, f.y, 'goo-puddle').setScale(3 + f.kind).setDepth(-480);
-        this.tweens.add({ targets: pd, alpha: 0, delay: 1500, duration: 900, onComplete: () => pd.destroy() });
-      });
-      this.cameras.main.shake(f.kind === 2 ? 260 : 90, f.kind === 2 ? 0.008 : 0.003);
-    } else if (f.t === 'goohit') {
-      sfx.bump();
-      this.burst(f.x, f.y - 10, 0xb46bff, 8);
-    } else if (f.t === 'steal') {
-      sfx.steal();
-      this.burst(f.x, f.y - 20, 0xe63946, 6);
-    } else if (f.t === 'shield') {
-      sfx.power();
-      const c = this.add.circle(f.x, f.y - 6, 30, 0x8fd3ff, 0.5).setStrokeStyle(3, 0xffffff, 0.9).setDepth(5000);
-      this.tweens.add({ targets: c, scale: 1.8, alpha: 0, duration: 350, onComplete: () => c.destroy() });
     } else if (f.t === 'totem') {
       sfx.power();
       const fx = this.add.sprite(f.x, f.y - 10, 'fx-levelup').setScale(3).setDepth(4500);
