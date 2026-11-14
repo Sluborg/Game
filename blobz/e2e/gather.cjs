@@ -11,7 +11,7 @@ const pick = (host, kinds) => sim(host, (s, ks) => s.trees.findIndex((t, j) => k
 /** Park player #i just right of node n (keep them there: blobz drift a little after a bump). */
 const beside = (host, i, n) => sim(host, (s, a) => {
   const t = s.trees[a.n]; const p = s.players[a.i];
-  p.x = t.x + (t.kind === 5 ? 0 : [15, 15, 15, 12, 24][t.kind]) + 22; p.y = t.y; p.vx = 0; p.vy = 0;
+  p.x = t.x + (t.kind === 5 ? 0 : [15, 15, 15, 15, 28][t.kind]) + 22; p.y = t.y; p.vx = 0; p.vy = 0;
 }, { i, n });
 const carry = async (page, i) => (await view(page)).players[i].carry;
 const tap = async (page) => { await page.locator('#dash').dispatchEvent('pointerdown'); await page.locator('#dash').dispatchEvent('pointerup'); };

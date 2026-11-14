@@ -18,7 +18,7 @@ const DASH_COOLDOWN = 1.1;
 const TREE_R = 15;
 /** Resource nodes: 0-2 trees (green, orange, pine) give wood; 3 small rock and 4 boulder give stone;
  *  5 berry bush gives berries. Hit them with the action button. Trees and rocks are solid, bushes not. */
-export const OBSTACLE_R = [15, 15, 12, 12, 24, 14];
+export const OBSTACLE_R = [15, 15, 15, 15, 28, 14]; // rock + boulder match their 3x art
 export const isSolid = (kind: number) => kind !== 5;
 export type Tool = 'axe' | 'pickaxe' | 'rake';
 export const nodeTool = (kind: number): Tool => (kind < 3 ? 'axe' : kind < 5 ? 'pickaxe' : 'rake');
