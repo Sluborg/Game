@@ -134,3 +134,7 @@
 - Smoke puffs on sharp turns and dashes.
 - HUD: score box left, timer right, room code under the timer (no overlap at 390 px), bigger numbers;
   star diamonds are outlines until reached, then filled. New white ">>" dash icon; hint sits left of it.
+
+## 2026-11-14 - v019b: calmer world
+- Pickups: bob only, ring is static. Flower grass tiles ~1%, flower patches rarer. Base glow ring removed (dirt yard marks the zone).
+- Slime trail ~2x longer (distance-based points, slower fade). Puffs spawn behind the blob and drift straight back, also on starts.

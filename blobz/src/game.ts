@@ -23,7 +23,7 @@ const OBSTACLE_ART: [string, number][] = [['pr-tree-green', 2.8], ['pr-tree-oran
 const PROPS = ['tree-green', 'tree-orange', 'tree-pine', 'rock', 'boulder', 'bush', 'flowers', 'stump', 'pond', 'fence', 'sign', 'plate', 'plate-down', 'gate', 'gate-open', 'gate-post'];
 const BLOB_SCALE = 2.9; // 18x24 pixel blob grid
 // decorations from Tiny Farm (sheet 'farm') and Tiny Town ('town')
-const DECOR: [string, number][] = [['pr-bush', 2], ['pr-flowers', 2], ['pr-flowers', 2], ['pr-bush', 2]];
+const DECOR: [string, number][] = [['pr-bush', 2], ['pr-bush', 2], ['pr-flowers', 2]];
 
 interface BlobGfx {
   shadow: Phaser.GameObjects.Ellipse;
@@ -101,7 +101,7 @@ export class GameScene extends Phaser.Scene {
           row.push(0);
         } else {
           const v = r();
-          row.push(v < 0.72 ? 0 : v < 0.92 ? 1 : 2);
+          row.push(v < 0.8 ? 0 : v < 0.99 ? 1 : 2); // few flower tiles
         }
       }
       data.push(row);
@@ -186,10 +186,9 @@ export class GameScene extends Phaser.Scene {
     const now = this.time.now;
 
     // base ring pulse
-    const pulse = 0.5 + 0.5 * Math.sin(now / 300);
+    const pulse = 0;
     this.baseG.clear();
-    this.baseG.fillStyle(0xffe08a, 0.18 + 0.1 * pulse).fillCircle(BASE.x, BASE.y, BASE.r);
-    this.baseG.lineStyle(4, 0xffe08a, 0.7).strokeCircle(BASE.x, BASE.y, BASE.r - 2 + pulse * 3);
+    void pulse; // the dirt yard itself marks the drop-off zone (no glow ring)
 
     // ---- items: pickups bob and sit on a pulsing light ring so they read as "take me" ----
     const seenI = new Set<number>();
@@ -205,7 +204,7 @@ export class GameScene extends Phaser.Scene {
       const bob = Math.abs(Math.sin(now / 260 + it.id)) * 5;
       img.x = it.x; img.y = it.y - 4 - bob;
       img.setDepth(it.y - 10);
-      const pr = 15 + Math.sin(now / 300 + it.id) * 2;
+      const pr = 15;
       this.pickG.fillStyle(0x000000, 0.18).fillEllipse(it.x, it.y + 9, 22 - bob, 7);
       this.pickG.lineStyle(2, 0xffffff, 0.75).strokeEllipse(it.x, it.y + 6, pr * 2, pr);
     }
@@ -303,15 +302,17 @@ export class GameScene extends Phaser.Scene {
       const dir = Math.atan2(b.vy, b.vx);
       const turn = b.lastDir === undefined ? 0 : Math.abs(Phaser.Math.Angle.Wrap(dir - b.lastDir));
       const burst = sp - (b.lastSp ?? sp) > 120;
-      if ((turn > 0.7 || burst) && b.puffCd <= 0) { this.puff(b.x, b.y + 12, b.vx, b.vy, burst ? 8 : 5); b.puffCd = 0.15; }
+      const start = (b.lastSp ?? 0) < 45;
+      if ((turn > 0.55 || burst || start) && b.puffCd <= 0) { this.puff(b.x, b.y + 12, b.vx, b.vy, burst ? 8 : 5); b.puffCd = 0.12; }
       b.lastDir = dir;
     }
     b.lastSp = sp;
     const hover = Math.sin(now / 180 + b.x * 0.01) * 2; // they hover-glide, never roll
     // trail of little glide puffs
-    if (sp > 90) b.trail.push({ x: b.x, y: b.y + 8, a: Math.min(0.5, sp / 600) });
-    for (const t of b.trail) t.a -= dt * 1.2;
-    b.trail = b.trail.filter((t) => t.a > 0).slice(-14);
+    const lastT = b.trail[b.trail.length - 1];
+    if (sp > 80 && (!lastT || Math.hypot(lastT.x - b.x, lastT.y - b.y - 8) > 7)) b.trail.push({ x: b.x, y: b.y + 8, a: Math.min(0.55, sp / 550) });
+    for (const t of b.trail) t.a -= dt * 0.55;
+    b.trail = b.trail.filter((t) => t.a > 0).slice(-40);
     const color = this.s.infos().get(p.id)?.color ?? 0xffffff;
     for (const t of b.trail) this.trailG.fillStyle(color, t.a).fillCircle(t.x, t.y, 4 + t.a * 10);
 
@@ -381,11 +382,16 @@ export class GameScene extends Phaser.Scene {
 
   /** Little white dust puffs behind the blob, drifting against its motion. */
   private puff(x: number, y: number, vx: number, vy: number, n: number) {
+    // spawn just behind the blob and drift straight back (against the travel direction), faster = further
     const sp = Math.hypot(vx, vy) || 1;
+    const bx = -vx / sp, by = -vy / sp;
+    const reach = 18 + Math.min(40, sp * 0.12);
     for (let i = 0; i < n; i++) {
-      const a = Math.atan2(-vy / sp, -vx / sp) + (Math.random() - 0.5) * 1.6;
-      const c = this.add.circle(x + (Math.random() - 0.5) * 12, y, 6 + Math.random() * 4, 0xffffff, 0.95).setStrokeStyle(2, 0xd8d0c0, 0.9).setDepth(y - 15);
-      this.tweens.add({ targets: c, x: c.x + Math.cos(a) * 22, y: c.y + Math.sin(a) * 14 - 6, scale: 2.2, alpha: 0, duration: 420 + Math.random() * 200, ease: 'Cubic.Out', onComplete: () => c.destroy() });
+      const a = Math.atan2(by, bx) + (Math.random() - 0.5) * 0.7;
+      const side = (Math.random() - 0.5) * 14;
+      const sx = x + bx * 12 - by * side, sy = y + by * 8 + bx * side * 0.5;
+      const c = this.add.circle(sx, sy, 5 + Math.random() * 3, 0xffffff, 0.95).setStrokeStyle(2, 0xd8d0c0, 0.9).setDepth(sy - 15);
+      this.tweens.add({ targets: c, x: sx + Math.cos(a) * reach, y: sy + Math.sin(a) * reach * 0.7, scale: 2, alpha: 0, duration: 380 + Math.random() * 160, delay: i * 18, ease: 'Cubic.Out', onComplete: () => c.destroy() });
     }
   }
 
