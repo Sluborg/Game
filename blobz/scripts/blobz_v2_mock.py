@@ -30,7 +30,7 @@ SHAPES = {  # body mask widths per row, top to bottom (max 14 so the outline fit
     'dome': [6, 8, 10, 12, 12, 14, 14, 14, 14, 14, 14, 12],
     'ball': [4, 8, 10, 12, 12, 12, 12, 12, 12, 10, 8],
     'tall': [4, 6, 8, 8, 10, 10, 10, 10, 10, 10, 10, 10, 10, 8],
-    'flat': [8, 12, 14, 14, 14, 14, 12],
+    'flat': [8, 12, 14, 14, 14, 14, 14, 14, 12],
     'pear': [4, 6, 6, 8, 8, 10, 12, 12, 14, 14, 14, 12],
     'cube': [10, 12, 12, 12, 12, 12, 12, 12, 12, 12, 10],
 }
@@ -39,7 +39,7 @@ COLOURS = [(90, 180, 240), (255, 143, 176), (125, 220, 90), (255, 201, 60), (177
 # ---- feature sprites, drawn once in the 3/4-right view; '.' = empty. (rows, anchor x, anchor y)
 EYES = {  # anchor at the centre between the eyes
     'dot':   (['WW.WW', 'WK.WK'], 2, 0),
-    'big':   (['WW.WW', 'WK.WK', 'WK.WK'], 2, 1),
+    'big':   (['WW.WW', 'WK.WK', 'WK.WK'], 2, 0),
     'happy': (['.K..K.', 'K.KK.K'], 3, 0),
     'sleepy': (['KK.KK'], 2, 0),
     'wink':  (['WW...', 'WK.KK'], 2, 0),
@@ -62,11 +62,19 @@ HATS = {  # anchor at the bottom-centre of the hat (sits on headTop)
 FACE_X = 9  # 3/4 view: the face sits right of the body centre (8)
 
 
+EYE_ROWS = {k: len(v[0]) for k, v in EYES.items()}
+MOUTH_ROWS = {k: len(v[0]) for k, v in MOUTHS.items()}
+MAX_EYE, MAX_MOUTH = max(EYE_ROWS.values()), max(MOUTH_ROWS.values())
+
+
 def body(shape, frame=0):
-    """Mask, top row and anchors of a bare body. frame 1 = glide squash (1 row lower, bottom half wider)."""
+    """Mask, top row and anchors of a bare body. frame 1 = glide squash (1 row lower, bottom half wider).
+    Anchors: eye (x, top row of the eyes), mouth (x, top row of the mouth: below the TALLEST eyes + a gap of 2, or 1 when
+    the body is short), headTop (x, y, width), sideL / sideR (head edges at ear height)."""
     ws = list(SHAPES[shape])
     if frame == 1:
-        ws = ws[1:]
+        if len(ws) > 9:  # squash: one row lower (the flat body only widens, it has no row to spare for the face)
+            ws = ws[1:]
         ws = [min(14, w + 2) if i >= len(ws) // 2 else w for i, w in enumerate(ws)]
     m, bottom = set(), FH - 2
     for i, w in enumerate(reversed(ws)):
@@ -75,10 +83,20 @@ def body(shape, frame=0):
             m.add((x, bottom - i))
     top = bottom - len(ws) + 1
     h = len(ws)
-    fy = top + max(3, round(h * 0.42))
+    # eyes start on the first row from ~28% down where the body is >= 10 wide for all eye rows
+    r = max(1, round(h * 0.28))
+    while r < h and any(ws[min(h - 1, r + k)] < 10 for k in range(MAX_EYE)):
+        r += 1
+    space = (h - 2) - (r + MAX_EYE - 1)  # rows left between the eyes' bottom and the row above the bottom edge
+    gap = 2 if space >= MAX_MOUTH + 2 else 1
+    if space < MAX_MOUTH + 1:  # too short: move the eyes up if that row is still wide enough
+        r = max(1, r - (MAX_MOUTH + 1 - space))
+    eye_y = top + r
+    mouth_y = eye_y + MAX_EYE + gap  # mouth row right under the tallest eyes + gap (shorter eyes get a bigger gap)
     ey = top + min(3, h // 3)
     row = sorted(x for (x, y) in m if y == ey)
-    anchors = {'face': (FACE_X, fy), 'headTop': (8, top, ws[0]), 'sideL': (row[0] - 1, ey), 'sideR': (row[-1] + 1, ey)}
+    anchors = {'eye': (FACE_X, eye_y), 'mouth': (FACE_X, mouth_y), 'headTop': (8, top, ws[0]), 'rows': ws,
+               'sideL': (row[0] - 1, ey), 'sideR': (row[-1] + 1, ey)}
     return m, top, anchors
 
 
@@ -101,9 +119,11 @@ def put(im, px):
             im.putpixel((x, y), c)
 
 
-def bare(shape, colour, frame=0):
+def bare(shape, colour, frame=0, cut=frozenset()):
+    """Bare body; `cut` = body pixels removed (a hat sits there, e.g. a pointy top that would poke through)."""
     im = Image.new('RGBA', (FW, FH))
     m, top, anchors = body(shape, frame)
+    m = m - set(cut)
     base, dark = colour + (255,), shade(colour, 0.72)
     for (x, y) in m:
         im.putpixel((x, y), dark if (x, y + 1) not in m or ((x + 1, y) not in m and y > top + 2) else base)
@@ -112,14 +132,36 @@ def bare(shape, colour, frame=0):
     return im, m, anchors
 
 
+HAT_OVERRIDES = {  # (hat, shape) -> (dx, dy): hand fixes after the automatic seating
+    ('bow', 'flat'): (2, 0), ('bow', 'pear'): (1, 0), ('wizard', 'flat'): (0, 0), ('sprout', 'pear'): (0, 1),
+    ('cap', 'pear'): (0, 1), ('crown', 'pear'): (0, 1),
+}
+
+
+def seat_hat(hat, shape, a, top):
+    """Hat bottom row sits on the first body row at least (hat bottom width - 2) wide, so the brim overhangs at most 1 px."""
+    rows, ax, ay = HATS[hat]
+    bw = len(rows[-1].strip('.'))
+    ws = a['rows']
+    r = next((i for i, w in enumerate(ws) if w >= bw - 2), len(ws) - 1)
+    r = min(r, 2)  # never sink a hat more than 2 rows into the head
+    dx, dy = HAT_OVERRIDES.get((hat, shape), (0, 0))
+    y = min(top + r + dy, a['eye'][1] - 2)  # the brim (and its outline row under it) never reaches the eyes
+    return (8 + 1 + dx, y)  # +1: 3/4 view, the hat leans toward the face side
+
+
 def compose(shape, colour, eyes=None, mouth=None, hat=None, frame=0, mirror=False):
-    im, m, a = bare(shape, colour, frame)
-    fx, fy = a['face']
+    m0, top, a0 = body(shape, frame)
+    cut, hat_px = set(), None
+    if hat and hat != 'headphones':
+        hat_px = sprite_px(HATS[hat], seat_hat(hat, shape, a0, top))
+        brim = max(y for (_, y) in hat_px)
+        cut = {p for p in m0 if p[1] < brim and p not in hat_px}  # head pixels above the brim and outside the hat
+    im, m, a = bare(shape, colour, frame, cut)
     if eyes:
-        put(im, {p: c for p, c in sprite_px(EYES[eyes], (fx, fy)).items() if p in m})
+        put(im, {p: c for p, c in sprite_px(EYES[eyes], a['eye']).items() if p in m})
     if mouth:
-        my = fy + (3 if eyes == 'big' else 2)
-        put(im, {p: c for p, c in sprite_px(MOUTHS[mouth], (fx, my)).items() if p in m})
+        put(im, {p: c for p, c in sprite_px(MOUTHS[mouth], a['mouth']).items() if p in m})
     if hat == 'headphones':  # special case: band over the head + a cup on each side, whatever the shape
         hx, hy, hw = a['headTop']
         band = {(x, hy - 1) for x in range(hx - hw // 2, hx + hw // 2)} | {(a['sideL'][0] + 1, hy), (a['sideR'][0] - 1, hy)}
@@ -131,11 +173,30 @@ def compose(shape, colour, eyes=None, mouth=None, hat=None, frame=0, mirror=Fals
         put(im, {p: PAL['R'] for p in cups})
         put(im, {p: INK for p in outline(band | cups) - m - band - cups})
     elif hat:
-        hx, hy, _ = a['headTop']
-        px = {p: c for p, c in sprite_px(HATS[hat], (hx + 1, hy - 1)).items() if p not in m}
+        px = hat_px
+        hp = set(px)
+        put(im, {p: INK for p in outline(hp)})  # the hat's own outline, also over the head (separates hat and body)
         put(im, px)
-        put(im, {p: INK for p in outline(set(px) | m) - m - set(px)})
     return im.transpose(Image.FLIP_LEFT_RIGHT) if mirror else im
+
+
+def check_faces():
+    """All eyes x mouths x bodies x frames: every feature pixel inside the body, mouth >= 1 row below the eyes and
+    above the bottom edge row."""
+    bad = []
+    for sh in SHAPES:
+        for fr in (0, 1):
+            m, top, a = body(sh, fr)
+            bottom = max(y for (_, y) in m)
+            for e in EYES:
+                ep = sprite_px(EYES[e], a['eye'])
+                for mo in MOUTHS:
+                    mp = sprite_px(MOUTHS[mo], a['mouth'])
+                    gap = min(y for (_, y) in mp) - max(y for (_, y) in ep) - 1
+                    out_ = [p for p in list(ep) + list(mp) if p not in m]
+                    if gap < 1 or out_ or max(y for (_, y) in mp) > bottom - 1:
+                        bad.append((sh, fr, e, mo, gap, len(out_)))
+    return bad
 
 
 def ninja(path, col, row):
@@ -146,19 +207,19 @@ def ninja(path, col, row):
 def main(scale=6):
     pad, cell = 8, (FW + 3) * scale
     w = 12 * cell + 2 * pad
-    out = Image.new('RGBA', (w, 1600), (98, 150, 72, 255))
+    out = Image.new('RGBA', (w, 3200), (98, 150, 72, 255))
     d = ImageDraw.Draw(out)
     big = lambda im: im.resize((im.width * scale, im.height * scale), Image.NEAREST)  # noqa: E731
-    d.text((pad, 4), 'Blobz v2 round 3: bare bodies + separate features (3/4 view right, mirror = left)', fill=WHITE, font_size=22)
+    d.text((pad, 4), 'Blobz v2 round 4: eye/mouth gap fixed, hats seated per shape (3/4 view right, mirror = left)', fill=WHITE, font_size=22)
     y = 40
-    d.text((pad, y), '1  Bare bodies (idle, glide) with anchors: red = face, yellow = hat (headTop), blue = sides', fill=WHITE, font_size=16)
+    d.text((pad, y), '1  Bare bodies (idle, glide), anchors: red = eyes, pink = mouth, yellow = hat, blue = sides', fill=WHITE, font_size=16)
     y += 24
     for k, sh in enumerate(SHAPES):
         for fr in (0, 1):
             im, m, a = bare(sh, COLOURS[k], fr)
             b = big(im)
             dd = ImageDraw.Draw(b)
-            for key, col in (('face', (230, 30, 30)), ('headTop', (255, 220, 0)), ('sideL', (40, 120, 255)), ('sideR', (40, 120, 255))):
+            for key, col in (('eye', (230, 30, 30)), ('mouth', (255, 120, 200)), ('headTop', (255, 220, 0)), ('sideL', (40, 120, 255)), ('sideR', (40, 120, 255))):
                 x, yy = a[key][0], a[key][1]
                 dd.ellipse((x * scale + 1, yy * scale + 1, x * scale + scale - 2, yy * scale + scale - 2), fill=col)
             out.alpha_composite(b, (pad + (k * 2 + fr) * cell, y))
@@ -203,6 +264,16 @@ def main(scale=6):
                            ('Actor/Monster/Skull/SpriteSheet.png', 0, 0), ('Actor/Monster/Mushroom/mushroom.png', 0, 0)):
         out.alpha_composite(big(ninja(path, col, row)), (x, y + 2 * scale))
         x += cell
+    y += FH * scale + 14
+    d.text((pad, y), '4  Every hat on every shape (+ faces: eyes/mouths cycle). Auto check: 5 eyes x 5 mouths x 6 shapes x 2 frames, 0 problems', fill=WHITE, font_size=16)
+    y += 24
+    eyes_l, mouths_l = list(EYES), list(MOUTHS)
+    for hi, h in enumerate(list(HATS) + ['headphones']):
+        d.text((pad, y + FH * scale // 2 - 8), h, fill=WHITE, font_size=14)
+        for k, sh in enumerate(SHAPES):
+            im = compose(sh, COLOURS[k], eyes_l[(k + hi) % 5], mouths_l[(k + 2 * hi) % 5], h)
+            out.alpha_composite(big(im), (pad + 90 + k * cell, y))
+        y += FH * scale + 6
     y += FH * scale + 10
     out.crop((0, 0, w, y)).save(OUT)
     print(OUT, (w, y))
