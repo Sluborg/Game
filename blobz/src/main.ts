@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
-import '@fontsource/pixelify-sans/400.css';
-import '@fontsource/pixelify-sans/700.css';
+import '@fontsource/nunito/600.css';
+import '@fontsource/nunito/800.css';
+import '@fontsource/nunito/900.css';
 import { loadArt, pixelText } from './art';
 import { blobEl, clampLook, COLORS, EYES, HATS, MOUTHS, randomLook, SHAPES, type BlobLook } from './blob';
 import { Controls } from './controls';
@@ -16,6 +17,19 @@ import type { FxEvent, Input, PlayerInfo, Snapshot, State, View } from './sim';
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const show = (id: string, on = true) => $(id).classList.toggle('hidden', !on);
+
+// ---------- loading screen ----------
+let loadingSince = performance.now();
+function loading(on: boolean, progress = 0) {
+  const el = $('loading');
+  if (on) { loadingSince = performance.now(); el.classList.remove('hidden', 'out'); setLoad(progress); return; }
+  setLoad(1);
+  const wait = Math.max(0, 600 - (performance.now() - loadingSince)); // never just flash
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.classList.add('hidden'), 400); }, wait);
+}
+const onLoadProgress = (p: number) => setLoad(0.1 + p * 0.85);
+function setLoad(p: number) { $('loadfill').style.width = Math.round(Math.max(0, Math.min(1, p)) * 100) + '%'; }
+setLoad(0.15);
 
 // ---------- profile (name / color / hat) ----------
 const store = {
@@ -157,9 +171,8 @@ let emptyRounds = 0;
 let retryTimer = 0;
 const SEARCHING = 'Letar efter spel på ditt Wi-Fi...';
 const NOTHING = 'Hittar inga spel. Är ni på samma Wi-Fi?';
-let netCode = '';
 function lanStatus(text: string, rescan = false) {
-  $('lan-status').textContent = netCode ? `${text} (nät ${netCode})` : text;
+  $('lan-status').textContent = text;
   $('lan-status').classList.toggle('static', rescan);
   show('btn-rescan', rescan);
 }
@@ -178,7 +191,7 @@ function startScan() {
       retryTimer = window.setTimeout(tryNs, 5000);
       return;
     }
-    netCode = ns.slice(0, 4).toUpperCase();
+
     lanStatus(SEARCHING);
     scanner = new Scanner(ns, clampLook);
     scanner.onUpdate = renderRooms;
@@ -188,10 +201,11 @@ function startScan() {
 }
 function stopScan() { scanGen++; clearTimeout(retryTimer); scanner?.stop(); scanner = null; }
 function renderRooms(rooms: FoundRoom[]) {
+  const connecting = scanner?.pending.size ?? 0;
   show('lan-status', rooms.length === 0);
-  emptyRounds = rooms.length ? 0 : emptyRounds + 1;
+  emptyRounds = rooms.length || connecting ? 0 : emptyRounds + 1;
   // ~10 s without a game: hint at the usual cause, still scanning
-  lanStatus(emptyRounds >= 3 ? NOTHING : SEARCHING, emptyRounds >= 3);
+  lanStatus(connecting && !rooms.length ? 'Hittade ett spel, ansluter...' : emptyRounds >= 3 ? NOTHING : SEARCHING, emptyRounds >= 3 && !connecting);
   $('lan-list').replaceChildren(...rooms.map((r) => {
     const li = document.createElement('li');
     const b = document.createElement('button');
@@ -243,11 +257,16 @@ async function checkForNewVersion() {
 void checkForNewVersion();
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && $('hud').classList.contains('hidden')) void checkForNewVersion(); });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => { /* optional */ });
-$('version').textContent = __APP_VERSION__ + (matchMedia('(prefers-color-scheme: dark)').matches ? ' D' : '');
+const versionText = () => __APP_VERSION__ + (matchMedia('(prefers-color-scheme: dark)').matches ? ' D' : '');
+$('version').textContent = versionText();
+// Wi-Fi code next to the version: two phones must show the same code to find each other (a VPN changes it)
+void lanNamespace().then((ns) => { if (ns) $('version').textContent = `${versionText()} (${ns.slice(0, 4).toUpperCase()})`; });
 $('version').title = __APP_COMMIT__;
 renderPicker();
 // First visit: pick your blob before anything else.
 if (!store.get('name')) panel('custom');
+Promise.all([loadArt().then(() => setLoad(0.7)), new Promise((r) => (document.readyState === 'complete' ? r(null) : window.addEventListener('load', () => r(null), { once: true })))])
+  .then(() => loading(false));
 void loadArt().then(() => { renderPicker(); renderLobby(); renderIcons(); });
 
 // ---------- shared game plumbing ----------
@@ -286,10 +305,17 @@ function startScene(session: Session) {
     });
     game.scene.add('game', GameScene, false);
   }
+  loading(true, 0.1);
+  $('loading-text').textContent = 'Laddar spelet...';
+  const hook = (scene: GameScene) => {
+    scene.onView = onView;
+    scene.load.off('progress', onLoadProgress).on('progress', onLoadProgress);
+    scene.events.once('create', () => { $('loading-text').textContent = 'Laddar...'; loading(false); });
+  };
   game.scene.start('game', { session });
   const sc = game.scene.getScene('game') as GameScene | null;
-  if (sc) sc.onView = onView;
-  else game.events.once('ready', () => { (game!.scene.getScene('game') as GameScene).onView = onView; });
+  if (sc) hook(sc);
+  else game.events.once('ready', () => hook(game!.scene.getScene('game') as GameScene));
 }
 
 function fmtTime(t: number) {
@@ -399,13 +425,12 @@ async function hostGame() {
     return { name: me.name, look: clampLook(me), players: infos.size, max: MAX_PLAYERS, started: !!state, v: __APP_VERSION__ };
   };
   // Show up in friends' Joina list. Keep retrying until it works (STUN can be slow or blocked).
-  const LAN_OK = 'Kompisar på samma Wi-Fi trycker <b>Joina</b> och väljer ditt namn';
+  const LAN_OK = '';
   const advertise = async () => {
     if (net.peer.destroyed) return;
     const ns = await lanNamespace();
     const slot = ns ? await net.openSlot(ns) : 0;
-    const code = ns ? ` <span class="netcode">(nät ${ns.slice(0, 4).toUpperCase()})</span>` : '';
-    $('lobby-lan').innerHTML = (slot ? LAN_OK : 'Letar efter ditt Wi-Fi... Kompisarna ser inte spelet än.') + code;
+    $('lobby-lan').innerHTML = slot ? LAN_OK : 'Letar efter ditt Wi-Fi... Kompisarna ser inte spelet än.';
     $('lobby-lan').classList.toggle('warn', !slot);
     if (!slot) setTimeout(() => void advertise(), 5000);
   };

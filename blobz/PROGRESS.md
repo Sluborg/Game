@@ -202,3 +202,24 @@
 ## 2026-11-14 - v028: smooth designer + visual polish (Code) + base art (Art)
 - Designer: bigger bouncing preview, swipe between tabs, remembers tab, scrolls selection into view, fixed 64 px tiles in landscape. Polish: integer scales for props, small rock collision 15, dust/coin-sparkle/plate-glow fx. Art: new cottage lv1-3 + 6 buildings + build spot in `public/art/base/` (wired by the base-building batch).
 - Lead review: version guard kept after merge, 43 tests, build, e2e lan-join/gather/totems/puzzles/designer ALL PASSED.
+
+## 2026-11-14 - v028b: loading screen (Lead)
+- Stefan art (order 80) as loading screen on app start and while a round loads (Phaser loader progress), logo + pixel bar, min 0.6 s so it never flashes. Landscape is a stopgap (portrait art on the right) until order 81 arrives. Board: picture options for graphic questions, followups.
+
+## 2026-11-14 - v028c: wreath + beanie sit around the head (Art)
+- `wrap` flag per hat (Mössa 4 px, Blomkrans 5 px lower); overlap test keeps its own bound for them.
+
+## 2026-11-14 - v028d: discovery probe timing (Lead hotfix)
+- Stefan still could not find a game on the same Wi-Fi. Probes gave up after 2.5 s, real phones need 3-6 s for WebRTC (mDNS/TURN). Probe timeout 9 s, empty slots end immediately on the broker "peer-unavailable" for that id, and a found-but-connecting host shows "Hittade ett spel, ansluter...". 43 tests, lan-join e2e passed.
+
+## 2026-11-14 - v028e: Wi-Fi code on the start card
+- The 4-char Wi-Fi code moved from the Joina/lobby text to the version line ("v028e (8C7F)"); both phones must show the same code. A VPN changes it (Stefan had VPN on). TEAM.md: Stefan can hand ChatGPT art straight to Art.
+
+## 2026-11-14 - dungeon art merged (Art batch, not wired; no version bump)
+- `public/art/dungeon/`: weapons (sword/hammer/spear strips), weapon cards, attack/dash icons, entrance + stairs, hearts, XP bar, level badge, KO/revive, goo flash, slam warning, shockwave, chest. For Code's dungeon v1.
+
+## 2026-11-14 - v028f: clean back arrow
+- Hand-placed 13x9 pixel back arrow replaces the sliced one. Font choice posted on the board (4 rendered options).
+
+## 2026-11-14 - dungeon special fx merged (Art, not wired)
+- Special-attack icons (sword spin, hammer slam, spear charge, sidestep) and fx strips; cooldown ring is drawn in code.
