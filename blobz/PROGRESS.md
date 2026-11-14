@@ -73,3 +73,10 @@
 - Stefan's phone (Chrome "auto dark mode for web contents") inverted the UI and blob faces. Added
   `<meta name="color-scheme" content="only light">` + `color-scheme: only light` on :root.
 - Not reproducible in headless Chromium (forced dark is ignored there); verify on the phone.
+
+## 2026-11-14 - Version on start screen + map props (order 30)
+- Start card shows `v<package> · <git sha> · <build time Stockholm>` (vite `define`), to confirm the phone runs the latest build.
+- Order 30 sliced into `public/art/props/` (slicer gained `--merge=N` for multi-part objects).
+  World obstacles are now ChatGPT trees (green/orange/pine, drop wood when bumped) plus rocks and boulders
+  (solid, no wood; sim `OBSTACLE_R` per kind). Decor: bushes, flowers, stumps, 2 ponds. Plates, gate, sign
+  and fence are installed for the co-op milestone.

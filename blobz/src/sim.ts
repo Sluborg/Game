@@ -16,6 +16,9 @@ const BOOST_SPEED = 340;
 const DASH_IMPULSE = 360;
 const DASH_COOLDOWN = 1.1;
 const TREE_R = 15;
+/** Obstacle kinds: 0-2 trees (green, orange, pine) drop wood when bumped; 3 rock; 4 boulder. */
+export const OBSTACLE_R = [15, 15, 12, 12, 24];
+const isTree = (kind: number) => kind < 3;
 const GEM_R = 22;
 const GEM_GRAB_R = 62;
 const PICKUP_R = 26;
@@ -90,7 +93,8 @@ export function makeTrees(seed: number): Tree[] {
     const y = 70 + r() * (WORLD_H - 130);
     if (nearBase(x, y, 90)) continue;
     if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < 70)) continue;
-    trees.push({ x, y, kind: Math.floor(r() * 3), cd: 0 });
+    const roll = r();
+    trees.push({ x, y, kind: roll < 0.78 ? Math.floor(r() * 3) : roll < 0.9 ? 3 : 4, cd: 0 });
   }
   return trees;
 }
@@ -190,14 +194,14 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     for (const p of s.players) {
       const dx = p.x - t.x, dy = p.y - t.y;
       const d = Math.hypot(dx, dy);
-      const min = BLOB_R + TREE_R;
+      const min = BLOB_R + (OBSTACLE_R[t.kind] ?? TREE_R);
       if (d < min && d > 0.001) {
         const nx = dx / d, ny = dy / d;
         const vn = p.vx * nx + p.vy * ny;
         p.x = t.x + nx * min; p.y = t.y + ny * min;
         if (vn < 0) {
           p.vx -= 1.6 * vn * nx; p.vy -= 1.6 * vn * ny;
-          if (-vn > 170 && t.cd <= 0) {
+          if (-vn > 170 && t.cd <= 0 && isTree(t.kind)) {
             t.cd = 3;
             const a = Math.atan2(ny, nx) + (Math.random() - 0.5) * 2;
             spawnItem(s, { x: t.x + Math.cos(a) * 42, y: t.y + Math.sin(a) * 42 }, 'wood');

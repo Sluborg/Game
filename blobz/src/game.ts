@@ -18,10 +18,12 @@ export interface Session {
 
 const T = 32; // rendered tile size (16px tiles at 2x)
 const ITEM_ICON: Record<ItemKind, string> = { wood: 'ic-log', shroom: 'ic-mushroom', coin: 'ic-coin' };
-const TREE_FRAMES = [16, 28, 27];
+// Obstacles (sim kinds 0-4) and decor from ChatGPT order 30 (public/art/props)
+const OBSTACLE_ART: [string, number][] = [['pr-tree-green', 2.8], ['pr-tree-orange', 2.8], ['pr-tree-pine', 2.8], ['pr-rock', 2.6], ['pr-boulder', 2.4]];
+const PROPS = ['tree-green', 'tree-orange', 'tree-pine', 'rock', 'boulder', 'bush', 'flowers', 'stump', 'pond', 'fence', 'sign', 'plate', 'plate-down', 'gate', 'gate-open', 'gate-post'];
 const BLOB_SCALE = 2.9; // 18x24 pixel blob grid
 // decorations from Tiny Farm (sheet 'farm') and Tiny Town ('town')
-const DECOR: [string, number][] = [['farm', 39], ['farm', 83], ['farm', 78], ['town', 5], ['town', 2], ['farm', 39]];
+const DECOR: [string, number][] = [['pr-bush', 2], ['pr-flowers', 2], ['pr-stump', 2], ['pr-flowers', 2], ['pr-bush', 2]];
 
 interface BlobGfx {
   shadow: Phaser.GameObjects.Ellipse;
@@ -83,6 +85,7 @@ export class GameScene extends Phaser.Scene {
 
   preload() {
     for (const n of ['log', 'mushroom', 'coin', 'chest', 'boot', 'magnet']) this.load.image('ic-' + n, `art/icons/${n}.png`);
+    for (const n of PROPS) this.load.image('pr-' + n, `art/props/${n}.png`);
     const sheet = (key: string, dir: string) => this.load.spritesheet(key, `assets/${dir}/tilemap_packed.png`, { frameWidth: 16, frameHeight: 16 });
     sheet('town', 'kenney-tiny-town');
     sheet('dungeon', 'kenney-tiny-dungeon');
@@ -137,16 +140,23 @@ export class GameScene extends Phaser.Scene {
     // trees (same layout as the host sim, from the shared seed)
     for (const t of makeTrees(this.s.seed)) {
       this.add.ellipse(t.x, t.y + 6, 34, 12, 0x000000, 0.18).setDepth(-500);
-      this.add.image(t.x, t.y + 8, this.tex('town', TREE_FRAMES[t.kind])).setScale(3).setOrigin(0.5, 0.85).setDepth(t.y);
+      const [key, sc] = OBSTACLE_ART[t.kind] ?? OBSTACLE_ART[0];
+      this.add.image(t.x, t.y + 10, key).setScale(sc).setOrigin(0.5, t.kind < 3 ? 0.95 : 0.8).setDepth(t.y);
     }
 
     // flat decorations (no collision), from the same seed on every phone
     const trees = makeTrees(this.s.seed);
     for (let i = 0; i < 46; i++) {
       const x = 30 + r() * (WORLD_W - 60), y = 30 + r() * (WORLD_H - 60);
-      const [key, f] = DECOR[Math.floor(r() * DECOR.length)];
-      if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 30 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 40)) continue;
-      this.add.image(x, y, this.tex(key, f)).setScale(2).setDepth(-600);
+      const [key, sc] = DECOR[Math.floor(r() * DECOR.length)];
+      if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 30 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 46)) continue;
+      this.add.image(x, y, key).setScale(sc).setDepth(-600);
+    }
+
+    for (let i = 0, placed = 0; i < 40 && placed < 2; i++) {
+      const x = 120 + r() * (WORLD_W - 240), y = 120 + r() * (WORLD_H - 240);
+      if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 120 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 80)) continue;
+      this.add.image(x, y, 'pr-pond').setScale(2.4).setDepth(-650); placed++;
     }
 
     this.trailG = this.add.graphics().setDepth(-400);

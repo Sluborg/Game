@@ -9,7 +9,7 @@ order left-to-right, top-to-bottom), names the files and wires them into the gam
 |---|---|---|---|
 | 10 | done | `art/ui/*.png` | Buttons, panels, tabs, input frame, thumbstick (wired as CSS 9-slice) |
 | 20 | done | `art/icons/*.png` | HUD, menu buttons, items, chest, power-ups |
-| 30 | ordered | `art/props.png` | Bigger trees, rocks, bushes, pressure plates, gate |
+| 30 | done | `art/props/*.png` | Trees, rocks, boulders, bush, flowers, stump, ponds in game; plates, gate, sign, fence ready for milestone 30 |
 | 40 | ordered | `art/totems.png` | Base totems for team power-ups (milestone 40) |
 | 50 | ordered | `art/enemies.png` | Slime waves that attack the base (milestone 50) |
 | 60 | ordered | `art/lobby.png` | Lobby background |

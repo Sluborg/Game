@@ -6,6 +6,7 @@ usage: slice_sheet.py SHEET OUT_DIR name1 name2 ... [--native] [--grid=CxR] [--p
             thickness) so it can be upscaled crisply with image-rendering: pixelated.
   --grid=CxR  the sheet is an even C x R grid: one sprite per cell (keeps multi-part icons whole).
   --px=N    size of one art pixel in the sheet (overrides the per-sprite estimate).
+  --merge=N merge objects whose boxes are closer than N px (multi-part objects like an open gate).
 Objects are found as connected areas of non-transparent pixels (8-neighbour); tiny specks are dropped.
 """
 import sys
@@ -75,7 +76,20 @@ def main():
                 if bb: boxes.append((cell[0] + bb[0], cell[1] + bb[1], cell[0] + bb[2], cell[1] + bb[3]))
     else:
         alpha = im.getchannel('A').tobytes()
-        boxes = reading_order(components(alpha, w, h))
+        boxes = components(alpha, w, h, min_area=150)
+        gap = int(opts.get('merge', 0))
+        merged = True
+        while gap and merged:
+            merged = False
+            for i in range(len(boxes)):
+                for j in range(i + 1, len(boxes)):
+                    a, b = boxes[i], boxes[j]
+                    dx = max(0, max(a[0], b[0]) - min(a[2], b[2])); dy = max(0, max(a[1], b[1]) - min(a[3], b[3]))
+                    if dx <= gap and dy <= gap:
+                        boxes[i] = (min(a[0], b[0]), min(a[1], b[1]), max(a[2], b[2]), max(a[3], b[3]))
+                        del boxes[j]; merged = True; break
+                if merged: break
+        boxes = reading_order(boxes)
     print(f'found {len(boxes)} objects, {len(names)} names')
     for i, b in enumerate(boxes):
         name = names[i] if i < len(names) else f'extra-{i + 1}'

@@ -21,6 +21,7 @@ UI icons (diamonds, dash arrow, pixel letters) are cut from these packs; no emoj
 | `art/victory.png` | Generated with ChatGPT image generation, supplied by Stefan | End screen background |
 | `art/ui/*.png` | ChatGPT order 10 (UI kit), sliced with `scripts/slice_sheet.py --native`; source sheet `docs/art-src-ui-kit.png` | Buttons, panels, tabs, input, thumbstick |
 | `art/icons/*.png` | ChatGPT order 20 (icons), sliced with `scripts/slice_sheet.py --grid=4x4 --px=13`; source `docs/art-src-icons.png` | HUD, buttons, items, chest, power-ups |
+| `art/props/*.png` | ChatGPT order 30 (map props), sliced with `scripts/slice_sheet.py --px=13 --merge=40`; source `docs/art-src-props.png` | Trees, rocks, decor, plates, gate, sign, pond |
 | `icon-192.png`, `icon-512.png` | Generated with ChatGPT image generation, supplied by Stefan | App icon (resized) |
 
 Blobz are drawn in code (`src/blob.ts`) as pixel SVG/canvas: color, eyes, mouth and hat are separate parts.
