@@ -178,3 +178,6 @@
 ## 2026-11-14 - v025: milestone 40 base totems (Code batch merged)
 - Team bank (HUD + growing pile at the cottage); 4 totem plates around the cottage (speed, magnet, shield, double), stand 1 s to buy the next level, price tags green/red, level dots, level-up fx. Still coin-based: the gathering batch converts bank and prices to wood/stone/berries.
 - Lead review: 31 tests, build, e2e totems + puzzles + lan-join ALL PASSED, screenshots checked.
+
+## 2026-11-14 - v025b: gather art (Art batch merged, not wired)
+- `public/art/gather/`: tool swing strips (axe/pickaxe/rake), button icons, berry bush full/empty, rubble, chips, stone/berries items, HUD resource icons, sun + day bar, star, quest card. Review sheet `docs/art-review/gather-sheet.png`.
