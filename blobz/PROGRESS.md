@@ -158,3 +158,6 @@
 ## 2026-11-14 - v022: fine-pixel parts set (Art batch merged)
 - Merged `claude/blobz-art` (baa44b2, 28bc966): 16 eyes, 12 mouths, 21 hats hand-drawn in fine pixels; old indices stable, new appended; headphones/bandana procedural per shape. Review sheet `docs/art-review/parts-sheet.png`.
 - Lead review: 19 tests, build, designer portrait/landscape, in-game close-up, Code e2e ALL PASSED. Open: designer grid cramped in landscape (Code), blush weak on red/pink bodies (Art).
+
+## 2026-11-14 - v022b: fx sprites (Art batch merged, not wired yet)
+- `public/art/fx/`: dust, splat, coin sparkle, level-up ring, coin piles s/m/l, plate glow (own CC0, `scripts/fx_sheet.py`). For Code to use in milestones 30-50.
