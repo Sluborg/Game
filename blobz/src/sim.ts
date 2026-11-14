@@ -127,6 +127,26 @@ export interface Totem { kind: TotemKind; level: number; buy: number; armed: boo
 export const totemPrice = (t: { kind: TotemKind; level: number }): Partial<Res> => (t.level >= TOTEM_MAX ? {} : TOTEM_PRICES[t.kind][t.level]);
 const totemLevel = (s: State, k: TotemKind) => s.totems.find((t) => t.kind === k)?.level ?? 0;
 
+// ---- goo waves (milestone 50): purple goo steals resources; dash into it to splat it ----
+export type GooKind = 0 | 1 | 2; // small, medium, boss
+export const GOO_R = [14, 20, 30];
+export const GOO_HP = [1, 2, 5];
+export const GOO_SPEED = [62, 46, 32];
+export const GOO_LOOT = [1, 2, 3]; // items a goo can carry off
+const GOO_SEE = 260; // chases a carrying blob this close
+const GOO_HIT_CD = [0.35, 0.35, 0.6]; // per blob: the boss needs several blobz (or patience)
+export const GOO_NEAR = 90; // a goo this close turns the action button back into a dash (attack)
+/** Waves start when this much daylight is left; the third one brings the boss (last minute). */
+export const WAVES = [150, 105, 58, 20];
+export const BOSS_WAVE = 2;
+export interface Goo { id: number; kind: GooKind; x: number; y: number; vx: number; vy: number; hp: number; loot: ItemKind[]; stun: number; cd: Record<string, number> }
+/** Goo per wave for n players: [small, medium, boss]. */
+export function waveMix(wave: number, players: number): [number, number, number] {
+  const n = Math.max(1, players);
+  return wave === 0 ? [n + 1, 0, 0] : wave === 1 ? [n + 1, 1, 0] : wave === BOSS_WAVE ? [n, 0, 1] : [n + 1, 2, 0];
+}
+export const gooNear = (goos: { x: number; y: number }[], x: number, y: number) => goos.some((g) => Math.hypot(g.x - x, g.y - y) < GOO_NEAR);
+
 /** Plates per puzzle: 2 and 3, but never more than the players at round start (min 1). */
 export function puzzleNeeds(players: number): number[] {
   const n = Math.max(1, players);
@@ -154,7 +174,12 @@ export type FxEvent =
   | { t: 'bump'; x: number; y: number }
   | { t: 'power'; x: number; y: number; kind: PowerKind }
   | { t: 'gate'; x: number; y: number }
-  | { t: 'totem'; x: number; y: number; kind: TotemKind; level: number };
+  | { t: 'totem'; x: number; y: number; kind: TotemKind; level: number }
+  | { t: 'wave'; boss: boolean }
+  | { t: 'splat'; x: number; y: number; kind: GooKind }
+  | { t: 'goohit'; x: number; y: number }
+  | { t: 'steal'; x: number; y: number }
+  | { t: 'shield'; x: number; y: number };
 
 export interface State {
   phase: 'play' | 'end';
@@ -171,6 +196,8 @@ export interface State {
   puzzles: Puzzle[];
   totems: Totem[];
   doubleT: number; // seconds of 2x points left
+  goos: Goo[];
+  wave: number; // waves started so far
   fx: FxEvent[]; // events since last snapshot (cleared by caller)
   nextId: number;
   gemT: number; powerT: number;
@@ -228,6 +255,7 @@ export function createState(infos: PlayerInfo[], seed: number): State {
     players: [], items: [], gems: [], powers: [], trees,
     layout, puzzles: layout.map((_, i) => ({ need: needs[i], mask: 0, open: false, taken: false })),
     totems: TOTEM_KINDS.map((kind) => ({ kind, level: 0, buy: 0, armed: true })), doubleT: 0,
+    goos: [], wave: 0,
     fx: [], nextId: 1,
     gemT: 8, powerT: 10,
   };
@@ -330,7 +358,8 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     if (inp.dash !== p.lastDash) {
       p.lastDash = inp.dash;
       // contextual action: a node in reach gets the right tool, otherwise dash
-      const node = toolNode(s.trees, (i) => s.trees[i].left, p.x, p.y);
+      // goo close by: the button attacks (dash) even next to a node
+      const node = gooNear(s.goos, p.x, p.y) ? -1 : toolNode(s.trees, (i) => s.trees[i].left, p.x, p.y);
       if (node >= 0) {
         if (p.toolCd <= 0) { hitNode(s, p, node); p.toolCd = TOOL_COOLDOWN; }
       } else if (p.dashCd <= 0) {
@@ -471,6 +500,8 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     }
   }
 
+  stepGoo(s, dt);
+
   // --- totems: stand on a pad for a second to buy the next level; step off before buying again ---
   s.totems.forEach((t, i) => {
     const pad = TOTEM_PADS[i];
@@ -508,6 +539,108 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
   if (s.time <= 0) s.phase = 'end';
 }
 
+function spawnGoo(s: State, kind: GooKind) {
+  // somewhere on the map edge
+  const side = Math.floor(Math.random() * 4), t = Math.random();
+  const x = side < 2 ? 20 + t * (WORLD_W - 40) : side === 2 ? 10 : WORLD_W - 10;
+  const y = side >= 2 ? 20 + t * (WORLD_H - 40) : side === 0 ? 10 : WORLD_H - 10;
+  s.goos.push({ id: s.nextId++, kind, x, y, vx: 0, vy: 0, hp: GOO_HP[kind], loot: [], stun: 0, cd: {} });
+}
+
+/** Drop items around a point (splatted goo returns what it stole). */
+function dropItems(s: State, x: number, y: number, items: ItemKind[]) {
+  items.forEach((kind, i) => {
+    const a = (i / Math.max(1, items.length)) * Math.PI * 2 + Math.random();
+    s.items.push({ id: s.nextId++, kind, x: Math.max(20, Math.min(WORLD_W - 20, x + Math.cos(a) * 30)), y: Math.max(20, Math.min(WORLD_H - 20, y + Math.sin(a) * 30)) });
+  });
+}
+
+function stepGoo(s: State, dt: number) {
+  // waves on the daylight clock
+  while (s.wave < WAVES.length && s.time <= WAVES[s.wave]) {
+    const [sm, md, bs] = waveMix(s.wave, s.players.length);
+    for (let i = 0; i < sm; i++) spawnGoo(s, 0);
+    for (let i = 0; i < md; i++) spawnGoo(s, 1);
+    for (let i = 0; i < bs; i++) spawnGoo(s, 2);
+    s.fx.push({ t: 'wave', boss: bs > 0 });
+    s.wave++;
+  }
+  for (let gi = s.goos.length - 1; gi >= 0; gi--) {
+    const g = s.goos[gi];
+    const R = GOO_R[g.kind];
+    g.stun = Math.max(0, g.stun - dt);
+    for (const k in g.cd) g.cd[k] = Math.max(0, g.cd[k] - dt);
+    // steer: full of loot -> nearest edge; else the nearest carrying blob in sight; else the base
+    let tx = BASE.x, ty = BASE.y;
+    const full = g.loot.length >= GOO_LOOT[g.kind];
+    if (full) {
+      const dl = g.x, dr = WORLD_W - g.x, du = g.y, dd = WORLD_H - g.y, m = Math.min(dl, dr, du, dd);
+      [tx, ty] = m === dl ? [-50, g.y] : m === dr ? [WORLD_W + 50, g.y] : m === du ? [g.x, -50] : [g.x, WORLD_H + 50];
+    } else {
+      let best = GOO_SEE;
+      for (const p of s.players) {
+        if (!p.carry.length) continue;
+        const d = Math.hypot(p.x - g.x, p.y - g.y);
+        if (d < best) { best = d; tx = p.x; ty = p.y; }
+      }
+    }
+    if (g.stun <= 0) {
+      const dx = tx - g.x, dy = ty - g.y, d = Math.hypot(dx, dy) || 1;
+      const sp = GOO_SPEED[g.kind] * (full ? 1.25 : 1);
+      g.vx += ((dx / d) * sp - g.vx) * Math.min(1, dt * 4);
+      g.vy += ((dy / d) * sp - g.vy) * Math.min(1, dt * 4);
+    } else { g.vx *= Math.exp(-4 * dt); g.vy *= Math.exp(-4 * dt); }
+    g.x += g.vx * dt; g.y += g.vy * dt;
+    // escaped with loot: gone (the loot is lost)
+    if (full && (g.x < -R || g.x > WORLD_W + R || g.y < -R || g.y > WORLD_H + R)) { s.goos.splice(gi, 1); continue; }
+    if (!full) { g.x = Math.max(R, Math.min(WORLD_W - R, g.x)); g.y = Math.max(R, Math.min(WORLD_H - R, g.y)); }
+    // reached the base: nibbles the bank, then runs
+    if (!full && g.stun <= 0 && nearBase(g.x, g.y, -20)) {
+      for (let n = g.loot.length; n < GOO_LOOT[g.kind]; n++) {
+        const k = RES.reduce((a, b) => (s.bank[b] > s.bank[a] ? b : a), RES[0]);
+        if (s.bank[k] <= 0) break;
+        s.bank[k]--; g.loot.push(k);
+      }
+      if (!g.loot.length) g.loot.push('wood'); // nothing to take: it still leaves
+      while (g.loot.length < GOO_LOOT[g.kind]) g.loot.push(g.loot[0]);
+      s.fx.push({ t: 'steal', x: g.x, y: g.y });
+      continue;
+    }
+    // blobz: a dash splats, a touch while carrying gets robbed (unless a shield charge pops)
+    for (const p of s.players) {
+      const dx = g.x - p.x, dy = g.y - p.y, d = Math.hypot(dx, dy);
+      if (d >= R + BLOB_R || d < 0.001) continue;
+      const nx = dx / d, ny = dy / d;
+      const push = R + BLOB_R - d;
+      g.x += nx * push * 0.6; g.y += ny * push * 0.6; p.x -= nx * push * 0.4; p.y -= ny * push * 0.4;
+      if (p.dashT > 0) {
+        if ((g.cd[p.id] ?? 0) > 0) continue;
+        g.cd[p.id] = GOO_HIT_CD[g.kind];
+        g.hp--;
+        g.vx = nx * 260; g.vy = ny * 260; g.stun = 0.5;
+        p.vx = -nx * 160; p.vy = -ny * 160;
+        if (g.hp <= 0) {
+          dropItems(s, g.x, g.y, g.kind === 2 ? [...g.loot, 'wood', 'wood', 'stone', 'stone', 'berry', 'berry'] : g.loot);
+          s.fx.push({ t: 'splat', x: g.x, y: g.y, kind: g.kind });
+          s.goos.splice(gi, 1);
+          break;
+        }
+        s.fx.push({ t: 'goohit', x: g.x, y: g.y });
+      } else if (p.carry.length && !full && g.stun <= 0) {
+        if (p.shield > 0) {
+          p.shield--;
+          g.vx = nx * 220; g.vy = ny * 220; g.stun = 1;
+          s.fx.push({ t: 'shield', x: p.x, y: p.y });
+        } else {
+          g.loot.push(p.carry.pop()!);
+          g.stun = 0.4;
+          s.fx.push({ t: 'steal', x: p.x, y: p.y });
+        }
+      }
+    }
+  }
+}
+
 /** Push a blob out of an axis-aligned box and bounce it off. */
 function collideBox(p: Player, b: Rect) {
   const qx = Math.max(b.x0, Math.min(p.x, b.x1)), qy = Math.max(b.y0, Math.min(p.y, b.y1));
@@ -536,6 +669,7 @@ export interface Snapshot {
   w: [number, string, number, number][];
   z: [number, number, number, number][]; // puzzles: need, plate mask, open, chest taken
   k: [number, number][]; d: number; // totems [level, buy%], double seconds left
+  o: [number, number, number, number, number, string][]; // goo: id, kind, x, y, hp, loot
   fx: FxEvent[];
 }
 
@@ -556,6 +690,7 @@ export function snapshot(s: State): Snapshot {
     w: s.powers.map((w) => [w.id, w.kind, r1(w.x), r1(w.y)]),
     z: s.puzzles.map((z) => [z.need, z.mask, +z.open, +z.taken]),
     k: s.totems.map((t) => [t.level, Math.round(t.buy * 100)]), d: r1(s.doubleT),
+    o: s.goos.map((g) => [g.id, g.kind, r1(g.x), r1(g.y), g.hp, g.loot.map((k) => KIND_CODE[k]).join('')]),
     fx: s.fx,
   };
 }
@@ -569,6 +704,7 @@ export interface View {
   items: Item[]; gems: { id: number; x: number; y: number; holders: number }[]; powers: Power[];
   puzzles: Puzzle[];
   totems: { kind: TotemKind; level: number; buy: number }[]; doubleT: number;
+  goos: { id: number; kind: GooKind; x: number; y: number; hp: number; loot: ItemKind[] }[];
 }
 
 export function viewFromState(s: State): View {
@@ -577,7 +713,7 @@ export function viewFromState(s: State): View {
     nodes: s.trees.map((t) => t.left),
     players: s.players.map((p) => ({ id: p.id, x: p.x, y: p.y, vx: p.vx, vy: p.vy, carry: p.carry, boostT: p.boostT, magnetT: p.magnetT, dashCd: p.dashCd, shield: p.shield })),
     items: s.items, gems: s.gems, powers: s.powers, puzzles: s.puzzles,
-    totems: s.totems, doubleT: s.doubleT,
+    totems: s.totems, doubleT: s.doubleT, goos: s.goos,
   };
 }
 
@@ -591,6 +727,7 @@ export function viewFromSnapshot(n: Snapshot): View {
     gems: n.g.map(([id, x, y, h]) => ({ id, x, y, holders: h })),
     powers: n.w.map(([id, k, x, y]) => ({ id, kind: k as PowerKind, x, y })),
     puzzles: (n.z ?? []).map(([need, mask, open, taken]) => ({ need, mask, open: !!open, taken: !!taken })),
+    goos: (n.o ?? []).map(([id, kind, x, y, hp, l]) => ({ id, kind: kind as GooKind, x, y, hp, loot: l.split('').filter(Boolean).map((k) => CODE_KIND[k]) })),
     totems: TOTEM_KINDS.map((kind, i) => ({ kind, level: n.k?.[i]?.[0] ?? 0, buy: (n.k?.[i]?.[1] ?? 0) / 100 })), doubleT: n.d ?? 0,
   };
 }
