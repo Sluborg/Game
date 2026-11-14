@@ -26,6 +26,7 @@ OWN = 'Own art (CC0)'
 CC0K = 'CC0 1.0 (Kenney)'
 # (glob on the path under public/, source, license, approved?) first match wins
 SOURCES = [
+    ('art/ninja/*', 'Ninja crop: Ninja Adventure rect cut by scripts/ninja_crops.py (Code)', 'CC0 1.0 (Ninja Adventure)', True),
     ('art/dungeon/card-class-*.png', 'ChatGPT N-5 class cards, sliced by scripts/slice_cards.py', GPT, True),
     ('art/dungeon/weapons/ninja-*.png', 'Claude-drawn: scripts/ninja_weapons.py (Ninja palette)', OWN, None),
     ('art/dungeon/weapons/*.png', 'ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py', GPT, True),
@@ -184,7 +185,7 @@ def main():
         hits = uses(rel, texts)
         st = status(rel, bool(hits), ok)
         kind = src.split(':')[0].split(' ')[0] if not src.startswith('Claude') else 'Claude-drawn'
-        kind = {'ChatGPT': 'ChatGPT', 'Kenney': 'Kenney', 'Cut': 'ChatGPT'}.get(kind, kind)
+        kind = {'ChatGPT': 'ChatGPT', 'Kenney': 'Kenney', 'Cut': 'ChatGPT', 'Ninja': 'Ninja crop'}.get(kind, kind)
         counts[kind] = counts.get(kind, 0) + 1
         where = ', '.join(hits[:3]) + (f' (+{len(hits) - 3})' if len(hits) > 3 else '') if hits else 'UNUSED'
         state = rt_state(rel, hits, rt)
