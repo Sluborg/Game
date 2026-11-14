@@ -24,8 +24,9 @@ const ok = (cond, msg) => { if (!cond) throw new Error('FAIL: ' + msg); console.
     await host.goto(url());
     await host.click('#btn-host');
     await host.waitForSelector('#lobby:not(.hidden)', { timeout: 20000 });
-    const code = await host.getAttribute('#lobby-code', 'data-code');
-    ok(/^[A-Z]{4}$/.test(code), 'host still gets a room code fallback: ' + code);
+    ok((await host.locator('#lobby-code, #hud-code, #code').count()) === 0, 'no room code anywhere in the UI');
+    await host.waitForFunction(() => !document.querySelector('#lobby-lan.warn') && /Joina/.test(document.querySelector('#lobby-lan').textContent), null, { timeout: 20000 });
+    ok(true, 'host lobby says friends on the same Wi-Fi can tap Joina');
 
     const joiners = [];
     for (const [i, name] of ['Ada', 'Bo'].entries()) {
@@ -33,7 +34,6 @@ const ok = (cond, msg) => { if (!cond) throw new Error('FAIL: ' + msg); console.
       await p.goto(url());
       await p.click('#btn-show-join');
       ok(await p.isVisible('#lan-status'), `${name} sees "Letar efter spel..." while scanning`);
-      ok(!(await p.isVisible('#code')), `${name}: code input hidden behind "Har du en kod?"`);
       const row = p.locator('.lanrow', { hasText: 'Joina Stefan' });
       await row.waitFor({ timeout: 25000 });
       ok(true, `${name} sees "Joina Stefan" without typing a code (${await row.innerText().then((t) => t.replace(/\s+/g, ' '))})`);
