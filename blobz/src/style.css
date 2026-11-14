@@ -511,3 +511,16 @@ h2, button.big, .tab, .chip, .edit, #score, #hud-time, .me-text b, .lantext b, #
 .mapcard:disabled { cursor: default; }
 .mapcard:disabled:not(.on) { filter: grayscale(0.7) opacity(0.6); }
 @media (orientation: landscape) and (max-height: 520px) { .mapimg { height: 46px; } .mapimg img { height: 38px; } .mapimg img:nth-child(2) { height: 24px; } }
+
+/* landscape lobby: players left, map cards + Starta right, so Starta stays above the fold with 5 players */
+@media (orientation: landscape) and (max-height: 520px) {
+  #lobby .card.lobbycard { max-width: 640px; display: grid; grid-template-columns: 1fr 1fr; column-gap: 16px; row-gap: 6px; align-items: start; align-content: start; }
+  .lobbycard > h2 { grid-column: 1 / -1; }
+  .lobbycard > #lobby-list { grid-column: 1; grid-row: 2 / span 8; }
+  .lobbycard > :not(h2):not(#lobby-list):not(.backbtn) { grid-column: 2; }
+  .lobbycard .mapimg { height: 40px; }
+  .lobbycard .mapimg img { height: 32px; }
+  .lobbycard .mapimg img:nth-child(2) { height: 20px; }
+  .lobbycard .mapcard b { font-size: 17px; }
+  .lobbycard button.big { min-height: 52px; }
+}

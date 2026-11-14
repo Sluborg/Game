@@ -422,28 +422,40 @@ export function dungeonFrame(scene: Phaser.Scene, v: View, session: Session): bo
   return false;
 }
 
+/** Texture for the cave mouth: the snowy one on the snow map once Art's file exists, else the normal one. */
+function entranceKey(scene: Phaser.Scene): string | null {
+  if (scene.registry.get('biome') === 'snow' && scene.textures.exists('dg-entrance-snow')) return 'dg-entrance-snow';
+  return scene.textures.exists('dg-entrance') ? 'dg-entrance' : null;
+}
+
 /** The cave mouth on the meadow, a ring that fills while everyone stands on it, and an "n/N" bubble. */
 function drawEntrance(scene: Phaser.Scene, v: View, seed: number) {
   let g = entrances.get(scene);
   if (!g || !g.img.active || g.seed !== seed) {
     if (g) for (const o of [g.img, g.ring, g.bubble]) o.destroy();
     const ENTRANCE = entranceOf(seed);
-    if (!scene.textures.exists('dg-entrance')) {
-      // loaded on first use (keeps the meadow's preload untouched); shown as soon as it is there
+    // loaded on first use (keeps the meadow's preload untouched); shown as soon as it is there.
+    // Snow map hook (Code): GameScene puts the biome in the registry; entrance-snow.png is used when it exists.
+    const load = (key: string, src: string) => {
+      if (scene.textures.exists(key)) return;
       const im = new Image();
-      im.onload = () => { if (!scene.textures.exists('dg-entrance')) scene.textures.addImage('dg-entrance', im); scene.textures.get('dg-entrance').setFilter(Phaser.Textures.FilterMode.NEAREST); };
-      im.src = 'art/dungeon/entrance.png';
-    }
+      im.onload = () => { if (!scene.textures.exists(key)) scene.textures.addImage(key, im); scene.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST); };
+      im.onerror = () => { /* no snowy cave yet: the normal one is used */ };
+      im.src = src;
+    };
+    load('dg-entrance', 'art/dungeon/entrance.png');
+    if (scene.registry.get('biome') === 'snow') load('dg-entrance-snow', 'art/dungeon/entrance-snow.png');
     g = {
       seed, at: ENTRANCE,
-      img: scene.add.image(ENTRANCE.x, ENTRANCE.y + 30, scene.textures.exists('dg-entrance') ? 'dg-entrance' : '__MISSING').setScale(2).setOrigin(0.5, 1).setDepth(ENTRANCE.y - 60).setVisible(scene.textures.exists('dg-entrance')),
+      img: scene.add.image(ENTRANCE.x, ENTRANCE.y + 30, entranceKey(scene) ?? '__MISSING').setScale(2).setOrigin(0.5, 1).setDepth(ENTRANCE.y - 60).setVisible(!!entranceKey(scene)),
       ring: scene.add.graphics().setDepth(ENTRANCE.y - 50),
       bubble: scene.add.text(ENTRANCE.x, ENTRANCE.y - 66, '', { fontFamily: FONT, fontSize: '22px', color: '#3f2631', fontStyle: 'bold', backgroundColor: '#fff7e6', padding: { x: 8, y: 2 } }).setOrigin(0.5, 1).setDepth(4000),
     };
     entrances.set(scene, g);
   }
   const ENTRANCE = g.at;
-  if (!g.img.visible && scene.textures.exists('dg-entrance')) g.img.setTexture('dg-entrance').setVisible(true);
+  const key = entranceKey(scene);
+  if (key && (!g.img.visible || g.img.texture.key !== key)) g.img.setTexture(key).setVisible(true);
   const on = v.players.filter((p) => Math.hypot(p.x - ENTRANCE.x, p.y - ENTRANCE.y) < ENTRANCE_R).length;
   g.ring.clear();
   g.ring.lineStyle(3, 0xfff7e6, on ? 0.9 : 0.5).strokeEllipse(ENTRANCE.x, ENTRANCE.y + 10, ENTRANCE_R * 2, ENTRANCE_R);
