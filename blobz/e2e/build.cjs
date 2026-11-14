@@ -35,7 +35,9 @@ const openPanel = async (page) => { await page.waitForSelector('#btn-build:not(.
     ok(true, 'the card now says "Byggd"');
     await ada.click('#btn-build-close');
     await ada.waitForSelector('#q-build:not(.hidden)', { timeout: 3000 });
-    ok((await ada.textContent('#q-build span')) === 'Byggt: Förråd', 'quest card shows "Byggt: Förråd"');
+    await ada.waitForFunction(() => document.getElementById('q-build').getAttribute('aria-label') === 'Byggt: Förråd', null, { timeout: 3000 });
+    ok((await ada.getAttribute('#q-build .qbimg', 'src')).endsWith('base/storage.png') && (await ada.getAttribute('#q-build .qbico', 'src')).endsWith('icons/check.png'),
+      'quest card shows the storage picture + a check (aria "Byggt: Förråd")');
 
     // Bo (landscape) builds the bridge from his own panel; then walks over the water
     await sim(host, (s) => { s.bank = { wood: 12, stone: 8, berry: 0 }; });
@@ -96,7 +98,8 @@ const openPanel = async (page) => { await page.waitForSelector('#btn-build:not(.
     await p.goto(base + '?lan=e2e-ny&debug');
     await p.click('#btn-host');
     await p.waitForSelector('#lobby:not(.hidden)');
-    ok((await p.textContent('#lobby-village')).includes('stuga nivå 2'), 'host lobby shows the saved village: ' + (await p.textContent('#lobby-village')));
+    ok((await p.getAttribute('#lobby-village', 'aria-label')).includes('stuga nivå 2') && (await p.getAttribute('#lobby-village .vcot', 'src')).endsWith('cottage-2.png'),
+      'host lobby shows the saved village as pictures (cottage 2): ' + (await p.getAttribute('#lobby-village', 'aria-label')));
     await p.click('#btn-newvillage');
     ok(await p.isVisible('#newvillage-ask') && (await p.textContent('#newvillage-ask p')) === 'Riv byn och börja om?', 'in-page confirm "Riv byn och börja om?"');
     if (shots) await p.screenshot({ path: `${shots}/base-nyby-portrait.png` });

@@ -73,8 +73,8 @@ async function phone(browser, name, locale, size = PORTRAIT) {
     await en.click('#btn-start');
     for (const p of [en, sv]) await p.waitForSelector('#hud:not(.hidden)', { timeout: 15000 });
     await en.waitForFunction(() => !!window.__blobzView, null, { timeout: 10000 });
-    ok((await en.textContent('#hud-quest .qtitle')).trim() === 'Bring to the base', 'HUD quest title in English');
-    ok((await sv.textContent('#hud-quest .qtitle')).trim() === 'Samla till basen', 'joiner HUD in Swedish');
+    ok((await en.getAttribute('#hud-quest .qtitle', 'aria-label')) === 'Bring to the base', 'HUD quest title in English');
+    ok((await sv.getAttribute('#hud-quest .qtitle', 'aria-label')) === 'Samla till basen', 'joiner HUD in Swedish');
     await sim(en, (s) => { s.bank = { wood: 12, stone: 8, berry: 4 }; Object.assign(s.players[0], { x: 640, y: 530, vx: 0, vy: 0 }); });
     await en.waitForSelector('#btn-build:not(.hidden)');
     await en.click('#btn-build');
