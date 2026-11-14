@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
-"""Blobz v2 mock on Ninja Adventure's 16 px grid (docs/art-review/blobz-v2.png): a look test before blob.ts changes.
+"""Blobz v2 mock, round 3 (docs/art-review/blobz-v2.png): bare bodies + separate feature sprites on the Ninja grid.
 
 usage (from blobz/): python3 scripts/blobz_v2_mock.py
 
-Frame 16x18 (body 16x16 + 2 rows of hat room), 4 facings like the Ninja characters (down, up, left, right),
-Ninja outline colour (20,27,27). Shown with Ninja characters and monsters at the same scale.
+Structure (what blob.ts will do):
+  * 6 BARE bodies (no face) in ONE 3/4 view facing right; facing left = mirror. Idle + glide (squash) frame.
+  * Each body has anchors: face (centre of the face), headTop (x, y, width of the top row), sideL / sideR (the
+    head's left/right edge at ear height).
+  * Features are separate small sprites drawn once: eyes, mouths, hats. They are placed on the anchors.
+  * Special cases have their own rule: headphones = band over headTop + a cup on sideL and on sideR.
+Frame 16x18 (body up to 16x16, 2 rows of hat room), Ninja outline colour (20,27,27).
 """
 import os
 from PIL import Image, ImageDraw
@@ -16,11 +21,12 @@ OUT = os.path.join(ROOT, 'docs', 'art-review', 'blobz-v2.png')
 FW, FH = 16, 18
 INK = (20, 27, 27, 255)
 WHITE = (255, 255, 255, 255)
-EYE = (227, 241, 245, 255)
-PINK = (211, 110, 130, 255)
+PAL = {'K': INK, 'W': (240, 246, 248, 255), 'P': (226, 104, 128, 255), 'R': (230, 57, 70, 255), 'r': (170, 30, 45, 255),
+       'Y': (255, 201, 60, 255), 'y': (210, 150, 30, 255), 'G': (98, 196, 88, 255), 'g': (62, 140, 66, 255),
+       'B': (63, 120, 220, 255), 'b': (40, 80, 160, 255), 'S': (120, 128, 140, 255), 's': (70, 76, 88, 255),
+       'V': (140, 90, 200, 255), 'v': (95, 55, 150, 255), 'C': (255, 247, 230, 255)}
 
-# body mask widths per row (bottom row last), max 14 so the outline fits in 16
-SHAPES = {
+SHAPES = {  # body mask widths per row, top to bottom (max 14 so the outline fits in 16)
     'dome': [6, 8, 10, 12, 12, 14, 14, 14, 14, 14, 14, 12],
     'ball': [4, 8, 10, 12, 12, 12, 12, 12, 12, 10, 8],
     'tall': [4, 6, 8, 8, 10, 10, 10, 10, 10, 10, 10, 10, 10, 8],
@@ -30,181 +36,172 @@ SHAPES = {
 }
 COLOURS = [(90, 180, 240), (255, 143, 176), (125, 220, 90), (255, 201, 60), (177, 140, 255), (255, 138, 61)]
 
+# ---- feature sprites, drawn once in the 3/4-right view; '.' = empty. (rows, anchor x, anchor y)
+EYES = {  # anchor at the centre between the eyes
+    'dot':   (['WW.WW', 'WK.WK'], 2, 0),
+    'big':   (['WW.WW', 'WK.WK', 'WK.WK'], 2, 1),
+    'happy': (['.K..K.', 'K.KK.K'], 3, 0),
+    'sleepy': (['KK.KK'], 2, 0),
+    'wink':  (['WW...', 'WK.KK'], 2, 0),
+}
+MOUTHS = {  # anchor at the mouth's centre
+    'smile': (['K..K', '.KK.'], 2, 0),
+    'open':  (['KKK', 'KPK', '.K.'], 1, 0),
+    'flat':  (['KKK'], 1, 0),
+    'grin':  (['KKKK', 'KWWK', '.KK.'], 2, 0),
+    'cat':   (['K.K', '.K.'], 1, 0),
+}
+HATS = {  # anchor at the bottom-centre of the hat (sits on headTop)
+    'cap':    (['..RRRR..', '.RRRRRRR', 'RRRRRRRRRR'], 4, 2),
+    'crown':  (['Y.Y.Y', 'YYYYY', 'yyyyy'], 2, 2),
+    'sprout': (['GG.GG', '.GgG.', '..g..'], 2, 2),
+    'beanie': (['..WW..', '.BBBB.', 'BBBBBB', 'bbbbbb'], 3, 3),
+    'wizard': (['...V..', '..VV..', '.VVVV.', 'VVVVVVV', 'vvvvvvv'], 3, 4),
+    'bow':    (['RR.RR', 'RrRrR', 'RR.RR'], 2, 2),
+}
+FACE_X = 9  # 3/4 view: the face sits right of the body centre (8)
+
+
+def body(shape, frame=0):
+    """Mask, top row and anchors of a bare body. frame 1 = glide squash (1 row lower, bottom half wider)."""
+    ws = list(SHAPES[shape])
+    if frame == 1:
+        ws = ws[1:]
+        ws = [min(14, w + 2) if i >= len(ws) // 2 else w for i, w in enumerate(ws)]
+    m, bottom = set(), FH - 2
+    for i, w in enumerate(reversed(ws)):
+        x0 = 8 - w // 2
+        for x in range(x0, x0 + w):
+            m.add((x, bottom - i))
+    top = bottom - len(ws) + 1
+    h = len(ws)
+    fy = top + max(3, round(h * 0.42))
+    ey = top + min(3, h // 3)
+    row = sorted(x for (x, y) in m if y == ey)
+    anchors = {'face': (FACE_X, fy), 'headTop': (8, top, ws[0]), 'sideL': (row[0] - 1, ey), 'sideR': (row[-1] + 1, ey)}
+    return m, top, anchors
+
+
+def outline(pts):
+    return {(x + dx, y + dy) for (x, y) in pts for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))} - pts
+
 
 def shade(c, f):
     return tuple(max(0, min(255, int(v * f))) for v in c) + (255,)
 
 
-def body_mask(widths, squash=0):
-    """Pixels of the body standing on row FH-2 (one row left for the outline). squash: +1 wider/lower, -1 taller."""
-    ws = list(widths)
-    if squash == 1:
-        ws = ws[1:]
-        ws = [min(14, w + 2) if i >= len(ws) // 2 else w for i, w in enumerate(ws)]
-    elif squash == -1:
-        ws = [ws[0]] + ws
-        ws = [max(4, w - 2) if i >= len(ws) - 3 else w for i, w in enumerate(ws)]
-    pts = set()
-    bottom = FH - 2
-    for i, w in enumerate(reversed(ws)):
-        y = bottom - i
-        x0 = 8 - w // 2
-        for x in range(x0, x0 + w):
-            pts.add((x, y))
-    return pts
+def sprite_px(spec, at):
+    rows, ax, ay = spec
+    return {(at[0] - ax + i, at[1] - ay + j): PAL[ch] for j, row in enumerate(rows) for i, ch in enumerate(row) if ch != '.'}
 
 
-def paint(im, pts, col):
-    for (x, y) in pts:
+def put(im, px):
+    for (x, y), c in px.items():
         if 0 <= x < FW and 0 <= y < FH:
-            im.putpixel((x, y), col)
+            im.putpixel((x, y), c)
 
 
-def outline(pts):
-    out = set()
-    for (x, y) in pts:
-        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-            if (x + dx, y + dy) not in pts:
-                out.add((x + dx, y + dy))
-    return out
-
-
-def eyes(face, top, bottom, kind):
-    """Eye and mouth pixels for a facing. top/bottom: body rows."""
-    h = bottom - top + 1
-    ey = top + max(2, int(h * 0.35))
-    px = {}
-    if face == 'up':
-        return px
-    if face == 'q':
-        xs = [7, 11]
-    elif face == 'down':
-        xs = [5, 10]
-    elif face == 'right':
-        xs = [11]
-    else:
-        xs = [3]
-    for ex in xs:
-        if kind == 'happy':
-            for (dx, dy) in ((0, 1), (1, 0)):
-                px[(ex + dx - (0 if face != 'left' else 0), ey + dy)] = INK
-        else:
-            for dy in range(3 if kind == 'big' else 2):
-                px[(ex, ey + dy)] = EYE
-                px[(ex + 1, ey + dy)] = EYE
-            pdx = 1 if face in ('right', 'q') else 0 if face == 'left' else (1 if ex < 8 else 0)
-            px[(ex + pdx, ey + (2 if kind == 'big' else 1))] = INK
-            if kind == 'big':
-                px[(ex + pdx, ey + 1)] = INK
-    my = ey + (3 if kind == 'big' else 2) + 1
-    if face == 'q':
-        for x in (9, 10):
-            px[(x, my)] = INK
-        px[(8, my - 1)] = INK
-        px[(11, my - 1)] = INK
-    elif face == 'down':
-        for x in (7, 8):
-            px[(x, my)] = INK
-        px[(6, my - 1)] = INK
-        px[(9, my - 1)] = INK
-    else:
-        mx = 12 if face == 'right' else 3
-        px[(mx, my)] = INK
-        px[(mx - 1 if face == 'right' else mx + 1, my - 1)] = INK
-    return px
-
-
-HATS = {
-    'none': [],
-    'cap': ['.....RRRRRR.....', '....RRRRRRRRR...'],
-    'crown': ['.....Y.YY.Y.....', '.....YYYYYY.....'],
-    'sprout': ['......GG.GG.....', '.......GG.......'],
-    'ears': ['....K......K....', '....KK....KK....'],
-    'beanie': ['.......WW.......', '.....BBBBBB.....', '....BBBBBBBB....'],
-}
-HAT_COL = {'R': (230, 57, 70, 255), 'Y': (255, 201, 60, 255), 'G': (98, 196, 88, 255), 'K': None, 'B': (63, 120, 220, 255), 'W': WHITE}
-
-
-def blob(shape, colour, face='down', frame=0, eye='normal', hat='none'):
+def bare(shape, colour, frame=0):
     im = Image.new('RGBA', (FW, FH))
-    squash = [0, 1, 0, -1][frame % 4]
-    m = body_mask(SHAPES[shape], squash)
-    ys = [p[1] for p in m]
-    top, bottom = min(ys), max(ys)
-    base = colour + (255,)
-    dark = shade(colour, 0.72)
-    light = shade(colour, 1.18)
+    m, top, anchors = body(shape, frame)
+    base, dark = colour + (255,), shade(colour, 0.72)
     for (x, y) in m:
-        c = base
-        if (x, y + 1) not in m or (x + 1, y) not in m and y > top + 2:
-            c = dark
-        im.putpixel((x, y), c)
-    paint(im, outline(m), INK)
-    # highlight like the Ninja slime: a 2 px white glint top-left (top-right when facing right)
-    hx = {'right': 5, 'left': 9, 'q': 3}.get(face, 4)  # glint on the back side when seen from the side
-    if face != 'up':
-        paint(im, {(hx, top + 1), (hx + 1, top + 1), (hx, top + 2)} & m, WHITE)
-    else:
-        paint(im, {(hx + 1, top + 1), (hx + 2, top + 1)} & m, light)
-    for p, c in eyes(face, top, bottom, eye).items():
-        if p in m:
-            im.putpixel(p, c)
-    rows = HATS[hat]
-    if rows:
-        ears = hat == 'ears'
-        for i, row in enumerate(rows):
-            y = top - len(rows) + i + (1 if ears else 0)
-            for x, ch in enumerate(row):
-                if ch != '.' and 0 <= y < FH:
-                    im.putpixel((x, y), base if ch == 'K' else HAT_COL[ch])
-        hat_px = {(x, top - len(rows) + i + (1 if ears else 0)) for i, row in enumerate(rows) for x, ch in enumerate(row) if ch != '.'}
-        hat_px = {p for p in hat_px if p not in m}
-        paint(im, outline(hat_px | m) - m - hat_px, INK)
-    return im
+        im.putpixel((x, y), dark if (x, y + 1) not in m or ((x + 1, y) not in m and y > top + 2) else base)
+    put(im, {p: INK for p in outline(m)})
+    put(im, {p: WHITE for p in {(3, top + 1), (4, top + 1), (3, top + 2)} & m})  # glint on the back side
+    return im, m, anchors
 
 
-def ninja(path, col, row, cols=4):
+def compose(shape, colour, eyes=None, mouth=None, hat=None, frame=0, mirror=False):
+    im, m, a = bare(shape, colour, frame)
+    fx, fy = a['face']
+    if eyes:
+        put(im, {p: c for p, c in sprite_px(EYES[eyes], (fx, fy)).items() if p in m})
+    if mouth:
+        my = fy + (3 if eyes == 'big' else 2)
+        put(im, {p: c for p, c in sprite_px(MOUTHS[mouth], (fx, my)).items() if p in m})
+    if hat == 'headphones':  # special case: band over the head + a cup on each side, whatever the shape
+        hx, hy, hw = a['headTop']
+        band = {(x, hy - 1) for x in range(hx - hw // 2, hx + hw // 2)} | {(a['sideL'][0] + 1, hy), (a['sideR'][0] - 1, hy)}
+        band -= m
+        cups = set()
+        for sx, sy in (a['sideL'], a['sideR']):
+            cups |= {(sx + dx, sy + dy) for dx in (0, 1 if sx > 8 else -1) for dy in range(-1, 2)}
+        put(im, {p: PAL['S'] for p in band})
+        put(im, {p: PAL['R'] for p in cups})
+        put(im, {p: INK for p in outline(band | cups) - m - band - cups})
+    elif hat:
+        hx, hy, _ = a['headTop']
+        px = {p: c for p, c in sprite_px(HATS[hat], (hx + 1, hy - 1)).items() if p not in m}
+        put(im, px)
+        put(im, {p: INK for p in outline(set(px) | m) - m - set(px)})
+    return im.transpose(Image.FLIP_LEFT_RIGHT) if mirror else im
+
+
+def ninja(path, col, row):
     s = Image.open(os.path.join(NA, path)).convert('RGBA')
     return s.crop((col * 16, row * 16, col * 16 + 16, row * 16 + 16))
 
 
 def main(scale=6):
-    shapes = list(SHAPES)
-    pad = 6
-    cell = (FW + 4) * scale
-    w = 9 * cell + 2 * pad
-    out = Image.new('RGBA', (w, 1400), (98, 150, 72, 255))
+    pad, cell = 8, (FW + 3) * scale
+    w = 12 * cell + 2 * pad
+    out = Image.new('RGBA', (w, 1600), (98, 150, 72, 255))
     d = ImageDraw.Draw(out)
-    d.text((pad, 4), 'Blobz v2 round 2: ONE 3/4 view (facing right), left = mirrored. Idle + glide frame.', fill=(255, 255, 255, 255), font_size=22)
+    big = lambda im: im.resize((im.width * scale, im.height * scale), Image.NEAREST)  # noqa: E731
+    d.text((pad, 4), 'Blobz v2 round 3: bare bodies + separate features (3/4 view right, mirror = left)', fill=WHITE, font_size=22)
     y = 40
-    eyes_ = ['normal', 'big', 'normal', 'normal', 'big', 'normal']
-    for r, sh in enumerate(shapes):
-        d.text((pad, y + cell // 2 - 10), sh, fill=(255, 255, 255, 255), font_size=18)
-        frames = [blob(sh, COLOURS[r], 'q', fr, eyes_[r]) for fr in (0, 1)]
-        for k, im in enumerate(frames + [f.transpose(Image.FLIP_LEFT_RIGHT) for f in frames]):
-            out.alpha_composite(im.resize((FW * scale, FH * scale), Image.NEAREST), (pad + cell + k * cell + (cell // 2 if k >= 2 else 0), y))
-        y += FH * scale + 10
-    d.text((pad + cell, y), 'right: idle, glide            left (mirrored): idle, glide', fill=(255, 255, 255, 255), font_size=16)
+    d.text((pad, y), '1  Bare bodies (idle, glide) with anchors: red = face, yellow = hat (headTop), blue = sides', fill=WHITE, font_size=16)
+    y += 24
+    for k, sh in enumerate(SHAPES):
+        for fr in (0, 1):
+            im, m, a = bare(sh, COLOURS[k], fr)
+            b = big(im)
+            dd = ImageDraw.Draw(b)
+            for key, col in (('face', (230, 30, 30)), ('headTop', (255, 220, 0)), ('sideL', (40, 120, 255)), ('sideR', (40, 120, 255))):
+                x, yy = a[key][0], a[key][1]
+                dd.ellipse((x * scale + 1, yy * scale + 1, x * scale + scale - 2, yy * scale + scale - 2), fill=col)
+            out.alpha_composite(b, (pad + (k * 2 + fr) * cell, y))
+    y += FH * scale + 8
+    for k, sh in enumerate(SHAPES):
+        d.text((pad + k * 2 * cell + 10, y), sh, fill=WHITE, font_size=16)
     y += 30
-    d.text((pad, y), 'hats (same 3/4 view) + Ninja actors at the same scale', fill=(255, 255, 255, 255), font_size=18)
-    y += 26
+    d.text((pad, y), '2  Feature sprites, each drawn once: eyes, mouths, hats (+ headphones = special rule)', fill=WHITE, font_size=16)
+    y += 24
     x = pad
-    for k, h in enumerate(h for h in HATS if h != 'none'):
-        im = blob(['dome', 'ball', 'tall', 'pear', 'cube'][k], COLOURS[k], 'q', 0, 'normal', h)
-        out.alpha_composite(im.resize((FW * scale, FH * scale), Image.NEAREST), (x, y))
-        x += cell
-    y += FH * scale + 16
-    x = pad
-    for path, col, row in (('Actor/Character/Boy/SpriteSheet.png', 0, 0), ('Actor/Character/Boy/SpriteSheet.png', 3, 0),
-                           ('Actor/Monster/Slime/Slime.png', 0, 0), ('Actor/Monster/Skull/SpriteSheet.png', 0, 0),
-                           ('Actor/Monster/Mushroom/mushroom.png', 0, 0)):
-        out.alpha_composite(ninja(path, col, row).resize((16 * scale, 16 * scale), Image.NEAREST), (x, y + 2 * scale))
-        x += cell
-    for k, sh in enumerate(('dome', 'ball', 'tall')):
-        im = blob(sh, COLOURS[k], 'q', 0, 'normal', ['cap', 'none', 'sprout'][k])
-        if k == 1:
-            im = im.transpose(Image.FLIP_LEFT_RIGHT)
-        out.alpha_composite(im.resize((FW * scale, FH * scale), Image.NEAREST), (x, y))
+    tile_w, tile_h = 10 * scale, 7 * scale
+    for group in (EYES, MOUTHS, HATS):
+        for name, (rows, _, _) in group.items():
+            spr = Image.new('RGBA', (len(max(rows, key=len)), len(rows)))
+            for j, row in enumerate(rows):
+                for i, ch in enumerate(row):
+                    if ch != '.':
+                        spr.putpixel((i, j), PAL[ch])
+            tile = Image.new('RGBA', (tile_w, tile_h), (200, 220, 190, 255))
+            sb = big(spr)
+            tile.alpha_composite(sb, ((tile_w - sb.width) // 2, (tile_h - sb.height) // 2))
+            if x + tile_w > w - pad:
+                x = pad
+                y += tile_h + 26
+            out.alpha_composite(tile, (x, y))
+            d.text((x + 2, y + tile_h + 2), name, fill=WHITE, font_size=14)
+            x += tile_w + 8
+    y += tile_h + 30
+    d.text((pad, y), '3  Composed: headphones (special case) on every shape, mixes, mirrored (left), Ninja actors for scale', fill=WHITE, font_size=16)
+    y += 24
+    for k, sh in enumerate(SHAPES):
+        out.alpha_composite(big(compose(sh, COLOURS[k], 'dot', 'smile', 'headphones')), (pad + k * cell, y))
+    for k, (sh, e, mo, h) in enumerate((('dome', 'big', 'open', 'cap'), ('ball', 'happy', 'smile', 'crown'))):
+        out.alpha_composite(big(compose(sh, COLOURS[k], e, mo, h)), (pad + (6 + k) * cell, y))
+    y += FH * scale + 10
+    combos = [('tall', 'wink', 'grin', 'wizard', False), ('flat', 'dot', 'cat', 'sprout', True), ('pear', 'sleepy', 'flat', 'beanie', False),
+              ('cube', 'big', 'smile', 'bow', True), ('dome', 'happy', 'grin', None, True), ('ball', 'dot', 'open', 'cap', True)]
+    for k, (sh, e, mo, h, mir) in enumerate(combos):
+        out.alpha_composite(big(compose(sh, COLOURS[(k + 2) % 6], e, mo, h, mirror=mir)), (pad + k * cell, y))
+    x = pad + 6 * cell
+    for path, col, row in (('Actor/Character/Boy/SpriteSheet.png', 0, 0), ('Actor/Monster/Slime/Slime.png', 0, 0),
+                           ('Actor/Monster/Skull/SpriteSheet.png', 0, 0), ('Actor/Monster/Mushroom/mushroom.png', 0, 0)):
+        out.alpha_composite(big(ninja(path, col, row)), (x, y + 2 * scale))
         x += cell
     y += FH * scale + 10
     out.crop((0, 0, w, y)).save(OUT)
