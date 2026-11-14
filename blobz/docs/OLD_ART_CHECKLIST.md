@@ -2,7 +2,7 @@
 
 Made by Art for "replace old art" (Stefan). Source: grep of `src/`, `index.html`, `style.css`, `dungeon.css` on the
 deploy branch `claude/mobile-game-5-players-8qthjq` (cd8ceb3) plus the heads of `claude/blobz-code` (7fdedd0) and
-`claude/blobz-dungeon` (05d0118); none of the branch heads adds a new old-art reference. Regenerate with
+`claude/blobz-dungeon` (05d0118, re-checked at d0f50b9: the dungeon is Ninja now); none adds a new old-art reference. Regenerate with
 `python3 scripts/old_art_checklist.py` after editing the rows there.
 
 - **Ninja** paths are relative to `public/assets/ninja-adventure/`; rects are `x,y,w,h` (see `docs/ART_MAP.md`).
@@ -12,7 +12,7 @@ deploy branch `claude/mobile-game-5-players-8qthjq` (cd8ceb3) plus the heads of 
 - Owner = who swaps the reference: Code (meadow, UI, `game.ts`/`main.ts`/`style.css`/`index.html`), Code 2 (`dungeon*`).
 - Tick the box when the game no longer loads the old file.
 
-**Counts: 209 total / 169 mapped to Ninja / 22 Ninja stand-ins / 4 pending Art rating / 0 gaps / 14 done.**
+**Counts: 209 total / 82 mapped to Ninja / 20 Ninja stand-ins / 1 pending Art rating / 0 gaps / 93 done / 13 archived (snow).**
 
 
 ## Screens
@@ -49,7 +49,7 @@ deploy branch `claude/mobile-game-5-players-8qthjq` (cd8ceb3) plus the heads of 
 | [ ] | `art/icons/dice.png` | random skin button (data-icon) | Code | Items/Object/Dice 6.png |
 | [ ] | `art/icons/dash-arrow.png` | dash button icon (data-icon, controls.ts, dungeonUi) | Code + Code 2 | Ui/Skill Icon/Items & Weapon/Boot.png 24x24 (or Ui/Theme/Theme Wood/arrow_right.png) |
 | [ ] | `art/icons/house.png` | new-village chip, home edge arrow, house marker (game.ts ic-house) | Code | STAND-IN: Backgrounds/Tilesets/TilesetHouse.png round straw hut 48,128,47,32 (small, reads as home) |
-| [ ] | `art/icons/coin.png` | dungeon gold HUD + end stat (index.html) | Code 2 | Items/Treasure/Coin2.png frame 0 (10x10) or GoldCoin.png 7x7 |
+| [x] | `art/icons/coin.png` | dungeon gold HUD + end stat (index.html) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Items/Treasure/Coin2.png frame 0 (10x10) or GoldCoin.png 7x7 |
 
 ## Meadow HUD
 
@@ -154,18 +154,18 @@ deploy branch `claude/mobile-game-5-players-8qthjq` (cd8ceb3) plus the heads of 
 
 | Done | Old file (public/) | Used in | Owner | Ninja replacement |
 |---|---|---|---|---|
-| [ ] | `art/props-winter/tree-snow-round.png` | snow wood node 0, map picker | Code | Backgrounds/Tilesets/TilesetNature.png 192,0,32,32 |
-| [ ] | `art/props-winter/tree-snow-pine.png` | snow wood node 1, map picker | Code | Backgrounds/Tilesets/TilesetNature.png 160,0,32,32 (green showing: 128,0) |
-| [ ] | `art/props-winter/tree-snow-small.png` | snow wood node 2 | Code | Backgrounds/Tilesets/TilesetNature.png 128,0,32,32 |
-| [ ] | `art/props-winter/rock-snow.png` | snow stone node 3 | Code | Backgrounds/Tilesets/TilesetNature.png snowy boulder 32,192,32,32 |
-| [ ] | `art/props-winter/ice-rock.png` | snow stone node 4 | Code | Backgrounds/Tilesets/TilesetNature.png snowy rock 64,192,16,16 (or snowy peaks 144,192) |
-| [ ] | `art/props-winter/bush-berries-snow.png` | snow berry node 5 | Code | STAND-IN: Backgrounds/Tilesets/TilesetNature.png snow bush 192,0,32,32 with Items/Food/Nut2.png drawn on top in code |
-| [ ] | `art/props-winter/bush-empty-snow.png` | picked snow berry node | Code | Backgrounds/Tilesets/TilesetNature.png snow bush 192,0,32,32 |
-| [ ] | `art/props-winter/snowman.png` | snow decor, map picker | Code | STAND-IN: Backgrounds/Tilesets/TilesetNature.png snowball 80,192,16,16 / snow mound 160,192,16,16 |
-| [ ] | `art/props-winter/igloo.png` | snow decor | Code | Backgrounds/Tilesets/TilesetHouse.png igloo 0,176,48,46 |
-| [ ] | `art/props-winter/ice.png` | snow decor | Code | Backgrounds/Tilesets/TilesetFloor.png frozen pond 3x3 0,336,48,48 |
-| [ ] | `art/props-winter/tree-bare.png` | snow decor | Code | Backgrounds/Tilesets/TilesetNature.png dead tree 64,0,32,32 |
-| [ ] | `art/props-winter/pond-frozen-tiles.png` | frozen pond tiles (w-pond) | Code | Backgrounds/Tilesets/TilesetFloor.png ice block 0,336,48,48, ice fill 16,352,16,16 |
+| [x] | `art/props-winter/tree-snow-round.png` | snow wood node 0, map picker | Code | ARCHIVED: snow map archived (Code keeps it behind a flag). Was: Backgrounds/Tilesets/TilesetNature.png 192,0,32,32 |
+| [x] | `art/props-winter/tree-snow-pine.png` | snow wood node 1, map picker | Code | ARCHIVED: snow map archived (Code keeps it behind a flag). Was: Backgrounds/Tilesets/TilesetNature.png 160,0,32,32 (green showing: 128,0) |
+| [x] | `art/props-winter/tree-snow-small.png` | snow wood node 2 | Code | ARCHIVED: snow map archived (Code keeps it behind a flag). Was: Backgrounds/Tilesets/TilesetNature.png 128,0,32,32 |
+| [x] | `art/props-winter/rock-snow.png` | snow stone node 3 | Code | ARCHIVED: snow map archived (Code keeps it behind a flag). Was: Backgrounds/Tilesets/TilesetNature.png snowy boulder 32,192,32,32 |
+| [x] | `art/props-winter/ice-rock.png` | snow stone node 4 | Code | ARCHIVED: snow map archived (Code keeps it behind a flag). Was: Backgrounds/Tilesets/TilesetNature.png snowy rock 64,192,16,16 (or snowy peaks 144,192) |
+| [x] | `art/props-winter/bush-berries-snow.png` | snow berry node 5 | Code | ARCHIVED: snow map archived (Code keeps it behind a flag). Was: STAND-IN: Backgrounds/Tilesets/TilesetNature.png snow bush 192,0,32,32 with Items/Food/Nut2.png drawn on top in code |
+| [x] | `art/props-winter/bush-empty-snow.png` | picked snow berry node | Code | ARCHIVED: snow map archived (Code keeps it behind a flag). Was: Backgrounds/Tilesets/TilesetNature.png snow bush 192,0,32,32 |
+| [x] | `art/props-winter/snowman.png` | snow decor, map picker | Code | ARCHIVED: snow map archived (Code keeps it behind a flag). Was: STAND-IN: Backgrounds/Tilesets/TilesetNature.png snowball 80,192,16,16 / snow mound 160,192,16,16 |
+| [x] | `art/props-winter/igloo.png` | snow decor | Code | ARCHIVED: snow map archived (Code keeps it behind a flag). Was: Backgrounds/Tilesets/TilesetHouse.png igloo 0,176,48,46 |
+| [x] | `art/props-winter/ice.png` | snow decor | Code | ARCHIVED: snow map archived (Code keeps it behind a flag). Was: Backgrounds/Tilesets/TilesetFloor.png frozen pond 3x3 0,336,48,48 |
+| [x] | `art/props-winter/tree-bare.png` | snow decor | Code | ARCHIVED: snow map archived (Code keeps it behind a flag). Was: Backgrounds/Tilesets/TilesetNature.png dead tree 64,0,32,32 |
+| [x] | `art/props-winter/pond-frozen-tiles.png` | frozen pond tiles (w-pond) | Code | ARCHIVED: snow map archived (Code keeps it behind a flag). Was: Backgrounds/Tilesets/TilesetFloor.png ice block 0,336,48,48, ice fill 16,352,16,16 |
 
 ## Bärregn
 
@@ -180,70 +180,70 @@ deploy branch `claude/mobile-game-5-players-8qthjq` (cd8ceb3) plus the heads of 
 
 | Done | Old file (public/) | Used in | Owner | Ninja replacement |
 |---|---|---|---|---|
-| [ ] | `art/fine/tiles/dungeon-floor.png` | dungeon floor | Code 2 | Backgrounds/Tilesets/Interior/TilesetInteriorFloor.png stone brick fill 176,192,16,16 (block 176,192,176,80) |
-| [ ] | `art/fine/tiles/dungeon-wall.png` | dungeon walls | Code 2 | Backgrounds/Tilesets/Interior/TilesetWallSimple.png brown room 0,96,80,80 |
-| [ ] | `art/fine/dungeon/stairs-down.png` | stairs down | Code 2 | Backgrounds/Tilesets/TilesetElement.png 128,176,16,16 (orange style) |
-| [ ] | `art/fine/dungeon/stairs-up.png` | stairs up | Code 2 | Backgrounds/Tilesets/TilesetElement.png 128,192,16,16 |
-| [ ] | `art/fine/dungeon/chest-closed.png` | loot chest closed | Code 2 | Items/Treasure/BigTreasureChest.png frame 0 (16x14) |
-| [ ] | `art/fine/dungeon/chest-open.png` | loot chest open | Code 2 | Items/Treasure/BigTreasureChest.png frame 1 |
-| [ ] | `art/fine/dungeon/potion.png` | potion pickup | Code 2 | Items/Potion/LifePot.png 9x11 |
-| [ ] | `art/fine/dungeon/revive.png` | revive effect | Code 2 | FX/Magic/Spirit/SpriteSheet.png 5 x 32x32 |
-| [ ] | `art/fine/dungeon/fx-spin.png` | spin special | Code 2 | FX/Attack/CircularSlash/SpriteSheet.png 4 x 32x32 |
-| [ ] | `art/fine/dungeon/fx-slam.png` | hammer slam | Code 2 | FX/Elemental/Rock/SpriteSheet.png 14 x 30x30 |
-| [ ] | `art/fine/dungeon/fx-charge.png` | tank charge | Code 2 | FX/Smoke/SmokeCircular/SpriteSheet.png 8 x 30x14 (trail) |
-| [ ] | `art/fine/dungeon/fx-sidestep.png` | sidestep puff | Code 2 | FX/Smoke/Smoke/SpriteSheet.png 6 x 32x32 |
-| [ ] | `art/fine/dungeon/fx-heal.png` | heal | Code 2 | FX/Magic/Spirit/SpriteSheet.png 5 x 32x32 |
-| [ ] | `art/fine/dungeon/fx-wall.png` | tank wall | Code 2 | FX/Magic/Shield/SpriteSheetYellow.png 6 x 24x26 |
-| [ ] | `art/fine/dungeon/fx-block.png` | block | Code 2 | FX/Magic/Shield/SpriteSheetBlue.png 6 x 24x26 |
-| [ ] | `art/fine/fx/coin-pile-s.png` | gold drop small | Code 2 | Items/Treasure/Coin2.png 4 x 10x10 |
-| [ ] | `art/fine/fx/coin-pile-m.png` | gold drop medium | Code 2 | Items/Treasure/Coin2.png x2-3 placed in code |
-| [ ] | `art/fine/fx/coin-pile-l.png` | gold drop large | Code 2 | Items/Object/MoneyBag.png 14x15 |
-| [ ] | `art/dungeon/arrow.png` | marksman bolt | Code 2 | FX/Projectile/Arrow.png 13x5 |
-| [ ] | `art/dungeon/entrance.png` | dungeon entrance on the meadow | Code 2 | Backgrounds/Tilesets/TilesetHouse.png stone arch 464,322,48,42 |
-| [ ] | `art/dungeon/entrance-snow.png` | dungeon entrance on snow | Code 2 | Backgrounds/Tilesets/TilesetHouse.png stone arch 464,322,48,42 (or igloo 0,176,48,46) |
-| [ ] | `art/dungeon/level-badge.png` | XP level badge (dungeon.css) | Code 2 | Ui/Receptacle/Receptacle Sphere/BackgroundWood.png 32x32 with the number on top |
-| [ ] | `art/dungeon/xp-frame.png` | XP bar frame (dungeon.css) | Code 2 | Ui/Receptacle/LifeBarMiniUnder.png 18x4 |
-| [ ] | `art/dungeon/xp-fill.png` | XP bar fill (dungeon.css) | Code 2 | Ui/Receptacle/LifeBarMiniProgress.png recoloured yellow |
-| [ ] | `art/dungeon/btn-sidestep.png` | sidestep button (dungeonUi) | Code 2 | Ui/Skill Icon/Spell/Camouflage.png 24x24 (substitute) |
+| [x] | `art/fine/tiles/dungeon-floor.png` | dungeon floor | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Backgrounds/Tilesets/Interior/TilesetInteriorFloor.png stone brick fill 176,192,16,16 (block 176,192,176,80) |
+| [x] | `art/fine/tiles/dungeon-wall.png` | dungeon walls | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Backgrounds/Tilesets/Interior/TilesetWallSimple.png brown room 0,96,80,80 |
+| [x] | `art/fine/dungeon/stairs-down.png` | stairs down | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Backgrounds/Tilesets/TilesetElement.png 128,176,16,16 (orange style) |
+| [x] | `art/fine/dungeon/stairs-up.png` | stairs up | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Backgrounds/Tilesets/TilesetElement.png 128,192,16,16 |
+| [x] | `art/fine/dungeon/chest-closed.png` | loot chest closed | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Items/Treasure/BigTreasureChest.png frame 0 (16x14) |
+| [x] | `art/fine/dungeon/chest-open.png` | loot chest open | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Items/Treasure/BigTreasureChest.png frame 1 |
+| [x] | `art/fine/dungeon/potion.png` | potion pickup | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Items/Potion/LifePot.png 9x11 |
+| [x] | `art/fine/dungeon/revive.png` | revive effect | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: FX/Magic/Spirit/SpriteSheet.png 5 x 32x32 |
+| [x] | `art/fine/dungeon/fx-spin.png` | spin special | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: FX/Attack/CircularSlash/SpriteSheet.png 4 x 32x32 |
+| [x] | `art/fine/dungeon/fx-slam.png` | hammer slam | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: FX/Elemental/Rock/SpriteSheet.png 14 x 30x30 |
+| [x] | `art/fine/dungeon/fx-charge.png` | tank charge | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: FX/Smoke/SmokeCircular/SpriteSheet.png 8 x 30x14 (trail) |
+| [x] | `art/fine/dungeon/fx-sidestep.png` | sidestep puff | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: FX/Smoke/Smoke/SpriteSheet.png 6 x 32x32 |
+| [x] | `art/fine/dungeon/fx-heal.png` | heal | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: FX/Magic/Spirit/SpriteSheet.png 5 x 32x32 |
+| [x] | `art/fine/dungeon/fx-wall.png` | tank wall | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: FX/Magic/Shield/SpriteSheetYellow.png 6 x 24x26 |
+| [x] | `art/fine/dungeon/fx-block.png` | block | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: FX/Magic/Shield/SpriteSheetBlue.png 6 x 24x26 |
+| [x] | `art/fine/fx/coin-pile-s.png` | gold drop small | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Items/Treasure/Coin2.png 4 x 10x10 |
+| [x] | `art/fine/fx/coin-pile-m.png` | gold drop medium | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Items/Treasure/Coin2.png x2-3 placed in code |
+| [x] | `art/fine/fx/coin-pile-l.png` | gold drop large | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Items/Object/MoneyBag.png 14x15 |
+| [x] | `art/dungeon/arrow.png` | marksman bolt | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: FX/Projectile/Arrow.png 13x5 |
+| [x] | `art/dungeon/entrance.png` | dungeon entrance on the meadow | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Backgrounds/Tilesets/TilesetHouse.png stone arch 464,322,48,42 |
+| [x] | `art/dungeon/entrance-snow.png` | dungeon entrance on snow | Code 2 | ARCHIVED: snow map archived (Code keeps it behind a flag). Was: Backgrounds/Tilesets/TilesetHouse.png stone arch 464,322,48,42 (or igloo 0,176,48,46) |
+| [x] | `art/dungeon/level-badge.png` | XP level badge (dungeon.css) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Receptacle/Receptacle Sphere/BackgroundWood.png 32x32 with the number on top |
+| [x] | `art/dungeon/xp-frame.png` | XP bar frame (dungeon.css) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Receptacle/LifeBarMiniUnder.png 18x4 |
+| [x] | `art/dungeon/xp-fill.png` | XP bar fill (dungeon.css) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Receptacle/LifeBarMiniProgress.png recoloured yellow |
+| [x] | `art/dungeon/btn-sidestep.png` | sidestep button (dungeonUi) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Spell/Camouflage.png 24x24 (substitute) |
 | [x] | `art/dungeon/card-class-rogue.png` | class pick card | Code 2 | DONE: ChatGPT N-5, sliced by scripts/slice_cards.py |
 | [x] | `art/dungeon/card-class-healer.png` | class pick card | Code 2 | DONE: ChatGPT N-5 |
 | [x] | `art/dungeon/card-class-marksman.png` | class pick card | Code 2 | DONE: ChatGPT N-5 |
 | [x] | `art/dungeon/card-class-tank.png` | class pick card | Code 2 | DONE: ChatGPT N-5 |
-| [ ] | `art/dungeon/card-sword.png` | rogue weapon card | Code 2 | Items/Weapons/Sword/Sprite.png 6x17 on a nine_path_panel card |
-| [ ] | `art/dungeon/card-hammer.png` | rogue weapon card | Code 2 | Items/Weapons/Hammer/Sprite.png 9x16 |
-| [ ] | `art/dungeon/card-dagger.png` | rogue weapon card | Code 2 | Items/Weapons/Sai/Sprite.png 7x13 |
-| [ ] | `art/dungeon/btn-special-sword.png` | special button (dungeonUi) | Code 2 | Ui/Skill Icon/Spell/Cut.png |
-| [ ] | `art/dungeon/btn-special-hammer.png` | special button | Code 2 | Ui/Skill Icon/Spell/Explosion.png |
-| [ ] | `art/dungeon/btn-special-spear.png` | special button | Code 2 | Ui/Skill Icon/Spell/MagicWeapon.png |
-| [ ] | `art/dungeon/btn-special-staff.png` | special button | Code 2 | Ui/Skill Icon/Spell/Heal.png |
-| [ ] | `art/dungeon/btn-special-bow.png` | special button | Code 2 | Ui/Skill Icon/Items & Weapon/Kunai.png (volley) |
-| [ ] | `art/dungeon/btn-special-shield.png` | special button | Code 2 | Ui/Skill Icon/Spell/DefenseUpgrade.png |
-| [ ] | `art/dungeon/btn-special-dagger.png` | special button | Code 2 | Ui/Skill Icon/Items & Weapon/Shuriken.png |
-| [ ] | `art/dungeon/item-ring.png` | loot item (dungeonUi) | Code 2 | Ui/Skill Icon/Items & Weapon/Ring.png |
-| [ ] | `art/dungeon/item-helm.png` | loot item | Code 2 | Ui/Skill Icon/Items & Weapon/Helmet.png |
-| [ ] | `art/dungeon/item-gloves.png` | loot item | Code 2 | Ui/Skill Icon/Job & Action/Punch.png (no gloves in Ninja) |
-| [ ] | `art/dungeon/item-amulet.png` | loot item | Code 2 | Ui/Skill Icon/Items & Weapon/Amulet.png |
-| [ ] | `art/dungeon/item-stone.png` | loot item (regen stone) | Code 2 | Items/Resource/GemGreen.png 16x16 |
-| [ ] | `art/dungeon/weapons/sword.png` | hovering weapon (WIMG) | Code 2 | Items/Weapons/Sword/Sprite.png 6x17 (Code 2 switching) |
-| [ ] | `art/dungeon/weapons/hammer.png` | hovering weapon | Code 2 | Items/Weapons/Hammer/Sprite.png 9x16 |
-| [ ] | `art/dungeon/weapons/spear.png` | hovering weapon | Code 2 | Items/Weapons/Lance/Sprite.png 6x23 |
-| [ ] | `art/dungeon/weapons/staff.png` | hovering weapon | Code 2 | Items/Weapons/MagicWand/Sprite.png 5x18 |
-| [ ] | `art/dungeon/weapons/dagger-1.png` | hovering dagger | Code 2 | Items/Weapons/Sai/Sprite.png 7x13 |
-| [ ] | `art/dungeon/weapons/dagger-2.png` | hovering dagger | Code 2 | Items/Weapons/Sai/Sprite.png 7x13 (mirrored) |
-| [ ] | `art/dungeon/weapons/shield.png` | hovering shield | Code 2 | PENDING (Art piece, waits for Stefan rating): public/art/dungeon/weapons/ninja-shield.png 12x12 |
-| [ ] | `art/dungeon/weapon-sword.png` | old weapon strip (fallback) | Code 2 | Items/Weapons/Sword/Sprite.png rotated in code + FX/Slash/SpriteSheetArc.png |
-| [ ] | `art/dungeon/weapon-hammer.png` | old weapon strip | Code 2 | Items/Weapons/Hammer/Sprite.png rotated in code |
-| [ ] | `art/dungeon/weapon-spear.png` | old weapon strip | Code 2 | Items/Weapons/Lance/Sprite.png rotated in code |
-| [ ] | `art/dungeon/gear-staff.png` | old gear strip | Code 2 | Items/Weapons/MagicWand/Sprite.png |
-| [ ] | `art/dungeon/gear-shield.png` | old gear strip | Code 2 | PENDING (Art piece, waits for Stefan rating): ninja-shield.png |
-| [ ] | `art/dungeon/gear-daggers.png` | old gear strip | Code 2 | Items/Weapons/Sai/Sprite.png x2 |
-| [ ] | `art/dungeon/gear-crossbow.png` | marksman weapon strip (no WIMG sprite yet) | Code 2 | PENDING (Art piece, waits for Stefan rating): public/art/dungeon/weapons/ninja-crossbow.png 16x10 (Ninja alt: Items/Weapons/Bow/Sprite.png 15x7) |
+| [x] | `art/dungeon/card-sword.png` | rogue weapon card | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Items/Weapons/Sword/Sprite.png 6x17 on a nine_path_panel card |
+| [x] | `art/dungeon/card-hammer.png` | rogue weapon card | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Items/Weapons/Hammer/Sprite.png 9x16 |
+| [x] | `art/dungeon/card-dagger.png` | rogue weapon card | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Items/Weapons/Sai/Sprite.png 7x13 |
+| [x] | `art/dungeon/btn-special-sword.png` | special button (dungeonUi) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Spell/Cut.png |
+| [x] | `art/dungeon/btn-special-hammer.png` | special button | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Spell/Explosion.png |
+| [x] | `art/dungeon/btn-special-spear.png` | special button | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Spell/MagicWeapon.png |
+| [x] | `art/dungeon/btn-special-staff.png` | special button | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Spell/Heal.png |
+| [x] | `art/dungeon/btn-special-bow.png` | special button | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Items & Weapon/Kunai.png (volley) |
+| [x] | `art/dungeon/btn-special-shield.png` | special button | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Spell/DefenseUpgrade.png |
+| [x] | `art/dungeon/btn-special-dagger.png` | special button | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Items & Weapon/Shuriken.png |
+| [x] | `art/dungeon/item-ring.png` | loot item (dungeonUi) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Items & Weapon/Ring.png |
+| [x] | `art/dungeon/item-helm.png` | loot item | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Items & Weapon/Helmet.png |
+| [x] | `art/dungeon/item-gloves.png` | loot item | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Job & Action/Punch.png (no gloves in Ninja) |
+| [x] | `art/dungeon/item-amulet.png` | loot item | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Items & Weapon/Amulet.png |
+| [x] | `art/dungeon/item-stone.png` | loot item (regen stone) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Items/Resource/GemGreen.png 16x16 |
+| [x] | `art/dungeon/weapons/sword.png` | hovering weapon (WIMG) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Items/Weapons/Sword/Sprite.png 6x17 (Code 2 switching) |
+| [x] | `art/dungeon/weapons/hammer.png` | hovering weapon | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Items/Weapons/Hammer/Sprite.png 9x16 |
+| [x] | `art/dungeon/weapons/spear.png` | hovering weapon | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Items/Weapons/Lance/Sprite.png 6x23 |
+| [x] | `art/dungeon/weapons/staff.png` | hovering weapon | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Items/Weapons/MagicWand/Sprite.png 5x18 |
+| [x] | `art/dungeon/weapons/dagger-1.png` | hovering dagger | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Items/Weapons/Sai/Sprite.png 7x13 |
+| [x] | `art/dungeon/weapons/dagger-2.png` | hovering dagger | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Items/Weapons/Sai/Sprite.png 7x13 (mirrored) |
+| [x] | `art/dungeon/weapons/shield.png` | hovering shield | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: PENDING (Art piece, waits for Stefan rating): public/art/dungeon/weapons/ninja-shield.png 12x12 |
+| [x] | `art/dungeon/weapon-sword.png` | old weapon strip (fallback) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Items/Weapons/Sword/Sprite.png rotated in code + FX/Slash/SpriteSheetArc.png |
+| [x] | `art/dungeon/weapon-hammer.png` | old weapon strip | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Items/Weapons/Hammer/Sprite.png rotated in code |
+| [x] | `art/dungeon/weapon-spear.png` | old weapon strip | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Items/Weapons/Lance/Sprite.png rotated in code |
+| [x] | `art/dungeon/gear-staff.png` | old gear strip | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Items/Weapons/MagicWand/Sprite.png |
+| [x] | `art/dungeon/gear-shield.png` | old gear strip | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: PENDING (Art piece, waits for Stefan rating): ninja-shield.png |
+| [x] | `art/dungeon/gear-daggers.png` | old gear strip | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Items/Weapons/Sai/Sprite.png x2 |
+| [x] | `art/dungeon/gear-crossbow.png` | marksman weapon strip (no WIMG sprite yet) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: PENDING (Art piece, waits for Stefan rating): public/art/dungeon/weapons/ninja-crossbow.png 16x10 (Ninja alt: Items/Weapons/Bow/Sprite.png 15x7) |
 
 ## Kenney
 
 | Done | Old file (public/) | Used in | Owner | Ninja replacement |
 |---|---|---|---|---|
-| [ ] | `assets/kenney-tiny-dungeon/tilemap_packed.png` | DOM icon fallback when an art/dungeon file 404s (dungeonUi icon()); placeholder weapons staff/shield/dagger (WEAPON_TILE) | Code 2 | Nothing: every art/dungeon file above exists; drop the fallback once the Ninja rows are done |
+| [x] | `assets/kenney-tiny-dungeon/tilemap_packed.png` | DOM icon fallback when an art/dungeon file 404s (dungeonUi icon()); placeholder weapons staff/shield/dagger (WEAPON_TILE) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Nothing: every art/dungeon file above exists; drop the fallback once the Ninja rows are done |
 | [ ] | `assets/kenney-tiny-ski/tilemap_packed.png` | pixel font fallback for the logo (art.ts pixelText) | Code | Ui/Font/NormalFont.ttf (or font8x8.png) |
 | [ ] | `assets/kenney-tiny-town/tilemap_packed.png` | loaded (game.ts, art.ts) but no frame used | Code | Nothing: remove the dead load |
 | [ ] | `assets/kenney-tiny-farm/tilemap_packed.png` | loaded but no frame used | Code | Nothing: remove the dead load |
@@ -254,30 +254,30 @@ deploy branch `claude/mobile-game-5-players-8qthjq` (cd8ceb3) plus the heads of 
 
 | Done | Old file (public/) | Used in | Owner | Ninja replacement |
 |---|---|---|---|---|
-| [ ] | `art/dungeon/skills/rogue-rage.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Spell/OrbFire.png 24x24 (+ OrbFireDisabled.png for locked) |
-| [ ] | `art/dungeon/skills/rogue-knockback.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Spell/Explosion.png 24x24 (+ ExplosionDisabled.png for locked) |
-| [ ] | `art/dungeon/skills/rogue-whirlwind.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Items & Weapon/Shuriken.png 24x24 (+ ShurikenDisabled.png for locked) |
-| [ ] | `art/dungeon/skills/rogue-extraheart.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Spell/Heal.png 24x24 (+ HealDisabled.png for locked) |
-| [ ] | `art/dungeon/skills/rogue-lifesteal.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Job & Action/Potion.png 24x24 (+ PotionDisabled.png for locked) |
-| [ ] | `art/dungeon/skills/rogue-power.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Spell/AttackUpgrade.png 24x24 (+ AttackUpgradeDisabled.png for locked) |
-| [ ] | `art/dungeon/skills/healer-heal.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Spell/Heal.png 24x24 (+ HealDisabled.png for locked) |
-| [ ] | `art/dungeon/skills/healer-regen.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Spell/OrbPlant.png 24x24 (+ OrbPlantDisabled.png for locked) |
-| [ ] | `art/dungeon/skills/healer-bubble.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Spell/DefenseUpgrade.png 24x24 (+ DefenseUpgradeDisabled.png for locked) |
-| [ ] | `art/dungeon/skills/healer-revive.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Spell/OrbLight.png 24x24 (+ OrbLightDisabled.png for locked) |
-| [ ] | `art/dungeon/skills/healer-holy.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Spell/BookLight.png 24x24 (+ BookLightDisabled.png for locked) |
-| [ ] | `art/dungeon/skills/healer-cleanse.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Spell/OrbWater.png 24x24 (+ OrbWaterDisabled.png for locked) |
-| [ ] | `art/dungeon/skills/marksman-multishot.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Items & Weapon/Kunai.png 24x24 (+ KunaiDisabled.png for locked) |
-| [ ] | `art/dungeon/skills/marksman-pierce.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Items & Weapon/Arrow.png 24x24 (+ ArrowDisabled.png for locked) |
-| [ ] | `art/dungeon/skills/marksman-crit.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Spell/Vision.png 24x24 (+ VisionDisabled.png for locked) |
-| [ ] | `art/dungeon/skills/marksman-speed.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Spell/Upgrade.png 24x24 (+ UpgradeDisabled.png for locked) |
-| [ ] | `art/dungeon/skills/marksman-poison.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Spell/BookIce.png 24x24 (+ BookIceDisabled.png for locked) |
-| [ ] | `art/dungeon/skills/marksman-trap.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Items & Weapon/Hook.png 24x24 (+ HookDisabled.png for locked) |
-| [ ] | `art/dungeon/skills/tank-block.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Spell/Counter.png 24x24 (+ CounterDisabled.png for locked) |
-| [ ] | `art/dungeon/skills/tank-taunt.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Job & Action/Talk.png 24x24 (+ TalkDisabled.png for locked) |
-| [ ] | `art/dungeon/skills/tank-armor.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Items & Weapon/Armor.png 24x24 (+ ArmorDisabled.png for locked) |
-| [ ] | `art/dungeon/skills/tank-charge.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Spell/RockSpike.png 24x24 (+ RockSpikeDisabled.png for locked) |
-| [ ] | `art/dungeon/skills/tank-stun.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Spell/BookThunder.png 24x24 (+ BookThunderDisabled.png for locked) |
-| [ ] | `art/dungeon/skills/tank-guard.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | Ui/Skill Icon/Items & Weapon/Guard.png 24x24 (+ GuardDisabled.png for locked) |
+| [x] | `art/dungeon/skills/rogue-rage.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Spell/OrbFire.png 24x24 (+ OrbFireDisabled.png for locked) |
+| [x] | `art/dungeon/skills/rogue-knockback.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Spell/Explosion.png 24x24 (+ ExplosionDisabled.png for locked) |
+| [x] | `art/dungeon/skills/rogue-whirlwind.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Items & Weapon/Shuriken.png 24x24 (+ ShurikenDisabled.png for locked) |
+| [x] | `art/dungeon/skills/rogue-extraheart.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Spell/Heal.png 24x24 (+ HealDisabled.png for locked) |
+| [x] | `art/dungeon/skills/rogue-lifesteal.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Job & Action/Potion.png 24x24 (+ PotionDisabled.png for locked) |
+| [x] | `art/dungeon/skills/rogue-power.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Spell/AttackUpgrade.png 24x24 (+ AttackUpgradeDisabled.png for locked) |
+| [x] | `art/dungeon/skills/healer-heal.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Spell/Heal.png 24x24 (+ HealDisabled.png for locked) |
+| [x] | `art/dungeon/skills/healer-regen.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Spell/OrbPlant.png 24x24 (+ OrbPlantDisabled.png for locked) |
+| [x] | `art/dungeon/skills/healer-bubble.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Spell/DefenseUpgrade.png 24x24 (+ DefenseUpgradeDisabled.png for locked) |
+| [x] | `art/dungeon/skills/healer-revive.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Spell/OrbLight.png 24x24 (+ OrbLightDisabled.png for locked) |
+| [x] | `art/dungeon/skills/healer-holy.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Spell/BookLight.png 24x24 (+ BookLightDisabled.png for locked) |
+| [x] | `art/dungeon/skills/healer-cleanse.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Spell/OrbWater.png 24x24 (+ OrbWaterDisabled.png for locked) |
+| [x] | `art/dungeon/skills/marksman-multishot.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Items & Weapon/Kunai.png 24x24 (+ KunaiDisabled.png for locked) |
+| [x] | `art/dungeon/skills/marksman-pierce.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Items & Weapon/Arrow.png 24x24 (+ ArrowDisabled.png for locked) |
+| [x] | `art/dungeon/skills/marksman-crit.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Spell/Vision.png 24x24 (+ VisionDisabled.png for locked) |
+| [x] | `art/dungeon/skills/marksman-speed.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Spell/Upgrade.png 24x24 (+ UpgradeDisabled.png for locked) |
+| [x] | `art/dungeon/skills/marksman-poison.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Spell/BookIce.png 24x24 (+ BookIceDisabled.png for locked) |
+| [x] | `art/dungeon/skills/marksman-trap.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Items & Weapon/Hook.png 24x24 (+ HookDisabled.png for locked) |
+| [x] | `art/dungeon/skills/tank-block.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Spell/Counter.png 24x24 (+ CounterDisabled.png for locked) |
+| [x] | `art/dungeon/skills/tank-taunt.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Job & Action/Talk.png 24x24 (+ TalkDisabled.png for locked) |
+| [x] | `art/dungeon/skills/tank-armor.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Items & Weapon/Armor.png 24x24 (+ ArmorDisabled.png for locked) |
+| [x] | `art/dungeon/skills/tank-charge.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Spell/RockSpike.png 24x24 (+ RockSpikeDisabled.png for locked) |
+| [x] | `art/dungeon/skills/tank-stun.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Spell/BookThunder.png 24x24 (+ BookThunderDisabled.png for locked) |
+| [x] | `art/dungeon/skills/tank-guard.png` | level-up skill card (dungeon.ts SKILLS) | Code 2 | DONE: Ninja in the dungeon (Code 2, d0f50b9). Mapped to: Ui/Skill Icon/Items & Weapon/Guard.png 24x24 (+ GuardDisabled.png for locked) |
 
 ## Not counted (on disk but not loaded)
 
