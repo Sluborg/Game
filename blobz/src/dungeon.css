@@ -9,11 +9,12 @@
   position: absolute; right: max(18px, env(safe-area-inset-right)); bottom: max(22px, env(safe-area-inset-bottom));
   width: 104px; height: 104px; padding: 0; pointer-events: auto; touch-action: none; border-style: solid; border-color: var(--plum);
   display: flex; align-items: center; justify-content: center; image-rendering: pixelated;
-  border-width: 16px; background: none; border-image: url('/art/ui/btn-orange.png') 4 fill / 16px stretch;
+  border-width: 12px; background: none; border-image: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/button_normal.png') 2 fill / 12px stretch;
   filter: drop-shadow(0 6px 0 #3f263140); --cd: 0;
 }
 #attack .icon { height: 60px; width: auto; margin: 0; filter: none; position: relative; z-index: 1; }
-#attack:active { border-image-source: url('/art/ui/btn-orange-down.png'); }
+#attack:active { border-image-source: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/button_pressed.png'); }
+#attack .icon { image-rendering: pixelated; }
 /* cooldown ring (Art's spec): plum #3f2631 at ~55% over the button, shrinking clockwise from 12 o'clock */
 #attack::after {
   content: ''; position: absolute; inset: -10px; border-radius: 50%; pointer-events: none; z-index: 2;
@@ -45,11 +46,11 @@
 #dg-xp { display: flex; align-items: center; gap: 8px; }
 #dg-level {
   display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 32px; padding-top: 2px;
-  background: url('/art/dungeon/level-badge.png') center / 100% 100% no-repeat; image-rendering: pixelated;
+  image-rendering: pixelated;
   color: #3f2631; font-size: 16px;
 }
-#dg-xp .xpbar { width: 126px; height: 24px; padding: 3px 3px; background: url('/art/dungeon/xp-frame.png') center / 100% 100% no-repeat; image-rendering: pixelated; }
-#dg-xpfill { height: 100%; width: 0; background: url('/art/dungeon/xp-fill.png') left / 120px 100% no-repeat; image-rendering: pixelated; transition: width 0.3s steps(6); }
+#dg-xp .xpbar { width: 126px; height: 24px; padding: 3px 3px; image-rendering: pixelated; }
+#dg-xpfill { height: 100%; width: 0; image-rendering: pixelated; transition: width 0.3s steps(6); }
 
 #dg-ko {
   position: absolute; left: 50%; top: 38%; transform: translate(-50%, -50%); padding: 10px 16px;
@@ -141,3 +142,60 @@
 #dg-cards-safe { margin-top: 6px; font-size: 13px; font-weight: 700; color: #2f8a2f; }
 
 .skcard .skfx, .lootside .skfx { font-size: 13px; font-weight: 800; color: #2f8a2f; line-height: 1.15; }
+
+/* ---- Ninja Adventure UI (CC0, docs/ART_MAP.md section 7): panels, buttons, bars, icons. Pixel art at integer
+   scale via border-image 9-slices. Placed last so it overrides the earlier dungeon styles. ---- */
+/* HUD: dark wood-framed panel (nine_path_bg), heart icon + Ninja life bar, Ninja gold coin, XP bar, level cell */
+#hud-dg {
+  background: none; box-shadow: none; border-style: solid; border-width: 12px; padding: 2px 6px;
+  border-image: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/nine_path_bg.png') 4 fill / 12px stretch; image-rendering: pixelated;
+}
+#dg-hearts::before {
+  content: ''; width: 28px; height: 24px; flex: none; image-rendering: pixelated;
+  background: url('/assets/ninja-adventure/Ui/Receptacle/IconHeart.png') center / 100% 100% no-repeat;
+}
+.hpbar, #dg-xp .xpbar {
+  padding: 0; box-shadow: none; background: none; border-style: solid; border-width: 3px; image-rendering: pixelated;
+  border-image: url('/assets/ninja-adventure/Ui/Receptacle/LifeBarMiniUnder.png') 1 fill / 3px stretch;
+}
+.hpbar { width: 150px; height: 18px; }
+.hpbar i { background: #e0394c; box-shadow: inset 0 3px 0 #ff6b7d; }
+.hpbar i.low { background: #ff3b3b; }
+#dg-xp .xpbar { width: 126px; height: 16px; }
+#dg-xpfill { background: #ffad5d; box-shadow: inset 0 3px 0 #ffe08a; }
+#dg-level {
+  width: 32px; height: 32px; padding: 0; color: #fff7e6; text-shadow: 0 2px 0 #131b1b;
+  background: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/inventory_cell.png') center / 100% 100% no-repeat;
+}
+#dg-row .icon { height: 21px; width: 21px; image-rendering: pixelated; }
+#dg-floor, #dg-time { background: #131b1b55; }
+
+/* cards: the cream wooden panel (nine_path_panel_3); picked = the orange panel; buttons = Ninja wood buttons */
+#weapon-pick .card, #dg-end .card {
+  background: none; box-shadow: none; border-style: solid; border-width: 18px;
+  border-image: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/nine_path_panel_3.png') 6 fill / 18px stretch; image-rendering: pixelated;
+}
+.wcard, .skcard, #dg-cards, #dg-loot {
+  background: none; box-shadow: none; border-style: solid; border-width: 12px;
+  border-image: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/nine_path_panel_3.png') 6 fill / 12px stretch; image-rendering: pixelated;
+}
+.wcard, .skcard { padding: 2px; }
+.wcard.on, .skcard.on {
+  background: none; box-shadow: none;
+  border-image: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/nine_path_panel.png') 6 fill / 12px stretch;
+}
+.wcard.on b, .skcard.on b { color: #fff7e6; text-shadow: 0 2px 0 #131b1b; }
+#dg-loot-btns button {
+  box-shadow: none; border-style: solid; border-width: 9px 9px 12px; padding: 2px 12px; color: #fff7e6; text-shadow: 0 2px 0 #131b1b;
+  background: none; image-rendering: pixelated;
+  border-image: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/button_normal.png') 3 3 4 fill / 9px 9px 12px stretch;
+}
+#dg-loot-btns button:active { border-image-source: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/button_pressed.png'); }
+#dg-pass { border-image-source: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/button_disabled.png') !important; }
+.lootside i, #dg-item { background: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/inventory_cell.png') center / 100% 100% no-repeat; box-shadow: none; image-rendering: pixelated; }
+
+/* the small sidestep button underground: Ninja wood button too */
+#hud.dungeon #dash { background: none; border-style: solid; border-image: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/button_normal.png') 2 fill / 12px stretch; image-rendering: pixelated; }
+#hud.dungeon #dash:active { border-image-source: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/button_pressed.png'); }
+/* rogue weapon cards: the Ninja weapon sprite, upright, big and crisp */
+.wcard img.wpnimg { object-fit: contain; padding: 14px 30px; box-sizing: border-box; image-rendering: pixelated; }

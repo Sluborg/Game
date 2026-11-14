@@ -3,10 +3,9 @@
 // the "Dungeon klar!" summary. Art that is not there yet falls back to Kenney Tiny Dungeon tiles.
 // Markup lives in index.html (#weapon-pick, #hud-dg, #dg-ko, #dg-end, #attack); main.ts calls dungeonUi().
 import './dungeon.css';
-import { tileCanvas } from './art';
 import type { Controls } from './controls';
 import {
-  skillIcon, CLASS_WEAPONS, CLASSES, FLOORS, heroMods, itemOf, LEVEL_XP, LOOT_SECONDS, skillOf, specialOf,
+  skillIcon, ITEM_ICON, CLASS_WEAPONS, CLASSES, FLOORS, heroMods, itemOf, LEVEL_XP, LOOT_SECONDS, skillOf, specialOf,
   type DView, type HeroClass, type Weapon,
 } from './dungeon';
 import { sfx } from './sfx';
@@ -17,22 +16,27 @@ import type { View } from './sim';
 const $ = (id: string) => document.getElementById(id)!;
 const show = (id: string, on: boolean) => document.getElementById(id)?.classList.toggle('hidden', !on);
 const setText = (el: HTMLElement, t: string) => { if (el.textContent !== t) el.textContent = t; };
-/** Kenney Tiny Dungeon tiles standing in for class cards until Art's card-<class>.png exists. */
-const CLASS_TILE: Record<HeroClass, number> = { rogue: 88, healer: 84, marksman: 87, tank: 96 };
 
 let sendPick: (w: string) => void = () => {};
 /** main.ts tells the UI how a pick reaches the host (host: straight into the sim; joiner: over the net).
  *  The same path carries weapons ('sword'), skill cards ('skill:k-dmg') and loot votes ('loot:roll'). */
 export function setPicker(fn: (w: string) => void) { sendPick = fn; }
 
-/** Art if it exists (`src`), else a Kenney tile. */
-function icon(src: string, tile: number, scale: number, cls = 'dgicon'): HTMLElement {
+/** A pixel-art icon image (Ninja Adventure / Art). */
+function icon(src: string, _tile = 0, _scale = 1, cls = 'dgicon'): HTMLElement {
   const img = new Image();
   img.className = cls; img.alt = '';
-  img.onerror = () => { const c = tileCanvas('dungeon', tile, scale, cls); img.replaceWith(c); };
   img.src = src;
   return img;
 }
+const NAU = 'assets/ninja-adventure/';
+/** Ninja icon on the special button per weapon (docs/OLD_ART_CHECKLIST.md). */
+const SPECIAL_ICON: Record<Weapon, string> = {
+  sword: 'Ui/Skill Icon/Spell/Cut.png', hammer: 'Ui/Skill Icon/Spell/Explosion.png', spear: 'Ui/Skill Icon/Spell/MagicWeapon.png', staff: 'Ui/Skill Icon/Spell/Heal.png',
+  bow: 'Ui/Skill Icon/Items & Weapon/Kunai.png', shield: 'Ui/Skill Icon/Spell/DefenseUpgrade.png', dagger: 'Ui/Skill Icon/Items & Weapon/Shuriken.png',
+};
+/** Ninja weapon sprites on the rogue's weapon cards. */
+const WEAPON_CARD: Partial<Record<Weapon, string>> = { sword: 'Items/Weapons/Sword/Sprite.png', hammer: 'Items/Weapons/Hammer/Sprite.png', dagger: 'Items/Weapons/Sai/Sprite.png', spear: 'Items/Weapons/Lance/Sprite.png' };
 
 let lastMode = 'meadow';
 let myPick: Weapon | null = null;
@@ -55,7 +59,7 @@ function buildCards() {
   const h2 = $('weapon-pick').querySelector('h2');
   if (!pickClass) {
     if (h2) h2.textContent = t('dg.pickClass');
-    root.replaceChildren(...CLASSES.map((c) => card(c, icon(`art/dungeon/card-class-${c}.png`, CLASS_TILE[c], 6, 'cardimg'), tClass(c), tClassHint(c), () => {
+    root.replaceChildren(...CLASSES.map((c) => card(c, icon(`art/dungeon/card-class-${c}.png`, 0, 1, 'cardimg') /* GAP: ChatGPT N-5 class cards */, tClass(c), tClassHint(c), () => {
       const ws = CLASS_WEAPONS[c];
       if (ws.length === 1) { myPick = ws[0]; pickClass = c; sendPick(ws[0]); markCards(); return; }
       pickClass = c; buildCards();
@@ -65,7 +69,7 @@ function buildCards() {
     const arrow = document.createElement('span'); arrow.className = 'cardimg back'; arrow.textContent = '←';
     const back = card('back', arrow, t('dg.back'), '', () => { pickClass = null; buildCards(); });
     root.replaceChildren(...CLASS_WEAPONS[pickClass].map((w) => {
-      const img = icon(`art/dungeon/card-${w}.png`, 103, 6, 'cardimg'); // daggers: Kenney tile until Art's card-dagger.png
+      const img = icon(NAU + (WEAPON_CARD[w] ?? 'Items/Weapons/Sword/Sprite.png'), 0, 1, 'cardimg wpnimg');
       return card(w, img, tWeapon(w), tWeaponHint(w), () => { myPick = w; sendPick(w); markCards(); });
     }), back);
   }
@@ -133,7 +137,7 @@ function renderHud(d: DView, myId: string) {
   // Art's icon per weapon special (spin / slam / charge)
   const spIcon = document.getElementById('attack-icon') as HTMLImageElement | null;
   // Art's special icon per weapon (spin / slam / charge / heal / volley / wall)
-  const src = `art/dungeon/btn-special-${h?.weapon ?? 'sword'}.png`;
+  const src = encodeURI(NAU + SPECIAL_ICON[h?.weapon ?? 'sword']);
   if (spIcon && !spIcon.src.endsWith(src)) spIcon.src = src;
   // my loot item next to the gold
   const key = h?.item ?? '';
@@ -141,7 +145,7 @@ function renderHud(d: DView, myId: string) {
   if (slot.dataset.k !== key) {
     slot.dataset.k = key;
     const it = itemOf(key);
-    slot.replaceChildren(...(it ? [icon(`art/dungeon/item-${it.id}.png`, it.icon, 2)] : []));
+    slot.replaceChildren(...(it ? [icon(encodeURI(ITEM_ICON[it.id]), it.icon, 2)] : []));
     slot.title = it ? `${tItem(it.id)}: ${tEffects(it.mod)}` : '';
     slot.classList.toggle('hidden', !it);
   }
@@ -161,7 +165,7 @@ function renderOffer(d: DView, myId: string) {
       const sk = skillOf(id)!;
       const b = document.createElement('button');
       b.className = 'skcard'; b.type = 'button'; b.dataset.s = id;
-      b.append(icon(skillIcon(id), sk.icon, 3));
+      b.append(icon(encodeURI(skillIcon(id)), sk.icon, 3));
       b.insertAdjacentHTML('beforeend', `<b>${tSkill(sk.id)}</b><small class="skfx">${tEffects(sk.mod)}</small>`);
       b.onclick = () => { sfx.pick(); sendPick('skill:' + id); b.classList.add('on'); };
       return b;
@@ -189,7 +193,7 @@ function renderLoot(d: DView, myId: string, nameOf: (id: string) => string) {
         const col = document.createElement('div');
         col.className = 'lootside';
         col.insertAdjacentHTML('beforeend', `<small>${label}</small>`);
-        col.append(x ? icon(`art/dungeon/item-${x.id}.png`, x.icon, 4) : document.createElement('i'));
+        col.append(x ? icon(encodeURI(ITEM_ICON[x.id]), x.icon, 4) : document.createElement('i'));
         col.insertAdjacentHTML('beforeend', `<b>${x ? tItem(x.id) : t('dg.lootNone')}</b>${x ? `<small class="skfx">${tEffects(x.mod)}</small>` : ''}`);
         return col;
       };
@@ -209,7 +213,7 @@ function renderLoot(d: DView, myId: string, nameOf: (id: string) => string) {
     if (key !== lootKey) {
       lootKey = key;
       const it = itemOf(last.item)!;
-      $('dg-loot-items').replaceChildren(icon(`art/dungeon/item-${it.id}.png`, it.icon, 4));
+      $('dg-loot-items').replaceChildren(icon(encodeURI(ITEM_ICON[it.id]), it.icon, 4));
       show('dg-loot-btns', false);
       setText($('dg-loot-title'), last.win ? t('dg.lootWon', { name: nameOf(last.win), item: tItem(it.id) }) : t('dg.lootNobody', { item: tItem(it.id) }));
       setText($('dg-loot-msg'), last.win ? t('dg.rolled', { n: last.roll }) : '');
@@ -251,7 +255,7 @@ export function dungeonUi(v: View, myId: string | undefined, controls: Controls,
     controls.setDungeon(mode === 'dungeon');
     // the small button: sidestep icon underground, the dash arrow again on the meadow
     const dashImg = controls.dashBtn.querySelector('img');
-    if (dashImg && !controls.tool) dashImg.src = mode === 'dungeon' ? 'art/dungeon/btn-sidestep.png' : 'art/icons/dash-arrow.png';
+    if (dashImg && !controls.tool) dashImg.src = mode === 'dungeon' ? encodeURI(NAU + 'Ui/Skill Icon/Spell/Camouflage.png') : 'art/icons/dash-arrow.png';
     show('hud-dg', mode === 'dungeon');
     if (mode !== 'dungeon') { show('dg-ko', false); show('dg-end', false); show('dg-cards', false); show('dg-loot', false); offerKey = ''; lootKey = ''; }
     lastMode = mode;

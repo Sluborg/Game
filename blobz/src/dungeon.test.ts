@@ -8,7 +8,7 @@ import {
 import { createState, DUNGEON_ENABLED, ENTRANCE_R, entranceOf, makePuzzles, makeTrees, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
 
 /** Art's skill icons in the repo (vite glob, no node fs types needed). */
-const ART_SKILLS = Object.keys(import.meta.glob('../public/art/dungeon/skills/*.png')).map((k) => k.split('/').pop());
+const NA_ICONS = Object.keys(import.meta.glob('../public/assets/ninja-adventure/Ui/Skill Icon/**/*.png')).map((k) => k.replace('../public/', ''));
 const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 });
 type B = { id: string; x: number; y: number; vx: number; vy: number; dashT: number; lastDash: number };
 const body = (id: string, x: number, y: number): B => ({ id, x, y, vx: 0, vy: 0, dashT: 0, lastDash: 0 });
@@ -528,7 +528,7 @@ describe('dungeon', () => {
     for (const c of ['rogue', 'healer', 'marksman', 'tank'] as const) {
       const ids = SKILLS.filter((k) => k.cls === c).map((k) => k.id);
       expect(ids).toHaveLength(6);
-      for (const id of ids) { expect(id.startsWith(c + '-')).toBe(true); expect(ART_SKILLS).toContain(skillIcon(id).split('/').pop()); }
+      for (const id of ids) { expect(id.startsWith(c + '-')).toBe(true); expect(NA_ICONS).toContain(skillIcon(id)); }
     }
     for (const s of [...SKILLS, ...ITEMS]) {
       const lines = effectLines(s.mod);

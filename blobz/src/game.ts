@@ -7,7 +7,8 @@ import { BASE, GATE_W, makePuzzles, makeTrees, PLATE_R, rng, WORLD_H, WORLD_W } 
 import { isSolid, RES } from './sim';
 import { affordable, BUILDING_ENABLED, BUILD_KINDS, BUILD_R, BUILD_SPOTS, COTTAGE_PAD, makeWater, nodeRes } from './sim';
 import type { Biome, BuildKind } from './sim';
-import { makeIce } from './sim';
+import { DUNGEON_ENABLED, entranceOf, makeIce, WATER_TILE } from './sim';
+import { autotileMask, waterTiles, type Shore } from './water';
 import { ARENA, BOMB_R, DROP_HEIGHT } from './mini';
 import type { PuzzleLayout, Res, Tool } from './sim';
 import type { FxEvent, Input, ItemKind, PlayerInfo, View } from './sim';
@@ -51,6 +52,18 @@ const WINTER = ['tree-snow-round', 'tree-snow-pine', 'tree-snow-small', 'rock-sn
 /** Look of a used-up node: stump, rubble, picked bush. */
 const SPENT_ART: [string, number][] = [['pr-stump', 3], ['pr-stump', 3], ['pr-stump', 3], ['g-rubble', 3], ['g-rubble', 3], ['g-bush-empty', 3]];
 const PROPS = ['tree-green', 'tree-orange', 'tree-pine', 'rock', 'boulder', 'bush', 'flowers', 'stump', 'pond', 'fence', 'sign', 'plate', 'plate-down', 'gate', 'gate-open', 'gate-post'];
+/** Ninja Adventure world scale: 16 px tiles drawn at 3x = 48 world px (= WATER_TILE). */
+const NINJA_SCALE = 3;
+const NINJA_COLS = Math.ceil(WORLD_W / WATER_TILE), NINJA_ROWS = Math.ceil(WORLD_H / WATER_TILE);
+/** Shore piece -> 16 px tile (x, y) in a Ninja 3x3 autotile block whose top-left is (bx, by), plus its inner corners. */
+function autoFrame(sh: Shore, bx: number, by: number, inner: Record<'inw' | 'ine' | 'isw' | 'ise', [number, number]>, open2: [number, number]): [number, number] {
+  const g: Record<string, [number, number]> = {
+    nw: [bx, by], n: [bx + 16, by], ne: [bx + 32, by], w: [bx, by + 16], open: [bx + 16, by + 16], e: [bx + 32, by + 16],
+    sw: [bx, by + 32], s: [bx + 16, by + 32], se: [bx + 32, by + 32],
+  };
+  if (sh === 'open2') return open2;
+  return (g[sh] ?? inner[sh as 'inw']) ?? g.open;
+}
 /** The organic dirt yard around the cottage and under buildings. false = plain grass everywhere ("no ground" test). */
 export const YARD_ENABLED = true;
 const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.search).has('debug');
@@ -149,6 +162,11 @@ export class GameScene extends Phaser.Scene {
     const art = (path: string) => `art/${FINE.includes(path) ? 'fine/' : ''}${path}.png`;
     for (const n of ['log', 'chest', 'boot', 'magnet', 'house']) this.load.image('ic-' + n, art(`icons/${n}`));
     this.load.image('m-base-marker', 'art/fine/icons/base-marker.png');
+    // Ninja Adventure ground (docs/ART_MAP.md sections 1-2), meadow only for now
+    const ninja = 'assets/ninja-adventure/Backgrounds/Tilesets/';
+    this.load.image('n-floor', ninja + 'TilesetFloor.png');
+    this.load.image('n-floordetail', ninja + 'TilesetFloorDetail.png');
+    this.load.image('n-water', ninja + 'TilesetWater.png');
     this.load.spritesheet('f-grass', 'art/fine/tiles/grass.png', { frameWidth: 32, frameHeight: 32 });
     this.load.spritesheet('f-dirt', 'art/fine/tiles/dirt.png', { frameWidth: 32, frameHeight: 32 });
     for (const n of GATHER) this.load.image('g-' + n, art(`gather/${n}`));
@@ -215,7 +233,7 @@ export class GameScene extends Phaser.Scene {
     if (!this.textures.exists(groundKey)) {
       const grass = this.textures.get('f-grass').getSourceImage() as HTMLImageElement;
       const gc = document.createElement('canvas');
-      gc.width = cols * TP; gc.height = rows * TP;
+      if (snow) { gc.width = cols * TP; gc.height = rows * TP; } else { gc.width = NINJA_COLS * 16; gc.height = NINJA_ROWS * 16; }
       const gx = gc.getContext('2d')!;
       if (this.s.biome === 'snow') {
         // snow: flat white with soft blue drifts and a few sparkles, in art pixels (no tile seams)
@@ -229,12 +247,12 @@ export class GameScene extends Phaser.Scene {
           gx.fillRect(Math.floor(r() * gc.width), Math.floor(r() * gc.height), 1, 1);
         }
       } else {
-        // grass frames 0 plain, 1 tufts, 2 flowers (same odds as the old Tiny Town tiles)
-        data.forEach((row, ty) => row.forEach((f, tx) => gx.drawImage(grass, f * 32, 0, 32, 32, tx * 32, ty * 32, 32, 32)));
+        void grass; void data;
+        this.bakeNinjaMeadow(gc, r);
       }
       this.textures.addCanvas(groundKey, gc)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
-    this.add.image(0, 0, groundKey).setOrigin(0).setScale(32 / TP).setDepth(-1000);
+    this.add.image(0, 0, groundKey).setOrigin(0).setScale(snow ? 32 / TP : NINJA_SCALE).setDepth(-1000);
 
     // base: round dirt yard with the cottage in the middle + glowing drop-off ring
     // the yard: an organic patch of dirt (packed snow on the snow map) that grows with the cottage and spreads
@@ -250,13 +268,13 @@ export class GameScene extends Phaser.Scene {
     this.water = water;
     if (BUILDING_ENABLED) {
       const wg = this.add.graphics().setDepth(-940);
-      for (const w of water.water) {
+      if (snow) for (const w of water.water) {
         const x0 = Math.max(0, w.x0), x1 = Math.min(WORLD_W, w.x1), y0 = Math.max(0, w.y0), y1 = Math.min(WORLD_H, w.y1);
         wg.fillStyle(0x6b4a2a, 1).fillRect(x0 - 3, y0 - 3, x1 - x0 + 6, y1 - y0 + 6);
         wg.fillStyle(0x2f86c8, 1).fillRect(x0, y0, x1 - x0, y1 - y0);
         wg.fillStyle(0x3fa9f5, 1).fillRect(x0 + 5, y0 + 5, x1 - x0 - 10, y1 - y0 - 10);
       }
-      for (const w of water.water) for (let i = 0; i < 8; i++) {
+      if (snow) for (const w of water.water) for (let i = 0; i < 8; i++) {
         const x = Math.max(0, w.x0) + 10 + ((i * 37) % Math.max(20, Math.min(WORLD_W, w.x1) - Math.max(0, w.x0) - 30));
         const y = Math.max(0, w.y0) + 10 + ((i * 53) % Math.max(20, Math.min(WORLD_H, w.y1) - Math.max(0, w.y0) - 20));
         wg.fillStyle(0x8fd3ff, 0.8).fillRect(x, y, 12, 3);
@@ -397,7 +415,7 @@ export class GameScene extends Phaser.Scene {
       seenG.add(g.id);
       let e = this.gems.get(g.id);
       if (!e) {
-        e = { g: this.add.graphics(), img: this.add.image(g.x, g.y, 'ic-chest').setScale(1.5), t: [0, 1].map(() => this.add.image(0, 0, this.miniBlob()).setScale(1.8)), x: g.x, y: g.y };
+        e = { g: this.add.graphics(), img: this.add.image(g.x, g.y, 'ic-chest').setScale(1.5), t: [0, 1].map(() => this.add.image(0, 0, this.miniBlob()).setScale(1.45)), x: g.x, y: g.y };
         this.gems.set(g.id, e);
       }
       e.x += (g.x - e.x) * (smooth ? k : 1);
@@ -558,7 +576,7 @@ export class GameScene extends Phaser.Scene {
     if (p.boostT > 0) b.aura.lineStyle(3, 0xffc93c, 0.8).strokeCircle(b.x, b.y - 4 + hover, 26 + Math.sin(now / 60) * 2);
     if (p.magnetT > 0) b.aura.lineStyle(2, 0xff6b8b, 0.5).strokeCircle(b.x, b.y, 60 + Math.sin(now / 200) * 6);
     if (p.shield > 0) b.aura.fillStyle(0x5ec8ff, 0.16).fillCircle(b.x, b.y - 6 + hover, 30).lineStyle(2, 0x8fd3ff, 0.7).strokeCircle(b.x, b.y - 6 + hover, 30);
-    if (isMe) b.aura.fillStyle(0xffffff, 0.9).fillTriangle(b.x - 6, b.y - 60 + hover, b.x + 6, b.y - 60 + hover, b.x, b.y - 52 + hover);
+    if (isMe) b.aura.fillStyle(0xffffff, 0.9).fillTriangle(b.x - 6, b.y - 68 + hover, b.x + 6, b.y - 68 + hover, b.x, b.y - 60 + hover);
 
     b.label.setPosition(b.x, b.y + 24).setDepth(this.dB + b.y + 2);
 
@@ -568,7 +586,7 @@ export class GameScene extends Phaser.Scene {
     p.carry.forEach((k, i) => {
       const img = b.carry[i];
       img.setTexture(ITEM_ICON[k] ?? 'ic-log').setScale(CARRY_SCALE[k] ?? 0.5);
-      img.setPosition(b.x + (i - (p.carry.length - 1) / 2) * 14, b.y - 44 + hover - Math.abs(i - 1) * 2).setDepth(this.dB + b.y + 3);
+      img.setPosition(b.x + (i - (p.carry.length - 1) / 2) * 14, b.y - 52 + hover - Math.abs(i - 1) * 2).setDepth(this.dB + b.y + 3);
     });
   }
 
@@ -605,7 +623,71 @@ export class GameScene extends Phaser.Scene {
   /** Organic yard (Stefan: dynamic size and shape, brown ground under new buildings, no hard outline): a blob
    *  around the cottage (bigger per cottage level) plus a small patch under each built building, each with a wobbly
    *  seeded edge that dithers softly into the grass. Pixels are Art's dirt tiles (meadow) or packed snow. */
+  /** Meadow ground in Ninja Adventure tiles (ART_MAP 1-2), 16 px per tile, shown at NINJA_SCALE: lime grass with a
+   *  sprinkle of tuft variants and small flowers, and the water corner as a grass-shore autotile. */
+  private bakeNinjaMeadow(gc: HTMLCanvasElement, r: () => number) {
+    const gx = gc.getContext('2d')!;
+    const floor = this.textures.get('n-floor').getSourceImage() as HTMLImageElement;
+    const detail = this.textures.get('n-floordetail').getSourceImage() as HTMLImageElement;
+    const water = this.textures.get('n-water').getSourceImage() as HTMLImageElement;
+    const tile = (img: HTMLImageElement, sx: number, sy: number, tx: number, ty: number) => gx.drawImage(img, sx, sy, 16, 16, tx * 16, ty * 16, 16, 16);
+    const VARIANTS: [number, number][] = [[16, 192], [32, 192], [48, 192], [64, 192], [32, 176], [48, 176]];
+    const wet = BUILDING_ENABLED ? waterTiles(makeWater(this.s.seed).water) : [];
+    const isWet = new Set(wet.map((t) => t.tx + ',' + t.ty));
+    for (let ty = 0; ty < NINJA_ROWS; ty++) for (let tx = 0; tx < NINJA_COLS; tx++) {
+      const v = r();
+      const [sx, sy] = v < 1 / 6 ? VARIANTS[Math.floor(r() * VARIANTS.length)] : [0, 192];
+      tile(floor, sx, sy, tx, ty);
+      if (!isWet.has(tx + ',' + ty) && r() < 0.03) tile(detail, [0, 16, 32, 48, 80, 96, 112][Math.floor(r() * 7)], 32, tx, ty); // tufts, sprouts, flowers
+    }
+    const inner = { inw: [96, 128], ine: [80, 128], isw: [96, 112], ise: [80, 112] } as Record<'inw' | 'ine' | 'isw' | 'ise', [number, number]>;
+    for (const t of wet) { const [sx, sy] = autoFrame(t.shore, 0, 96, inner, [16, 112]); tile(water, sx, sy, t.tx, t.ty); }
+  }
+
+  /** Meadow yard + path in Ninja dirt tiles: the yard is a blob of tiles round the cottage (bigger per level) plus a
+   *  patch under every built building, and a 2-tile path runs to the cave; autotiled with the dirt-on-grass block. */
+  private drawNinjaDirt(level: number, built: BuildKind[]) {
+    const key = `ndirt-${this.s.seed}-${level}-${YARD_ENABLED ? [...built].sort().join(',') : 'off'}`;
+    if (key === this.yardKey) return;
+    if (!this.textures.exists(key)) {
+      const T = WATER_TILE, mask = new Set<string>();
+      const wet = new Set(BUILDING_ENABLED ? waterTiles(makeWater(this.s.seed).water).map((t) => t.tx + ',' + t.ty) : []);
+      const add = (tx: number, ty: number) => { if (tx >= 0 && ty >= 0 && tx < NINJA_COLS && ty < NINJA_ROWS && !wet.has(tx + ',' + ty)) mask.add(tx + ',' + ty); };
+      const blob = (cx: number, cy: number, rx: number, ry: number) => {
+        for (let ty = Math.floor((cy - ry) / T); ty <= Math.floor((cy + ry) / T); ty++) for (let tx = Math.floor((cx - rx) / T); tx <= Math.floor((cx + rx) / T); tx++) {
+          const dx = ((tx + 0.5) * T - cx) / rx, dy = ((ty + 0.5) * T - cy) / ry;
+          if (dx * dx + dy * dy <= 1) add(tx, ty);
+        }
+      };
+      if (YARD_ENABLED) {
+        blob(BASE.x, BASE.y + 6, 96 + 16 * level, 84 + 12 * level);
+        for (const k of built) { const at = BUILD_SPOTS[k]; blob(at.x, at.y - 30, 66, 52); }
+      }
+      if (DUNGEON_ENABLED) { // a 2-tile path from the yard to the cave: across, then down/up
+        const e = entranceOf(this.s.seed), bx = Math.floor(BASE.x / T), by = Math.floor(BASE.y / T);
+        const ex = Math.floor(e.x / T), ey = Math.floor(e.y / T);
+        for (let x = Math.min(bx, ex); x <= Math.max(bx, ex); x++) { add(x, by); add(x, by + 1); }
+        for (let y = Math.min(by, ey); y <= Math.max(by, ey); y++) { add(ex, y); add(ex + 1, y); }
+      }
+      const floor = this.textures.get('n-floor').getSourceImage() as HTMLImageElement;
+      const c = document.createElement('canvas'); c.width = NINJA_COLS * 16; c.height = NINJA_ROWS * 16;
+      const cx = c.getContext('2d')!;
+      const inner = { inw: [96, 144], ine: [80, 144], isw: [96, 128], ise: [80, 128] } as Record<'inw' | 'ine' | 'isw' | 'ise', [number, number]>;
+      for (const t of autotileMask(mask)) {
+        const [sx, sy] = autoFrame(t.shore, 0, 112, inner, t.shore === 'open2' ? [16, 176] : [16, 128]);
+        cx.drawImage(floor, sx, sy, 16, 16, t.tx * 16, t.ty * 16, 16, 16);
+      }
+      this.textures.addCanvas(key, c)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    }
+    const old = this.yardKey;
+    if (!this.yardImg) this.yardImg = this.add.image(0, 0, key).setOrigin(0).setScale(NINJA_SCALE).setDepth(-950);
+    else this.yardImg.setTexture(key);
+    this.yardKey = key;
+    if (old && old !== key && this.textures.exists(old)) this.textures.remove(old);
+  }
+
   private drawYard(level: number, built: BuildKind[]) {
+    if (this.s.biome !== 'snow') { this.drawNinjaDirt(level, built); return; }
     if (!YARD_ENABLED) return;
     const key = `yard-${this.s.biome ?? 'meadow'}-${this.s.seed}-${level}-${[...built].sort().join(',')}`;
     if (key === this.yardKey) return;
