@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  BASE, BRIDGE_Y, BUILD_COST, BUILD_KINDS, BUILD_SPOTS, cleanVillage, COTTAGE_COST, COTTAGE_PAD, createState, makeTrees,
+  BASE, BRIDGE_Y, BUILDING_ENABLED, BUILD_COST, BUILD_KINDS, BUILD_SPOTS, cleanVillage, COTTAGE_COST, COTTAGE_PAD, createState, makeTrees,
   newVillage, NODE_HITS, questTargets, res, RIVER, snapshot, step, viewFromSnapshot, villageOf,
   type BuildKind, type Input, type State,
 } from './sim';
@@ -12,7 +12,8 @@ const at = (s: State, i: number, x: number, y: number) => Object.assign(s.player
 const b = (s: State, k: BuildKind) => s.builds.find((x) => x.kind === k)!;
 const finish = (s: State, k: BuildKind) => { b(s, k).state = 2; };
 
-describe('base building', () => {
+// paused behind BUILDING_ENABLED (see sim.ts); these run again when it is switched on
+describe.skipIf(!BUILDING_ENABLED)('base building', () => {
   it('standing 1 s on a spot starts a site; it pays itself from the bank until done', () => {
     const s = createState([P('a')], 1);
     const sp = BUILD_SPOTS.storage;

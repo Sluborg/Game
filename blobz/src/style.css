@@ -455,3 +455,15 @@ button.link .icon { height: 18px; margin-right: 6px; vertical-align: -3px; }
   .opt .blob { width: 36px; height: 48px; }
   .opt.swatch-opt { height: 64px; }
 }
+
+/* ---------- base building (village) ---------- */
+.qbuild { display: flex; align-items: center; gap: 6px; height: 26px; font-size: 16px; font-weight: 700; color: var(--plum); }
+.qbuild.done { color: #2f8a2f; }
+.qbuild .qstar { width: 22px; height: 22px; }
+#edge-arrows { position: absolute; inset: 0; pointer-events: none; }
+.edge { position: absolute; display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; margin: -23px 0 0 -23px;
+  background: #fff7e6e6; border-radius: 50%; box-shadow: 0 0 0 3px #3f2631, 0 4px 0 3px #3f263140; }
+.edge img { height: 18px; image-rendering: pixelated; position: relative; }
+.edge .arr { position: absolute; inset: -14px; }
+.edge .arr::after { content: ''; position: absolute; right: -2px; top: 50%; margin-top: -8px; border: 8px solid transparent; border-left: 12px solid #3f2631; }
+#lobby-village:empty { display: none; }

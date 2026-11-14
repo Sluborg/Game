@@ -4,6 +4,8 @@ import { blobCanvas, BODY_CY, clampLook } from './blob';
 import { sfx } from './sfx';
 import { BASE, GATE_W, makePuzzles, makeTrees, PLATE_R, rng, WORLD_H, WORLD_W } from './sim';
 import { canAfford, isSolid, PAD_R, RES, TOTEM_KINDS, TOTEM_MAX, TOTEM_PADS, totemPrice } from './sim';
+import { BRIDGE_Y, BUILDING_ENABLED, BUILD_COST, BUILD_KINDS, BUILD_NAMES, BUILD_R, BUILD_SPOTS, COTTAGE_COST, COTTAGE_MAX, COTTAGE_PAD, nodeRes, RIVER } from './sim';
+import type { BuildKind } from './sim';
 import type { PuzzleLayout, Res, Tool, TotemKind } from './sim';
 import type { FxEvent, Input, ItemKind, PlayerInfo, View } from './sim';
 
@@ -87,6 +89,8 @@ export class GameScene extends Phaser.Scene {
   private gems = new Map<number, { g: Phaser.GameObjects.Graphics; img: Phaser.GameObjects.Image; t: Phaser.GameObjects.Image[]; x: number; y: number }>();
   private powers = new Map<number, Phaser.GameObjects.Container>();
   private pz: PuzzleGfx[] = [];
+  private bgfx = new Map<BuildKind | 'cottage', { img: Phaser.GameObjects.Image; spot: Phaser.GameObjects.Image; tag: Phaser.GameObjects.Container; key: string }>();
+  private cottageImg!: Phaser.GameObjects.Image;
   private nodes: { img: Phaser.GameObjects.Image; kind: number; left: number; x: number; y: number; sc: number }[] = [];
   private dusk!: Phaser.GameObjects.Rectangle;
   private totems: TotemGfx[] = [];
@@ -130,6 +134,7 @@ export class GameScene extends Phaser.Scene {
     this.load.spritesheet('fx-dust', 'art/fx/dust.png', { frameWidth: 14, frameHeight: 12 });
     this.load.spritesheet('fx-sparkle', 'art/fx/coin-sparkle.png', { frameWidth: 11, frameHeight: 11 });
     this.load.image('fx-plate-glow', 'art/fx/plate-glow.png');
+    for (const n of ['cottage-1', 'cottage-2', 'cottage-3', 'build-spot', ...BUILD_KINDS.flatMap((k) => [k, k + '-site'])]) this.load.image('b-' + n, `art/base/${n}.png`);
     const sheet = (key: string, dir: string) => this.load.spritesheet(key, `assets/${dir}/tilemap_packed.png`, { frameWidth: 16, frameHeight: 16 });
     sheet('town', 'kenney-tiny-town');
     sheet('dungeon', 'kenney-tiny-dungeon');
@@ -178,7 +183,15 @@ export class GameScene extends Phaser.Scene {
     yard.fillStyle(0xe2b27a, 1).fillCircle(BASE.x, BASE.y, BASE.r - 18);
     this.baseG = this.add.graphics().setDepth(-900);
     this.add.ellipse(BASE.x, BASE.y + 26, 110, 26, 0x000000, 0.18).setDepth(-880);
-    this.add.image(BASE.x, BASE.y + 30, 'ic-house').setScale(5).setOrigin(0.5, 1).setDepth(BASE.y - 40);
+    // cottage (Art's base set, level 1-3), integer scale 2, anchored bottom centre
+    this.cottageImg = this.add.image(BASE.x, BASE.y + 30, 'b-cottage-1').setScale(2).setOrigin(0.5, 1).setDepth(BASE.y - 40);
+    // the river with the east meadow behind it (base building only)
+    const river = this.add.graphics().setDepth(-940).setVisible(BUILDING_ENABLED);
+    river.fillStyle(0x2f86c8, 1).fillRect(RIVER.x0, 0, RIVER.x1 - RIVER.x0, WORLD_H);
+    river.fillStyle(0x3fa9f5, 1).fillRect(RIVER.x0 + 6, 0, RIVER.x1 - RIVER.x0 - 12, WORLD_H);
+    river.fillStyle(0x6b4a2a, 1).fillRect(RIVER.x0 - 4, 0, 4, WORLD_H).fillRect(RIVER.x1, 0, 4, WORLD_H);
+    for (let y = 12; y < WORLD_H; y += 46) river.fillStyle(0x8fd3ff, 0.8).fillRect(RIVER.x0 + 14 + ((y / 46) % 3) * 10, y, 12, 3);
+    if (BUILDING_ENABLED) this.buildBase();
     this.add.text(BASE.x, BASE.y + 52, 'BAS', { fontFamily: "'Pixelify Sans', sans-serif", fontSize: '20px', color: '#fff7e6', fontStyle: 'bold', stroke: '#3f2631', strokeThickness: 5 }).setOrigin(0.5).setDepth(-800);
 
     // resource nodes (same layout as the host sim, from the shared seed); textures swap when used up
@@ -195,14 +208,14 @@ export class GameScene extends Phaser.Scene {
     const inZone = (x: number, y: number, pad: number) => zones.some((z) => x > z.x0 - pad && x < z.x1 + pad && y > z.y0 - pad && y < z.y1 + pad)
       || TOTEM_PADS.some((p) => Math.hypot(p.x - x, p.y - y) < 60 + pad);
     for (let i = 0; i < 22; i++) {
-      const x = 30 + r() * (WORLD_W - 60), y = 30 + r() * (WORLD_H - 60);
+      const x = 30 + r() * (RIVER.x0 - 60), y = 30 + r() * (WORLD_H - 60);
       const [key, sc] = DECOR[Math.floor(r() * DECOR.length)];
       if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 30 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 46) || inZone(x, y, 20)) continue;
       this.add.image(x, y, key).setScale(sc).setDepth(-600);
     }
 
     for (let i = 0, placed = 0; i < 40 && placed < 2; i++) {
-      const x = 120 + r() * (WORLD_W - 240), y = 120 + r() * (WORLD_H - 240);
+      const x = 120 + r() * (RIVER.x0 - 240), y = 120 + r() * (WORLD_H - 240);
       if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 120 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 80) || inZone(x, y, 40)) continue;
       this.add.image(x, y, 'pr-pond').setScale(2).setDepth(-650); placed++;
     }
@@ -312,6 +325,9 @@ export class GameScene extends Phaser.Scene {
 
     // ---- co-op puzzles ----
     v.puzzles?.forEach((z, i) => this.drawPuzzle(this.pz[i], z, now));
+
+    // ---- base building ----
+    if (BUILDING_ENABLED) this.drawBuilds(v, now);
 
     // ---- totems + bank ----
     this.drawTotems(v, now);
@@ -443,6 +459,107 @@ export class GameScene extends Phaser.Scene {
       img.setTexture(ITEM_ICON[k] ?? 'ic-log').setScale(CARRY_SCALE[k] ?? 1);
       img.setPosition(b.x + (i - (p.carry.length - 1) / 2) * 14, b.y - 44 + hover - Math.abs(i - 1) * 2).setDepth(b.y + 3);
     });
+  }
+
+  /** Spot markers, ghosts of what can be built, construction sites, finished buildings, cottage pad. */
+  private buildBase() {
+    this.bgfx.clear();
+    const mk = (kind: BuildKind | 'cottage', at: { x: number; y: number }) => {
+      const bridge = kind === 'bridge';
+      // the building stands just behind the spot (the bridge spans the river)
+      const bx = bridge ? (RIVER.x0 + RIVER.x1) / 2 : at.x, by = bridge ? BRIDGE_Y + 24 : at.y - BUILD_R + 4;
+      const img = this.add.image(bx, by, kind === 'cottage' ? 'b-build-spot' : 'b-' + kind).setScale(2).setOrigin(0.5, 1).setDepth(bridge ? -930 : by);
+      const spot = this.add.image(at.x, at.y + 15, 'b-build-spot').setScale(2).setOrigin(0.5, 1).setDepth(-690);
+      const tag = this.add.container(at.x, at.y - 96).setDepth(3900);
+      this.bgfx.set(kind, { img, spot, tag, key: '' });
+    };
+    for (const k of BUILD_KINDS) mk(k, BUILD_SPOTS[k]);
+    mk('cottage', COTTAGE_PAD);
+    this.bgfx.get('cottage')!.img.setVisible(false);
+  }
+
+  /** Name + one icon/amount per resource still needed (amounts turn green when the bank covers them). */
+  private signTag(tag: Phaser.GameObjects.Container, title: string, need: Partial<Res>, bank: Res | undefined) {
+    tag.removeAll(true);
+    const parts = RES.filter((k) => (need[k] ?? 0) > 0);
+    const w = Math.max(96, 42 * parts.length + 8);
+    tag.add(this.add.rectangle(0, 0, w, 50, 0xfff7e6).setStrokeStyle(3, 0x3f2631));
+    tag.add(this.add.text(0, -12, title, { fontFamily: "'Pixelify Sans', sans-serif", fontSize: '15px', color: '#3f2631', fontStyle: 'bold' }).setOrigin(0.5));
+    parts.forEach((k, j) => {
+      const x = -(42 * parts.length) / 2 + j * 42 + 4;
+      tag.add(this.add.image(x + 9, 12, ITEM_ICON[k]).setScale(k === 'wood' ? 1 : 2));
+      tag.add(this.add.text(x + 20, 12, String(need[k]), { fontFamily: "'Pixelify Sans', sans-serif", fontSize: '17px', color: (bank?.[k] ?? 0) >= need[k]! ? '#2f8a2f' : '#b3261e', fontStyle: 'bold' }).setOrigin(0, 0.5));
+    });
+  }
+
+  private drawBuilds(v: View, now: number) {
+    if (!v.builds || !v.cottage) return;
+    const ck = 'b-cottage-' + Math.max(1, Math.min(3, v.cottage.level));
+    if (this.cottageImg.texture.key !== ck) this.cottageImg.setTexture(ck);
+    const pads = [
+      ...v.builds.map((b) => ({ kind: b.kind as BuildKind | 'cottage', at: BUILD_SPOTS[b.kind], state: b.state, paid: b.paid, buy: b.buy, cost: BUILD_COST[b.kind] as Res | null, title: BUILD_NAMES[b.kind] })),
+      { kind: 'cottage' as const, at: COTTAGE_PAD, state: v.cottage.state as 0 | 1 | 2, paid: v.cottage.paid, buy: v.cottage.buy,
+        cost: v.cottage.level >= COTTAGE_MAX ? null : COTTAGE_COST[v.cottage.level - 1], title: `Stuga nivå ${v.cottage.level + 1}` },
+    ];
+    for (const p of pads) {
+      const g = this.bgfx.get(p.kind);
+      if (!g) continue;
+      const done = p.state === 2 || !p.cost;
+      if (p.kind !== 'cottage') {
+        const tex = 'b-' + p.kind + (p.state === 1 ? '-site' : '');
+        if (g.img.texture.key !== tex) g.img.setTexture(tex);
+        // empty spot: a faded ghost of what will stand here
+        g.img.setAlpha(p.state === 0 ? 0.35 : 1);
+      }
+      g.spot.setVisible(!done);
+      g.tag.setVisible(!done);
+      if (!done) {
+        const need = RES.reduce((o, k) => ({ ...o, [k]: Math.max(0, p.cost![k] - p.paid[k]) }), {} as Res);
+        const key = `${p.title}|${RES.map((k) => need[k] + ':' + ((v.bank?.[k] ?? 0) >= need[k] ? 1 : 0)).join(',')}`;
+        if (key !== g.key) { g.key = key; this.signTag(g.tag, p.title, need, v.bank); }
+        g.tag.setY(p.at.y - 96 + (p.state === 1 ? Math.sin(now / 300) * 2 : 0));
+        if (p.buy > 0) {
+          this.buyG.lineStyle(10, 0x3f2631, 0.85).strokeCircle(p.at.x, p.at.y, BUILD_R + 4);
+          this.buyG.lineStyle(6, 0x6cc644, 1).beginPath();
+          this.buyG.arc(p.at.x, p.at.y, BUILD_R + 4, -Math.PI / 2, -Math.PI / 2 + p.buy * Math.PI * 2);
+          this.buyG.strokePath();
+        }
+      }
+    }
+    this.drawArrows(v);
+  }
+
+  /** Watchtower: edge arrows on screen pointing at the nearest node of each resource that is off-screen. */
+  private drawArrows(v: View) {
+    const box = document.getElementById('edge-arrows');
+    if (!box) return;
+    const tower = v.builds.some((b) => b.kind === 'watchtower' && b.state === 2);
+    box.classList.toggle('hidden', !tower);
+    if (!tower) return;
+    const me = this.blobs.get(this.s.myId);
+    const cam = this.cameras.main, wv = cam.worldView;
+    for (const k of RES) {
+      const el = box.querySelector<HTMLElement>(`[data-k="${k}"]`);
+      if (!el) continue;
+      let best: { x: number; y: number } | null = null, bd = Infinity;
+      this.nodes.forEach((n, i) => {
+        if ((v.nodes[i] ?? 0) <= 0 || nodeRes(n.kind) !== k) return;
+        if (n.x > wv.x && n.x < wv.right && n.y > wv.y && n.y < wv.bottom) { bd = -1; return; } // one is on screen already
+        const d = me ? Math.hypot(n.x - me.x, n.y - me.y) : 0;
+        if (bd >= 0 && d < bd) { bd = d; best = n; }
+      });
+      if (!best || bd < 0) { el.style.display = 'none'; continue; }
+      const t = best as { x: number; y: number };
+      const cx = wv.centerX, cy = wv.centerY;
+      const ang = Math.atan2(t.y - cy, t.x - cx);
+      // where the ray from the view centre leaves the view (inset), in screen pixels
+      const hw = wv.width / 2 - 40 / cam.zoom, hh = wv.height / 2 - 60 / cam.zoom;
+      const sc = Math.min(Math.abs(hw / Math.cos(ang) || Infinity), Math.abs(hh / Math.sin(ang) || Infinity));
+      const sx = (cx + Math.cos(ang) * sc - wv.x) * cam.zoom, sy = (cy + Math.sin(ang) * sc - wv.y) * cam.zoom;
+      el.style.display = 'flex';
+      el.style.left = sx + 'px'; el.style.top = sy + 'px';
+      (el.querySelector('.arr') as HTMLElement).style.transform = `rotate(${ang}rad)`;
+    }
   }
 
   /** Totem on its pedestal, level pips below, price tag above (coin icon + number). */
@@ -661,6 +778,12 @@ export class GameScene extends Phaser.Scene {
       sfx.bump();
       this.burst(f.x, f.y - 20, 0x5aa83a, 8);
       this.cameras.main.shake(80, 0.003);
+    } else if (f.t === 'build') {
+      sfx.power();
+      const fx = this.add.sprite(f.x, f.y - 10, 'fx-levelup').setScale(f.done ? 4 : 3).setDepth(4500);
+      fx.play('levelup');
+      fx.once('animationcomplete', () => fx.destroy());
+      if (f.done) { this.burst(f.x, f.y - 60, 0xffe08a, 16); this.cameras.main.shake(140, 0.004); sfx.star(); }
     } else if (f.t === 'totem') {
       sfx.power();
       const fx = this.add.sprite(f.x, f.y - 10, 'fx-levelup').setScale(3).setDepth(4500);

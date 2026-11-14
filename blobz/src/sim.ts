@@ -1,10 +1,13 @@
 // Authoritative game simulation. Pure TypeScript, no Phaser, no network.
 // Runs on the host only; clients render the snapshots it produces.
 
+/** Base building (paused for the dungeon, Lead 2026-11-14): OFF hides the river, east meadow,
+ *  build spots, cottage upgrades and the saved village. Flip to true to resume. */
+export const BUILDING_ENABLED = false;
 /** The meadow (x < MAIN_W) plus, past a river, the east meadow that the bridge opens. */
 export const MAIN_W = 1280;
 export const RIVER = { x0: 1288, x1: 1352 };
-export const WORLD_W = 1600;
+export const WORLD_W = BUILDING_ENABLED ? 1600 : MAIN_W;
 export const WORLD_H = 960;
 export const BRIDGE_Y = 480;
 export const BRIDGE_HALF = 34; // half-width of the walkable deck
@@ -292,7 +295,7 @@ export function makeTrees(seed: number): Tree[] {
   // the east meadow past the river: a rich patch (more stone and berries), reachable over the bridge
   const e = rng(seed * 31 + 7);
   let n = 0;
-  for (let tries2 = 0; n < 14 && tries2 < 800; tries2++) {
+  for (let tries2 = 0; BUILDING_ENABLED && n < 14 && tries2 < 800; tries2++) {
     const x = RIVER.x1 + 50 + e() * (WORLD_W - RIVER.x1 - 90), y = 70 + e() * (WORLD_H - 130);
     if (Math.abs(y - BRIDGE_Y) < 90 && x < RIVER.x1 + 110) continue; // keep the bridge landing clear
     if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < 70)) continue;
@@ -310,7 +313,7 @@ export function createState(infos: PlayerInfo[], seed: number, village: Village 
   const trees = makeTrees(seed);
   const layout = makePuzzles(seed);
   const needs = puzzleNeeds(infos.length);
-  const vil = cleanVillage(village);
+  const vil = BUILDING_ENABLED ? cleanVillage(village) : newVillage();
   const s: State = {
     phase: 'play', time: ROUND_SECONDS,
     bank: res(), delivered: res(), quest: questTargets(infos.length, vil.cottage),
@@ -470,7 +473,7 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
   }
 
   // --- river: solid until the bridge is built ---
-  const river = riverWalls(built(s, 'bridge'));
+  const river = BUILDING_ENABLED ? riverWalls(built(s, 'bridge')) : [];
   for (const p of s.players) for (const b of river) collideBox(p, b);
 
   // --- fences + closed gates: solid boxes ---
@@ -589,7 +592,7 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     }
   });
 
-  stepBuilding(s, dt);
+  if (BUILDING_ENABLED) stepBuilding(s, dt);
 
   // --- spawners ---
   s.gemT -= dt;
