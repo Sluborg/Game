@@ -1,0 +1,219 @@
+<title>Blobz Beslut</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Nunito:wght@400;600;700&display=swap">
+<style>
+/* Layout: one column of question cards (pixel-framed like the game UI); open questions first, decided ones collapsed below. */
+:root {
+  --grass: #6cbf45;
+  --grass-deep: #4f9a31;
+  --cream: #fff7e6;
+  --cream-2: #f1e4c6;
+  --plum: #3f2631;
+  --muted: #7c6a5e;
+  --orange: #ff8a3d;
+  --orange-lo: #d4621f;
+  --green: #3f9a2a;
+  --blue: #3fa9f5;
+  --display: 'Pixelify Sans', 'Trebuchet MS', system-ui, sans-serif;
+  --body: 'Nunito', 'Segoe UI', system-ui, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--grass); color: var(--plum); font-family: var(--body); font-size: 16px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 48px;
+  background-image: radial-gradient(var(--grass-deep) 1.5px, transparent 1.6px); background-size: 22px 22px;
+}
+.wrap { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+h1 { font-family: var(--display); font-size: 34px; margin: 0; color: var(--cream); text-shadow: 0 3px 0 var(--plum), 2px 0 0 var(--plum), -2px 0 0 var(--plum), 0 -2px 0 var(--plum); letter-spacing: 1px; }
+.sub { margin: 0; color: var(--cream); font-weight: 700; }
+.pill { font-family: var(--display); background: var(--cream); padding: 4px 10px; box-shadow: 0 0 0 3px var(--plum); font-size: 15px; }
+.note { background: var(--cream); padding: 10px 14px; box-shadow: 0 0 0 3px var(--plum); font-size: 14px; color: var(--muted); }
+.card {
+  background: var(--cream); padding: 16px; display: flex; flex-direction: column; gap: 12px;
+  box-shadow: 0 -4px 0 0 var(--plum), 0 4px 0 0 var(--plum), -4px 0 0 0 var(--plum), 4px 0 0 0 var(--plum), inset 0 -5px 0 0 var(--cream-2), 0 10px 0 2px #3f263140;
+  margin: 4px; min-width: 0;
+}
+.card h2 { font-family: var(--display); font-size: 22px; margin: 0; text-wrap: balance; }
+.card .body { margin: 0; line-height: 1.45; max-width: 65ch; }
+.meta { font-size: 13px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.tag { font-family: var(--display); font-size: 13px; padding: 1px 8px; background: var(--cream-2); box-shadow: 0 0 0 2px var(--plum); }
+.tag.done { background: #d9f2c9; }
+.tag.new { background: #ffe1c9; }
+.opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.opt {
+  font: inherit; color: inherit; text-align: left; cursor: pointer; background: #fff; border: 0; padding: 10px;
+  display: flex; flex-direction: column; gap: 6px; min-width: 0;
+  box-shadow: 0 0 0 3px var(--plum), inset 0 -4px 0 0 #efe4cd; position: relative;
+}
+.opt img { width: 100%; aspect-ratio: 1 / 1; object-fit: contain; image-rendering: pixelated; background: var(--grass); box-shadow: 0 0 0 2px var(--plum); }
+.opt b { font-family: var(--display); font-size: 17px; }
+.opt span { font-size: 14px; color: var(--muted); line-height: 1.35; }
+.opt:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
+.opt.on { box-shadow: 0 0 0 5px var(--plum), inset 0 -4px 0 0 #efe4cd; background: #fffdf6; }
+.opt.on::after {
+  content: '✓'; position: absolute; top: -12px; right: -12px; width: 28px; height: 28px; display: grid; place-items: center;
+  background: var(--green); color: #fff; font-weight: 700; box-shadow: 0 0 0 3px var(--plum);
+}
+label.lbl { font-family: var(--display); font-size: 15px; }
+textarea {
+  font: inherit; width: 100%; min-height: 70px; padding: 10px; border: 0; resize: vertical; background: #fff; color: var(--plum);
+  box-shadow: 0 0 0 3px var(--plum), inset 0 3px 0 0 #ece2cc;
+}
+textarea:focus { outline: 3px solid var(--blue); outline-offset: 3px; }
+.row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.btn {
+  font-family: var(--display); font-size: 18px; color: #fff; background: var(--orange); border: 0; padding: 10px 18px 13px; cursor: pointer;
+  box-shadow: 0 0 0 3px var(--plum), inset 0 -5px 0 0 var(--orange-lo), inset 0 3px 0 0 #ffb27a; text-shadow: 0 2px 0 var(--orange-lo);
+}
+.btn:active { transform: translateY(2px); }
+.btn:disabled { filter: saturate(0.2); cursor: default; }
+.btn:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
+.status { font-size: 14px; color: var(--muted); }
+.status.ok { color: var(--green); font-weight: 700; }
+.status.err { color: #b3261e; font-weight: 700; }
+.decision { background: #e6f5dc; padding: 10px 12px; box-shadow: 0 0 0 2px var(--plum); font-size: 15px; }
+details.archive summary { font-family: var(--display); font-size: 20px; color: var(--cream); cursor: pointer; text-shadow: 0 2px 0 var(--plum); list-style: none; }
+details.archive summary::-webkit-details-marker { display: none; }
+details.archive[open] summary { margin-bottom: 12px; }
+.empty { text-align: center; padding: 28px 16px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Blobz Beslut</h1>
+      <p class="sub">Välj, kommentera, tryck Skicka. Claude läser allt härifrån.</p>
+    </div>
+    <span class="pill" id="count">Laddar...</span>
+  </header>
+  <div class="note" id="conn" hidden></div>
+  <section id="open" class="wrap" aria-label="Öppna frågor"></section>
+  <details class="archive" id="archiveBox">
+    <summary id="archiveTitle">Avgjorda frågor</summary>
+    <section id="done" class="wrap" aria-label="Avgjorda frågor"></section>
+  </details>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const state = { questions: [], answers: {}, drafts: {} };
+let db = null;
+
+function el(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') e.className = v; else if (k === 'text') e.textContent = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (v !== undefined && v !== null) e.setAttribute(k, v);
+  }
+  for (const c of kids) if (c) e.append(c);
+  return e;
+}
+
+function draftFor(q) {
+  if (!state.drafts[q.id]) {
+    const a = state.answers[q.id] || {};
+    state.drafts[q.id] = { choice: a.choice || null, comment: a.comment || '' };
+  }
+  return state.drafts[q.id];
+}
+
+function fmt(ts) {
+  if (!ts) return '';
+  try { return new Date(ts).toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' }); } catch { return ''; }
+}
+
+function renderCard(q) {
+  const a = state.answers[q.id];
+  const d = draftFor(q);
+  const card = el('article', { class: 'card', id: 'q-' + q.id });
+  const tags = el('div', { class: 'meta' },
+    q.decision ? el('span', { class: 'tag done', text: 'Avgjord' }) : a ? el('span', { class: 'tag', text: 'Besvarad' }) : el('span', { class: 'tag new', text: 'Ny' }),
+    q.area ? el('span', { text: q.area }) : null,
+    a && a.at ? el('span', { text: 'Ditt svar: ' + fmt(a.at) }) : null);
+  card.append(tags, el('h2', { text: q.title }));
+  if (q.body) card.append(el('p', { class: 'body', text: q.body }));
+
+  const options = Array.isArray(q.options) ? q.options : [];
+  if (options.length) {
+    const grid = el('div', { class: 'opts', role: 'radiogroup', 'aria-label': q.title });
+    for (const o of options) {
+      const b = el('button', { class: 'opt' + (d.choice === o.id ? ' on' : ''), type: 'button', role: 'radio', 'aria-checked': String(d.choice === o.id) });
+      if (o.img) b.append(el('img', { src: o.img, alt: o.label || '' }));
+      b.append(el('b', { text: o.label || o.id }));
+      if (o.desc) b.append(el('span', { text: o.desc }));
+      b.addEventListener('click', () => { d.choice = d.choice === o.id ? null : o.id; renderAll(); });
+      grid.append(b);
+    }
+    card.append(grid);
+  }
+
+  const taId = 'c-' + q.id;
+  const ta = el('textarea', { id: taId, placeholder: options.length ? 'Kommentar (valfritt)' : 'Ditt svar' });
+  ta.value = d.comment;
+  ta.addEventListener('input', () => { d.comment = ta.value; });
+  card.append(el('label', { class: 'lbl', for: taId, text: options.length ? 'Kommentar' : 'Svar' }), ta);
+
+  const status = el('span', { class: 'status' });
+  const send = el('button', { class: 'btn', type: 'button', text: a ? 'Uppdatera' : 'Skicka' });
+  send.addEventListener('click', async () => {
+    if (!db) { status.textContent = 'Kan inte spara här. Öppna sidan inloggad på claude.ai.'; status.className = 'status err'; return; }
+    if (!d.choice && !d.comment.trim()) { status.textContent = 'Välj ett alternativ eller skriv något först.'; status.className = 'status err'; return; }
+    send.disabled = true; status.textContent = 'Sparar...'; status.className = 'status';
+    try {
+      await db.doc('answers/' + q.id).set({ choice: d.choice, comment: d.comment.trim(), at: new Date().toISOString() });
+      status.textContent = 'Skickat. Claude ser det.'; status.className = 'status ok';
+    } catch (e) {
+      status.textContent = 'Kunde inte spara (' + (e && e.code || 'fel') + '). Försök igen.'; status.className = 'status err';
+    } finally { send.disabled = false; }
+  });
+  card.append(el('div', { class: 'row' }, send, status));
+  if (q.decision) card.append(el('div', { class: 'decision', text: 'Beslut: ' + q.decision }));
+  return card;
+}
+
+function renderAll() {
+  const qs = [...state.questions].sort((x, y) => (y.order || 0) - (x.order || 0));
+  const open = qs.filter((q) => !q.decision), done = qs.filter((q) => q.decision);
+  const openBox = $('#open'), doneBox = $('#done');
+  const focusId = document.activeElement && document.activeElement.id;
+  openBox.replaceChildren(...(open.length ? open.map(renderCard) : [el('div', { class: 'card empty' }, el('h2', { text: 'Inga öppna frågor just nu' }), el('p', { class: 'body', text: 'När Claude behöver ett beslut dyker frågan upp här, med alternativ att välja mellan.' }))]));
+  doneBox.replaceChildren(...done.map(renderCard));
+  $('#archiveBox').hidden = done.length === 0;
+  $('#archiveTitle').textContent = 'Avgjorda frågor (' + done.length + ')';
+  const unanswered = open.filter((q) => !state.answers[q.id]).length;
+  $('#count').textContent = open.length ? unanswered + ' obesvarade av ' + open.length : 'Allt besvarat';
+  if (focusId && focusId.startsWith('c-')) { const t = document.getElementById(focusId); if (t) t.focus(); }
+}
+
+renderAll();
+$('#count').textContent = 'Laddar...';
+
+(async () => {
+  const timer = setTimeout(() => { const c = $('#conn'); c.hidden = false; c.textContent = 'Får inte kontakt med databasen än. Frågorna dyker upp när anslutningen är klar.'; }, 10000);
+  db = await (window.claude ? window.claude.use('db') : null);
+  if (!db) {
+    clearTimeout(timer);
+    const c = $('#conn'); c.hidden = false; c.textContent = 'Den här vyn kan inte läsa frågorna. Öppna sidan inloggad på claude.ai.';
+    $('#count').textContent = '–';
+    return;
+  }
+  const clear = () => { clearTimeout(timer); $('#conn').hidden = true; };
+  db.collection('questions').onSnapshot((snap) => {
+    if (!snap.metadata.fromCache) clear();
+    state.questions = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    renderAll();
+  }, (e) => { clear(); const c = $('#conn'); c.hidden = false; c.textContent = 'Kunde inte läsa frågorna (' + (e && e.code) + ').'; });
+  db.collection('answers').onSnapshot((snap) => {
+    const next = {};
+    for (const d of snap.docs) next[d.id] = d.data();
+    state.answers = next;
+    for (const id of Object.keys(next)) if (!state.drafts[id]) delete state.drafts[id];
+    renderAll();
+  }, () => {});
+})();
+</script>

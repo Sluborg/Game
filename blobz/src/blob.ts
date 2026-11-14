@@ -97,15 +97,24 @@ const MOUTH_PARTS: MouthPart[] = [
 
 // Hats: centred on x = 18 (+ dx); bottom row on fine row min(top + 2, 11) * S - 1 (+ drop).
 // `float`: hovers above the real head top (halo). `proc`: drawn procedurally to hug the body shape.
-interface HatPart { rows: string[]; dx?: number; float?: boolean; proc?: 'phones' | 'bandana' | 'ninja' | 'dino' }
+// Fitting: hats are squeezed (whole pixel columns) until they stay within ~2 px of the head outline
+// (see fitHat). `brim`: an intentional brim may overhang (straw hat, pirate, wizard, cap).
+// `pair`: a left piece (ear, horn) mirrored to the right, its outer column at fraction `at` of the
+// head-top width (minus 2 px overhang), or, without `at`, against the hat's own sides; `dy` moves it up (-) or down.
+// `anchor`: a narrow side piece centred at this fraction of the head-top width (flower).
+interface HatPart {
+  rows: string[]; dx?: number; float?: boolean; brim?: boolean; anchor?: number;
+  pair?: { rows: string[]; at?: number; dy?: number };
+  proc?: 'phones' | 'bandana' | 'ninja' | 'dino';
+}
 const HAT_PARTS: HatPart[] = [
   { rows: [] }, // Ingen
   { rows: ['U......UU......U', 'UYU...UYYU...UYU', 'UYYU.UYYYYU.UYYU', 'UYYYUYYYYYYUYYYU', 'UYYYYYYeeYYYYYYU',
     'UYoYYYYeeYYYYoYU', 'UYYYYYYYYYYYYYYU', 'UyyyyyyyyyyyyyyU', 'UUUUUUUUUUUUUUUU'] }, // Krona
-  { dx: 2, rows: [ // Keps
+  { dx: 2, brim: true, rows: [ // Keps
     '......UUUUUU........', '....UUeeeeeeUU......', '...UeeeWeeeeeeU.....', '..UeeWeeeeeeeeeU....',
     '..UeeeeeeeeeeeeU....', '..UeeeeeeeeeeeeUUUUU', '..UccccccccccccccccU', '..UUUUUUUUUUUUUUUUU.'] },
-  { dx: 6, rows: [ // Blomma
+  { anchor: 0.7, rows: [ // Blomma
     '....UU....', '...UNNU...', '.UUUNNUUU.', 'UNNUYYUNNU', 'UNNUYoUNNU', '.UUUNNUUU.', '...UNNU...',
     '....ULU...', '....ULLU..', '....ULU...'] },
   { rows: [ // Partyhatt
@@ -117,31 +126,29 @@ const HAT_PARTS: HatPart[] = [
   { rows: [ // Rosett
     '.UU........UU.', 'UNNUU....UUNNU', 'UNWNNUUUUNNNNU', 'UNNNNUnnUNNNNU', 'UNNNNUnnUNNNNU',
     'UNNnnUUUUnnNNU', 'UNnnU....UnnNU', '.UU........UU.'] },
-  { rows: [ // Halmhatt
+  { brim: true, rows: [ // Halmhatt
     '........UUUUUU........', '......UUSSSSSSUU......', '.....USSsSSSSSsSU.....', '.....USSSSSsSSSSU.....',
     '.....UeeeeeeeeeeU.....', '.UUUUUSSSSSSSSSSUUUUU.', 'USSsSSSSsSSSSsSSSSsSSU', 'UssssssssssssssssssssU',
     '.UUUUUUUUUUUUUUUUUUUU.'] },
-  { rows: [ // Pirat
+  { brim: true, rows: [ // Pirat
     '.......UUUUUU.......', '....UUUkkkkkkUUU....', '..UUkkkkkkkkkkkkUU..', '.UkkkkkkkWWWkkkkkkU.',
     '.UkkkkkkWkWkWkkkkkU.', 'UkkkkkkkWWWWWkkkkkkU', 'UkkkkkkkkWkWkkkkkkkU', 'UYYYYYYYYYYYYYYYYYYU',
     '.UUUUUUUUUUUUUUUUUU.'] },
-  { dx: 1, rows: [ // Trollkarl
+  { dx: 1, brim: true, rows: [ // Trollkarl
     '..............UU....', '............UUPPU...', '...........UPPUU....', '..........UPPU......',
     '.........UPPPU......', '.........UPYPU......', '........UPPPPPU.....', '........UPPPPPU.....',
     '.......UPPPPYPPU....', '.......UPYPPPPPU....', '......UPPPPPPPPPU...', '.....UYYYYYYYYYYYU..',
     'UUUUUUPPPPPPPPPPPUUU', 'UPPPPPPPPPPPPPPPPPPU', 'UppppppppppppppppppU', '.UUUUUUUUUUUUUUUUUU.'] },
-  { rows: sym([ // Viking
-    '.U.........', 'UvU........', 'UvU........', 'UvvU.......', 'UxvvU..UUUU', '.UxvvUUaaaa',
-    '..UxxUaWaaa', '...UUaaaaaa', '....UgggggU', '....UgygggU', '....UUUUUUU']) },
+  { rows: sym(['...UUUU', '.UUaaaa', 'UaaWaaa', 'Uaaaaaa', 'UgggggU', 'UgygggU', 'UUUUUUU']), // Viking: helmet + horns
+    pair: { dy: -2, rows: ['U....', 'UvU..', 'UvU..', 'UvvU.', 'UxvvU', '.UxvU', '..UxU', '...UU'] } },
   { rows: sym([ // Kock
     '..UUU.UU', '.UWWWUWW', 'UWWWWWWW', 'UWWWWWWW', 'UWWWWWWW', '.UWWWWWW', '..UWWWWW', '..UaWWaW',
     '..UaWWaW', '..UUUUUU']) },
   { proc: 'phones', rows: [] }, // Lurar
-  { rows: sym([ // Kanin
-    '..UUU...', '.UWWWU..', '.UWNWU..', '.UWNWU..', '.UWNWU..', '.UWNWU..', '.UWNWU..', '.UWNWU..',
-    '.UWNWU..', '..UWWWU.', '..UWWWU.']) },
-  { rows: sym([ // Katt (body colored)
-    'U........', 'UU.......', 'UNU......', 'UNNU.....', 'UNNMU....', 'UNNMMUUUU', 'UNMMMMMMM', 'UMMMMMMMM']) },
+  { rows: [], pair: { at: 0.18, rows: [ // Kanin
+    '.UUU.', 'UWWWU', 'UWNWU', 'UWNWU', 'UWNWU', 'UWNWU', 'UWNWU', 'UWNWU', 'UWNWU', 'UWWWU', 'UWWWU'] } },
+  { rows: [], pair: { at: 0, rows: [ // Katt (body colored ears at the head corners)
+    'U......', 'UU.....', 'UNU....', 'UNNU...', 'UNMMU..', 'UNMMMU.', 'UMMMMMU', 'UMMMMMM'] } },
   { float: true, rows: ['...UUUUUUUU...', '.UUYYYYYYYYUU.', 'UYYUUUUUUUUoYU', 'UyYU......UYyU', '.UyyYYYYYYyyU.', '...UUUUUUUU...'] }, // Gloria
   { rows: ['..UUUUUUUUUU..', '..UkkkkkkkkU..', '..UkgkkkkkkU..', '..UkgkkkkkkU..', '..UkgkkkkkkU..', '..UkkkkkkkkU..',
     '..UeeeeeeeeU..', '..UeeeeeeeeU..', 'UUUUUUUUUUUUUU', 'UkkkkkkkkkkkkU', '.UUUUUUUUUUUU.'] }, // Cylinder
@@ -225,6 +232,77 @@ function distToBody(x: number, y: number, cap: number) {
   }
   return cap + 1;
 }
+/** Silhouette extents [left, right] per fine row for the current shape; rows above the head use the top row. */
+const extCache = new Map<number, ([number, number] | null)[]>();
+function headExtents() {
+  let ext = extCache.get(curShape);
+  if (!ext) {
+    ext = Array.from({ length: GRID_H }, (_, y) => {
+      let l = -1, r = -1;
+      for (let x = 0; x < GRID_W; x++) if (inSilhouette(x, y)) { if (l < 0) l = x; r = x; }
+      return l < 0 ? null : [l, r] as [number, number];
+    });
+    const first = ext.findIndex((e) => e);
+    for (let y = 0; y < first; y++) ext[y] = ext[first];
+    extCache.set(curShape, ext);
+  }
+  return ext;
+}
+/** How far (fine px) a hat may stick out past the head outline at any row. */
+export const HAT_OVERHANG = 2;
+const fitCache = new Map<string, string[]>();
+/** The hat's rows, squeezed in whole pixel columns until they fit the current head (brims exempt). */
+function fitHat(index: number, shape: number, hat: HatPart, bottom: number) {
+  const key = `${index}/${shape}`;
+  const hit = fitCache.get(key);
+  if (hit) return hit;
+  const ext = headExtents();
+  let rows = hat.rows;
+  const fits = (r: string[]) => {
+    const w = r[0].length, x0 = Math.floor(GRID_W / 2 - w / 2) + (hat.dx ?? 0), y0 = restOnHead(r, x0, bottom - r.length + 1);
+    return r.every((row, ry) => [...row].every((ch, rx) => {
+      if (ch === '.' || y0 + ry < 0) return true;
+      const e = ext[Math.min(GRID_H - 1, y0 + ry)];
+      return !!e && x0 + rx >= e[0] - HAT_OVERHANG && x0 + rx <= e[1] + HAT_OVERHANG;
+    }));
+  };
+  const col = (r: string[], i: number) => r.map((row) => row[i]).join('');
+  while (!hat.brim && hat.anchor === undefined && !hat.float && !fits(rows) && rows[0].length > 6) {
+    // drop a mirrored pair of columns from the longest run of identical columns (keeps the drawing intact)
+    const w = rows[0].length;
+    let best = Math.floor(w / 2) - 1, bestRun = 0;
+    for (let i = 1; i < Math.floor(w / 2); i++) {
+      let run = 1;
+      for (let j = i - 1; j >= 0 && col(rows, j) === col(rows, i); j--) run++;
+      for (let j = i + 1; j < w / 2 && col(rows, j) === col(rows, i); j++) run++;
+      if (run > bestRun || (run === bestRun && Math.abs(i - w / 4) < Math.abs(best - w / 4))) { best = i; bestRun = run; }
+    }
+    const drop = new Set([best, w - 1 - best]);
+    rows = rows.map((row) => [...row].filter((_, i) => !drop.has(i)).join(''));
+  }
+  fitCache.set(key, rows);
+  return rows;
+}
+
+/** How many fine px a resting hat may overlap the head outline (its lowest row vs the head top, per column). */
+export const HAT_REST_OVERLAP = 2;
+/** Top row y for a hat so it rests ON the head: per column, its lowest opaque pixel overlaps the head's
+ *  top outline by at most HAT_REST_OVERLAP px. Never lower than `maxY0` (keeps clear of the eyes). */
+function restOnHead(rows: string[], x0: number, maxY0: number) {
+  let y0 = maxY0;
+  for (let rx = 0; rx < rows[0].length; rx++) {
+    let low = -1;
+    rows.forEach((row, ry) => { if (row[rx] !== '.') low = ry; });
+    if (low < 0) continue;
+    const x = x0 + rx;
+    let top = 0;
+    while (top < GRID_H && !inSilhouette(x, top)) top++;
+    if (top >= 23) continue; // no head under this column (overhanging brim)
+    y0 = Math.min(y0, top + HAT_REST_OVERLAP - 1 - low);
+  }
+  return y0;
+}
+
 /** Headphones: a band hugging the head (any shape) and two cups at eye height on the sides. */
 function drawPhones(set: Setter) {
   const cupY = 22, cupH = 10;
@@ -336,10 +414,26 @@ export function blobGrid(look: BlobLook): (string | null)[][] {
   else if (hat.proc === 'bandana') drawBandana(set, look.color);
   else if (hat.proc === 'ninja') drawBandana(set, look.color, true);
   else if (hat.proc === 'dino') drawDino(set, look.color);
-  else if (hat.rows.length) {
+  else {
     // the hat's bottom row sits just above the eyes (row 23) on every shape; tall hats clip at the top
     const bottom = hat.float ? headTop() - 3 : Math.min(top + 2, 11) * S - 1;
-    paint(hat.rows, GRID_W / 2 - hat.rows[0].length / 2 + (hat.dx ?? 0), bottom - hat.rows.length + 1);
+    const ext = headExtents();
+        let hx0 = 0, hw = 0, hy0 = bottom;
+    if (hat.rows.length) {
+      const rows = fitHat(look.hat, look.shape, hat, bottom);
+      hw = rows[0].length;
+      hx0 = hat.anchor !== undefined ? Math.round(ext[0]![0] + (ext[0]![1] - ext[0]![0] + 1) * hat.anchor - hw / 2) : Math.floor(GRID_W / 2 - hw / 2) + (hat.dx ?? 0);
+      hy0 = hat.float ? bottom - rows.length + 1 : restOnHead(rows, hx0, bottom - rows.length + 1);
+      paint(rows, hx0, hy0);
+    }
+    if (hat.pair) {
+      const hatBottom = hat.rows.length ? hy0 + hat.rows.length - 1 : bottom; // horns follow the helmet; ears keep the head row
+      const pw = hat.pair.rows[0].length, py = hatBottom + (hat.pair.dy ?? 0) - hat.pair.rows.length + 1;
+      const [tl, tr] = ext[0]!; // head-top row: ears/horns rise above it, so they must stay within it
+      const px = hat.pair.at !== undefined ? tl + Math.round((tr - tl + 1) * hat.pair.at) - 2 : hx0 - pw + 2;
+      paint(hat.pair.rows, px, py);
+      paint(hat.pair.rows, GRID_W - px - pw, py, true);
+    }
   }
   return g;
 }

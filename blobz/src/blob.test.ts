@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { blobGrid, blobSvg, clampLook, COLORS, EYES, GRID_H, GRID_W, HATS, MOUTHS, PART_TABLES, SHAPES } from './blob';
+import { blobGrid, blobSvg, clampLook, COLORS, EYES, GRID_H, GRID_W, HAT_OVERHANG, HAT_REST_OVERLAP, HATS, MOUTHS, PART_TABLES, SHAPES } from './blob';
 
 const diff = (a: (string | null)[][], b: (string | null)[][]) => {
   const out: [number, number][] = [];
@@ -31,7 +31,8 @@ describe('blob', () => {
 
   it('part patterns are rectangular and use only palette letters', () => {
     const ok = new Set([...Object.keys(PART_TABLES.palette), '.', 'M', 'm']);
-    const all = [...PART_TABLES.eyes.flatMap((e) => [e.rows, e.right ?? []]), ...PART_TABLES.mouths.map((m) => m.rows), ...PART_TABLES.hats.map((h) => h.rows)];
+    const all = [...PART_TABLES.eyes.flatMap((e) => [e.rows, e.right ?? []]), ...PART_TABLES.mouths.map((m) => m.rows),
+      ...PART_TABLES.hats.flatMap((h) => [h.rows, h.pair?.rows ?? []])].filter((rows) => rows.length);
     for (const rows of all) {
       for (const r of rows) {
         expect(r.length).toBe(rows[0].length);
@@ -77,6 +78,47 @@ describe('blob', () => {
     for (let s = 0; s < SHAPES.length; s++) {
       const bare = blobGrid({ color: COLORS[0], shape: s, eyes: 0, mouth: 0, hat: 0 });
       for (let h = 1; h < HATS.length; h++) expect(diff(bare, blobGrid({ color: COLORS[0], shape: s, eyes: 0, mouth: 0, hat: h })).length).toBeGreaterThan(20);
+    }
+  });
+
+  // intentional overhangs: brims, headphone cups, bandana knot tails, viking horns; Dino is the head
+  // silhouette raised 3 px (follows the head by construction, above the head top it is wider than the top row)
+  const OVERHANG_OK = new Set(['Keps', 'Halmhatt', 'Pirat', 'Trollkarl', 'Lurar', 'Bandana', 'Ninja', 'Viking', 'Dino']);
+  it('hats fit the head on every shape (no pixel more than HAT_OVERHANG px outside the head outline)', () => {
+    for (let s = 0; s < SHAPES.length; s++) {
+      const bare = blobGrid({ color: COLORS[0], shape: s, eyes: 0, mouth: 0, hat: 0 });
+      const ext = bare.map((row) => {
+        const xs = row.map((c, x) => (c ? x : -1)).filter((x) => x >= 0);
+        return xs.length ? [xs[0], xs[xs.length - 1]] : null;
+      });
+      const first = ext.findIndex((e) => e);
+      for (let h = 1; h < HATS.length; h++) {
+        if (OVERHANG_OK.has(HATS[h])) continue;
+        const out = diff(bare, blobGrid({ color: COLORS[0], shape: s, eyes: 0, mouth: 0, hat: h })).filter(([x, y]) => {
+          const e = ext[Math.max(y, first)]!;
+          return x < e[0] - HAT_OVERHANG || x > e[1] + HAT_OVERHANG;
+        });
+        expect(out, `${HATS[h]} on ${SHAPES[s]}`).toEqual([]);
+      }
+    }
+  });
+
+  // bands, ears and the dino hood wrap the head on purpose; the halo floats; headphones hug the sides
+  const WRAPS = new Set(['Lurar', 'Bandana', 'Ninja', 'Dino', 'Katt', 'Kanin', 'Gloria']);
+  it('hats rest ON the head: lowest hat row overlaps the head top by at most HAT_REST_OVERLAP px', () => {
+    for (let s = 0; s < SHAPES.length; s++) {
+      const bare = blobGrid({ color: COLORS[0], shape: s, eyes: 0, mouth: 0, hat: 0 });
+      const headTop = (x: number) => { let y = 0; while (y < GRID_H && !bare[y][x]) y++; return y; };
+      for (let h = 1; h < HATS.length; h++) {
+        if (WRAPS.has(HATS[h])) continue;
+        const low = new Map<number, number>();
+        for (const [x, y] of diff(bare, blobGrid({ color: COLORS[0], shape: s, eyes: 0, mouth: 0, hat: h }))) {
+          if (y < 23) low.set(x, Math.max(low.get(x) ?? -1, y));
+        }
+        let worst = 0;
+        for (const [x, y] of low) if (headTop(x) < 23) worst = Math.max(worst, y - headTop(x) + 1);
+        expect(worst, `${HATS[h]} on ${SHAPES[s]}`).toBeLessThanOrEqual(HAT_REST_OVERLAP);
+      }
     }
   });
 

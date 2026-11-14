@@ -181,3 +181,13 @@
 
 ## 2026-11-14 - v025b: gather art (Art batch merged, not wired)
 - `public/art/gather/`: tool swing strips (axe/pickaxe/rake), button icons, berry bush full/empty, rubble, chips, stone/berries items, HUD resource icons, sun + day bar, star, quest card. Review sheet `docs/art-review/gather-sheet.png`.
+
+## 2026-11-14 - v026: hats fit every shape (Art batch merged)
+- Head profile per shape; wide hats squeezed by whole pixel columns to stay within 2 px of the head; cat/bunny ears placed from the head edges (pear fixed); new test guards hat overhang (brims whitelisted). 32 tests, build, lan-join e2e passed.
+
+## 2026-11-14 - v027: gathering with tools (Code batch merged)
+- Contextual action button (axe/pickaxe/rake near nodes, else dash; hold = repeat swings). Trees/rocks/boulders/berry bushes as regrowing resource nodes; no coins, mushrooms or random items. Team bank wood/stone/berries; quest card "Samla till basen" with 3 bars and stars (targets scale with players); totems priced in resources; sun day bar with dusk instead of countdown; idle breathing instead of hopping; npm run e2e runs all suites.
+- Lead review: 40 tests, build, e2e gather/totems/puzzles/lan-join ALL PASSED, screenshots checked. Open: victory.png still shows coins; tool size on a real phone; balance unplayed.
+
+## 2026-11-14 - v027b: hats rest on the head (Art fix)
+- Drawn hats overlap the head top by at most 2 fine px (`restOnHead`); new test. Ears/bands/hoods/headphones/halo unchanged by design. 41 tests, build.
