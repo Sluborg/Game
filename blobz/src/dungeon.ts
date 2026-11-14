@@ -13,10 +13,7 @@ const BLOB_R = 17;
 // ---- classes, weapons, specials, sidesteps, level-up skills, loot items (all data) ----
 export type HeroClass = 'rogue' | 'healer' | 'marksman' | 'tank';
 export const CLASSES: HeroClass[] = ['healer', 'rogue', 'tank', 'marksman'];
-/** Player-facing names (sv; en kept for the coming i18n table). Stefan: "Rogue" in Swedish too. */
-export const CLASS_NAMES: Record<HeroClass, string> = { healer: 'Helare', rogue: 'Rogue', tank: 'Riddare', marksman: 'Skytt' };
-export const CLASS_NAMES_EN: Record<HeroClass, string> = { healer: 'Healer', rogue: 'Rogue', tank: 'Tank', marksman: 'Marksman' };
-export const CLASS_HINT: Record<HeroClass, string> = { healer: 'Läker kompisar', rogue: 'Snabb, två dolkar', tank: 'Skyddar laget', marksman: 'Skjuter långt' };
+// Player-facing names live in src/i18n.ts ('dg.class.*', 'dg.weapon.*', 'dg.skill.*' ...), see dungeonText.ts.
 /** Art's file names still use the old class ids (card-class-<x>.png, skills/<x>-<id>.png) until Art renames them. */
 export const ART_CLASS: Record<HeroClass, string> = { healer: 'healer', rogue: 'rogue', tank: 'tank', marksman: 'marksman' }; // art files use the class ids since the rename
 export const skillIcon = (id: string) => { const [c, ...rest] = id.split('-'); return `art/dungeon/skills/${ART_CLASS[c as HeroClass] ?? c}-${rest.join('-')}.png`; };
@@ -26,7 +23,6 @@ export type Weapon = 'sword' | 'hammer' | 'spear' | 'staff' | 'bow' | 'shield' |
 export const WEAPONS: Weapon[] = ['sword', 'hammer', 'spear', 'staff', 'bow', 'shield', 'dagger'];
 export const CLASS_WEAPONS: Record<HeroClass, Weapon[]> = { rogue: ['dagger', 'sword', 'hammer', 'spear'], healer: ['staff'], marksman: ['bow'], tank: ['shield'] };
 export const classOf = (w: Weapon): HeroClass => CLASSES.find((c) => CLASS_WEAPONS[c].includes(w)) ?? 'rogue';
-export const WEAPON_NAMES: Record<Weapon, string> = { sword: 'Svärd', hammer: 'Hammare', spear: 'Spjut', staff: 'Stav', bow: 'Armborst', shield: 'Sköld', dagger: 'Två dolkar' }; // 'bow' = the crossbow (id kept for the snapshot)
 /** Auto-attack: reach (px from the blob centre to the goo's edge), half-arc (radians, PI = all around),
  *  damage, seconds between attacks, knockback; ranged = an arrow at the nearest goo in sight. */
 export const WEAPON_STATS: Record<Weapon, { reach: number; arc: number; dmg: number; cd: number; kb: number; ranged?: boolean }> = {
@@ -39,23 +35,23 @@ export const WEAPON_STATS: Record<Weapon, { reach: number; arc: number; dmg: num
   dagger: { reach: 44, arc: 1.2, dmg: 1, cd: 0.25, kb: 80 }, // the rogue's two daggers: very fast, short
 };
 export type SpecialKind = 'spin' | 'slam' | 'lunge' | 'heal' | 'wall' | 'volley';
-export interface SpecialDef { kind: SpecialKind; name: string; cd: number; r: number; dmg: number; kb: number; stun: number }
+export interface SpecialDef { kind: SpecialKind; cd: number; r: number; dmg: number; kb: number; stun: number }
 export const SPECIALS: Record<string, SpecialDef> = {
-  'rogue:dagger': { kind: 'spin', name: 'Dolkvirvel', cd: 5, r: 72, dmg: 2, kb: 200, stun: 0.6 },
-  'rogue:sword': { kind: 'spin', name: 'Snurr', cd: 6, r: 84, dmg: 2, kb: 300, stun: 0.5 },
-  'rogue:hammer': { kind: 'slam', name: 'Markslag', cd: 8, r: 110, dmg: 3, kb: 480, stun: 0.9 },
-  'rogue:spear': { kind: 'lunge', name: 'Utfall', cd: 7, r: 30, dmg: 2, kb: 220, stun: 0.4 },
-  'healer:staff': { kind: 'heal', name: 'Läkljus', cd: 9, r: 150, dmg: 0, kb: 0, stun: 0 }, // heals + revives friends around
-  'marksman:bow': { kind: 'volley', name: 'Pilregn', cd: 7, r: 300, dmg: 2, kb: 160, stun: 0.3 }, // arrows at several goo
-  'tank:shield': { kind: 'wall', name: 'Sköldmur', cd: 10, r: 120, dmg: 0, kb: 360, stun: 0.6 }, // friends inside take no damage
+  'rogue:dagger': { kind: 'spin', cd: 5, r: 72, dmg: 2, kb: 200, stun: 0.6 },
+  'rogue:sword': { kind: 'spin', cd: 6, r: 84, dmg: 2, kb: 300, stun: 0.5 },
+  'rogue:hammer': { kind: 'slam', cd: 8, r: 110, dmg: 3, kb: 480, stun: 0.9 },
+  'rogue:spear': { kind: 'lunge', cd: 7, r: 30, dmg: 2, kb: 220, stun: 0.4 },
+  'healer:staff': { kind: 'heal', cd: 9, r: 150, dmg: 0, kb: 0, stun: 0 }, // heals + revives friends around
+  'marksman:bow': { kind: 'volley', cd: 7, r: 300, dmg: 2, kb: 160, stun: 0.3 }, // arrows at several goo
+  'tank:shield': { kind: 'wall', cd: 10, r: 120, dmg: 0, kb: 360, stun: 0.6 }, // friends inside take no damage
 };
 export const specialOf = (cls: HeroClass, w: Weapon): SpecialDef => SPECIALS[`${cls}:${w}`] ?? SPECIALS['rogue:dagger'];
 /** Small button per class: how long the blob is untouchable, plus a twist. */
-export const SIDESTEPS: Record<HeroClass, { name: string; dodge: number; heal?: number; away?: boolean; hold?: boolean }> = {
-  rogue: { name: 'Rulla', dodge: 0.4 },
-  healer: { name: 'Ljushopp', dodge: 0.4, heal: 0.5 }, // a little self-heal
-  marksman: { name: 'Bakåthopp', dodge: 0.5, away: true }, // jumps away from the nearest goo
-  tank: { name: 'Blockera', dodge: 0.7, hold: true }, // stands its ground, blocks longer
+export const SIDESTEPS: Record<HeroClass, { dodge: number; heal?: number; away?: boolean; hold?: boolean }> = {
+  rogue: { dodge: 0.4 },
+  healer: { dodge: 0.4, heal: 0.5 }, // a little self-heal
+  marksman: { dodge: 0.5, away: true }, // jumps away from the nearest goo
+  tank: { dodge: 0.7, hold: true }, // stands its ground, blocks longer
 };
 const LUNGE_SPEED = 400; // the sim lets a dashing blob reach 1.7x its top speed (~408)
 const LUNGE_T = 0.35;
@@ -73,45 +69,45 @@ const NO_MODS: Mods = {
   kb: 1, stun: 0, crit: 0, trap: 0, dodge: 0, koFast: 0,
 };
 const MULT: (keyof Mods)[] = ['rate', 'spCd', 'spR', 'kb'];
-/** Level-up cards: 6 per class, picture + 2-3 words. Ids match Art's icons art/dungeon/skills/<id>.png;
+/** Level-up cards: 6 per class, picture + 2-3 words (names: 'dg.skill.*' in i18n.ts). Ids match Art's icons art/dungeon/skills/<id>.png;
  *  `icon` = Kenney Tiny Dungeon tile fallback. */
-export interface SkillDef { id: string; cls: HeroClass; name: string; icon: number; mod: Partial<Mods> }
+export interface SkillDef { id: string; cls: HeroClass; icon: number; mod: Partial<Mods> }
 export const SKILLS: SkillDef[] = [
-  { id: 'rogue-rage', cls: 'rogue', name: 'Raseri', icon: 103, mod: { rate: 0.85 } },
-  { id: 'rogue-knockback', cls: 'rogue', name: 'Stor knuff', icon: 118, mod: { kb: 1.5 } },
-  { id: 'rogue-whirlwind', cls: 'rogue', name: 'Virvelvind', icon: 107, mod: { spR: 1.25, spCd: 0.85 } },
-  { id: 'rogue-extraheart', cls: 'rogue', name: 'Extra hjärta', icon: 115, mod: { hearts: 1 } },
-  { id: 'rogue-lifesteal', cls: 'rogue', name: 'Läk vid splat', icon: 127, mod: { killHeal: 1 } },
-  { id: 'rogue-power', cls: 'rogue', name: 'Kraft', icon: 104, mod: { dmg: 1 } },
-  { id: 'healer-heal', cls: 'healer', name: 'Mer läkning', icon: 115, mod: { heal: 0.5 } },
-  { id: 'healer-regen', cls: 'healer', name: 'Läk dig själv', icon: 114, mod: { regen: 1 } },
-  { id: 'healer-bubble', cls: 'healer', name: 'Sköldbubbla', icon: 102, mod: { shieldAll: 1 } },
-  { id: 'healer-revive', cls: 'healer', name: 'Snabb väckning', icon: 127, mod: { koFast: 2 } }, // knocked-out friends wake 2 s sooner
-  { id: 'healer-holy', cls: 'healer', name: 'Helig träff', icon: 129, mod: { dmg: 1 } },
-  { id: 'healer-cleanse', cls: 'healer', name: 'Större ljus', icon: 130, mod: { spR: 1.25, spCd: 0.85 } },
-  { id: 'marksman-multishot', cls: 'marksman', name: 'Fler pilar', icon: 131, mod: { arrows: 2 } },
-  { id: 'marksman-pierce', cls: 'marksman', name: 'Genomskott', icon: 107, mod: { pierce: 1 } },
-  { id: 'marksman-crit', cls: 'marksman', name: 'Fullträff', icon: 104, mod: { crit: 0.25 } }, // 1 in 4 arrows hits double
-  { id: 'marksman-speed', cls: 'marksman', name: 'Snabba pilar', icon: 105, mod: { rate: 0.85 } },
-  { id: 'marksman-poison', cls: 'marksman', name: 'Giftpilar', icon: 114, mod: { stun: 0.4 } }, // hit goo stand still longer
-  { id: 'marksman-trap', cls: 'marksman', name: 'Fälla', icon: 64, mod: { trap: 1.2 } }, // the volley freezes goo
-  { id: 'tank-block', cls: 'tank', name: 'Längre block', icon: 101, mod: { dodge: 0.3 } },
-  { id: 'tank-taunt', cls: 'tank', name: 'Lockar goo', icon: 108, mod: { taunt: 80 } },
-  { id: 'tank-armor', cls: 'tank', name: 'Tjock rustning', icon: 96, mod: { hearts: 2 } },
-  { id: 'tank-charge', cls: 'tank', name: 'Sköldknuff', icon: 102, mod: { kb: 1.5, dmg: 1 } },
-  { id: 'tank-stun', cls: 'tank', name: 'Bedöva', icon: 117, mod: { stun: 0.5 } },
-  { id: 'tank-guard', cls: 'tank', name: 'Lång mur', icon: 65, mod: { wallT: 1, spR: 1.2 } },
+  { id: 'rogue-rage', cls: 'rogue', icon: 103, mod: { rate: 0.85 } },
+  { id: 'rogue-knockback', cls: 'rogue', icon: 118, mod: { kb: 1.5 } },
+  { id: 'rogue-whirlwind', cls: 'rogue', icon: 107, mod: { spR: 1.25, spCd: 0.85 } },
+  { id: 'rogue-extraheart', cls: 'rogue', icon: 115, mod: { hearts: 1 } },
+  { id: 'rogue-lifesteal', cls: 'rogue', icon: 127, mod: { killHeal: 1 } },
+  { id: 'rogue-power', cls: 'rogue', icon: 104, mod: { dmg: 1 } },
+  { id: 'healer-heal', cls: 'healer', icon: 115, mod: { heal: 0.5 } },
+  { id: 'healer-regen', cls: 'healer', icon: 114, mod: { regen: 1 } },
+  { id: 'healer-bubble', cls: 'healer', icon: 102, mod: { shieldAll: 1 } },
+  { id: 'healer-revive', cls: 'healer', icon: 127, mod: { koFast: 2 } }, // knocked-out friends wake 2 s sooner
+  { id: 'healer-holy', cls: 'healer', icon: 129, mod: { dmg: 1 } },
+  { id: 'healer-cleanse', cls: 'healer', icon: 130, mod: { spR: 1.25, spCd: 0.85 } },
+  { id: 'marksman-multishot', cls: 'marksman', icon: 131, mod: { arrows: 2 } },
+  { id: 'marksman-pierce', cls: 'marksman', icon: 107, mod: { pierce: 1 } },
+  { id: 'marksman-crit', cls: 'marksman', icon: 104, mod: { crit: 0.25 } }, // 1 in 4 arrows hits double
+  { id: 'marksman-speed', cls: 'marksman', icon: 105, mod: { rate: 0.85 } },
+  { id: 'marksman-poison', cls: 'marksman', icon: 114, mod: { stun: 0.4 } }, // hit goo stand still longer
+  { id: 'marksman-trap', cls: 'marksman', icon: 64, mod: { trap: 1.2 } }, // the volley freezes goo
+  { id: 'tank-block', cls: 'tank', icon: 101, mod: { dodge: 0.3 } },
+  { id: 'tank-taunt', cls: 'tank', icon: 108, mod: { taunt: 80 } },
+  { id: 'tank-armor', cls: 'tank', icon: 96, mod: { hearts: 2 } },
+  { id: 'tank-charge', cls: 'tank', icon: 102, mod: { kb: 1.5, dmg: 1 } },
+  { id: 'tank-stun', cls: 'tank', icon: 117, mod: { stun: 0.5 } },
+  { id: 'tank-guard', cls: 'tank', icon: 65, mod: { wallT: 1, spR: 1.2 } },
 ];
 export const skillOf = (id: string) => SKILLS.find((k) => k.id === id);
 /** Rare loot: one item slot per blob. `icon` = Kenney tile until Art's item-<id>.png exists. */
-export interface ItemDef { id: string; name: string; icon: number; mod: Partial<Mods> }
+export interface ItemDef { id: string; icon: number; mod: Partial<Mods> }
 export const ITEMS: ItemDef[] = [
-  { id: 'ring', name: 'Rubinring', icon: 113, mod: { dmg: 1 } },
-  { id: 'helm', name: 'Järnhjälm', icon: 96, mod: { hearts: 2 } },
-  { id: 'gloves', name: 'Snabbhandskar', icon: 105, mod: { rate: 0.8 } },
-  { id: 'amulet', name: 'Stjärnamulett', icon: 126, mod: { spCd: 0.7 } },
-  { id: 'cape', name: 'Fjäderkappa', icon: 72, mod: { reach: 16 } },
-  { id: 'stone', name: 'Läkesten', icon: 114, mod: { regen: 1 } },
+  { id: 'ring', icon: 113, mod: { dmg: 1 } },
+  { id: 'helm', icon: 96, mod: { hearts: 2 } },
+  { id: 'gloves', icon: 105, mod: { rate: 0.8 } },
+  { id: 'amulet', icon: 126, mod: { spCd: 0.7 } },
+  { id: 'cape', icon: 72, mod: { reach: 16 } },
+  { id: 'stone', icon: 114, mod: { regen: 1 } },
 ];
 export const itemOf = (id: string | null | undefined) => ITEMS.find((i) => i.id === id);
 export const LOOT_SECONDS = 10;
