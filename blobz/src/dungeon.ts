@@ -13,12 +13,12 @@ const BLOB_R = 17;
 // ---- classes, weapons, specials, sidesteps, level-up skills, loot items (all data) ----
 export type HeroClass = 'rogue' | 'healer' | 'marksman' | 'tank';
 export const CLASSES: HeroClass[] = ['healer', 'rogue', 'tank', 'marksman'];
-/** Player-facing names (sv; en kept for the coming i18n table). "Rogue" may become "Skurk" (Stefan). */
+/** Player-facing names (sv; en kept for the coming i18n table). Stefan: "Rogue" in Swedish too. */
 export const CLASS_NAMES: Record<HeroClass, string> = { healer: 'Helare', rogue: 'Rogue', tank: 'Riddare', marksman: 'Skytt' };
 export const CLASS_NAMES_EN: Record<HeroClass, string> = { healer: 'Healer', rogue: 'Rogue', tank: 'Tank', marksman: 'Marksman' };
 export const CLASS_HINT: Record<HeroClass, string> = { healer: 'Läker kompisar', rogue: 'Snabb, två dolkar', tank: 'Skyddar laget', marksman: 'Skjuter långt' };
 /** Art's file names still use the old class ids (card-class-<x>.png, skills/<x>-<id>.png) until Art renames them. */
-export const ART_CLASS: Record<HeroClass, string> = { healer: 'prast', rogue: 'krigare', tank: 'riddare', marksman: 'bagskytt' };
+export const ART_CLASS: Record<HeroClass, string> = { healer: 'healer', rogue: 'rogue', tank: 'tank', marksman: 'marksman' }; // art files use the class ids since the rename
 export const skillIcon = (id: string) => { const [c, ...rest] = id.split('-'); return `art/dungeon/skills/${ART_CLASS[c as HeroClass] ?? c}-${rest.join('-')}.png`; };
 export const CLASS_HEARTS: Record<HeroClass, number> = { rogue: 5, healer: 5, marksman: 4, tank: 7 };
 export type Weapon = 'sword' | 'hammer' | 'spear' | 'staff' | 'bow' | 'shield' | 'dagger';
@@ -115,7 +115,6 @@ export const ITEMS: ItemDef[] = [
 ];
 export const itemOf = (id: string | null | undefined) => ITEMS.find((i) => i.id === id);
 export const LOOT_SECONDS = 10;
-export const OFFER_SECONDS = 10;
 const REGEN_EVERY = 8;
 
 /** Boss HP grows with the team: 15 for one blob, +50% per extra blob. */
@@ -123,7 +122,11 @@ export const bossHp = (players: number) => Math.round(15 * (1 + 0.5 * Math.max(0
 
 export type EnemyKind = 0 | 1 | 2; // small, medium, boss goo
 export const ENEMY_HP = [1, 3, 15];
-export const ENEMY_R = [14, 20, 34];
+/** Goo art (art/enemies/goo-*.png, opaque to the edges) and its world scale: the hitbox is the drawn sprite,
+ *  a circle with the mean half-size of what is on screen (small 28x24 -> 13, medium 44x36 -> 20, boss 87x87 -> 44). */
+export const GOO_ART: [number, number][] = [[14, 12], [22, 18], [29, 29]];
+export const GOO_SCALE = [2, 2, 3];
+export const ENEMY_R = GOO_ART.map(([w, h], k) => Math.round(((w + h) / 4) * GOO_SCALE[k]));
 export const ENEMY_SPEED = [72, 54, 40];
 export const ENEMY_GOLD = [1, 3, 15];
 export const ENEMY_XP = [1, 3, 10];
@@ -245,7 +248,8 @@ export interface Hero {
   dodge: number; lastDash: number; // sidestep invulnerability, last dash counter
   kx: number; ky: number; // where a knocked-out blob lies
   skills: string[]; item: string | null; // level-up picks, the one loot item
-  offer: string[]; offerT: number; pending: number; // 1-of-3 cards on screen, seconds left, level-ups still to pick
+  offer: string[]; offerT: number; pending: number; // 1-of-3 cards on screen (no timer: offerT stays 0), level-ups still to pick
+  zx: number; zy: number; picking: boolean; // frozen + safe while the cards are open
   shield: number; wallT: number; regenT: number; kills: number; // priest shield charges, knight wall, regen clock, own kills
 }
 export type EndWhy = 'boss' | 'exit' | 'time';
@@ -318,7 +322,7 @@ export function newHero(weapon: Weapon, maxHearts?: number): Hero {
   return {
     cls, hearts: max, maxHearts: max, ko: 0, inv: 0, weapon, fx: 0, fy: 1, aim: 0, atkCd: 0, swing: 0,
     spCd: 0, spT: 0, lastAtk: -1, lunge: [], dodge: 0, lastDash: -1, kx: 0, ky: 0,
-    skills: [], item: null, offer: [], offerT: 0, pending: 0, shield: 0, wallT: 0, regenT: 0, kills: 0,
+    skills: [], item: null, offer: [], offerT: 0, pending: 0, zx: 0, zy: 0, picking: false, shield: 0, wallT: 0, regenT: 0, kills: 0,
   };
 }
 
@@ -378,7 +382,7 @@ function makeOffer(h: Hero) {
   const pool = SKILLS.filter((k) => k.cls === h.cls).map((k) => k.id);
   const out: string[] = [];
   while (out.length < 3 && pool.length) out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
-  h.offer = out; h.offerT = OFFER_SECONDS;
+  h.offer = out; h.offerT = 0; // no timer: the cards wait for the player (who is frozen and safe meanwhile)
 }
 
 function takeSkill(h: Hero, id: string, who: string, fx: DFx[]) {
@@ -492,7 +496,7 @@ function autoAttack(d: DState, h: Hero, b: Body, m: Mods, fx: DFx[]) {
       if (left <= 0) break;
       if (e === t || e.hp <= 0) continue;
       const ex = e.x - b.x, ey = e.y - b.y, along = ex * h.fx + ey * h.fy;
-      if (along <= 0 || along > reach + 40 || Math.abs(ex * h.fy - ey * h.fx) > ENEMY_R[e.kind] + 6) continue;
+      if (along <= 0 || along > reach + 40 || Math.abs(ex * h.fy - ey * h.fx) > ENEMY_R[e.kind]) continue;
       hitEnemy(d, e, dmg, kb, 0.25 + m.stun, b.x, b.y, fx, b.id); left--;
     }
     return;
@@ -514,7 +518,6 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
   }
   d.time = Math.max(0, d.time - dt);
   if (d.time <= 0) { d.done = DONE_SECONDS; d.why = 'time'; return 'stay'; }
-  const alive = bodies.filter((b) => (d.heroes[b.id]?.ko ?? 0) <= 0);
   const mods = new Map<string, Mods>();
   // heroes: facing, timers, auto-attack, special, sidestep, KO/revive, cards
   for (const b of bodies) {
@@ -525,8 +528,6 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
     h.atkCd = Math.max(0, h.atkCd - dt); h.inv = Math.max(0, h.inv - dt); h.swing = Math.max(0, h.swing - dt);
     h.spCd = Math.max(0, h.spCd - dt); h.spT = Math.max(0, h.spT - dt); h.dodge = Math.max(0, h.dodge - dt); h.aim = Math.max(0, h.aim - dt);
     h.wallT = Math.max(0, h.wallT - dt);
-    // level-up cards: the first card is taken when time runs out
-    if (h.offer.length) { h.offerT -= dt; if (h.offerT <= 0) takeSkill(h, h.offer[0], b.id, fx); }
     const a = atk.get(b.id) ?? h.lastAtk;
     if (h.lastAtk < 0) h.lastAtk = a; // first tick: whatever the counter was on the meadow
     if (h.lastDash < 0) h.lastDash = b.lastDash ?? 0;
@@ -540,6 +541,14 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
       }
       continue;
     }
+    // level-up cards open: frozen in place and untouchable until a card is picked (no timer)
+    if (h.offer.length) {
+      if (!h.picking) { h.picking = true; h.zx = b.x; h.zy = b.y; }
+      b.x = h.zx; b.y = h.zy; b.vx = 0; b.vy = 0;
+      h.lastAtk = a; h.lastDash = b.lastDash ?? h.lastDash;
+      continue;
+    }
+    h.picking = false;
     if (m.regen > 0 && h.hearts < h.maxHearts) {
       h.regenT += dt;
       if (h.regenT >= REGEN_EVERY) { h.regenT = 0; healHero(h, 0.5 * m.regen); fx.push({ t: 'heal', id: b.id, x: b.x, y: b.y }); }
@@ -577,6 +586,8 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
     }
     if (h.atkCd <= 0) autoAttack(d, h, b, m, fx);
   }
+  // standing blobz: not knocked out and not busy with the level-up cards (goo ignore those, stairs don't wait for them)
+  const alive = bodies.filter((b) => (d.heroes[b.id]?.ko ?? 0) <= 0 && !d.heroes[b.id]?.offer.length);
   // dead enemies: coins (+ sometimes a potion or rare loot) + XP
   for (let i = d.enemies.length - 1; i >= 0; i--) {
     const e = d.enemies[i];
@@ -700,6 +711,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
       b.x = d.map.start.x + (Math.random() - 0.5) * 20; b.y = d.map.start.y + (Math.random() - 0.5) * 20; b.vx = 0; b.vy = 0;
       const h = d.heroes[b.id];
       if (h?.ko) { h.ko = 0.01; h.kx = b.x; h.ky = b.y; } // knocked-out blobz come along and wake up at once
+      if (h) h.picking = false; // a blob picking cards is frozen again at the new start
     }
     fx.push({ t: 'floor', floor: d.floor });
   }
@@ -736,7 +748,7 @@ function stepLoot(d: DState, dt: number, fx: DFx[]) {
 /** Returns true when the hit landed (thorns bite back only then). */
 function hurt(d: DState, b: Body, fromX: number, fromY: number, dmg: number, fx: DFx[], bodies: Body[]): boolean {
   const h = d.heroes[b.id];
-  if (!h || h.inv > 0 || h.ko > 0 || h.dodge > 0 || b.dashT > 0) return false; // a sidestep (or lunge) dodges
+  if (!h || h.inv > 0 || h.ko > 0 || h.dodge > 0 || b.dashT > 0 || h.offer.length) return false; // a sidestep (or lunge) dodges
   // a knight's shield wall covers every friend inside it
   const wall = bodies.some((o) => { const oh = d.heroes[o.id]; return oh?.wallT > 0 && oh.ko <= 0 && Math.hypot(o.x - b.x, o.y - b.y) <= specialOf(oh.cls, oh.weapon).r * heroMods(oh).spR; });
   if (wall || h.shield > 0) {

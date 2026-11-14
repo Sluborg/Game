@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ARENA, BOMB_R, DROP_HEIGHT, FALL_SECONDS, MINI_SECONDS, miniGoal, miniStars, newMini, stepMini, type MiniFx } from './mini';
+import { ARENA, BOMB_R, DROP_HEIGHT, FALL_SECONDS, MINI_INTRO, MINI_SECONDS, miniGoal, miniStars, newMini, stepMini, type MiniFx } from './mini';
 import { createState, finishMini, snapshot, step, viewFromSnapshot, type Input, type State } from './sim';
 
 const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 });
@@ -12,12 +12,21 @@ describe('Bärregn mini game', () => {
     for (let n = 1; n <= 5; n++) {
       const s = sunset(n);
       expect(s.phase).toBe('mini');
-      expect(s.mini!.t).toBeCloseTo(MINI_SECONDS, 0);
+      expect(s.mini!.t).toBeCloseTo(MINI_SECONDS + MINI_INTRO, 0);
       for (const p of s.players) expect(p.x > ARENA.x0 && p.x < ARENA.x1 && p.y > ARENA.y0 && p.y < ARENA.y1).toBe(true);
     }
     expect(miniGoal(5)[2]).toBeGreaterThan(miniGoal(1)[2]);
     const g = miniGoal(3);
     expect(g[0]).toBeLessThan(g[1]); expect(g[1]).toBeLessThan(g[2]);
+  });
+
+  it('a short picture intro first: no rain until it is over', () => {
+    const m = newMini(3);
+    const fx: MiniFx[] = [];
+    for (let i = 0; i < (MINI_INTRO - 0.1) * 60; i++) stepMini(m, [body('a', 640, 480)], 1 / 60, fx);
+    expect(m.drops).toHaveLength(0);
+    for (let i = 0; i < 1 * 60; i++) stepMini(m, [body('a', 640, 480)], 1 / 60, fx);
+    expect(m.drops.length).toBeGreaterThan(0);
   });
 
   it('a berry landing on a blob is caught; one landing on the ground is lost', () => {
