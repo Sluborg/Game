@@ -3,7 +3,8 @@ import Phaser from 'phaser';
 import { blobCanvas, BODY_CY, clampLook } from './blob';
 import { sfx } from './sfx';
 import { BASE, GATE_W, makePuzzles, makeTrees, PLATE_R, rng, WORLD_H, WORLD_W } from './sim';
-import type { PuzzleLayout } from './sim';
+import { PAD_R, TOTEM_KINDS, TOTEM_MAX, TOTEM_PADS, totemPrice } from './sim';
+import type { PuzzleLayout, TotemKind } from './sim';
 import type { FxEvent, Input, ItemKind, PlayerInfo, View } from './sim';
 
 export interface Session {
@@ -37,6 +38,16 @@ interface PuzzleGfx {
   taken: boolean;
 }
 
+interface TotemGfx {
+  kind: TotemKind;
+  pad: { x: number; y: number };
+  img: Phaser.GameObjects.Image;
+  pips: Phaser.GameObjects.Graphics;
+  tag: Phaser.GameObjects.Container;
+  price: Phaser.GameObjects.Text;
+  level: number;
+}
+
 interface BlobGfx {
   shadow: Phaser.GameObjects.Ellipse;
   body: Phaser.GameObjects.Image;
@@ -63,6 +74,10 @@ export class GameScene extends Phaser.Scene {
   private gems = new Map<number, { g: Phaser.GameObjects.Graphics; img: Phaser.GameObjects.Image; t: Phaser.GameObjects.Image[]; x: number; y: number }>();
   private powers = new Map<number, Phaser.GameObjects.Container>();
   private pz: PuzzleGfx[] = [];
+  private totems: TotemGfx[] = [];
+  private totemG!: Phaser.GameObjects.Graphics;
+  private buyG!: Phaser.GameObjects.Graphics;
+  private pile!: Phaser.GameObjects.Image;
   private trailG!: Phaser.GameObjects.Graphics;
   private pickG!: Phaser.GameObjects.Graphics;
   private baseG!: Phaser.GameObjects.Graphics;
@@ -91,6 +106,9 @@ export class GameScene extends Phaser.Scene {
   preload() {
     for (const n of ['log', 'mushroom', 'coin', 'chest', 'boot', 'magnet', 'house']) this.load.image('ic-' + n, `art/icons/${n}.png`);
     for (const n of PROPS) this.load.image('pr-' + n, `art/props/${n}.png`);
+    for (const k of TOTEM_KINDS) for (let l = 1; l <= 3; l++) this.load.image(`tt-${k}-${l}`, `art/totems/totem-${k}-${l}.png`);
+    for (const n of ['s', 'm', 'l']) this.load.image('pile-' + n, `art/fx/coin-pile-${n}.png`);
+    this.load.spritesheet('fx-levelup', 'art/fx/levelup.png', { frameWidth: 32, frameHeight: 22 });
     const sheet = (key: string, dir: string) => this.load.spritesheet(key, `assets/${dir}/tilemap_packed.png`, { frameWidth: 16, frameHeight: 16 });
     sheet('town', 'kenney-tiny-town');
     sheet('dungeon', 'kenney-tiny-dungeon');
@@ -152,7 +170,8 @@ export class GameScene extends Phaser.Scene {
     // flat decorations (no collision), from the same seed on every phone; never on the puzzle pens/plates
     const trees = makeTrees(this.s.seed);
     const zones = makePuzzles(this.s.seed).map((l) => l.zone);
-    const inZone = (x: number, y: number, pad: number) => zones.some((z) => x > z.x0 - pad && x < z.x1 + pad && y > z.y0 - pad && y < z.y1 + pad);
+    const inZone = (x: number, y: number, pad: number) => zones.some((z) => x > z.x0 - pad && x < z.x1 + pad && y > z.y0 - pad && y < z.y1 + pad)
+      || TOTEM_PADS.some((p) => Math.hypot(p.x - x, p.y - y) < 60 + pad);
     for (let i = 0; i < 22; i++) {
       const x = 30 + r() * (WORLD_W - 60), y = 30 + r() * (WORLD_H - 60);
       const [key, sc] = DECOR[Math.floor(r() * DECOR.length)];
@@ -167,6 +186,12 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.pz = makePuzzles(this.s.seed).map((l) => this.buildPuzzle(l));
+    this.totemG = this.add.graphics().setDepth(-700);
+    this.buyG = this.add.graphics().setDepth(3800); // purchase progress, above the blob standing on the pad
+    this.totems = TOTEM_KINDS.map((kind, i) => this.buildTotem(kind, TOTEM_PADS[i]));
+    // team bank: a coin pile beside the cottage that grows with the bank
+    this.pile = this.add.image(BASE.x + 58, BASE.y + 34, 'pile-s').setScale(2.4).setOrigin(0.5, 1).setDepth(BASE.y + 34).setVisible(false);
+    if (!this.anims.exists('levelup')) this.anims.create({ key: 'levelup', frames: this.anims.generateFrameNumbers('fx-levelup', { start: 0, end: 3 }), frameRate: 10 });
 
     this.trailG = this.add.graphics().setDepth(-400);
     this.pickG = this.add.graphics().setDepth(-450);
@@ -248,6 +273,9 @@ export class GameScene extends Phaser.Scene {
 
     // ---- co-op puzzles ----
     v.puzzles?.forEach((z, i) => this.drawPuzzle(this.pz[i], z, now));
+
+    // ---- totems + bank ----
+    this.drawTotems(v, now);
 
     // ---- power-ups ----
     const seenW = new Set<number>();
@@ -359,6 +387,7 @@ export class GameScene extends Phaser.Scene {
     b.aura.clear().setDepth(b.y - 1);
     if (p.boostT > 0) b.aura.lineStyle(3, 0xffc93c, 0.8).strokeCircle(b.x, b.y - 4 + hover, 26 + Math.sin(now / 60) * 2);
     if (p.magnetT > 0) b.aura.lineStyle(2, 0xff6b8b, 0.5).strokeCircle(b.x, b.y, 60 + Math.sin(now / 200) * 6);
+    if (p.shield > 0) b.aura.fillStyle(0x5ec8ff, 0.16).fillCircle(b.x, b.y - 6 + hover, 30).lineStyle(2, 0x8fd3ff, 0.7).strokeCircle(b.x, b.y - 6 + hover, 30);
     if (isMe) b.aura.fillStyle(0xffffff, 0.9).fillTriangle(b.x - 6, b.y - 60 + hover, b.x + 6, b.y - 60 + hover, b.x, b.y - 52 + hover);
 
     b.label.setPosition(b.x, b.y + 24).setDepth(b.y + 2);
@@ -371,6 +400,64 @@ export class GameScene extends Phaser.Scene {
       img.setTexture(ITEM_ICON[k]);
       img.setPosition(b.x + (i - (p.carry.length - 1) / 2) * 14, b.y - 44 + hover - Math.abs(i - 1) * 2).setDepth(b.y + 3);
     });
+  }
+
+  /** Totem on its pedestal, level pips below, price tag above (coin icon + number). */
+  private buildTotem(kind: TotemKind, pad: { x: number; y: number }): TotemGfx {
+    const img = this.add.image(pad.x, pad.y - PAD_R + 6, `tt-${kind}-1`).setOrigin(0.5, 1).setScale(2.6).setDepth(pad.y - PAD_R);
+    const pips = this.add.graphics().setDepth(pad.y);
+    const coin = this.add.image(-14, 0, 'ic-coin').setScale(1.4);
+    const price = this.add.text(4, 0, '', { fontFamily: "'Pixelify Sans', sans-serif", fontSize: '20px', color: '#3f2631', fontStyle: 'bold' }).setOrigin(0, 0.5);
+    const bg = this.add.rectangle(0, 0, 70, 30, 0xfff7e6).setStrokeStyle(3, 0x3f2631);
+    const tag = this.add.container(pad.x, pad.y - PAD_R - 80, [bg, coin, price]).setDepth(3900);
+    return { kind, pad, img, pips, tag, price, level: -1 };
+  }
+
+  private drawTotems(v: View, now: number) {
+    this.totemG.clear();
+    this.buyG.clear();
+    v.totems?.forEach((t, i) => {
+      const g = this.totems[i];
+      if (!g) return;
+      if (t.level !== g.level) {
+        g.level = t.level;
+        g.img.setTexture(`tt-${g.kind}-${Math.max(1, t.level)}`);
+        // not bought yet: a faded "ghost" of the totem shows what you can build
+        g.img.setAlpha(t.level ? 1 : 0.5).setTint(t.level ? 0xffffff : 0xb8b0a8);
+      }
+      const price = totemPrice(t);
+      const can = t.level < TOTEM_MAX && (v.bank ?? 0) >= price;
+      g.tag.setVisible(t.level < TOTEM_MAX);
+      if (t.level < TOTEM_MAX) {
+        const txt = String(price);
+        if (g.price.text !== txt) g.price.setText(txt);
+        g.price.setColor(can ? '#2f8a2f' : '#b3261e');
+        g.tag.setY(g.pad.y - PAD_R - 80 + (can ? Math.sin(now / 250 + i) * 3 : 0));
+      }
+      // pad: stone ring; bright + pulsing when you can afford it; fills as you stand on it
+      const p = g.pad;
+      this.totemG.fillStyle(0x000000, 0.15).fillEllipse(p.x, p.y + 4, PAD_R * 2, PAD_R * 1.1);
+      this.totemG.fillStyle(can ? 0xffe08a : 0xd9cbb0, can ? 0.55 + 0.2 * Math.sin(now / 200 + i) : 0.6).fillEllipse(p.x, p.y, PAD_R * 1.8, PAD_R);
+      this.totemG.lineStyle(3, 0x3f2631, 0.8).strokeEllipse(p.x, p.y, PAD_R * 1.8, PAD_R);
+      if (t.buy > 0) {
+        // a ring around the totem fills up while a blob stands on the pad
+        const cy = p.y - PAD_R - 26;
+        this.buyG.lineStyle(10, 0x3f2631, 0.85).strokeCircle(p.x, cy, 40);
+        this.buyG.lineStyle(6, 0x6cc644, 1).beginPath();
+        this.buyG.arc(p.x, cy, 40, -Math.PI / 2, -Math.PI / 2 + t.buy * Math.PI * 2);
+        this.buyG.strokePath();
+      }
+      // level pips: 3 dots under the totem, filled per level
+      g.pips.clear();
+      for (let k = 0; k < TOTEM_MAX; k++) {
+        const x = p.x + (k - 1) * 14, y = p.y + PAD_R - 6;
+        g.pips.fillStyle(0x3f2631, 1).fillCircle(x, y, 6);
+        g.pips.fillStyle(k < t.level ? 0xffc93c : 0xe3d5b6, 1).fillCircle(x, y, 4);
+      }
+    });
+    const b = v.bank ?? 0;
+    this.pile.setVisible(b > 0);
+    if (b > 0) this.pile.setTexture(b >= 50 ? 'pile-l' : b >= 20 ? 'pile-m' : 'pile-s');
   }
 
   /** Fenced pen (static) + gate, plates, count bubbles and the bonus chest. */
@@ -453,6 +540,12 @@ export class GameScene extends Phaser.Scene {
       sfx.bump();
       this.burst(f.x, f.y - 20, 0x5aa83a, 8);
       this.cameras.main.shake(80, 0.003);
+    } else if (f.t === 'totem') {
+      sfx.power();
+      const fx = this.add.sprite(f.x, f.y - 10, 'fx-levelup').setScale(3).setDepth(4500);
+      fx.play('levelup');
+      fx.once('animationcomplete', () => fx.destroy());
+      this.burst(f.x, f.y - 60, 0xffe08a, 10);
     } else if (f.t === 'gate') {
       sfx.star();
       this.burst(f.x, f.y, 0xffe08a, 12);

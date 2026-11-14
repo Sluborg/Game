@@ -174,3 +174,7 @@
 
 ## 2026-11-14 - v024: 6 new hats + winter props (Art batch merged)
 - Hats 21-26: Ninja, Dino, Astronaut, Blomkrans, Propeller, Enhörning (27 hat choices). Winter props in `public/art/props-winter/` (not wired). 25 tests, build, lan-join e2e passed.
+
+## 2026-11-14 - v025: milestone 40 base totems (Code batch merged)
+- Team bank (HUD + growing pile at the cottage); 4 totem plates around the cottage (speed, magnet, shield, double), stand 1 s to buy the next level, price tags green/red, level dots, level-up fx. Still coin-based: the gathering batch converts bank and prices to wood/stone/berries.
+- Lead review: 31 tests, build, e2e totems + puzzles + lan-join ALL PASSED, screenshots checked.
