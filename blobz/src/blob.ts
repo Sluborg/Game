@@ -101,9 +101,10 @@ const MOUTH_PARTS: MouthPart[] = [
 // (see fitHat). `brim`: an intentional brim may overhang (straw hat, pirate, wizard, cap).
 // `pair`: a left piece (ear, horn) mirrored to the right, its outer column at fraction `at` of the
 // head-top width (minus 2 px overhang), or, without `at`, against the hat's own sides; `dy` moves it up (-) or down.
+// `wrap`: sits this many px lower than resting on the head, wrapping its top (wreath, beanie).
 // `anchor`: a narrow side piece centred at this fraction of the head-top width (flower).
 interface HatPart {
-  rows: string[]; dx?: number; float?: boolean; brim?: boolean; anchor?: number;
+  rows: string[]; dx?: number; float?: boolean; brim?: boolean; anchor?: number; wrap?: number;
   pair?: { rows: string[]; at?: number; dy?: number };
   proc?: 'phones' | 'bandana' | 'ninja' | 'dino';
 }
@@ -120,7 +121,7 @@ const HAT_PARTS: HatPart[] = [
   { rows: [ // Partyhatt
     '....UooU....', '....UooU....', '.....UU.....', '.....UU.....', '....UPPU....', '....UPYU....', '...UPPYYU...',
     '...UYPPPU...', '..UPYYPPPU..', '..UPPPYYPU..', '.UPPPPPPYYU.', '.UYYPPPPPPU.', 'UPPYYPPPPPPU', 'UppppppppppU', 'UUUUUUUUUUUU'] },
-  { rows: sym([ // Mössa
+  { wrap: 4, rows: sym([ // Mössa
     '......UU', '.....UWW', '.....UWW', '......UU', '....UUBB', '..UUBBBB', '.UBBBBBB', '.UBBbBBb',
     'UWWWWWWW', 'UaWaWaWa', 'UUUUUUUU']) },
   { rows: [ // Rosett
@@ -167,7 +168,7 @@ const HAT_PARTS: HatPart[] = [
   { rows: sym([ // Astronaut (visor flipped up above the eyes)
     '.........U', '........Ue', '.........U', '.....UUUUa', '...UUWWWWW', '..UWWWWWWW', '.UWiWWWWWW', '.UWUUUUUUU',
     'UaUqqqqqqq', 'UaUqTqqqqq', 'UaUUqqqqqq', '.UWUUUUUUU', '.UUUUUUUUU']) },
-  { rows: [ // Blomkrans
+  { wrap: 5, rows: [ // Blomkrans
     '.UUU..UUU..UUU..UUU.', 'UNYNUUWYWUUPYPUUNYNU', '.UNU..UWU..UPU..UNU.', 'ULLGLLLGLLLGLLLGLLLU',
     '.UUUUUUUUUUUUUUUUUU.'] },
   { rows: [ // Propeller
@@ -259,7 +260,7 @@ function fitHat(index: number, shape: number, hat: HatPart, bottom: number) {
   const ext = headExtents();
   let rows = hat.rows;
   const fits = (r: string[]) => {
-    const w = r[0].length, x0 = Math.floor(GRID_W / 2 - w / 2) + (hat.dx ?? 0), y0 = restOnHead(r, x0, bottom - r.length + 1);
+    const w = r[0].length, x0 = Math.floor(GRID_W / 2 - w / 2) + (hat.dx ?? 0), y0 = restOnHead(r, x0, bottom - r.length + 1, hat.wrap);
     return r.every((row, ry) => [...row].every((ch, rx) => {
       if (ch === '.' || y0 + ry < 0) return true;
       const e = ext[Math.min(GRID_H - 1, y0 + ry)];
@@ -288,7 +289,7 @@ function fitHat(index: number, shape: number, hat: HatPart, bottom: number) {
 export const HAT_REST_OVERLAP = 2;
 /** Top row y for a hat so it rests ON the head: per column, its lowest opaque pixel overlaps the head's
  *  top outline by at most HAT_REST_OVERLAP px. Never lower than `maxY0` (keeps clear of the eyes). */
-function restOnHead(rows: string[], x0: number, maxY0: number) {
+function restOnHead(rows: string[], x0: number, maxY0: number, wrap = 0) {
   let y0 = maxY0;
   for (let rx = 0; rx < rows[0].length; rx++) {
     let low = -1;
@@ -298,7 +299,7 @@ function restOnHead(rows: string[], x0: number, maxY0: number) {
     let top = 0;
     while (top < GRID_H && !inSilhouette(x, top)) top++;
     if (top >= 23) continue; // no head under this column (overhanging brim)
-    y0 = Math.min(y0, top + HAT_REST_OVERLAP - 1 - low);
+    y0 = Math.min(y0, top + HAT_REST_OVERLAP + wrap - 1 - low);
   }
   return y0;
 }
@@ -423,7 +424,7 @@ export function blobGrid(look: BlobLook): (string | null)[][] {
       const rows = fitHat(look.hat, look.shape, hat, bottom);
       hw = rows[0].length;
       hx0 = hat.anchor !== undefined ? Math.round(ext[0]![0] + (ext[0]![1] - ext[0]![0] + 1) * hat.anchor - hw / 2) : Math.floor(GRID_W / 2 - hw / 2) + (hat.dx ?? 0);
-      hy0 = hat.float ? bottom - rows.length + 1 : restOnHead(rows, hx0, bottom - rows.length + 1);
+      hy0 = hat.float ? bottom - rows.length + 1 : restOnHead(rows, hx0, bottom - rows.length + 1, hat.wrap);
       paint(rows, hx0, hy0);
     }
     if (hat.pair) {
