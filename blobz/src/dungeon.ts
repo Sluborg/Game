@@ -18,7 +18,7 @@ export const CLASS_NAMES: Record<HeroClass, string> = { healer: 'Helare', rogue:
 export const CLASS_NAMES_EN: Record<HeroClass, string> = { healer: 'Healer', rogue: 'Rogue', tank: 'Tank', marksman: 'Marksman' };
 export const CLASS_HINT: Record<HeroClass, string> = { healer: 'Läker kompisar', rogue: 'Snabb, två dolkar', tank: 'Skyddar laget', marksman: 'Skjuter långt' };
 /** Art's file names still use the old class ids (card-class-<x>.png, skills/<x>-<id>.png) until Art renames them. */
-export const ART_CLASS: Record<HeroClass, string> = { healer: 'prast', rogue: 'krigare', tank: 'riddare', marksman: 'bagskytt' };
+export const ART_CLASS: Record<HeroClass, string> = { healer: 'healer', rogue: 'rogue', tank: 'tank', marksman: 'marksman' }; // art files use the class ids since the rename
 export const skillIcon = (id: string) => { const [c, ...rest] = id.split('-'); return `art/dungeon/skills/${ART_CLASS[c as HeroClass] ?? c}-${rest.join('-')}.png`; };
 export const CLASS_HEARTS: Record<HeroClass, number> = { rogue: 5, healer: 5, marksman: 4, tank: 7 };
 export type Weapon = 'sword' | 'hammer' | 'spear' | 'staff' | 'bow' | 'shield' | 'dagger';
