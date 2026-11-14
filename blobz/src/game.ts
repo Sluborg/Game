@@ -1,6 +1,6 @@
 // Phaser scene: renders a View (from the host sim or from network snapshots).
 import Phaser from 'phaser';
-import { blobCanvas, pixelBlob, PIXEL_H } from './art';
+import { blobCanvas, BODY_CY, clampLook } from './blob';
 import { sfx } from './sfx';
 import { BASE, makeTrees, rng, WORLD_H, WORLD_W } from './sim';
 import type { FxEvent, Input, ItemKind, PlayerInfo, View } from './sim';
@@ -19,7 +19,7 @@ export interface Session {
 const T = 32; // rendered tile size (16px tiles at 2x)
 const ITEM_FRAME: Record<ItemKind, number> = { wood: 106, shroom: 29, coin: 93 };
 const TREE_FRAMES = [16, 28, 27];
-const BLOB_SCALE = 3.2;
+const BLOB_SCALE = 2.6; // 18x24 pixel blob grid
 // decorations from Tiny Farm (sheet 'farm') and Tiny Town ('town')
 const DECOR: [string, number][] = [['farm', 39], ['farm', 52], ['farm', 53], ['farm', 83], ['farm', 64], ['town', 5], ['town', 17], ['farm', 78]];
 
@@ -214,21 +214,21 @@ export class GameScene extends Phaser.Scene {
     this.trailG.clear();
     for (const p of v.players) {
       seenP.add(p.id);
-      const info = infos.get(p.id) ?? { id: p.id, name: '?', color: 0xcccccc, hat: 0 };
+      const info = infos.get(p.id) ?? { id: p.id, name: '?', color: 0xcccccc, eyes: 0, mouth: 0, hat: 0 };
       let b = this.blobs.get(p.id);
-      const texKey = `blob-${info.color}-${info.hat}`;
+      const look = clampLook(info);
+      const texKey = `blob-${look.color}-${look.eyes}-${look.mouth}-${look.hat}`;
       if (!this.textures.exists(texKey)) {
-        const px = pixelBlob(info.color, info.hat);
-        this.textures.addCanvas(texKey, px ?? blobCanvas(info.color, info.hat, 96));
-        if (px) this.textures.get(texKey).setFilter(Phaser.Textures.FilterMode.NEAREST);
+        this.textures.addCanvas(texKey, blobCanvas(look, 1));
+        this.textures.get(texKey).setFilter(Phaser.Textures.FilterMode.NEAREST);
       }
-      const pixel = this.textures.get(texKey).getSourceImage().width === 16;
-      const baseScale = pixel ? BLOB_SCALE : 0.6;
+      const pixel = true;
+      const baseScale = BLOB_SCALE;
       if (!b) {
         b = {
           shadow: this.add.ellipse(p.x, p.y, 34, 12, 0x000000, 0.22),
           aura: this.add.graphics(),
-          body: this.add.image(p.x, p.y, texKey).setOrigin(0.5, pixel ? 14 / PIXEL_H : 0.62).setScale(baseScale),
+          body: this.add.image(p.x, p.y, texKey).setOrigin(0.5, BODY_CY).setScale(baseScale),
           eyes: this.add.graphics(),
           label: this.add.text(p.x, p.y, info.name, { fontFamily: 'Trebuchet MS, sans-serif', fontSize: '13px', color: '#ffffff', fontStyle: 'bold', stroke: '#000000', strokeThickness: 3 }).setOrigin(0.5),
           carry: [], x: p.x, y: p.y, vx: 0, vy: 0, look: { x: 0, y: 1 }, trail: [], texKey, blinkT: 2 + Math.random() * 3, baseScale, pixel,

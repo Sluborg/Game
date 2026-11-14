@@ -9,13 +9,16 @@
 | Tiny Ski 1.0 | Kenney (www.kenney.nl) | CC0 1.0 | https://opengameart.org/content/tiny-ski | `kenney-tiny-ski/tilemap_packed.png`, `kenney-tiny-ski/License.txt` |
 | Pixel Platformer | Kenney (www.kenney.nl) | CC0 1.0 | https://opengameart.org/content/pixel-platformer-0 | `kenney-pixel-platformer/tilemap_packed.png` (18px tiles), `kenney-pixel-platformer/License.txt` |
 
-The blob sprite is Tiny Dungeon's slime, recolored per skin in code; hats and the crystal are drawn in code.
 
 
-UI icons (diamonds, dash arrows, pixel letters, app icon) are cut from these packs; no emoji or custom SVG.
+UI icons (diamonds, dash arrow, pixel letters) are cut from these packs; no emoji.
 
 ## Generated art (not CC0)
 | File | Source | Note |
 |---|---|---|
 | `art/title.png` | Generated with ChatGPT image generation from `docs/ART_PROMPTS.md`, supplied by Stefan | Menu/lobby background |
 | `art/logo.png` | Generated with ChatGPT image generation, supplied by Stefan | Menu logo (cropped, resized) |
+| `art/victory.png` | Generated with ChatGPT image generation, supplied by Stefan | End screen background |
+| `icon-192.png`, `icon-512.png` | Generated with ChatGPT image generation, supplied by Stefan | App icon (resized) |
+
+Blobz are drawn in code (`src/blob.ts`) as pixel SVG/canvas: color, eyes, mouth and hat are separate parts.

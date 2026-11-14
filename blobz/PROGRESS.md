@@ -28,3 +28,12 @@
 - Backgrounds: `public/art/title.png`, logo: `public/art/logo.png` (ChatGPT-generated, listed under
   "Generated art" in LICENSES.md). Removed the canvas meadow intro (`src/intro.ts`).
 - Verified in headless Chromium at 390x844 and 844x390 (screenshots 08-11), 3-player run green, 5 tests.
+
+## 2026-11-14 - Blob designer + round blobz
+- Blobz are now round dome "balls" like the title art, drawn in code (`src/blob.ts`) on an 18x24 pixel grid,
+  rendered as crisp SVG in menus and canvas textures in Phaser. Replaced the Tiny Dungeon ghost-slime.
+- Blob designer: tabs Färg (12) / Ögon (6) / Mun (6) / Hatt (8) with live previews of your own blob,
+  plus "Slumpa". Looks sync over the network (`PlayerInfo` has eyes + mouth; host clamps values).
+- Stefan's art: new app icon (`icon-192/512.png`) and victory background on the end screen.
+- Removed the old canvas blob/slime code from `src/art.ts` (now only Kenney loader + pixel font).
+- Verified: 9 tests (4 new blob tests), build green, designer at 390x844 and 844x390, 3-player run.

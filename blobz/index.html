@@ -21,7 +21,7 @@
       <div id="home" class="card panel home">
         <h1 class="logo" id="logo" aria-label="Blobz">Blobz</h1>
         <button id="me" class="me" aria-label="Ändra din blob">
-          <canvas id="preview" class="px bounce" width="132" height="132"></canvas>
+          <span id="preview" class="blob bounce"></span>
           <span class="me-text"><b id="me-name">Blob</b><span class="edit">Ändra blob</span></span>
         </button>
         <div class="actions">
@@ -32,17 +32,23 @@
         </div>
       </div>
 
-      <!-- Customize -->
+      <!-- Blob designer -->
       <div id="custom" class="card panel custom hidden">
-        <h2>Din blob</h2>
-        <canvas id="preview2" class="px bounce" width="132" height="132"></canvas>
+        <h2>Blob-designer</h2>
+        <div class="stage">
+          <span id="preview2" class="blob bounce"></span>
+          <button id="btn-random" class="chip" type="button">Slumpa</button>
+        </div>
         <div class="fields">
           <label class="lbl" for="name">Namn</label>
           <input id="name" maxlength="10" placeholder="Skriv ditt namn" autocomplete="off" />
-          <span class="lbl">Färg</span>
-          <div id="colors" class="row"></div>
-          <span class="lbl">Hatt</span>
-          <div id="hats" class="row"></div>
+          <div class="tabs" role="tablist">
+            <button role="tab" data-part="color" class="tab on">Färg</button>
+            <button role="tab" data-part="eyes" class="tab">Ögon</button>
+            <button role="tab" data-part="mouth" class="tab">Mun</button>
+            <button role="tab" data-part="hat" class="tab">Hatt</button>
+          </div>
+          <div id="opts" class="opts" role="tabpanel"></div>
           <button id="btn-custom-done" class="big">Klar</button>
         </div>
       </div>

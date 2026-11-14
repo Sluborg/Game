@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { COLORS, HATS, loadArt, pixelPreviewInto as previewInto, pixelText, tileCanvas } from './art';
+import { loadArt, pixelText, tileCanvas } from './art';
+import { blobEl, clampLook, COLORS, EYES, HATS, MOUTHS, randomLook, type BlobLook } from './blob';
 import { Controls } from './controls';
 import { GameScene, type Session } from './game';
 import { ClientNet, HostNet, friendlyError, type ToClient } from './net';
@@ -17,43 +18,67 @@ const store = {
   get(k: string) { try { return localStorage.getItem('blobz.' + k); } catch { return null; } },
   set(k: string, v: string) { try { localStorage.setItem('blobz.' + k, v); } catch { /* private mode */ } },
 };
-const profile = {
-  name: store.get('name') ?? '',
-  color: Number(store.get('color') ?? COLORS[Math.floor(Math.random() * COLORS.length)]),
-  hat: Number(store.get('hat') ?? 0),
-};
-if (!COLORS.includes(profile.color)) profile.color = COLORS[0];
+function loadLook(): BlobLook {
+  try {
+    const raw = store.get('look');
+    if (raw) return clampLook(JSON.parse(raw));
+  } catch { /* corrupt: start fresh */ }
+  const legacy = store.get('color');
+  return legacy ? clampLook({ color: Number(legacy), hat: Number(store.get('hat') ?? 0) }) : randomLook();
+}
+const profile = { name: store.get('name') ?? '', look: loadLook() };
+const saveLook = () => store.set('look', JSON.stringify(profile.look));
 
 const nameInput = $<HTMLInputElement>('name');
 nameInput.value = profile.name;
 function myInfo(): Omit<PlayerInfo, 'id'> {
   const name = nameInput.value.trim().slice(0, 10) || 'Blob';
   store.set('name', name);
-  return { name, color: profile.color, hat: profile.hat };
+  return { name, ...profile.look };
 }
+
+// ---------- blob designer ----------
+type Part = 'color' | 'eyes' | 'mouth' | 'hat';
+let part: Part = 'color';
+const PART_OPTS: Record<Exclude<Part, 'color'>, string[]> = { eyes: EYES, mouth: MOUTHS, hat: HATS };
+
 function renderPicker() {
-  previewInto($<HTMLCanvasElement>('preview'), profile.color, profile.hat);
-  previewInto($<HTMLCanvasElement>('preview2'), profile.color, profile.hat);
+  $('preview').replaceChildren(blobEl(profile.look));
+  $('preview2').replaceChildren(blobEl(profile.look));
   $('me-name').textContent = nameInput.value.trim() || 'Blob';
-  $('colors').replaceChildren(...COLORS.map((c) => {
-    const b = document.createElement('button');
-    b.className = 'swatch' + (c === profile.color ? ' on' : '');
-    b.style.background = '#' + c.toString(16).padStart(6, '0');
-    b.onclick = () => { profile.color = c; store.set('color', String(c)); renderPicker(); renderIcons(); };
-    return b;
-  }));
-  $('hats').replaceChildren(...HATS.map((h, i) => {
-    const b = document.createElement('button');
-    b.className = 'hatbtn' + (i === profile.hat ? ' on' : '');
-    b.setAttribute('aria-label', h);
-    const c = document.createElement('canvas');
-    c.width = 88; c.height = 88; c.className = 'px';
-    previewInto(c, profile.color, i);
-    b.append(c);
-    b.onclick = () => { profile.hat = i; store.set('hat', String(i)); renderPicker(); renderIcons(); };
-    return b;
-  }));
+  document.querySelectorAll<HTMLButtonElement>('.tab').forEach((t) => {
+    t.classList.toggle('on', t.dataset.part === part);
+    t.setAttribute('aria-selected', String(t.dataset.part === part));
+  });
+  const choose = (patch: Partial<BlobLook>) => { profile.look = { ...profile.look, ...patch }; saveLook(); renderPicker(); };
+  if (part === 'color') {
+    $('opts').replaceChildren(...COLORS.map((c) => {
+      const b = document.createElement('button');
+      b.className = 'opt swatch-opt' + (c === profile.look.color ? ' on' : '');
+      b.setAttribute('aria-label', 'Färg');
+      const i = document.createElement('i');
+      i.style.background = '#' + c.toString(16).padStart(6, '0');
+      b.append(i);
+      b.onclick = () => choose({ color: c });
+      return b;
+    }));
+  } else {
+    const key = part;
+    $('opts').replaceChildren(...PART_OPTS[key].map((label, i) => {
+      const b = document.createElement('button');
+      b.className = 'opt' + (profile.look[key] === i ? ' on' : '');
+      b.append(blobEl({ ...profile.look, [key]: i }), document.createTextNode(label));
+      b.onclick = () => choose({ [key]: i });
+      return b;
+    }));
+  }
 }
+document.querySelectorAll<HTMLButtonElement>('.tab').forEach((t) => {
+  t.onclick = () => { part = t.dataset.part as Part; renderPicker(); };
+});
+$('btn-random').onclick = () => { profile.look = randomLook(); saveLook(); renderPicker(); };
+saveLook();
+
 // ---------- Kenney UI icons ----------
 const GEM = () => tileCanvas('pp', 67, 4); // Pixel Platformer diamond = "star"
 let roomCode = '';
@@ -109,21 +134,13 @@ let lastStars = 0;
 let isHost = false;
 
 function sanitize(id: string, i: Partial<PlayerInfo>): PlayerInfo {
-  return {
-    id,
-    name: String(i.name ?? 'Blob').slice(0, 10) || 'Blob',
-    color: COLORS.includes(Number(i.color)) ? Number(i.color) : COLORS[0],
-    hat: Math.max(0, Math.min(HATS.length - 1, Number(i.hat) || 0)),
-  };
+  return { id, name: String(i.name ?? 'Blob').slice(0, 10) || 'Blob', ...clampLook(i) };
 }
 
 function renderLobby() {
   $('lobby-list').replaceChildren(...[...infos.values()].map((p) => {
     const li = document.createElement('li');
-    const c = document.createElement('canvas');
-    c.width = 72; c.height = 72;
-    previewInto(c, p.color, p.hat);
-    li.append(c, document.createTextNode(p.name));
+    li.append(blobEl(clampLook(p)), document.createTextNode(p.name));
     return li;
   }));
 }
