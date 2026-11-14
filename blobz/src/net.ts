@@ -3,16 +3,19 @@
 // is only used to pair phones; game traffic flows peer-to-peer on the Wi-Fi.
 import Peer, { DataConnection } from 'peerjs';
 import type { Input, PlayerInfo, Snapshot } from './sim';
+import { slotId, SLOTS, type RoomInfo } from './discovery';
 
-const PREFIX = 'blobz-v1-';
+export const PREFIX = 'blobz-v1-';
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 
 export type ToHost =
   | { t: 'hello'; info: Omit<PlayerInfo, 'id'> }
+  | { t: 'info?' }
   | { t: 'in'; x: number; y: number; dash: number };
 export type ToClient =
   | { t: 'welcome'; id: string }
   | { t: 'full' }
+  | { t: 'info'; info: RoomInfo }
   | { t: 'lobby'; players: PlayerInfo[] }
   | { t: 'start'; seed: number }
   | { t: 's'; s: Snapshot };
@@ -40,6 +43,30 @@ export class HostNet {
   onHello: (id: string, info: Omit<PlayerInfo, 'id'>) => boolean = () => true;
   onInput: (id: string, inp: Input) => void = () => {};
   onLeave: (id: string) => void = () => {};
+  onInfo: () => RoomInfo | null = () => null;
+  /** Second peer on `blobz-v2-<ns>-<slot>` so same-Wi-Fi phones find the room without a code. */
+  slotPeer: Peer | null = null;
+  slot = 0;
+
+  /** Claim the first free slot 1..8 in the namespace. Resolves the slot, or 0 if none could be had. */
+  openSlot(ns: string): Promise<number> {
+    return new Promise((resolve) => {
+      const attempt = (slot: number) => {
+        if (slot > SLOTS || !this.peer || this.peer.destroyed) { resolve(0); return; }
+        const peer = new Peer(slotId(ns, slot), { debug: 0 });
+        let opened = false;
+        peer.on('open', () => { opened = true; this.slotPeer = peer; this.slot = slot; resolve(slot); });
+        peer.on('error', (e) => {
+          const type = (e as { type?: string }).type ?? 'unknown';
+          if (opened) return; // later errors (e.g. a probe to a gone peer) are harmless
+          peer.destroy();
+          if (type === 'unavailable-id') attempt(slot + 1); else resolve(0);
+        });
+        peer.on('connection', (c) => this.accept(c));
+      };
+      attempt(1);
+    });
+  }
 
   open(): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -61,6 +88,12 @@ export class HostNet {
   private accept(c: DataConnection) {
     c.on('data', (raw) => {
       const m = raw as ToHost;
+      if (m?.t === 'info?') {
+        const info = this.onInfo();
+        if (info) c.send({ t: 'info', info } satisfies ToClient);
+        setTimeout(() => c.close(), 1000); // the prober closes first; this is the safety net
+        return;
+      }
       if (m.t === 'hello') {
         if (!this.onHello(c.peer, m.info)) { c.send({ t: 'full' } satisfies ToClient); setTimeout(() => c.close(), 300); return; }
         this.conns.set(c.peer, c);
@@ -78,7 +111,7 @@ export class HostNet {
     for (const c of this.conns.values()) if (c.open) c.send(m);
   }
 
-  close() { this.peer?.destroy(); }
+  close() { this.slotPeer?.destroy(); this.peer?.destroy(); }
 }
 
 export class ClientNet {
@@ -88,7 +121,8 @@ export class ClientNet {
   onMessage: (m: ToClient) => void = () => {};
   onClose: () => void = () => {};
 
-  join(code: string, info: Omit<PlayerInfo, 'id'>): Promise<string> {
+  /** `target` is a 4-letter room code or a full slot peer id from the Wi-Fi list. */
+  join(target: string, info: Omit<PlayerInfo, 'id'>): Promise<string> {
     return new Promise((resolve, reject) => {
       const peer = new Peer({ debug: 0 });
       let done = false;
@@ -97,7 +131,7 @@ export class ClientNet {
       peer.on('error', (e) => fail((e as { type?: string }).type ?? 'unknown'));
       peer.on('open', () => {
         this.peer = peer;
-        const conn = peer.connect(PREFIX + code.toUpperCase().trim(), { reliable: true, serialization: 'json' });
+        const conn = peer.connect(target.startsWith('blobz-') ? target : PREFIX + target.toUpperCase().trim(), { reliable: true, serialization: 'json' });
         this.conn = conn;
         conn.on('open', () => conn.send({ t: 'hello', info } satisfies ToHost));
         conn.on('data', (raw) => {
