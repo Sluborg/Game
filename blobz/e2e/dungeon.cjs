@@ -71,11 +71,11 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     await bo.waitForFunction((k) => window.__blobzView.dungeon.kills > k, k0, { timeout: 5000 });
     ok(true, 'Bågskytt: auto-arrow kills a goo at range');
 
-    // Präst special heals a hurt friend
+    // Helare: the big button switches the wand to heal mode; green bolts heal a hurt friend
     await sim(host, (s) => { const h = s.dg.heroes[s.players[0].id]; h.hp = 30; s.players[0].x = s.players[1].x + 40; s.players[0].y = s.players[1].y; });
     await ada.click('#attack');
     await bo.waitForFunction((id) => window.__blobzView.dungeon.heroes[id].hp > 30, ids[0], { timeout: 4000 });
-    ok(true, 'Präst special (Läkljus) heals Stefan on every phone');
+    ok(await ada.evaluate(() => document.getElementById('attack').dataset.mode) === 'heal', 'Helare: button switches the wand to heal mode (green), the bolt heals Stefan on every phone');
     await ada.waitForTimeout(120);
     if (shots) await ada.screenshot({ path: `${shots}/dg-heal-portrait.png` });
     // Bågskytt volley + Krigare spin
@@ -85,8 +85,8 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     if (shots) await bo.screenshot({ path: `${shots}/dg-volley-landscape.png` });
     await host.click('#attack');
     await host.click('#dash');
-    const sp = await bo.evaluate(() => Object.values(window.__blobzView.dungeon.heroes).map((h) => h.spCd > 0));
-    ok(sp.every(Boolean), 'all three class specials on cooldown (spin, heal, volley)');
+    const sp = await bo.evaluate((ids) => [ids[0], ids[2]].map((id) => window.__blobzView.dungeon.heroes[id].spCd > 0), ids);
+    ok(sp.every(Boolean), 'rogue + marksman specials on cooldown (the healer toggles instead)');
     await sim(host, (s) => { s.dg.enemies = []; });
 
     // level-up: 1 of 3 skill cards on every phone, from each one's own class
