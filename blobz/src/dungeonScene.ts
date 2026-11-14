@@ -18,7 +18,9 @@ const WEAPON_SCALE = 1.45; // Art's weapon strips keep their size; only the blob
 const EDGE_X = 22, EDGE_Y = 13, DROP = 3;
 // hovering weapons (no hands): they float this far beyond the body edge, bob gently and lunge out on each attack
 const HOVER = 7, BOB_PX = 1.5, BOB_S = 1.5;
-const LUNGE: Record<Weapon, number> = { sword: 12, hammer: 10, spear: 20, staff: 10, bow: -5, shield: 9, dagger: 14 }; // bow recoils
+const LUNGE: Record<Weapon, number> = { sword: 4, hammer: 4, spear: 20, staff: 4, bow: -6, shield: 10, dagger: 4 }; // spear thrusts, bow recoils, shield bashes
+// slashing weapons sweep in an arc around the blob across the aim line (deg); the hammer's arc speeds up into a slam
+const SLASH: Partial<Record<Weapon, { sweep: number; slam?: boolean }>> = { sword: { sweep: 120 }, dagger: { sweep: 110 }, hammer: { sweep: 130, slam: true }, staff: { sweep: 100 } };
 const FONT = "'Fredoka', sans-serif"; // same as the meadow
 const DEBUG = new URLSearchParams(location.search).has('debug');
 const HITBOX = new URLSearchParams(location.search).has('hitbox'); // ?hitbox draws the sim's circles
@@ -94,6 +96,7 @@ export class DungeonScene extends Phaser.Scene {
     for (const n of [...GOO, 'goo-splat']) img('dg-' + n, `art/enemies/${n}.png`);
     for (const n of ['coin-pile-s', 'coin-pile-m', 'coin-pile-l']) img('dg-' + n, `art/fine/fx/${n}.png`);
     sheet('dg-floor', 'art/fine/tiles/dungeon-floor.png', 32, 32);
+    sheet('na-arc', 'assets/ninja-adventure/FX/Slash/SpriteSheetArc.png', 38, 34); // Ninja slash arc (CC0) for slashing weapons
     sheet('dg-wall', 'art/fine/tiles/dungeon-wall.png', 32, 32);
     for (const w of ['sword', 'hammer', 'spear'] as Weapon[]) sheet('dg-weapon-' + w, `art/dungeon/weapon-${w}.png`, WEAPON_FRAME[w]!.w, WEAPON_FRAME[w]!.h);
     // Art's class gear strips; the Bågskytt carries a crossbow (weapon id stays 'bow': loaded, aim, shot, reload)
@@ -434,10 +437,24 @@ export class DungeonScene extends Phaser.Scene {
     // glides), turned to that angle, bobbing gently over its own small shadow. An attack lunges it out along the aim
     // and back to its hover spot. Art's strips point right on the strike frame (pivot = grip), so the rotation aims it.
     const swinging = b.swingT > 0;
-    const A = swinging ? b.swingA : face;
-    const L = Math.cos(A) < 0;
+    const aim = swinging ? b.swingA : face;
     const prog = swinging ? 1 - b.swingT / b.swingDur : 0;
-    const out = swinging ? Math.sin(prog * Math.PI) * LUNGE[w] : 0;
+    // A = where the weapon points now: slashing weapons sweep across the aim line (60% of the swing) and ease back
+    let A = aim, out = swinging ? Math.sin(prog * Math.PI) * LUNGE[w] : 0;
+    const sl = SLASH[w];
+    if (swinging && sl) {
+      const half = (sl.sweep * Math.PI) / 360;
+      const dir = (w === 'dagger' && b.swings % 2 === 1 ? -1 : 1) * (Math.cos(aim) < 0 ? -1 : 1);
+      if (prog < 0.6) {
+        const u = prog / 0.6, k = sl.slam ? u * u * u : 1 - (1 - u) * (1 - u); // the hammer speeds up into the slam
+        A = aim + dir * (-half + 2 * half * k);
+        if (sl.slam && u > 0.8) out += (u - 0.8) * 40; // ... and lands a little further out
+      } else {
+        const u = (prog - 0.6) / 0.4, e = u * u * (3 - 2 * u);
+        A = aim + dir * half * (1 - e);
+      }
+    }
+    const L = Math.cos(A) < 0;
     const bob = Math.sin((this.time.now / 1000 / BOB_S) * Math.PI * 2 + (b.id.charCodeAt(0) % 7)) * BOB_PX;
     const gx = cx + Math.cos(A) * (EDGE_X + HOVER + out), gy = cy + Math.sin(A) * (EDGE_Y + HOVER * 0.6 + out * 0.7) + DROP;
     const px = gx, py = gy + bob;
@@ -454,7 +471,7 @@ export class DungeonScene extends Phaser.Scene {
     if (DEBUG) {
       // e2e: which way the weapon really points (flipped sprites point left)
       const point = b.weapon.flipX ? rot + Math.PI : rot;
-      ((window as unknown as { __dgWeapon?: Record<string, unknown> }).__dgWeapon ??= {})[b.id] = { a: Math.atan2(Math.sin(point), Math.cos(point)), swing: swinging, n: b.swings, x: px, y: py, bx: cx, by: cy, w, bob };
+      ((window as unknown as { __dgWeapon?: Record<string, unknown> }).__dgWeapon ??= {})[b.id] = { a: Math.atan2(Math.sin(point), Math.cos(point)), aim: Math.atan2(Math.sin(aim), Math.cos(aim)), slash: !!sl, prog, swing: swinging, n: b.swings, x: px, y: py, bx: cx, by: cy, w, bob };
     }
   }
 
@@ -487,7 +504,17 @@ export class DungeonScene extends Phaser.Scene {
     switch (f.t) {
       case 'swing': {
         const b = this.heroes.get(f.id);
-        if (b) { b.swingDur = f.w === 'hammer' ? 0.4 : 0.26; b.swingT = b.swingDur; b.swingA = f.a; b.swings++; }
+        if (b) {
+          b.swingDur = f.w === 'hammer' ? 0.4 : 0.26; b.swingT = b.swingDur; b.swingA = f.a; b.swings++;
+          // Ninja slash arc across the aim line for slashing weapons (mirrored on the dagger's back-swing)
+          if (SLASH[f.w as Weapon]) {
+            if (!this.anims.exists('na-arc')) this.anims.create({ key: 'na-arc', frames: this.anims.generateFrameNumbers('na-arc', {}), frameRate: 22 });
+            const r = EDGE_X + HOVER + 10, flipY = f.w === 'dagger' && b.swings % 2 === 1;
+            const arc = this.add.sprite(b.x + Math.cos(f.a) * r, b.y - 4 + Math.sin(f.a) * r * 0.7, 'na-arc', 0).setScale(f.w === 'hammer' ? 2 : f.w === 'dagger' ? 1.4 : 1.7)
+              .setAngle((f.a * 180) / Math.PI).setFlipY(flipY).setDepth(b.y + 6);
+            arc.play('na-arc').once('animationcomplete', () => arc.destroy());
+          }
+        }
         sfx.tool(f.w === 'hammer' ? 'axe' : f.w === 'spear' ? 'rake' : 'pickaxe', false);
         break;
       }
