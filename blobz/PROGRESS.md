@@ -117,3 +117,7 @@
 
 ## 2026-11-14 - v018f: clean dice icon
 - Replaced the blurry sliced dice with a hand-placed 12x12 pixel die (5 pips) in `public/art/icons/dice.png`.
+
+## 2026-11-14 - v018g: neutral selection marker
+- Designer selection no longer uses yellow (a pickable body color): white tile, thick plum frame, green check badge.
+- Star eyes get dark corners so they read on yellow blobz.

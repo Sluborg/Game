@@ -35,7 +35,7 @@ const EYE_PIX: { rows: string[]; wide?: boolean; mirror?: boolean; dy?: number }
   { rows: ['KKKK', 'WWKK', 'WWKK'] }, // sleepy
   { rows: ['KKKKKKKKKKKK', 'KWWKKKKWWKKK', '.KKKK..KKKK.'], wide: true }, // cool shades
   { rows: ['H.H', 'HHH', '.H.'] }, // heart eyes
-  { rows: ['.Y.', 'YYY', '.Y.'] }, // star eyes
+  { rows: ['KYK', 'YWY', 'KYK'] }, // star eyes (dark corners: readable on yellow too)
   { rows: ['K..', '.KK', 'WWK', 'WKK'], mirror: true, dy: -1 }, // angry brows
   { rows: ['WWW', 'WKK', 'WKK', '...', 'NN.'], mirror: true }, // blushing
 ];

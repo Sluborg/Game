@@ -310,3 +310,17 @@ button.link .icon { height: 18px; margin-right: 6px; vertical-align: -3px; }
 .opt { padding: 4px 0; justify-content: center; }
 .opt .blob { width: 45px; height: 60px; }
 @media (orientation: landscape) and (max-height: 520px) { .opt .blob { width: 33px; height: 44px; } }
+
+/* selected option: not a body color (yellow/orange/... are all pickable) -> thick plum frame + green check */
+.opt { position: relative; }
+.opt.on {
+  border-image-source: url('/art/ui/input.png'); border-image-slice: 4 fill;
+  box-shadow: 0 0 0 4px var(--plum); background: none;
+}
+.opt.on { overflow: visible; }
+.opt.on::after {
+  content: ''; position: absolute; right: -10px; top: -12px; width: 26px; height: 26px; z-index: 1;
+  background: url('/art/icons/check.png') center / contain no-repeat; image-rendering: pixelated;
+  filter: drop-shadow(0 2px 0 #3f263180);
+}
+.opts { padding: 10px 8px 6px 6px; }
