@@ -10,6 +10,8 @@ integrates them, and tells Lead whether a new ChatGPT round is needed and with w
 **Rule (Stefan 2026-11-14):** Art's generator scripts are only for simple shapes (icons, tiles, UI frames, small fx,
 blob parts). Anything illustrative (class cards, buildings like the cottage, characters, scenes, loading art) is
 ordered from ChatGPT: Art writes the prompt, Lead gives it to Stefan, Art slices the result.
+Flow: Art makes 3 rough variants (SVG/PNG) -> Lead posts them on the board -> Stefan picks -> Art writes the ChatGPT
+prompt from the pick -> Stefan runs it -> Art slices and integrates.
 
 ## Branches
 | Role | Branch | Pushes to |
