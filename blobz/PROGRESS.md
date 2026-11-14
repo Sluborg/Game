@@ -149,3 +149,15 @@
 ## 2026-11-14 - v020b: gem row
 - HUD stars: hand-drawn 11x9 pixel gems (`gem.png`, `gem-empty.png` = translucent slot) in a row beside the score, thin progress bar below (no icons sitting on the bar). End screen uses the same gems.
 - Team: Art (parts set) and Code (code-free join) running; queued next: milestone 30, 40, 50.
+
+## 2026-11-14 - v021: code-free join (Code batch merged)
+- Merged `claude/blobz-code` (c543ad8..4b02a2d): Wi-Fi discovery via hashed public IP (STUN srflx, SHA-256, 10 hex) and PeerJS slots `blobz-v2-<hash>-<1..8>`; Joina screen lists "Joina <name> n/5" (full = grey, started = "pågår"); no codes anywhere; "Hittar inga spel. Är ni på samma Wi-Fi?" + "Leta igen".
+- Lead review: conflicts with v020b gem row resolved (kept gem row, dropped HUD code box). 13 tests, build, Code e2e `node e2e/lan-join.cjs <url>` ALL PASSED (uses `?lan=` because the sandbox has no STUN/UDP); screenshots checked.
+- Risk: real STUN path only verifiable on two phones on the same Wi-Fi.
+
+## 2026-11-14 - v022: fine-pixel parts set (Art batch merged)
+- Merged `claude/blobz-art` (baa44b2, 28bc966): 16 eyes, 12 mouths, 21 hats hand-drawn in fine pixels; old indices stable, new appended; headphones/bandana procedural per shape. Review sheet `docs/art-review/parts-sheet.png`.
+- Lead review: 19 tests, build, designer portrait/landscape, in-game close-up, Code e2e ALL PASSED. Open: designer grid cramped in landscape (Code), blush weak on red/pink bodies (Art).
+
+## 2026-11-14 - v022b: fx sprites (Art batch merged, not wired yet)
+- `public/art/fx/`: dust, splat, coin sparkle, level-up ring, coin piles s/m/l, plate glow (own CC0, `scripts/fx_sheet.py`). For Code to use in milestones 30-50.
