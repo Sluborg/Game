@@ -43,18 +43,24 @@ function myInfo(): Omit<PlayerInfo, 'id'> {
 
 // ---------- blob designer ----------
 type Part = 'shape' | 'color' | 'eyes' | 'mouth' | 'hat';
-let part: Part = 'shape';
+const PARTS: Part[] = ['shape', 'color', 'eyes', 'mouth', 'hat'];
+// remember the last tab between visits
+let part: Part = PARTS.includes(store.get('tab') as Part) ? (store.get('tab') as Part) : 'shape';
+let boing = false; // squash-bounce the live preview on the next render (after a change)
+let slide: '' | 'from-left' | 'from-right' = '';
 const PART_OPTS: Record<Exclude<Part, 'color'>, string[]> = { shape: SHAPES, eyes: EYES, mouth: MOUTHS, hat: HATS };
 
 function renderPicker() {
   $('preview').replaceChildren(blobEl(profile.look));
-  $('preview2').replaceChildren(blobEl(profile.look));
+  const big = blobEl(profile.look);
+  if (boing) { big.classList.add('boing'); boing = false; }
+  $('preview2').replaceChildren(big);
   $('me-name').textContent = nameInput.value.trim() || 'Blob';
   document.querySelectorAll<HTMLButtonElement>('.tab').forEach((t) => {
     t.classList.toggle('on', t.dataset.part === part);
     t.setAttribute('aria-selected', String(t.dataset.part === part));
   });
-  const choose = (patch: Partial<BlobLook>) => { profile.look = { ...profile.look, ...patch }; saveLook(); renderPicker(); };
+  const choose = (patch: Partial<BlobLook>) => { profile.look = { ...profile.look, ...patch }; saveLook(); boing = true; renderPicker(); };
   if (part === 'color') {
     $('opts').replaceChildren(...COLORS.map((c) => {
       const b = document.createElement('button');
@@ -78,10 +84,50 @@ function renderPicker() {
     }));
   }
 }
+/** Switch tab: slide the options in from the side we came from, keep the chosen tile in view. */
+function setPart(next: Part) {
+  if (next === part) return;
+  slide = PARTS.indexOf(next) > PARTS.indexOf(part) ? 'from-right' : 'from-left';
+  part = next;
+  store.set('tab', part);
+  renderPicker();
+  const opts = $('opts');
+  opts.classList.remove('from-left', 'from-right'); void opts.offsetWidth;
+  if (slide) opts.classList.add(slide);
+  slide = '';
+  showChosen();
+}
+/** Scroll the option grid so the selected tile is visible (only the grid scrolls, never the page). */
+function showChosen() {
+  const opts = $('opts');
+  const on = opts.querySelector<HTMLElement>('.opt.on');
+  if (!on) { opts.scrollTop = 0; return; }
+  const top = on.offsetTop - opts.clientHeight / 2 + on.offsetHeight / 2;
+  opts.scrollTop = Math.max(0, top);
+}
 document.querySelectorAll<HTMLButtonElement>('.tab').forEach((t) => {
-  t.onclick = () => { part = t.dataset.part as Part; renderPicker(); };
+  t.onclick = () => setPart(t.dataset.part as Part);
 });
-$('btn-random').onclick = () => { profile.look = randomLook(); saveLook(); renderPicker(); };
+// swipe left/right on the options to change tab (vertical drags still scroll the grid)
+{
+  const opts = $('opts');
+  let sx = 0, sy = 0, down = false, swipedAt = 0;
+  opts.addEventListener('pointerdown', (e) => { down = true; sx = e.clientX; sy = e.clientY; });
+  opts.addEventListener('pointercancel', () => { down = false; });
+  opts.addEventListener('pointerup', (e) => {
+    if (!down) return;
+    down = false;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    const i = PARTS.indexOf(part) + (dx < 0 ? 1 : -1);
+    if (i < 0 || i >= PARTS.length) return;
+    swipedAt = performance.now();
+    setPart(PARTS[i]);
+  });
+  // a swipe must not also pick the tile it started on
+  opts.addEventListener('click', (e) => { if (performance.now() - swipedAt < 400) { e.stopPropagation(); e.preventDefault(); } }, true);
+}
+$('btn-random').onclick = () => { profile.look = randomLook(); saveLook(); boing = true; renderPicker(); };
 saveLook();
 
 // ---------- Kenney UI icons ----------
@@ -172,7 +218,7 @@ function renderRooms(rooms: FoundRoom[]) {
   }));
 }
 $('btn-rescan').onclick = () => { $('join-msg').textContent = ''; startScan(); };
-$('me').onclick = () => panel('custom');
+$('me').onclick = () => { panel('custom'); showChosen(); };
 $('btn-custom-done').onclick = () => { myInfo(); renderPicker(); panel('home'); };
 nameInput.addEventListener('input', () => { $('me-name').textContent = nameInput.value.trim() || 'Blob'; });
 nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') nameInput.blur(); });
