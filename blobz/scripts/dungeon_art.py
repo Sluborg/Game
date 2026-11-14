@@ -47,6 +47,24 @@ def sword(u, v):
     return None
 
 
+def dagger(u, v):
+    """Short dagger: dark leather grip, small gold guard, silver blade."""
+    if -2 <= u < 2.5 and abs(v) <= 1:
+        return 'd' if v > 0.3 else 'h'
+    if 2.5 <= u < 4 and abs(v) <= 2.6:
+        return 'Y' if v < 1 else 'y'
+    if 4 <= u <= 12:
+        half = 1.5 * min(1.0, (12.5 - u) / 2.5)
+        if abs(v) <= half:
+            return 'M' if v < -0.5 else 'n' if v > 0.7 else 'm'
+    return None
+
+
+def daggers(u, v):
+    """Two daggers held side by side, the second a little behind (dual wield)."""
+    return dagger(u, v + 3.2) or dagger(u + 2, v - 3.2)
+
+
 def hammer(u, v):
     if -2 <= u <= 14 and abs(v) <= 1:
         return 'H' if v < 0 else 'h' if v < 1 else 'd'
@@ -212,24 +230,24 @@ def card(shape, ribbon, scale, angle=-45, pivot=(9, 33)):
 
 
 CLASS_COLORS = {
-    'prast': (ba.rgb(236, 176, 48), ba.rgb(255, 214, 110), ba.rgb(184, 124, 24)),
-    'bagskytt': (ba.rgb(70, 156, 72), ba.rgb(124, 200, 110), ba.rgb(40, 104, 48)),
-    'krigare': (ba.rgb(214, 62, 70), ba.rgb(250, 120, 120), ba.rgb(150, 30, 44)),
-    'riddare': (ba.rgb(66, 118, 210), ba.rgb(120, 170, 244), ba.rgb(40, 76, 160)),
+    'healer': (ba.rgb(214, 62, 70), ba.rgb(250, 120, 120), ba.rgb(150, 30, 44)),  # red: heart = health
+    'marksman': (ba.rgb(70, 156, 72), ba.rgb(124, 200, 110), ba.rgb(40, 104, 48)),
+    'rogue': (ba.rgb(236, 176, 48), ba.rgb(255, 214, 110), ba.rgb(184, 124, 24)),  # yellow
+    'tank': (ba.rgb(66, 118, 210), ba.rgb(120, 170, 244), ba.rgb(40, 76, 160)),
 }
 
 
 def class_cards():
     return {
-        'card-class-prast.png': card(staff, CLASS_COLORS['prast'], 1.15),
-        'card-class-bagskytt.png': card(bow(4, True), CLASS_COLORS['bagskytt'], 1.2, angle=-45, pivot=(14, 26)),
-        'card-class-krigare.png': card(sword, CLASS_COLORS['krigare'], 1.25),
-        'card-class-riddare.png': shield_card(),
+        'card-class-healer.png': card(staff, CLASS_COLORS['healer'], 1.15),
+        'card-class-marksman.png': card(bow(4, True), CLASS_COLORS['marksman'], 1.2, angle=-45, pivot=(14, 26)),
+        'card-class-rogue.png': card(sword, CLASS_COLORS['rogue'], 1.25),
+        'card-class-tank.png': shield_card(),
     }
 
 
 def shield_card():
-    im = card(lambda u, v: None, CLASS_COLORS['riddare'], 1.0)
+    im = card(lambda u, v: None, CLASS_COLORS['tank'], 1.0)
     sh = shield_img()
     big = sh.resize((sh.width * 2, sh.height * 2), Image.NEAREST)
     im.alpha_composite(big, ((48 - big.width) // 2, 10))
@@ -266,7 +284,7 @@ RED_A = ba.rgb(230, 57, 70)
 GREEN_A = ba.rgb(98, 196, 88)
 GOLD_A = ba.rgb(255, 201, 60)
 SKILLS = {
-    'prast': {
+    'healer': {
         'heal': lambda: [(plus_pts(12, 12, 6, 2), CREAM)],
         'regen': lambda: [(heart_pts(12, 10, 3.2), CREAM), (plus_pts(12, 11, 2, 1), GREEN_A)],
         'bubble': lambda: [(ba.ellipse(12, 12, 7.5, 7.5) - ba.ellipse(12, 12, 5.5, 5.5), CREAM), (ba.rect(8, 8, 9, 9), CREAM)],
@@ -274,7 +292,7 @@ SKILLS = {
         'holy': lambda: [(ba.ellipse(12, 12, 3.5, 3.5), GOLD_A)] + [(ba.rect(11, 3, 12, 6) | ba.rect(11, 18, 12, 21) | ba.rect(3, 11, 6, 12) | ba.rect(18, 11, 21, 12), CREAM)],
         'cleanse': lambda: [(ba.ellipse(12, 14.5, 4.6, 4.6) | ba.poly([(12, 4), (7.5, 13), (16.5, 13)]), CREAM), (ba.rect(10, 13, 10, 15), ba.rgb(200, 230, 255))],
     },
-    'bagskytt': {
+    'marksman': {
         'multishot': lambda: [(arrow_right(6, 4, 17) | arrow_right(12, 4, 19) | arrow_right(18, 4, 17), CREAM)],
         'pierce': lambda: [(ba.ellipse(14, 12, 5, 5) - ba.ellipse(14, 12, 3, 3), RED_A), (arrow_right(12, 3, 20), CREAM)],
         'crit': lambda: [(ba.ellipse(12, 12, 7.5, 7.5) - ba.ellipse(12, 12, 5.5, 5.5), CREAM), (ba.ellipse(12, 12, 2.6, 2.6), RED_A)],
@@ -282,7 +300,7 @@ SKILLS = {
         'poison': lambda: [(ba.ellipse(12, 14.5, 4.6, 4.6) | ba.poly([(12, 4), (7.5, 13), (16.5, 13)]), GREEN_A), (ba.ellipse(17, 6, 1.6, 1.6) | ba.ellipse(6, 8, 1.2, 1.2), CREAM)],
         'trap': lambda: [(ba.poly([(4, 18), (7, 9), (10, 18)]) | ba.poly([(9, 18), (12, 7), (15, 18)]) | ba.poly([(14, 18), (17, 9), (20, 18)]) | ba.rect(4, 18, 19, 19), CREAM)],
     },
-    'krigare': {
+    'rogue': {
         'rage': lambda: [(ba.poly([(12, 3), (17, 11), (16, 9), (18, 15), (15, 20), (9, 20), (6, 15), (8, 9), (8.5, 12)]), ba.rgb(255, 138, 61)), (ba.poly([(12, 11), (14.5, 16), (12, 19.5), (9.5, 16)]), GOLD_A)],
         'knockback': lambda: [(arrow_right(12, 4, 15, 4), CREAM), (ba.rect(18, 5, 19, 19), CREAM)],
         'whirlwind': lambda: [(ring_cut(12, 12, 6, 8, 20, 300), CREAM), (ring_cut(12, 12, 2, 3.6, 200, 120), CREAM)],
@@ -290,14 +308,14 @@ SKILLS = {
         'lifesteal': lambda: [(heart_pts(12, 10, 3.6), CREAM), (ba.ellipse(12, 12.5, 1.8, 1.8) | ba.poly([(12, 8.5), (10.4, 12), (13.6, 12)]), RED_A)],
         'power': lambda: [(ba.rect(11, 4, 12, 14) | ba.rect(8, 15, 15, 16) | ba.rect(11, 17, 12, 20), CREAM), (ba.poly([(18, 4), (21, 8), (19, 8), (19, 11), (17, 11), (17, 8), (15, 8)]), GOLD_A)],
     },
-    'riddare': {
+    'tank': {
         'block': lambda: [(shield_pts(), CREAM)],
         'taunt': lambda: [(ba.rect(11, 4, 13, 14) | ba.rect(11, 17, 13, 19), CREAM)],
         'armor': lambda: [(ba.poly([(4, 7), (8, 4), (10, 4), (12, 7), (14, 4), (16, 4), (20, 7), (18, 11), (17, 11), (17, 19), (7, 19), (7, 11), (6, 11)]), CREAM),
                           (ba.rect(11, 10, 12, 17), ba.rgb(170, 178, 190))],
         'charge': lambda: [(arrow_right(9, 3, 20, 4) | ba.rect(3, 15, 9, 15) | ba.rect(5, 18, 12, 18), CREAM)],
         'stun': lambda: [(star_pts(8, 9, 4.5), GOLD_A), (star_pts(16, 15, 4.5), CREAM)],
-        'guard': lambda: [(shield_pts(), CREAM), (plus_pts(12, 11, 3, 1), CLASS_COLORS['riddare'][0])],
+        'guard': lambda: [(shield_pts(), CREAM), (plus_pts(12, 11, 3, 1), CLASS_COLORS['tank'][0])],
     },
 }
 
@@ -321,6 +339,20 @@ def skill_icons():
 
 
 # ---------------------------------------------------------------- button icons
+def dagger_icon():
+    """Two crossed daggers, cream, 20x20 (hand-placed lines: a rasterised dagger is too blobby at this size)."""
+    c = Canvas(20, 20)
+    for sgn in (1, -1):
+        x0 = 4 if sgn == 1 else 15
+        blade = {(x0 + sgn * k, 15 - k) for k in range(10)} | {(x0 + sgn * (k + 1), 15 - k) for k in range(10)}
+        ba.comp(c, blade, CREAM)
+        g = (x0 + sgn * 3, 12)  # guard across the blade
+        ba.comp(c, {(g[0] - 1, g[1] - 1), (g[0], g[1]), (g[0] + 1, g[1] + 1), (g[0] + 2, g[1] + 2)} if sgn == 1 else
+                {(g[0] + 1, g[1] - 1), (g[0], g[1]), (g[0] - 1, g[1] + 1), (g[0] - 2, g[1] + 2)}, CREAM)
+        ba.comp(c, {(x0 - sgn * 1, 17), (x0 - sgn * 2, 18)}, CREAM)  # pommel end
+    return c.image()
+
+
 def attack_icon():
     a = ga.tool_frame(sword, -45, size=(20, 20), pivot=(4, 16), scale=0.72, mono=ga.MONO)
     b = a.transpose(Image.FLIP_LEFT_RIGHT)
@@ -766,6 +798,9 @@ def main():
         'gear-bow.png': bow_strip(),
         'gear-shield.png': shield_strip(),
         'gear-crossbow.png': crossbow_strip(),
+        'gear-daggers.png': ga.tool_strip(daggers),
+        'card-dagger.png': card(daggers, CLASS_COLORS['rogue'], 1.6),
+        'btn-special-dagger.png': dagger_icon(),
         'icon-crossbow.png': crossbow_icon(),
     }
     out.update(class_cards())
