@@ -124,6 +124,46 @@ def shield(u, v):
     return None
 
 
+def crossbow(pull, bolt):
+    """Crossbow pointing forward (+u): stock along u, steel limbs across at the front, string + bolt.
+    pull: string position back from the limbs (0 = released); bolt: a loaded bolt on the stock."""
+    def f(u, v):
+        if -4 <= u <= 13 and abs(v) <= 1.2:
+            if bolt and u >= 13 - 9 and abs(v) <= 0.5:
+                return 'M'  # bolt shaft lying on the stock
+            return 'h' if v < 0.4 else 'd'
+        if -4 <= u <= -1 and 1.2 < v <= 3.2:
+            return 'd'  # grip
+        cu = 12 - (v * v) / 30
+        if abs(v) <= 8 and abs(u - cu) <= 1:
+            return 'n' if abs(v) > 6.5 else 'm'
+        su = 12 - 64 / 30 - pull * (1 - abs(v) / 8)
+        if abs(v) <= 7.6 and abs(u - su) <= 0.45:
+            return 'W'
+        if bolt and 13 < u <= 16 and abs(v) <= 1.5 * (16 - u) / 3:
+            return 'M'
+        return None
+    return f
+
+
+CROSSBOW_FRAMES = [(5, True), (5, True), (0, False), (2.5, False)]  # loaded, aim, fire, reload
+
+
+def crossbow_strip():
+    return strip([ga.tool_frame(crossbow(p, b), 0 if i != 1 else -6, size=(44, 48), pivot=ga.PIVOT, scale=1.35)
+                  for i, (p, b) in enumerate(CROSSBOW_FRAMES)])
+
+
+def crossbow_icon():
+    """Cream crossbow for a round button, pointing up-right."""
+    c = Canvas(20, 20)
+
+    ba.comp(c, ba.rect(1, 9, 12, 10) | ba.rect(2, 11, 4, 13), CREAM)  # stock + grip
+    ba.comp(c, {(round(14 - dy * dy / 14), 10 + dy) for dy in range(-7, 8)} | {(round(15 - dy * dy / 14), 10 + dy) for dy in range(-7, 8)}, CREAM)  # limbs
+    ba.comp(c, ba.rect(9, 9, 15, 9) | ba.poly([(16, 6.5), (19.5, 9.5), (16, 12.5)]), CREAM)  # bolt
+    return c.image()
+
+
 BOW_FRAMES = [(0, False), (2.5, True), (5, True), (0, False)]  # idle, draw, full draw, release
 SHIELD_ANGLES = [80, 45, 5, 30]  # resting down, raising, block (in front), hold
 
@@ -715,6 +755,8 @@ def main():
         'gear-staff.png': ga.tool_strip(staff),
         'gear-bow.png': bow_strip(),
         'gear-shield.png': shield_strip(),
+        'gear-crossbow.png': crossbow_strip(),
+        'icon-crossbow.png': crossbow_icon(),
     }
     out.update(class_cards())
     out.update(skill_icons())
