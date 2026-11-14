@@ -6,6 +6,7 @@ import { blobEl, clampLook, COLORS, EYES, HATS, MOUTHS, randomLook, SHAPES, type
 import { Controls } from './controls';
 import { GameScene, type Session } from './game';
 import { ClientNet, HostNet, friendlyError, type ToClient } from './net';
+import { lanNamespace, Scanner, type FoundRoom } from './discovery';
 import { sfx, unlockAudio } from './sfx';
 import {
   addPlayer, createState, MAX_PLAYERS, removePlayer, snapshot, starsFor, step, viewFromSnapshot, viewFromState,
@@ -109,8 +110,65 @@ function setRoomCode(code: string) {
 function panel(id: 'home' | 'custom' | 'join') {
   for (const p of ['home', 'custom', 'join']) show(p, p === id);
   $('menu-msg').textContent = ''; $('join-msg').textContent = '';
-  if (id === 'join') setTimeout(() => $<HTMLInputElement>('code').focus(), 50);
+  if (id === 'join') startScan(); else stopScan();
 }
+
+// ---------- Wi-Fi room list ("Joina Stefan") ----------
+let scanner: Scanner | null = null;
+let scanGen = 0;
+function showCodeBox(focus = true) {
+  show('code-box'); show('btn-have-code', false);
+  if (focus) setTimeout(() => $<HTMLInputElement>('code').focus(), 50);
+}
+function startScan() {
+  stopScan();
+  const gen = ++scanGen;
+  $('lan-list').replaceChildren();
+  show('lan-list'); show('lan-status');
+  $('lan-status').textContent = 'Letar efter spel på ditt Wi-Fi...';
+  $('lan-status').classList.remove('static');
+  void lanNamespace().then((ns) => {
+    if (gen !== scanGen) return; // left the panel meanwhile
+    if (!ns) {
+      $('lan-status').textContent = 'Hittar inte ditt Wi-Fi automatiskt. Skriv koden som syns på värdens skärm.';
+      $('lan-status').classList.add('static');
+      show('code-help', false);
+      show('lan-list', false);
+      showCodeBox();
+      return;
+    }
+    scanner = new Scanner(ns, clampLook);
+    scanner.onUpdate = renderRooms;
+    scanner.start();
+  });
+}
+function stopScan() { scanGen++; scanner?.stop(); scanner = null; }
+function renderRooms(rooms: FoundRoom[]) {
+  show('lan-status', rooms.length === 0);
+  $('lan-status').textContent = 'Letar efter spel på ditt Wi-Fi...';
+  $('lan-list').replaceChildren(...rooms.map((r) => {
+    const li = document.createElement('li');
+    const b = document.createElement('button');
+    const full = r.players >= r.max;
+    b.className = 'lanrow' + (full ? ' full' : '');
+    b.disabled = full;
+    b.dataset.slot = String(r.slot);
+    const txt = document.createElement('span');
+    txt.className = 'lantext';
+    const title = document.createElement('b');
+    title.textContent = 'Joina ' + r.name;
+    const sub = document.createElement('span');
+    sub.className = 'lansub';
+    sub.textContent = `${r.players}/${r.max}` + (full ? ' · fullt' : r.started ? ' · pågår' : '');
+    txt.append(title, sub);
+    b.append(blobEl(r.look), txt);
+    b.setAttribute('aria-label', `Joina ${r.name}, ${r.players} av ${r.max}` + (full ? ', fullt' : r.started ? ', pågår' : ''));
+    b.onclick = () => void joinGame(r.peerId, r.code, b);
+    li.append(b);
+    return li;
+  }));
+}
+$('btn-have-code').onclick = () => showCodeBox();
 $('me').onclick = () => panel('custom');
 $('btn-custom-done').onclick = () => { myInfo(); renderPicker(); panel('home'); };
 nameInput.addEventListener('input', () => { $('me-name').textContent = nameInput.value.trim() || 'Blob'; });
@@ -220,6 +278,13 @@ async function hostGame() {
   try { code = await net.open(); } catch (e) { $('menu-msg').textContent = friendlyError(String(e)); return; }
   const myId = net.peer.id;
   infos = new Map([[myId, { id: myId, ...myInfo() }]]);
+  net.onInfo = () => {
+    const me = infos.get(myId);
+    if (!me) return null;
+    return { name: me.name, look: clampLook(me), players: infos.size, max: MAX_PLAYERS, started: !!state, code };
+  };
+  // Register on the Wi-Fi list in the background; the code keeps working if this fails.
+  void lanNamespace().then((ns) => (ns ? net.openSlot(ns) : 0));
   let state: State | null = null;
   let seed = 0;
   const inputs = new Map<string, Input>();
@@ -292,15 +357,20 @@ async function hostGame() {
 }
 
 // ---------- join ----------
-async function joinGame() {
+let joining = false;
+/** Join by the typed code, or by a Wi-Fi list row (`target` = slot peer id, `listCode` = its room code). */
+async function joinGame(target?: string, listCode = '', row?: HTMLButtonElement) {
   unlockAudio();
-  const code = $<HTMLInputElement>('code').value.trim().toUpperCase();
-  if (code.length !== 4) { $('join-msg').textContent = 'Skriv rummets 4 bokstäver.'; return; }
-  if ($<HTMLButtonElement>('btn-join').disabled) return;
+  const code = target ? listCode : $<HTMLInputElement>('code').value.trim().toUpperCase();
+  if (!target && code.length !== 4) { $('join-msg').textContent = 'Skriv rummets 4 bokstäver.'; return; }
+  if (joining) return;
+  joining = true;
   isHost = false;
   const net = new ClientNet();
   $('join-msg').textContent = 'Ansluter...';
   $<HTMLButtonElement>('btn-join').disabled = true;
+  row?.classList.add('busy');
+  stopScan(); // free the probing peer; a failed join restarts the list
   let latest: Snapshot | null = null;
   const fx: FxEvent[] = [];
   let sendAcc = 0;
@@ -338,14 +408,20 @@ async function joinGame() {
   net.onClose = () => { alert('Värden lämnade spelet.'); location.reload(); };
 
   try {
-    await net.join(code, myInfo());
+    await net.join(target ?? code, myInfo());
   } catch (e) {
+    joining = false;
     $<HTMLButtonElement>('btn-join').disabled = false;
     const why = String(e);
-    $('join-msg').textContent = why === 'full' ? 'Rummet är fullt (max 5).' : why === 'timeout' ? 'Ingen svarade. Rätt kod?' : friendlyError(why);
+    const msg = why === 'full' ? 'Rummet är fullt (max 5).'
+      : why === 'timeout' ? (target ? 'Ingen svarade. Försök igen.' : 'Ingen svarade. Rätt kod?')
+      : why === 'peer-unavailable' && target ? 'Spelet finns inte längre.'
+      : friendlyError(why);
+    if (target) startScan(); // panel('join') would clear the message, so restart the list directly
+    $('join-msg').textContent = msg;
     return;
   }
-  setRoomCode(code);
+  if (code) setRoomCode(code);
   $('hud-code').textContent = '';
   show('btn-start', false); show('lobby-wait');
   show('menu', false); show('lobby');
@@ -354,6 +430,8 @@ async function joinGame() {
 $('btn-host').onclick = () => void hostGame();
 $('btn-join').onclick = () => void joinGame();
 codeInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') void joinGame(); });
+// Warm up the Wi-Fi namespace (STUN) so the Joina list and host slot are ready sooner.
+void lanNamespace();
 $('btn-leave').onclick = () => location.reload();
 $('btn-menu').onclick = () => location.reload();
 
@@ -362,4 +440,4 @@ const roundSecs = Math.max(0, Math.min(600, Number(new URLSearchParams(location.
 
 // Join link support: ?room=ABCD prefills the code.
 const room = new URLSearchParams(location.search).get('room');
-if (room) { codeInput.value = room.slice(0, 4).toUpperCase(); panel('join'); }
+if (room) { codeInput.value = room.slice(0, 4).toUpperCase(); panel('join'); showCodeBox(false); }
