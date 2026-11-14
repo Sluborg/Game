@@ -214,3 +214,6 @@
 
 ## 2026-11-14 - v028e: Wi-Fi code on the start card
 - The 4-char Wi-Fi code moved from the Joina/lobby text to the version line ("v028e (8C7F)"); both phones must show the same code. A VPN changes it (Stefan had VPN on). TEAM.md: Stefan can hand ChatGPT art straight to Art.
+
+## 2026-11-14 - dungeon art merged (Art batch, not wired; no version bump)
+- `public/art/dungeon/`: weapons (sword/hammer/spear strips), weapon cards, attack/dash icons, entrance + stairs, hearts, XP bar, level badge, KO/revive, goo flash, slam warning, shockwave, chest. For Code's dungeon v1.
