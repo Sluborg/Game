@@ -37,6 +37,11 @@ Stefan works phone-only; replies in Swedish or English, docs and code in English
 - Before any tool call, answer Stefan in 1-3 lines: what you understood, what you will do, any
   question that blocks it. Only then start working. Long jobs: post short status lines along the way.
 
+## 27. Team (Lead / Art / Code)
+- This session is **Lead**: talks with Stefan, tests, reviews, merges Art/Code branches into the deploy
+  branch, bumps `VERSION`, deploys. Art and Code run in separate Claude Code sessions.
+- Roles, branches, file ownership and definition of done: [`docs/TEAM.md`](./docs/TEAM.md).
+
 ## 30. Workflow (light: changes go straight into the live game)
 build -> verify -> push = live
 1. **Build** in small conventional commits on the Blobz branch (`claude/mobile-game-5-players-8qthjq`).
