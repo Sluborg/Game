@@ -405,8 +405,15 @@ export function blobGrid(look: BlobLook, classHat?: number, face?: Face, frame =
     const big = look.shape !== 1; // Boll: approved as is
     const xsC = big ? [xl - 2, xl - 1, xl, xr, xr + 1, xr + 2] : [xl - 1, xl, xr, xr + 1];
     const dys = big ? [-2, -1, 0, 1, 2] : [-1, 0, 1];
-    for (const x of xsC) for (const dy of dys) if (x >= 0 && x < GRID_W && !L.mask.has(key(x, L.earY + dy))) cups.add(key(x, L.earY + dy));
-    for (const k of outlineOf(cups)) if (!L.mask.has(k)) px.set(k, INK);
+    const clip = big && (xl - 2 < 0 || xr + 2 > GRID_W - 1); // the frame would cut the muffs (Kupol, Platt, Kub)
+    if (clip) { // two 3-wide muffs kept fully inside the frame: on wide bodies they cover the head's side (never the face)
+      const lx0 = Math.max(0, xl - 2), rx1 = Math.min(GRID_W - 1, xr + 2);
+      for (const x of [lx0, lx0 + 1, lx0 + 2, rx1 - 2, rx1 - 1, rx1]) for (const dy of dys) {
+        const k = key(x, L.earY + dy);
+        if (x <= xl || x >= xr || !L.mask.has(k)) cups.add(k);
+      }
+    } else for (const x of xsC) for (const dy of dys) if (x >= 0 && x < GRID_W && !L.mask.has(key(x, L.earY + dy))) cups.add(key(x, L.earY + dy));
+    for (const k of outlineOf(cups)) if (!L.mask.has(k) || (clip && (k % GRID_W < 8 ? k % GRID_W <= xl + 1 : k % GRID_W >= xr - 1))) px.set(k, INK);
     for (const k of cups) px.set(k, Math.floor(k / GRID_W) === L.earY - 1 ? '#4a505a' : '#2c3038');
   } else if (TOPS[hatName]) { // top changers: grow out of the head's top outline row (pairs at both ends of the top row)
     const t = TOPS[hatName], spr = t.sizes[hatSize(L.headW)];
