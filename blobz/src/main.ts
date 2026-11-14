@@ -123,6 +123,7 @@ codeInput.addEventListener('input', () => {
   if (codeInput.value.length === 4) void joinGame(); // auto-join on the 4th letter
 });
 
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => { /* optional */ });
 $('version').textContent = __APP_VERSION__ + (matchMedia('(prefers-color-scheme: dark)').matches ? ' D' : '');
 $('version').title = __APP_COMMIT__;
 renderPicker();

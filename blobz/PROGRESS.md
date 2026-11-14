@@ -106,3 +106,11 @@
   sites with their own dark theme), `darkreader-lock` + `supported-color-schemes` metas, menu blobz as PNG
   `<img>` instead of inline SVG. Version line shows " D" when the browser reports dark mode (diagnostics).
 - Cannot reproduce the phone's forced dark headless; verify on the phone.
+
+## 2026-11-14 - v018d/e: picture-only designer, proper app icon
+- v018d: designer option tiles show only the blob picture (names kept as aria-label/title).
+- v018e: home-screen icon. Manifest now has `any` icons (ChatGPT app icon) + `maskable` icons (art at 72% on
+  full-bleed grass, so Android's circle/squircle crop doesn't shrink it into a white disc),
+  `apple-touch-icon.png` (180), id/scope, grass theme color, and a pass-through service worker (`sw.js`,
+  caches nothing) so Android installs it as an app instead of a browser shortcut.
+- Stefan must remove the old home-screen app and add it again (Android caches the icon).
