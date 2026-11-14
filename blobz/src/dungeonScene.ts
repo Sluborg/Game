@@ -11,7 +11,7 @@ import { sfx } from './sfx';
 import { entranceOf, ENTRANCE_R, DUNGEON_ENABLED, type View } from './sim';
 
 const BLOB_SCALE = 1.45; // same as the meadow (game.ts)
-const FONT = "'Nunito', sans-serif"; // same as the meadow
+const FONT = "'Fredoka', sans-serif"; // same as the meadow
 const DEBUG = new URLSearchParams(location.search).has('debug');
 const HITBOX = new URLSearchParams(location.search).has('hitbox'); // ?hitbox draws the sim's circles
 /** Weapon strips (art/dungeon/README.md): frame size + pivot. */

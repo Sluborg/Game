@@ -461,7 +461,7 @@ export class GameScene extends Phaser.Scene {
           aura: this.add.graphics(),
           body: this.add.image(p.x, p.y, texKey).setOrigin(0.5, BODY_CY).setScale(baseScale),
           eyes: this.add.graphics(),
-          label: this.add.text(p.x, p.y, info.name, { fontFamily: "'Nunito', sans-serif", fontSize: '13px', color: '#ffffff', fontStyle: 'bold', stroke: '#000000', strokeThickness: 3 }).setOrigin(0.5),
+          label: this.add.text(p.x, p.y, info.name, { fontFamily: "'Fredoka', sans-serif", fontSize: '13px', color: '#ffffff', fontStyle: 'bold', stroke: '#000000', strokeThickness: 3 }).setOrigin(0.5),
           carry: [], swingT: 0, faceLeft: false, x: p.x, y: p.y, vx: 0, vy: 0, look: { x: 0, y: 1 }, trail: [], texKey, blinkT: 2 + Math.random() * 3, baseScale, pixel,
         };
         this.blobs.set(p.id, b);
@@ -746,7 +746,7 @@ export class GameScene extends Phaser.Scene {
     const plates = l.plates.map((p) => this.add.image(p.x, p.y, 'pr-plate').setScale(4).setDepth(-700).setVisible(false));
     const glows = l.plates.map((p) => this.add.image(p.x, p.y + 2, 'fx-plate-glow').setScale(2).setDepth(-690).setVisible(false));
     const bubbles = l.plates.map((p) => this.add.text(p.x, p.y - 72, '', {
-      fontFamily: "'Nunito', sans-serif", fontSize: '20px', color: '#3f2631', fontStyle: 'bold',
+      fontFamily: "'Fredoka', sans-serif", fontSize: '20px', color: '#3f2631', fontStyle: 'bold',
       backgroundColor: '#fff7e6', padding: { x: 7, y: 2 }, stroke: '#fff7e6', strokeThickness: 1,
     }).setOrigin(0.5).setDepth(4000).setVisible(false));
     return { l, plates, glows, bubbles, gate, chest, glow, open: false, taken: false };
@@ -803,7 +803,7 @@ export class GameScene extends Phaser.Scene {
       const parts = RES.filter((k) => f.r[k] > 0);
       parts.forEach((k, j) => {
         const y = f.y - j * 30;
-        const t = this.add.text(f.x - 6, y, '+' + f.r[k], { fontFamily: "'Nunito', sans-serif", fontSize: '26px', color: '#ffe08a', fontStyle: 'bold', stroke: '#6b4a2a', strokeThickness: 5 }).setOrigin(1, 0.5);
+        const t = this.add.text(f.x - 6, y, '+' + f.r[k], { fontFamily: "'Fredoka', sans-serif", fontSize: '26px', color: '#ffe08a', fontStyle: 'bold', stroke: '#6b4a2a', strokeThickness: 5 }).setOrigin(1, 0.5);
         const ic = this.add.image(f.x + 14, y, ITEM_ICON[k]).setScale(k === 'wood' ? 1 : 1.5);
         const c = this.add.container(0, 0, [t, ic]).setDepth(5000);
         this.tweens.add({ targets: c, y: -50, alpha: 0, duration: 1100, delay: j * 80, ease: 'Cubic.Out', onComplete: () => c.destroy() });
@@ -835,7 +835,7 @@ export class GameScene extends Phaser.Scene {
       sfx.pick();
       const sp = this.add.sprite(f.x, f.y - 20, 'fx-sparkle', 0).setScale(3).setDepth(20000);
       sp.play('sparkle'); sp.once('animationcomplete', () => sp.destroy());
-      const t = this.add.text(f.x, f.y - 40, '+1', { fontFamily: "'Nunito', sans-serif", fontSize: '24px', color: '#ffe08a', fontStyle: 'bold', stroke: '#6b4a2a', strokeThickness: 5 }).setOrigin(0.5).setDepth(20000);
+      const t = this.add.text(f.x, f.y - 40, '+1', { fontFamily: "'Fredoka', sans-serif", fontSize: '24px', color: '#ffe08a', fontStyle: 'bold', stroke: '#6b4a2a', strokeThickness: 5 }).setOrigin(0.5).setDepth(20000);
       this.tweens.add({ targets: t, y: f.y - 80, alpha: 0, duration: 700, onComplete: () => t.destroy() });
     } else if (f.t === 'miss') {
       // the berry splats flat on the grass and fades
