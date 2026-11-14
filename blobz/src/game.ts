@@ -219,10 +219,12 @@ export class GameScene extends Phaser.Scene {
 
     // base: round dirt yard with the cottage in the middle + glowing drop-off ring
     const yard = this.add.graphics().setDepth(-950);
-    yard.fillStyle(0x8a5a3c, 1).fillCircle(BASE.x, BASE.y, BASE.r + 4);
-    yard.fillStyle(0xe2b27a, 1).fillCircle(BASE.x, BASE.y, BASE.r);
-    yard.fillStyle(0xd09a62, 1).fillCircle(BASE.x, BASE.y + 6, BASE.r - 14);
-    yard.fillStyle(0xe2b27a, 1).fillCircle(BASE.x, BASE.y, BASE.r - 18);
+    // meadow: dirt; snow: packed snow (light blue-white, darker blue-grey edge)
+    const [edge, fill, shade] = this.s.biome === 'snow' ? [0x7d93a8, 0xdfeaf3, 0xc9d9e6] : [0x8a5a3c, 0xe2b27a, 0xd09a62];
+    yard.fillStyle(edge, 1).fillCircle(BASE.x, BASE.y, BASE.r + 4);
+    yard.fillStyle(fill, 1).fillCircle(BASE.x, BASE.y, BASE.r);
+    yard.fillStyle(shade, 1).fillCircle(BASE.x, BASE.y + 6, BASE.r - 14);
+    yard.fillStyle(fill, 1).fillCircle(BASE.x, BASE.y, BASE.r - 18);
     this.baseG = this.add.graphics().setDepth(-900);
     this.add.ellipse(BASE.x, BASE.y + 26, 110, 26, 0x000000, 0.18).setDepth(-880);
     // cottage (Art's base set, level 1-3), integer scale 2, anchored bottom centre
