@@ -6,7 +6,8 @@ Owners: Art keeps the queue and statuses current; Lead reviews. Stefan only says
 
 ## For ChatGPT: how to work (read every time)
 1. Re-read this file at the start of every chat and every time Stefan writes "next" (it changes often).
-2. Make the FIRST order in the queue with status **READY** that you have not already made in this chat
+2. Orders with id D-* are small direction tests: Stefan answers them before any big A-order is READY.
+   Make the FIRST order in the queue with status **READY** that you have not already made in this chat
    **in its current round** (an order whose title says "round N" higher than the one you made must be made again).
    Skip WAITING and DONE orders.
 3. ONE image per reply. Apply the style block below to every image.
@@ -32,16 +33,30 @@ Make ONE image per reply and wait for "next".
 ## Queue
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
-| A-1 | READY | Class cards, round 3 | `dungeon/card-class-*.png` |
-| A-2 | READY | Cottage level 2 and 3 + snow igloo, matching the loading-screen house | `base/cottage-2.png`, `cottage-3.png`, `props-winter/igloo.png` |
-| A-3 | READY | Landscape loading screen | `art/loading-landscape.png` |
-| A-4 | READY | Dungeon entrance, meadow + snow | `dungeon/entrance.png`, `entrance-snow.png` |
-| A-5 | READY | Base buildings (build menu picture cards + on the map) | `base/*` buildings |
+| D-1 | READY | Direction test 1: small style probe (one tiny scene) | nothing, a test |
+| A-1 | WAITING (paused: art direction first, see D-orders) | Class cards, round 3 | `dungeon/card-class-*.png` |
+| A-2 | WAITING (paused: art direction first, see D-orders) | Cottage level 2 and 3 + snow igloo, matching the loading-screen house | `base/cottage-2.png`, `cottage-3.png`, `props-winter/igloo.png` |
+| A-3 | WAITING (paused: art direction first, see D-orders) | Landscape loading screen | `art/loading-landscape.png` |
+| A-4 | WAITING (paused: art direction first, see D-orders) | Dungeon entrance, meadow + snow | `dungeon/entrance.png`, `entrance-snow.png` |
+| A-5 | WAITING (paused: art direction first, see D-orders) | Base buildings (build menu picture cards + on the map) | `base/*` buildings |
 | A-6 | WAITING (Rogue weapon decision) | Weapon cards: daggers, sword, hammer, spear | `dungeon/card-dagger.png`, `card-sword.png`, `card-hammer.png`, `card-spear.png` |
 | A-7 | WAITING (style pick on the board) | Meadow props incl. berry bush | `props/*`, `gather/bush-*` |
 | A-8 | WAITING (variants on the board) | Dungeon buttons, goo enemies, skill icons, back arrow | `dungeon/btn-*`, `enemies/*`, `dungeon/skills/*`, `icons/back.png` |
-| A-9 | READY | Bärregn mini game: bomb, falling berries, basket, plop, fence | `mini/bomb.png`, `mini/berries.png`, `mini/basket.png`, `mini/plop.png`, `mini/fence-*.png` |
+| A-9 | WAITING (paused: art direction first, see D-orders) | Bärregn mini game: bomb, falling berries, basket, plop, fence | `mini/bomb.png`, `mini/berries.png`, `mini/basket.png`, `mini/plop.png`, `mini/fence-*.png` |
 | A-10 | WAITING (after A-7 style pick) | Winter props in the same style as A-7 | `props-winter/*` |
+
+### D-1 Direction test 1: style probe (small)
+Goal: lock the art direction with ONE small image before any big order. Stefan judges it and Art writes the next test.
+```
+Make ONE small square image, 768x768, of a tiny corner of the game world, top-down 3/4 view, in a cozy storybook style:
+warm yellow-green grass with soft light patches and a few tiny flowers, a short dirt path.
+On it, spaced apart with room around each: one round leafy tree, one berry bush full of shiny red berries, one grey
+rock, one small wooden signpost, and ONE blob (a soft round slime with big white eyes, black pupils, a small smile,
+1px dark plum outline #3f2631, light blue body, no arms or legs).
+IMPORTANT pixel size: crisp pixel art where the blob is about 36 game pixels wide and the tree about 48, i.e. the
+same fine pixel grid for everything (no chunky 16x16 tiles). One consistent pixel size, no blur, no gradients,
+no text. This is a style test, keep it simple and clean.
+```
 
 ### A-1 Class cards, round 3
 Classes (EN / SV): Healer / Helare, Rogue / Rogue, Tank / Riddare, Marksman / Skytt. Theme colours follow the common
