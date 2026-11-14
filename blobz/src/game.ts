@@ -133,6 +133,7 @@ export class GameScene extends Phaser.Scene {
 
   init(data: { session: Session }) {
     this.s = data.session;
+    this.registry.set('biome', this.s.biome ?? 'meadow'); // read by the dungeon entrance (snowy cave)
     this.blobs.clear(); this.items.clear(); this.gems.clear(); this.powers.clear();
     this.lastView = null;
     this.lastClock = 0;
