@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
-import '@fontsource/pixelify-sans/400.css';
-import '@fontsource/pixelify-sans/700.css';
+import '@fontsource/nunito/600.css';
+import '@fontsource/nunito/800.css';
+import '@fontsource/nunito/900.css';
 import { loadArt, pixelText } from './art';
 import { blobEl, clampLook, COLORS, EYES, HATS, MOUTHS, randomLook, SHAPES, type BlobLook } from './blob';
 import { Controls } from './controls';
@@ -396,7 +397,7 @@ async function hostGame() {
     return { name: me.name, look: clampLook(me), players: infos.size, max: MAX_PLAYERS, started: !!state, v: __APP_VERSION__ };
   };
   // Show up in friends' Joina list. Keep retrying until it works (STUN can be slow or blocked).
-  const LAN_OK = 'Kompisar på samma Wi-Fi trycker <b>Joina</b> och väljer ditt namn';
+  const LAN_OK = '';
   const advertise = async () => {
     if (net.peer.destroyed) return;
     const ns = await lanNamespace();

@@ -179,7 +179,7 @@ export class GameScene extends Phaser.Scene {
     this.baseG = this.add.graphics().setDepth(-900);
     this.add.ellipse(BASE.x, BASE.y + 26, 110, 26, 0x000000, 0.18).setDepth(-880);
     this.add.image(BASE.x, BASE.y + 30, 'ic-house').setScale(5).setOrigin(0.5, 1).setDepth(BASE.y - 40);
-    this.add.text(BASE.x, BASE.y + 52, 'BAS', { fontFamily: "'Pixelify Sans', sans-serif", fontSize: '20px', color: '#fff7e6', fontStyle: 'bold', stroke: '#3f2631', strokeThickness: 5 }).setOrigin(0.5).setDepth(-800);
+    this.add.text(BASE.x, BASE.y + 52, 'BAS', { fontFamily: "'Nunito', sans-serif", fontSize: '20px', color: '#fff7e6', fontStyle: 'bold', stroke: '#3f2631', strokeThickness: 5 }).setOrigin(0.5).setDepth(-800);
 
     // resource nodes (same layout as the host sim, from the shared seed); textures swap when used up
     this.nodes = makeTrees(this.s.seed).map((t) => {
@@ -353,7 +353,7 @@ export class GameScene extends Phaser.Scene {
           aura: this.add.graphics(),
           body: this.add.image(p.x, p.y, texKey).setOrigin(0.5, BODY_CY).setScale(baseScale),
           eyes: this.add.graphics(),
-          label: this.add.text(p.x, p.y, info.name, { fontFamily: "'Pixelify Sans', sans-serif", fontSize: '13px', color: '#ffffff', fontStyle: 'bold', stroke: '#000000', strokeThickness: 3 }).setOrigin(0.5),
+          label: this.add.text(p.x, p.y, info.name, { fontFamily: "'Nunito', sans-serif", fontSize: '13px', color: '#ffffff', fontStyle: 'bold', stroke: '#000000', strokeThickness: 3 }).setOrigin(0.5),
           carry: [], swingT: 0, faceLeft: false, x: p.x, y: p.y, vx: 0, vy: 0, look: { x: 0, y: 1 }, trail: [], texKey, blinkT: 2 + Math.random() * 3, baseScale, pixel,
         };
         this.blobs.set(p.id, b);
@@ -508,7 +508,7 @@ export class GameScene extends Phaser.Scene {
     parts.forEach((k, j) => {
       const x = -w / 2 + 8 + j * 42;
       g.tag.add(this.add.image(x + 9, 0, ITEM_ICON[k]).setScale(k === 'wood' ? 1 : 2));
-      const txt = this.add.text(x + 20, 0, String(price[k]), { fontFamily: "'Pixelify Sans', sans-serif", fontSize: '19px', color: '#3f2631', fontStyle: 'bold' }).setOrigin(0, 0.5);
+      const txt = this.add.text(x + 20, 0, String(price[k]), { fontFamily: "'Nunito', sans-serif", fontSize: '19px', color: '#3f2631', fontStyle: 'bold' }).setOrigin(0, 0.5);
       g.tag.add(txt);
       g.price.push({ k, n: price[k]!, txt });
     });
@@ -576,7 +576,7 @@ export class GameScene extends Phaser.Scene {
     const plates = l.plates.map((p) => this.add.image(p.x, p.y, 'pr-plate').setScale(4).setDepth(-700).setVisible(false));
     const glows = l.plates.map((p) => this.add.image(p.x, p.y + 2, 'fx-plate-glow').setScale(4).setDepth(-690).setVisible(false));
     const bubbles = l.plates.map((p) => this.add.text(p.x, p.y - 72, '', {
-      fontFamily: "'Pixelify Sans', sans-serif", fontSize: '20px', color: '#3f2631', fontStyle: 'bold',
+      fontFamily: "'Nunito', sans-serif", fontSize: '20px', color: '#3f2631', fontStyle: 'bold',
       backgroundColor: '#fff7e6', padding: { x: 7, y: 2 }, stroke: '#fff7e6', strokeThickness: 1,
     }).setOrigin(0.5).setDepth(4000).setVisible(false));
     return { l, plates, glows, bubbles, gate, chest, glow, open: false, taken: false };
@@ -633,7 +633,7 @@ export class GameScene extends Phaser.Scene {
       const parts = RES.filter((k) => f.r[k] > 0);
       parts.forEach((k, j) => {
         const y = f.y - j * 30;
-        const t = this.add.text(f.x - 6, y, '+' + f.r[k], { fontFamily: "'Pixelify Sans', sans-serif", fontSize: '26px', color: '#ffe08a', fontStyle: 'bold', stroke: '#6b4a2a', strokeThickness: 5 }).setOrigin(1, 0.5);
+        const t = this.add.text(f.x - 6, y, '+' + f.r[k], { fontFamily: "'Nunito', sans-serif", fontSize: '26px', color: '#ffe08a', fontStyle: 'bold', stroke: '#6b4a2a', strokeThickness: 5 }).setOrigin(1, 0.5);
         const ic = this.add.image(f.x + 14, y, ITEM_ICON[k]).setScale(k === 'wood' ? 2 : 3);
         const c = this.add.container(0, 0, [t, ic]).setDepth(5000);
         this.tweens.add({ targets: c, y: -50, alpha: 0, duration: 1100, delay: j * 80, ease: 'Cubic.Out', onComplete: () => c.destroy() });

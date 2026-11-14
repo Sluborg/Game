@@ -15,7 +15,7 @@
   --o4: 0 -4px 0 0 var(--plum), 0 4px 0 0 var(--plum), -4px 0 0 0 var(--plum), 4px 0 0 0 var(--plum);
   --o3: 0 -3px 0 0 var(--plum), 0 3px 0 0 var(--plum), -3px 0 0 0 var(--plum), 3px 0 0 0 var(--plum);
   --drop: 0 10px 0 0 #3f263140;
-  --font: 'Pixelify Sans', 'Trebuchet MS', system-ui, sans-serif;
+  --font: 'Nunito', 'Trebuchet MS', system-ui, sans-serif;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body {
@@ -474,3 +474,8 @@ button.link .icon { height: 18px; margin-right: 6px; vertical-align: -3px; }
 .loadbar { width: 82%; height: 18px; background: #fff7e6; box-shadow: 0 -3px 0 0 var(--plum), 0 3px 0 0 var(--plum), -3px 0 0 0 var(--plum), 3px 0 0 0 var(--plum); padding: 3px; }
 .loadbar i { display: block; height: 100%; width: 0; background: var(--orange); box-shadow: inset 0 -3px 0 0 var(--orange-lo), inset 0 3px 0 0 var(--orange-hi); transition: width 0.25s steps(8); }
 #loading-text { margin: 0; font-family: var(--font); font-weight: 700; font-size: 20px; color: #fff7e6; text-shadow: 0 2px 0 var(--plum), 2px 0 0 var(--plum), -2px 0 0 var(--plum), 0 -2px 0 var(--plum); }
+
+/* Nunito everywhere (Stefan: pixel font hard to read). Heavier weights for headings and buttons. */
+body { font-weight: 600; }
+h2, button.big, .tab, .chip, .edit, #score, #hud-time, .me-text b, .lantext b, #loading-text { font-weight: 900; }
+#lobby-lan:empty { display: none; }
