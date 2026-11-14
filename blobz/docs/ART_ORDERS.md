@@ -37,7 +37,7 @@ Make ONE image per reply and wait for "next".
 | A-3 | READY | Landscape loading screen | `art/loading-landscape.png` |
 | A-4 | READY | Dungeon entrance, meadow + snow | `dungeon/entrance.png`, `entrance-snow.png` |
 | A-5 | READY | Base buildings (build menu picture cards + on the map) | `base/*` buildings |
-| A-6 | WAITING (Rogue weapon decision) | Weapon cards | `dungeon/card-sword.png`, `card-hammer.png`, `card-spear.png` |
+| A-6 | WAITING (Rogue weapon decision) | Weapon cards: daggers, sword, hammer, spear | `dungeon/card-dagger.png`, `card-sword.png`, `card-hammer.png`, `card-spear.png` |
 | A-7 | WAITING (style pick on the board) | Meadow props incl. berry bush | `props/*`, `gather/bush-*` |
 | A-8 | WAITING (variants on the board) | Dungeon buttons, goo enemies, skill icons, back arrow | `dungeon/btn-*`, `enemies/*`, `dungeon/skills/*`, `icons/back.png` |
 | A-9 | READY | Bärregn mini game: bomb, falling berries, basket, plop, fence | `mini/bomb.png`, `mini/berries.png`, `mini/basket.png`, `mini/plop.png`, `mini/fence-*.png` |
@@ -110,11 +110,12 @@ Sizes relative to each other: watchtower tallest, bridge widest, well smallest.
 ```
 
 ### A-6 Weapon cards (WAITING)
+Rogue weapons: daggers, sword, hammer, spear.
 ```
-Order I-2: three upright weapon cards, 3 columns x 1 row, portrait 3:4, parchment card with a dark plum border and a
-coloured ribbon at the bottom (sword red, hammer orange, spear blue), no text. On each card a blob in action:
-1 a blob swinging a sword with a white swoosh, 2 a blob slamming a big hammer into the ground with cracks and dust,
-3 a blob charging forward with a long spear and speed lines. Blobz wear no hats. Same card frame as the class cards.
+Order A-6: four upright weapon cards, 4 columns x 1 row, portrait 3:4, the same parchment card frame as the class
+cards, coloured ribbon at the bottom (daggers yellow, sword red, hammer orange, spear blue), no text, no effects.
+On each card the same neutral white blob, centred, holding the weapon: 1 two short daggers crossed in front of it,
+2 a sword raised, 3 a big hammer held over its shoulder, 4 a long spear held upright. Blobz wear no hats.
 ```
 
 ### A-7 Meadow props (WAITING)
