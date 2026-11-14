@@ -194,3 +194,7 @@
 
 ## 2026-11-14 - v027c: Wi-Fi discovery hotfix (Lead)
 - Stefan: phones on the same Wi-Fi did not find each other. Likely cause: the first STUN srflx was IPv6, unique per phone. Now all srflx candidates are collected briefly; IPv4 wins, else the IPv6 /64 prefix (shared by one Wi-Fi). Two Google STUN servers. Join screen and host lobby show a short "nät XXXX" code so two phones can be compared. 43 tests, lan-join e2e passed. Real-phone check needed.
+
+## 2026-11-14 - v027d: version guard (Lead)
+- Info cards and hello carry the app version; Joina list greys out rooms on another version ("Annan version, ladda om sidan") and a mismatched join gets a clear message.
+- `version.json` is emitted at build; on start (and when the menu becomes visible again) the page fetches it with no-store and reloads onto the live version (`?v=` busts the ~10 min Pages cache, loop-guarded). Sigurd was stuck on v027b while Stefan had v027c.

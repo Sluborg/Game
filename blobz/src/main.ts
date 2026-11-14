@@ -149,7 +149,8 @@ function renderRooms(rooms: FoundRoom[]) {
   $('lan-list').replaceChildren(...rooms.map((r) => {
     const li = document.createElement('li');
     const b = document.createElement('button');
-    const full = r.players >= r.max;
+    const otherVersion = r.v !== __APP_VERSION__;
+    const full = r.players >= r.max || otherVersion;
     b.className = 'lanrow' + (full ? ' full' : '');
     b.disabled = full;
     b.dataset.slot = String(r.slot);
@@ -159,7 +160,9 @@ function renderRooms(rooms: FoundRoom[]) {
     title.textContent = 'Joina ' + r.name;
     const sub = document.createElement('span');
     sub.className = 'lansub';
-    sub.textContent = `${r.players}/${r.max}` + (full ? ' · fullt' : r.started ? ' · pågår' : '');
+    sub.textContent = otherVersion
+      ? `Annan version (${r.v || 'gammal'}), ladda om sidan`
+      : `${r.players}/${r.max}` + (full ? ' · fullt' : r.started ? ' · pågår' : '');
     txt.append(title, sub);
     b.append(blobEl(r.look), txt);
     b.setAttribute('aria-label', `Joina ${r.name}, ${r.players} av ${r.max}` + (full ? ', fullt' : r.started ? ', pågår' : ''));
@@ -176,6 +179,23 @@ nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') nameInput.
 $('btn-show-join').onclick = () => panel('join');
 $('btn-join-back').onclick = () => panel('home');
 
+// Stale-build guard: phones may keep an older index.html cached (Pages caches ~10 min). Ask the server
+// for the live version (no cache) and reload onto it, so friends always play the same version.
+async function checkForNewVersion() {
+  try {
+    const r = await fetch(`version.json?ts=${Date.now()}`, { cache: 'no-store' });
+    if (!r.ok) return;
+    const live = String((await r.json()).v || '');
+    if (live && live !== __APP_VERSION__) {
+      const url = new URL(location.href);
+      if (url.searchParams.get('v') === live) return; // already tried this version, avoid a reload loop
+      url.searchParams.set('v', live);
+      location.replace(url.toString());
+    }
+  } catch { /* offline or dev server: keep running */ }
+}
+void checkForNewVersion();
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && $('hud').classList.contains('hidden')) void checkForNewVersion(); });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => { /* optional */ });
 $('version').textContent = __APP_VERSION__ + (matchMedia('(prefers-color-scheme: dark)').matches ? ' D' : '');
 $('version').title = __APP_COMMIT__;
@@ -302,7 +322,7 @@ async function hostGame() {
   net.onInfo = () => {
     const me = infos.get(myId);
     if (!me) return null;
-    return { name: me.name, look: clampLook(me), players: infos.size, max: MAX_PLAYERS, started: !!state };
+    return { name: me.name, look: clampLook(me), players: infos.size, max: MAX_PLAYERS, started: !!state, v: __APP_VERSION__ };
   };
   // Show up in friends' Joina list. Keep retrying until it works (STUN can be slow or blocked).
   const LAN_OK = 'Kompisar på samma Wi-Fi trycker <b>Joina</b> och väljer ditt namn';
@@ -440,7 +460,8 @@ async function joinGame(target: string, row?: HTMLButtonElement) {
   } catch (e) {
     joining = false;
     const why = String(e);
-    const msg = why === 'full' ? 'Spelet är fullt (max 5).'
+    const msg = why.startsWith('version:') ? `Värden kör ${why.slice(8)}, du kör ${__APP_VERSION__}. Ladda om sidan på den som är äldst.`
+      : why === 'full' ? 'Spelet är fullt (max 5).'
       : why === 'timeout' ? 'Ingen svarade. Försök igen.'
       : friendlyError(why);
     startScan(); // panel('join') would clear the message, so restart the list directly

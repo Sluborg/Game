@@ -9,12 +9,13 @@ export const PREFIX = 'blobz-v1-';
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 
 export type ToHost =
-  | { t: 'hello'; info: Omit<PlayerInfo, 'id'> }
+  | { t: 'hello'; info: Omit<PlayerInfo, 'id'>; v?: string }
   | { t: 'info?' }
   | { t: 'in'; x: number; y: number; dash: number };
 export type ToClient =
   | { t: 'welcome'; id: string }
   | { t: 'full' }
+  | { t: 'version'; v: string }
   | { t: 'info'; info: RoomInfo }
   | { t: 'lobby'; players: PlayerInfo[] }
   | { t: 'start'; seed: number }
@@ -97,6 +98,8 @@ export class HostNet {
         return;
       }
       if (m.t === 'hello') {
+        // different app versions cannot play together (snapshot format changes between versions)
+        if (String(m.v ?? '') !== __APP_VERSION__) { c.send({ t: 'version', v: __APP_VERSION__ } satisfies ToClient); setTimeout(() => c.close(), 300); return; }
         if (!this.onHello(c.peer, m.info)) { c.send({ t: 'full' } satisfies ToClient); setTimeout(() => c.close(), 300); return; }
         this.conns.set(c.peer, c);
         c.send({ t: 'welcome', id: c.peer } satisfies ToClient);
@@ -135,11 +138,12 @@ export class ClientNet {
         this.peer = peer;
         const conn = peer.connect(target, { reliable: true, serialization: 'json' });
         this.conn = conn;
-        conn.on('open', () => conn.send({ t: 'hello', info } satisfies ToHost));
+        conn.on('open', () => conn.send({ t: 'hello', info, v: __APP_VERSION__ } satisfies ToHost));
         conn.on('data', (raw) => {
           const m = raw as ToClient;
           if (m.t === 'welcome' && !done) { done = true; clearTimeout(timer); this.id = m.id; resolve(m.id); }
           else if (m.t === 'full') fail('full');
+          else if (m.t === 'version') fail('version:' + String(m.v).slice(0, 12));
           this.onMessage(m);
         });
         conn.on('close', () => { if (done) this.onClose(); else fail('closed'); });

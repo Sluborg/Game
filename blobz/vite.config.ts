@@ -16,5 +16,10 @@ const VERSION = buildVersion();
 export default defineConfig({
   base: './',
   define: { __APP_VERSION__: JSON.stringify(VERSION.v), __APP_COMMIT__: JSON.stringify(VERSION.sha) },
+  // version.json lets an already-open (or cached) page notice that a newer build is live.
+  plugins: [{
+    name: 'blobz-version-json',
+    generateBundle() { this.emitFile({ type: 'asset', fileName: 'version.json', source: JSON.stringify({ v: VERSION.v }) }); },
+  }],
   build: { chunkSizeWarningLimit: 2000 },
 });

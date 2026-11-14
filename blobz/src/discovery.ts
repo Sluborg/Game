@@ -13,7 +13,7 @@ export const SLOTS = 8;
 export const STUN = 'stun:stun.l.google.com:19302';
 
 /** What a host tells a probing phone (`info?` -> `info`). */
-export interface RoomInfo { name: string; look: BlobLook; players: number; max: number; started: boolean }
+export interface RoomInfo { name: string; look: BlobLook; players: number; max: number; started: boolean; v: string }
 
 export function slotId(ns: string, slot: number) { return `${SLOT_PREFIX}${ns}-${slot}`; }
 export function slotIds(ns: string) { return Array.from({ length: SLOTS }, (_, i) => slotId(ns, i + 1)); }
@@ -110,6 +110,7 @@ export function cleanInfo(raw: unknown, clampLook: (l: Partial<BlobLook>) => Blo
     players: Math.max(0, Math.min(max, Math.floor(Number(r.players)) || 0)),
     max,
     started: !!r.started,
+    v: String(r.v ?? '').slice(0, 12), // '' = a host from before version checks
   };
 }
 
