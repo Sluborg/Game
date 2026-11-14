@@ -18,113 +18,119 @@ const spritePts = (s: { rows: string[]; ax: number; ay: number }, ax: number, ay
   return out;
 };
 
-/** Cells Stefan approved on the board (2026-11-14, sheet from 502dae7): frozen pixel for pixel (FNV-1a of the grid). */
+/** Cells Stefan approved on the board (2026-11-14): frozen pixel for pixel. FNV-1a of the grid CROPPED to its content,
+ *  so the 16x18 -> 20x20 frame change (a pure offset) keeps the same hashes. */
 const FROZEN: Record<string, string> = {
-  'Ingen/Kupol': 'ebe76a92',
-  'Ingen/Boll': '94a208a2',
-  'Ingen/Lång': 'd3b103ea',
-  'Ingen/Platt': '906d2579',
-  'Ingen/Päron': '891f638b',
-  'Ingen/Kub': '24f69827',
-  'Keps/Kupol': '2441e2b4',
-  'Keps/Boll': '187100a7',
-  'Keps/Lång': '9def6cea',
-  'Keps/Platt': 'c42b930b',
-  'Keps/Päron': '818cc486',
-  'Keps/Kub': 'fca1d6f0',
-  'Grodd/Kupol': '71ee8bde',
-  'Grodd/Boll': '8704fd46',
-  'Grodd/Lång': '5eb4415e',
-  'Grodd/Platt': 'a1528d3',
-  'Grodd/Päron': '118e05b7',
-  'Grodd/Kub': 'd4068e71',
-  'Mössa/Kupol': '4856bf',
-  'Mössa/Boll': '7df338ba',
-  'Mössa/Lång': 'e8051c75',
-  'Mössa/Platt': 'ee3b61c',
-  'Mössa/Päron': '473bfbc0',
-  'Mössa/Kub': 'f1f27c78',
+  'Ingen/Kupol': 'c6704e42',
+  'Ingen/Boll': 'cc20786c',
+  'Ingen/Lång': 'c81d74ce',
+  'Ingen/Platt': '8b371783',
+  'Ingen/Päron': '24684b7b',
+  'Ingen/Kub': '7fa95b27',
+  'Keps/Kupol': '262c097c',
+  'Keps/Boll': '14b7691a',
+  'Keps/Lång': '9d22e7a8',
+  'Keps/Platt': 'ba134ea1', // re-baselined for 20x20: content the 16x18 frame cut off (or wrapped) is now whole
+  'Keps/Päron': 'ee30b59e',
+  'Keps/Kub': 'daeb261b', // re-baselined for 20x20: content the 16x18 frame cut off (or wrapped) is now whole
+  'Grodd/Kupol': 'b043715c',
+  'Grodd/Boll': 'f7ea230c',
+  'Grodd/Lång': '6677f0b4',
+  'Grodd/Platt': 'caf49343',
+  'Grodd/Päron': '9f4a09',
+  'Grodd/Kub': 'c03b0c51',
+  'Mössa/Kupol': 'a40a91d9',
+  'Mössa/Boll': '382b27ec',
+  'Mössa/Lång': 'aecb1423',
+  'Mössa/Platt': 'b05f064c',
+  'Mössa/Päron': 'f511f6ee',
+  'Mössa/Kub': '7454022a',
   'Trollkarl/Kupol': '272e8b18',
-  'Trollkarl/Boll': '1aee77ae',
-  'Trollkarl/Lång': '5dcf7d5a',
-  'Trollkarl/Platt': '7588019b',
+  'Trollkarl/Boll': 'eab90c68',
+  'Trollkarl/Lång': 'e076fc52',
+  'Trollkarl/Platt': 'd16da801',
   'Trollkarl/Päron': '9a9ce5d7',
-  'Trollkarl/Kub': '8c3a9c53',
-  'Drottningkrona/Kupol': '60145497',
-  'Drottningkrona/Boll': '895cf172',
-  'Drottningkrona/Lång': '68ae0fd7',
-  'Drottningkrona/Päron': '27bd760e',
-  'Drottningkrona/Kub': '9256ed28',
-  'Kattöron/Kupol': 'd374b6b8',
-  'Kattöron/Boll': '6bfccf2e',
-  'Kattöron/Platt': '8a040e55',
-  'Kattöron/Kub': 'a99ec01d',
-  'Kaninöron/Kupol': 'eecd2610',
-  'Kaninöron/Boll': 'b38851ae',
-  'Enhörning/Platt': '250d9b13',
-  'Enhörning/Kub': '3d0ebaa9',
+  'Trollkarl/Kub': 'c617f9fb',
+  'Drottningkrona/Kupol': 'e155fc8d',
+  'Drottningkrona/Boll': '22583a64',
+  'Drottningkrona/Lång': 'bbd40f33',
+  'Drottningkrona/Päron': '2a5ec566',
+  'Drottningkrona/Kub': '9a04ff10',
+  'Kattöron/Kupol': '2e419d30',
+  'Kattöron/Boll': 'fbe0de18',
+  'Kattöron/Platt': 'f961bdc5',
+  'Kattöron/Kub': '8cbe1685',
+  'Kaninöron/Kupol': 'e575fcd6',
+  'Kaninöron/Boll': '1553a828',
+  'Enhörning/Platt': '1250863b',
+  'Enhörning/Kub': '8eef243d',
   'Gloria/Kupol': '8f894c16',
-  'Gloria/Boll': '2c069bc6',
-  'Gloria/Platt': 'a467ca5',
-  'Gloria/Kub': '5f2ee233',
-  'Krona/Kub': '45ef35d2', // round 2
-  'Rosett/Platt': '46e56ef5', // round 2
-  'Kattöron/Lång': '8e85fa38', // round 2
-  'Kattöron/Päron': '9cff2335', // round 2
-  'Kaninöron/Lång': 'c332f82', // round 2
-  'Kaninöron/Platt': '2ffb93e7', // round 2
-  'Kaninöron/Kub': 'f61336f7', // round 2
-  'Djävulshorn/Kupol': '4bf4f048', // round 2
-  'Djävulshorn/Boll': '9d98f752', // round 2
-  'Djävulshorn/Lång': 'f575095e', // round 2
-  'Djävulshorn/Platt': '1fb8f9a7', // round 2
-  'Djävulshorn/Päron': '556f4db7', // round 2
-  'Djävulshorn/Kub': '5bfdc4d7', // round 2
+  'Gloria/Boll': '2abe05a8',
+  'Gloria/Platt': '32b8ed67',
+  'Gloria/Kub': '92d25c3',
+  'Krona/Kub': '8c6e27ae', // round 2
+  'Rosett/Platt': 'b53e2b8b', // round 2
+  'Kattöron/Lång': '41c4f30c', // round 2
+  'Kattöron/Päron': 'd622953d', // round 2
+  'Kaninöron/Lång': 'e35a4e80', // round 2
+  'Kaninöron/Platt': 'e64d1b59', // round 2
+  'Kaninöron/Kub': '638b4557', // round 2
+  'Djävulshorn/Kupol': '2bd84dae', // round 2
+  'Djävulshorn/Boll': 'aee58fbc', // round 2
+  'Djävulshorn/Lång': 'fa7b2a32', // round 2
+  'Djävulshorn/Platt': 'bfece3b9', // round 2
+  'Djävulshorn/Päron': 'fadcd0ff', // round 2
+  'Djävulshorn/Kub': 'c8780a7', // round 2
   'Enhörning/Kupol': 'b0be8a2b', // round 2
-  'Enhörning/Boll': '90e83f88', // round 2
-  'Enhörning/Lång': '83a360f6', // round 2
-  'Enhörning/Päron': 'f870e59f', // round 2
-  'Gloria/Lång': 'c40c2d7e', // round 2
+  'Enhörning/Boll': 'd14bb8bc', // round 2
+  'Enhörning/Lång': 'f642b0d4', // round 2
+  'Enhörning/Päron': '8ae99a69', // round 2
+  'Gloria/Lång': 'aec011da', // round 2
   'Gloria/Päron': 'cb704c57', // round 2
-  'class:Prästluva/Kupol': 'dcfa7ab7', // round 2
-  'class:Prästluva/Boll': '62c23428', // round 2
-  'class:Prästluva/Lång': '46f42288', // round 2
-  'class:Prästluva/Päron': 'c2d61139', // round 2
-  'class:Prästluva/Kub': '8393e8b0', // round 2
+  'class:Prästluva/Kupol': 'ae9c38b1', // round 2
+  'class:Prästluva/Boll': '87f72bf6', // round 2
+  'class:Prästluva/Lång': '27d1f9ce', // round 2
+  'class:Prästluva/Päron': '5b9d27', // round 2
+  'class:Prästluva/Kub': 'c0de2136', // round 2
   'class:Fjädermössa/Kupol': 'f7c8f3af', // round 2
-  'class:Fjädermössa/Boll': 'cda1863c', // round 2
-  'class:Fjädermössa/Lång': '60a0698d', // round 2
+  'class:Fjädermössa/Boll': 'cf7e318a', // round 2
+  'class:Fjädermössa/Lång': 'd4a58fb1', // round 2
   'class:Fjädermössa/Päron': 'cb184630', // round 2
-  'class:Fjädermössa/Kub': 'f133f332', // round 2
-  'Rosett/Kupol': '138349c4', // round 3
-  'Rosett/Boll': 'efc4dfce', // round 3
-  'Rosett/Lång': 'fc24f42', // round 3
-  'Rosett/Päron': '9b03bec7', // round 3
-  'Rosett/Kub': '93a54a3d', // round 3
-  'Lurar/Boll': '53afdf0a', // round 3
-  'Antenn/Kupol': 'c3113e70', // round 3
-  'Antenn/Boll': '25c004a', // round 3
-  'Antenn/Lång': '20400398', // round 3
-  'Antenn/Platt': 'b2951511', // round 3
-  'Antenn/Päron': '486c0215', // round 3
-  'Antenn/Kub': 'a180e3d9', // round 3
+  'class:Fjädermössa/Kub': '8e5dd8fb', // re-baselined for 20x20: content the 16x18 frame cut off (or wrapped) is now whole
+  'Rosett/Kupol': '31286a82', // round 3
+  'Rosett/Boll': 'd7a9c41c', // round 3
+  'Rosett/Lång': 'f1339f06', // round 3
+  'Rosett/Päron': '14831077', // round 3
+  'Rosett/Kub': 'da7cf08d', // round 3
+  'Lurar/Boll': 'fb8f555a', // re-baselined for 20x20: content the 16x18 frame cut off (or wrapped) is now whole
+  'Antenn/Kupol': '2d77536e', // round 3
+  'Antenn/Boll': 'de67c984', // round 3
+  'Antenn/Lång': 'bad986e', // round 3
+  'Antenn/Platt': 'b0856f0b', // round 3
+  'Antenn/Päron': 'f5a208a7', // round 3
+  'Antenn/Kub': '9c8482a1', // round 3
   'class:Fjädermössa/Platt': 'ad14270a', // round 3
   'Krona/Kupol': '142d37f3', // round 4
-  'Krona/Boll': 'eac73d6c', // round 4
-  'Krona/Lång': '9e6b8d30', // round 4
-  'Krona/Platt': 'aa28c97', // round 4
+  'Krona/Boll': '784676ce', // round 4
+  'Krona/Lång': 'f256dcc', // round 4
+  'Krona/Platt': 'f984ebc9', // round 4
   'Krona/Päron': 'f2fe7ffd', // round 4
-  'Drottningkrona/Platt': '4e5f1a17', // round 4
-  'Lurar/Lång': 'a1ee2e82', // round 4
-  'Lurar/Päron': '8ba34ec7', // round 4
+  'Drottningkrona/Platt': 'f4edb585', // round 4
+  'Lurar/Lång': '85af08da', // round 4
+  'Lurar/Päron': '73752eef', // round 4
   'Kaninöron/Päron': 'f3e77f17', // round 4
-  'class:Prästluva/Platt': 'e43e2210', // round 4
+  'class:Prästluva/Platt': '1e5206e0', // round 4
   'class:Riddarhjälm/Kupol': '482a51be', // round 4
-  'class:Riddarhjälm/Boll': '9833b465', // round 4
-  'class:Riddarhjälm/Lång': 'f5c999bf', // round 4
-  'class:Riddarhjälm/Platt': 'ab416912', // round 4
+  'class:Riddarhjälm/Boll': '8806bebd', // round 4
+  'class:Riddarhjälm/Lång': '63f18a83', // round 4
+  'class:Riddarhjälm/Platt': '909f46a', // round 4
   'class:Riddarhjälm/Päron': 'd8bb5a9e', // round 4
-  'class:Riddarhjälm/Kub': 'ab886eb5', // round 4
+  'class:Riddarhjälm/Kub': 'fa37a3c5', // round 4
+};
+const cropped = (g: (string | null)[][]) => {
+  let x0 = 1e9, x1 = -1, y0 = 1e9, y1 = -1;
+  g.forEach((r, y) => r.forEach((c, x) => { if (c) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); } }));
+  return g.slice(y0, y1 + 1).map((r) => r.slice(x0, x1 + 1));
 };
 const fnv = (s: string) => { let x = 2166136261 >>> 0; for (let i = 0; i < s.length; i++) { x ^= s.charCodeAt(i); x = Math.imul(x, 16777619) >>> 0; } return x.toString(16); };
 
@@ -185,10 +191,11 @@ describe('blobz v2 (16 px Ninja grid, one 3/4 view)', () => {
     for (const sizes of Object.values(PART_TABLES.hats)) expect(sizes).toHaveLength(3);
   });
 
-  it('nothing is cut off at the frame edge (row 0 holds at most a hat outline)', () => {
+  it('nothing is cut off at the frame edge (the border holds at most an outline)', () => {
     for (let s = 0; s < SHAPES.length; s++) for (let h = 0; h < HATS.length; h++) for (let f = 0; f < BLOB_FRAMES; f++) {
       const g = blobGrid(look({ shape: s, hat: h }), undefined, undefined, f);
-      for (const c of g[0]) if (c) expect(c.toLowerCase()).toBe('#141b1b');
+      const edge = [...g[0], ...g[GRID_H - 1], ...g.map((r) => r[0]), ...g.map((r) => r[GRID_W - 1])];
+      for (const c of edge) if (c) expect(c.toLowerCase(), `${HATS[h]} on ${SHAPES[s]}`).toBe('#141b1b'); // only an outline may touch the edge
     }
   });
 
@@ -197,7 +204,7 @@ describe('blobz v2 (16 px Ninja grid, one 3/4 view)', () => {
       const [hat, shape] = cell.split('/');
       const cls = hat.startsWith('class:') ? CLASS_HATS.indexOf(hat.slice(6)) : undefined;
       const g = blobGrid({ color: 0x5ec8ff, shape: SHAPES.indexOf(shape), eyes: 0, mouth: 0, hat: cls === undefined ? HATS.indexOf(hat) : 0 }, cls);
-      expect(fnv(JSON.stringify(g)), cell).toBe(hash);
+      expect(fnv(JSON.stringify(cropped(g))), cell).toBe(hash);
     }
   });
 
