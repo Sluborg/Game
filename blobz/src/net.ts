@@ -4,6 +4,7 @@
 import Peer, { DataConnection } from 'peerjs';
 import type { Input, PlayerInfo, Snapshot } from './sim';
 import { slotId, SLOTS, type RoomInfo } from './discovery';
+import { t } from './i18n';
 
 export const PREFIX = 'blobz-v1-';
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -30,13 +31,13 @@ export function randomCode() {
 
 export function friendlyError(type: string): string {
   switch (type) {
-    case 'peer-unavailable': return 'Spelet finns inte längre.';
+    case 'peer-unavailable': return t('err.gone');
     case 'network':
     case 'server-error':
     case 'socket-error':
-    case 'socket-closed': return 'Ingen kontakt med servern. Kolla internet.';
-    case 'browser-incompatible': return 'Webbläsaren stöds inte.';
-    default: return 'Något gick fel (' + type + ').';
+    case 'socket-closed': return t('err.server');
+    case 'browser-incompatible': return t('err.browser');
+    default: return t('err.other', { type });
   }
 }
 

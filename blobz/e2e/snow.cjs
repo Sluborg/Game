@@ -12,7 +12,7 @@ const shots = process.argv[3] || '';
     const url = `${base}?lan=${lan}&debug`;
     const pages = [];
     for (const [i, name] of ['Stefan', 'Ada', 'Bo'].entries()) {
-      const ctx = await browser.newContext({ viewport: i === 2 ? LANDSCAPE : PORTRAIT, isMobile: true, hasTouch: true });
+      const ctx = await browser.newContext({ locale: 'sv-SE', viewport: i === 2 ? LANDSCAPE : PORTRAIT, isMobile: true, hasTouch: true });
       await ctx.addInitScript((n) => { localStorage.setItem('blobz.name', n); localStorage.removeItem('blobz.map'); }, name);
       const p = await ctx.newPage();
       p.on('pageerror', (e) => console.log(`[${name}] pageerror`, e.message));
