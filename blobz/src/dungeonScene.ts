@@ -66,6 +66,7 @@ interface HeroGfx {
   wshadow?: Phaser.GameObjects.Ellipse; // the hovering weapon's small shadow on the ground
   weapon2?: Phaser.GameObjects.Sprite; // the rogue's second dagger / the Riddare's guarding shield
   arcFor?: number; // which swing already has its slash fx
+  wa?: number; woff?: number; wsa?: number; lastSwing?: number; // smoothed weapon angle, slash offset, shield angle, time of the last swing
   tip?: { x: number; y: number }; // crossbow tip (bolts start there) // knight's shield wall (Art's fx-wall)
 }
 interface GooGfx {
@@ -496,17 +497,27 @@ export class DungeonScene extends Phaser.Scene {
     // Hovers beside the blob (blobz have no hands): a few px beyond the body edge toward the target (or the way it
     // glides), turned to that angle, bobbing gently over its own small shadow.
     const swinging = b.swingT > 0;
-    const aim = swinging ? b.swingA : face;
     const prog = swinging ? 1 - b.swingT / b.swingDur : 0;
-    const bob = Math.sin((this.time.now / 1000 / BOB_S) * Math.PI * 2 + (b.id.charCodeAt(0) % 7)) * BOB_PX;
+    // Where the weapon points (smoothed, never teleports): in a fight (a swing in the last 0.9 s) at the last target;
+    // otherwise it rests beside the blob on the side it faces, blade up and forward (it no longer orbits over the head
+    // or under the blob while gliding).
+    const fighting = swinging || (b.lastSwing !== undefined && this.time.now - b.lastSwing < 900);
+    const rest = b.facing === 'left' ? Math.PI + 0.75 : -0.75;
+    const want = fighting ? (b.swingA ?? face) : rest;
+    const wrap = (x: number) => Math.atan2(Math.sin(x), Math.cos(x));
+    b.wa = b.wa === undefined ? want : b.wa + wrap(want - b.wa) * Math.min(1, dt * (swinging ? 30 : 9));
+    const aim = b.wa;
+    // the idle bob fades out while attacking so it never fights the swing
+    const bob = (swinging ? 0 : 1) * Math.sin((this.time.now / 1000 / BOB_S) * Math.PI * 2 + (b.id.charCodeAt(0) % 7)) * BOB_PX;
     const spot = (ang: number, out: number) => ({ x: cx + Math.cos(ang) * (EDGE_X + HOVER + out), y: cy + Math.sin(ang) * (EDGE_Y + HOVER + 4 + out * 0.7) + DROP }); // vertical: clears the body top (hat) too
-    const dbg = (extra: Record<string, unknown>) => { if (DEBUG) ((window as unknown as { __dgWeapon?: Record<string, unknown> }).__dgWeapon ??= {})[b.id] = { aim: Math.atan2(Math.sin(aim), Math.cos(aim)), prog, swing: swinging, n: b.swings, bx: cx, by: cy, w, bob, ...extra }; };
+    const dbg = (extra: Record<string, unknown>) => { if (DEBUG) ((window as unknown as { __dgWeapon?: Record<string, unknown> }).__dgWeapon ??= {})[b.id] = { aim: wrap(swinging ? b.swingA : aim), prog, swing: swinging, n: b.swings, bx: cx, by: cy, w, bob, ...extra }; };
     if (w === 'dagger') {
-      // two sai, one each side of the aim, pointing along it; each attack stabs ONE of them out and back (alternating)
+      // two sai, one each side of the aim, pointing along it; each attack stabs ONE of them straight out and back
+      // (alternating left / right); the other holds still
       const stabber = b.swings % 2;
       const pts = [0, 1].map((i) => {
         const side = i === 0 ? 1 : -1, out = swinging && stabber === i ? Math.sin(prog * Math.PI) * DAGGER_STAB : 0;
-        const g = spot(aim + side * DAGGER_SPREAD * (1 - (out / DAGGER_STAB) * 0.6), 0);
+        const g = spot(aim + side * DAGGER_SPREAD, 0);
         return { x: g.x + Math.cos(aim) * out, y: g.y + Math.sin(aim) * out * 0.7 + bob * (i ? -1 : 1), gy: g.y };
       });
       if (b.weapon2!.texture.key !== 'w-sai') b.weapon2!.setTexture('w-sai');
@@ -516,38 +527,42 @@ export class DungeonScene extends Phaser.Scene {
           .setPosition(pts[i].x, pts[i].y).setRotation(aim + Math.PI / 2).setDepth(b.body.depth + (Math.sin(aim) < -0.35 ? -1 : 1));
       });
       b.wshadow.setVisible(true).setPosition(cx + Math.cos(aim) * (EDGE_X + HOVER + 6), Math.max(pts[0].gy, cy) + 22).setDepth(b.body.depth - 2).setScale(1.3, 1);
-      const a = Math.atan2(Math.sin(aim), Math.cos(aim));
+      const a = wrap(aim);
       dbg({ a, a2: a, slash: false, x: pts[0].x, y: pts[0].y, x2: pts[1].x, y2: pts[1].y, stab: stabber });
       return;
     }
-    // A = where the weapon points now: slashing weapons sweep across the aim line (60% of the swing) and ease back;
-    // the spear thrusts, the crossbow recoils
-    let A = aim, out = swinging ? Math.sin(prog * Math.PI) * LUNGE[w] : 0;
+    // A = where the weapon points now. Slashing weapons sweep across the aim line and stop on the far side; the next
+    // swing comes back the other way (forehand / backhand, no snap back); between fights they ease back to rest.
+    // The hammer is an overhead blow that always lands the same way. The spear thrusts, the crossbow recoils.
+    let out = swinging ? Math.sin(prog * Math.PI) * LUNGE[w] : 0;
     const sl = SLASH[w];
-    let dir = 1;
-    if (sl) out = swinging ? Math.sin(prog * Math.PI) * 4 : 0;
-    if (swinging && sl) {
+    let off = 0, dir = 1;
+    if (sl) {
+      out = swinging ? Math.sin(prog * Math.PI) * 4 : 0;
       const half = (sl.sweep * Math.PI) / 360;
-      dir = Math.cos(aim) < 0 ? -1 : 1;
-      if (prog < 0.6) {
-        const u = prog / 0.6, k = sl.slam ? u * u * u : 1 - (1 - u) * (1 - u); // the hammer speeds up into the slam
-        A = aim + dir * (-half + 2 * half * k);
-        if (sl.slam && u > 0.8) out += (u - 0.8) * 40; // ... and lands a little further out
+      dir = (Math.cos(aim) < 0 ? -1 : 1) * (sl.slam || b.swings % 2 === 0 ? 1 : -1);
+      if (swinging) {
+        const u = Math.min(1, prog / 0.6), k = sl.slam ? u * u * u : 1 - (1 - u) * (1 - u); // the hammer speeds up into the slam
+        off = dir * (-half + 2 * half * k);
+        if (sl.slam) { if (u > 0.8 && prog < 0.75) out += (u - 0.8) * 40; if (prog > 0.6) off = dir * half * (1 - (prog - 0.6) / 0.4); }
+        b.woff = off;
       } else {
-        const u = (prog - 0.6) / 0.4, e = u * u * (3 - 2 * u);
-        A = aim + dir * half * (1 - e);
+        b.woff = (b.woff ?? 0) * Math.exp(-dt * (fighting ? 2 : 7)); // hold the follow-through a moment, then settle
+        off = b.woff;
       }
-      // the Ninja slash arc in step with the blade: it starts as the blade enters the sweep and plays over the sweep,
-      // centred on the aim and curving the way the blade goes
-      if (prog >= 0.08 && b.arcFor !== b.swings) {
+      // the Ninja slash arc in step with the blade: it plays over the sweep, centred on the aim with its bulge
+      // pointing out along the aim (the art's bulge is its +y side)
+      if (swinging && prog >= 0.08 && b.arcFor !== b.swings) {
         b.arcFor = b.swings;
         if (!this.anims.exists('na-arc')) this.anims.create({ key: 'na-arc', frames: this.anims.generateFrameNumbers('na-arc', {}), frameRate: 22 });
-        const blade = (WIMG[art].up ? WIMG[art].h : WIMG[art].w) * WSCALE, r = EDGE_X + HOVER + blade * 0.35, sweepT = b.swingDur * 0.6 * (1 - 0.08 / 0.6);
-        const arc = this.add.sprite(cx + Math.cos(aim) * r, cy + Math.sin(aim) * r * 0.75, 'na-arc', 0).setScale(Math.max(0.9, (blade * 1.15) / 38))
-          .setRotation(aim).setFlipY(dir < 0).setDepth(b.body.depth + 3);
+        const blade = (WIMG[art].up ? WIMG[art].h : WIMG[art].w) * WSCALE, r = EDGE_X + HOVER + blade * 0.55, sweepT = b.swingDur * 0.6 * (1 - 0.08 / 0.6);
+        const sa = b.swingA;
+        const arc = this.add.sprite(cx + Math.cos(sa) * r, cy + Math.sin(sa) * r * 0.75, 'na-arc', 0).setScale(Math.max(1, (blade * 1.6) / 38))
+          .setRotation(sa - Math.PI / 2).setFlipX(dir < 0).setDepth(b.body.depth + 3).setAlpha(0.9);
         arc.play({ key: 'na-arc', frameRate: 6 / Math.max(0.1, sweepT) }).once('animationcomplete', () => arc.destroy());
       }
     }
+    const A = aim + off;
     const L = Math.cos(A) < 0;
     const g = spot(A, out);
     const px = g.x, py = g.y + bob;
@@ -565,7 +580,10 @@ export class DungeonScene extends Phaser.Scene {
     // the Riddare's shield: hovers on the far side from the sword; raised in front on a sidestep or the shield wall
     if (w === 'shield' && b.weapon2) {
       if (b.weapon2.texture.key !== 'w-shield') b.weapon2.setTexture('w-shield');
-      const sa = guard ? aim : aim + (Math.cos(aim) < 0 ? 1 : -1) * 1.9;
+      // the shield eases between its rest spot (far side) and the guard spot (in front) instead of popping
+      const sTarget = guard ? aim : aim + (Math.cos(aim) < 0 ? 1 : -1) * 1.9;
+      b.wsa = b.wsa === undefined ? sTarget : b.wsa + wrap(sTarget - b.wsa) * Math.min(1, dt * 14);
+      const sa = b.wsa;
       const sg = spot(sa, guard ? 6 : -4);
       b.weapon2.setVisible(true).setFlipX(Math.cos(sa) < 0).setScale(WSCALE * (guard ? 1.2 : 1)).setRotation(0).setOrigin(0.5, 0.5)
         .setPosition(sg.x, sg.y - bob).setDepth(b.body.depth + (guard || Math.sin(sa) > -0.35 ? 2 : -1));
@@ -690,7 +708,7 @@ export class DungeonScene extends Phaser.Scene {
       case 'swing': {
         const b = this.heroes.get(f.id);
         if (b) {
-          b.swingDur = f.w === 'hammer' ? 0.4 : 0.26; b.swingT = b.swingDur; b.swingA = f.a; b.swings++;
+          b.swingDur = f.w === 'hammer' ? 0.4 : 0.26; b.swingT = b.swingDur; b.swingA = f.a; b.swings++; b.lastSwing = this.time.now;
         }
         // a dagger stab: a small friendly spark at the stabbing sai's tip when it lands
         if (b && f.w === 'dagger') this.time.delayedCall(b.swingDur * 450, () => { const s2 = b.swings % 2 === 0 ? b.weapon : b.weapon2; if (s2?.visible) this.nfx('nf-star', s2.x + Math.cos(f.a) * 18, s2.y + Math.sin(f.a) * 14, 1.1, 0xfff2b0); });
