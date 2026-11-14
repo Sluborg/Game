@@ -40,7 +40,7 @@ Make ONE image per reply and wait for "next".
 | A-4 | WAITING (paused: art direction first, see D-orders) | Dungeon entrance, meadow + snow | `dungeon/entrance.png`, `entrance-snow.png` |
 | A-5 | WAITING (paused: art direction first, see D-orders) | Base buildings (build menu picture cards + on the map) | `base/*` buildings |
 | A-6 | WAITING (Rogue weapon decision) | Weapon cards: daggers, sword, hammer, spear | `dungeon/card-dagger.png`, `card-sword.png`, `card-hammer.png`, `card-spear.png` |
-| A-7 | WAITING (style pick on the board) | Meadow props incl. berry bush | `props/*`, `gather/bush-*` |
+| A-7 | WAITING (paused: art direction first, see D-orders) | Meadow props incl. berry bush (cozy storybook style) | `props/*`, `gather/bush-*` |
 | A-8 | WAITING (variants on the board) | Dungeon buttons, goo enemies, skill icons, back arrow | `dungeon/btn-*`, `enemies/*`, `dungeon/skills/*`, `icons/back.png` |
 | A-9 | WAITING (paused: art direction first, see D-orders) | Bärregn mini game: bomb, falling berries, basket, plop, fence | `mini/bomb.png`, `mini/berries.png`, `mini/basket.png`, `mini/plop.png`, `mini/fence-*.png` |
 | A-10 | WAITING (after A-7 style pick) | Winter props in the same style as A-7 | `props-winter/*` |
@@ -133,7 +133,7 @@ On each card the same neutral white blob, centred, holding the weapon: 1 two sho
 2 a sword raised, 3 a big hammer held over its shoulder, 4 a long spear held upright. Blobz wear no hats.
 ```
 
-### A-7 Meadow props (WAITING)
+### A-7 Meadow props
 ```
 Order I-4: meadow props, sheet 5 columns x 3 rows, in this order: 1 round green tree, 2 orange autumn tree,
 3 pine tree, 4 small rock, 5 big boulder, 6 berry bush full of red berries, 7 the same bush picked empty,
@@ -141,8 +141,10 @@ Order I-4: meadow props, sheet 5 columns x 3 rows, in this order: 1 round green 
 13 berries item, 14 small pond, 15 grass tuft. Items (11-13) a bit bigger and very readable for kids.
 Second sheet (4 columns x 2 rows): 1 pressure plate up, 2 pressure plate pressed down, 3 wooden gate closed,
 4 wooden gate open, 5 gate post, 6 wooden fence piece, 7 treasure chest closed, 8 treasure chest open.
-[Add the chosen direction here: A "polished current", B "cozy storybook: warmer colours, soft light, light outline
-glow on items", or C "chunky bold: thick outlines, few colours, high contrast".]
+DIRECTION "cozy storybook": warm, friendly colours (golden-green grass tones, warm wood, rosy berries), soft
+sunny light from the top-left, rounded fluffy shapes, small charming details (a few flowers, moss, leaf veins).
+Items 11-13 get a thin light-yellow glow line just outside the plum outline so they pop on grass. Still crisp pixels:
+no blur, no gradients, no soft brushes; shading is flat bands only.
 Also: the berry bush (full and picked) must look lush and appetising: fluffy round leaves, 6-8 big shiny red berries.
 ```
 
@@ -172,9 +174,11 @@ Art slices into `public/art/mini/` (bomb ~12x12, berries ~10x10, basket ~12x10, 
 16 px tiles) and tells Code the sizes.
 
 
-### A-10 Winter props (WAITING: same style as the picked A-7)
+### A-10 Winter props
 ```
-Order A-10: the snow-map versions of the meadow props, same style and pixel size as order A-7, sheet 5 columns x 2 rows:
+Order A-10: the snow-map versions of the meadow props, same "cozy storybook" style and pixel size as order A-7
+(warm friendly colours under the snow, soft top-left light, rounded fluffy shapes, snow as soft white caps with
+light-blue shade bands, flat colours, no blur), sheet 5 columns x 2 rows:
 1 snowy round tree, 2 snowy pine tree, 3 small snowy pine, 4 bare winter tree, 5 snowy rock, 6 ice rock (blue,
 crystal-like, glinting), 7 winter berry bush with snow on top and red berries, 8 the same bush picked empty,
 9 snowy tree stump, 10 snowman with a carrot nose.
