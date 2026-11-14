@@ -35,5 +35,8 @@ export const sfx = {
     else tone(330, 0.07, 'triangle', 0.08, 120);
     if (drop) setTimeout(() => tone(880, 0.09, 'triangle', 0.1, 300), 90);
   },
+  wave: (boss: boolean) => { tone(boss ? 110 : 160, 0.3, 'sawtooth', 0.06, -40); setTimeout(() => tone(boss ? 90 : 130, 0.35, 'sawtooth', 0.06, -40), 220); },
+  splat: () => { tone(260, 0.12, 'triangle', 0.14, -200); setTimeout(() => tone(700, 0.08, 'triangle', 0.08, 200), 70); },
+  steal: () => tone(420, 0.18, 'square', 0.06, -260),
   star: () => { tone(784, 0.15, 'square', 0.07); setTimeout(() => tone(1175, 0.25, 'square', 0.07), 120); },
 };

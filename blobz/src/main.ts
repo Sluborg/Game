@@ -9,7 +9,7 @@ import { ClientNet, HostNet, friendlyError, type ToClient } from './net';
 import { lanNamespace, Scanner, type FoundRoom } from './discovery';
 import { sfx, unlockAudio } from './sfx';
 import {
-  addPlayer, createState, makeTrees, MAX_PLAYERS, nodeTool, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
+  addPlayer, createState, gooNear, makeTrees, MAX_PLAYERS, nodeTool, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
   toolNode, viewFromSnapshot, viewFromState,
 } from './sim';
 import type { FxEvent, Input, PlayerInfo, Snapshot, State, View } from './sim';
@@ -314,7 +314,8 @@ function onView(v: View) {
   const me = v.players.find((p) => p.id === session?.myId);
   // action button: the tool of the nearest node in reach, else dash
   if (session && treesFor.seed !== session.seed) treesFor = { seed: session.seed, trees: makeTrees(session.seed) };
-  const node = me ? toolNode(treesFor.trees, (i) => v.nodes[i] ?? 0, me.x, me.y) : -1;
+  // a goo close by: the button attacks (dash), like the host sim decides
+  const node = me && !gooNear(v.goos ?? [], me.x, me.y) ? toolNode(treesFor.trees, (i) => v.nodes[i] ?? 0, me.x, me.y) : -1;
   controls.setTool(node >= 0 ? nodeTool(treesFor.trees[node].kind) : null);
   controls.setCooldown(!!me && me.dashCd > 0);
   if (v.phase === 'end' && !endShown) {
