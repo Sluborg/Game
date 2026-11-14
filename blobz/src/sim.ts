@@ -174,8 +174,9 @@ export function cleanVillage(raw: unknown): Village {
 export const built = (s: { builds: { kind: BuildKind; state: number }[] }, k: BuildKind) => s.builds.some((b) => b.kind === k && b.state === 2);
 
 // ---- the water corner: a seeded corner (not a puzzle corner) behind water; the bridge opens it ----
-export const WATER_W = 48;
-const AREA_W = 300, AREA_H = 250;
+/** Water channel = 2 tiles of 32 px; the corner area is a whole number of tiles, so all water sits on the 32 px grid. */
+export const WATER_W = 64;
+const AREA_W = 288, AREA_H = 256;
 export interface WaterLayout { corner: number; area: Rect; water: Rect[]; withBridge: Rect[]; bridge: { x: number; y: number } }
 export function makeWater(seed: number): WaterLayout {
   const used = puzzleCorners(seed);
