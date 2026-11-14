@@ -48,3 +48,8 @@ Blobz are drawn in code (`src/blob.ts`) as pixel SVG/canvas: color, eyes, mouth 
 | `art/fine/**/*.png` | Own art (CC0) by `scripts/fine_art.py` (fine 2x redraws of own sprites, ground tiles in the Kenney Tiny palette) | Fine-resolution world sprites, fx and ground tiles |
 | Water shore autotiles (proposal, `docs/art-review/variants-water.png`) | Kenney Tiny Battle 1.0 (CC0, vendored above): frames 18-20, 36-38, 54-56 (shore), 37/92 (water), 90/91 (inner corners), 39 (halves for the south inner corners); variant B = Scale2x pass by `scripts/water_variants.py`, variant C = own art in the same palette | Meadow water corner (pending the board pick) |
 | `art/fine/icons/*` hint icons | Own art (CC0) by `scripts/hint_icons.py` | Quest / hint / tutorial icons |
+
+## Ninja Adventure (Pixel-boy & AAA) — CHOSEN main art pack (2026-11-14)
+- Source: https://pixel-boy.itch.io/ninja-adventure-asset-pack (full pack, downloaded by Stefan)
+- License: CC0 1.0 (see `public/assets/ninja-adventure/LICENSE.txt`)
+- Vendored: Actor, Backgrounds, FX, Items, Ui (images). Audio (96 MB) not vendored yet; a curated, compressed subset will follow.
