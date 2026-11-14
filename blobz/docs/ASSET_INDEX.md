@@ -11,13 +11,13 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
   image / CSS background or border image / canvas icon, or a WebGL texture bound at a Phaser draw call); CODE ONLY =
   referenced but never shown in the run (remove the reference and the file); UNUSED = no reference and never shown.
 
-**Runtime run:** 2026-11-14, e2e 15/16 scripts passed (failed: dungeon-weapons.cjs, a swing-angle timing check slowed by the hook). **Own files:** CODE ONLY 88 / IN GAME 60 / UNUSED 10.
+**Runtime run:** 2026-11-14, e2e 15/16 scripts passed (failed: dungeon-weapons.cjs, a swing-angle timing check slowed by the hook). **Own files:** CODE ONLY 88 / IN GAME 60 / UNUSED 6.
 
 **Claude-drawn still IN GAME** (38): `art/base/bridge.png`, `art/base/btn-build.png`, `art/base/cottage-2.png`, `art/base/cottage-3.png`, `art/base/garden.png`, `art/base/storage.png`, `art/base/watchtower.png`, `art/base/well.png`, `art/base/workshop.png`, `art/dungeon/ko-stars.png`, `art/dungeon/weapons/ninja-crossbow.png`, `art/dungeon/weapons/ninja-shield.png`, `art/fine/dungeon/ko-stars.png`, `art/fine/dungeon/shockwave.png`, `art/fine/dungeon/slam-warning.png`, `art/fine/fx/coin-sparkle.png`, `art/fine/fx/dust.png`, `art/fine/fx/levelup.png`, `art/fine/fx/plate-glow.png`, `art/fine/gather/chips-stone.png`, `art/fine/gather/chips-wood.png`, `art/fine/icons/base-marker.png`, `art/fine/icons/magnet.png`, `art/fine/icons/quest-home.png`, `art/fine/icons/speed.png`, `art/gather/bar-fill-green.png`, `art/gather/btn-axe.png`, `art/gather/btn-pickaxe.png`, `art/gather/btn-rake.png`, `art/gather/daybar-fill.png`, `art/gather/daybar-frame.png`, `art/gather/hud-berries.png`, `art/gather/hud-stone.png`, `art/gather/hud-wood.png`, `art/gather/item-berries.png`, `art/gather/quest-card.png`, `art/gather/sun.png`, `art/props/berry-bush-ninja.png`
 
 **Kenney still IN GAME** (0): none
 
-**Counts by source:** ChatGPT 83 / Claude-drawn 64 / Kenney 11 / Ninja 2037 (Ninja: 106 referenced by code). **Own files:** 158, 0 delete candidates.
+**Counts by source:** ChatGPT 79 / Claude-drawn 64 / Kenney 11 / Ninja 2037 (Ninja: 106 referenced by code). **Own files:** 154, 0 delete candidates.
 
 ## Own files (art, Kenney, app icons)
 
@@ -53,15 +53,11 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/dungeon/ko-stars.png` | 40x9 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | IN GAME | src/style.css:674 | replace (see OLD_ART_CHECKLIST) |
 | `art/dungeon/potion.png` | 16x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | CODE ONLY | src/dungeonScene.ts:807 | replace (see OLD_ART_CHECKLIST) |
 | `art/dungeon/revive.png` | 48x20 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | CODE ONLY | src/dungeonScene.ts:762 | replace (see OLD_ART_CHECKLIST) |
-| `art/dungeon/weapons/dagger-1.png` | 16x6 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/dungeon/weapons/dagger-2.png` | 16x7 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/dungeon/weapons/daggers.png` | 16x14 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/weapons/hammer.png` | 20x13 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:39, src/dungeonScene.ts:710, src/dungeonScene.ts:714 | keep |
 | `art/dungeon/weapons/ninja-crossbow.png` | 16x10 | Claude-drawn: scripts/ninja_weapons.py (Ninja palette) | Own art (CC0) | IN GAME | src/dungeonScene.ts:36 | keep (pending Stefan rating) |
 | `art/dungeon/weapons/ninja-shield.png` | 12x12 | Claude-drawn: scripts/ninja_weapons.py (Ninja palette) | Own art (CC0) | IN GAME | src/dungeonScene.ts:35 | keep (pending Stefan rating) |
 | `art/dungeon/weapons/shield.png` | 19x19 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:21, src/dungeonScene.ts:38, src/dungeonScene.ts:492 (+2) | keep |
 | `art/dungeon/weapons/spear.png` | 38x8 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:714 | keep |
-| `art/dungeon/weapons/staff.png` | 29x9 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/weapons/sword.png` | 27x11 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:39, src/dungeonScene.ts:392 | keep |
 | `art/fine/dungeon/ko-stars.png` | 80x18 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | IN GAME | src/game.ts:224 | replace (see OLD_ART_CHECKLIST) |
 | `art/fine/dungeon/shockwave.png` | 288x48 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | IN GAME | src/game.ts:226 | replace (see OLD_ART_CHECKLIST) |
@@ -306,7 +302,7 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `assets/ninja-adventure/preview-part-1.png` | 641x417 | Ninja Adventure (pack preview / palette) | CC0 1.0 | UNUSED | keep (reference) |
 | `assets/ninja-adventure/preview-part-2.png` | 641x417 | Ninja Adventure (pack preview / palette) | CC0 1.0 | UNUSED | keep (reference) |
 
-## Archived (`blobz/archive/`, not shipped): 144 files
+## Archived (`blobz/archive/`, not shipped): 148 files
 
 See `archive/README.md`.
 
@@ -388,6 +384,10 @@ See `archive/README.md`.
 | `archive/art/dungeon/weapon-hammer.png` | 176x48 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
 | `archive/art/dungeon/weapon-spear.png` | 272x48 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
 | `archive/art/dungeon/weapon-sword.png` | 176x48 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/weapons/dagger-1.png` | 16x6 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/weapons/dagger-2.png` | 16x7 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/weapons/daggers.png` | 16x14 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/weapons/staff.png` | 29x9 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
 | `archive/art/dungeon/xp-fill.png` | 40x6 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
 | `archive/art/dungeon/xp-frame.png` | 42x8 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
 | `archive/art/enemies/goo-boss.png` | 29x29 | ChatGPT order 50 (goo enemies), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
