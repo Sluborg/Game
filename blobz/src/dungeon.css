@@ -136,7 +136,11 @@
 #dg-pass { background: #f1e4c6; color: #3f2631; }
 #dg-loot-msg { font-size: 14px; color: #8a7466; min-height: 18px; }
 @media (orientation: landscape) and (max-height: 500px) {
-  #dg-loot { bottom: auto; top: 8px; left: auto; right: 140px; transform: none; width: 300px; }
+  /* landscape: the loot card bottom-left (under the HUD), the level-up cards top-right, so they never overlap */
+  #dg-loot { bottom: 8px; top: auto; left: max(10px, env(safe-area-inset-left)); right: auto; transform: none; width: 290px; padding: 4px 8px; }
+  #dg-loot-title { font-size: 17px; margin-bottom: 2px; }
+  #dg-loot .lootside .dgicon, #dg-loot .lootside i { width: 44px; height: 44px; }
+  #dg-loot-btns { margin: 4px 0 2px; }
 }
 
 #dg-cards-safe { margin-top: 6px; font-size: 13px; font-weight: 700; color: #2f8a2f; }
@@ -199,3 +203,6 @@
 #hud.dungeon #dash:active { border-image-source: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/button_pressed.png'); }
 /* rogue weapon cards: the Ninja weapon sprite, upright, big and crisp */
 .wcard img.wpnimg { object-fit: contain; padding: 14px 30px; box-sizing: border-box; image-rendering: pixelated; }
+
+/* gold: the round Ninja coin (frame 0 of the Coin2 strip) instead of the square GoldCoin */
+#dg-row img.icon, #dg-end .dgstat img.icon { object-fit: cover; object-position: 0 50%; aspect-ratio: 1; }
