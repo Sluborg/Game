@@ -568,6 +568,16 @@ def special_shield():
     return mono_icon(d)
 
 
+def build_icon():
+    """Build button: a small house with a hammer over it (cream, 20x20)."""
+    def d(c):
+        ba.comp(c, ba.poly([(0.5, 11), (6.5, 5), (12.5, 11)]) | ba.rect(2, 11, 11, 18), CREAM)  # house
+        ba.comp(c, ba.rect(5, 13, 7, 18), ba.rgb(226, 207, 178), outline=False)  # door
+        ba.comp(c, ba.rect(15, 6, 16, 18), CREAM)  # hammer handle
+        ba.comp(c, ba.rect(12, 2, 19, 5), CREAM)  # hammer head
+    return mono_icon(d)
+
+
 def arrow_img():
     c = Canvas(13, 5)
     ba.comp(c, ba.rect(3, 2, 9, 2), ba.WOOD[0])
@@ -761,6 +771,7 @@ def main():
     out.update(class_cards())
     out.update(skill_icons())
     os.makedirs(os.path.join(OUT_DIR, 'skills'), exist_ok=True)
+    build_icon().save(os.path.join(ROOT, 'public', 'art', 'base', 'btn-build.png'))  # base UI, drawn with the button icons
     for name, im in out.items():
         im.save(os.path.join(OUT_DIR, name))
         print(f'{name:22s} {im.size}')

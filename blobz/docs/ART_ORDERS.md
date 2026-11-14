@@ -34,7 +34,7 @@ Make ONE image per reply and wait for "next".
 | A-2 | READY | Cottage level 2 and 3 + snow igloo, matching the loading-screen house | `base/cottage-2.png`, `cottage-3.png`, `props-winter/igloo.png` |
 | A-3 | READY | Landscape loading screen | `art/loading-landscape.png` |
 | A-4 | READY | Dungeon entrance, meadow + snow | `dungeon/entrance.png`, `entrance-snow.png` |
-| A-5 | WAITING (base redesign in progress) | Base buildings | `base/*` buildings |
+| A-5 | READY | Base buildings (build menu picture cards + on the map) | `base/*` buildings |
 | A-6 | WAITING (Rogue weapon decision) | Weapon cards | `dungeon/card-sword.png`, `card-hammer.png`, `card-spear.png` |
 | A-7 | WAITING (style pick on the board) | Meadow props incl. berry bush | `props/*`, `gather/bush-*` |
 | A-8 | WAITING (variants on the board) | Dungeon buttons, goo enemies, skill icons, back arrow | `dungeon/btn-*`, `enemies/*`, `dungeon/skills/*`, `icons/back.png` |
@@ -84,9 +84,10 @@ stone steps going down inside, a few grass tufts and a small torch on each side;
 icicles on the cave edge, no grass. Both the same size and angle, about as wide as a small house.
 ```
 
-### A-5 Base buildings (WAITING)
+### A-5 Base buildings
+Reference for the look (the base cottage is the house in this image): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/art/loading.png
 ```
-Order I-1: base buildings the blob team builds around their cottage, sheet 4 columns x 3 rows, each building twice:
+Order A-5: in the same style as the cottage in the reference image (red roofs, cream walls, warm wood), base buildings the blob team builds around their cottage, sheet 4 columns x 3 rows, each building twice:
 first as a CONSTRUCTION SITE (wooden scaffold, half-built walls, a plank pile and a stone, dirt patch), then FINISHED.
 Same footprint and camera angle for both versions of a building. Order:
 1 bridge site, 2 bridge finished (small wooden arched bridge with railings, for a 2-3 tile water gap, left-right),

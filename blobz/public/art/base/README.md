@@ -29,3 +29,7 @@ a plank pile and a stone, so they read as "being built" and match the finished f
 
 ## Build spot marker
 `build-spot.png` (40x30): dotted cream ring on the ground + small sign with a hammer. Anchor bottom centre.
+
+## Build button
+`btn-build.png` (20x20, cream, same style as the other button icons): a small house with a hammer, for the "Bygg" button.
+Drawn by `scripts/dungeon_art.py` with the other button icons.
