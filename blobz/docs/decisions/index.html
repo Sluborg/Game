@@ -241,7 +241,8 @@ function renderQuestion(q) {
     card.append(seg);
   }
   if (Array.isArray(q.flagRows)) {
-    const f = state.flags[q.id] || { flagged: [], notes: {} };
+    const src = state.flags[q.id] || {};
+    const f = { flagged: [...(src.flagged || [])], notes: { ...(src.notes || {}) } }; // db docs are frozen: always work on a copy
     // local copy wins while edits are pending; writes are debounced and sent one at a time
     const save = (next, st) => {
       if (!needDb(st)) return;

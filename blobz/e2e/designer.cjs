@@ -34,10 +34,10 @@ const tab = (p) => p.getAttribute('.tab.on', 'data-part');
     const after = await p.evaluate(() => JSON.parse(localStorage.getItem('blobz.look')));
     ok(JSON.stringify(before) === JSON.stringify(after) && await tab(p) === 'color', 'a short drag does not switch tab');
     await p.click('.tab[data-part="hat"]');
-    await p.locator('#opts .opt').nth(19).click();
+    await p.locator('#opts .opt').last().click(); // blobz v2: 8 hats
     await p.click('.tab[data-part="shape"]'); await p.click('.tab[data-part="hat"]');
     const vis = await p.evaluate(() => { const o = document.getElementById('opts').getBoundingClientRect(); const t = document.querySelector('#opts .opt.on').getBoundingClientRect(); return t.top >= o.top - 2 && t.bottom <= o.bottom + 2; });
-    ok(vis, 'hat #20 chosen: switching back to Hatt scrolls it into view');
+    ok(vis, 'last hat chosen: switching back to Hatt keeps it in view');
     if (shots) { await p.waitForTimeout(400); await p.screenshot({ path: `${shots}/b-designer-portrait.png` }); }
     await p.reload();
     await p.click('#me').catch(() => {});
@@ -52,8 +52,9 @@ const tab = (p) => p.getAttribute('.tab.on', 'data-part');
     ok(tiles.every((h) => h >= 56 && h === tiles[0]), `landscape: every hat tile is the same readable height (${tiles[0]}px)`);
     const perRow = await lp.evaluate(() => { const t = [...document.querySelectorAll('#opts .opt')]; return t.filter((x) => Math.abs(x.offsetTop - t[0].offsetTop) < 2).length; });
     ok(perRow >= 6 && perRow <= 8, `landscape: ${perRow} tiles per row`);
-    const scrolls = await lp.evaluate(() => { const o = document.getElementById('opts'); return o.scrollHeight > o.clientHeight; });
-    ok(scrolls, 'landscape: the hat grid scrolls instead of squeezing');
+    // blobz v2 has 8 hats: the grid fits; with more it scrolls (never squeezes, tile height checked above)
+    const fitsOrScrolls = await lp.evaluate(() => { const o = document.getElementById('opts'); const last = [...o.querySelectorAll('.opt')].pop().getBoundingClientRect(); const ob = o.getBoundingClientRect(); return o.scrollHeight > o.clientHeight || last.bottom <= ob.bottom + 2; });
+    ok(fitsOrScrolls, 'landscape: the hat grid fits or scrolls (never squeezes)');
     if (shots) await lp.screenshot({ path: `${shots}/b-designer-landscape.png` });
     console.log('ALL PASSED');
   } finally {

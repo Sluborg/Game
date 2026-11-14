@@ -684,3 +684,18 @@ body { font-weight: 500; } /* Fredoka (Stefan's pick on the board) */
 @media (orientation: landscape) and (max-height: 520px) { .bicons img { height: 26px; } .bicons { min-height: 26px; } }
 .qtitle img { height: 24px; }
 #lobby-village .vbadge { height: 28px; }
+
+/* ---- blobz v2 (16x18 grid): menu blobz at whole multiples of the grid so pixels stay crisp ---- */
+.blob img { object-fit: contain; }
+.me .blob { width: 64px; height: 72px; }
+#preview2 { width: 128px; height: 144px; }
+.opt .blob { width: 48px; height: 54px; }
+#lobby-list .blob { width: 32px; height: 36px; }
+.lanrow .blob { width: 48px; height: 54px; }
+.mi-blob .blob { width: 48px; height: 54px; }
+@media (orientation: landscape) and (max-height: 520px) {
+  #preview2 { width: 96px; height: 108px; }
+  .opt .blob { width: 32px; height: 36px; }
+  #lobby-list .blob { width: 32px; height: 36px; }
+  .lanrow .blob { width: 32px; height: 36px; }
+}
