@@ -108,6 +108,72 @@ def attack_icon():
     return out
 
 
+CREAM = ba.CREAM
+
+
+def ring_pts(cx, cy, r0, r1, a0, a1, sy=1.0):
+    """Pixels of a ring sector between radii r0..r1 and angles a0..a1 (degrees, screen space)."""
+    out = set()
+    for y in range(int(cy - r1 * sy) - 1, int(cy + r1 * sy) + 2):
+        for x in range(int(cx - r1) - 1, int(cx + r1) + 2):
+            dx, dy = x + 0.5 - cx, (y + 0.5 - cy) / sy
+            d = math.hypot(dx, dy)
+            a = math.degrees(math.atan2(dy, dx)) % 360
+            span = (a - a0) % 360
+            if r0 <= d <= r1 and span <= (a1 - a0) % 360:
+                out.add((x, y))
+    return out
+
+
+def mono_icon(draw):
+    c = Canvas(20, 20)
+    draw(c)
+    return c.image()
+
+
+def special_sword():
+    """Sword with a spin arrow around it."""
+    def d(c):
+        ba.comp(c, ring_pts(10, 10, 7.2, 8.8, 200, 150), CREAM)
+        ba.comp(c, {(14, 16), (15, 16), (16, 16), (15, 17), (15, 15), (16, 15), (14, 17)}, CREAM)  # arrow head
+    im = mono_icon(d)
+    sw = ga.tool_frame(sword, -45, size=(20, 20), pivot=(6, 14), scale=0.5, mono=ga.MONO)
+    im.alpha_composite(sw)
+    return im
+
+
+def special_hammer():
+    """Hammer coming down with impact lines."""
+    im = ga.tool_frame(hammer, -20, size=(20, 20), pivot=(3, 8), scale=0.75, mono=ga.MONO)
+    c = Canvas(20, 20)
+    for (x0, y0, x1, y1) in ((14, 15, 17, 17), (10, 16, 10, 19), (17, 11, 19, 11)):
+        pts = {(x0 + round((x1 - x0) * t / 3), y0 + round((y1 - y0) * t / 3)) for t in range(4)}
+        ba.comp(c, pts, CREAM)
+    over = c.image()
+    over.alpha_composite(im)
+    return over
+
+
+def special_spear():
+    """Spear pointing right with speed lines behind (hand-placed: the rasterised shaft is too thin at 20 px)."""
+    def d(c):
+        for y, (x0, x1) in ((4, (1, 6)), (15, (1, 6))):
+            ba.comp(c, ba.rect(x0, y, x1, y), CREAM)
+        ba.comp(c, ba.rect(4, 9, 12, 10) | ba.poly([(12, 5.5), (19, 10), (12, 14.5)]), CREAM)
+        ba.comp(c, ba.rect(11, 8, 12, 11), ba.rgb(226, 207, 178), outline=False)  # binding
+    return mono_icon(d)
+
+
+def sidestep_icon():
+    """Blob silhouette with a sideways double arrow."""
+    def d(c):
+        ba.comp(c, ba.ellipse(7, 12, 5, 5) | ba.rect(2, 12, 12, 16), CREAM)
+        ba.comp(c, ba.ellipse(7, 12, 5, 5) - ba.rect(0, 0, 20, 8), CREAM, outline=False)
+        for x0 in (13, 16):
+            ba.comp(c, {(x0, 7), (x0 + 1, 8), (x0 + 2, 9), (x0 + 1, 10), (x0, 11)}, CREAM)
+    return mono_icon(d)
+
+
 DASH_SMALL = ['UU..UU..', 'UcU.UcU.', '.UcU.UcU', 'UcU.UcU.', 'UU..UU..']
 
 
@@ -252,6 +318,63 @@ def chest(open_):
     return c.image()
 
 
+# ---------------------------------------------------------------- special-attack and sidestep fx
+def spin_arc():
+    """4 frames, 48x40: a white slash arc sweeping around the blob (centre 24,22)."""
+    frames = []
+    for i in range(4):
+        c = Canvas(48, 40)
+        a0 = -90 + i * 90
+        ba.comp(c, ring_pts(24, 22, 15, 19, a0, a0 + 150, sy=0.8), ba.SMOKE[1])
+        ba.comp(c, ring_pts(24, 22, 16.5, 18, a0 + 100, a0 + 150, sy=0.8), CREAM, outline=False)
+        frames.append(c.image())
+    return strip(frames)
+
+
+def slam_ring():
+    """4 frames, 56x28: ground shockwave with stone chips flying out."""
+    frames = []
+    for i, (rx, t) in enumerate(((8, 2.5), (14, 2.5), (20, 2), (25, 1.5))):
+        c = Canvas(56, 28)
+        ring = ba.ellipse(28, 15, rx, rx * 0.48) - ba.ellipse(28, 15, rx - t, rx * 0.48 - t)
+        ba.comp(c, ring, ba.SMOKE[0] if i < 3 else ba.SMOKE[2])
+        if i in (1, 2):
+            for k in range(5):
+                a = math.radians(-160 + k * 35)
+                x, y = 28 + (rx + 3) * math.cos(a), 13 + (rx * 0.48 + 3 + i * 2) * math.sin(a)
+                ba.comp(c, ba.rect(round(x), round(y), round(x) + 1, round(y) + 1), ba.shaded(ba.STONE))
+        frames.append(c.image())
+    return strip(frames)
+
+
+def charge_streak():
+    """3 frames, 48x16: speed streaks left behind a charging blob (blob on the right edge)."""
+    frames = []
+    for i in range(3):
+        c = Canvas(48, 16)
+        for k, y in enumerate((4, 8, 12)):
+            length = (30, 40, 22)[k] - i * 8
+            x1 = 46 - (k % 2) * 4
+            ba.comp(c, ba.rect(max(1, x1 - length), y, x1, y), ba.SMOKE[1] if k != 1 else CREAM)
+        frames.append(c.image())
+    return strip(frames)
+
+
+def sidestep_puff():
+    """3 frames, 24x24: fading afterimage of the blob + a dust puff where it stood."""
+    frames = []
+    for i in range(3):
+        c = Canvas(24, 24)
+        if i < 2:  # ghost silhouette, dotted
+            ghost = (ba.ellipse(12, 12, 9 - i, 8 - i) | ba.rect(3 + i, 12, 20 - i, 20 - i)) - (ba.ellipse(12, 12, 7 - i, 6 - i) | ba.rect(5 + i, 12, 18 - i, 18 - i))
+            ba.comp(c, {(x, y) for (x, y) in ghost if (x + y + i) % 2 == 0}, ba.SMOKE[1], outline=False)
+        for (cx, cy, r) in ((7, 20, 2.5 - i * 0.5), (12, 21, 3 - i * 0.6), (17, 20, 2.5 - i * 0.5)):
+            if r > 1:
+                ba.comp(c, ba.ellipse(cx - i, cy, r, r * 0.8), ba.shaded(ba.SMOKE))
+        frames.append(c.image())
+    return strip(frames)
+
+
 def main():
     out = {
         'weapon-sword.png': weapon_strip(sword),
@@ -262,6 +385,14 @@ def main():
         'card-spear.png': card(spear, ba.ROOF_BLUE, 0.95, pivot=(13, 29)),
         'btn-attack.png': attack_icon(),
         'btn-dash-small.png': ga.from_rows(DASH_SMALL),
+        'btn-special-sword.png': special_sword(),
+        'btn-special-hammer.png': special_hammer(),
+        'btn-special-spear.png': special_spear(),
+        'btn-sidestep.png': sidestep_icon(),
+        'fx-spin.png': spin_arc(),
+        'fx-slam.png': slam_ring(),
+        'fx-charge.png': charge_streak(),
+        'fx-sidestep.png': sidestep_puff(),
         'entrance.png': entrance(),
         'stairs-up.png': stairs(True),
         'stairs-down.png': stairs(False),
