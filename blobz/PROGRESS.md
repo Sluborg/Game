@@ -145,3 +145,12 @@
 - Existing eyes/mouths/hats are 2x-upscaled design-unit maps (placeholders) until the ChatGPT part sheets
   (orders 80-110, `docs/chatgpt-parts-prompt.txt`) arrive; then parts are sliced to native pixels and
   anchored per shape. In-game scale 2.9 -> 1.45 (same on-screen size).
+
+## 2026-11-14 - v020b: gem row
+- HUD stars: hand-drawn 11x9 pixel gems (`gem.png`, `gem-empty.png` = translucent slot) in a row beside the score, thin progress bar below (no icons sitting on the bar). End screen uses the same gems.
+- Team: Art (parts set) and Code (code-free join) running; queued next: milestone 30, 40, 50.
+
+## 2026-11-14 - v021: code-free join (Code batch merged)
+- Merged `claude/blobz-code` (c543ad8..4b02a2d): Wi-Fi discovery via hashed public IP (STUN srflx, SHA-256, 10 hex) and PeerJS slots `blobz-v2-<hash>-<1..8>`; Joina screen lists "Joina <name> n/5" (full = grey, started = "pågår"); no codes anywhere; "Hittar inga spel. Är ni på samma Wi-Fi?" + "Leta igen".
+- Lead review: conflicts with v020b gem row resolved (kept gem row, dropped HUD code box). 13 tests, build, Code e2e `node e2e/lan-join.cjs <url>` ALL PASSED (uses `?lan=` because the sandbox has no STUN/UDP); screenshots checked.
+- Risk: real STUN path only verifiable on two phones on the same Wi-Fi.
