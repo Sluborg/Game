@@ -229,8 +229,28 @@ for k, v in SKILLS.items():
     ROWS.append(('Dungeon skills', f'art/dungeon/skills/{k}.png', 'level-up skill card (dungeon.ts SKILLS)', C2, f'{SI}{v}.png 24x24 (+ {v.split("/")[-1]}Disabled.png for locked)'))
 
 
+# Code 2 made the whole dungeon Ninja (claude/blobz-dungeon d0f50b9, verified by grep of dungeon*.ts/.css + shared files)
+C2_DONE_AT = 'd0f50b9'
+C2_KEEP = {'art/dungeon/card-class-rogue.png', 'art/dungeon/card-class-healer.png', 'art/dungeon/card-class-marksman.png',
+           'art/dungeon/card-class-tank.png'}  # ChatGPT N-5, stay
+C2_EXTRA = {'art/icons/coin.png', 'assets/kenney-tiny-dungeon/tilemap_packed.png'}
+
+
+def finalize(rows):
+    out = []
+    for area, f, where, owner, rep in rows:
+        if area == 'Snow world' or f == 'art/dungeon/entrance-snow.png':
+            rep = 'ARCHIVED: snow map archived (Code keeps it behind a flag). Was: ' + rep
+        elif (area in ('Dungeon', 'Dungeon skills') and f not in C2_KEEP) or f in C2_EXTRA:
+            rep = f'DONE: Ninja in the dungeon (Code 2, {C2_DONE_AT}). Mapped to: ' + rep
+        out.append((area, f, where, owner, rep))
+    return out
+
+
 def kind(r):
     rep = r[4]
+    if rep.startswith('ARCHIVED'):
+        return 'archived'
     if rep.startswith('PENDING'):
         return 'pending'
     if rep.startswith('GAP'):
@@ -243,15 +263,17 @@ def kind(r):
 
 
 def main():
+    global ROWS
+    ROWS = finalize(ROWS)
     for r in ROWS:
         assert os.path.exists(os.path.join(ROOT, 'public', r[1])), r[1]
-    n = {'mapped': 0, 'stand-in': 0, 'pending': 0, 'gap': 0, 'done': 0}
+    n = {'mapped': 0, 'stand-in': 0, 'pending': 0, 'gap': 0, 'done': 0, 'archived': 0}
     for r in ROWS:
         n[kind(r)] += 1
     out = ['# Old art checklist: every non-Ninja image still used, and its Ninja replacement', '',
            'Made by Art for "replace old art" (Stefan). Source: grep of `src/`, `index.html`, `style.css`, `dungeon.css` on the',
            'deploy branch `claude/mobile-game-5-players-8qthjq` (cd8ceb3) plus the heads of `claude/blobz-code` (7fdedd0) and',
-           '`claude/blobz-dungeon` (05d0118); none of the branch heads adds a new old-art reference. Regenerate with',
+           '`claude/blobz-dungeon` (05d0118, re-checked at d0f50b9: the dungeon is Ninja now); none adds a new old-art reference. Regenerate with',
            '`python3 scripts/old_art_checklist.py` after editing the rows there.', '',
            '- **Ninja** paths are relative to `public/assets/ninja-adventure/`; rects are `x,y,w,h` (see `docs/ART_MAP.md`).',
            '- **GAP** = Ninja has nothing usable: needs a ChatGPT order (or an Art piece only with Stefan\'s OK).',
@@ -259,13 +281,13 @@ def main():
            '- **PENDING** = an Art piece made before the "no own art" rule; it waits for Stefan\'s rating.',
            '- Owner = who swaps the reference: Code (meadow, UI, `game.ts`/`main.ts`/`style.css`/`index.html`), Code 2 (`dungeon*`).',
            '- Tick the box when the game no longer loads the old file.', '',
-           f'**Counts: {len(ROWS)} total / {n["mapped"]} mapped to Ninja / {n["stand-in"]} Ninja stand-ins / {n["pending"]} pending Art rating / {n["gap"]} gaps / {n["done"]} done.**', '']
+           f'**Counts: {len(ROWS)} total / {n["mapped"]} mapped to Ninja / {n["stand-in"]} Ninja stand-ins / {n["pending"]} pending Art rating / {n["gap"]} gaps / {n["done"]} done / {n["archived"]} archived (snow).**', '']
     area = None
     for r in ROWS:
         if r[0] != area:
             area = r[0]
             out += ['', f'## {area}', '', '| Done | Old file (public/) | Used in | Owner | Ninja replacement |', '|---|---|---|---|---|']
-        out.append(f'| {"[x]" if kind(r) == "done" else "[ ]"} | `{r[1]}` | {r[2]} | {r[3]} | {r[4]} |')
+        out.append(f'| {"[x]" if kind(r) in ("done", "archived") else "[ ]"} | `{r[1]}` | {r[2]} | {r[3]} | {r[4]} |')
     out += ['', '## Not counted (on disk but not loaded)', '',
             'Old files nothing references any more (safe to delete later, by Lead): `art/icons/{boot,chest,log,magnet,dash,clock,diamond*,gem*,',
             'mushroom,sparkle,team}.png`, `art/gather/{item-stone,chips-*,btn-dash}.png`, `art/fx/*`, `art/fine/base/build-spot.png`,',

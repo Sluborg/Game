@@ -57,7 +57,11 @@ Reference for wiring art. **One art source:** CC0 "Ninja Adventure" pack, vendor
 | **Bridge (pre-assembled)** | Backgrounds/Tilesets/TilesetHouse.png | 144,240,64,46 | Wooden plank bridge with rails, crossing left-right. Green-stone version 144,304,64,46. |
 | Bridge / dock planks (tiled) | TilesetWater.png | 3x3 deck 0,192,48,48; 1-wide vertical 48,192,16,48; horizontal strip 0,240,64,16; big deck 64,192,80,80 | Plain orange planks with a dark bottom edge. |
 
-## 3. Snow map
+## 3. Snow map (ARCHIVED)
+
+> **Archived 2026-11-14:** the snow map is dropped from the game (Code keeps it behind a flag). The rows stay for
+> reference only; nothing here needs wiring.
+
 | Game object | File | Rect / frames | Notes |
 |---|---|---|---|
 | Snow fill (white) | TilesetFloor.png | 16,240,16,16 (tile 1,15) | Pure white. |

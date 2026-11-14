@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { BASE, cleanBiome, createState, ICE_RX, makeIce, makeTrees, onIce, step, type Input, type State } from './sim';
+import { BASE, cleanBiome, createState, ICE_RX, makeIce, makeTrees, onIce, step, type Input, type State, SNOW_MAP_ENABLED } from './sim';
 
 const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 });
 const run = (s: State, secs: number, inp: Map<string, Input>) => { for (let i = 0; i < secs * 60; i++) step(s, inp, 1 / 60); };
 
-describe('snow map', () => {
+describe.skipIf(!SNOW_MAP_ENABLED)('snow map (archived)', () => {
   it('biome: only "snow" is snow, anything else is the meadow; the meadow has no ice', () => {
     expect(cleanBiome('snow')).toBe('snow');
     expect(cleanBiome('lava')).toBe('meadow');
