@@ -1,10 +1,14 @@
 name: Deploy to GitHub Pages
 
+# TEMPORARY: Blobz borrows the Pages host. Pushes to the Blobz branch deploy
+# Blobz at /Game/, Asset Report main at /Game/asset-report/ and dev at /Game/dev/.
+# A push to main/dev runs THEIR copy of this workflow and restores the old layout.
 on:
   push:
     branches:
       - main
       - dev
+      - claude/mobile-game-5-players-8qthjq
   workflow_dispatch:
 
 permissions:
@@ -20,6 +24,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Blobz (this commit)
+        uses: actions/checkout@v4
+        with:
+          path: blobz-src
+
       - name: Checkout main (production)
         uses: actions/checkout@v4
         with:
@@ -37,11 +46,17 @@ jobs:
         with:
           node-version: 20
 
-      - name: Build main -> site root (/Game/)
+      - name: Build Blobz -> site root (/Game/)
+        working-directory: blobz-src/blobz
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build main -> /Game/asset-report/
         working-directory: main/web
         run: |
           npm ci
-          npm run build -- --base=/Game/
+          npm run build -- --base=/Game/asset-report/
 
       - name: Build dev -> site/dev (/Game/dev/)
         working-directory: dev/web
@@ -51,8 +66,9 @@ jobs:
 
       - name: Assemble combined site
         run: |
-          mkdir -p site
-          cp -r main/web/dist/. site/
+          mkdir -p site site/asset-report
+          cp -r blobz-src/blobz/dist/. site/
+          cp -r main/web/dist/. site/asset-report/
           mkdir -p site/dev
           cp -r dev/web/dist/. site/dev/
 

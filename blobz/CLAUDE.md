@@ -33,14 +33,14 @@ Stefan works phone-only; replies in Swedish or English, docs and code in English
   modify `web/`, `app/` or other Asset Report code. Only shared touch point: the Pages workflow
   builds `blobz/` and serves it at `/Game/blobz/` (main) and `/Game/dev/blobz/` (dev).
 
-## 30. Workflow (lightweight)
-plan -> build -> review -> PR -> merge
-1. **Plan** each milestone in a short reply (scope, files, assumptions). Wait for Stefan's go.
-2. **Build** in small conventional commits on the session's `claude/*` branch.
-3. **Review** the diff once with one independent reviewer subagent (gameplay fun for kids, code
-   quality, runs on a fresh clone, works at phone width). Fix blockers.
-4. **PR** against `dev`. Stefan may ask for Codex; if so, post `@codex review` and wait.
-5. **Merge** only on Stefan's explicit go. Never self-merge.
+## 30. Workflow (light: changes go straight into the live game)
+build -> verify -> push = live
+1. **Build** in small conventional commits on the Blobz branch (`claude/mobile-game-5-players-8qthjq`).
+2. **Verify** (build, tests, headless multi-player run) before every push.
+3. **Push** to the Blobz branch: the Pages workflow deploys it to https://sluborg.github.io/Game/
+   (Blobz temporarily borrows the Pages host; Asset Report main moves to `/Game/asset-report/`).
+   No PR, no Codex, no review gates unless Stefan asks for them.
+4. Big design changes (new mode, new milestone): one short plan reply first.
 
 ## 40. Milestones
 | Order | Milestone | Done when |
@@ -59,7 +59,7 @@ plan -> build -> review -> PR -> merge
 - Bottom-line-first summaries, files by path, no full code unless Stefan says "full file".
 
 ## 60. Hard stops
-- No commits to `main` or `dev` without a PR.
+- No commits to `main` or `dev` (Blobz ships from its own branch).
 - No changes outside `blobz/` except the Pages workflow entry (and the root CLAUDE.md pointer).
 - No assets without a verified open license.
 - No silent overwrite or delete.
