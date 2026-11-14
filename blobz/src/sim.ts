@@ -28,6 +28,68 @@ export type ItemKind = 'wood' | 'shroom' | 'coin';
 export type PowerKind = 'speed' | 'magnet';
 export const ITEM_POINTS: Record<ItemKind, number> = { wood: 1, shroom: 2, coin: 3 };
 export const GEM_POINTS = 15;
+export const CHEST_POINTS = 25;
+
+// ---- co-op puzzles: pressure plates open a fenced pen with a bonus chest ----
+export const PEN_W = 168; // outer size of the fenced pen
+export const PEN_H = 128;
+export const WALL = 14; // fence thickness
+export const GATE_W = 56; // gap in the fence that the gate closes
+export const PLATE_R = 24; // a blob centre this close stands on the plate
+const CHEST_R = 30;
+const PLATE_DIST = 86; // plates sit this far outside the gate
+const PLATE_SPREAD = 96;
+export interface Rect { x0: number; y0: number; x1: number; y1: number }
+/** Static puzzle geometry, rebuilt from the seed on every phone (never sent over the network). */
+export interface PuzzleLayout {
+  cx: number; cy: number;
+  gateDown: boolean; // gate on the bottom fence (pen above the base) or the top one
+  walls: Rect[];
+  gate: Rect;
+  plates: { x: number; y: number }[]; // 3 spots; the first `need` are used
+  chest: { x: number; y: number };
+  zone: Rect; // pen + plates, kept clear of trees and spawns
+}
+/** Live puzzle state (host-authoritative, synced in snapshots). */
+export interface Puzzle { need: number; mask: number; open: boolean; taken: boolean }
+
+const inRect = (r: Rect, x: number, y: number, pad = 0) => x > r.x0 - pad && x < r.x1 + pad && y > r.y0 - pad && y < r.y1 + pad;
+
+/** Two pens in two of the four map corners, gate facing the base. Deterministic from the seed. */
+export function makePuzzles(seed: number): PuzzleLayout[] {
+  const r = rng(seed * 13 + 5);
+  const corners = [[250, 210], [WORLD_W - 250, 210], [250, WORLD_H - 210], [WORLD_W - 250, WORLD_H - 210]];
+  const first = Math.floor(r() * 4);
+  const second = (first + 1 + Math.floor(r() * 3)) % 4; // any other corner
+  return [first, second].map((ci) => {
+    const [bx, by] = corners[ci];
+    const cx = Math.round(bx + (r() - 0.5) * 80), cy = Math.round(by + (r() - 0.5) * 50);
+    const gateDown = cy < BASE.y;
+    const x0 = cx - PEN_W / 2, x1 = cx + PEN_W / 2, y0 = cy - PEN_H / 2, y1 = cy + PEN_H / 2;
+    const g0 = cx - GATE_W / 2, g1 = cx + GATE_W / 2;
+    const gy = gateDown ? y1 - WALL : y0; // fence row that holds the gate
+    const solid = gateDown ? { y0, y1: y0 + WALL } : { y0: y1 - WALL, y1 };
+    const walls: Rect[] = [
+      { x0, x1, ...solid },
+      { x0, x1: x0 + WALL, y0, y1 },
+      { x0: x1 - WALL, x1, y0, y1 },
+      { x0, x1: g0, y0: gy, y1: gy + WALL },
+      { x0: g1, x1, y0: gy, y1: gy + WALL },
+    ];
+    const gate = { x0: g0, x1: g1, y0: gy, y1: gy + WALL };
+    const py = gateDown ? y1 + PLATE_DIST : y0 - PLATE_DIST;
+    const plates = [{ x: cx - PLATE_SPREAD, y: py }, { x: cx + PLATE_SPREAD, y: py }, { x: cx, y: py + (gateDown ? 70 : -70) }];
+    const ys = plates.map((p) => p.y);
+    const zone = { x0: x0 - 10, x1: x1 + 10, y0: Math.min(y0, ...ys) - PLATE_R - 10, y1: Math.max(y1, ...ys) + PLATE_R + 10 };
+    return { cx, cy, gateDown, walls, gate, plates, chest: { x: cx, y: cy - (gateDown ? 10 : -10) }, zone };
+  });
+}
+
+/** Plates per puzzle: 2 and 3, but never more than the players at round start (min 1). */
+export function puzzleNeeds(players: number): number[] {
+  const n = Math.max(1, players);
+  return [Math.min(2, n), Math.min(3, n)];
+}
 
 export interface PlayerInfo { id: string; name: string; color: number; shape: number; eyes: number; mouth: number; hat: number }
 export interface Player extends PlayerInfo {
@@ -45,7 +107,8 @@ export type FxEvent =
   | { t: 'score'; x: number; y: number; pts: number }
   | { t: 'pick'; x: number; y: number }
   | { t: 'bump'; x: number; y: number }
-  | { t: 'power'; x: number; y: number; kind: PowerKind };
+  | { t: 'power'; x: number; y: number; kind: PowerKind }
+  | { t: 'gate'; x: number; y: number };
 
 export interface State {
   phase: 'play' | 'end';
@@ -56,6 +119,8 @@ export interface State {
   gems: Gem[];
   powers: Power[];
   trees: Tree[];
+  layout: PuzzleLayout[];
+  puzzles: Puzzle[];
   stars: [number, number, number];
   fx: FxEvent[]; // events since last snapshot (cleared by caller)
   nextId: number;
@@ -86,12 +151,14 @@ function nearBase(x: number, y: number, extra: number) {
 
 export function makeTrees(seed: number): Tree[] {
   const r = rng(seed);
+  const zones = makePuzzles(seed).map((p) => p.zone);
   const trees: Tree[] = [];
   let tries = 0;
   while (trees.length < 34 && tries++ < 2000) {
     const x = 60 + r() * (WORLD_W - 120);
     const y = 70 + r() * (WORLD_H - 130);
     if (nearBase(x, y, 90)) continue;
+    if (zones.some((z) => inRect(z, x, y, 40))) continue;
     if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < 70)) continue;
     const roll = r();
     trees.push({ x, y, kind: roll < 0.78 ? Math.floor(r() * 3) : roll < 0.9 ? 3 : 4, cd: 0 });
@@ -101,9 +168,12 @@ export function makeTrees(seed: number): Tree[] {
 
 export function createState(infos: PlayerInfo[], seed: number): State {
   const trees = makeTrees(seed);
+  const layout = makePuzzles(seed);
+  const needs = puzzleNeeds(infos.length);
   const s: State = {
     phase: 'play', time: ROUND_SECONDS, score: 0,
     players: [], items: [], gems: [], powers: [], trees,
+    layout, puzzles: layout.map((_, i) => ({ need: needs[i], mask: 0, open: false, taken: false })),
     stars: starThresholds(infos.length), fx: [], nextId: 1,
     spawnT: 0, gemT: 8, powerT: 10,
   };
@@ -132,6 +202,7 @@ function freeSpot(s: State, minBase = 60): { x: number; y: number } {
     const y = 60 + Math.random() * (WORLD_H - 110);
     if (nearBase(x, y, minBase)) continue;
     if (s.trees.some((t) => Math.hypot(t.x - x, t.y - y) < 34)) continue;
+    if (s.layout.some((l) => inRect(l.zone, x, y, 20))) continue;
     return { x, y };
   }
   return { x: 80, y: 80 };
@@ -212,6 +283,12 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     }
   }
 
+  // --- fences + closed gates: solid boxes ---
+  s.layout.forEach((l, i) => {
+    const boxes = s.puzzles[i].open ? l.walls : [...l.walls, l.gate];
+    for (const p of s.players) for (const b of boxes) collideBox(p, b);
+  });
+
   // --- blob vs blob: bouncy bumps ---
   for (let i = 0; i < s.players.length; i++) {
     for (let j = i + 1; j < s.players.length; j++) {
@@ -264,6 +341,26 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     }
   }
 
+  // --- pressure plates: every used plate held at the same time opens the gate (stays open) ---
+  s.layout.forEach((l, i) => {
+    const pz = s.puzzles[i];
+    let mask = 0;
+    for (let k = 0; k < pz.need; k++) {
+      const pl = l.plates[k];
+      if (s.players.some((p) => Math.hypot(p.x - pl.x, p.y - pl.y) < PLATE_R)) mask |= 1 << k;
+    }
+    pz.mask = mask;
+    if (!pz.open && mask === (1 << pz.need) - 1) {
+      pz.open = true;
+      s.fx.push({ t: 'gate', x: l.cx, y: (l.gate.y0 + l.gate.y1) / 2 });
+    }
+    if (pz.open && !pz.taken && s.players.some((p) => Math.hypot(p.x - l.chest.x, p.y - l.chest.y) < CHEST_R)) {
+      pz.taken = true;
+      s.score += CHEST_POINTS;
+      s.fx.push({ t: 'score', x: l.chest.x, y: l.chest.y - 30, pts: CHEST_POINTS });
+    }
+  });
+
   // --- big gems: need 2+ blobz together to move them ---
   for (let gi = s.gems.length - 1; gi >= 0; gi--) {
     const g = s.gems[gi];
@@ -309,6 +406,23 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
   if (s.time <= 0) s.phase = 'end';
 }
 
+/** Push a blob out of an axis-aligned box and bounce it off. */
+function collideBox(p: Player, b: Rect) {
+  const qx = Math.max(b.x0, Math.min(p.x, b.x1)), qy = Math.max(b.y0, Math.min(p.y, b.y1));
+  let dx = p.x - qx, dy = p.y - qy;
+  let d = Math.hypot(dx, dy);
+  if (d >= BLOB_R) return;
+  if (d < 0.001) { // centre inside the box: leave along the shortest side
+    const l = p.x - b.x0, r = b.x1 - p.x, t = p.y - b.y0, bo = b.y1 - p.y;
+    const m = Math.min(l, r, t, bo);
+    [dx, dy] = m === l ? [-1, 0] : m === r ? [1, 0] : m === t ? [0, -1] : [0, 1];
+    d = 0; p.x = m === l ? b.x0 : m === r ? b.x1 : p.x; p.y = m === t ? b.y0 : m === bo ? b.y1 : p.y;
+  } else { dx /= d; dy /= d; }
+  p.x += dx * (BLOB_R - d); p.y += dy * (BLOB_R - d);
+  const vn = p.vx * dx + p.vy * dy;
+  if (vn < 0) { p.vx -= 1.5 * vn * dx; p.vy -= 1.5 * vn * dy; }
+}
+
 // ---- network snapshot (compact, rounded) ----
 export interface Snapshot {
   ph: State['phase']; tm: number; sc: number; st: [number, number, number];
@@ -316,6 +430,7 @@ export interface Snapshot {
   i: [number, string, number, number][];
   g: [number, number, number, number][];
   w: [number, string, number, number][];
+  z: [number, number, number, number][]; // puzzles: need, plate mask, open, chest taken
   fx: FxEvent[];
 }
 
@@ -330,6 +445,7 @@ export function snapshot(s: State): Snapshot {
     i: s.items.map((i) => [i.id, KIND_CODE[i.kind], r1(i.x), r1(i.y)]),
     g: s.gems.map((g) => [g.id, r1(g.x), r1(g.y), g.holders]),
     w: s.powers.map((w) => [w.id, w.kind, r1(w.x), r1(w.y)]),
+    z: s.puzzles.map((z) => [z.need, z.mask, +z.open, +z.taken]),
     fx: s.fx,
   };
 }
@@ -339,13 +455,14 @@ export interface View {
   phase: State['phase']; time: number; score: number; stars: [number, number, number];
   players: { id: string; x: number; y: number; vx: number; vy: number; carry: ItemKind[]; boostT: number; magnetT: number; dashCd: number }[];
   items: Item[]; gems: { id: number; x: number; y: number; holders: number }[]; powers: Power[];
+  puzzles: Puzzle[];
 }
 
 export function viewFromState(s: State): View {
   return {
     phase: s.phase, time: s.time, score: s.score, stars: s.stars,
     players: s.players.map((p) => ({ id: p.id, x: p.x, y: p.y, vx: p.vx, vy: p.vy, carry: p.carry, boostT: p.boostT, magnetT: p.magnetT, dashCd: p.dashCd })),
-    items: s.items, gems: s.gems, powers: s.powers,
+    items: s.items, gems: s.gems, powers: s.powers, puzzles: s.puzzles,
   };
 }
 
@@ -356,5 +473,6 @@ export function viewFromSnapshot(n: Snapshot): View {
     items: n.i.map(([id, k, x, y]) => ({ id, kind: CODE_KIND[k], x, y })),
     gems: n.g.map(([id, x, y, h]) => ({ id, x, y, holders: h })),
     powers: n.w.map(([id, k, x, y]) => ({ id, kind: k as PowerKind, x, y })),
+    puzzles: (n.z ?? []).map(([need, mask, open, taken]) => ({ need, mask, open: !!open, taken: !!taken })),
   };
 }
