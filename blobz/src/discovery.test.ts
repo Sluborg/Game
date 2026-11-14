@@ -32,9 +32,9 @@ describe('discovery helpers', () => {
 
   it('cleans untrusted info cards', () => {
     expect(cleanInfo(null, clamp)).toBeNull();
-    const i = cleanInfo({ name: 'Stefan the great', look: { color: 7 }, players: 99, max: 5, started: 1, code: 'ab1cd' }, clamp)!;
-    expect(i).toMatchObject({ name: 'Stefan the', players: 5, max: 5, started: true, code: 'ABCD' });
+    const i = cleanInfo({ name: 'Stefan the great', look: { color: 7 }, players: 99, max: 5, started: 1 }, clamp)!;
+    expect(i).toMatchObject({ name: 'Stefan the', players: 5, max: 5, started: true });
     expect(i.look.color).toBe(7);
-    expect(cleanInfo({}, clamp)).toMatchObject({ name: 'Blob', players: 0, max: 5, started: false, code: '' });
+    expect(cleanInfo({}, clamp)).toMatchObject({ name: 'Blob', players: 0, max: 5, started: false });
   });
 });

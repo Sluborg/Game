@@ -13,7 +13,7 @@ export const SLOTS = 8;
 export const STUN = 'stun:stun.l.google.com:19302';
 
 /** What a host tells a probing phone (`info?` -> `info`). */
-export interface RoomInfo { name: string; look: BlobLook; players: number; max: number; started: boolean; code: string }
+export interface RoomInfo { name: string; look: BlobLook; players: number; max: number; started: boolean }
 
 export function slotId(ns: string, slot: number) { return `${SLOT_PREFIX}${ns}-${slot}`; }
 export function slotIds(ns: string) { return Array.from({ length: SLOTS }, (_, i) => slotId(ns, i + 1)); }
@@ -59,11 +59,14 @@ export function publicIp(ms = 4000): Promise<string | null> {
 }
 
 let nsPromise: Promise<string | null> | null = null;
-/** Namespace hash for this Wi-Fi, cached. `?lan=x` overrides the IP (tests, networks without UDP). */
+/** Namespace hash for this Wi-Fi. A found hash is cached; a miss is retried on the next call.
+ *  `?lan=x` overrides the IP (tests, networks without UDP). */
 export function lanNamespace(): Promise<string | null> {
   if (!nsPromise) {
     const override = new URLSearchParams(location.search).get('lan');
-    nsPromise = (override ? Promise.resolve(override) : publicIp()).then((seed) => (seed ? hashNs(seed) : null));
+    const p = (override ? Promise.resolve(override) : publicIp()).then((seed) => (seed ? hashNs(seed) : null));
+    nsPromise = p;
+    void p.then((ns) => { if (!ns && nsPromise === p) nsPromise = null; });
   }
   return nsPromise;
 }
@@ -79,7 +82,6 @@ export function cleanInfo(raw: unknown, clampLook: (l: Partial<BlobLook>) => Blo
     players: Math.max(0, Math.min(max, Math.floor(Number(r.players)) || 0)),
     max,
     started: !!r.started,
-    code: String(r.code ?? '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4),
   };
 }
 

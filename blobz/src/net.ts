@@ -20,13 +20,14 @@ export type ToClient =
   | { t: 'start'; seed: number }
   | { t: 's'; s: Snapshot };
 
+/** Random part of the host's own (never shown) PeerJS id `blobz-v1-XXXX`. */
 export function randomCode() {
   return Array.from({ length: 4 }, () => LETTERS[Math.floor(Math.random() * LETTERS.length)]).join('');
 }
 
 export function friendlyError(type: string): string {
   switch (type) {
-    case 'peer-unavailable': return 'Hittar inget rum med den koden.';
+    case 'peer-unavailable': return 'Spelet finns inte längre.';
     case 'network':
     case 'server-error':
     case 'socket-error':
@@ -50,6 +51,7 @@ export class HostNet {
 
   /** Claim the first free slot 1..8 in the namespace. Resolves the slot, or 0 if none could be had. */
   openSlot(ns: string): Promise<number> {
+    if (this.slotPeer && !this.slotPeer.destroyed) return Promise.resolve(this.slot);
     return new Promise((resolve) => {
       const attempt = (slot: number) => {
         if (slot > SLOTS || !this.peer || this.peer.destroyed) { resolve(0); return; }
@@ -121,7 +123,7 @@ export class ClientNet {
   onMessage: (m: ToClient) => void = () => {};
   onClose: () => void = () => {};
 
-  /** `target` is a 4-letter room code or a full slot peer id from the Wi-Fi list. */
+  /** `target` is the host's slot peer id from the Wi-Fi list. */
   join(target: string, info: Omit<PlayerInfo, 'id'>): Promise<string> {
     return new Promise((resolve, reject) => {
       const peer = new Peer({ debug: 0 });
@@ -131,7 +133,7 @@ export class ClientNet {
       peer.on('error', (e) => fail((e as { type?: string }).type ?? 'unknown'));
       peer.on('open', () => {
         this.peer = peer;
-        const conn = peer.connect(target.startsWith('blobz-') ? target : PREFIX + target.toUpperCase().trim(), { reliable: true, serialization: 'json' });
+        const conn = peer.connect(target, { reliable: true, serialization: 'json' });
         this.conn = conn;
         conn.on('open', () => conn.send({ t: 'hello', info } satisfies ToHost));
         conn.on('data', (raw) => {

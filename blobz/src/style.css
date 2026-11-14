@@ -380,10 +380,11 @@ button.link .icon { height: 18px; margin-right: 6px; vertical-align: -3px; }
 .lanrow.busy { filter: brightness(0.92); }
 #lan-status:not(.static) { animation: lanpulse 1.6s ease-in-out infinite; }
 @keyframes lanpulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
-.codebox-wrap { display: flex; flex-direction: column; gap: 10px; }
 @media (orientation: landscape) and (max-height: 520px) {
   .lanlist { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .lanrow { min-height: 56px; border-width: 9px; border-image-width: 9px; }
   .lanrow .blob { width: 33px; height: 44px; }
   .lantext b { font-size: 19px; }
 }
+#btn-rescan { align-self: center; min-width: 200px; }
+#lobby-lan.warn { color: #c0392b; }
