@@ -2,7 +2,7 @@
 // is underground; the meadow scene keeps ticking the session (sim / network) and hides its camera.
 // Also draws the dungeon entrance on the meadow (dungeonFrame is the one hook GameScene calls).
 import Phaser from 'phaser';
-import { blobCanvas, BODY_CY, clampLook } from './blob';
+import { blobCanvas, BODY_CY, clampLook, FACE_DIRS, faceIndex } from './blob';
 import { DT, ENEMY_R, GOO_ART, GOO_SCALE, WEAPON_STATS, FLOORS, GH, GW, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
 /** Weapons without Art's strip yet: a Kenney Tiny Dungeon tile in hand (bow: drawn in code). */
 const WEAPON_TILE: Partial<Record<Weapon, number>> = { staff: 130, shield: 102, dagger: 103 }; // dagger tile: blade up
@@ -262,8 +262,16 @@ export class DungeonScene extends Phaser.Scene {
       const info = infos.get(p.id) ?? { id: p.id, name: '?', color: 0xcccccc, shape: 0, eyes: 0, mouth: 0, hat: 0 };
       const look = clampLook(info);
       const ch = h ? CLASS_HAT[h.cls] : undefined; // Prästluva / Fjädermössa / Riddarhjälm replace the skin hat underground
-      const texKey = `blob-${look.color}-${look.shape}-${look.eyes}-${look.mouth}-${look.hat}` + (ch !== undefined ? `-c${ch}` : '');
-      if (!this.textures.exists(texKey)) this.textures.addCanvas(texKey, blobCanvas(look, 1, ch))!.setFilter(Phaser.Textures.FilterMode.NEAREST);
+      const base = `blob-${look.color}-${look.shape}-${look.eyes}-${look.mouth}-${look.hat}` + (ch !== undefined ? `-c${ch}` : '');
+      // Art's face direction: 9 pre-baked looks per blob + class hat; eyes follow the glide, or the target
+      // while it stands still and attacks; centre when knocked out
+      if (!this.textures.exists(base + '-f0')) FACE_DIRS.forEach((fd, i) => this.textures.addCanvas(`${base}-f${i}`, blobCanvas(look, 1, ch, fd))!.setFilter(Phaser.Textures.FilterMode.NEAREST));
+      const prev = this.heroes.get(p.id);
+      let fi = faceIndex(p.vx, p.vy, 30);
+      if (fi === 0 && prev && prev.swingT > 0) fi = faceIndex(Math.cos(prev.swingA), Math.sin(prev.swingA), 0.1);
+      if ((h?.ko ?? 0) > 0) fi = 0;
+      const texKey = `${base}-f${fi}`;
+      if (DEBUG) ((window as unknown as { __dgFace?: Record<string, number> }).__dgFace ??= {})[p.id] = fi;
       let b = this.heroes.get(p.id);
       const w = h?.weapon ?? 'sword';
       if (!b) {
