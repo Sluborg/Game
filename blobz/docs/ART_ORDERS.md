@@ -13,7 +13,7 @@ order left-to-right, top-to-bottom), names the files and wires them into the gam
 | 40 | done (art) | `art/totems/*.png` | 4 totems x 3 levels, waiting for milestone 40 gameplay |
 | 50 | done (art) | `art/enemies/*.png` | Small/medium/boss goo + splat, waiting for milestone 50 gameplay |
 | 60 | done | `art/lobby.png` | Lobby background |
-| 70 | ordered | `art/parts.png` | Ideas for new blob parts (Claude re-draws them on the 18x24 pixel grid) |
+| 70 | done | `docs/art-src-parts.png` (reference) | Redrawn in `src/blob.ts`: 12 hats + 4 eye styles |
 | -- | done | `art/title.png`, `art/logo.png`, `art/victory.png`, `icon-*.png` | Menu, logo, end screen, app icon |
 
 ## Prompt (paste once into a new chat)

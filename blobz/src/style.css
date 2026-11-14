@@ -286,3 +286,10 @@ button.link .icon { height: 18px; margin-right: 6px; vertical-align: -3px; }
   #lobby.screen { background-size: auto 140%; background-position: 92% 100%; justify-content: flex-start; align-items: flex-start; padding-left: max(20px, env(safe-area-inset-left)); }
   #lobby .card { max-width: 400px; }
 }
+
+/* many options (20 hats): the option grid scrolls inside the card */
+.opts { max-height: 300px; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; touch-action: pan-y; scrollbar-width: thin;
+  grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 3px 4px 3px 3px; }
+.opt { min-width: 0; overflow: hidden; }
+.opt { white-space: nowrap; }
+@media (orientation: landscape) and (max-height: 520px) { .opts { max-height: 150px; grid-template-columns: repeat(8, minmax(0, 1fr)); } }

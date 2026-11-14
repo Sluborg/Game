@@ -92,3 +92,10 @@
   Now the page declares `color-scheme: light dark` (meta + :root): force-dark skips pages that support
   dark, and all colors are explicit so it renders the same. Checked with a dark preference in Chromium;
   the real force-dark path cannot be reproduced headless, verify on the phone.
+
+## 2026-11-14 - v018: 12 new hats + 4 new eye styles (order 70)
+- Redrawn from ChatGPT's idea sheet on the 18x24 blob grid (so they fit all 6 body shapes):
+  hats Pirat, Trollkarl, Viking, Kock, Lurar, Kanin, Katt (body-colored ears), Gloria, Cylinder, Bandana,
+  Antenn, Grodd; eyes Kär (hearts), Stjärnor, Arga (brows), Rosiga (cheeks). 20 hats, 10 eyes in total.
+- Option grid scrolls inside the designer card; 4 columns portrait / 8 landscape.
+- All 7 art orders delivered.

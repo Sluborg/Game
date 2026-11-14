@@ -8,9 +8,10 @@ export const COLORS = [
   0x4fe0c3, 0xf2f2f2, 0xe63946, 0x3d6bff, 0xc08850, 0x9aa0b4,
 ];
 export const SHAPES = ['Kupol', 'Boll', 'Lång', 'Platt', 'Päron', 'Kub'];
-export const EYES = ['Glada', 'Runda', 'Stora', 'Nöjda', 'Sömniga', 'Coola'];
+export const EYES = ['Glada', 'Runda', 'Stora', 'Nöjda', 'Sömniga', 'Coola', 'Kär', 'Stjärnor', 'Arga', 'Rosiga'];
 export const MOUTHS = ['Öppen', 'Leende', 'Tunga', 'Tänder', 'Oj', 'Lugn'];
-export const HATS = ['Ingen', 'Krona', 'Keps', 'Blomma', 'Partyhatt', 'Mössa', 'Rosett', 'Halmhatt'];
+export const HATS = ['Ingen', 'Krona', 'Keps', 'Blomma', 'Partyhatt', 'Mössa', 'Rosett', 'Halmhatt',
+  'Pirat', 'Trollkarl', 'Viking', 'Kock', 'Lurar', 'Kanin', 'Katt', 'Gloria', 'Cylinder', 'Bandana', 'Antenn', 'Grodd'];
 
 export const GRID_W = 18;
 export const GRID_H = 24;
@@ -21,17 +22,22 @@ const OUT = '#3f2631';
 const PAL: Record<string, string> = {
   K: '#1b1018', W: '#ffffff', R: '#ff5a6e', Y: '#ffd23f', y: '#e0a81e', C: '#e63946', c: '#a4161a',
   G: '#5aa83a', P: '#b18cff', p: '#7d5fd6', B: '#3d6bff', b: '#2a4bb8', S: '#e9c46a', s: '#c99a3e', N: '#ff8fab',
+  H: '#ff4d6d', D: '#4a4a55', g: '#a7adb8', w: '#f3ead8', O: '#ff8a3d', L: '#7ccf4a', l: '#3f8f2f', E: '#2b2b33',
 };
 
 // Eye patterns: left eye drawn at x=4 (mirrored to the right eye), top row y=12.
 // A pattern with `wide` spans both eyes (x=3..14).
-const EYE_PIX: { rows: string[]; wide?: boolean; mirror?: boolean }[] = [
+const EYE_PIX: { rows: string[]; wide?: boolean; mirror?: boolean; dy?: number }[] = [
   { rows: ['WWW', 'WKK', 'WKK'] }, // happy (like the art)
   { rows: ['WWW', 'WKW', 'WKW', 'WWW'] }, // round, centred pupil
   { rows: ['WWWW', 'WWKK', 'WWKK', 'WWWW'], mirror: true }, // big
   { rows: ['.KK.', 'K..K', 'K..K'] }, // content ^^ (thick arcs)
   { rows: ['KKKK', 'WWKK', 'WWKK'] }, // sleepy
   { rows: ['KKKKKKKKKKKK', 'KWWKKKKWWKKK', '.KKKK..KKKK.'], wide: true }, // cool shades
+  { rows: ['H.H', 'HHH', '.H.'] }, // heart eyes
+  { rows: ['.Y.', 'YYY', '.Y.'] }, // star eyes
+  { rows: ['K..', '.KK', 'WWK', 'WKK'], mirror: true, dy: -1 }, // angry brows
+  { rows: ['WWW', 'WKK', 'WKK', '...', 'NN.'], mirror: true }, // blushing
 ];
 // Mouth patterns, centered (even widths), top row y=17. Near-black outline + red/white inside.
 const MOUTH_PIX: string[][] = [
@@ -42,8 +48,10 @@ const MOUTH_PIX: string[][] = [
   ['.KK.', 'KRRK', '.KK.'], // oh
   ['.KKKK.'], // calm
 ];
-// Hats: x offset, bottom row lands on the top of the head (y=9).
-const HAT_PIX: { x: number; rows: string[] }[] = [
+// Hats: x offset, bottom row lands on the top of the head. `lift` raises it (halo), `drop` lowers it
+// onto the forehead (bandana), `side` paints extra pieces at absolute rows (headphone cups, mirrored).
+// 'M' / 'm' = the blob's own body color / shade (cat ears).
+const HAT_PIX: { x: number; rows: string[]; lift?: number; drop?: number; side?: { x: number; y: number; rows: string[] } }[] = [
   { x: 0, rows: [] },
   { x: 5, rows: ['K.K..K.K', 'KYKYYKYK', 'KYYYYYYK', 'KYYRYYYK', 'KyyyyyyK', '.KKKKKK.'] }, // crown
   { x: 4, rows: ['...KKKK...', '..KCCCCK..', '.KCCCCCCK.', '.KCCCCCCCKKK', '.KccccccccccK', '..KKKKKKKKKK'] }, // cap
@@ -52,6 +60,18 @@ const HAT_PIX: { x: number; rows: string[] }[] = [
   { x: 4, rows: ['....KK....', '...KWWK...', '..KKKKKK..', '.KBBBBBBK.', 'KBBBBBBBBK', 'KbbbbbbbbK', 'KWWWWWWWWK', '.KKKKKKKK.'] }, // beanie
   { x: 5, rows: ['KK....KK', 'KNK..KNK', 'KNNKKNNK', 'KNNNNNNK', 'KNK..KNK', 'KK....KK'] }, // bow
   { x: 2, rows: ['.....KKKK.....', '....KSSSSK....', '...KSSSSSSK...', '...KCCCCCCK...', 'KKKSSSSSSSSKKK', 'KssssssssssssK', '.KKKKKKKKKKKK.'] }, // straw hat
+  { x: 2, rows: ['.....KKKK.....', '..KKKEEEEKKK..', '.KEEEEEEEEEEK.', 'KYEEEEWWEEEEYK', 'KYYYYYYYYYYYYK', '.KKKKKKKKKKKK.'] }, // pirate
+  { x: 3, rows: ['........KK..', '.......KPPK.', '......KPPK..', '.....KPPPK..', '....KPPPPPK.', '...KPPPPPPPK', '.KKYYYYYYYYKK', 'KPPPPPPPPPPPK'] }, // wizard
+  { x: 1, rows: ['.KK..........KK.', 'KwwK........KwwK', 'KwwK..KKKK..KwwK', '.KwwKKggggKKwwK.', '..KKggggggggKK..', '..KDDDDDDDDDDK..', '..KKKKKKKKKKKK..'] }, // viking
+  { x: 4, rows: ['..KKKKKK..', '.KWWWWWWK.', 'KWWWWWWWWK', 'KWWWWWWWWK', '.KWWWWWWK.', '.KwwwwwwK.', '.KKKKKKKK.'] }, // chef
+  { x: 3, rows: ['...KKKKKK...', '..KggggggK..', '.KgKKKKKKgK.', 'KgK......KgK', 'KgK......KgK'], side: { x: 0, y: 11, rows: ['.KK', 'KOK', 'KOK', 'KOK', '.KK'] } }, // headphones
+  { x: 4, rows: ['.KK....KK.', 'KWNK..KNWK', 'KWNK..KNWK', 'KWNK..KNWK', 'KWNK..KNWK', 'KWWK..KWWK', '.KK....KK.'] }, // bunny ears
+  { x: 3, rows: ['K..........K', 'KK........KK', 'KNK......KNK', 'KMNK....KNMK', 'KMMMK..KMMMK'] }, // cat ears
+  { x: 4, lift: 2, rows: ['.KKKKKKKK.', 'KYYYYYYYYK', '.KKKKKKKK.'] }, // halo
+  { x: 5, rows: ['.KKKKKK.', '.KEEEEK.', '.KEEEEK.', '.KCCCCK.', 'KKKKKKKK', 'KEEEEEEK', '.KKKKKK.'] }, // top hat
+  { x: 3, drop: 2, rows: ['.KKKKKKKKK..', 'KCCCCCCCCCKK', 'KCWCCCCCCKCK', '.KKKKKKKKK.K'] }, // bandana
+  { x: 7, rows: ['.KK.', 'KYYK', 'KYYK', '.KK.', '.DK.', '.DK.'] }, // antenna
+  { x: 4, rows: ['.KK...KK.', 'KLLK.KLLK', 'KlLLKLLlK', '.KKlLlKK.', '...KlK...', '...KlK...'] }, // sprout
 ];
 
 function rgb(c: number) { return [(c >> 16) & 255, (c >> 8) & 255, c & 255]; }
@@ -107,15 +127,18 @@ export function blobGrid(look: BlobLook): (string | null)[][] {
 
   const paint = (rows: string[], x0: number, y0: number, mirror = false) => rows.forEach((row, ry) => [...row].forEach((ch, rx) => {
     if (ch === '.') return;
-    set(mirror ? x0 + row.length - 1 - rx : x0 + rx, y0 + ry, PAL[ch]);
+    set(mirror ? x0 + row.length - 1 - rx : x0 + rx, y0 + ry, ch === 'M' ? mid : ch === 'm' ? dark : PAL[ch]);
   }));
   const eye = EYE_PIX[look.eyes] ?? EYE_PIX[0];
-  if (eye.wide) paint(eye.rows, 3, 12);
-  else { paint(eye.rows, 4, 12); paint(eye.rows, GRID_W - 4 - eye.rows[0].length, 12, eye.mirror); }
+  const ey = 12 + (eye.dy ?? 0);
+  if (eye.wide) paint(eye.rows, 3, ey);
+  else { paint(eye.rows, 4, ey); paint(eye.rows, GRID_W - 4 - eye.rows[0].length, ey, eye.mirror); }
   const mouth = MOUTH_PIX[look.mouth] ?? MOUTH_PIX[0];
   paint(mouth, 9 - mouth[0].length / 2, 17);
   const hat = HAT_PIX[look.hat] ?? HAT_PIX[0];
-  paint(hat.rows, hat.x, Math.min(top + 2, 11) - hat.rows.length); // never over the eyes (row 12)
+  const hatBottom = Math.min(top + 2 + (hat.drop ?? 0), 11) - (hat.lift ?? 0); // never over the eyes (row 12)
+  paint(hat.rows, hat.x, Math.max(0, hatBottom - hat.rows.length));
+  if (hat.side) { paint(hat.side.rows, hat.side.x, hat.side.y); paint(hat.side.rows, GRID_W - hat.side.x - hat.side.rows[0].length, hat.side.y, true); }
   return g;
 }
 
