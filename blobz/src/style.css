@@ -565,3 +565,33 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .endmini { margin: 2px 0; font-weight: 800; font-size: 18px; color: var(--plum); }
 .endmini .star { width: 22px; height: 22px; vertical-align: -4px; image-rendering: pixelated; }
 #hud.mini #hud-quest, #hud.mini #hud-day, #hud.mini #hud-bank, #hud.mini #hud-double, #hud.mini #edge-arrows { display: none !important; }
+
+/* ---------- build panel (at the cottage) ---------- */
+#btn-build { position: absolute; right: max(118px, env(safe-area-inset-right)); bottom: max(34px, env(safe-area-inset-bottom)); pointer-events: auto; font-size: 18px; }
+#btn-build img { height: 22px; vertical-align: -5px; image-rendering: pixelated; }
+#build-panel {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(94vw, 560px); max-height: 86vh; overflow-y: auto;
+  pointer-events: auto; touch-action: pan-y; padding: 2px 4px 6px; z-index: 6;
+  border-style: solid; border-width: 15px; border-image: url('/art/ui/panel.png') 4 fill / 15px stretch; image-rendering: pixelated;
+  filter: drop-shadow(0 8px 0 #3f263155);
+}
+.bphead { display: flex; align-items: center; justify-content: space-between; margin: -4px 0 8px; }
+.bphead b { font-size: 24px; font-weight: 900; color: var(--plum); }
+.bcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+.bcard { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 0 2px 4px; cursor: pointer; background: none; color: var(--plum);
+  border-style: solid; border-width: 9px; border-image: url('/art/ui/input.png') 4 fill / 9px stretch; image-rendering: pixelated; touch-action: manipulation; }
+.bcard.can { border-image-source: url('/art/ui/btn-yellow.png'); border-image-slice: 3 fill; }
+.bcard:disabled { cursor: default; }
+.bcard:disabled:not(.built) { filter: saturate(0.6); opacity: 0.85; }
+.bcard.built { filter: grayscale(0.4); opacity: 0.7; }
+.bcard.tap { animation: pop 0.35s ease-out; }
+.bimg { height: 64px; display: flex; align-items: flex-end; justify-content: center; }
+.bimg img { max-height: 64px; max-width: 100px; image-rendering: pixelated; }
+.bname { font-size: 16px; font-weight: 900; }
+.beff { font-size: 12px; color: var(--muted); min-height: 15px; }
+.bcost { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+.bcost .c { display: inline-flex; align-items: center; gap: 2px; font-weight: 900; font-size: 16px; }
+.bcost .c img { height: 16px; image-rendering: pixelated; }
+.bcost .c.ok { color: #2f8a2f; }
+.bcost .c.no { color: #b3261e; }
+@media (orientation: landscape) and (max-height: 520px) { .bcards { grid-template-columns: repeat(4, minmax(0, 1fr)); } .bimg { height: 48px; } .bimg img { max-height: 48px; } }

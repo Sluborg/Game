@@ -117,27 +117,8 @@ export function makePuzzles(seed: number): PuzzleLayout[] {
   });
 }
 
-// ---- base totems: spend the team bank on team-wide upgrades ----
-export type TotemKind = 'speed' | 'magnet' | 'shield' | 'double';
-export const TOTEM_KINDS: TotemKind[] = ['speed', 'magnet', 'shield', 'double'];
-/** Resource cost per level (1-2 trips of 3 items buy level 1). */
-export const TOTEM_PRICES: Record<TotemKind, [Partial<Res>, Partial<Res>, Partial<Res>]> = {
-  speed: [{ wood: 4 }, { wood: 8 }, { wood: 14 }],
-  magnet: [{ stone: 4 }, { stone: 8 }, { stone: 14 }],
-  shield: [{ wood: 2, stone: 2 }, { wood: 4, stone: 4 }, { wood: 7, stone: 7 }],
-  double: [{ berry: 4 }, { berry: 8 }, { berry: 14 }],
-};
 export const canAfford = (bank: Res, price: Partial<Res>) => RES.every((k) => bank[k] >= (price[k] ?? 0));
-export const TOTEM_MAX = 3;
-export const PAD_R = 30; // stand this close to the pad in front of a totem to buy
-export const BUY_SECONDS = 1;
-export const DOUBLE_SECONDS = 20;
-export const SHIELD_RECHARGE = 8;
-/** Pads on the four diagonals around the cottage (same order as TOTEM_KINDS). */
-export const TOTEM_PADS = [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([dx, dy]) => ({ x: BASE.x + dx * 88, y: BASE.y + dy * 88 })); // ~125 px, inside the build ring
-export interface Totem { kind: TotemKind; level: number; buy: number; armed: boolean }
-export const totemPrice = (t: { kind: TotemKind; level: number }): Partial<Res> => (t.level >= TOTEM_MAX ? {} : TOTEM_PRICES[t.kind][t.level]);
-const totemLevel = (s: State, k: TotemKind) => s.totems.find((t) => t.kind === k)?.level ?? 0;
+export const BUILD_LOCK = 1; // seconds between two builds (one build at a time)
 
 // ---- base building: 6 build spots, buildings with team effects, cottage upgrades; the village is
 // saved on the host and continues next round ----
@@ -152,7 +133,7 @@ export const BUILD_COST: Record<BuildKind, Res> = {
 };
 /** One line per building for the sign / report (Swedish, kid-short). */
 export const BUILD_EFFECT: Record<BuildKind, string> = {
-  storage: 'Bär 4 saker', workshop: 'Färre slag', garden: 'Mer bär', well: 'Totem räcker längre',
+  storage: 'Bär 4 saker', workshop: 'Färre slag, snabbare', garden: 'Mer bär', well: 'Dubbla bär hemma',
   watchtower: 'Pilar till resurser', bridge: 'Nytt hörn med resurser',
 };
 /** Six fixed spots in a ring ~180 px around the cottage, one building each. */
@@ -229,8 +210,7 @@ export function entranceOf(seed: number): { x: number; y: number } {
   if (BUILDING_ENABLED) { const w = makeWater(seed); zones.push(w.area, ...w.water); }
   const spots = [[BASE.x - 330, BASE.y], [BASE.x + 330, BASE.y], [BASE.x, BASE.y + 330], [BASE.x, BASE.y - 300]].map(([x, y]) => ({ x, y }));
   const clear = (p: { x: number; y: number }) => !zones.some((z) => inRect(z, p.x, p.y, ENTRANCE_R + 20))
-    && !(BUILDING_ENABLED && Object.values(BUILD_SPOTS).some((b) => Math.hypot(b.x - p.x, b.y - p.y) < 120))
-    && !TOTEM_PADS.some((t) => Math.hypot(t.x - p.x, t.y - p.y) < 100);
+    && !(BUILDING_ENABLED && Object.values(BUILD_SPOTS).some((b) => Math.hypot(b.x - p.x, b.y - p.y) < 120));
   return spots.find(clear) ?? spots[0];
 }
 export const PICK_SECONDS = 20; // unpicked blobz get the sword after this
@@ -247,7 +227,7 @@ export interface PlayerInfo { id: string; name: string; color: number; shape: nu
 export interface Player extends PlayerInfo {
   x: number; y: number; vx: number; vy: number;
   carry: ItemKind[];
-  shield: number; shieldT: number; // shield totem charges (protect carried items from goo)
+  shield: number; shieldT: number; // unused since the totems went (kept for the snapshot shape)
   dashCd: number; dashT: number; boostT: number; magnetT: number; toolCd: number;
   lastDash: number; // last dash counter seen from input
 }
@@ -264,7 +244,6 @@ export type FxEvent =
   | { t: 'bump'; x: number; y: number }
   | { t: 'power'; x: number; y: number; kind: PowerKind }
   | { t: 'gate'; x: number; y: number }
-  | { t: 'totem'; x: number; y: number; kind: TotemKind; level: number }
   | { t: 'build'; x: number; y: number; kind: BuildKind | 'cottage'; done: boolean }
   | { t: 'enter' } | { t: 'leave'; done: boolean }
   | DFx
@@ -286,7 +265,8 @@ export interface State {
   pickT: number;
   runs: number; // dungeon runs this round (seeds a new dungeon each time)
   dg: DState | null;
-  bank: Res; // spendable team resources (totems, buildings)
+  bank: Res; // spendable team resources (buildings, cottage)
+  buildLock: number; // seconds until the next build may start
   builds: Build[];
   cottage: Cottage;
   builtNow: BuildKind[]; // finished this round (quest goal)
@@ -302,8 +282,6 @@ export interface State {
   trees: Tree[];
   layout: PuzzleLayout[];
   puzzles: Puzzle[];
-  totems: Totem[];
-  doubleT: number; // seconds of 2x points left
   fx: FxEvent[]; // events since last snapshot (cleared by caller)
   nextId: number;
   gemT: number; powerT: number;
@@ -335,7 +313,6 @@ export function makeTrees(seed: number): Tree[] {
     if (nearBase(x, y, 90)) continue;
     if (spots.some((p) => Math.hypot(p.x - x, p.y - y) < 80)) continue;
     if (zones.some((z) => inRect(z, x, y, 40))) continue;
-    if (TOTEM_PADS.some((p) => Math.hypot(p.x - x, p.y - y) < 70)) continue;
     if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < 70)) continue;
     const roll = r();
     const kind = roll < 0.58 ? Math.floor(r() * 3) : roll < 0.7 ? 3 : roll < 0.8 ? 4 : 5;
@@ -383,7 +360,7 @@ export function makeIce(seed: number): { x: number; y: number }[] {
   const zones = [...makePuzzles(seed).map((p) => p.zone)];
   const w = makeWater(seed);
   if (BUILDING_ENABLED) zones.push(w.area, ...w.water);
-  const pads = [...TOTEM_PADS, ...(BUILDING_ENABLED ? [...Object.values(BUILD_SPOTS), COTTAGE_PAD] : []), entranceOf(seed)];
+  const pads = [...(BUILDING_ENABLED ? [...Object.values(BUILD_SPOTS), COTTAGE_PAD] : []), entranceOf(seed)];
   const out: { x: number; y: number }[] = [];
   for (let tries = 0; out.length < 3 && tries < 3000; tries++) {
     const x = 90 + r() * (WORLD_W - 180), y = 70 + r() * (WORLD_H - 140);
@@ -414,7 +391,7 @@ export function createState(infos: PlayerInfo[], seed: number, village: Village 
     builtNow: [], villageDirty: false, gardenT: GARDEN_EVERY,
     players: [], items: [], gems: [], powers: [], trees,
     layout, puzzles: layout.map((_, i) => ({ need: needs[i], mask: 0, open: false, taken: false })),
-    totems: TOTEM_KINDS.map((kind) => ({ kind, level: 0, buy: 0, armed: true })), doubleT: 0,
+    buildLock: 0,
     fx: [], nextId: 1,
     gemT: 8, powerT: 10,
   };
@@ -444,7 +421,6 @@ function freeSpot(s: State, minBase = 60): { x: number; y: number } {
     if (nearBase(x, y, minBase)) continue;
     if (s.trees.some((t) => Math.hypot(t.x - x, t.y - y) < 34)) continue;
     if (s.layout.some((l) => inRect(l.zone, x, y, 20))) continue;
-    if (TOTEM_PADS.some((p) => Math.hypot(p.x - x, p.y - y) < PAD_R + 30)) continue;
     if ([...Object.values(BUILD_SPOTS), COTTAGE_PAD].some((p) => Math.hypot(p.x - x, p.y - y) < BUILD_R + 40)) continue;
     if (DUNGEON_ENABLED && Math.hypot(s.entrance.x - x, s.entrance.y - y) < ENTRANCE_R + 40) continue; // [dungeon hook]
     if (BUILDING_ENABLED && [s.water.area, ...s.water.water].some((r) => inRect(r, x, y, 30))) continue;
@@ -464,10 +440,9 @@ export function toolNode(trees: { x: number; y: number; kind: number }[], left: 
   return best;
 }
 
-/** Add resources to the bank and the quest tally (2x while the double totem runs). */
+/** Add resources to the bank and the quest tally (the well doubles delivered berries). */
 function award(s: State, x: number, y: number, r: Res) {
-  const m = s.doubleT > 0 ? 2 : 1;
-  const got = res(r.wood * m, r.stone * m, r.berry * m);
+  const got = res(r.wood, r.stone, r.berry * (built(s, 'well') ? 2 : 1));
   for (const k of RES) { s.bank[k] += got[k]; s.delivered[k] += got[k]; }
   s.villageDirty = true; // the bank is part of the saved village
   s.fx.push({ t: 'gain', x, y, r: got });
@@ -580,10 +555,10 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
   }
   const inDungeon = s.mode === 'dungeon';
   if (!inDungeon) s.time = Math.max(0, s.time - dt); // the sun waits while the team is underground
-  s.doubleT = Math.max(0, s.doubleT - dt);
-  const speedMul = 1 + 0.1 * totemLevel(s, 'speed');
-  const pickR = PICKUP_R + 10 * totemLevel(s, 'magnet');
-  const shieldMax = totemLevel(s, 'shield');
+  s.buildLock = Math.max(0, s.buildLock - dt);
+  // former totem effects now come from buildings: workshop boots (+10% speed), storage reach (+10 px pickup)
+  const speedMul = built(s, 'workshop') ? 1.1 : 1;
+  const pickR = PICKUP_R + (built(s, 'storage') ? 10 : 0);
   const carryMax = CARRY_MAX + (built(s, 'storage') ? 1 : 0) + (s.cottage.level >= 2 ? 1 : 0);
 
   // --- players: glide physics ---
@@ -596,8 +571,6 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     const ice = s.mode === 'meadow' && s.ice.length > 0 && onIce(s.ice, p.x, p.y); // frozen pond: slippery
     p.vx += ix * ACCEL * mul * (ice ? ICE_GRIP : 1) * dt;
     p.vy += iy * ACCEL * mul * (ice ? ICE_GRIP : 1) * dt;
-    // shield charges refill one at a time
-    if (p.shield < shieldMax) { p.shieldT += dt; if (p.shieldT >= SHIELD_RECHARGE) { p.shield++; p.shieldT = 0; } } else p.shieldT = 0;
     const drag = Math.exp(-(ice ? ICE_DRAG : DRAG) * dt);
     p.vx *= drag; p.vy *= drag;
     p.dashCd = Math.max(0, p.dashCd - dt);
@@ -768,24 +741,6 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     }
   }
 
-  // --- totems: stand on a pad for a second to buy the next level; step off before buying again ---
-  s.totems.forEach((t, i) => {
-    const pad = TOTEM_PADS[i];
-    const on = s.players.some((p) => Math.hypot(p.x - pad.x, p.y - pad.y) < PAD_R);
-    if (!on) { t.buy = 0; t.armed = true; return; }
-    const price = totemPrice(t);
-    if (!t.armed || t.level >= TOTEM_MAX || !canAfford(s.bank, price)) { t.buy = 0; return; }
-    t.buy = Math.min(1, t.buy + dt / BUY_SECONDS);
-    if (t.buy >= 1) {
-      for (const k of RES) s.bank[k] -= price[k] ?? 0;
-      s.villageDirty = true;
-      t.level++; t.buy = 0; t.armed = false;
-      if (t.kind === 'double') s.doubleT = DOUBLE_SECONDS * (built(s, 'well') ? 1.5 : 1); // well: totems last +50%
-      if (t.kind === 'shield') for (const p of s.players) p.shield = Math.max(p.shield, t.level); // first charge right away
-      s.fx.push({ t: 'totem', x: pad.x, y: pad.y, kind: t.kind, level: t.level });
-    }
-  });
-
   if (BUILDING_ENABLED) stepBuilding(s, dt);
 
   // --- spawners ---
@@ -808,27 +763,35 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
   if (s.time <= 0) { if (MINI_ENABLED && s.players.length) startMini(s); else s.phase = 'end'; }
 }
 
-/** Build like totems: stand 1 s on a spot when the bank covers the price; step off before the next buy. */
-function stepBuilding(s: State, dt: number) {
-  const pads: { b: Build | Cottage; at: { x: number; y: number }; cost: Res | null; kind: BuildKind | 'cottage' }[] = [
-    ...s.builds.map((b) => ({ b, at: BUILD_SPOTS[b.kind], cost: b.state === 2 ? null : BUILD_COST[b.kind], kind: b.kind })),
-    { b: s.cottage, at: COTTAGE_PAD, cost: s.cottage.level >= COTTAGE_MAX ? null : COTTAGE_COST[s.cottage.level - 1], kind: 'cottage' as const },
-  ];
-  for (const { b, at, cost, kind } of pads) {
-    const on = s.players.some((p) => Math.hypot(p.x - at.x, p.y - at.y) < BUILD_R);
-    if (!on) { b.buy = 0; b.armed = true; continue; }
-    if (!cost || !b.armed || !canAfford(s.bank, cost)) { b.buy = 0; continue; }
-    b.buy = Math.min(1, b.buy + dt / BUY_SECONDS);
-    if (b.buy < 1) continue;
-    b.buy = 0; b.armed = false;
-    for (const k of RES) s.bank[k] -= cost[k];
-    if (kind === 'cottage') {
-      s.cottage.level++;
-      s.quest = questTargets(s.players.length, s.cottage.level);
-    } else { (b as Build).state = 2; s.builtNow.push(kind); }
-    s.villageDirty = true;
-    s.fx.push({ t: 'build', x: at.x, y: at.y, kind, done: true });
+/** A player taps a card in the build panel at the cottage. Host-authoritative: needs the price in the bank,
+ *  not built yet, the player at home, and no other build in the last BUILD_LOCK seconds. Returns success. */
+export function requestBuild(s: State, playerId: string, kind: BuildKind | 'cottage'): boolean {
+  if (!BUILDING_ENABLED || s.phase !== 'play' || s.mode !== 'meadow' || s.buildLock > 0) return false;
+  const p = s.players.find((q) => q.id === playerId);
+  if (!p || !atHome(p.x, p.y)) return false;
+  const cost = kind === 'cottage' ? (s.cottage.level >= COTTAGE_MAX ? null : COTTAGE_COST[s.cottage.level - 1])
+    : s.builds.find((b) => b.kind === kind)?.state === 2 ? null : BUILD_COST[kind as BuildKind];
+  if (!cost || !canAfford(s.bank, cost)) return false;
+  for (const k of RES) s.bank[k] -= cost[k];
+  if (kind === 'cottage') {
+    s.cottage.level++;
+    s.quest = questTargets(s.players.length, s.cottage.level);
+  } else {
+    const b = s.builds.find((x) => x.kind === kind);
+    if (!b) return false;
+    b.state = 2; s.builtNow.push(kind);
   }
+  s.buildLock = BUILD_LOCK;
+  s.villageDirty = true;
+  const at = kind === 'cottage' ? { x: BASE.x, y: BASE.y } : kind === 'bridge' ? s.water.bridge : BUILD_SPOTS[kind];
+  s.fx.push({ t: 'build', x: at.x, y: at.y, kind, done: true });
+  return true;
+}
+/** "At home": on the cottage yard; the build panel (hammer button) is offered here. */
+export const HOME_R = 110;
+export const atHome = (x: number, y: number) => Math.hypot(x - BASE.x, y - BASE.y) < HOME_R;
+
+function stepBuilding(s: State, dt: number) {
   // garden: a small farm patch beside it grows berries (max 3 waiting)
   if (built(s, 'garden')) {
     s.gardenT -= dt;
@@ -879,7 +842,6 @@ export interface Snapshot {
   g: [number, number, number, number][];
   w: [number, string, number, number][];
   z: [number, number, number, number][]; // puzzles: need, plate mask, open, chest taken
-  k: [number, number][]; d: number; // totems [level, buy%], double seconds left
   bd: [number, number, number, number, number][]; // builds (BUILD_KINDS order) then cottage: state|level, paid w,s,b, buy%
   cs: number; // cottage: 0 idle, 1 upgrading
   md?: number; en?: number; pk?: string[]; pt?: number; // mode (MODES index), entrance ready %, picked blobz, pick seconds left
@@ -906,7 +868,6 @@ export function snapshot(s: State): Snapshot {
     g: s.gems.map((g) => [g.id, r1(g.x), r1(g.y), g.holders]),
     w: s.powers.map((w) => [w.id, w.kind, r1(w.x), r1(w.y)]),
     z: s.puzzles.map((z) => [z.need, z.mask, +z.open, +z.taken]),
-    k: s.totems.map((t) => [t.level, Math.round(t.buy * 100)]), d: r1(s.doubleT),
     bd: [...s.builds.map((b) => [b.state, ...resArr(b.paid), Math.round(b.buy * 100)] as [number, number, number, number, number]),
       [s.cottage.level, ...resArr(s.cottage.paid), Math.round(s.cottage.buy * 100)] as [number, number, number, number, number]],
     cs: s.cottage.state, bn: s.builtNow.join(','),
@@ -926,7 +887,6 @@ export interface View {
   players: { id: string; x: number; y: number; vx: number; vy: number; carry: ItemKind[]; boostT: number; magnetT: number; dashCd: number; shield: number }[];
   items: Item[]; gems: { id: number; x: number; y: number; holders: number }[]; powers: Power[];
   puzzles: Puzzle[];
-  totems: { kind: TotemKind; level: number; buy: number }[]; doubleT: number;
   builds: { kind: BuildKind; state: 0 | 1 | 2; paid: Res; buy: number }[];
   cottage: { level: number; state: 0 | 1; paid: Res; buy: number };
   builtNow: BuildKind[];
@@ -943,7 +903,7 @@ export function viewFromState(s: State): View {
     nodes: s.trees.map((t) => t.left),
     players: s.players.map((p) => ({ id: p.id, x: p.x, y: p.y, vx: p.vx, vy: p.vy, carry: p.carry, boostT: p.boostT, magnetT: p.magnetT, dashCd: p.dashCd, shield: p.shield })),
     items: s.items, gems: s.gems, powers: s.powers, puzzles: s.puzzles,
-    totems: s.totems, doubleT: s.doubleT, builds: s.builds, cottage: s.cottage, builtNow: s.builtNow,
+    builds: s.builds, cottage: s.cottage, builtNow: s.builtNow,
     mode: s.mode, entry: s.entry / READY_SECONDS, picked: Object.keys(s.picks), pickT: s.pickT,
     dungeon: s.dg ? dview(dsnap(s.dg, s.seed * 7919 + s.runs * 104729)) : null,
   };
@@ -969,6 +929,5 @@ export function viewFromSnapshot(n: Snapshot): View {
     mode: MODES[n.md ?? 0] ?? 'meadow', entry: (n.en ?? 0) / 100, picked: n.pk ?? [], pickT: n.pt ?? 0,
     dungeon: n.dg ? dview(n.dg) : null,
     builtNow: (n.bn ?? '').split(',').filter((k): k is BuildKind => (BUILD_KINDS as string[]).includes(k)),
-    totems: TOTEM_KINDS.map((kind, i) => ({ kind, level: n.k?.[i]?.[0] ?? 0, buy: (n.k?.[i]?.[1] ?? 0) / 100 })), doubleT: n.d ?? 0,
   };
 }

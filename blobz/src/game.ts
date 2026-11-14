@@ -4,12 +4,12 @@ import { blobCanvas, BODY_CY, clampLook } from './blob';
 import { sfx } from './sfx';
 import { dungeonFrame } from './dungeonScene'; // [dungeon hook]
 import { BASE, GATE_W, makePuzzles, makeTrees, PLATE_R, rng, WORLD_H, WORLD_W } from './sim';
-import { canAfford, isSolid, PAD_R, RES, TOTEM_KINDS, TOTEM_MAX, TOTEM_PADS, totemPrice } from './sim';
-import { BUILDING_ENABLED, BUILD_COST, BUILD_EFFECT, BUILD_KINDS, BUILD_NAMES, BUILD_R, BUILD_SPOTS, COTTAGE_BONUS, COTTAGE_COST, COTTAGE_MAX, COTTAGE_PAD, makeWater, nodeRes } from './sim';
+import { isSolid, RES } from './sim';
+import { BUILDING_ENABLED, BUILD_KINDS, BUILD_R, BUILD_SPOTS, COTTAGE_PAD, makeWater, nodeRes } from './sim';
 import type { Biome, BuildKind } from './sim';
 import { makeIce } from './sim';
 import { ARENA, BOMB_R, DROP_HEIGHT } from './mini';
-import type { PuzzleLayout, Res, Tool, TotemKind } from './sim';
+import type { PuzzleLayout, Res, Tool } from './sim';
 import type { FxEvent, Input, ItemKind, PlayerInfo, View } from './sim';
 
 export interface Session {
@@ -64,15 +64,6 @@ interface PuzzleGfx {
   taken: boolean;
 }
 
-interface TotemGfx {
-  kind: TotemKind;
-  pad: { x: number; y: number };
-  img: Phaser.GameObjects.Image;
-  pips: Phaser.GameObjects.Graphics;
-  tag: Phaser.GameObjects.Container;
-  price: { k: ItemKind; n: number; txt: Phaser.GameObjects.Text }[];
-  level: number;
-}
 
 interface BlobGfx {
   shadow: Phaser.GameObjects.Ellipse;
@@ -108,15 +99,11 @@ export class GameScene extends Phaser.Scene {
   private miniCenterY = 0;
   private miniG?: Phaser.GameObjects.Graphics;
   private drops = new Map<number, { item: Phaser.GameObjects.Image; mark: Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse }>();
-  private bgfx = new Map<BuildKind | 'cottage', { img: Phaser.GameObjects.Image; spot: Phaser.GameObjects.Image; tag: Phaser.GameObjects.Container; key: string }>();
+  private bgfx = new Map<BuildKind, { img: Phaser.GameObjects.Image; built: boolean }>();
   private cottageImg!: Phaser.GameObjects.Image;
   private water!: ReturnType<typeof makeWater>;
-  private bridgeImg?: Phaser.GameObjects.Image;
   private nodes: { img: Phaser.GameObjects.Image; kind: number; left: number; x: number; y: number; sc: number }[] = [];
   private dusk!: Phaser.GameObjects.Rectangle;
-  private totems: TotemGfx[] = [];
-  private totemG!: Phaser.GameObjects.Graphics;
-  private buyG!: Phaser.GameObjects.Graphics;
   private pile!: Phaser.GameObjects.Container;
   private pileKey = '';
   private trailG!: Phaser.GameObjects.Graphics;
@@ -151,7 +138,6 @@ export class GameScene extends Phaser.Scene {
     for (const t of ['axe', 'pickaxe', 'rake']) this.load.spritesheet('tool-' + t, `art/gather/tool-${t}.png`, { frameWidth: TOOL_FRAME.w, frameHeight: TOOL_FRAME.h });
     for (const c of ['wood', 'stone']) this.load.spritesheet('chips-' + c, `art/gather/chips-${c}.png`, { frameWidth: 16, frameHeight: 12 });
     for (const n of PROPS) this.load.image('pr-' + n, `art/props/${n}.png`);
-    for (const k of TOTEM_KINDS) for (let l = 1; l <= 3; l++) this.load.image(`tt-${k}-${l}`, `art/totems/totem-${k}-${l}.png`);
     this.load.spritesheet('fx-levelup', 'art/fx/levelup.png', { frameWidth: 32, frameHeight: 22 });
     this.load.spritesheet('fx-dust', 'art/fx/dust.png', { frameWidth: 14, frameHeight: 12 });
     this.load.spritesheet('fx-sparkle', 'art/fx/coin-sparkle.png', { frameWidth: 11, frameHeight: 11 });
@@ -273,7 +259,6 @@ export class GameScene extends Phaser.Scene {
     const ice = this.s.biome === 'snow' ? makeIce(this.s.seed) : [];
     for (const i of ice) zones.push({ x0: i.x - 70, x1: i.x + 70, y0: i.y - 40, y1: i.y + 40 });
     const inZone = (x: number, y: number, pad: number) => zones.some((z) => x > z.x0 - pad && x < z.x1 + pad && y > z.y0 - pad && y < z.y1 + pad)
-      || TOTEM_PADS.some((p) => Math.hypot(p.x - x, p.y - y) < 60 + pad)
       || (BUILDING_ENABLED && [...Object.values(BUILD_SPOTS), COTTAGE_PAD].some((p) => Math.hypot(p.x - x, p.y - y) < 60 + pad))
       || (BUILDING_ENABLED && [water.area, ...water.water].some((z) => x > z.x0 - pad && x < z.x1 + pad && y > z.y0 - pad && y < z.y1 + pad));
     for (let i = 0; i < 22; i++) {
@@ -304,9 +289,6 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.pz = makePuzzles(this.s.seed).map((l) => this.buildPuzzle(l));
-    this.totemG = this.add.graphics().setDepth(-700);
-    this.buyG = this.add.graphics().setDepth(3800); // purchase progress, above the blob standing on the pad
-    this.totems = TOTEM_KINDS.map((kind, i) => this.buildTotem(kind, TOTEM_PADS[i]));
     // team bank: small stacks of wood / stone / berries beside the cottage
     this.pile = this.add.container(BASE.x + 52, BASE.y + 40).setDepth(BASE.y + 40);
     // dusk: warm tint over the world in the last 20 s of daylight
@@ -429,8 +411,8 @@ export class GameScene extends Phaser.Scene {
     // ---- base building ----
     if (BUILDING_ENABLED) this.drawBuilds(v, now);
 
-    // ---- totems + bank ----
-    this.drawTotems(v, now);
+    // ---- bank pile ----
+    this.drawPile(v.bank);
 
     // ---- power-ups ----
     const seenW = new Set<number>();
@@ -562,80 +544,31 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  /** Spot markers, ghosts of what can be built, construction sites, finished buildings, cottage pad. */
+  /** Buildings at their fixed spots (the bridge spans the water). Only what IS built shows on the map;
+   *  building happens in the build panel at the cottage. */
   private buildBase() {
     this.bgfx.clear();
-    const mk = (kind: BuildKind | 'cottage', at: { x: number; y: number }) => {
-      // the building stands just behind its spot (the bridge's spot shows a preview; the real one spans the water)
-      const by = at.y - BUILD_R + 4;
-      const img = this.add.image(at.x, by, kind === 'cottage' ? 'b-build-spot' : 'b-' + kind).setScale(2).setOrigin(0.5, 1).setDepth(by);
-      const spot = this.add.image(at.x, at.y + 15, 'b-build-spot').setScale(2).setOrigin(0.5, 1).setDepth(-690);
-      const tag = this.add.container(at.x, at.y - 96).setDepth(3900);
-      this.bgfx.set(kind, { img, spot, tag, key: '' });
-    };
-    for (const k of BUILD_KINDS) mk(k, BUILD_SPOTS[k]);
     const w = this.water;
-    this.bridgeImg = this.add.image(w.bridge.x, w.bridge.y + 24, 'b-bridge').setScale(2).setOrigin(0.5, 1).setDepth(-930).setVisible(false);
-    mk('cottage', COTTAGE_PAD);
-    this.bgfx.get('cottage')!.img.setVisible(false);
+    for (const k of BUILD_KINDS) {
+      const at = BUILD_SPOTS[k];
+      const img = k === 'bridge'
+        ? this.add.image(w.bridge.x, w.bridge.y + 24, 'b-bridge').setScale(2).setOrigin(0.5, 1).setDepth(-930)
+        : this.add.image(at.x, at.y - BUILD_R + 4, 'b-' + k).setScale(2).setOrigin(0.5, 1).setDepth(at.y - BUILD_R + 4);
+      this.bgfx.set(k, { img: img.setVisible(false), built: false });
+    }
   }
 
-  /** Name + one icon/amount per resource still needed (amounts turn green when the bank covers them). */
-  private signTag(tag: Phaser.GameObjects.Container, title: string, need: Partial<Res>, bank: Res | undefined, effect = '') {
-    tag.removeAll(true);
-    const parts = RES.filter((k) => (need[k] ?? 0) > 0);
-    const w = Math.max(!title ? 0 : effect ? 126 : 96, 42 * parts.length + 8);
-    const h = !title ? 30 : effect ? 66 : 50, cy = !title ? 0 : effect ? 20 : 12;
-    tag.add(this.add.rectangle(0, 0, w, h, 0xfff7e6).setStrokeStyle(3, 0x3f2631));
-    if (title) tag.add(this.add.text(0, effect ? -20 : -12, title, { fontFamily: "'Nunito', sans-serif", fontSize: '15px', color: '#3f2631', fontStyle: 'bold' }).setOrigin(0.5));
-    if (effect) tag.add(this.add.text(0, -3, effect, { fontFamily: "'Nunito', sans-serif", fontSize: '12px', color: '#8a7466' }).setOrigin(0.5));
-    parts.forEach((k, j) => {
-      const x = -(42 * parts.length) / 2 + j * 42 + 4;
-      tag.add(this.add.image(x + 9, cy, ITEM_ICON[k]).setScale(k === 'wood' ? 1 : 2));
-      tag.add(this.add.text(x + 20, cy, String(need[k]), { fontFamily: "'Nunito', sans-serif", fontSize: '17px', color: (bank?.[k] ?? 0) >= need[k]! ? '#2f8a2f' : '#b3261e', fontStyle: 'bold' }).setOrigin(0, 0.5));
-    });
-  }
-
-  private drawBuilds(v: View, now: number) {
+  private drawBuilds(v: View, _now: number) {
     if (!v.builds || !v.cottage) return;
     // snow map: the igloo is the level-1 base (Art: cottage footprint); upgrades use the cottage art
     const lvl = Math.max(1, Math.min(3, v.cottage.level));
     const ck = this.s.biome === 'snow' && lvl === 1 ? 'w-igloo' : 'b-cottage-' + lvl;
     if (this.cottageImg.texture.key !== ck) this.cottageImg.setTexture(ck).setScale(ck === 'w-igloo' ? 4 : ck === 'b-cottage-1' ? 3 : 2);
-    const pads = [
-      ...v.builds.map((b) => ({ kind: b.kind as BuildKind | 'cottage', at: BUILD_SPOTS[b.kind], state: b.state, paid: b.paid, buy: b.buy, cost: BUILD_COST[b.kind] as Res | null, title: BUILD_NAMES[b.kind], effect: BUILD_EFFECT[b.kind] })),
-      { kind: 'cottage' as const, at: COTTAGE_PAD, state: v.cottage.state as 0 | 1 | 2, paid: v.cottage.paid, buy: v.cottage.buy,
-        cost: v.cottage.level >= COTTAGE_MAX ? null : COTTAGE_COST[v.cottage.level - 1], title: `Stuga nivå ${v.cottage.level + 1}`, effect: COTTAGE_BONUS[v.cottage.level] ?? '' },
-    ];
-    for (const p of pads) {
-      const g = this.bgfx.get(p.kind);
+    for (const b of v.builds) {
+      const g = this.bgfx.get(b.kind);
       if (!g) continue;
-      const done = p.state === 2 || !p.cost;
-      const can = !done && !!v.bank && canAfford(v.bank, p.cost!);
-      if (p.kind !== 'cottage') {
-        // not affordable: a faded ghost; affordable: the construction site ("build me!"); built: the building
-        const tex = 'b-' + p.kind + (!done && can ? '-site' : '');
-        if (g.img.texture.key !== tex) g.img.setTexture(tex);
-        g.img.setAlpha(done || can ? 1 : 0.35);
-        if (p.kind === 'bridge') { g.img.setVisible(!done); this.bridgeImg?.setVisible(done); }
-      }
-      g.spot.setVisible(!done);
-      g.tag.setVisible(!done);
-      if (!done) {
-        const need = RES.reduce((o, k) => ({ ...o, [k]: Math.max(0, p.cost![k] - p.paid[k]) }), {} as Res);
-        // compact (icons + cost) until a blob comes close, then name + effect too; lower spots show it below
-        const near = v.players.some((q) => Math.hypot(q.x - p.at.x, q.y - p.at.y) < 110);
-        const key = `${near ? 1 : 0}|${p.title}|${RES.map((k) => need[k] + ':' + ((v.bank?.[k] ?? 0) >= need[k] ? 1 : 0)).join(',')}`;
-        if (key !== g.key) { g.key = key; this.signTag(g.tag, near ? p.title : '', need, v.bank, near ? p.effect : ''); }
-        const below = p.at.y > BASE.y + 40;
-        g.tag.setY(p.at.y + (below ? 58 : -104) + (can ? Math.sin(now / 250) * 3 : 0)).setDepth(near ? 3950 : 3900);
-        if (p.buy > 0) {
-          this.buyG.lineStyle(10, 0x3f2631, 0.85).strokeCircle(p.at.x, p.at.y, BUILD_R + 4);
-          this.buyG.lineStyle(6, 0x6cc644, 1).beginPath();
-          this.buyG.arc(p.at.x, p.at.y, BUILD_R + 4, -Math.PI / 2, -Math.PI / 2 + p.buy * Math.PI * 2);
-          this.buyG.strokePath();
-        }
-      }
+      const on = b.state === 2;
+      if (on !== g.built) { g.built = on; g.img.setVisible(on); }
     }
     this.drawArrows(v);
   }
@@ -671,75 +604,6 @@ export class GameScene extends Phaser.Scene {
       el.style.left = sx + 'px'; el.style.top = sy + 'px';
       (el.querySelector('.arr') as HTMLElement).style.transform = `rotate(${ang}rad)`;
     }
-  }
-
-  /** Totem on its pedestal, level pips below, price tag above (coin icon + number). */
-  private buildTotem(kind: TotemKind, pad: { x: number; y: number }): TotemGfx {
-    const img = this.add.image(pad.x, pad.y - PAD_R + 6, `tt-${kind}-1`).setOrigin(0.5, 1).setScale(3).setDepth(pad.y - PAD_R);
-    const pips = this.add.graphics().setDepth(pad.y);
-    const tag = this.add.container(pad.x, pad.y - PAD_R - 80).setDepth(3900);
-    return { kind, pad, img, pips, tag, price: [], level: -1 };
-  }
-
-  private drawTotems(v: View, now: number) {
-    this.totemG.clear();
-    this.buyG.clear();
-    v.totems?.forEach((t, i) => {
-      const g = this.totems[i];
-      if (!g) return;
-      if (t.level !== g.level) {
-        g.level = t.level;
-        this.buildTag(g, totemPrice(t));
-        g.img.setTexture(`tt-${g.kind}-${Math.max(1, t.level)}`);
-        // not bought yet: a faded "ghost" of the totem shows what you can build
-        g.img.setAlpha(t.level ? 1 : 0.5).setTint(t.level ? 0xffffff : 0xb8b0a8);
-      }
-      const price = totemPrice(t);
-      const can = t.level < TOTEM_MAX && !!v.bank && canAfford(v.bank, price);
-      g.tag.setVisible(t.level < TOTEM_MAX);
-      if (t.level < TOTEM_MAX) {
-        // each resource number turns green once the bank has enough of it
-        for (const pr of g.price) pr.txt.setColor((v.bank?.[pr.k] ?? 0) >= pr.n ? '#2f8a2f' : '#b3261e');
-        g.tag.setY(g.pad.y - PAD_R - 80 + (can ? Math.sin(now / 250 + i) * 3 : 0));
-      }
-      // pad: stone ring; bright + pulsing when you can afford it; fills as you stand on it
-      const p = g.pad;
-      this.totemG.fillStyle(0x000000, 0.15).fillEllipse(p.x, p.y + 4, PAD_R * 2, PAD_R * 1.1);
-      this.totemG.fillStyle(can ? 0xffe08a : 0xd9cbb0, can ? 0.55 + 0.2 * Math.sin(now / 200 + i) : 0.6).fillEllipse(p.x, p.y, PAD_R * 1.8, PAD_R);
-      this.totemG.lineStyle(3, 0x3f2631, 0.8).strokeEllipse(p.x, p.y, PAD_R * 1.8, PAD_R);
-      if (t.buy > 0) {
-        // a ring around the totem fills up while a blob stands on the pad
-        const cy = p.y - PAD_R - 26;
-        this.buyG.lineStyle(10, 0x3f2631, 0.85).strokeCircle(p.x, cy, 40);
-        this.buyG.lineStyle(6, 0x6cc644, 1).beginPath();
-        this.buyG.arc(p.x, cy, 40, -Math.PI / 2, -Math.PI / 2 + t.buy * Math.PI * 2);
-        this.buyG.strokePath();
-      }
-      // level pips: 3 dots under the totem, filled per level
-      g.pips.clear();
-      for (let k = 0; k < TOTEM_MAX; k++) {
-        const x = p.x + (k - 1) * 14, y = p.y + PAD_R - 6;
-        g.pips.fillStyle(0x3f2631, 1).fillCircle(x, y, 6);
-        g.pips.fillStyle(k < t.level ? 0xffc93c : 0xe3d5b6, 1).fillCircle(x, y, 4);
-      }
-    });
-    this.drawPile(v.bank);
-  }
-
-  /** Price tag: one icon + amount per resource the next level costs. */
-  private buildTag(g: TotemGfx, price: Partial<Res>) {
-    g.tag.removeAll(true);
-    g.price = [];
-    const parts = RES.filter((k) => (price[k] ?? 0) > 0);
-    const w = 42 * parts.length + 8;
-    g.tag.add(this.add.rectangle(0, 0, w, 30, 0xfff7e6).setStrokeStyle(3, 0x3f2631));
-    parts.forEach((k, j) => {
-      const x = -w / 2 + 8 + j * 42;
-      g.tag.add(this.add.image(x + 9, 0, ITEM_ICON[k]).setScale(k === 'wood' ? 1 : 2));
-      const txt = this.add.text(x + 20, 0, String(price[k]), { fontFamily: "'Nunito', sans-serif", fontSize: '19px', color: '#3f2631', fontStyle: 'bold' }).setOrigin(0, 0.5);
-      g.tag.add(txt);
-      g.price.push({ k, n: price[k]!, txt });
-    });
   }
 
   /** The bank beside the cottage: up to 6 icons per resource in little heaps. */
@@ -957,17 +821,17 @@ export class GameScene extends Phaser.Scene {
         this.time.delayedCall(1000, () => { follow.remove(); st.destroy(); });
       }
     } else if (f.t === 'build') {
-      sfx.power();
-      const fx = this.add.sprite(f.x, f.y - 10, 'fx-levelup').setScale(f.done ? 4 : 3).setDepth(4500);
+      // the new building pops up at its spot with a dust cloud (the cottage: on the base)
+      sfx.power(); sfx.star();
+      const g = f.kind === 'cottage' ? null : this.bgfx.get(f.kind);
+      const img = f.kind === 'cottage' ? this.cottageImg : g?.img;
+      if (g) { g.built = true; g.img.setVisible(true); }
+      if (img) { const sc = img.scaleX; img.setScale(sc * 0.2); this.tweens.add({ targets: img, scale: sc, duration: 420, ease: 'Back.Out' }); }
+      for (let i = 0; i < 3; i++) this.time.delayedCall(i * 90, () => this.puff(f.x + (i - 1) * 22, f.y + 6, (i - 1) * 60, -40, 6));
+      const fx = this.add.sprite(f.x, f.y - 6, 'fx-levelup').setScale(4).setDepth(4500);
       fx.play('levelup');
       fx.once('animationcomplete', () => fx.destroy());
-      if (f.done) { this.burst(f.x, f.y - 60, 0xffe08a, 16); this.cameras.main.shake(140, 0.004); sfx.star(); }
-    } else if (f.t === 'totem') {
-      sfx.power();
-      const fx = this.add.sprite(f.x, f.y - 10, 'fx-levelup').setScale(3).setDepth(4500);
-      fx.play('levelup');
-      fx.once('animationcomplete', () => fx.destroy());
-      this.burst(f.x, f.y - 60, 0xffe08a, 10);
+      this.cameras.main.shake(120, 0.003);
     } else if (f.t === 'gate') {
       sfx.star();
       this.burst(f.x, f.y, 0xffe08a, 12);
