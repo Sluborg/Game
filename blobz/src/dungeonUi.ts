@@ -130,9 +130,8 @@ function renderHud(d: DView, myId: string) {
   btn.setAttribute('aria-label', h ? specialOf(h.cls, h.weapon).name : 'Special');
   // Art's icon per weapon special (spin / slam / charge)
   const spIcon = document.getElementById('attack-icon') as HTMLImageElement | null;
-  // Art's icons exist for the Krigare weapons; the other classes use the generic attack icon until theirs arrive
-  const w = h?.weapon ?? 'sword';
-  const src = ['sword', 'hammer', 'spear'].includes(w) ? `art/dungeon/btn-special-${w}.png` : 'art/dungeon/btn-attack.png';
+  // Art's special icon per weapon (spin / slam / charge / heal / volley / wall)
+  const src = `art/dungeon/btn-special-${h?.weapon ?? 'sword'}.png`;
   if (spIcon && !spIcon.src.endsWith(src)) spIcon.src = src;
   // my loot item next to the gold
   const key = h?.item ?? '';
