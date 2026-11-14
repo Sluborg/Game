@@ -5,13 +5,12 @@ import { sfx } from './sfx';
 import { dungeonFrame } from './dungeonScene'; // [dungeon hook]
 import { BASE, GATE_W, makePuzzles, makeTrees, PLATE_R, rng, WORLD_H, WORLD_W } from './sim';
 import { isSolid, RES } from './sim';
-import { BUILDING_ENABLED, BUILD_KINDS, BUILD_R, BUILD_SPOTS, COTTAGE_PAD, makeWater, nodeRes } from './sim';
+import { affordable, BUILDING_ENABLED, BUILD_KINDS, BUILD_R, BUILD_SPOTS, COTTAGE_PAD, makeWater, nodeRes } from './sim';
 import type { Biome, BuildKind } from './sim';
 import { makeIce } from './sim';
 import { ARENA, BOMB_R, DROP_HEIGHT } from './mini';
 import type { PuzzleLayout, Res, Tool } from './sim';
 import type { FxEvent, Input, ItemKind, PlayerInfo, View } from './sim';
-import { t } from './i18n';
 
 export interface Session {
   role: 'host' | 'client';
@@ -245,7 +244,8 @@ export class GameScene extends Phaser.Scene {
       }
       this.buildBase();
     }
-    this.add.text(BASE.x, BASE.y + 52, t('hud.base'), { fontFamily: "'Nunito', sans-serif", fontSize: '20px', color: '#fff7e6', fontStyle: 'bold', stroke: '#3f2631', strokeThickness: 5 }).setOrigin(0.5).setDepth(-800);
+    // "this is home": a house icon on the yard (no reading needed; was the word BAS)
+    this.add.image(BASE.x, BASE.y + 56, 'ic-house').setScale(2).setDepth(-800).setAlpha(0.9);
 
     // resource nodes (same layout as the host sim, from the shared seed); textures swap when used up
     this.nodes = makeTrees(this.s.seed).map((t) => {
@@ -575,27 +575,20 @@ export class GameScene extends Phaser.Scene {
     this.drawArrows(v);
   }
 
-  /** Watchtower: edge arrows on screen pointing at the nearest node of each resource that is off-screen. */
+  /** Edge arrows: with the watchtower, one per resource to the nearest node off-screen; and (no reading needed)
+   *  a house arrow back to the cottage while the bank can pay for a building and the house is off-screen. */
   private drawArrows(v: View) {
     const box = document.getElementById('edge-arrows');
     if (!box) return;
     const tower = v.builds.some((b) => b.kind === 'watchtower' && b.state === 2);
-    box.classList.toggle('hidden', !tower);
-    if (!tower) return;
-    const me = this.blobs.get(this.s.myId);
     const cam = this.cameras.main, wv = cam.worldView;
-    for (const k of RES) {
-      const el = box.querySelector<HTMLElement>(`[data-k="${k}"]`);
-      if (!el) continue;
-      let best: { x: number; y: number } | null = null, bd = Infinity;
-      this.nodes.forEach((n, i) => {
-        if ((v.nodes[i] ?? 0) <= 0 || nodeRes(n.kind) !== k) return;
-        if (n.x > wv.x && n.x < wv.right && n.y > wv.y && n.y < wv.bottom) { bd = -1; return; } // one is on screen already
-        const d = me ? Math.hypot(n.x - me.x, n.y - me.y) : 0;
-        if (bd >= 0 && d < bd) { bd = d; best = n; }
-      });
-      if (!best || bd < 0) { el.style.display = 'none'; continue; }
-      const t = best as { x: number; y: number };
+    const onScreen = (p: { x: number; y: number }) => p.x > wv.x && p.x < wv.right && p.y > wv.y && p.y < wv.bottom;
+    const goHome = BUILDING_ENABLED && v.phase === 'play' && v.mode === 'meadow' && !onScreen(BASE)
+      && !!affordable(v.bank, v.builds, v.cottage?.level ?? 1);
+    box.classList.toggle('hidden', !tower && !goHome);
+    const me = this.blobs.get(this.s.myId);
+    const point = (el: HTMLElement, t: { x: number; y: number } | null) => {
+      if (!t) { el.style.display = 'none'; return; }
       const cx = wv.centerX, cy = wv.centerY;
       const ang = Math.atan2(t.y - cy, t.x - cx);
       // where the ray from the view centre leaves the view (inset), in screen pixels
@@ -605,6 +598,20 @@ export class GameScene extends Phaser.Scene {
       el.style.display = 'flex';
       el.style.left = sx + 'px'; el.style.top = sy + 'px';
       (el.querySelector('.arr') as HTMLElement).style.transform = `rotate(${ang}rad)`;
+    };
+    const home = box.querySelector<HTMLElement>('[data-k="home"]');
+    if (home) point(home, goHome ? BASE : null);
+    for (const k of RES) {
+      const el = box.querySelector<HTMLElement>(`[data-k="${k}"]`);
+      if (!el) continue;
+      let best: { x: number; y: number } | null = null, bd = Infinity;
+      if (tower) this.nodes.forEach((n, i) => {
+        if ((v.nodes[i] ?? 0) <= 0 || nodeRes(n.kind) !== k) return;
+        if (onScreen(n)) { bd = -1; return; } // one is on screen already
+        const d = me ? Math.hypot(n.x - me.x, n.y - me.y) : 0;
+        if (bd >= 0 && d < bd) { bd = d; best = n; }
+      });
+      point(el, bd < 0 ? null : best);
     }
   }
 

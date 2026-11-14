@@ -4,6 +4,8 @@
 // Pure TypeScript, run by the host inside the normal sim (sim.ts phase 'mini').
 
 export const MINI_SECONDS = 40;
+/** A picture intro (berry on blob = good, bomb = dizzy) before the rain; the clock starts at MINI_SECONDS + this. */
+export const MINI_INTRO = 2.5;
 /** The field, centred on the base (world px). The sim keeps blobz inside it; nothing else runs meanwhile. */
 export const ARENA = { x0: 360, y0: 300, x1: 920, y1: 680 };
 export const DROP_HEIGHT = 220; // px above the ground when an item appears
@@ -39,7 +41,7 @@ export function miniGoal(n: number): [number, number, number] {
 export const miniStars = (m: { caught: number; goal: [number, number, number] }) => m.goal.filter((g) => m.caught >= g).length;
 
 export function newMini(players: number): Mini {
-  return { t: MINI_SECONDS, caught: 0, goal: miniGoal(players), drops: [], stun: {}, berryT: 0.5, bombT: 3, nextId: 1 };
+  return { t: MINI_SECONDS + MINI_INTRO, caught: 0, goal: miniGoal(players), drops: [], stun: {}, berryT: MINI_INTRO + 0.5, bombT: MINI_INTRO + 3, nextId: 1 };
 }
 
 interface Body { id: string; x: number; y: number; vx: number; vy: number }

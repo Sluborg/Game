@@ -139,6 +139,12 @@ export const BUILD_SPOTS = Object.fromEntries(RING_ORDER.map((k, i) => {
 export const COTTAGE_PAD = { x: BASE.x, y: BASE.y + 124 };
 export const COTTAGE_COST: Res[] = [res(20, 15, 10), res(40, 30, 20)]; // to level 2, to level 3
 export const COTTAGE_MAX = 3;
+/** First thing the bank pays for right now: a missing building (BUILD_KINDS order), else the next cottage level. */
+export function affordable(bank: Res, builds: { kind: BuildKind; state: number }[], cottageLevel: number): BuildKind | 'cottage' | null {
+  const b = builds.find((x) => x.state !== 2 && canAfford(bank, BUILD_COST[x.kind]));
+  if (b) return b.kind;
+  return cottageLevel < COTTAGE_MAX && canAfford(bank, COTTAGE_COST[cottageLevel - 1]) ? 'cottage' : null;
+}
 // cottage team bonus (besides +20% quest): level 2 carries one more, level 3 regrows faster
 export const BUILD_R = 30; // stand this close to a spot to build
 /** state: 0 = empty spot, 2 = built (1 is unused: buildings are bought at once, like totems). */
