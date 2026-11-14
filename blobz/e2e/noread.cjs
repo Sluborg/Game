@@ -54,6 +54,8 @@ const shots = process.argv[3] || '';
     await host.click('#btn-skip-mini');
     await ada.waitForSelector('#end:not(.hidden)', { timeout: 6000 });
     ok(await ada.isVisible('#end .endsun'), 'end screen shows a setting sun');
+    const title = await ada.locator('#end-title').boundingBox();
+    ok(title && title.width <= 1 && (await ada.textContent('#end-title')).trim() === 'Solen gick ner!', 'end title is picture-only (words kept for screen readers)');
     const line = (await ada.textContent('#end-mini')).trim();
     ok(/^\d+$/.test(line), `Bärregn line has no words, only the number ("${line}")`);
     if (shots) await host.screenshot({ path: `${shots}/noread-end-portrait.png` });
