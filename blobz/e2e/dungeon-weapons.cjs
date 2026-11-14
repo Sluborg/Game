@@ -16,12 +16,12 @@ const angDiff = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)))
   try {
     await host.evaluate(() => { const s = window.__blobz.state; s.players.forEach((p, i) => { p.x = s.entrance.x + i * 10; p.y = s.entrance.y; }); });
     for (const p of pages) await p.waitForSelector('#weapon-pick:not(.hidden)', { timeout: 6000 });
-    for (const p of pages) { await p.click('.wcard[data-w="rogue"]'); await p.click('.wcard[data-w="sword"]'); }
+    for (const p of pages) await p.click('.wcard[data-w="rogue"]'); // one weapon per class: the rogue gets the dagger at once
     for (const p of pages) await p.waitForFunction(() => window.__blobzView.mode === 'dungeon', null, { timeout: 6000 });
     const ids = await host.evaluate(() => window.__blobz.state.players.map((p) => p.id));
     await host.waitForTimeout(2200); // floor banner gone
     for (const w of Object.keys(CLS)) {
-      const deg = DIRS[w], ranged = w === 'bow';
+      const deg = DIRS[w], ranged = w === 'bow' || w === 'staff'; // the healer's wand shoots bolts
       for (const [i, p] of pages.entries()) {
         // this phone's blob gets one heavy goo in direction `deg`; the other blob holds still (no attacks)
         await sim(host, (s, a) => {
@@ -43,7 +43,7 @@ const angDiff = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)))
           return g && g.swing && g.w === w && g.n >= n0 + 2 ? g : null;
         }, [ids[i], w, n0], { timeout: 8000 }).then((h) => h.jsonValue());
         const want = await host.evaluate(([i]) => { const s = window.__blobz.state, q = s.players[i], e = s.dg.enemies[0]; return Math.atan2(e.y - q.y, e.x - q.x); }, [i]);
-        // the shield stays upright: it must sit on the body's edge toward the goo; everything else must point at it
+        // (the healer's wand points at the goo it shoots) the shield stays upright: it must sit on the body's edge toward the goo; everything else must point at it
         // slashing weapons (and the Riddare's sword) sweep across the line: the swing is aimed at the goo and the blade
         // stays within its arc; the daggers stab along the line (both sai point at it); spear / crossbow point at it
         const got = res.slash ? res.aim : res.a;
@@ -52,8 +52,7 @@ const angDiff = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)))
         const held = Math.hypot(res.x - res.bx, res.y - res.by);
         const where = i ? 'joiner (landscape)' : 'host (portrait)';
         if (w === 'dagger') {
-          const off2 = (angDiff(res.a2, want) * 180) / Math.PI, held2 = Math.hypot(res.x2 - res.bx, res.y2 - res.by);
-          ok(off <= 30 && off2 <= 30 && held >= 18 && held <= 56 && held2 >= 18 && held2 <= 56, `dagger on ${where}: two daggers stab at the goo (${off.toFixed(0)} / ${off2.toFixed(0)} deg off, <= 30), hovering ${held.toFixed(0)} / ${held2.toFixed(0)} px, stab #${res.stab}`);
+          ok(off <= 30 && held >= 18 && held <= 56, `dagger on ${where}: one dagger, held close, stabs at the goo (${off.toFixed(0)} deg off, <= 30), hovering ${held.toFixed(0)} px, stab ${Number(res.stab).toFixed(0)} px out`);
         } else {
           ok(off <= 30 && (!res.slash || blade <= (w === 'hammer' ? 85 : 75)) && held >= 18 && held <= 56, `${w} on ${where}: ${res.slash ? `slashes across the goo (aim ${off.toFixed(0)} deg off, blade ${blade.toFixed(0)} deg into its arc)` : `points ${off.toFixed(0)} deg off the goo`} (<= 30), hovering ${held.toFixed(0)} px from the body centre`);
         }

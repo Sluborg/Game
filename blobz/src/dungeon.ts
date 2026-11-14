@@ -40,7 +40,9 @@ export type Weapon = 'sword' | 'hammer' | 'spear' | 'staff' | 'bow' | 'shield' |
 /** Order is the snapshot index: only append. */
 export const WEAPONS: Weapon[] = ['sword', 'hammer', 'spear', 'staff', 'bow', 'shield', 'dagger'];
 // the spear stays in the code but is not offered (Stefan: too strong for now); classOf('spear') still gives 'rogue'
-export const CLASS_WEAPONS: Record<HeroClass, Weapon[]> = { rogue: ['dagger', 'sword', 'hammer'], healer: ['staff'], marksman: ['bow'], tank: ['shield'] };
+// Stefan: ONE weapon per class (rogue dagger, healer wand, knight sword + shield, marksman crossbow); the other weapons
+// stay in the code, not offered
+export const CLASS_WEAPONS: Record<HeroClass, Weapon[]> = { rogue: ['dagger'], healer: ['staff'], marksman: ['bow'], tank: ['shield'] };
 export const classOf = (w: Weapon): HeroClass => CLASSES.find((c) => CLASS_WEAPONS[c].includes(w)) ?? 'rogue';
 /** Auto-attack: reach (px from the blob centre to the goo's edge), half-arc (radians, PI = all around),
  *  damage (goo hit points), seconds between attacks, knockback; ranged = a bolt at the nearest goo in sight. */
@@ -48,8 +50,8 @@ export const WEAPON_STATS: Record<Weapon, { reach: number; arc: number; dmg: num
   sword: { reach: 56, arc: 1.0, dmg: 12, cd: 0.4, kb: 160 }, // fast, medium reach
   hammer: { reach: 58, arc: Math.PI, dmg: 26, cd: 0.9, kb: 380 }, // slow, hits all around, big knockback
   spear: { reach: 96, arc: 0.3, dmg: 14, cd: 0.55, kb: 200 }, // long and narrow
-  staff: { reach: 52, arc: 1.2, dmg: 9, cd: 0.6, kb: 140 }, // the healer's bonk
-  bow: { reach: 200, arc: 0, dmg: 7, cd: 0.55, kb: 90, ranged: true }, // crossbow: safe at range, so clearly less damage than melee (~42% of the sword)
+  staff: { reach: 170, arc: 0, dmg: 8, cd: 0.6, kb: 80, ranged: true }, // the healer's wand: bolts (damage or heal mode)
+  bow: { reach: 200, arc: 0, dmg: 7, cd: 0.6, kb: 90, ranged: true }, // crossbow: safe at range, so clearly less damage than melee (~42% of the sword)
   shield: { reach: 56, arc: 1.0, dmg: 10, cd: 0.5, kb: 280 }, // the Riddare: a heavier, slower sword slash with big knockback (id stays 'shield')
   dagger: { reach: 44, arc: 1.2, dmg: 8, cd: 0.25, kb: 80 }, // the rogue's two daggers: very fast, short
 };
@@ -65,7 +67,10 @@ export const SPECIALS: Record<string, SpecialDef> = {
   'tank:shield': { kind: 'wall', cd: 10, r: 120, dmg: 0, kb: 360, stun: 0.6 }, // friends inside take no damage
 };
 export const specialOf = (cls: HeroClass, w: Weapon): SpecialDef => SPECIALS[`${cls}:${w}`] ?? SPECIALS['rogue:dagger'];
-export const HEAL_HP = 25; // healer's light, per friend
+export const HEAL_HP = 25; // healer's light, per friend (old special)
+export const HEAL_BOLT = 10; // the healer's wand in heal mode, per bolt
+export const STILL_SPEED = 25; // the marksman only shoots standing still (slower than this)
+const HOLD_GAP = 0.4; // the big button repeats every 0.3 s while held: held = a press within this long
 /** Small button per class: how long the blob is untouchable, plus a twist. */
 export const SIDESTEPS: Record<HeroClass, { dodge: number; heal?: number; away?: boolean; hold?: boolean }> = {
   rogue: { dodge: 0.4 },
@@ -113,10 +118,10 @@ export const SKILLS: SkillDef[] = [
   { id: 'rogue-power', cls: 'rogue', icon: 104, mod: { dmg: 1.25 } },
   { id: 'healer-heal', cls: 'healer', icon: 115, mod: { heal: 1.5 } },
   { id: 'healer-regen', cls: 'healer', icon: 114, mod: { regen: 4 } }, // +4 health every 4 s
-  { id: 'healer-bubble', cls: 'healer', icon: 102, mod: { shieldAll: 1 } }, // the light also blocks 1 hit
+  { id: 'healer-bubble', cls: 'healer', icon: 102, mod: { shieldAll: 1 } }, // a heal bolt also blocks 1 hit
   { id: 'healer-revive', cls: 'healer', icon: 127, mod: { koFast: 2 } }, // knocked-out friends wake 2 s sooner
   { id: 'healer-holy', cls: 'healer', icon: 129, mod: { dmg: 1.4 } },
-  { id: 'healer-cleanse', cls: 'healer', icon: 130, mod: { spCd: 0.75 } }, // light 25% more often
+  { id: 'healer-cleanse', cls: 'healer', icon: 130, mod: { rate: 0.8 } }, // wand bolts 20% faster
   { id: 'marksman-multishot', cls: 'marksman', icon: 131, mod: { arrows: 2 } },
   { id: 'marksman-pierce', cls: 'marksman', icon: 107, mod: { pierce: 1 } },
   { id: 'marksman-crit', cls: 'marksman', icon: 104, mod: { crit: 0.25 } }, // 1 in 4 bolts hits double
@@ -128,7 +133,7 @@ export const SKILLS: SkillDef[] = [
   { id: 'tank-armor', cls: 'tank', icon: 96, mod: { hp: 40 } },
   { id: 'tank-charge', cls: 'tank', icon: 102, mod: { dmg: 1.3 } },
   { id: 'tank-stun', cls: 'tank', icon: 117, mod: { stun: 0.6 } },
-  { id: 'tank-guard', cls: 'tank', icon: 65, mod: { wallT: 2 } },
+  { id: 'tank-guard', cls: 'tank', icon: 65, mod: { rate: 0.85 } }, // sword 15% faster
 ];
 export const skillOf = (id: string) => SKILLS.find((k) => k.id === id);
 /** Rare loot (boss, chests): one item slot per blob, each with one clear effect. */
@@ -141,7 +146,7 @@ export const ITEMS: ItemDef[] = [
   { id: 'stone', icon: 114, mod: { regen: 5 } },
 ];
 export const itemOf = (id: string | null | undefined) => ITEMS.find((i) => i.id === id);
-export const LOOT_SECONDS = 10;
+export const LOOT_SECONDS = 20;
 export const CHEST_ITEM_CHANCE = 0.5; // the boss always drops one
 
 // ---- goo ----
@@ -306,6 +311,7 @@ export interface Hero {
   offer: string[]; offerT: number; pending: number; // 1-of-3 cards on screen (no timer), level-ups still to pick
   zx: number; zy: number; picking: boolean; // frozen + safe while the cards are open
   shield: number; wallT: number; regenT: number; kills: number; // healer shield charges, tank wall, regen clock, own kills
+  mode: 0 | 1; held: number; guard: boolean; // healer wand mode (1 = heal), big button held (s left), knight shield up
 }
 export type EndWhy = 'boss' | 'exit' | 'time';
 export interface LootVote { item: string; t: number; rolls: Record<string, number> } // -1 undecided, 0 pass, 1-100 roll
@@ -328,7 +334,8 @@ export interface DState {
 }
 export type DFx =
   | { t: 'swing'; id: string; w: Weapon; a: number }
-  | { t: 'shot'; x: number; y: number; tx: number; ty: number }
+  | { t: 'shot'; x: number; y: number; tx: number; ty: number; k?: number } // k 1 = a heal bolt
+  | { t: 'mode'; id: string; x: number; y: number; m: number }
   | { t: 'special'; id: string; k: SpecialKind; x: number; y: number; a: number; r: number }
   | { t: 'dodge'; id: string; x: number; y: number }
   | { t: 'hurt'; e: number; x: number; y: number; kind: EnemyKind }
@@ -382,7 +389,7 @@ export function newHero(weapon: Weapon, maxHp?: number): Hero {
   return {
     cls, hp: max, maxHp: max, ko: 0, inv: 0, weapon, fx: 0, fy: 1, aim: 0, atkCd: 0, swing: 0,
     spCd: 0, spT: 0, lastAtk: -1, lunge: [], dodge: 0, lastDash: -1, kx: 0, ky: 0,
-    skills: [], item: null, offer: [], offerT: 0, pending: 0, zx: 0, zy: 0, picking: false, shield: 0, wallT: 0, regenT: 0, kills: 0,
+    skills: [], item: null, offer: [], offerT: 0, pending: 0, zx: 0, zy: 0, picking: false, shield: 0, wallT: 0, regenT: 0, kills: 0, mode: 0, held: 0, guard: false,
   };
 }
 
@@ -546,9 +553,31 @@ function special(d: DState, h: Hero, b: Body, bodies: Body[], m: Mods, fx: DFx[]
 }
 
 /** Auto-attack: melee swing at the nearest goo in reach, or a bolt at the nearest goo in sight. */
-function autoAttack(d: DState, h: Hero, b: Body, m: Mods, fx: DFx[]) {
+function autoAttack(d: DState, h: Hero, b: Body, m: Mods, fx: DFx[], bodies: Body[]) {
   const st = WEAPON_STATS[h.weapon];
   const reach = st.reach + m.reach;
+  if (h.weapon === 'bow' && Math.hypot(b.vx, b.vy) > STILL_SPEED) return; // the marksman shoots only standing still
+  if (h.weapon === 'staff' && h.mode === 1) {
+    // heal mode: a green bolt at the most hurt friend in reach (knocked-out friends first: it wakes them)
+    let best: { o: Body; need: number } | null = null;
+    for (const o of bodies) {
+      const oh = d.heroes[o.id];
+      if (!oh || o.id === b.id || Math.hypot(o.x - b.x, o.y - b.y) > reach || !lineOfSight(d.map, b.x, b.y, o.x, o.y)) continue;
+      const need = oh.ko > 0 ? 1e9 : oh.maxHp - oh.hp;
+      if (need > 0 && (!best || need > best.need)) best = { o, need };
+    }
+    if (!best) return;
+    const o = best.o, oh = d.heroes[o.id];
+    face(h, b, o.x, o.y);
+    h.atkCd = st.cd * m.rate; h.swing = Math.min(0.3, h.atkCd * 0.8);
+    fx.push({ t: 'swing', id: b.id, w: h.weapon, a: Math.atan2(h.fy, h.fx) });
+    fx.push({ t: 'shot', x: b.x, y: b.y, tx: o.x, ty: o.y, k: 1 });
+    if (oh.ko > 0) { oh.ko = 0; oh.hp = Math.max(1, Math.round(oh.maxHp / 2)); oh.inv = 1.5; fx.push({ t: 'revive', id: o.id, x: o.x, y: o.y }); }
+    else healHero(oh, Math.round(HEAL_BOLT * m.heal));
+    if (m.shieldAll) oh.shield = Math.max(oh.shield, m.shieldAll);
+    fx.push({ t: 'heal', id: o.id, x: o.x, y: o.y });
+    return;
+  }
   const t = nearestEnemy(d, b.x, b.y, reach, st.ranged ? d.map : undefined);
   if (!t) return;
   face(h, b, t.x, t.y);
@@ -557,7 +586,7 @@ function autoAttack(d: DState, h: Hero, b: Body, m: Mods, fx: DFx[]) {
   const dmg = Math.round(st.dmg * m.dmg * (m.crit > 0 && Math.random() < m.crit ? 2 : 1));
   const kb = st.kb * m.kb;
   if (st.ranged) {
-    fx.push({ t: 'shot', x: b.x, y: b.y, tx: t.x, ty: t.y });
+    fx.push({ t: 'shot', x: b.x, y: b.y, tx: t.x, ty: t.y, ...(h.weapon === 'staff' ? { k: 0 } : {}) });
     hitEnemy(d, t, dmg, kb, 0.25 + m.stun, b.x, b.y, fx, b.id);
     // pierce: the bolt flies on through the next goo in the line
     let left = m.pierce;
@@ -680,10 +709,15 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
     const sp = Math.hypot(b.vx, b.vy);
     if (sp > 30 && h.aim <= 0 && h.spT <= 0) { h.fx = b.vx / sp; h.fy = b.vy / sp; }
     // special attack (big button)
+    // the big button: healer = toggle the wand's mode (per press), knight = hold the shield up, others = special
     if (a !== h.lastAtk) {
-      h.lastAtk = a;
-      if (h.spCd <= 0) special(d, h, b, bodies, m, fx);
-    }
+      const fresh = h.held <= 0; // a new press, not the button's auto-repeat while it is held
+      h.lastAtk = a; h.held = HOLD_GAP;
+      if (h.cls === 'healer') { if (fresh) { h.mode = h.mode ? 0 : 1; fx.push({ t: 'mode', id: b.id, x: b.x, y: b.y, m: h.mode }); } }
+      else if (h.cls !== 'tank' && h.spCd <= 0) special(d, h, b, bodies, m, fx);
+    } else h.held = Math.max(0, h.held - dt);
+    h.guard = h.cls === 'tank' && h.held > 0;
+    if (h.guard) { const v = Math.hypot(b.vx, b.vy); if (v > 70) { b.vx *= 70 / v; b.vy *= 70 / v; } } // shield up: slow
     // lunge in progress: pierce every goo it touches once
     if (h.spT > 0 && specialOf(h.cls, h.weapon).kind === 'lunge') {
       const def = specialOf(h.cls, h.weapon);
@@ -693,7 +727,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
         hitEnemy(d, e, Math.round(def.dmg * m.dmg), def.kb * m.kb, def.stun + m.stun, b.x, b.y, fx, b.id);
       }
     }
-    if (h.atkCd <= 0) autoAttack(d, h, b, m, fx);
+    if (h.atkCd <= 0) autoAttack(d, h, b, m, fx, bodies);
   }
   // standing blobz: not knocked out and not busy with the level-up cards (goo ignore those, stairs don't wait for them)
   const alive = bodies.filter((b) => (d.heroes[b.id]?.ko ?? 0) <= 0 && !d.heroes[b.id]?.offer.length);
@@ -881,7 +915,9 @@ function dropAt(d: DState, x: number, y: number, v: number, k: 0 | 1) {
 function stepLoot(d: DState, dt: number, fx: DFx[]) {
   if (d.lootLast) { d.lootLast.t -= dt; if (d.lootLast.t <= 0) d.lootLast = null; }
   if (!d.loot && d.lootQ.length && !d.lootLast) {
-    d.loot = { item: d.lootQ.shift()!, t: LOOT_SECONDS, rolls: Object.fromEntries(Object.keys(d.heroes).map((id) => [id, -1])) };
+    // a player who already wears that item passes automatically (one item slot; items have no tiers)
+    const item = d.lootQ.shift()!;
+    d.loot = { item, t: LOOT_SECONDS, rolls: Object.fromEntries(Object.keys(d.heroes).map((id) => [id, d.heroes[id].item === item ? 0 : -1])) };
   }
   const v = d.loot;
   if (!v) return;
@@ -903,8 +939,10 @@ function hurt(d: DState, b: Body, fromX: number, fromY: number, dmg: number, fx:
   if (!h || h.inv > 0 || h.ko > 0 || h.dodge > 0 || b.dashT > 0 || h.offer.length) return false; // a sidestep (or lunge) dodges
   // a tank's shield wall covers every friend inside it
   const wall = bodies.some((o) => { const oh = d.heroes[o.id]; return oh?.wallT > 0 && oh.ko <= 0 && Math.hypot(o.x - b.x, o.y - b.y) <= specialOf(oh.cls, oh.weapon).r * heroMods(oh).spR; });
-  if (wall || h.shield > 0) {
-    if (!wall) h.shield--;
+  // the knight's raised shield blocks everything from the front (the way it faces)
+  const front = h.guard && (fromX - b.x) * h.fx + (fromY - b.y) * h.fy > 0;
+  if (wall || front || h.shield > 0) {
+    if (!wall && !front) h.shield--;
     h.inv = HURT_INV * 0.5;
     fx.push({ t: 'block', id: b.id, x: b.x, y: b.y });
     return true;
@@ -935,7 +973,7 @@ export interface DSnap {
 }
 export interface DHeroView {
   cls: HeroClass; hp: number; maxHp: number; ko: number; weapon: Weapon; face: number; swing: number; spCd: number; spMax: number; spT: number; dodge: boolean; inv: boolean;
-  shield: number; wallT: number; item: string | null; skills: string[]; offer: string[]; offerT: number;
+  mode: number; guard: boolean; shield: number; wallT: number; item: string | null; skills: string[]; offer: string[]; offerT: number;
 }
 export interface DView {
   seed: number; floor: number; gold: number; xp: number; level: number; kills: number; ready: number; done: number; time: number; why: EndWhy; bossMax: number;
@@ -957,7 +995,7 @@ export function dsnap(d: DState, seed: number): DSnap {
     sp: (d.spit ?? []).map((s) => [s.id, r1(s.x), r1(s.y)]),
     op: d.opened.map((o) => (o ? '1' : '0')).join(''),
     h: Object.entries(d.heroes).map(([id, h]): HeroTuple => [id, Math.ceil(h.hp), h.maxHp, r1(h.ko), WEAPONS.indexOf(h.weapon), Math.round(Math.atan2(h.fy, h.fx) * 100),
-      Math.round(h.swing * 100), Math.ceil(h.spCd * 10), Math.round(h.spT * 100), (h.dodge > 0 ? 1 : 0) | (h.inv > 0 ? 2 : 0),
+      Math.round(h.swing * 100), Math.ceil(h.spCd * 10), Math.round(h.spT * 100), (h.dodge > 0 ? 1 : 0) | (h.inv > 0 ? 2 : 0) | (h.mode ? 4 : 0) | (h.guard ? 8 : 0),
       h.shield, Math.ceil(h.wallT * 10), h.item ?? '', h.skills.join(','), h.offer.join(','), Math.ceil(h.offerT)]),
     lt: d.loot ? [d.loot.item, Math.ceil(d.loot.t), Object.entries(d.loot.rolls)] : null,
     ll: d.lootLast ? [d.lootLast.item, d.lootLast.win ?? '', d.lootLast.roll] : null,
@@ -975,7 +1013,7 @@ export function dview(n: DSnap): DView {
       const weapon = WEAPONS[w] ?? 'sword', cls = classOf(weapon);
       return [id, {
         cls, hp, maxHp, ko, weapon, face: face / 100, swing: swing / 100,
-        spCd: (cd ?? 0) / 10, spMax: specialOf(cls, weapon).cd, spT: (spT ?? 0) / 100, dodge: !!((fl ?? 0) & 1), inv: !!((fl ?? 0) & 2),
+        spCd: (cd ?? 0) / 10, spMax: specialOf(cls, weapon).cd, spT: (spT ?? 0) / 100, dodge: !!((fl ?? 0) & 1), inv: !!((fl ?? 0) & 2), mode: (fl ?? 0) & 4 ? 1 : 0, guard: !!((fl ?? 0) & 8),
         shield: sh ?? 0, wallT: (wl ?? 0) / 10, item: it || null, skills: list(sk), offer: list(of), offerT: ot ?? 0,
       }];
     })),

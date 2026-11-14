@@ -28,11 +28,9 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     await place(host, 2, ent.x, ent.y + 16);
     for (const p of pages) await p.waitForSelector('#weapon-pick:not(.hidden)', { timeout: 6000 });
     ok(true, 'everyone on the entrance 1.5 s -> class cards on all 3 phones');
-    // Stefan: Krigare -> weapon step -> Svärd; Ada: Präst; Bo: Bågskytt (one weapon each, picked at once)
+    // Stefan: Rogue (dagger); Ada: Helare; Bo: Skytt (one weapon per class, picked at once)
+    if (shots) { await ada.screenshot({ path: `${shots}/dg-class-portrait.png` }); await bo.screenshot({ path: `${shots}/dg-class-landscape.png` }); }
     await host.click('.wcard[data-w="rogue"]');
-    await host.waitForSelector('.wcard[data-w="sword"]', { timeout: 3000 });
-    if (shots) { await ada.screenshot({ path: `${shots}/dg-class-portrait.png` }); await host.screenshot({ path: `${shots}/dg-weapon-portrait.png` }); await bo.screenshot({ path: `${shots}/dg-class-landscape.png` }); }
-    await host.click('.wcard[data-w="sword"]');
     await ada.click('.wcard[data-w="healer"]');
     await bo.click('.wcard[data-w="marksman"]');
     for (const p of pages) await p.waitForFunction(() => window.__blobzView.mode === 'dungeon' && !!window.__blobzView.dungeon, null, { timeout: 6000 });
@@ -40,8 +38,8 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     const ids = await host.evaluate(() => window.__blobz.state.players.map((p) => p.id));
     let d = await dg(bo);
     const hs = ids.map((id) => d.heroes[id]);
-    ok(d.floor === 1 && hs[0].cls === 'rogue' && hs[0].weapon === 'sword' && hs[1].cls === 'healer' && hs[2].cls === 'marksman',
-      'down together: Krigare (svärd) / Präst / Bågskytt on every phone');
+    ok(d.floor === 1 && hs[0].cls === 'rogue' && hs[0].weapon === 'dagger' && hs[1].cls === 'healer' && hs[2].cls === 'marksman',
+      'down together: Rogue (dagger) / Helare / Skytt on every phone');
     ok(hs[2].maxHp === 80 && hs[0].maxHp === 100, 'health follows the class (Skytt 80, Rogue 100)');
     ok(d.bossMax === 660, `boss health scales with 3 players (${d.bossMax})`);
     ok(await bo.isVisible('#attack') && await host.isVisible('#attack'), 'special button shows underground');
