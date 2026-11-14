@@ -7,7 +7,7 @@ import { BASE, GATE_W, makePuzzles, makeTrees, PLATE_R, rng, WORLD_H, WORLD_W } 
 import { isSolid, RES } from './sim';
 import { affordable, BUILDING_ENABLED, BUILD_KINDS, BUILD_R, BUILD_SPOTS, COTTAGE_PAD, makeWater, nodeRes } from './sim';
 import type { Biome, BuildKind } from './sim';
-import { DUNGEON_ENABLED, entranceOf, makeIce, WATER_TILE } from './sim';
+import { DUNGEON_ENABLED, entranceOf, ICE_RX, ICE_RY, makeIce, WATER_TILE } from './sim';
 import { autotileMask, waterTiles, type Shore } from './water';
 import { ARENA, BOMB_R, DROP_HEIGHT } from './mini';
 import type { PuzzleLayout, Res, Tool } from './sim';
@@ -33,16 +33,16 @@ const ITEM_ICON: Record<ItemKind, string> = { wood: 'ic-log', stone: 'g-item-sto
 // Fine art (public/art/fine, README there): items, chips, dust, level-up and plate glow are redrawn with twice the
 // pixels to match the blobz, so they are drawn at HALF the old scale.
 const FINE = ['icons/log', 'icons/chest', 'icons/boot', 'icons/magnet', 'gather/item-stone', 'gather/item-berries'];
-const ITEM_SCALE: Record<ItemKind, number> = { wood: 1, stone: 1.5, berry: 1.5 };
-const CARRY_SCALE: Record<ItemKind, number> = { wood: 0.5, stone: 1, berry: 1 };
+// Ninja items are 16 px: 2x on the ground, 1x carried over the head
+const ITEM_SCALE: Record<ItemKind, number> = { wood: 2, stone: 2, berry: 2 };
+const CARRY_SCALE: Record<ItemKind, number> = { wood: 1, stone: 1, berry: 1 };
 const GATHER = ['bush-berries', 'bush-empty', 'rubble', 'item-stone', 'item-berries', 'hud-wood', 'hud-stone', 'hud-berries'];
-const TOOL_FRAME = { w: 44, h: 48, px: 16, py: 28 }; // tool strip frame + pivot (art/gather/README.md)
 // Obstacles (sim kinds 0-4) and decor from ChatGPT order 30 (public/art/props)
-const OBSTACLE_ART: [string, number][] = [['pr-tree-green', 3], ['pr-tree-orange', 3], ['pr-tree-pine', 3], ['pr-rock', 3], ['pr-boulder', 3], ['g-bush-berries', 3]];
+const OBSTACLE_ART: [string, number][] = [['pr-tree-green', 2], ['pr-tree-orange', 2], ['pr-tree-pine', 2], ['pr-rock', 2], ['pr-boulder', 2], ['g-bush-berries', 2]];
 /** Snow map: Art's winter props (art/props-winter), integer scales. Kinds without winter art yet use a
  *  cold-tinted meadow sprite; a dedicated file is picked up automatically once it exists (WINTER_WANTED). */
-const WINTER_ART: [string, number][] = [['w-tree-snow-round', 3], ['w-tree-snow-pine', 3], ['w-tree-snow-small', 4], ['w-rock-snow', 3], ['w-ice-rock', 4], ['w-bush-berries-snow', 3]];
-const WINTER_SPENT: [string, number][] = [['w-stump-snow', 3], ['w-stump-snow', 3], ['w-stump-snow', 3], ['w-rubble-snow', 3], ['w-rubble-snow', 3], ['w-bush-empty-snow', 3]];
+const WINTER_ART: [string, number][] = [['w-tree-snow-round', 2], ['w-tree-snow-pine', 2], ['w-tree-snow-small', 2], ['w-rock-snow', 2], ['w-ice-rock', 2], ['w-bush-berries-snow', 2]];
+const WINTER_SPENT: [string, number][] = [['w-stump-snow', 2], ['w-stump-snow', 2], ['w-stump-snow', 2], ['w-rubble-snow', 2], ['w-rubble-snow', 2], ['w-bush-empty-snow', 2]];
 /** Winter files Art has not drawn yet and their tinted stand-ins (key -> [placeholder, tint]). */
 const WINTER_WANTED: Record<string, [string, number]> = {
   'w-stump-snow': ['pr-stump', 0xe8f2ff], 'w-rubble-snow': ['g-rubble', 0xe8f2ff],
@@ -50,10 +50,52 @@ const WINTER_WANTED: Record<string, [string, number]> = {
 const WINTER = ['tree-snow-round', 'tree-snow-pine', 'tree-snow-small', 'rock-snow', 'ice-rock', 'bush-berries-snow', 'bush-empty-snow', 'snowman', 'igloo', 'ice', 'tree-bare', ...Object.keys(WINTER_WANTED).map((k) => k.slice(2))];
 
 /** Look of a used-up node: stump, rubble, picked bush. */
-const SPENT_ART: [string, number][] = [['pr-stump', 3], ['pr-stump', 3], ['pr-stump', 3], ['g-rubble', 3], ['g-rubble', 3], ['g-bush-empty', 3]];
+const SPENT_ART: [string, number][] = [['pr-stump', 2], ['pr-stump', 2], ['pr-stump', 2], ['g-rubble', 2], ['g-rubble', 2], ['g-bush-empty', 2]];
 const PROPS = ['tree-green', 'tree-orange', 'tree-pine', 'rock', 'boulder', 'bush', 'flowers', 'stump', 'pond', 'fence', 'sign', 'plate', 'plate-down', 'gate', 'gate-open', 'gate-post'];
+/** Ninja Adventure art for the meadow + snow world (docs/ART_MAP.md 3-6, 11): the old texture keys are rebuilt from
+ *  crops of the Ninja sheets, so the game code keeps its keys. A crop is [sheet, x, y, w, h]; a list is laid side by
+ *  side. Sheets 'n-*' are Ninja tilesets, 'nx-*' single Ninja item files (or Art's Ninja-style berry bush). */
+type Crop = [string, number, number, number, number];
+const NINJA_CROPS: Record<string, Crop | Crop[]> = {
+  // resource nodes (sim kinds 0-5) and their used-up looks
+  'pr-tree-green': ['n-nature', 0, 0, 32, 32], 'pr-tree-orange': ['n-nature', 96, 0, 32, 32], 'pr-tree-pine': ['n-nature', 32, 0, 32, 32],
+  'pr-rock': ['n-nature', 112, 224, 32, 32], 'pr-boulder': ['n-nature', 144, 224, 32, 32],
+  'g-bush-berries': ['nx-berrybush', 0, 0, 32, 32], 'g-bush-empty': ['n-nature', 256, 0, 32, 32],
+  'pr-stump': ['n-nature', 0, 128, 32, 32], 'g-rubble': ['n-nature', 288, 144, 16, 16],
+  'pr-flowers': ['n-nature', 96, 176, 16, 16],
+  // puzzle pens: picket fence, posts, double gate, pressure plates, chest
+  'pr-fence': ['n-house', 176, 80, 16, 16], 'pr-gate-post': ['n-house', 176, 64, 16, 16],
+  'pr-gate': [['n-house', 128, 64, 16, 16], ['n-house', 144, 64, 16, 16]], 'pr-gate-open': ['n-house', 176, 64, 16, 16],
+  'pr-plate': ['n-dungeon', 0, 16, 16, 16], 'pr-plate-down': ['n-dungeon', 16, 16, 16, 16],
+  'ic-chest': ['nx-chest', 0, 0, 16, 14],
+  // carried resources
+  'ic-log': ['nx-branch', 0, 0, 16, 16], 'g-item-stone': ['nx-rock', 0, 0, 16, 16], 'g-item-berries': ['nx-nut2', 0, 0, 15, 15],
+  // the base: cottage levels 1-3 and the six buildings
+  'b-cottage-1': ['n-house', 0, 0, 64, 48], 'b-cottage-2': ['n-house', 128, 0, 64, 48], 'b-cottage-3': ['n-house', 192, 0, 64, 48],
+  'b-storage': ['n-house', 304, 224, 32, 32], 'b-workshop': ['n-house', 304, 304, 48, 48], 'b-garden': ['n-element', 208, 64, 48, 48],
+  'b-well': ['n-element', 112, 27, 16, 21], 'b-watchtower': ['n-towers', 4, 0, 24, 32], 'b-bridge': ['n-house', 144, 240, 64, 46],
+  // snow map
+  'w-tree-snow-round': ['n-nature', 192, 0, 32, 32], 'w-tree-snow-pine': ['n-nature', 160, 0, 32, 32], 'w-tree-snow-small': ['n-nature', 128, 0, 32, 32],
+  'w-rock-snow': ['n-nature', 32, 192, 32, 32], 'w-ice-rock': ['n-nature', 112, 256, 32, 32], 'w-bush-berries-snow': ['nx-berrybush', 0, 0, 32, 32],
+  'w-stump-snow': ['n-nature', 0, 128, 32, 32], 'w-rubble-snow': ['n-nature', 64, 192, 16, 16], 'w-bush-empty-snow': ['n-nature', 256, 0, 32, 32],
+  'w-snowman': ['n-nature', 160, 192, 16, 16], 'w-tree-bare': ['n-nature', 64, 0, 32, 32], 'w-igloo': ['n-house', 0, 176, 48, 46],
+  'w-ice': ['n-floor', 16, 352, 16, 16],
+};
+const NINJA_SHEETS: Record<string, string> = {
+  'n-nature': 'Backgrounds/Tilesets/TilesetNature.png', 'n-house': 'Backgrounds/Tilesets/TilesetHouse.png',
+  'n-element': 'Backgrounds/Tilesets/TilesetElement.png', 'n-towers': 'Backgrounds/Tilesets/TilesetTowers.png',
+  'n-dungeon': 'Backgrounds/Tilesets/TilesetDungeon.png',
+  'nx-chest': 'Items/Treasure/BigTreasureChest.png', 'nx-branch': 'Items/Resource/Branch.png', 'nx-rock': 'Items/Resource/Rock.png',
+  'nx-nut2': 'Items/Food/Nut2.png',
+  'nt-axe': 'Items/Tool/Axe.png', 'nt-pickaxe': 'Items/Tool/Pickaxe.png', 'nt-rake': 'Items/Tool/Hoe.png',
+};
+/** Rebuilt keys survive scene restarts (the texture cache is global). */
+const ninjaInstalled = new Set<string>();
+
 /** Ninja Adventure world scale: 16 px tiles drawn at 3x = 48 world px (= WATER_TILE). */
 const NINJA_SCALE = 3;
+/** Props, nodes and buildings at 2x: a 32 px tree is 64 world px like the old trees, so it matches the collision. */
+const PROP_SCALE = 2;
 const NINJA_COLS = Math.ceil(WORLD_W / WATER_TILE), NINJA_ROWS = Math.ceil(WORLD_H / WATER_TILE);
 /** Shore piece -> 16 px tile (x, y) in a Ninja 3x3 autotile block whose top-left is (bx, by), plus its inner corners. */
 function autoFrame(sh: Shore, bx: number, by: number, inner: Record<'inw' | 'ine' | 'isw' | 'ise', [number, number]>, open2: [number, number]): [number, number] {
@@ -70,8 +112,7 @@ const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.se
 /** Below this speed (px/s) the face looks straight ahead. */
 const FACE_DEAD = 40;
 const BLOB_SCALE = 3; // blobz v2: 16x18 grid on the Ninja 16 px grid, drawn at the Ninja world scale
-const TOOL_SCALE = 1.45; // the tool strips keep their old size
-// decorations from Tiny Farm (sheet 'farm') and Tiny Town ('town')
+const TOOL_SCALE = 2; // Ninja tool icons (16 px)
 const DECOR: [string, number][] = [['pr-flowers', 2]]; // no decor bushes: bushes are berry nodes now
 
 interface PuzzleGfx {
@@ -160,19 +201,20 @@ export class GameScene extends Phaser.Scene {
 
   preload() {
     const art = (path: string) => `art/${FINE.includes(path) ? 'fine/' : ''}${path}.png`;
-    for (const n of ['log', 'chest', 'boot', 'magnet', 'house']) this.load.image('ic-' + n, art(`icons/${n}`));
+    // keys rebuilt from Ninja crops are not loaded from the old files
+    const img = (key: string, url: string) => { if (!(key in NINJA_CROPS)) this.load.image(key, url); };
+    for (const [k, f] of Object.entries(NINJA_SHEETS)) this.load.image(k, 'assets/ninja-adventure/' + f);
+    this.load.image('nx-berrybush', 'art/props/berry-bush-ninja.png');
+    for (const n of ['log', 'chest', 'boot', 'magnet', 'house']) img('ic-' + n, art(`icons/${n}`));
     this.load.image('m-base-marker', 'art/fine/icons/base-marker.png');
     // Ninja Adventure ground (docs/ART_MAP.md sections 1-2), meadow only for now
     const ninja = 'assets/ninja-adventure/Backgrounds/Tilesets/';
     this.load.image('n-floor', ninja + 'TilesetFloor.png');
     this.load.image('n-floordetail', ninja + 'TilesetFloorDetail.png');
     this.load.image('n-water', ninja + 'TilesetWater.png');
-    this.load.spritesheet('f-grass', 'art/fine/tiles/grass.png', { frameWidth: 32, frameHeight: 32 });
-    this.load.spritesheet('f-dirt', 'art/fine/tiles/dirt.png', { frameWidth: 32, frameHeight: 32 });
-    for (const n of GATHER) this.load.image('g-' + n, art(`gather/${n}`));
-    for (const t of ['axe', 'pickaxe', 'rake']) this.load.spritesheet('tool-' + t, `art/gather/tool-${t}.png`, { frameWidth: TOOL_FRAME.w, frameHeight: TOOL_FRAME.h });
+    for (const n of GATHER) img('g-' + n, art(`gather/${n}`));
     for (const c of ['wood', 'stone']) this.load.spritesheet('chips-' + c, `art/fine/gather/chips-${c}.png`, { frameWidth: 32, frameHeight: 24 });
-    for (const n of PROPS) this.load.image('pr-' + n, `art/props/${n}.png`);
+    for (const n of PROPS) img('pr-' + n, `art/props/${n}.png`);
     this.load.spritesheet('fx-levelup', 'art/fine/fx/levelup.png', { frameWidth: 64, frameHeight: 44 });
     this.load.spritesheet('fx-dust', 'art/fine/fx/dust.png', { frameWidth: 28, frameHeight: 24 });
     // meadow keys ('m-sparkle'): the dungeon scene loads the old 11 px 'fx-sparkle' into the shared texture cache
@@ -182,15 +224,10 @@ export class GameScene extends Phaser.Scene {
     this.load.spritesheet('mini-ko', 'art/fine/dungeon/ko-stars.png', { frameWidth: 40, frameHeight: 18 });
     this.load.image('mini-warn', 'art/fine/dungeon/slam-warning.png');
     this.load.spritesheet('mini-wave', 'art/fine/dungeon/shockwave.png', { frameWidth: 96, frameHeight: 48 });
-    for (const n of ['cottage-1', 'cottage-2', 'cottage-3', 'build-spot', ...BUILD_KINDS.flatMap((k) => [k, k + '-site'])]) this.load.image('b-' + n, `art/base/${n}.png`);
-    const sheet = (key: string, dir: string) => this.load.spritesheet(key, `assets/${dir}/tilemap_packed.png`, { frameWidth: 16, frameHeight: 16 });
-    sheet('town', 'kenney-tiny-town');
-    sheet('dungeon', 'kenney-tiny-dungeon');
-    sheet('farm', 'kenney-tiny-farm');
-    sheet('battle', 'kenney-tiny-battle');
+    for (const n of ['cottage-1', 'cottage-2', 'cottage-3', ...BUILD_KINDS]) img('b-' + n, `art/base/${n}.png`);
     if (this.s.biome === 'snow') {
       this.load.on('loaderror', () => { /* winter art not drawn yet: tinted stand-ins below */ });
-      for (const n of WINTER) this.load.image('w-' + n, `art/props-winter/${n}.png`);
+      for (const n of WINTER) img('w-' + n, `art/props-winter/${n}.png`);
       this.load.spritesheet('w-pond', 'art/props-winter/pond-frozen-tiles.png', { frameWidth: 16, frameHeight: 16 });
     }
   }
@@ -204,8 +241,24 @@ export class GameScene extends Phaser.Scene {
     return [stand, (spent ? SPENT_ART : OBSTACLE_ART)[kind]?.[1] ?? sc, tint];
   }
 
+  /** Build every NINJA_CROPS key as a canvas texture (nearest filtering) from the loaded Ninja sheets. */
+  private installNinjaArt() {
+    for (const [key, spec] of Object.entries(NINJA_CROPS)) {
+      if (ninjaInstalled.has(key) && this.textures.exists(key)) continue;
+      const parts = (Array.isArray(spec[0]) ? spec : [spec]) as Crop[];
+      const c = document.createElement('canvas');
+      c.width = parts.reduce((w, p) => w + p[3], 0); c.height = Math.max(...parts.map((p) => p[4]));
+      const cx = c.getContext('2d')!;
+      let x = 0;
+      for (const [sheet, sx, sy, w, h] of parts) { cx.drawImage(this.textures.get(sheet).getSourceImage() as HTMLImageElement, sx, sy, w, h, x, c.height - h, w, h); x += w; }
+      if (this.textures.exists(key)) this.textures.remove(key);
+      this.textures.addCanvas(key, c)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
+      ninjaInstalled.add(key);
+    }
+  }
+
   create() {
-    for (const k of ['town', 'dungeon', 'farm', 'battle']) this.textures.get(k).setFilter(Phaser.Textures.FilterMode.NEAREST);
+    this.installNinjaArt();
     const r = rng(this.s.seed * 7 + 3);
 
     // ground: grass with variety + dirt yard around base
@@ -228,31 +281,14 @@ export class GameScene extends Phaser.Scene {
     }
     // Ground baked into ONE canvas (a tilemap layer shows seams between tiles at fractional zoom)
     const groundKey = `ground-${this.s.biome ?? 'meadow'}-${this.s.seed}`;
-    const snow = this.s.biome === 'snow';
-    const TP = snow ? 16 : 32; // art px per tile: Art's fine grass (32 px) is drawn at scale 1
     if (!this.textures.exists(groundKey)) {
-      const grass = this.textures.get('f-grass').getSourceImage() as HTMLImageElement;
       const gc = document.createElement('canvas');
-      if (snow) { gc.width = cols * TP; gc.height = rows * TP; } else { gc.width = NINJA_COLS * 16; gc.height = NINJA_ROWS * 16; }
-      const gx = gc.getContext('2d')!;
-      if (this.s.biome === 'snow') {
-        // snow: flat white with soft blue drifts and a few sparkles, in art pixels (no tile seams)
-        gx.fillStyle = '#eef6fb'; gx.fillRect(0, 0, gc.width, gc.height);
-        for (let i = 0; i < cols * rows * 0.6; i++) {
-          const x = Math.floor(r() * gc.width), y = Math.floor(r() * gc.height);
-          gx.fillStyle = '#d6e8f3'; gx.fillRect(x, y, 3 + Math.floor(r() * 4), 1); // a drift line
-        }
-        for (let i = 0; i < cols * rows * 0.25; i++) {
-          gx.fillStyle = r() < 0.5 ? '#ffffff' : '#c3dcec';
-          gx.fillRect(Math.floor(r() * gc.width), Math.floor(r() * gc.height), 1, 1);
-        }
-      } else {
-        void grass; void data;
-        this.bakeNinjaMeadow(gc, r);
-      }
+      gc.width = NINJA_COLS * 16; gc.height = NINJA_ROWS * 16;
+      void data;
+      this.bakeNinjaMeadow(gc, r);
       this.textures.addCanvas(groundKey, gc)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
-    this.add.image(0, 0, groundKey).setOrigin(0).setScale(snow ? 32 / TP : NINJA_SCALE).setDepth(-1000);
+    this.add.image(0, 0, groundKey).setOrigin(0).setScale(NINJA_SCALE).setDepth(-1000);
 
     // base: round dirt yard with the cottage in the middle + glowing drop-off ring
     // the yard: an organic patch of dirt (packed snow on the snow map) that grows with the cottage and spreads
@@ -262,23 +298,11 @@ export class GameScene extends Phaser.Scene {
     this.baseG = this.add.graphics().setDepth(-900);
     this.add.ellipse(BASE.x, BASE.y + 26, 110, 26, 0x000000, 0.18).setDepth(-880);
     // cottage (Art's base set, level 1-3), integer scale 2, anchored bottom centre
-    this.cottageImg = this.add.image(BASE.x, BASE.y + 30, this.s.biome === 'snow' ? 'w-igloo' : 'b-cottage-1').setScale(this.s.biome === 'snow' ? 4 : 3).setOrigin(0.5, 1).setDepth(BASE.y - 40);
+    this.cottageImg = this.add.image(BASE.x, BASE.y + 30, this.s.biome === 'snow' ? 'w-igloo' : 'b-cottage-1').setScale(PROP_SCALE).setOrigin(0.5, 1).setDepth(BASE.y - 40);
     // the water corner (an L of water around a seeded corner; the bridge opens it)
     const water = makeWater(this.s.seed);
     this.water = water;
     if (BUILDING_ENABLED) {
-      const wg = this.add.graphics().setDepth(-940);
-      if (snow) for (const w of water.water) {
-        const x0 = Math.max(0, w.x0), x1 = Math.min(WORLD_W, w.x1), y0 = Math.max(0, w.y0), y1 = Math.min(WORLD_H, w.y1);
-        wg.fillStyle(0x6b4a2a, 1).fillRect(x0 - 3, y0 - 3, x1 - x0 + 6, y1 - y0 + 6);
-        wg.fillStyle(0x2f86c8, 1).fillRect(x0, y0, x1 - x0, y1 - y0);
-        wg.fillStyle(0x3fa9f5, 1).fillRect(x0 + 5, y0 + 5, x1 - x0 - 10, y1 - y0 - 10);
-      }
-      if (snow) for (const w of water.water) for (let i = 0; i < 8; i++) {
-        const x = Math.max(0, w.x0) + 10 + ((i * 37) % Math.max(20, Math.min(WORLD_W, w.x1) - Math.max(0, w.x0) - 30));
-        const y = Math.max(0, w.y0) + 10 + ((i * 53) % Math.max(20, Math.min(WORLD_H, w.y1) - Math.max(0, w.y0) - 20));
-        wg.fillStyle(0x8fd3ff, 0.8).fillRect(x, y, 12, 3);
-      }
       this.buildBase();
     }
     // "this is home": Art's base-marker sign (post foot = anchor), beside the drop-off (no reading needed; was BAS)
@@ -302,29 +326,19 @@ export class GameScene extends Phaser.Scene {
       || (BUILDING_ENABLED && [water.area, ...water.water].some((z) => x > z.x0 - pad && x < z.x1 + pad && y > z.y0 - pad && y < z.y1 + pad));
     for (let i = 0; i < 22; i++) {
       const x = 30 + r() * (WORLD_W - 60), y = 30 + r() * (WORLD_H - 60);
-      const [key, sc] = this.s.biome === 'snow' ? (r() < 0.7 ? ['w-snowman', 3] as [string, number] : ['w-tree-bare', 3] as [string, number]) : DECOR[Math.floor(r() * DECOR.length)];
+      const [key, sc] = this.s.biome === 'snow' ? (r() < 0.7 ? ['w-snowman', 2] as [string, number] : ['w-tree-bare', 2] as [string, number]) : DECOR[Math.floor(r() * DECOR.length)];
       if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 30 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 46) || inZone(x, y, 20)) continue;
       this.add.image(x, y, key).setScale(sc).setOrigin(0.5, 0.9).setDepth(key === 'pr-flowers' ? -600 : y);
     }
     if (this.s.biome === 'snow') {
       // frozen ponds (slippery in the sim) + an igloo or two
       // frozen ponds from Art's 3x3 autotile: 4x2 tiles at 2x = 128x64, the sim's ice ellipse
-      for (const i of ice) {
-        const frames = [[0, 1, 1, 2], [6, 7, 7, 8]];
-        frames.forEach((row, ry) => row.forEach((f, cx) => this.add.image(i.x - 64 + cx * 32, i.y - 32 + ry * 32, 'w-pond', f).setOrigin(0).setScale(2).setDepth(-650)));
-      }
       // a few small ice patches as decor
       for (let i = 0, placed = 0; i < 40 && placed < 3; i++) {
         const x = 120 + r() * (WORLD_W - 240), y = 120 + r() * (WORLD_H - 240);
         if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 220 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 60) || inZone(x, y, 30)) continue;
-        this.add.image(x, y, 'w-ice').setScale(2).setDepth(-655); placed++;
+        this.add.image(x, y, 'w-ice').setScale(PROP_SCALE).setDepth(-655); placed++;
       }
-    }
-
-    for (let i = 0, placed = 0; this.s.biome !== 'snow' && i < 40 && placed < 2; i++) {
-      const x = 120 + r() * (WORLD_W - 240), y = 120 + r() * (WORLD_H - 240);
-      if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 120 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 80) || inZone(x, y, 40)) continue;
-      this.add.image(x, y, 'pr-pond').setScale(2).setDepth(-650); placed++;
     }
 
     this.pz = makePuzzles(this.s.seed).map((l) => this.buildPuzzle(l));
@@ -415,7 +429,7 @@ export class GameScene extends Phaser.Scene {
       seenG.add(g.id);
       let e = this.gems.get(g.id);
       if (!e) {
-        e = { g: this.add.graphics(), img: this.add.image(g.x, g.y, 'ic-chest').setScale(1.5), t: [0, 1].map(() => this.add.image(0, 0, this.miniBlob()).setScale(1.45)), x: g.x, y: g.y };
+        e = { g: this.add.graphics(), img: this.add.image(g.x, g.y, 'ic-chest').setScale(PROP_SCALE), t: [0, 1].map(() => this.add.image(0, 0, this.miniBlob()).setScale(1.45)), x: g.x, y: g.y };
         this.gems.set(g.id, e);
       }
       e.x += (g.x - e.x) * (smooth ? k : 1);
@@ -581,11 +595,11 @@ export class GameScene extends Phaser.Scene {
     b.label.setPosition(b.x, b.y + 24).setDepth(this.dB + b.y + 2);
 
     // carried items stack
-    while (b.carry.length < p.carry.length) b.carry.push(this.add.image(0, 0, 'ic-log').setScale(0.5));
+    while (b.carry.length < p.carry.length) b.carry.push(this.add.image(0, 0, 'ic-log').setScale(1));
     while (b.carry.length > p.carry.length) b.carry.pop()!.destroy();
     p.carry.forEach((k, i) => {
       const img = b.carry[i];
-      img.setTexture(ITEM_ICON[k] ?? 'ic-log').setScale(CARRY_SCALE[k] ?? 0.5);
+      img.setTexture(ITEM_ICON[k] ?? 'ic-log').setScale(CARRY_SCALE[k] ?? 1);
       img.setPosition(b.x + (i - (p.carry.length - 1) / 2) * 14, b.y - 52 + hover - Math.abs(i - 1) * 2).setDepth(this.dB + b.y + 3);
     });
   }
@@ -598,8 +612,8 @@ export class GameScene extends Phaser.Scene {
     for (const k of BUILD_KINDS) {
       const at = BUILD_SPOTS[k];
       const img = k === 'bridge'
-        ? this.add.image(w.bridge.x, w.bridge.y + 24, 'b-bridge').setScale(2).setOrigin(0.5, 1).setDepth(-930)
-        : this.add.image(at.x, at.y - BUILD_R + 4, 'b-' + k).setScale(2).setOrigin(0.5, 1).setDepth(at.y - BUILD_R + 4);
+        ? this.add.image(w.bridge.x, w.bridge.y + 69, 'b-bridge').setScale(NINJA_SCALE).setOrigin(0.5, 1).setDepth(-930)
+        : this.add.image(at.x, at.y - BUILD_R + 4, 'b-' + k).setScale(PROP_SCALE).setOrigin(0.5, 1).setDepth(at.y - BUILD_R + 4);
       this.bgfx.set(k, { img: img.setVisible(false), built: false });
     }
   }
@@ -609,7 +623,7 @@ export class GameScene extends Phaser.Scene {
     // snow map: the igloo is the level-1 base (Art: cottage footprint); upgrades use the cottage art
     const lvl = Math.max(1, Math.min(3, v.cottage.level));
     const ck = this.s.biome === 'snow' && lvl === 1 ? 'w-igloo' : 'b-cottage-' + lvl;
-    if (this.cottageImg.texture.key !== ck) this.cottageImg.setTexture(ck).setScale(ck === 'w-igloo' ? 4 : ck === 'b-cottage-1' ? 3 : 2);
+    if (this.cottageImg.texture.key !== ck) this.cottageImg.setTexture(ck).setScale(PROP_SCALE);
     for (const b of v.builds) {
       const g = this.bgfx.get(b.kind);
       if (!g) continue;
@@ -631,23 +645,48 @@ export class GameScene extends Phaser.Scene {
     const detail = this.textures.get('n-floordetail').getSourceImage() as HTMLImageElement;
     const water = this.textures.get('n-water').getSourceImage() as HTMLImageElement;
     const tile = (img: HTMLImageElement, sx: number, sy: number, tx: number, ty: number) => gx.drawImage(img, sx, sy, 16, 16, tx * 16, ty * 16, 16, 16);
-    const VARIANTS: [number, number][] = [[16, 192], [32, 192], [48, 192], [64, 192], [32, 176], [48, 176]];
+    const snow = this.s.biome === 'snow';
+    // meadow: lime grass + tuft variants; snow: shaded snow + its variants (ART_MAP 1 and 3)
+    const FILL: [number, number] = snow ? [0, 304] : [0, 192];
+    const VARIANTS: [number, number][] = snow ? [[16, 304], [32, 304], [48, 304], [64, 304]] : [[16, 192], [32, 192], [48, 192], [64, 192], [32, 176], [48, 176]];
+    const DETAIL_Y = snow ? 48 : 32; // snowy or green tufts
     const wet = BUILDING_ENABLED ? waterTiles(makeWater(this.s.seed).water) : [];
     const isWet = new Set(wet.map((t) => t.tx + ',' + t.ty));
+    // frozen ponds (the sim's ice ellipses) as tiles, autotiled with the ice-on-snow block
+    const iceMask = new Set<string>();
+    if (snow) for (const e of makeIce(this.s.seed)) {
+      const rx = ICE_RX + 24, ry = ICE_RY + 24;
+      for (let ty = Math.floor((e.y - ry) / WATER_TILE); ty <= Math.floor((e.y + ry) / WATER_TILE); ty++) for (let tx = Math.floor((e.x - rx) / WATER_TILE); tx <= Math.floor((e.x + rx) / WATER_TILE); tx++) {
+        const dx = ((tx + 0.5) * WATER_TILE - e.x) / rx, dy = ((ty + 0.5) * WATER_TILE - e.y) / ry;
+        if (dx * dx + dy * dy <= 1) iceMask.add(tx + ',' + ty);
+      }
+    }
+    const ice = autotileMask(iceMask);
+    const isIce = new Set(ice.map((t) => t.tx + ',' + t.ty));
     for (let ty = 0; ty < NINJA_ROWS; ty++) for (let tx = 0; tx < NINJA_COLS; tx++) {
       const v = r();
-      const [sx, sy] = v < 1 / 6 ? VARIANTS[Math.floor(r() * VARIANTS.length)] : [0, 192];
+      const [sx, sy] = v < 1 / 6 ? VARIANTS[Math.floor(r() * VARIANTS.length)] : FILL;
       tile(floor, sx, sy, tx, ty);
-      if (!isWet.has(tx + ',' + ty) && r() < 0.03) tile(detail, [0, 16, 32, 48, 80, 96, 112][Math.floor(r() * 7)], 32, tx, ty); // tufts, sprouts, flowers
+      const k = tx + ',' + ty;
+      if (!isWet.has(k) && !isIce.has(k) && r() < 0.03) tile(detail, [0, 16, 32, 48, 80, 96, 112][Math.floor(r() * 7)], DETAIL_Y, tx, ty);
     }
-    const inner = { inw: [96, 128], ine: [80, 128], isw: [96, 112], ise: [80, 112] } as Record<'inw' | 'ine' | 'isw' | 'ise', [number, number]>;
-    for (const t of wet) { const [sx, sy] = autoFrame(t.shore, 0, 96, inner, [16, 112]); tile(water, sx, sy, t.tx, t.ty); }
+    // water: grass-shore block (0,96) on the meadow, the white/ice-shore block (208,0) on the snow map
+    const wb = snow ? [208, 0] : [0, 96];
+    const winner = { inw: [wb[0] + 96, wb[1] + 32], ine: [wb[0] + 80, wb[1] + 32], isw: [wb[0] + 96, wb[1] + 16], ise: [wb[0] + 80, wb[1] + 16] } as Record<'inw' | 'ine' | 'isw' | 'ise', [number, number]>;
+    for (const t of wet) { const [sx, sy] = autoFrame(t.shore, wb[0], wb[1], winner, [wb[0] + 16, wb[1] + 16]); tile(water, sx, sy, t.tx, t.ty); }
+    // Ninja's ice block sits on white snow: lay a white snow patch one tile wider than each pond first (block 0,224)
+    const white = new Set<string>();
+    for (const t of ice) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) white.add((t.tx + dx) + ',' + (t.ty + dy));
+    const sinner = { inw: [96, 256], ine: [80, 256], isw: [96, 240], ise: [80, 240] } as Record<'inw' | 'ine' | 'isw' | 'ise', [number, number]>;
+    for (const t of autotileMask(white)) { const [sx, sy] = autoFrame(t.shore, 0, 224, sinner, [16, 240]); tile(floor, sx, sy, t.tx, t.ty); }
+    const iinner = { inw: [96, 368], ine: [80, 368], isw: [96, 352], ise: [80, 352] } as Record<'inw' | 'ine' | 'isw' | 'ise', [number, number]>;
+    for (const t of ice) { const [sx, sy] = autoFrame(t.shore, 0, 336, iinner, [16, 352]); tile(floor, sx, sy, t.tx, t.ty); }
   }
 
   /** Meadow yard + path in Ninja dirt tiles: the yard is a blob of tiles round the cottage (bigger per level) plus a
    *  patch under every built building, and a 2-tile path runs to the cave; autotiled with the dirt-on-grass block. */
   private drawNinjaDirt(level: number, built: BuildKind[]) {
-    const key = `ndirt-${this.s.seed}-${level}-${YARD_ENABLED ? [...built].sort().join(',') : 'off'}`;
+    const key = `ndirt-${this.s.biome ?? 'meadow'}-${this.s.seed}-${level}-${YARD_ENABLED ? [...built].sort().join(',') : 'off'}`;
     if (key === this.yardKey) return;
     if (!this.textures.exists(key)) {
       const T = WATER_TILE, mask = new Set<string>();
@@ -672,9 +711,12 @@ export class GameScene extends Phaser.Scene {
       const floor = this.textures.get('n-floor').getSourceImage() as HTMLImageElement;
       const c = document.createElement('canvas'); c.width = NINJA_COLS * 16; c.height = NINJA_ROWS * 16;
       const cx = c.getContext('2d')!;
-      const inner = { inw: [96, 144], ine: [80, 144], isw: [96, 128], ise: [80, 128] } as Record<'inw' | 'ine' | 'isw' | 'ise', [number, number]>;
+      // meadow: dirt-on-grass block (0,112); snow: white snow patch on shaded snow (0,224)
+      const by = this.s.biome === 'snow' ? 224 : 112;
+      const inner = { inw: [96, by + 32], ine: [80, by + 32], isw: [96, by + 16], ise: [80, by + 16] } as Record<'inw' | 'ine' | 'isw' | 'ise', [number, number]>;
+      const pebble: [number, number] = this.s.biome === 'snow' ? [16, by + 16] : [16, 176];
       for (const t of autotileMask(mask)) {
-        const [sx, sy] = autoFrame(t.shore, 0, 112, inner, t.shore === 'open2' ? [16, 176] : [16, 128]);
+        const [sx, sy] = autoFrame(t.shore, 0, by, inner, t.shore === 'open2' ? pebble : [16, by + 16]);
         cx.drawImage(floor, sx, sy, 16, 16, t.tx * 16, t.ty * 16, 16, 16);
       }
       this.textures.addCanvas(key, c)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
@@ -686,67 +728,11 @@ export class GameScene extends Phaser.Scene {
     if (old && old !== key && this.textures.exists(old)) this.textures.remove(old);
   }
 
+  /** The yard / path overlay (see drawNinjaDirt), for both maps. */
   private drawYard(level: number, built: BuildKind[]) {
-    if (this.s.biome !== 'snow') { this.drawNinjaDirt(level, built); return; }
-    if (!YARD_ENABLED) return;
-    const key = `yard-${this.s.biome ?? 'meadow'}-${this.s.seed}-${level}-${[...built].sort().join(',')}`;
-    if (key === this.yardKey) return;
-    const pad = 300, x0 = BASE.x - pad, y0 = BASE.y - pad, W = pad * 2, H = pad * 2;
-    if (!this.textures.exists(key)) {
-      const rand = rng(this.s.seed * 31 + 5);
-      // blobs: centre, radii, and a few sine wobbles on the edge
-      const blob = (x: number, y: number, rx: number, ry: number) => ({
-        x, y, rx, ry, w: [0, 1, 2].map((i) => ({ k: 2 + i * 2 + Math.floor(rand() * 2), a: 0.05 + rand() * 0.05 / (i + 1), p: rand() * Math.PI * 2 })),
-      });
-      const blobs = [blob(BASE.x, BASE.y + 4, 80 + 12 * level, 70 + 10 * level)];
-      for (const k of built) { const at = BUILD_SPOTS[k]; blobs.push(blob(at.x, at.y - 30, 46, 30)); }
-      const snow = this.s.biome === 'snow';
-      // dirt colours sampled from Art's tile (frame 0 plain 70%, frame 1 pebbles)
-      let dirtPx: Uint8ClampedArray | null = null;
-      if (!snow) {
-        const dc = document.createElement('canvas'); dc.width = 64; dc.height = 32;
-        const dx = dc.getContext('2d')!; dx.drawImage(this.textures.get('f-dirt').getSourceImage() as HTMLImageElement, 0, 0);
-        dirtPx = dx.getImageData(0, 0, 64, 32).data;
-      }
-      const tileFrame = (tx: number, ty: number) => (((tx * 73856093) ^ (ty * 19349663)) >>> 0) % 10 < 7 ? 0 : 1;
-      const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
-      const c = document.createElement('canvas'); c.width = W; c.height = H;
-      const cx = c.getContext('2d')!;
-      const img = cx.createImageData(W, H), d = img.data;
-      const FEATHER = 10; // px of dithered edge
-      for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) {
-        const wx = x0 + px, wy = y0 + py;
-        let best = -Infinity; // signed distance-ish: >0 inside
-        for (const b of blobs) {
-          const ex = (wx - b.x) / b.rx, ey = (wy - b.y) / b.ry;
-          if (ex > 1.4 || ex < -1.4 || ey > 1.4 || ey < -1.4) continue; // far outside this blob
-          const a = Math.atan2(ey, ex);
-          let rr = 1; for (const w of b.w) rr += w.a * Math.sin(w.k * a + w.p);
-          const v = (rr - Math.hypot(ex, ey)) * Math.min(b.rx, b.ry);
-          if (v > best) best = v;
-        }
-        if (best < -FEATHER / 2) continue;
-        const t = Math.min(1, (best + FEATHER / 2) / FEATHER); // 0 at the outer edge, 1 inside
-        if (t < 1 && t * 16 <= BAYER[(py % 4) * 4 + (px % 4)]) continue;
-        const o = (py * W + px) * 4;
-        if (dirtPx) {
-          const f = tileFrame(Math.floor(wx / 32), Math.floor(wy / 32));
-          const s2 = ((wy % 32) * 64 + f * 32 + (wx % 32)) * 4;
-          d[o] = dirtPx[s2]; d[o + 1] = dirtPx[s2 + 1]; d[o + 2] = dirtPx[s2 + 2]; d[o + 3] = 255;
-        } else {
-          const speck = (((wx * 2654435761) ^ (wy * 40503)) >>> 0) % 23 === 0;
-          d[o] = speck ? 0xb8 : 0xd3; d[o + 1] = speck ? 0xcf : 0xe2; d[o + 2] = speck ? 0xe3 : 0xee; d[o + 3] = 255;
-        }
-      }
-      cx.putImageData(img, 0, 0);
-      this.textures.addCanvas(key, c)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
-    }
-    const old = this.yardKey;
-    if (!this.yardImg) this.yardImg = this.add.image(x0, y0, key).setOrigin(0).setDepth(-950);
-    else this.yardImg.setTexture(key);
-    this.yardKey = key;
-    if (old && old !== key && this.textures.exists(old)) this.textures.remove(old);
+    this.drawNinjaDirt(level, built);
   }
+
 
   /** Edge arrows: with the watchtower, one per resource to the nearest node off-screen; and (no reading needed)
    *  a house arrow back to the cottage while the bank can pay for a building and the house is off-screen. */
@@ -800,7 +786,7 @@ export class GameScene extends Phaser.Scene {
       for (let i = 0; i < shown[col]; i++) {
         const row = i < 3 ? 0 : i < 5 ? 1 : 2, inRow = i < 3 ? i : i < 5 ? i - 3 : 0;
         const x = col * 34 + (inRow - (row === 0 ? 1 : row === 1 ? 0.5 : 0)) * 10, y = -row * 8;
-        this.pile.add(this.add.image(x, y, ITEM_ICON[k]).setScale(k === 'wood' ? 0.5 : 1));
+        this.pile.add(this.add.image(x, y, ITEM_ICON[k]).setScale(1));
       }
     });
   }
@@ -811,20 +797,21 @@ export class GameScene extends Phaser.Scene {
     b.swingT = Math.max(0, b.swingT - dt);
     if (b.swingT <= 0) { b.tool.setVisible(false); return; }
     const sc = b.baseScale;
-    const frame = Math.min(3, Math.floor((1 - b.swingT / 0.32) * 4));
+    const k = 1 - b.swingT / 0.32; // 0 -> 1 over the swing
     // blob grid top-left, then the hand at the body's side edge, ~2/3 down the grid (mirrored when facing left)
     const left = b.body.x - (GRID_W / 2) * sc, top = b.body.y - BODY_CY * GRID_H * sc;
-    const hx = left + (b.faceLeft ? 1 : GRID_W - 1) * sc, hy = top + Math.round(GRID_H * 0.69) * sc;
-    b.tool.setVisible(true).setFrame(frame).setScale(TOOL_SCALE).setFlipX(b.faceLeft)
-      .setOrigin((b.faceLeft ? TOOL_FRAME.w - TOOL_FRAME.px : TOOL_FRAME.px) / TOOL_FRAME.w, TOOL_FRAME.py / TOOL_FRAME.h)
-      .setPosition(hx, hy).setDepth(b.body.depth + 1);
+    const hx = left + (b.faceLeft ? 3 : GRID_W - 3) * sc, hy = top + Math.round(GRID_H * 0.69) * sc;
+    // Ninja tool icon (head top-right, handle bottom-left), held at the handle and swung down in front of the blob
+    const ang = -60 + 110 * Math.sin(Math.min(1, k * 1.25) * Math.PI / 2);
+    b.tool.setVisible(true).setScale(TOOL_SCALE).setFlipX(b.faceLeft).setOrigin(b.faceLeft ? 0.85 : 0.15, 0.85)
+      .setAngle(b.faceLeft ? -ang : ang).setPosition(hx, hy).setDepth(b.body.depth + 1);
   }
 
   private swing(id: string, tool: Tool, nx: number) {
     const b = this.blobs.get(id);
     if (!b) return;
-    if (!b.tool) b.tool = this.add.sprite(0, 0, 'tool-' + tool, 0).setVisible(false);
-    if (b.tool.texture.key !== 'tool-' + tool) b.tool.setTexture('tool-' + tool, 0);
+    if (!b.tool) b.tool = this.add.sprite(0, 0, 'nt-' + tool).setVisible(false);
+    if (b.tool.texture.key !== 'nt-' + tool) b.tool.setTexture('nt-' + tool);
     b.faceLeft = nx < b.x;
     b.swingT = 0.32;
   }
@@ -846,9 +833,9 @@ export class GameScene extends Phaser.Scene {
       // a wooden fence around the field (the puzzle-pen fence art): planks on top/bottom, posts on the sides
       const S = 3, n = Math.round((a.x1 - a.x0) / (16 * S)), tw = (a.x1 - a.x0 + 12) / n;
       for (const y of [a.y0 + 2, a.y1 + 10]) for (let k = 0; k < n; k++) {
-        this.miniDeco.push(this.add.image(a.x0 - 6 + tw * (k + 0.5), y, 'pr-fence').setOrigin(0.5, 1).setDisplaySize(tw + 1, 12 * S).setDepth(y === a.y0 + 2 ? 9050 : 10000 + a.y1 + 20));
+        this.miniDeco.push(this.add.image(a.x0 - 6 + tw * (k + 0.5), y, 'pr-fence').setOrigin(0.5, 1).setDisplaySize(tw + 1, 16 * S).setDepth(y === a.y0 + 2 ? 9050 : 10000 + a.y1 + 20));
       }
-      for (const x of [a.x0 - 4, a.x1 + 4]) for (let y = a.y0 + 24; y <= a.y1; y += 48) {
+      for (const x of [a.x0 - 4, a.x1 + 4]) for (let y = a.y0 + 48; y <= a.y1 + 8; y += 48) {
         this.miniDeco.push(this.add.image(x, y, 'pr-gate-post').setOrigin(0.5, 1).setScale(S).setDepth(10000 + y));
       }
       this.trailG.setDepth(9500);
@@ -873,7 +860,7 @@ export class GameScene extends Phaser.Scene {
         e = {
           // bombs: Art's red slam ring marks the blast area; berries: a plain shadow
           mark: bomb ? this.add.image(d.x, d.y, 'mini-warn').setDisplaySize(BOMB_R * 2, BOMB_R).setDepth(9100) : this.add.ellipse(d.x, d.y + 4, 30, 10, 0x000000, 0.25).setDepth(9100),
-          item: bomb ? this.add.image(d.x, d.y, 'pr-rock').setScale(3).setTint(0x2e2a3a).setDepth(10000 + d.y + 5) : this.add.image(d.x, d.y, 'g-item-berries').setScale(1.5).setDepth(10000 + d.y + 5),
+          item: bomb ? this.add.image(d.x, d.y, 'pr-rock').setScale(1).setTint(0x2e2a3a).setDepth(10000 + d.y + 5) : this.add.image(d.x, d.y, 'g-item-berries').setScale(2).setDepth(10000 + d.y + 5),
         };
         this.drops.set(d.id, e);
       }
@@ -899,16 +886,17 @@ export class GameScene extends Phaser.Scene {
         // fence planks along the run, evenly stretched so the ends line up with the corners
         const n = Math.max(1, Math.round((w.x1 - w.x0) / (16 * S)));
         const tw = (w.x1 - w.x0) / n;
-        for (let k = 0; k < n; k++) this.add.image(w.x0 + tw * (k + 0.5), w.y1 + 4, 'pr-fence').setOrigin(0.5, 1).setDisplaySize(tw + 1, 12 * S).setDepth(w.y1);
+        for (let k = 0; k < n; k++) this.add.image(w.x0 + tw * (k + 0.5), w.y1 + 4, 'pr-fence').setOrigin(0.5, 1).setDisplaySize(tw + 1, 16 * S).setDepth(w.y1);
       } else {
         // side fences seen from above: a column of posts
-        for (let y = w.y0 + 8; y <= w.y1 + 1; y += 16) this.add.image((w.x0 + w.x1) / 2, y + 6, 'pr-gate-post').setOrigin(0.5, 1).setScale(S).setDepth(y);
+        // side fences seen from above: Ninja's vertical fence pole tiled down the run
+        for (let y = w.y0 + 16 * S; y <= w.y1 + 16 * S - 1; y += 16 * S) this.add.image((w.x0 + w.x1) / 2, Math.min(y, w.y1 + 4), 'pr-gate-post').setOrigin(0.5, 1).setScale(S).setDepth(Math.min(y, w.y1));
       }
     }
-    const gate = this.add.image(l.cx, l.gate.y1 + 4, 'pr-gate').setOrigin(0.5, 1).setDisplaySize(GATE_W + 2, 12 * S + 4).setDepth(l.gate.y1);
+    const gate = this.add.image(l.cx, l.gate.y1 + 4, 'pr-gate').setOrigin(0.5, 1).setDisplaySize(GATE_W + 2, 16 * S).setDepth(l.gate.y1);
     const glow = this.add.graphics().setDepth(-460);
-    const chest = this.add.image(l.chest.x, l.chest.y, 'ic-chest').setScale(1.5).setDepth(l.chest.y);
-    const plates = l.plates.map((p) => this.add.image(p.x, p.y, 'pr-plate').setScale(4).setDepth(-700).setVisible(false));
+    const chest = this.add.image(l.chest.x, l.chest.y, 'ic-chest').setScale(PROP_SCALE).setDepth(l.chest.y);
+    const plates = l.plates.map((p) => this.add.image(p.x, p.y, 'pr-plate').setScale(S).setDepth(-700).setVisible(false));
     const glows = l.plates.map((p) => this.add.image(p.x, p.y + 2, 'fx-plate-glow').setScale(2).setDepth(-690).setVisible(false));
     const bubbles = l.plates.map((p) => this.add.text(p.x, p.y - 72, '', {
       fontFamily: "'Fredoka', sans-serif", fontSize: '20px', color: '#3f2631', fontStyle: 'bold',
@@ -941,7 +929,7 @@ export class GameScene extends Phaser.Scene {
     if (z.open !== g.open) {
       g.open = z.open;
       // hinged open: the swung gate sits at the left post of the gap
-      if (z.open) g.gate.setTexture('pr-gate-open').setOrigin(0, 1).setX(g.l.gate.x0 - 2).setDisplaySize(11 * 3, 14 * 3);
+      if (z.open) g.gate.setTexture('pr-gate-open').setOrigin(0, 1).setX(g.l.gate.x0 - 2).setDisplaySize(16 * 3, 16 * 3);
     }
     if (z.taken !== g.taken) {
       g.taken = z.taken;
@@ -969,7 +957,7 @@ export class GameScene extends Phaser.Scene {
       parts.forEach((k, j) => {
         const y = f.y - j * 30;
         const t = this.add.text(f.x - 6, y, '+' + f.r[k], { fontFamily: "'Fredoka', sans-serif", fontSize: '26px', color: '#ffe08a', fontStyle: 'bold', stroke: '#6b4a2a', strokeThickness: 5 }).setOrigin(1, 0.5);
-        const ic = this.add.image(f.x + 14, y, ITEM_ICON[k]).setScale(k === 'wood' ? 1 : 1.5);
+        const ic = this.add.image(f.x + 14, y, ITEM_ICON[k]).setScale(2);
         const c = this.add.container(0, 0, [t, ic]).setDepth(5000);
         this.tweens.add({ targets: c, y: -50, alpha: 0, duration: 1100, delay: j * 80, ease: 'Cubic.Out', onComplete: () => c.destroy() });
       });
@@ -1004,8 +992,8 @@ export class GameScene extends Phaser.Scene {
       this.tweens.add({ targets: t, y: f.y - 80, alpha: 0, duration: 700, onComplete: () => t.destroy() });
     } else if (f.t === 'miss') {
       // the berry splats flat on the grass and fades
-      const sq = this.add.image(f.x, f.y - 2, 'g-item-berries').setScale(1.5).setDepth(9200);
-      this.tweens.add({ targets: sq, scaleY: 0.4, scaleX: 1.9, alpha: 0, duration: 520, ease: 'Quad.Out', onComplete: () => sq.destroy() });
+      const sq = this.add.image(f.x, f.y - 2, 'g-item-berries').setScale(2).setDepth(9200);
+      this.tweens.add({ targets: sq, scaleY: 0.5, scaleX: 2.6, alpha: 0, duration: 520, ease: 'Quad.Out', onComplete: () => sq.destroy() });
       this.burst(f.x, f.y, 0xc0392b, 4);
     } else if (f.t === 'boom') {
       sfx.bump();
