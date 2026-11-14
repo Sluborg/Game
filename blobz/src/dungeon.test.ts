@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { KEYS } from './i18n';
 import {
-  bossHp, CLASS_HP, CLASSES, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, GH, GW,
+  AIM_WARN, BITE_TIME, CLASS_WEAPONS, BITE_WARN, bossHp, BURST, BURST_DMG, BURST_GAP, BURST_SPREAD, CLASS_HP, CLASSES, DASH_TIME, DASH_WARN, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, GH, GW,
   HEAL_HP, heroMods, refresh, inSwing, isWall, ITEMS, itemOf, KO_SECONDS, LEVEL_XP, LOOT_SECONDS, makeFloor, makeGoo, newRun, POTION_HP, REGEN_EVERY,
   skillIcon, skillOf, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
 } from './dungeon';
@@ -39,6 +39,8 @@ const goo = (d: DState, kind: EnemyKind, x: number, y: number, o: Partial<Enemy>
   return e;
 };
 const still = { stun: 999, slamT: 999, cd: 999 };
+/** The middle of the floor's biggest room, a little left of centre: open space for monster attacks to the right. */
+const roomMid = (d: DState) => { const r = d.map.rooms.reduce((a, b) => (b.w * b.h > a.w * a.h ? b : a)); return { x: (r.x + r.w / 2) * DT - 70, y: (r.y + r.h / 2) * DT }; };
 
 describe('dungeon', () => {
   it('floors: 6-9 rooms, everything reachable, boss on floor 3, spitters and mediums, deterministic', () => {
@@ -68,6 +70,17 @@ describe('dungeon', () => {
     expect(bossHp(3)).toBe(660);
     const d = newRun(3, { a: 'sword', b: 'bow' });
     expect(d.enemies.find((e) => e.kind === 0)!.mx).toBe(Math.round(ENEMY_HP[0] * floorHp(1, 2)));
+  });
+
+  it('weapon balance (Stefan): no spear on offer; the crossbow hits clearly softer than melee; the Riddare below the sword', () => {
+    expect(CLASS_WEAPONS.rogue).not.toContain('spear');
+    expect(WEAPON_STATS.spear).toBeDefined(); // the code stays
+    const dps = (w: keyof typeof WEAPON_STATS) => WEAPON_STATS[w].dmg / WEAPON_STATS[w].cd;
+    expect(WEAPON_STATS.bow.dmg).toBeLessThan(WEAPON_STATS.sword.dmg * 0.7);
+    expect(dps('bow')).toBeLessThanOrEqual(dps('sword') * 0.7);
+    expect(dps('bow')).toBeLessThan(dps('dagger') * 0.7);
+    expect(dps('shield')).toBeLessThan(dps('sword'));
+    expect(WEAPON_STATS.shield.kb).toBeGreaterThan(WEAPON_STATS.sword.kb); // heavier: more knockback
   });
 
   it('weapons: sword arc, hammer all around, spear long and narrow', () => {
@@ -156,26 +169,93 @@ describe('dungeon', () => {
     expect(d.heroes.a.hp).toBe(CLASS_HP.rogue);
   });
 
-  it('spitters keep their distance and spit; spit hurts, walls stop it', () => {
+  it('spitters keep their distance; they aim first (warning), then fire a burst of 3 along the aim; spit hurts, walls stop it', () => {
     const d = quiet(newRun(16, { a: 'staff' }));
-    const st = d.map.start, a = body('a', st.x, st.y);
+    const st = roomMid(d), a = body('a', st.x, st.y);
     d.heroes.a.atkCd = 999;
-    goo(d, 3, st.x + 60, st.y, { awake: true, cd: 0.01 });
-    const { fx } = run1(d, [a], undefined, 0.2);
-    expect(fx.some((f) => f.t === 'spit')).toBe(true);
-    expect(d.spit.length + (d.heroes.a.hp < CLASS_HP.healer ? 1 : 0)).toBeGreaterThan(0);
+    const s = goo(d, 3, st.x + 120, st.y, { awake: true, cd: 0.01 });
+    run1(d, [a], undefined, 0.05);
+    expect(s.act).toBe(5); // aiming: no shot yet
+    expect(d.spit).toHaveLength(0);
+    const aim = s.ang!;
+    const { fx } = run1(d, [a], undefined, AIM_WARN + BURST_GAP * BURST);
+    expect(fx.filter((f) => f.t === 'spit')).toHaveLength(BURST);
+    // the shots fly along the aim taken when the warning started (spread a little)
+    for (const sp of d.spit) { const da = Math.atan2(sp.vy, sp.vx) - aim; expect(Math.abs(Math.atan2(Math.sin(da), Math.cos(da)))).toBeLessThanOrEqual(BURST_SPREAD + 1e-6); }
     // it backs off from a blob that is too close
-    const s = d.enemies[0];
+    d.spit = []; s.act = 0; s.cd = 999; s.x = a.x + 60; s.y = a.y;
     const before = Math.hypot(s.x - a.x, s.y - a.y);
-    s.cd = 999;
     run1(d, [a], undefined, 0.5);
     expect(Math.hypot(s.x - a.x, s.y - a.y)).toBeGreaterThan(before);
-    // a spit ball that reaches a blob costs SPIT_DMG
+    // a burst shot costs BURST_DMG, an old-style spit (boss ring) SPIT_DMG
     d.enemies = []; d.spit = []; d.heroes.a.hp = 100; d.heroes.a.inv = 0;
-    d.spit.push({ id: 901, x: a.x - 40, y: a.y, vx: 210, vy: 0, t: 1 });
+    d.spit.push({ id: 901, x: a.x - 40, y: a.y, vx: 210, vy: 0, t: 1, dmg: BURST_DMG });
     run1(d, [a], undefined, 0.3);
-    expect(d.heroes.a.hp).toBe(100 - SPIT_DMG);
+    expect(d.heroes.a.hp).toBe(100 - BURST_DMG);
     expect(d.spit).toHaveLength(0);
+    d.heroes.a.inv = 0;
+    d.spit.push({ id: 902, x: a.x - 40, y: a.y, vx: 210, vy: 0, t: 1 });
+    run1(d, [a], undefined, 0.3);
+    expect(d.heroes.a.hp).toBe(100 - BURST_DMG - SPIT_DMG);
+  });
+
+  it('a burst aimed during the warning misses a blob that sidestepped', () => {
+    const d = quiet(newRun(16, { a: 'staff' }));
+    const st = roomMid(d), a = body('a', st.x, st.y);
+    d.heroes.a.atkCd = 999;
+    goo(d, 3, st.x + 150, st.y, { awake: true, cd: 0.01 });
+    run1(d, [a], undefined, 0.05);
+    a.y += 60; // stepped out of the line while it aimed
+    run1(d, [a], undefined, AIM_WARN + 1.2);
+    expect(d.heroes.a.hp).toBe(CLASS_HP.healer);
+  });
+
+  it('bat: telegraphed dash (stands still during the warning), dashes along the aim, then backs off (hit and run)', () => {
+    const d = quiet(newRun(18, { a: 'staff' }));
+    const st = roomMid(d), a = body('a', st.x, st.y);
+    d.heroes.a.atkCd = 999;
+    const bat = goo(d, 0, st.x + 140, st.y, { awake: true, cd: 0.01 });
+    run1(d, [a], undefined, 0.05);
+    expect(bat.act).toBe(1);
+    const x0 = bat.x;
+    run1(d, [a], undefined, DASH_WARN - 0.1);
+    expect(Math.abs(bat.x - x0)).toBeLessThan(6); // the wind-up holds still
+    const { fx } = run1(d, [a], undefined, 0.15);
+    expect(fx.some((f) => f.t === 'mdash')).toBe(true);
+    expect(bat.act).toBe(2);
+    run1(d, [a], undefined, DASH_TIME + 0.05);
+    expect(d.heroes.a.hp).toBeLessThan(CLASS_HP.healer); // it hit the blob that stayed in the line
+    expect(bat.act).toBe(7); // and backs off
+    const near = Math.hypot(bat.x - a.x, bat.y - a.y);
+    run1(d, [a], undefined, 0.4);
+    expect(Math.hypot(bat.x - a.x, bat.y - a.y)).toBeGreaterThan(near);
+  });
+
+  it('slime: dash, then a short second warning and a bite where it landed; a sidestep during the warning dodges', () => {
+    const d = quiet(newRun(19, { a: 'staff' }));
+    const st = roomMid(d), a = body('a', st.x, st.y);
+    d.heroes.a.atkCd = 999;
+    const sl = goo(d, 1, st.x + 160, st.y, { awake: true, cd: 0.01 });
+    run1(d, [a], undefined, 0.05);
+    expect(sl.act).toBe(1);
+    a.y += 70; // sidestep the dash
+    run1(d, [a], undefined, DASH_WARN + DASH_TIME + 0.02);
+    expect(d.heroes.a.hp).toBe(CLASS_HP.healer);
+    expect(sl.act).toBe(3); // bite wind-up, aimed at the blob's new spot
+    const { fx } = run1(d, [a], undefined, BITE_WARN + BITE_TIME + 0.05);
+    expect(fx.some((f) => f.t === 'bite')).toBe(true);
+  });
+
+  it('monster actions travel in the snapshot (state, angle, time left) for the warnings on every phone', () => {
+    const d = quiet(newRun(18, { a: 'staff' }));
+    const st = roomMid(d), a = body('a', st.x, st.y);
+    d.heroes.a.atkCd = 999;
+    goo(d, 0, st.x + 140, st.y, { awake: true, cd: 0.01 });
+    run1(d, [a], undefined, 0.05);
+    const e = dview(dsnap(d, 18)).enemies[0];
+    expect(e.act).toBe(1);
+    expect(Math.abs(e.ang - Math.PI)).toBeLessThan(0.05);
+    expect(e.at).toBeGreaterThan(0.4);
   });
 
   it('goo gang up: one waking calls the goo around it', () => {
@@ -197,6 +277,7 @@ describe('dungeon', () => {
     expect(boss.slam).not.toBeNull();
     run1(d, [a], undefined, 1.2);
     expect(d.heroes.a.hp).toBe(CLASS_HP.rogue - SLAM_DMG);
+    expect(Math.hypot(boss.x - a.x, boss.y - a.y)).toBeLessThan(ENEMY_R[2] + 20); // it leapt onto the slam spot
     // phase 2
     boss.hp = boss.mx / 2 - 1; boss.slamT = 0.01; boss.slam = null; d.heroes.a.inv = 99;
     const { fx } = run1(d, [a], undefined, 1.3);
@@ -458,7 +539,7 @@ describe('dungeon', () => {
   });
 
   it('hitboxes are the drawn goo: just inside the sprite hits, just outside misses (melee, bolt, contact)', () => {
-    expect(ENEMY_R.slice(0, 3)).toEqual([13, 20, 44]);
+    expect(ENEMY_R.slice(0, 3)).toEqual([16, 21, 47]);
     for (const kind of [0, 1, 2] as const) for (const w of ['sword', 'spear', 'bow'] as const) for (const [gap, hits] of [[-2, true], [2, false]] as [number, boolean][]) {
       const d = quiet(newRun(21, { a: w }));
       const st = d.map.start, a = body('a', st.x, st.y);

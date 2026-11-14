@@ -22,7 +22,8 @@ export const CLASS_HP: Record<HeroClass, number> = { rogue: 100, healer: 100, ma
 export type Weapon = 'sword' | 'hammer' | 'spear' | 'staff' | 'bow' | 'shield' | 'dagger';
 /** Order is the snapshot index: only append. */
 export const WEAPONS: Weapon[] = ['sword', 'hammer', 'spear', 'staff', 'bow', 'shield', 'dagger'];
-export const CLASS_WEAPONS: Record<HeroClass, Weapon[]> = { rogue: ['dagger', 'sword', 'hammer', 'spear'], healer: ['staff'], marksman: ['bow'], tank: ['shield'] };
+// the spear stays in the code but is not offered (Stefan: too strong for now); classOf('spear') still gives 'rogue'
+export const CLASS_WEAPONS: Record<HeroClass, Weapon[]> = { rogue: ['dagger', 'sword', 'hammer'], healer: ['staff'], marksman: ['bow'], tank: ['shield'] };
 export const classOf = (w: Weapon): HeroClass => CLASSES.find((c) => CLASS_WEAPONS[c].includes(w)) ?? 'rogue';
 /** Auto-attack: reach (px from the blob centre to the goo's edge), half-arc (radians, PI = all around),
  *  damage (goo hit points), seconds between attacks, knockback; ranged = a bolt at the nearest goo in sight. */
@@ -31,8 +32,8 @@ export const WEAPON_STATS: Record<Weapon, { reach: number; arc: number; dmg: num
   hammer: { reach: 58, arc: Math.PI, dmg: 26, cd: 0.9, kb: 380 }, // slow, hits all around, big knockback
   spear: { reach: 96, arc: 0.3, dmg: 14, cd: 0.55, kb: 200 }, // long and narrow
   staff: { reach: 52, arc: 1.2, dmg: 9, cd: 0.6, kb: 140 }, // the healer's bonk
-  bow: { reach: 200, arc: 0, dmg: 10, cd: 0.7, kb: 90, ranged: true }, // crossbow (playtest: was too strong)
-  shield: { reach: 50, arc: 1.1, dmg: 11, cd: 0.55, kb: 260 }, // shield bash: big knockback
+  bow: { reach: 200, arc: 0, dmg: 7, cd: 0.55, kb: 90, ranged: true }, // crossbow: safe at range, so clearly less damage than melee (~42% of the sword)
+  shield: { reach: 56, arc: 1.0, dmg: 10, cd: 0.5, kb: 280 }, // the Riddare: a heavier, slower sword slash with big knockback (id stays 'shield')
   dagger: { reach: 44, arc: 1.2, dmg: 8, cd: 0.25, kb: 80 }, // the rogue's two daggers: very fast, short
 };
 export type SpecialKind = 'spin' | 'slam' | 'lunge' | 'heal' | 'wall' | 'volley';
@@ -43,7 +44,7 @@ export const SPECIALS: Record<string, SpecialDef> = {
   'rogue:hammer': { kind: 'slam', cd: 8, r: 110, dmg: 35, kb: 480, stun: 0.9 },
   'rogue:spear': { kind: 'lunge', cd: 7, r: 30, dmg: 25, kb: 220, stun: 0.4 },
   'healer:staff': { kind: 'heal', cd: 9, r: 150, dmg: 0, kb: 0, stun: 0 }, // heals + revives friends around
-  'marksman:bow': { kind: 'volley', cd: 7, r: 260, dmg: 18, kb: 160, stun: 0.3 }, // bolts at several goo
+  'marksman:bow': { kind: 'volley', cd: 7, r: 260, dmg: 14, kb: 160, stun: 0.3 }, // bolts at several goo
   'tank:shield': { kind: 'wall', cd: 10, r: 120, dmg: 0, kb: 360, stun: 0.6 }, // friends inside take no damage
 };
 export const specialOf = (cls: HeroClass, w: Weapon): SpecialDef => SPECIALS[`${cls}:${w}`] ?? SPECIALS['rogue:dagger'];
@@ -127,12 +128,13 @@ export const LOOT_SECONDS = 10;
 export const CHEST_ITEM_CHANCE = 0.5; // the boss always drops one
 
 // ---- goo ----
-/** 0 small, 1 medium, 2 boss, 3 spitter (keeps away and spits) */
+/** Ninja Adventure monsters: 0 small = Bat (telegraphed dash, hit and run), 1 medium = Slime (telegraphed dash, then a
+ *  bite where it lands), 2 boss = Giant Slime (telegraphed jump slam), 3 spitter = Eye (aims, then a burst of 3 shots) */
 export type EnemyKind = 0 | 1 | 2 | 3;
 export const ENEMY_HP = [20, 50, 300, 30];
-/** Goo art (art/enemies/goo-*.png, opaque to the edges) and its world scale: the hitbox is the drawn sprite. */
-export const GOO_ART: [number, number][] = [[14, 12], [22, 18], [29, 29], [14, 12]];
-export const GOO_SCALE = [2, 2, 3, 2.5];
+/** Visible size of each monster's first frame (px) and its world scale: the hitbox is the drawn sprite. */
+export const GOO_ART: [number, number][] = [[16, 15], [16, 12], [40, 22], [14, 16]];
+export const GOO_SCALE = [2, 3, 3, 2.5];
 export const ENEMY_R = GOO_ART.map(([w, h], k) => Math.round(((w + h) / 4) * GOO_SCALE[k]));
 export const ENEMY_SPEED = [92, 68, 46, 70];
 export const ENEMY_TOUCH = [8, 12, 18, 6]; // health lost per touch (floor 1)
@@ -148,6 +150,13 @@ export const SPIT_SPEED = 210;
 export const SPIT_DMG = 10;
 const SPIT_LIFE = 2.2;
 const SPIT_R = 7;
+// telegraphed monster attacks (the warning is long enough to sidestep): dash -> (slime) bite / (bat) back off; aim -> burst
+export const DASH_WARN = 0.6, DASH_SPEED = 430, DASH_TIME = 0.32, DASH_MIN = 50, DASH_MAX = 210;
+export const BITE_WARN = 0.35, BITE_SPEED = 360, BITE_TIME = 0.18, FLEE_TIME = 0.7;
+export const AIM_WARN = 0.55, BURST = 3, BURST_GAP = 0.11, BURST_SPREAD = 0.09, BURST_DMG = 6;
+export const ACT_CD = [2.6, 3.2, 0, 3.0]; // seconds between attacks per kind
+/** Enemy action: 0 none, 1 dash wind-up, 2 dashing, 3 bite wind-up, 4 biting, 5 aiming, 6 firing the burst, 7 backing off */
+export type Act = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 export const SLAM_EVERY = 4; // boss: telegraphed slam (phase 2: every 2.5 s, plus a ring of spit and 2 small goo)
 export const SLAM_EVERY_2 = 2.5;
 export const SLAM_WARN = 1.1; // red ring on the ground before it lands
@@ -261,12 +270,13 @@ export function collideWalls(f: Floor, o: { x: number; y: number; vx: number; vy
 
 export interface Enemy {
   id: number; kind: EnemyKind; x: number; y: number; vx: number; vy: number; hp: number; mx: number; awake: boolean; stun: number;
-  slamT: number; slam: { x: number; y: number; t: number } | null; by?: string; cd?: number; p2?: boolean; // spit cooldown, boss phase 2
+  slamT: number; slam: { x: number; y: number; t: number } | null; by?: string; cd?: number; p2?: boolean; // attack cooldown, boss phase 2
+  act?: Act; actT?: number; ang?: number; shots?: number; // telegraphed attack in progress: state, time left, direction, burst left
 }
 /** Floor pickups: kind 0 = coin (team gold), 1 = potion (+POTION_HP for everyone). */
 export interface Coin { id: number; x: number; y: number; v: number; k?: 0 | 1 }
 /** Goo spit in flight (spitters, boss phase 2). */
-export interface Spit { id: number; x: number; y: number; vx: number; vy: number; t: number }
+export interface Spit { id: number; x: number; y: number; vx: number; vy: number; t: number; dmg?: number }
 export interface Hero {
   cls: HeroClass; hp: number; maxHp: number; ko: number; inv: number; weapon: Weapon;
   fx: number; fy: number; aim: number; // facing; aim > 0: facing the last target (movement does not turn it)
@@ -306,6 +316,8 @@ export type DFx =
   | { t: 'dodge'; id: string; x: number; y: number }
   | { t: 'hurt'; e: number; x: number; y: number; kind: EnemyKind }
   | { t: 'kill'; x: number; y: number; kind: EnemyKind }
+  | { t: 'mdash'; x: number; y: number; a: number }
+  | { t: 'bite'; x: number; y: number; a: number }
   | { t: 'ouch'; id: string; x: number; y: number }
   | { t: 'block'; id: string; x: number; y: number }
   | { t: 'heal'; id: string; x: number; y: number }
@@ -547,9 +559,43 @@ function autoAttack(d: DState, h: Hero, b: Body, m: Mods, fx: DFx[]) {
   }
 }
 
-function spitAt(d: DState, x: number, y: number, a: number, fx: DFx[]) {
-  d.spit.push({ id: d.nextId++, x, y, vx: Math.cos(a) * SPIT_SPEED, vy: Math.sin(a) * SPIT_SPEED, t: SPIT_LIFE });
+function spitAt(d: DState, x: number, y: number, a: number, fx: DFx[], dmg?: number) {
+  d.spit.push({ id: d.nextId++, x, y, vx: Math.cos(a) * SPIT_SPEED, vy: Math.sin(a) * SPIT_SPEED, t: SPIT_LIFE, dmg });
   fx.push({ t: 'spit', x, y });
+}
+
+/** Run a telegraphed monster attack. Wind-ups stand still (the warning is drawn from the snapshot), then the attack
+ *  goes the way it was aimed when the warning started, so a sidestep during the warning avoids it. */
+function stepAct(d: DState, e: Enemy, tgt: Body | null, dt: number, fx: DFx[]) {
+  e.actT = (e.actT ?? 0) - dt;
+  const a = e.ang ?? 0, ux = Math.cos(a), uy = Math.sin(a);
+  const still = () => { e.vx *= Math.exp(-10 * dt); e.vy *= Math.exp(-10 * dt); };
+  const go = (sp: number) => { e.vx = ux * sp; e.vy = uy * sp; };
+  const done = () => { e.act = 0; e.cd = ACT_CD[e.kind] * (0.85 + Math.random() * 0.3); };
+  switch (e.act) {
+    case 1: still(); if (e.actT <= 0) { e.act = 2; e.actT = DASH_TIME; go(DASH_SPEED); fx.push({ t: 'mdash', x: e.x, y: e.y, a }); } break;
+    case 2:
+      go(DASH_SPEED);
+      if (e.actT <= 0) {
+        if (e.kind === 1) { e.act = 3; e.actT = BITE_WARN; if (tgt) e.ang = Math.atan2(tgt.y - e.y, tgt.x - e.x); } // slime: bite where it lands
+        else { e.act = 7; e.actT = FLEE_TIME; e.ang = a + Math.PI; } // bat: hit and run
+      }
+      break;
+    case 3: still(); if (e.actT <= 0) { e.act = 4; e.actT = BITE_TIME; go(BITE_SPEED); fx.push({ t: 'bite', x: e.x, y: e.y, a }); } break;
+    case 4: go(BITE_SPEED); if (e.actT <= 0) done(); break;
+    case 5: still(); if (e.actT <= 0) { e.act = 6; e.actT = 0; e.shots = BURST; } break;
+    case 6:
+      still();
+      if (e.actT <= 0 && (e.shots ?? 0) > 0) {
+        const k = BURST - (e.shots ?? 0);
+        spitAt(d, e.x + ux * 14, e.y + uy * 14, a + (k - 1) * BURST_SPREAD, fx, BURST_DMG);
+        e.shots = (e.shots ?? 1) - 1; e.actT = BURST_GAP;
+      }
+      if ((e.shots ?? 0) <= 0) done();
+      break;
+    case 7: go(ENEMY_SPEED[e.kind] * 1.6); if (e.actT <= 0) done(); break;
+    default: e.act = 0;
+  }
 }
 
 /** One dungeon tick after the players have moved (sim.ts moves them with the usual glide physics).
@@ -672,7 +718,19 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
     }
     if (tgt && !e.awake) { e.awake = true; woke.push(e); }
     const angry = e.kind === 2 && e.hp < e.mx / 2;
-    if (e.stun <= 0 && tgt) {
+    // telegraphed attacks: start one when ready (in range, line of sight), then run it; a stun pauses it
+    if (e.kind !== 2 && e.stun <= 0 && tgt && !e.act) {
+      e.cd = (e.cd ?? ACT_CD[e.kind]) - dt;
+      const a = Math.atan2(tgt.y - e.y, tgt.x - e.x);
+      if (e.cd <= 0 && lineOfSight(f, e.x, e.y, tgt.x, tgt.y)) {
+        if (e.kind === 3 && dist < 320) { e.act = 5; e.actT = AIM_WARN; e.ang = a; }
+        else if (e.kind <= 1 && dist > DASH_MIN && dist < DASH_MAX) { e.act = 1; e.actT = DASH_WARN; e.ang = a; }
+      }
+    }
+    if (e.act) {
+      if (e.stun <= 0) stepAct(d, e, tgt, dt, fx);
+      else { e.vx *= Math.exp(-5 * dt); e.vy *= Math.exp(-5 * dt); }
+    } else if (e.stun <= 0 && tgt) {
       const dx = tgt.x - e.x, dy = tgt.y - e.y, dl = Math.hypot(dx, dy) || 1;
       let spd = ENEMY_SPEED[e.kind] * (e.slam ? 0.2 : 1) * (angry ? 1.6 : 1);
       // spitters hold at 150-230 px: back off when close, close in when far
@@ -680,10 +738,6 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
       if (e.kind === 3) { if (dist < 150) dir = -1; else if (dist < 230) { dir = 0; spd *= 0.3; } }
       e.vx += ((dx / dl) * spd * dir - e.vx) * Math.min(1, dt * 5);
       e.vy += ((dy / dl) * spd * dir - e.vy) * Math.min(1, dt * 5);
-      if (e.kind === 3) {
-        e.cd = (e.cd ?? SPIT_EVERY) - dt;
-        if (e.cd <= 0 && dist < 320 && lineOfSight(f, e.x, e.y, tgt.x, tgt.y)) { e.cd = SPIT_EVERY; spitAt(d, e.x, e.y, Math.atan2(dy, dx), fx); }
-      }
     } else { e.vx *= Math.exp(-5 * dt); e.vy *= Math.exp(-5 * dt); }
     e.x += e.vx * dt; e.y += e.vy * dt;
     collideWalls(f, e, ENEMY_R[e.kind]);
@@ -691,6 +745,9 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
       if (e.slam) {
         e.slam.t -= dt;
         if (e.slam.t <= 0) {
+          // it lands there (the leap is drawn during the warning), then the shockwave
+          e.x = e.slam.x; e.y = e.slam.y; e.vx = 0; e.vy = 0;
+          collideWalls(f, e, ENEMY_R[e.kind]);
           fx.push({ t: 'slam', x: e.slam.x, y: e.slam.y });
           for (const b of alive) if (Math.hypot(b.x - e.slam.x, b.y - e.slam.y) < SLAM_R + BLOB_R) hurt(d, b, e.slam.x, e.slam.y, SLAM_DMG * dmgMul, fx, bodies);
           if (angry) {
@@ -727,7 +784,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
       if (gone || Math.hypot(b.x - s.x, b.y - s.y) > BLOB_R + SPIT_R) continue;
       const h = d.heroes[b.id];
       if (h && (h.dodge > 0 || b.dashT > 0)) continue; // dodged: it flies past
-      hurt(d, b, s.x - s.vx, s.y - s.vy, SPIT_DMG * dmgMul, fx, bodies);
+      hurt(d, b, s.x - s.vx, s.y - s.vy, (s.dmg ?? SPIT_DMG) * dmgMul, fx, bodies);
       gone = true;
     }
     if (gone) d.spit.splice(i, 1);
@@ -849,7 +906,7 @@ const r1 = (n: number) => Math.round(n * 10) / 10;
 type HeroTuple = [string, number, number, number, number, number, number, number?, number?, number?, number?, number?, string?, string?, string?, number?];
 export interface DSnap {
   sd: number; f: number; g: number; xp: number; lv: number; k: number; rd: number; dn: number; tm?: number; wy?: number; bm?: number;
-  e: [number, number, number, number, number, number, number, number, number?][]; // id, kind, x, y, hp, slam x, slam y, slam t (-1 none), max hp
+  e: [number, number, number, number, number, number, number, number, number?, number?, number?, number?][]; // id, kind, x, y, hp, slam x, slam y, slam t (-1 none), max hp, act, angle*100, act time*100
   c: [number, number, number, number?][]; // pickup id, x, y, kind
   sp?: [number, number, number][]; // spit id, x, y
   op: string; // opened chests '0101'
@@ -865,7 +922,7 @@ export interface DHeroView {
 }
 export interface DView {
   seed: number; floor: number; gold: number; xp: number; level: number; kills: number; ready: number; done: number; time: number; why: EndWhy; bossMax: number;
-  enemies: { id: number; kind: EnemyKind; x: number; y: number; hp: number; mx: number; slam: { x: number; y: number; t: number } | null }[];
+  enemies: { id: number; kind: EnemyKind; x: number; y: number; hp: number; mx: number; slam: { x: number; y: number; t: number } | null; act: Act; ang: number; at: number }[];
   coins: { id: number; x: number; y: number; k: number }[];
   spit: { id: number; x: number; y: number }[];
   opened: boolean[];
@@ -878,7 +935,7 @@ export function dsnap(d: DState, seed: number): DSnap {
   return {
     sd: seed, f: d.floor, g: d.gold, xp: d.xp, lv: d.level, k: d.kills, rd: Math.round((d.ready / READY_SECONDS) * 100), dn: r1(d.done),
     tm: Math.ceil(d.time), wy: WHY.indexOf(d.why), bm: d.bossMax,
-    e: d.enemies.map((e) => [e.id, e.kind, r1(e.x), r1(e.y), Math.ceil(e.hp), e.slam ? r1(e.slam.x) : 0, e.slam ? r1(e.slam.y) : 0, e.slam ? r1(e.slam.t) : -1, e.mx]),
+    e: d.enemies.map((e) => [e.id, e.kind, r1(e.x), r1(e.y), Math.ceil(e.hp), e.slam ? r1(e.slam.x) : 0, e.slam ? r1(e.slam.y) : 0, e.slam ? r1(e.slam.t) : -1, e.mx, e.act ?? 0, Math.round((e.ang ?? 0) * 100), Math.round((e.actT ?? 0) * 100)]),
     c: d.coins.map((c) => [c.id, r1(c.x), r1(c.y), c.k ?? 0]),
     sp: (d.spit ?? []).map((s) => [s.id, r1(s.x), r1(s.y)]),
     op: d.opened.map((o) => (o ? '1' : '0')).join(''),
@@ -893,7 +950,7 @@ const list = (s: string | undefined) => (s ? s.split(',').filter(Boolean) : []);
 export function dview(n: DSnap): DView {
   return {
     seed: n.sd, floor: n.f, gold: n.g, xp: n.xp, level: n.lv, kills: n.k, ready: n.rd / 100, done: n.dn, time: n.tm ?? 0, why: WHY[n.wy ?? 1] ?? 'exit', bossMax: n.bm ?? ENEMY_HP[2],
-    enemies: n.e.map(([id, kind, x, y, hp, sx, sy, st, mx]) => ({ id, kind: kind as EnemyKind, x, y, hp, mx: mx ?? hp, slam: st >= 0 ? { x: sx, y: sy, t: st } : null })),
+    enemies: n.e.map(([id, kind, x, y, hp, sx, sy, st, mx, act, ang, at]) => ({ id, kind: kind as EnemyKind, x, y, hp, mx: mx ?? hp, slam: st >= 0 ? { x: sx, y: sy, t: st } : null, act: (act ?? 0) as Act, ang: (ang ?? 0) / 100, at: (at ?? 0) / 100 })),
     coins: n.c.map(([id, x, y, k]) => ({ id, x, y, k: k ?? 0 })),
     spit: (n.sp ?? []).map(([id, x, y]) => ({ id, x, y })),
     opened: [...n.op].map((c) => c === '1'),

@@ -35,15 +35,15 @@ Make ONE image per reply and wait for "next".
 
 ## Queue
 
-**2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. All orders below are cancelled.
-ChatGPT works only on N-orders (READY ones). New orders only for pieces the pack lacks.**
+**2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
+ChatGPT works only on N-orders with status READY (N-2 is READY now). New orders only for pieces the pack lacks.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
-| N-1 | READY | Title header / logo in Ninja Adventure style | `art/logo.png` |
-| N-2 | READY | Start screen background, round 2: LANDSCAPE ONLY (portrait approved 4/5) | `art/title.png` |
+| N-1 | DONE (C chosen) | Title header / logo in Ninja Adventure style | `art/logo.png` |
+| N-2 | READY | Start screen background, round 3: LANDSCAPE 16:9 ONLY (portrait approved 4/5; make it even if you made a landscape before) | `art/title.png` |
 | N-3 | DONE | Loading screen (portrait + landscape approved) | `art/loading.png`, `art/loading-landscape.png` |
-| N-4 | READY | Hovering weapons sheet (7 weapons) in Ninja style | `dungeon/weapons/*.png` |
+| N-4 | DONE (round 2 received, awaiting rating) | Hovering weapons, round 2: crossbow with bolt further back | `dungeon/weapons/*.png` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
@@ -70,6 +70,9 @@ mouth, optional hat, bright body colours (blue, pink, green, yellow, purple, ora
 ```
 
 ### N-4 Hovering weapons (7)
+Round 2 (do this): redraw ONLY the crossbow from your weapons sheet, same style, size and direction (pointing right),
+with ONE change: the bolt sits further back, nocked at the string/stock, its tip just past the front of the bow
+(not sticking far out). Reference: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n4-weapons.png
 ```
 One sprite sheet, 7 columns x 1 row, transparent background (or flat magenta #ff00ff), in the Ninja Adventure style
 (see the style block): crisp pixel art, dark near-black outline, warm colours, no blur, no text.
@@ -92,7 +95,7 @@ Wide format 3:1. Make 3 variants side by side on one image so Stefan can pick.
 ```
 
 ### N-2 Start screen background
-Round 2: make ONLY the landscape 16:9 version of the approved portrait image (same village, cottage, blobz, path,
+Round 3 (do this): make ONLY the landscape 16:9 version of the approved portrait image (same village, cottage, blobz, path,
 pond). Reference: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n2-start-portrait.png
 ```
 A cozy scene for the start screen, made only of Ninja Adventure style tiles and props: a sunny village meadow with a

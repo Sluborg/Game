@@ -96,6 +96,35 @@ const FROZEN: Record<string, string> = {
   'class:Fjädermössa/Lång': '60a0698d', // round 2
   'class:Fjädermössa/Päron': 'cb184630', // round 2
   'class:Fjädermössa/Kub': 'f133f332', // round 2
+  'Rosett/Kupol': '138349c4', // round 3
+  'Rosett/Boll': 'efc4dfce', // round 3
+  'Rosett/Lång': 'fc24f42', // round 3
+  'Rosett/Päron': '9b03bec7', // round 3
+  'Rosett/Kub': '93a54a3d', // round 3
+  'Lurar/Boll': '53afdf0a', // round 3
+  'Antenn/Kupol': 'c3113e70', // round 3
+  'Antenn/Boll': '25c004a', // round 3
+  'Antenn/Lång': '20400398', // round 3
+  'Antenn/Platt': 'b2951511', // round 3
+  'Antenn/Päron': '486c0215', // round 3
+  'Antenn/Kub': 'a180e3d9', // round 3
+  'class:Fjädermössa/Platt': 'ad14270a', // round 3
+  'Krona/Kupol': '142d37f3', // round 4
+  'Krona/Boll': 'eac73d6c', // round 4
+  'Krona/Lång': '9e6b8d30', // round 4
+  'Krona/Platt': 'aa28c97', // round 4
+  'Krona/Päron': 'f2fe7ffd', // round 4
+  'Drottningkrona/Platt': '4e5f1a17', // round 4
+  'Lurar/Lång': 'a1ee2e82', // round 4
+  'Lurar/Päron': '8ba34ec7', // round 4
+  'Kaninöron/Päron': 'f3e77f17', // round 4
+  'class:Prästluva/Platt': 'e43e2210', // round 4
+  'class:Riddarhjälm/Kupol': '482a51be', // round 4
+  'class:Riddarhjälm/Boll': '9833b465', // round 4
+  'class:Riddarhjälm/Lång': 'f5c999bf', // round 4
+  'class:Riddarhjälm/Platt': 'ab416912', // round 4
+  'class:Riddarhjälm/Päron': 'd8bb5a9e', // round 4
+  'class:Riddarhjälm/Kub': 'ab886eb5', // round 4
 };
 const fnv = (s: string) => { let x = 2166136261 >>> 0; for (let i = 0; i < s.length; i++) { x ^= s.charCodeAt(i); x = Math.imul(x, 16777619) >>> 0; } return x.toString(16); };
 
@@ -129,7 +158,7 @@ describe('blobz v2 (16 px Ninja grid, one 3/4 view)', () => {
   });
 
   it('hats sit on top of, around or fitted to the head: never over the face, toppers never inside the head', () => {
-    const onTop = ['Grodd', 'Lurar', 'Kattöron', 'Enhörning', 'Kaninöron', 'Djävulshorn', 'Antenn', 'Gloria']; // Rosett: a hair bow, may sit on the forehead
+    const onTop = ['Grodd', 'Kattöron', 'Enhörning', 'Kaninöron', 'Djävulshorn', 'Antenn', 'Gloria']; // Rosett: a hair bow, may sit on the forehead
     for (let s = 0; s < SHAPES.length; s++) for (let f = 0; f < BLOB_FRAMES; f++) {
       const L = bodyLayout(s, f);
       const bare = blobGrid(look({ shape: s }), undefined, undefined, f);
