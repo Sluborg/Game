@@ -130,26 +130,19 @@ export class DungeonScene extends Phaser.Scene {
   preload() {
     const img = (key: string, url: string) => { if (!this.textures.exists(key)) this.load.image(key, url); };
     const sheet = (key: string, url: string, w: number, h: number) => { if (!this.textures.exists(key)) this.load.spritesheet(key, url, { frameWidth: w, frameHeight: h }); };
-    // Art's fine batch 2 (art/fine/..., twice the pixels: half the old scale, doubled frame sizes)
-    for (const n of ['stairs-down', 'stairs-up', 'chest-closed', 'chest-open']) img('dg-' + n, `art/fine/dungeon/${n}.png`);
-    for (const n of ['coin-pile-s', 'coin-pile-m', 'coin-pile-l']) img('dg-' + n, `art/fine/fx/${n}.png`);
-    sheet('dg-floor', 'art/fine/tiles/dungeon-floor.png', 32, 32);
-    sheet('na-arc', 'assets/ninja-adventure/FX/Slash/SpriteSheetArc.png', 38, 34); // Ninja slash arc (CC0) for slashing weapons
-    sheet('dg-wall', 'art/fine/tiles/dungeon-wall.png', 32, 32);
-    sheet('dg-ko-stars', 'art/fine/dungeon/ko-stars.png', 40, 18);
-    sheet('dg-revive', 'art/fine/dungeon/revive.png', 32, 40);
-    sheet('dg-shockwave', 'art/fine/dungeon/shockwave.png', 96, 48);
-    sheet('dg-fx-spin', 'art/fine/dungeon/fx-spin.png', 96, 80);
-    sheet('dg-fx-slam', 'art/fine/dungeon/fx-slam.png', 112, 56);
-    sheet('dg-fx-charge', 'art/fine/dungeon/fx-charge.png', 96, 32);
-    sheet('dg-fx-sidestep', 'art/fine/dungeon/fx-sidestep.png', 48, 48);
-    sheet('dg-fx-heal', 'art/fine/dungeon/fx-heal.png', 80, 48);
-    sheet('dg-fx-wall', 'art/fine/dungeon/fx-wall.png', 96, 80);
-    sheet('dg-fx-block', 'art/fine/dungeon/fx-block.png', 32, 32);
-    img('dg-arrow', 'art/dungeon/arrow.png');
-    img('dg-potion', 'art/fine/dungeon/potion.png');
-    sheet('dg-sparkle', 'art/fine/fx/coin-sparkle.png', 22, 22); // own key: the meadow still uses the 11 px one
-    sheet('dungeon', 'assets/kenney-tiny-dungeon/tilemap_packed.png', 16, 16);
+    // Ninja Adventure FX for the specials, revive, sidestep, pickups (docs/OLD_ART_CHECKLIST.md); keys kept from the old art
+    sheet('na-arc', NA + 'FX/Slash/SpriteSheetArc.png', 38, 34); // slash arc for slashing weapons
+    img('na-ko', NA + 'Ui/Emote/emote29.png'); // knocked out: a star bubble (Ninja has no dizzy stars)
+    sheet('dg-revive', NA + 'FX/Magic/Spirit/SpriteSheetBlue.png', 32, 32);
+    sheet('dg-fx-spin', NA + 'FX/Attack/CircularSlash/SpriteSheet.png', 32, 32);
+    sheet('dg-fx-slam', NA + 'FX/Elemental/Rock/SpriteSheet.png', 30, 30);
+    sheet('dg-fx-charge', NA + 'FX/Smoke/SmokeCircular/SpriteSheet.png', 30, 14);
+    sheet('dg-fx-sidestep', NA + 'FX/Smoke/Smoke/SpriteSheet.png', 32, 32);
+    sheet('dg-fx-heal', NA + 'FX/Magic/Spirit/SpriteSheet.png', 32, 32);
+    sheet('dg-fx-wall', NA + 'FX/Magic/Shield/SpriteSheetYellow.png', 24, 26);
+    sheet('dg-fx-block', NA + 'FX/Magic/Shield/SpriteSheetBlue.png', 24, 26);
+    img('dg-arrow', NA + 'FX/Projectile/Arrow.png');
+    sheet('dg-sparkle', NA + 'FX/Magic/Circle/SpriteSheetSpark.png', 32, 32);
     for (const [k, m] of Object.entries(WIMG)) img('w-' + k, m.src);
     // Ninja Adventure dungeon art (docs/ART_MAP.md section 12 + loot): floor, walls, stairs, chest, coins, potion, bars
     img('na-floor', NA + 'Backgrounds/Tilesets/Interior/TilesetInteriorFloor.png');
@@ -167,11 +160,9 @@ export class DungeonScene extends Phaser.Scene {
   }
 
   create() {
-    this.textures.get('dungeon').setFilter(Phaser.Textures.FilterMode.NEAREST);
     const anim = (key: string, tex: string, frames: number[], rate: number, repeat = 0) => {
       if (!this.anims.exists(key)) this.anims.create({ key, frames: this.anims.generateFrameNumbers(tex, { frames }), frameRate: rate, repeat });
     };
-    anim('dg-ko', 'dg-ko-stars', [0, 1], 4, -1);
     for (const m of MON) {
       if (m.key === 'na-boss') { anim('na-boss', 'na-boss', [0, 1, 2, 3, 4], 8, -1); continue; }
       MON_DIRS.forEach((dn, c) => anim(`${m.key}-${dn}`, m.key, [c, c + 4, c + 8, c + 12], 7, -1));
@@ -180,16 +171,16 @@ export class DungeonScene extends Phaser.Scene {
     anim('na-coin', 'na-coin', [0, 1, 2, 3], 8, -1);
     anim('na-boss-hit', 'na-boss-hit', [0, 1, 2, 3, 4], 14);
     for (const [k, , , , fps, loop] of NFX) if (k !== 'nf-chev') anim(k, k, [...Array(this.textures.get(k).frameTotal - 1).keys()], fps, loop ? -1 : 0);
-    anim('dg-revive', 'dg-revive', [0, 1, 2], 8);
-    anim('dg-shock', 'dg-shockwave', [0, 1, 2], 12);
-    anim('dg-spin', 'dg-fx-spin', [0, 1, 2, 3], 12);
-    anim('dg-slam', 'dg-fx-slam', [0, 1, 2, 3], 12);
-    anim('dg-charge', 'dg-fx-charge', [0, 1, 2], 10);
-    anim('dg-sidestep', 'dg-fx-sidestep', [0, 1, 2], 10);
-    anim('dg-heal', 'dg-fx-heal', [0, 1, 2, 3], 10);
-    anim('dg-wall', 'dg-fx-wall', [0, 1, 2], 10);
-    anim('dg-block', 'dg-fx-block', [0, 1, 2], 14);
-    anim('dg-sparkle', 'dg-sparkle', [0, 1, 2, 1, 0], 16);
+    const seq = (n: number) => [...Array(n).keys()];
+    anim('dg-revive', 'dg-revive', seq(5), 10);
+    anim('dg-spin', 'dg-fx-spin', seq(4), 14);
+    anim('dg-slam', 'dg-fx-slam', seq(14), 24);
+    anim('dg-charge', 'dg-fx-charge', seq(8), 20);
+    anim('dg-sidestep', 'dg-fx-sidestep', seq(6), 16);
+    anim('dg-heal', 'dg-fx-heal', seq(5), 10);
+    anim('dg-wall', 'dg-fx-wall', seq(6), 12);
+    anim('dg-block', 'dg-fx-block', seq(6), 16);
+    anim('dg-sparkle', 'dg-sparkle', seq(6), 18);
     this.auraG = this.add.graphics().setDepth(-300);
     this.hitG = this.add.graphics().setDepth(9000);
     this.ringG = this.add.graphics().setDepth(4000);
@@ -405,11 +396,10 @@ export class DungeonScene extends Phaser.Scene {
           body: this.add.image(p.x, p.y, texKey).setOrigin(0.5, BODY_CY).setScale(BLOB_SCALE),
           label: this.add.text(p.x, p.y, info.name, { fontFamily: FONT, fontSize: '13px', color: '#ffffff', fontStyle: 'bold', stroke: '#000000', strokeThickness: 3 }).setOrigin(0.5),
           weapon: this.add.sprite(p.x, p.y, 'w-' + WART[w]),
-          stars: this.add.sprite(p.x, p.y, 'dg-ko-stars', 0).setScale(1).setVisible(false),
+          stars: this.add.sprite(p.x, p.y, 'na-ko').setScale(2.5).setVisible(false),
           me: this.add.triangle(p.x, p.y, 0, 0, 12, 0, 6, 8, 0xffffff, 0.9).setVisible(p.id === this.s.myId),
           texKey, x: p.x, y: p.y, vx: 0, vy: 0, id: p.id, facing, swingT: 0, swingDur: 0.3, swingA: 0, swings: 0, spin: 0,
         };
-        b.stars.play('dg-ko');
         this.heroes.set(p.id, b);
       }
       if (b.texKey !== texKey) { b.body.setTexture(texKey); b.texKey = texKey; }
@@ -437,10 +427,10 @@ export class DungeonScene extends Phaser.Scene {
         const r = specialOf(h.cls, h.weapon).r * heroMods(h).spR;
         this.auraG.lineStyle(3, 0x8fd3ff, 0.6).strokeEllipse(b.x, b.y + 10, r * 2, r * 1.2);
         if (!b.dome) { b.dome = this.add.sprite(b.x, b.y, 'dg-fx-wall', 0).setOrigin(0.5, 1); b.dome.play('dg-wall'); }
-        b.dome.setPosition(b.x, b.y + 16).setScale(Math.max(1, Math.round((r * 2) / 96))).setDepth(b.y + 6).setAlpha(h.wallT < 0.6 ? h.wallT / 0.6 : 1);
+        b.dome.setPosition(b.x, b.y + 16).setScale(Math.max(2, Math.round((r * 1.6) / 24))).setDepth(b.y + 6).setAlpha(h.wallT < 0.6 ? h.wallT / 0.6 : 1);
       } else if (b.dome) { b.dome.destroy(); b.dome = undefined; }
       if (h && !ko && h.shield > 0) this.ringG.lineStyle(3, 0x8fd3ff, 0.9).strokeCircle(b.x, b.y - 6, 28);
-      b.stars.setVisible(ko).setPosition(b.x, b.y - 28).setDepth(b.y + 4);
+      b.stars.setVisible(ko).setPosition(b.x, b.y - 30 + Math.sin(now / 200) * 3).setDepth(b.y + 4);
       this.drawWeapon(b, w, h?.face ?? 0, ko, dt, !!h && (!!h.dodge || h.wallT > 0));
       // picking level-up cards: frozen and safe (a soft bubble so friends see why it stands still)
       if (h && !ko && h.offer.length) this.ringG.fillStyle(0xfff7e6, 0.25).fillCircle(b.x, b.y - 6, 30).lineStyle(3, 0xffe08a, 0.9).strokeCircle(b.x, b.y - 6, 30);
@@ -711,10 +701,10 @@ export class DungeonScene extends Phaser.Scene {
         const b = this.heroes.get(f.id);
         if (f.k === 'spin') {
           // Art's slash arc sweeping around the blob (centre 24,22 on the body)
-          if (b) { b.spin = 0.35; this.ride(b, 'dg-fx-spin', 'dg-spin', 'spin', f.a, 48 / 96, 44 / 80, 1.5); }
+          if (b) { b.spin = 0.35; this.ride(b, 'dg-fx-spin', 'dg-spin', 'spin', f.a, 0.5, 0.5, (f.r * 2) / 32); }
           sfx.dash();
         } else if (f.k === 'slam') {
-          const sw = this.add.sprite(f.x, f.y + 10, 'dg-fx-slam', 0).setOrigin(56 / 112, 30 / 56).setScale(2).setDepth(-400);
+          const sw = this.add.sprite(f.x, f.y + 10, 'dg-fx-slam', 0).setOrigin(0.5, 0.6).setScale((f.r * 1.6) / 30).setDepth(f.y + 20);
           sw.play('dg-slam'); sw.once('animationcomplete', () => sw.destroy());
           if (b) { b.swingDur = 0.4; b.swingT = 0.4; }
           this.cameras.main.shake(160, 0.006); sfx.bump();
@@ -728,12 +718,12 @@ export class DungeonScene extends Phaser.Scene {
           sfx.dash();
         } else if (f.k === 'lunge') {
           // speed streaks behind the blob: right edge at its back, flipped when it charges left
-          if (b) { b.swingDur = 0.35; b.swingT = 0.35; this.ride(b, 'dg-fx-charge', 'dg-charge', 'charge', f.a, 1, 0.5, 1); }
+          if (b) { b.swingDur = 0.35; b.swingT = 0.35; this.ride(b, 'dg-fx-charge', 'dg-charge', 'charge', f.a, 1, 0.5, 2.5); }
           sfx.dash();
         }
         break;
       }
-      case 'dodge': { const c = this.add.sprite(f.x, f.y + 14, 'dg-fx-sidestep', 0).setOrigin(0.5, 1).setScale(1).setDepth(f.y - 2); c.play('dg-sidestep'); c.once('animationcomplete', () => c.destroy()); sfx.dash(); break; }
+      case 'dodge': { const c = this.add.sprite(f.x, f.y + 14, 'dg-fx-sidestep', 0).setOrigin(0.5, 1).setScale(1.6).setDepth(f.y - 2); c.play('dg-sidestep'); c.once('animationcomplete', () => c.destroy()); sfx.dash(); break; }
       case 'hurt': { const g = this.goo.get(f.e); if (g) g.flash = 0.12; this.nfx('nf-star', f.x, f.y - 4, 1.6, 0xffffff); break; } // a friendly white spark on the monster
       case 'mdash': this.nfx('nf-dust', f.x, f.y + 14, 2.2); break;
       case 'bite': { const l: Phaser.GameObjects.Sprite[] = []; const c = this.hostile(l, 'nf-claw', f.x + Math.cos(f.a) * 34, f.y + Math.sin(f.a) * 34, 2.2, HOSTILE.red, f.a, undefined, f.y + 20); c.once('animationcomplete', () => l.forEach((o) => o.destroy())); break; }
@@ -752,9 +742,9 @@ export class DungeonScene extends Phaser.Scene {
         break;
       }
       case 'ko': this.floatText(f.x, f.y - 50, t('dg.ko'), '#ffffff', 22); break;
-      case 'revive': { const r = this.add.sprite(f.x, f.y - 16, 'dg-revive', 0).setScale(1.5).setDepth(5000); r.play('dg-revive'); r.once('animationcomplete', () => r.destroy()); sfx.power(); break; }
+      case 'revive': { const r = this.add.sprite(f.x, f.y - 16, 'dg-revive', 0).setScale(2.5).setDepth(5000); r.play('dg-revive'); r.once('animationcomplete', () => r.destroy()); sfx.power(); break; }
       case 'coin': {
-        const s = this.add.sprite(f.x, f.y - 8, 'dg-sparkle', 0).setScale(1.5).setDepth(5000);
+        const s = this.add.sprite(f.x, f.y - 8, 'dg-sparkle', 0).setScale(1.2).setDepth(5000);
         s.play('dg-sparkle'); s.once('animationcomplete', () => s.destroy());
         this.floatText(f.x, f.y - 20, '+' + f.n, '#ffe08a', 18); sfx.pick();
         break;
@@ -781,18 +771,18 @@ export class DungeonScene extends Phaser.Scene {
         let sx = f.x, sy = f.y - 10;
         for (const hb of this.heroes.values()) if (hb.tip && Math.hypot(hb.x - f.x, hb.y - f.y) < 40) { sx = hb.tip.x; sy = hb.tip.y; }
         const a = Math.atan2(f.ty - 6 - sy, f.tx - sx);
-        const ar = this.add.image(sx, sy, 'dg-arrow').setScale(2).setRotation(a).setDepth(4500); // Art's arrow points right
+        const ar = this.add.image(sx, sy, 'dg-arrow').setScale(2.5).setRotation(a).setDepth(4500); // Ninja arrow points right
         this.tweens.add({ targets: ar, x: f.tx, y: f.ty - 6, duration: Math.max(60, Math.hypot(f.tx - sx, f.ty - sy) / 1.2), onComplete: () => ar.destroy() });
         break;
       }
       case 'heal': {
-        const c = this.add.sprite(f.x, f.y + 14, 'dg-fx-heal', 0).setOrigin(40 / 80, 30 / 48).setScale(1.5).setDepth(f.y + 7);
+        const c = this.add.sprite(f.x, f.y - 6, 'dg-fx-heal', 0).setOrigin(0.5, 0.6).setScale(3).setDepth(f.y + 7);
         c.play('dg-heal'); c.once('animationcomplete', () => c.destroy());
         this.floatText(f.x, f.y - 40, '+', '#6cc644', 30); sfx.power();
         break;
       }
       case 'block': {
-        const c = this.add.sprite(f.x, f.y - 10, 'dg-fx-block', 0).setScale(1.5).setDepth(4500);
+        const c = this.add.sprite(f.x, f.y - 10, 'dg-fx-block', 0).setScale(2.2).setDepth(4500);
         c.play('dg-block'); c.once('animationcomplete', () => c.destroy());
         sfx.tool('pickaxe', false);
         break;
@@ -846,11 +836,23 @@ function drawEntrance(scene: Phaser.Scene, v: View, seed: number) {
       im.onerror = () => { /* no snowy cave yet: the normal one is used */ };
       im.src = src;
     };
-    load('dg-entrance', 'art/dungeon/entrance.png');
-    if (scene.registry.get('biome') === 'snow') load('dg-entrance-snow', 'art/dungeon/entrance-snow.png');
+    // Ninja Adventure stone arch (TilesetHouse 464,322,48,42) over a dark stairs-down tile, both biomes
+    if (!scene.textures.exists('dg-entrance')) {
+      const im = new Image();
+      im.onload = () => {
+        if (scene.textures.exists('dg-entrance')) return;
+        const c = document.createElement('canvas'); c.width = 48; c.height = 42;
+        const g2 = c.getContext('2d')!;
+        g2.fillStyle = '#141b1b'; g2.fillRect(12, 16, 24, 26);
+        g2.drawImage(im, 464, 322, 48, 42, 0, 0, 48, 42);
+        scene.textures.addCanvas('dg-entrance', c)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
+      };
+      im.src = 'assets/ninja-adventure/Backgrounds/Tilesets/TilesetHouse.png';
+    }
+    void load;
     g = {
       seed, at: ENTRANCE,
-      img: scene.add.image(ENTRANCE.x, ENTRANCE.y + 30, entranceKey(scene) ?? '__MISSING').setScale(2).setOrigin(0.5, 1).setDepth(ENTRANCE.y - 60).setVisible(!!entranceKey(scene)),
+      img: scene.add.image(ENTRANCE.x, ENTRANCE.y + 30, entranceKey(scene) ?? '__MISSING').setScale(3).setOrigin(0.5, 1).setDepth(ENTRANCE.y - 60).setVisible(!!entranceKey(scene)),
       ring: scene.add.graphics().setDepth(ENTRANCE.y - 50),
       bubble: scene.add.text(ENTRANCE.x, ENTRANCE.y - 66, '', { fontFamily: FONT, fontSize: '22px', color: '#3f2631', fontStyle: 'bold', backgroundColor: '#fff7e6', padding: { x: 8, y: 2 } }).setOrigin(0.5, 1).setDepth(4000),
     };

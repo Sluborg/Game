@@ -16,7 +16,24 @@ export type HeroClass = 'rogue' | 'healer' | 'marksman' | 'tank';
 export const CLASSES: HeroClass[] = ['healer', 'rogue', 'tank', 'marksman'];
 // Player-facing names live in src/i18n.ts ('dg.class.*', 'dg.weapon.*', 'dg.skill.*' ...), see dungeonText.ts.
 /** Art's skill icon: art/dungeon/skills/<class>-<id>.png (file names = skill ids). */
-export const skillIcon = (id: string) => `art/dungeon/skills/${id}.png`;
+/** Ninja Adventure skill icons (24x24, Ui/Skill Icon/..., docs/OLD_ART_CHECKLIST.md) per level-up skill. */
+const NA_SKILL: Record<string, string> = {
+  'rogue-rage': 'Spell/OrbFire', 'rogue-knockback': 'Spell/Explosion', 'rogue-whirlwind': 'Items & Weapon/Shuriken', 'rogue-extraheart': 'Spell/Heal',
+  'rogue-lifesteal': 'Job & Action/Potion', 'rogue-power': 'Spell/AttackUpgrade',
+  'healer-heal': 'Spell/Heal', 'healer-regen': 'Spell/OrbPlant', 'healer-bubble': 'Spell/DefenseUpgrade', 'healer-revive': 'Spell/OrbLight',
+  'healer-holy': 'Spell/BookLight', 'healer-cleanse': 'Spell/OrbWater',
+  'marksman-multishot': 'Items & Weapon/Kunai', 'marksman-pierce': 'Items & Weapon/Arrow', 'marksman-crit': 'Spell/Vision', 'marksman-speed': 'Spell/Upgrade',
+  'marksman-poison': 'Spell/BookIce', 'marksman-trap': 'Items & Weapon/Hook',
+  'tank-block': 'Spell/Counter', 'tank-taunt': 'Job & Action/Talk', 'tank-armor': 'Items & Weapon/Armor', 'tank-charge': 'Spell/RockSpike',
+  'tank-stun': 'Spell/BookThunder', 'tank-guard': 'Items & Weapon/Guard',
+};
+export const skillIcon = (id: string) => `assets/ninja-adventure/Ui/Skill Icon/${NA_SKILL[id] ?? 'Spell/Upgrade'}.png`;
+/** Ninja icons for loot items, the special button per weapon and the sidestep button. */
+const NAI = 'assets/ninja-adventure/';
+export const ITEM_ICON: Record<string, string> = {
+  ring: NAI + 'Ui/Skill Icon/Items & Weapon/Ring.png', helm: NAI + 'Ui/Skill Icon/Items & Weapon/Helmet.png', gloves: NAI + 'Ui/Skill Icon/Job & Action/Punch.png',
+  amulet: NAI + 'Ui/Skill Icon/Items & Weapon/Amulet.png', stone: NAI + 'Items/Resource/GemGreen.png',
+};
 /** Health points per class (the HUD shows a bar). */
 export const CLASS_HP: Record<HeroClass, number> = { rogue: 100, healer: 100, marksman: 80, tank: 140 };
 export type Weapon = 'sword' | 'hammer' | 'spear' | 'staff' | 'bow' | 'shield' | 'dagger';
