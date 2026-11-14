@@ -42,7 +42,7 @@ Make ONE image per reply and wait for "next".
 | A-9 | READY | Bärregn mini game: bomb, falling berries, basket, plop, fence | `mini/bomb.png`, `mini/berries.png`, `mini/basket.png`, `mini/plop.png`, `mini/fence-*.png` |
 
 ### A-1 Class cards, round 3
-Classes (EN / SV): Healer / Helare, Rogue / Smygare, Tank / Riddare, Marksman / Skytt. Theme colours follow the common
+Classes (EN / SV): Healer / Helare, Rogue / Rogue, Tank / Riddare, Marksman / Skytt. Theme colours follow the common
 role/class conventions: Healer red (heart = health), Rogue yellow, Tank blue, Marksman green.
 Round 2 feedback: blobz off-centre, daggers awkward, colours mixed up (healer got the yellow ribbon), flat expressions.
 ```

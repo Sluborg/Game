@@ -432,7 +432,12 @@ function renderMini(v: View) {
   if (!m) { miniStarsShown = 0; return; }
   controls.setTool(null);
   const c = String(m.caught);
-  if ($('mini-caught').textContent !== c) $('mini-caught').textContent = c;
+  if ($('mini-caught').textContent !== c) {
+    $('mini-caught').textContent = c;
+    // the basket hops on every catch (restart the CSS animation)
+    const bk = document.querySelector<HTMLElement>('#mini-hud .mbasket')!;
+    bk.classList.remove('hop'); void bk.offsetWidth; bk.classList.add('hop');
+  }
   const top = m.goal[2] || 1;
   $('mini-fill').style.clipPath = `inset(0 ${100 - Math.min(100, (m.caught / top) * 100)}% 0 0)`;
   document.querySelectorAll<HTMLImageElement>('#mini-hud .mstar').forEach((im) => {
@@ -444,6 +449,7 @@ function renderMini(v: View) {
   const stars = m.goal.filter((g) => m.caught >= g).length;
   if (stars > miniStarsShown) { miniStarsShown = stars; sfx.star(); }
   $('mini-time').style.width = `${(m.t / 40) * 100}%`;
+  $('mini-hud').classList.toggle('hurry', m.t <= 10);
 }
 
 /** True from startScene until the first rendered frame. On "Spela igen" the assets are cached, so Phaser

@@ -98,6 +98,7 @@ export class GameScene extends Phaser.Scene {
   private dB = 0;
   private miniCenterY = 0;
   private miniG?: Phaser.GameObjects.Graphics;
+  private miniDeco: Phaser.GameObjects.GameObject[] = [];
   private drops = new Map<number, { item: Phaser.GameObjects.Image; mark: Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse }>();
   private bgfx = new Map<BuildKind, { img: Phaser.GameObjects.Image; built: boolean }>();
   private cottageImg!: Phaser.GameObjects.Image;
@@ -127,7 +128,7 @@ export class GameScene extends Phaser.Scene {
   init(data: { session: Session }) {
     this.s = data.session;
     this.registry.set('biome', this.s.biome ?? 'meadow'); // read by the dungeon entrance (snowy cave)
-    this.blobs.clear(); this.items.clear(); this.gems.clear(); this.powers.clear(); this.drops.clear(); this.dB = 0; this.miniG = undefined;
+    this.blobs.clear(); this.items.clear(); this.gems.clear(); this.powers.clear(); this.drops.clear(); this.dB = 0; this.miniG = undefined; this.miniDeco = [];
     this.lastView = null;
     this.lastClock = 0;
   }
@@ -661,10 +662,21 @@ export class GameScene extends Phaser.Scene {
       const r = rng(7);
       for (let i = 0; i < 90; i++) g.fillStyle(this.s.biome === 'snow' ? 0xcfe1ee : 0x6fbd47, 1).fillRect(a.x0 + r() * (a.x1 - a.x0 - 8), a.y0 + r() * (a.y1 - a.y0 - 4), 8, 3);
       this.miniG = g;
+      // a wooden fence around the field (the puzzle-pen fence art): planks on top/bottom, posts on the sides
+      const S = 3, n = Math.round((a.x1 - a.x0) / (16 * S)), tw = (a.x1 - a.x0 + 12) / n;
+      for (const y of [a.y0 + 2, a.y1 + 10]) for (let k = 0; k < n; k++) {
+        this.miniDeco.push(this.add.image(a.x0 - 6 + tw * (k + 0.5), y, 'pr-fence').setOrigin(0.5, 1).setDisplaySize(tw + 1, 12 * S).setDepth(y === a.y0 + 2 ? 9050 : 10000 + a.y1 + 20));
+      }
+      for (const x of [a.x0 - 4, a.x1 + 4]) for (let y = a.y0 + 24; y <= a.y1; y += 48) {
+        this.miniDeco.push(this.add.image(x, y, 'pr-gate-post').setOrigin(0.5, 1).setScale(S).setDepth(10000 + y));
+      }
       this.trailG.setDepth(9500);
       this.fitCamera();
     } else if (!on && this.miniG) {
       this.miniG.destroy(); this.miniG = undefined;
+      for (const o of this.miniDeco) o.destroy();
+      this.miniDeco = [];
+      for (const b of this.blobs.values()) b.body.setAlpha(1);
       this.trailG.setDepth(-400);
       for (const d of this.drops.values()) { d.item.destroy(); d.mark.destroy(); }
       this.drops.clear();
@@ -686,6 +698,11 @@ export class GameScene extends Phaser.Scene {
       }
       const k = 1 - d.z / DROP_HEIGHT; // 0 when it appears, 1 when it lands
       e.item.setPosition(d.x, d.y - d.z - 6);
+      if (d.kind === 'bomb') {
+        // blinks red, faster the closer it gets to the ground
+        const hz = 2 + 10 * k;
+        e.item.setTint(Math.floor(this.time.now / 1000 * hz) % 2 ? 0xd2342c : 0x2e2a3a).setAngle(Math.sin(this.time.now / 90) * 8);
+      } else e.item.setAngle(Math.sin(this.time.now / 160 + d.id) * 12);
       if (e.mark instanceof Phaser.GameObjects.Ellipse) e.mark.setScale(0.5 + 0.5 * k).setAlpha(0.2 + 0.5 * k);
       else e.mark.setAlpha(0.25 + 0.7 * k);
     }
@@ -805,7 +822,10 @@ export class GameScene extends Phaser.Scene {
       const t = this.add.text(f.x, f.y - 40, '+1', { fontFamily: "'Nunito', sans-serif", fontSize: '24px', color: '#ffe08a', fontStyle: 'bold', stroke: '#6b4a2a', strokeThickness: 5 }).setOrigin(0.5).setDepth(20000);
       this.tweens.add({ targets: t, y: f.y - 80, alpha: 0, duration: 700, onComplete: () => t.destroy() });
     } else if (f.t === 'miss') {
-      this.burst(f.x, f.y, 0xc0392b, 5);
+      // the berry splats flat on the grass and fades
+      const sq = this.add.image(f.x, f.y - 2, 'g-item-berries').setScale(3).setDepth(9200);
+      this.tweens.add({ targets: sq, scaleY: 0.8, scaleX: 3.8, alpha: 0, duration: 520, ease: 'Quad.Out', onComplete: () => sq.destroy() });
+      this.burst(f.x, f.y, 0xc0392b, 4);
     } else if (f.t === 'boom') {
       sfx.bump();
       const w = this.add.sprite(f.x, f.y, 'mini-wave', 0).setDisplaySize(BOMB_R * 2.2, BOMB_R * 1.1).setDepth(20000);
@@ -818,7 +838,8 @@ export class GameScene extends Phaser.Scene {
         const st = this.add.sprite(b.x, b.y - 46, 'mini-ko', 0).setScale(2).setDepth(20001);
         st.play('mini-ko');
         const follow = this.time.addEvent({ delay: 16, loop: true, callback: () => st.setPosition(b.x, b.y - 46) });
-        this.time.delayedCall(1000, () => { follow.remove(); st.destroy(); });
+        const blink = this.tweens.add({ targets: b.body, alpha: 0.45, duration: 110, yoyo: true, repeat: -1 });
+        this.time.delayedCall(1000, () => { follow.remove(); st.destroy(); blink.remove(); b.body.setAlpha(1); });
       }
     } else if (f.t === 'build') {
       // the new building pops up at its spot with a dust cloud (the cottage: on the base)

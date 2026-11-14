@@ -595,3 +595,25 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .bcost .c.ok { color: #2f8a2f; }
 .bcost .c.no { color: #b3261e; }
 @media (orientation: landscape) and (max-height: 520px) { .bcards { grid-template-columns: repeat(4, minmax(0, 1fr)); } .bimg { height: 48px; } .bimg img { max-height: 48px; } }
+
+/* landscape build panel: all 7 cards in one row, no scrolling */
+@media (orientation: landscape) and (max-height: 520px) {
+  #build-panel { width: min(96vw, 840px); max-height: 94vh; overflow: visible; padding: 0 2px 2px; border-width: 12px; border-image-width: 12px; }
+  .bphead { margin: -4px 0 4px; }
+  .bphead b { font-size: 20px; }
+  .bcards { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+  .bcard { padding: 0 1px 2px; border-width: 7px; border-image-width: 7px; gap: 1px; }
+  .bimg { height: 44px; }
+  .bimg img { max-height: 44px; max-width: 72px; }
+  .bname { font-size: 13px; line-height: 1.1; }
+  .beff { font-size: 10px; line-height: 1.15; min-height: 23px; }
+  .bcost { gap: 3px; }
+  .bcost .c { font-size: 13px; }
+  .bcost .c img { height: 12px; }
+}
+
+/* Bärregn polish: the basket hops on a catch, the time bar turns red and pulses in the last 10 s */
+.mbasket.hop { animation: mhop 0.28s ease-out; }
+@keyframes mhop { 0% { transform: scale(1); } 40% { transform: scale(1.3) translateY(-3px); } 100% { transform: scale(1); } }
+#mini-hud.hurry #mini-time { background: #d2342c; animation: mhurry 0.5s ease-in-out infinite alternate; }
+@keyframes mhurry { from { opacity: 1; } to { opacity: 0.55; } }
