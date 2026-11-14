@@ -1,0 +1,65 @@
+# Blobz, Claude Code Operating Standard
+
+Auto-loaded when working under `blobz/`. **Blobz is a separate game from the rest of this repo.**
+For anything inside `blobz/`, this file replaces the repo-root `CLAUDE.md` (Asset Report rules,
+guild/combat core, art reconcile, root PROGRESS.md backfill do NOT apply here).
+Stefan works phone-only; replies in Swedish or English, docs and code in English.
+
+## 10. The game
+- **Pitch:** co-op party game for 1-5 players on phones over the same Wi-Fi. Kids (8+) and adults
+  play together. Inspirations: Mario Party (short co-op moments), Brawl Stars (thumb controls,
+  readable top-down arena), Minecraft (gather, build base).
+- **Camera:** top-down or slight 3/4, simple but clean graphics.
+- **Blobz:** each player is a blob that **glides/slides** around (hover-skate feel, momentum and
+  a little drift). Blobz never roll. Skins: color, hat, eyes.
+- **Core loop:** explore the map, collect resources (wood, stone, crystal), bring them home to the
+  shared base, build/upgrade base totems that grant **team powerups**. Field powerups are simple
+  readable icons.
+- **Co-op moments:** pressure plates needing N blobz at once, push heavy blocks (faster with more
+  pushers), two-blob carry, defend base from slime waves, revive a downed friend.
+- **Score:** one shared team score, 1-3 stars per level. No PvP damage.
+- **Kid-safe design:** one thumbstick + one action button, no reading required to play, auto-revive,
+  no fail state that ends the round early for one player, no chat, no accounts.
+
+## 20. Tech (decided)
+- **Engine:** Phaser 3 (MIT) + TypeScript + Vite. Runs in the phone browser, installable as PWA.
+- **Network:** PeerJS (WebRTC). One phone hosts and runs the authoritative sim; others join with a
+  4-letter room code and send inputs only. Signaling needs internet once; gameplay traffic is
+  peer-to-peer over the local Wi-Fi. Max 5 players.
+- **Graphics:** open-licensed assets only, CC0 preferred (Kenney). Vendor files under
+  `blobz/public/assets/` with a `LICENSES.md` listing source + license per pack. Blobz themselves are
+  drawn in code (cheap skins).
+- **Self-contained:** everything lives in `blobz/` with its own `package.json`. Never import from or
+  modify `web/`, `app/` or other Asset Report code. Only shared touch point: the Pages workflow
+  builds `blobz/` and serves it at `/Game/blobz/` (main) and `/Game/dev/blobz/` (dev).
+
+## 30. Workflow (lightweight)
+plan -> build -> review -> PR -> merge
+1. **Plan** each milestone in a short reply (scope, files, assumptions). Wait for Stefan's go.
+2. **Build** in small conventional commits on the session's `claude/*` branch.
+3. **Review** the diff once with one independent reviewer subagent (gameplay fun for kids, code
+   quality, runs on a fresh clone, works at phone width). Fix blockers.
+4. **PR** against `dev`. Stefan may ask for Codex; if so, post `@codex review` and wait.
+5. **Merge** only on Stefan's explicit go. Never self-merge.
+
+## 40. Milestones
+| Order | Milestone | Done when |
+|---|---|---|
+| 10 | Lobby + glide | Host creates room, up to 4 join by code, all 5 blobz glide around one map in sync |
+| 20 | Gather + base | Resources spawn, blobz carry them home, team score shows |
+| 30 | Co-op moments | Pressure plates, heavy block, two-blob carry, 1-3 stars |
+| 40 | Base totems + powerups | Spend resources on totems, team powerups, field powerups |
+| 50 | Skins + levels | Skin picker in lobby, 3+ levels, slime waves |
+
+## 50. Verify and visibility
+- Confirm every change with `npm run build` and a headless Chromium run at phone width (390px)
+  before reporting. Multiplayer: test with 2+ browser contexts in Playwright.
+- Push screenshots to `blobz/docs/screenshots/` so Stefan can see them on GitHub mobile.
+- Log each milestone gate in `blobz/PROGRESS.md` (date, branch, files, review verdict, open questions).
+- Bottom-line-first summaries, files by path, no full code unless Stefan says "full file".
+
+## 60. Hard stops
+- No commits to `main` or `dev` without a PR.
+- No changes outside `blobz/` except the Pages workflow entry (and the root CLAUDE.md pointer).
+- No assets without a verified open license.
+- No silent overwrite or delete.

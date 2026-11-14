@@ -2,6 +2,9 @@
 
 Auto-loaded as CLAUDE.md at repo root. Task-agnostic: this applies to EVERY task in this repo, whatever Stefan asks for. Stefan works phone-only.
 
+> **Exception: `blobz/`** is a separate game (Blobz). Work inside `blobz/` follows
+> [`blobz/CLAUDE.md`](./blobz/CLAUDE.md) instead of this file.
+
 ## The Loop (always, never collapsed)
 plan -> review -> build -> review -> PR -> codex -> merge
 1. PLAN the approach. No code yet.
