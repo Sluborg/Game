@@ -300,7 +300,7 @@ export class GameScene extends Phaser.Scene {
       if (left > 0) { n.img.setScale(sc * 0.3); this.tweens.add({ targets: n.img, scale: sc, duration: 300, ease: 'Back.Out' }); }
     });
     // ---- dusk ----
-    this.dusk.setFillStyle(v.phase === 'end' ? 0x4a2a6a : 0xff7a2f, v.phase === 'end' ? 0.35 : Math.max(0, Math.min(0.3, (20 - v.time) / 20 * 0.3)));
+    this.dusk.setFillStyle(v.phase === 'end' ? 0x4a2a6a : 0xff7a2f, v.phase === 'end' ? 0.38 : v.time >= 20 ? 0 : 0.1 + Math.min(1, (20 - v.time) / 20) * 0.25);
 
     // ---- co-op puzzles ----
     v.puzzles?.forEach((z, i) => this.drawPuzzle(this.pz[i], z, now));
