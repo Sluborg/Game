@@ -6,7 +6,7 @@ import './dungeon.css';
 import { tileCanvas } from './art';
 import type { Controls } from './controls';
 import {
-  ART_CLASS, CLASS_HINT, CLASS_NAMES, skillIcon, CLASS_WEAPONS, CLASSES, FLOORS, heroMods, itemOf, LEVEL_XP, LOOT_SECONDS, OFFER_SECONDS, skillOf, specialOf, WEAPON_NAMES,
+  ART_CLASS, CLASS_HINT, CLASS_NAMES, skillIcon, CLASS_WEAPONS, CLASSES, FLOORS, heroMods, itemOf, LEVEL_XP, LOOT_SECONDS, skillOf, specialOf, WEAPON_NAMES,
   type DView, type HeroClass, type Weapon,
 } from './dungeon';
 import { sfx } from './sfx';
@@ -145,7 +145,7 @@ function renderHud(d: DView, myId: string) {
   }
 }
 
-// ---------- level-up: 1 of 3 skill cards from my class (10 s, then the first is taken) ----------
+// ---------- level-up: 1 of 3 skill cards from my class (no timer; my blob is frozen and safe meanwhile) ----------
 let offerKey = '';
 function renderOffer(d: DView, myId: string) {
   const h = d.heroes[myId];
@@ -166,7 +166,6 @@ function renderOffer(d: DView, myId: string) {
     }));
   }
   if (offer.length) {
-    $('dg-cards-bar').style.width = Math.round(Math.max(0, Math.min(1, (h!.offerT) / OFFER_SECONDS)) * 100) + '%';
     setText($('dg-cards-title'), `Nivå ${d.level}! Välj en`);
   }
 }
@@ -220,7 +219,7 @@ function buildOverlays() {
   const stop = (el: HTMLElement) => { el.addEventListener('pointerdown', (e) => e.stopPropagation()); return el; };
   const cards = document.createElement('div');
   cards.id = 'dg-cards'; cards.className = 'hidden';
-  cards.innerHTML = '<div id="dg-cards-title"></div><div id="dg-cards-row"></div><div class="dgbar"><i id="dg-cards-bar"></i></div>';
+  cards.innerHTML = '<div id="dg-cards-title"></div><div id="dg-cards-row"></div><div id="dg-cards-safe">Du är skyddad tills du väljer</div>';
   hud.append(stop(cards));
   const loot = document.createElement('div');
   loot.id = 'dg-loot'; loot.className = 'hidden';
