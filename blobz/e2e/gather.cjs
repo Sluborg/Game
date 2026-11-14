@@ -61,7 +61,8 @@ const tap = async (page) => { await page.locator('#dash').dispatchEvent('pointer
     // everyone home: the team bank fills on every phone
     await sim(host, (s) => s.players.forEach((p, i) => { p.x = 620 + i * 20; p.y = 480; p.vx = 0; p.vy = 0; }));
     await bo.waitForFunction(() => { const v = window.__blobzView; return v.bank.wood >= 1 && v.bank.stone >= 1 && v.bank.berry >= 1; }, null, { timeout: 5000 });
-    ok((await ada.textContent('#bank-wood')) !== '0', 'bank counters show the delivery on a joiner');
+    await ada.waitForFunction(() => document.getElementById('bank-wood').textContent !== '0', null, { timeout: 5000 });
+    ok(true, 'bank counters show the delivery on a joiner');
 
     // finish the berry row: its star lights up
     await sim(host, (s) => { s.delivered.berry = s.quest.berry - 1; const p = s.players[1]; p.carry = ['berry']; p.x = 640; p.y = 480; });
