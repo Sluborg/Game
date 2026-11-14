@@ -85,6 +85,9 @@ const tap = async (page) => { await page.locator('#dash').dispatchEvent('pointer
     await bo.waitForSelector('#hud-day.dusk', { timeout: 5000 });
     if (shots) await bo.screenshot({ path: `${shots}/a-dusk-landscape.png` });
     await sim(host, (s) => { s.time = 0.05; });
+    // sunset starts Bärregn; the host skips it to reach the end screen
+    await host.waitForSelector('#btn-skip-mini:not(.hidden)', { timeout: 5000 });
+    await host.click('#btn-skip-mini');
     await ada.waitForSelector('#end:not(.hidden)', { timeout: 5000 });
     ok((await ada.textContent('#end-title')) === 'Solen gick ner!', 'end screen: "Solen gick ner!"');
     ok((await ada.locator('#end-rows .qrow').count()) === 3 && (await ada.locator('#end-stars .star.on').count()) === 1, 'end screen shows 3 rows and 1 star');

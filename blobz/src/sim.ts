@@ -267,10 +267,14 @@ export type FxEvent =
   | { t: 'totem'; x: number; y: number; kind: TotemKind; level: number }
   | { t: 'build'; x: number; y: number; kind: BuildKind | 'cottage'; done: boolean }
   | { t: 'enter' } | { t: 'leave'; done: boolean }
-  | DFx;
+  | DFx
+  | MiniFx
+  | { t: 'minigame' } | { t: 'minidone'; caught: number; stars: number };
 
 export interface State {
-  phase: 'play' | 'end';
+  phase: 'play' | 'mini' | 'end';
+  mini: Mini | null; // Bärregn while phase is 'mini'
+  miniResult: { caught: number; stars: number } | null; // shown on the end screen
   time: number; // seconds of daylight left
   seed: number;
   biome: Biome;
@@ -307,6 +311,9 @@ export interface State {
 
 export { rng } from './rng';
 import { rng } from './rng';
+import { ARENA, keepInArena, miniStars, newMini, stepMini, type Mini, type MiniFx } from './mini';
+/** "Bärregn" co-op mini game after sunset, before the end screen. */
+export const MINI_ENABLED = true;
 import { dsnap, dungeonChoice, dview, newRun, READY_SECONDS, stepDungeon, WEAPONS, type DFx, type DSnap, type DState, type DView, type Weapon } from './dungeon';
 
 
@@ -399,6 +406,7 @@ export function createState(infos: PlayerInfo[], seed: number, village: Village 
   const water = makeWater(seed);
   const s: State = {
     phase: 'play', time: ROUND_SECONDS,
+    mini: null, miniResult: null,
     seed, biome: cleanBiome(biome), ice: cleanBiome(biome) === 'snow' ? makeIce(seed) : [], entrance: entranceOf(seed), mode: 'meadow', entry: 0, picks: {}, pickT: 0, runs: 0, dg: null,
     bank: { ...vil.bank }, delivered: res(), quest: questTargets(infos.length, vil.cottage),
     builds: BUILD_KINDS.map((kind) => ({ kind, state: vil.builds[kind] ? 2 : 0, paid: res(), buy: 0, armed: true })),
@@ -511,7 +519,58 @@ function leaveDungeon(s: State) {
   s.fx.push({ t: 'leave', done });
 }
 
+/** Sunset: everyone into the Bärregn field. */
+function startMini(s: State) {
+  s.phase = 'mini';
+  s.mini = newMini(s.players.length);
+  const cx = (ARENA.x0 + ARENA.x1) / 2, cy = (ARENA.y0 + ARENA.y1) / 2;
+  s.players.forEach((p, i) => Object.assign(p, { x: cx + (i - (s.players.length - 1) / 2) * 50, y: cy, vx: 0, vy: 0, dashT: 0 }));
+  s.fx.push({ t: 'minigame' });
+}
+
+/** End Bärregn (time up, or the host skipped): caught berries go into the village bank. */
+export function finishMini(s: State) {
+  if (s.phase !== 'mini' || !s.mini) return;
+  const caught = s.mini.caught, stars = miniStars(s.mini);
+  s.bank.berry += caught;
+  s.villageDirty = true;
+  s.miniResult = { caught, stars };
+  s.mini = null;
+  s.phase = 'end';
+  s.fx.push({ t: 'minidone', caught, stars });
+}
+
+function stepMiniPhase(s: State, inputs: Map<string, Input>, dt: number) {
+  const m = s.mini!;
+  for (const p of s.players) {
+    const inp = inputs.get(p.id) ?? { x: 0, y: 0, dash: p.lastDash };
+    const stunned = !!m.stun[p.id];
+    let ix = stunned ? 0 : inp.x, iy = stunned ? 0 : inp.y;
+    const il = Math.hypot(ix, iy);
+    if (il > 1) { ix /= il; iy /= il; }
+    p.vx += ix * ACCEL * dt; p.vy += iy * ACCEL * dt;
+    const drag = Math.exp(-(stunned ? 6 : DRAG) * dt);
+    p.vx *= drag; p.vy *= drag;
+    p.dashCd = Math.max(0, p.dashCd - dt); p.dashT = Math.max(0, p.dashT - dt);
+    if (inp.dash !== p.lastDash) {
+      p.lastDash = inp.dash;
+      if (!stunned && p.dashCd <= 0) {
+        let dx = il > 0.2 ? ix : p.vx, dy = il > 0.2 ? iy : p.vy;
+        const dl = Math.hypot(dx, dy) || 1;
+        if (dx === 0 && dy === 0) dy = -1;
+        p.vx += (dx / dl) * DASH_IMPULSE; p.vy += (dy / dl) * DASH_IMPULSE;
+        p.dashCd = DASH_COOLDOWN; p.dashT = 0.3;
+      }
+    }
+    clampSpeed(p, 1);
+    p.x += p.vx * dt; p.y += p.vy * dt;
+    keepInArena(p);
+  }
+  if (stepMini(m, s.players, dt, s.fx as MiniFx[])) finishMini(s);
+}
+
 export function step(s: State, inputs: Map<string, Input>, dt: number) {
+  if (s.phase === 'mini') { stepMiniPhase(s, inputs, dt); return; }
   if (s.phase !== 'play') return;
   if (s.mode === 'pick') {
     // weapon cards on every phone; go down when all picked (or after PICK_SECONDS)
@@ -746,7 +805,7 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     }
   }
 
-  if (s.time <= 0) s.phase = 'end';
+  if (s.time <= 0) { if (MINI_ENABLED && s.players.length) startMini(s); else s.phase = 'end'; }
 }
 
 /** Build like totems: stand 1 s on a spot when the bank covers the price; step off before the next buy. */
@@ -811,6 +870,8 @@ function collideBox(p: Player, b: Rect) {
 // ---- network snapshot (compact, rounded) ----
 export interface Snapshot {
   ph: State['phase']; tm: number;
+  mn?: [number, number, [number, number, number], [number, number, number, number, number][], string[]]; // Bärregn: t, caught, goal, drops [id, bomb?, x, y, z], stunned ids
+  mr?: [number, number]; // Bärregn result: caught, stars
   r: number[]; // bank w,s,b, delivered w,s,b, quest w,s,b
   n: string; // items left per node, one digit each
   p: [string, number, number, number, number, string, number, number, number, number?][]; // id,x,y,vx,vy,carry,boost,magnet,dashCd,shield
@@ -836,6 +897,8 @@ const arrRes = (a: number[] | undefined, o: number): Res => res(a?.[o] ?? 0, a?.
 export function snapshot(s: State): Snapshot {
   return {
     ph: s.phase, tm: r1(s.time),
+    mn: s.mini ? [r1(s.mini.t), s.mini.caught, s.mini.goal, s.mini.drops.map((d) => [d.id, d.kind === 'bomb' ? 1 : 0, r1(d.x), r1(d.y), r1(d.z)]), Object.keys(s.mini.stun)] : undefined,
+    mr: s.miniResult ? [s.miniResult.caught, s.miniResult.stars] : undefined,
     r: [...resArr(s.bank), ...resArr(s.delivered), ...resArr(s.quest)],
     n: s.trees.map((t) => Math.max(0, Math.min(9, t.left))).join(''),
     p: s.players.map((p) => [p.id, r1(p.x), r1(p.y), r1(p.vx), r1(p.vy), p.carry.map((k) => KIND_CODE[k]).join(''), r1(p.boostT), r1(p.magnetT), r1(p.dashCd), p.shield]),
@@ -856,6 +919,8 @@ export function snapshot(s: State): Snapshot {
 /** View model shared by host (from State) and clients (from Snapshot). */
 export interface View {
   phase: State['phase']; time: number;
+  mini: { t: number; caught: number; goal: [number, number, number]; drops: { id: number; kind: 'berry' | 'bomb'; x: number; y: number; z: number }[]; stunned: string[] } | null;
+  miniResult: { caught: number; stars: number } | null;
   bank: Res; delivered: Res; quest: Res;
   nodes: number[]; // items left per node (same order as makeTrees)
   players: { id: string; x: number; y: number; vx: number; vy: number; carry: ItemKind[]; boostT: number; magnetT: number; dashCd: number; shield: number }[];
@@ -871,7 +936,10 @@ export interface View {
 
 export function viewFromState(s: State): View {
   return {
-    phase: s.phase, time: s.time, bank: s.bank, delivered: s.delivered, quest: s.quest,
+    phase: s.phase, time: s.time,
+    mini: s.mini ? { t: s.mini.t, caught: s.mini.caught, goal: s.mini.goal, drops: s.mini.drops, stunned: Object.keys(s.mini.stun) } : null,
+    miniResult: s.miniResult,
+    bank: s.bank, delivered: s.delivered, quest: s.quest,
     nodes: s.trees.map((t) => t.left),
     players: s.players.map((p) => ({ id: p.id, x: p.x, y: p.y, vx: p.vx, vy: p.vy, carry: p.carry, boostT: p.boostT, magnetT: p.magnetT, dashCd: p.dashCd, shield: p.shield })),
     items: s.items, gems: s.gems, powers: s.powers, puzzles: s.puzzles,
@@ -884,6 +952,8 @@ export function viewFromState(s: State): View {
 export function viewFromSnapshot(n: Snapshot): View {
   return {
     phase: n.ph, time: n.tm,
+    mini: n.mn ? { t: n.mn[0], caught: n.mn[1], goal: n.mn[2], drops: n.mn[3].map(([id, b, x, y, z]) => ({ id, kind: b ? 'bomb' as const : 'berry' as const, x, y, z })), stunned: n.mn[4] } : null,
+    miniResult: n.mr ? { caught: n.mr[0], stars: n.mr[1] } : null,
     bank: arrRes(n.r, 0), delivered: arrRes(n.r, 3), quest: arrRes(n.r, 6),
     nodes: [...(n.n ?? '')].map(Number),
     players: n.p.map(([id, x, y, vx, vy, c, b, m, d, sh]) => ({ id, x, y, vx, vy, carry: c.split('').filter(Boolean).map((k) => CODE_KIND[k]), boostT: b, magnetT: m, dashCd: d, shield: sh ?? 0 })),

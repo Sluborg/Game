@@ -544,3 +544,24 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .newvillage { align-self: center; display: inline-flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 900; min-height: 40px; padding: 2px 12px 0; }
 .newvillage img { height: 20px; image-rendering: pixelated; }
 .newvillage { justify-self: center; width: auto; justify-content: center; }
+
+/* ---------- Bärregn mini game HUD ---------- */
+#mini-hud {
+  position: absolute; top: max(10px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); width: min(92vw, 420px);
+  padding: 0 4px 4px; border-style: solid; border-width: 15px; border-image: url('/art/gather/quest-card.png') 5 fill / 15px stretch;
+  image-rendering: pixelated; filter: drop-shadow(0 6px 0 #3f263140); pointer-events: none;
+}
+.mtitle { margin: -11px 0 6px; text-align: center; font-weight: 900; font-size: 18px; color: #fff; text-shadow: 0 2px 0 #b5531c; }
+.mtitle img, .mbasket img, .endmini img { height: 22px; width: auto; vertical-align: -4px; image-rendering: pixelated; }
+.mrow { display: flex; align-items: center; gap: 10px; }
+.mbasket { display: flex; align-items: center; gap: 4px; font-size: 28px; font-weight: 900; color: var(--plum); min-width: 70px; }
+.mbar { position: relative; flex: 1; height: 22px; border-style: solid; border-width: 6px; border-image: url('/art/gather/daybar-frame.png') 3 fill / 6px stretch; image-rendering: pixelated; }
+.mfill { position: absolute; inset: 0; background: url('/art/gather/bar-fill-green.png') left / 100% 100% no-repeat; image-rendering: pixelated; clip-path: inset(0 100% 0 0); transition: clip-path 0.2s; }
+.mstar { position: absolute; top: -12px; width: 26px; height: 26px; margin-left: -13px; image-rendering: pixelated; }
+.mstar.on { animation: pop 0.45s ease-out both; }
+.mtime { margin-top: 8px; height: 8px; background: #e3d5b6; box-shadow: 0 0 0 2px var(--plum); }
+#mini-time { height: 100%; background: var(--orange); transition: width 0.25s linear; }
+#btn-skip-mini { position: absolute; left: max(12px, env(safe-area-inset-left)); bottom: max(16px, env(safe-area-inset-bottom)); pointer-events: auto; font-size: 17px; }
+.endmini { margin: 2px 0; font-weight: 800; font-size: 18px; color: var(--plum); }
+.endmini .star { width: 22px; height: 22px; vertical-align: -4px; image-rendering: pixelated; }
+#hud.mini #hud-quest, #hud.mini #hud-day, #hud.mini #hud-bank, #hud.mini #hud-double, #hud.mini #edge-arrows { display: none !important; }

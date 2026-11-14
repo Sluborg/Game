@@ -4,7 +4,7 @@ const { spawn, spawnSync } = require('node:child_process');
 const path = require('node:path');
 const PORT = 4179;
 const shots = process.argv[2] || '';
-const scripts = ['lan-join.cjs', 'puzzles.cjs', 'totems.cjs', 'gather.cjs', 'designer.cjs', 'build.cjs', 'dungeon.cjs', 'dungeon-weapons.cjs', 'snow.cjs'];
+const scripts = ['lan-join.cjs', 'puzzles.cjs', 'totems.cjs', 'gather.cjs', 'designer.cjs', 'build.cjs', 'dungeon.cjs', 'dungeon-weapons.cjs', 'snow.cjs', 'mini.cjs'];
 
 (async () => {
   const vite = spawn(process.execPath, [path.join(__dirname, '..', 'node_modules', 'vite', 'bin', 'vite.js'), 'preview', '--port', String(PORT), '--strictPort'], { cwd: path.join(__dirname, '..'), stdio: 'ignore' });

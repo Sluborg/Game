@@ -54,6 +54,9 @@ const spot = (host, k) => sim(host, (s, k) => {
 
     // sunset, then "Spela igen": the village + bank continue, the quest restarts
     await sim(host, (s) => { s.villageDirty = true; s.time = 0.05; });
+    // sunset starts Bärregn; the host skips it to reach the end screen
+    await host.waitForSelector('#btn-skip-mini:not(.hidden)', { timeout: 5000 });
+    await host.click('#btn-skip-mini');
     await host.waitForSelector('#end:not(.hidden)', { timeout: 5000 });
     await host.click('#btn-again');
     await ada.waitForFunction(() => window.__blobzView.time > 170, null, { timeout: 8000 });
