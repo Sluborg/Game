@@ -59,6 +59,10 @@ Stefan works phone-only; replies in Swedish or English, docs and code in English
 - **Art direction first, small orders:** Stefan prefers small direction tests (D-orders in ART_ORDERS.md) before any
   big ChatGPT order; big A-orders stay WAITING until the direction for their area is locked. Read ALL `answers/*`
   on the board (comments included) before planning or reporting art.
+- **Board upkeep (every merge):** mark finished `work` rows klar with version, prefix finished `backlog` items with
+  "✓ KLAR (vNNN)" / "◐ DELVIS" and a one-line outcome, and keep the Art tab (`art` collection) in sync with
+  `docs/ART_ORDERS.md`; read `artctl/*` (Stefan's Kör/Pausa/Gör om) and `comments` with item `art-<id>` and apply them to
+  ART_ORDERS.md.
 - Reporting to Stefan: only when a whole batch is merged and live (Art: a full part set; Code: a whole
   feature), or when a decision from him blocks work. No progress pings about single images or steps.
 

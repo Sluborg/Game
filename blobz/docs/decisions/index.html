@@ -127,6 +127,7 @@ details.archive[open] summary { margin-bottom: 12px; }
     <a href="#fragor" data-tab="fragor">Frågor <span class="badge" id="b-fragor"></span></a>
     <a href="#pagaende" data-tab="pagaende">Pågående <span class="badge" id="b-pagaende"></span></a>
     <a href="#backlog" data-tab="backlog">Backlog <span class="badge" id="b-backlog"></span></a>
+    <a href="#art" data-tab="art">Art <span class="badge" id="b-art"></span></a>
   </nav>
   <div class="note" id="conn" hidden></div>
 
@@ -146,6 +147,11 @@ details.archive[open] summary { margin-bottom: 12px; }
     </details>
   </section>
 
+  <section id="tab-art" class="wrap" aria-label="Art" hidden>
+    <article class="card"><h2>Art-kön</h2><p class="body">Här styr du ChatGPT-beställningarna. Kör = ChatGPT gör den vid nästa "next". Pausa = hoppas över. Gör om = ny runda med din kommentar. Claude för över ditt val till kön.</p></article>
+    <section id="art-list" class="wrap"></section>
+  </section>
+
   <section id="tab-backlog" class="wrap" aria-label="Backlog" hidden>
     <article class="card" id="newIdea">
       <h2>Ny idé</h2>
@@ -161,9 +167,9 @@ details.archive[open] summary { margin-bottom: 12px; }
 
 <script>
 const $ = (s) => document.querySelector(s);
-const state = { questions: [], answers: {}, drafts: {}, work: [], backlog: [], prio: {}, comments: [], commentDrafts: {} };
+const state = { questions: [], answers: {}, drafts: {}, work: [], backlog: [], prio: {}, comments: [], commentDrafts: {}, art: [], artctl: {} };
 let db = null;
-const TABS = ['fragor', 'pagaende', 'backlog'];
+const TABS = ['fragor', 'pagaende', 'backlog', 'art'];
 const PRIO = [['hog', 'Hög'], ['medel', 'Medel'], ['lag', 'Låg']];
 const PRIO_RANK = { hog: 0, medel: 1, lag: 2 };
 
@@ -366,7 +372,71 @@ $('#idea-save').addEventListener('click', async () => {
   finally { $('#idea-save').disabled = false; }
 });
 
-function renderAll() { renderQuestions(); renderWork(); renderBacklog(); }
+/* ---------- Art queue ---------- */
+const ART_ACT = [['go', 'Kör'], ['pause', 'Pausa'], ['redo', 'Gör om']];
+function artStatusTag(st) {
+  const s = String(st || '').toUpperCase();
+  if (s.startsWith('READY')) return el('span', { class: 'tag new', text: 'Redo i ChatGPT' });
+  if (s.startsWith('DONE')) return el('span', { class: 'tag done', text: 'Klar' });
+  return el('span', { class: 'tag wait', text: 'Väntar' });
+}
+function renderArtItem(a) {
+  const card = el('article', { class: 'card', id: 'art-' + a.id });
+  const ctl = state.artctl[a.id];
+  card.append(el('div', { class: 'meta' }, artStatusTag(a.status), el('span', { text: a.id }), a.area ? el('span', { text: a.area }) : null,
+    ctl ? el('span', { class: 'tag', text: 'Din begäran: ' + (Object.fromEntries(ART_ACT)[ctl.action] || ctl.action) }) : null));
+  card.append(el('h2', { text: a.title || '' }));
+  if (a.note) card.append(el('p', { class: 'body', text: a.note }));
+  if (a.result) card.append(el('img', { src: a.result, alt: 'Resultat ' + a.id, style: 'width:100%;height:auto;image-rendering:pixelated;box-shadow:0 0 0 3px var(--plum)' }));
+  if (a.prompt) { const d = el('details', {}, el('summary', { text: 'Visa prompten' }), el('pre', { style: 'white-space:pre-wrap;font-size:12px;margin:6px 0 0', text: a.prompt })); card.append(d); }
+  const seg = el('div', { class: 'seg', role: 'radiogroup', 'aria-label': 'Styr ' + a.id });
+  const st = el('span', { class: 'status' });
+  for (const [id, label] of ART_ACT) {
+    const on = ctl && ctl.action === id;
+    const btn = el('button', { type: 'button', class: on ? 'on' : '', role: 'radio', 'aria-checked': String(!!on), text: label });
+    btn.addEventListener('click', async () => {
+      if (!needDb(st)) return;
+      try { if (on) await db.doc('artctl/' + a.id).delete(); else await db.doc('artctl/' + a.id).set({ action: id, at: new Date().toISOString() }); }
+      catch (e) { st.textContent = 'Kunde inte spara (' + (e && e.code || 'fel') + ').'; st.className = 'status err'; }
+    });
+    seg.append(btn);
+  }
+  card.append(el('div', { class: 'row' }, seg, st));
+  const key = 'art-' + a.id;
+  const mine = state.comments.filter((c) => c.item === key).sort((x, y) => String(x.at).localeCompare(String(y.at)));
+  if (mine.length) {
+    const ul = el('ul', { class: 'comments' });
+    for (const c of mine) ul.append(el('li', {}, el('span', { class: 'c-text', text: c.text || '' }), el('span', { class: 'c-meta' }, el('span', { text: (c.by === 'claude' ? 'Claude · ' : '') + fmt(c.at) }))));
+    card.append(ul);
+  }
+  const taId = 'ac-' + a.id;
+  const ta = el('textarea', { id: taId, placeholder: 'Kommentar till Art (vad ska ändras?)' });
+  ta.value = state.commentDrafts[key] || '';
+  ta.addEventListener('input', () => { state.commentDrafts[key] = ta.value; });
+  const cst = el('span', { class: 'status' });
+  const save = el('button', { class: 'btn', type: 'button', text: 'Spara' });
+  save.addEventListener('click', async () => {
+    if (!needDb(cst)) return;
+    const text = (state.commentDrafts[key] || '').trim();
+    if (!text) { cst.textContent = 'Skriv något först.'; cst.className = 'status err'; return; }
+    save.disabled = true;
+    try { await db.collection('comments').add({ item: key, text, by: 'stefan', at: new Date().toISOString() }); state.commentDrafts[key] = ''; cst.textContent = 'Sparad.'; cst.className = 'status ok'; renderArt(); }
+    catch (e) { cst.textContent = 'Kunde inte spara (' + (e && e.code || 'fel') + ').'; cst.className = 'status err'; }
+    finally { save.disabled = false; }
+  });
+  card.append(el('label', { class: 'lbl', for: taId, text: 'Kommentar' }), ta, el('div', { class: 'row' }, save, cst));
+  return card;
+}
+function renderArt() {
+  const items = [...state.art].sort((x, y) => (x.order || 0) - (y.order || 0));
+  const focusId = document.activeElement && document.activeElement.id;
+  $('#art-list').replaceChildren(...(items.length ? items.map(renderArtItem) : [el('div', { class: 'card empty' }, el('h2', { text: 'Inga beställningar än' }))]));
+  const ready = items.filter((a) => String(a.status || '').toUpperCase().startsWith('READY')).length;
+  $('#b-art').textContent = ready ? String(ready) : '';
+  if (focusId && focusId.startsWith('ac-')) { const t = document.getElementById(focusId); if (t) t.focus(); }
+}
+
+function renderAll() { renderQuestions(); renderWork(); renderBacklog(); renderArt(); }
 showTab();
 renderAll();
 
@@ -390,6 +460,8 @@ renderAll();
   db.collection('work').onSnapshot((s) => { state.work = rows(s); renderWork(); }, fail('pågående arbete'));
   db.collection('backlog').onSnapshot((s) => { state.backlog = rows(s); renderBacklog(); }, fail('backloggen'));
   db.collection('prio').onSnapshot((s) => { const p = {}; for (const d of s.docs) p[d.id] = d.data().level; state.prio = p; renderBacklog(); }, () => {});
-  db.collection('comments').onSnapshot((s) => { state.comments = rows(s); renderBacklog(); }, () => {});
+  db.collection('comments').onSnapshot((s) => { state.comments = rows(s); renderBacklog(); renderArt(); }, () => {});
+  db.collection('art').onSnapshot((s) => { state.art = rows(s); renderArt(); }, () => {});
+  db.collection('artctl').onSnapshot((s) => { const m = {}; for (const d of s.docs) m[d.id] = d.data(); state.artctl = m; renderArt(); }, () => {});
 })();
 </script>
