@@ -42,7 +42,7 @@ shrinking clockwise from 12 o'clock). A code arc scales cleanly to any button si
 ## Entrance and stairs
 | File | Size | Use |
 |---|---|---|
-| `entrance.png` | 48x40 | Dungeon entrance on the meadow: rock mound, cave mouth, steps going down. Anchor bottom centre |
+| `entrance.png` / `entrance-snow.png` | 48x40 | Dungeon entrance on the meadow: rock mound, cave mouth, steps going down. Anchor bottom centre |
 | `stairs-up.png` | 32x32 | Exit stairs up (2x2 Tiny Dungeon tiles), daylight at the top |
 | `stairs-down.png` | 32x32 | Stairs down to the next floor |
 

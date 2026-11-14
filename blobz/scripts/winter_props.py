@@ -238,8 +238,19 @@ def main():
         'bush-empty-snow.png': snow_cap(os.path.join(ROOT, 'public', 'art', 'gather', 'bush-empty.png'), 0.7, 2),
         'ice-rock.png': ice_rock(),
         'pond-frozen-tiles.png': frozen_pond_tiles(),
+        'stump-snow.png': snow_cap(os.path.join(ROOT, 'public', 'art', 'props', 'stump.png'), 0.6, 2),
+        'rubble-snow.png': snow_cap(os.path.join(ROOT, 'public', 'art', 'gather', 'rubble.png'), 0.8, 1),
     }
     os.makedirs(OUT_DIR, exist_ok=True)
+    # snowy dungeon entrance lives with the dungeon art (same size as dungeon/entrance.png)
+    ent = snow_cap(os.path.join(ROOT, 'public', 'art', 'dungeon', 'entrance.png'), 0.75, 2)
+    epx = ent.load()
+    for y in range(ent.height):  # grass tufts on top become snow mounds
+        for x in range(ent.width):
+            r, g, b, a = epx[x, y]
+            if a and g > r + 30 and g > b:
+                epx[x, y] = SNOW if g > 180 else SNOW_SHADE
+    ent.save(os.path.join(ROOT, 'public', 'art', 'dungeon', 'entrance-snow.png'))
     for name, im in outputs.items():
         im.save(os.path.join(OUT_DIR, name))
         print(name, im.size)
