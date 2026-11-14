@@ -116,6 +116,13 @@
         <div class="edge" data-k="stone"><i class="arr"></i><img src="art/gather/hud-stone.png" alt="Sten" /></div>
         <div class="edge" data-k="berry"><i class="arr"></i><img src="art/gather/hud-berries.png" alt="Bär" /></div>
       </div>
+      <div id="mini-hud" class="hidden" aria-label="Bärregn">
+        <div class="mtitle"><img src="art/gather/item-berries.png" alt="" /> Bärregn!</div>
+        <div class="mrow"><span class="mbasket"><img src="art/gather/item-berries.png" alt="Bär" /><b id="mini-caught">0</b></span>
+          <div class="mbar"><div id="mini-fill" class="mfill"></div><img class="mstar" data-i="0" src="art/gather/star-empty.png" alt="" /><img class="mstar" data-i="1" src="art/gather/star-empty.png" alt="" /><img class="mstar" data-i="2" src="art/gather/star-empty.png" alt="" /></div></div>
+        <div class="mtime"><div id="mini-time"></div></div>
+      </div>
+      <button id="btn-skip-mini" class="chip hidden" type="button">Hoppa över</button>
       <div id="hud-double" class="hidden"><b>2x</b><span id="double-t"></span></div>
       <div id="stick"><div id="knob"></div></div>
       <button id="attack" class="hidden" aria-label="Attack"><img src="art/icons/dash-arrow.png" alt="" class="icon" id="attack-icon" /></button>
@@ -155,6 +162,7 @@
         <h2 id="end-title">Solen gick ner!</h2>
         <div id="end-stars" class="stars"></div>
         <div id="end-rows" class="endrows"></div>
+        <p id="end-mini" class="endmini hidden"><img src="art/gather/item-berries.png" alt="" /> Bärregn: <b id="end-mini-n">0</b> bär <span id="end-mini-stars"></span></p>
         <p class="tag">Bra jobbat!</p>
         <button id="btn-again" class="big">Spela igen</button>
         <p id="end-wait" class="msg">Väntar på värden...</p>

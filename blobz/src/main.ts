@@ -11,7 +11,7 @@ import { ClientNet, HostNet, friendlyError, type ToClient } from './net';
 import { lanNamespace, Scanner, type FoundRoom } from './discovery';
 import { sfx, unlockAudio } from './sfx';
 import {
-  addPlayer, BUILDING_ENABLED, cleanBiome, type Biome, BUILD_COST, BUILD_NAMES, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, pickWeapon, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
+  addPlayer, BUILDING_ENABLED, finishMini, cleanBiome, type Biome, BUILD_COST, BUILD_NAMES, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, pickWeapon, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
   toolNode, viewFromSnapshot, viewFromState,
 } from './sim';
 import type { FxEvent, Input, PlayerInfo, Snapshot, State, View } from './sim';
@@ -308,6 +308,7 @@ function startScene(session: Session) {
     game.scene.add('game', GameScene, false);
   }
   loading(true, 0.1);
+  loadPending = true;
   $('loading-text').textContent = 'Laddar spelet...';
   const hook = (scene: GameScene) => {
     scene.onView = onView;
@@ -371,7 +372,37 @@ function villageText() {
   return n || v.cottage > 1 || bank ? `Din by: stuga nivå ${v.cottage} · ${n} ${n === 1 ? 'byggnad' : 'byggnader'} · förråd ${v.bank.wood}/${v.bank.stone}/${v.bank.berry}` : '';
 }
 
+/** Bärregn HUD: basket counter, goal bar with 3 stars, time left; the host gets "Hoppa över". */
+let miniStarsShown = 0;
+function renderMini(v: View) {
+  const m = v.phase === 'mini' ? v.mini : null;
+  $('hud').classList.toggle('mini', !!m);
+  show('mini-hud', !!m);
+  show('btn-skip-mini', !!m && isHost);
+  if (!m) { miniStarsShown = 0; return; }
+  controls.setTool(null);
+  const c = String(m.caught);
+  if ($('mini-caught').textContent !== c) $('mini-caught').textContent = c;
+  const top = m.goal[2] || 1;
+  $('mini-fill').style.clipPath = `inset(0 ${100 - Math.min(100, (m.caught / top) * 100)}% 0 0)`;
+  document.querySelectorAll<HTMLImageElement>('#mini-hud .mstar').forEach((im) => {
+    const i = Number(im.dataset.i);
+    im.style.left = `${(m.goal[i] / top) * 100}%`;
+    const on = m.caught >= m.goal[i];
+    if (im.classList.contains('on') !== on) { im.classList.toggle('on', on); im.src = `art/gather/star${on ? '' : '-empty'}.png`; }
+  });
+  const stars = m.goal.filter((g) => m.caught >= g).length;
+  if (stars > miniStarsShown) { miniStarsShown = stars; sfx.star(); }
+  $('mini-time').style.width = `${(m.t / 40) * 100}%`;
+}
+
+/** True from startScene until the first rendered frame. On "Spela igen" the assets are cached, so Phaser
+ *  runs create() synchronously inside scene.start(), before the once('create') hook exists; the first view
+ *  is the reliable "ready" signal (the overlay otherwise stayed up and blocked every tap). */
+let loadPending = false;
+
 function onView(v: View) {
+  if (loadPending) { loadPending = false; loading(false); }
   if (DEBUG) (window as unknown as { __blobzView: View }).__blobzView = v;
   if (dungeonUi(v, session?.myId, controls, (id) => infos.get(id)?.name ?? '?')) return; // [dungeon hook, Code 2] pick cards / dungeon HUD
   renderQuestRows($('hud-quest'), v);
@@ -394,11 +425,18 @@ function onView(v: View) {
   const me = v.players.find((p) => p.id === session?.myId);
   // action button: the tool of the nearest node in reach, else dash
   if (session && treesFor.seed !== session.seed) treesFor = { seed: session.seed, trees: makeTrees(session.seed) };
-  const node = me ? toolNode(treesFor.trees, (i) => v.nodes[i] ?? 0, me.x, me.y) : -1;
+  const node = me && v.phase === 'play' ? toolNode(treesFor.trees, (i) => v.nodes[i] ?? 0, me.x, me.y) : -1;
   controls.setTool(node >= 0 ? nodeTool(treesFor.trees[node].kind) : null);
   controls.setCooldown(!!me && me.dashCd > 0);
+  renderMini(v);
   if (v.phase === 'end' && !endShown) {
     endShown = true;
+    // Bärregn result under the quest rows
+    show('end-mini', !!v.miniResult);
+    if (v.miniResult) {
+      $('end-mini-n').textContent = String(v.miniResult.caught);
+      $('end-mini-stars').replaceChildren(...[0, 1, 2].map((i) => { const im = new Image(); im.src = `art/gather/star${i < v.miniResult!.stars ? '' : '-empty'}.png`; im.className = 'star'; im.alt = ''; return im; }));
+    }
     $('end-stars').replaceChildren(...[0, 1, 2].map((i) => {
       const img = new Image(); img.src = `art/gather/star${i < st ? '' : '-empty'}.png`; img.alt = ''; img.className = 'star' + (i < st ? ' on' : '');
       return img;
@@ -529,6 +567,7 @@ async function hostGame() {
   show('btn-start'); show('lobby-wait', false);
   show('menu', false); show('lobby');
   $('btn-start').onclick = () => { unlockAudio(); newRound(); };
+  $('btn-skip-mini').onclick = () => { if (state) finishMini(state); };
   $('lobby-village').textContent = BUILDING_ENABLED ? villageText() : '';
   show('btn-newvillage', BUILDING_ENABLED);
   // "Ny by": confirmed in the page (no browser dialog)
