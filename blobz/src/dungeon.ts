@@ -22,7 +22,8 @@ export const CLASS_HP: Record<HeroClass, number> = { rogue: 100, healer: 100, ma
 export type Weapon = 'sword' | 'hammer' | 'spear' | 'staff' | 'bow' | 'shield' | 'dagger';
 /** Order is the snapshot index: only append. */
 export const WEAPONS: Weapon[] = ['sword', 'hammer', 'spear', 'staff', 'bow', 'shield', 'dagger'];
-export const CLASS_WEAPONS: Record<HeroClass, Weapon[]> = { rogue: ['dagger', 'sword', 'hammer', 'spear'], healer: ['staff'], marksman: ['bow'], tank: ['shield'] };
+// the spear stays in the code but is not offered (Stefan: too strong for now); classOf('spear') still gives 'rogue'
+export const CLASS_WEAPONS: Record<HeroClass, Weapon[]> = { rogue: ['dagger', 'sword', 'hammer'], healer: ['staff'], marksman: ['bow'], tank: ['shield'] };
 export const classOf = (w: Weapon): HeroClass => CLASSES.find((c) => CLASS_WEAPONS[c].includes(w)) ?? 'rogue';
 /** Auto-attack: reach (px from the blob centre to the goo's edge), half-arc (radians, PI = all around),
  *  damage (goo hit points), seconds between attacks, knockback; ranged = a bolt at the nearest goo in sight. */
@@ -31,8 +32,8 @@ export const WEAPON_STATS: Record<Weapon, { reach: number; arc: number; dmg: num
   hammer: { reach: 58, arc: Math.PI, dmg: 26, cd: 0.9, kb: 380 }, // slow, hits all around, big knockback
   spear: { reach: 96, arc: 0.3, dmg: 14, cd: 0.55, kb: 200 }, // long and narrow
   staff: { reach: 52, arc: 1.2, dmg: 9, cd: 0.6, kb: 140 }, // the healer's bonk
-  bow: { reach: 200, arc: 0, dmg: 10, cd: 0.7, kb: 90, ranged: true }, // crossbow (playtest: was too strong)
-  shield: { reach: 50, arc: 1.1, dmg: 11, cd: 0.55, kb: 260 }, // shield bash: big knockback
+  bow: { reach: 200, arc: 0, dmg: 7, cd: 0.55, kb: 90, ranged: true }, // crossbow: safe at range, so clearly less damage than melee (~42% of the sword)
+  shield: { reach: 56, arc: 1.0, dmg: 10, cd: 0.5, kb: 280 }, // the Riddare: a heavier, slower sword slash with big knockback (id stays 'shield')
   dagger: { reach: 44, arc: 1.2, dmg: 8, cd: 0.25, kb: 80 }, // the rogue's two daggers: very fast, short
 };
 export type SpecialKind = 'spin' | 'slam' | 'lunge' | 'heal' | 'wall' | 'volley';
@@ -43,7 +44,7 @@ export const SPECIALS: Record<string, SpecialDef> = {
   'rogue:hammer': { kind: 'slam', cd: 8, r: 110, dmg: 35, kb: 480, stun: 0.9 },
   'rogue:spear': { kind: 'lunge', cd: 7, r: 30, dmg: 25, kb: 220, stun: 0.4 },
   'healer:staff': { kind: 'heal', cd: 9, r: 150, dmg: 0, kb: 0, stun: 0 }, // heals + revives friends around
-  'marksman:bow': { kind: 'volley', cd: 7, r: 260, dmg: 18, kb: 160, stun: 0.3 }, // bolts at several goo
+  'marksman:bow': { kind: 'volley', cd: 7, r: 260, dmg: 14, kb: 160, stun: 0.3 }, // bolts at several goo
   'tank:shield': { kind: 'wall', cd: 10, r: 120, dmg: 0, kb: 360, stun: 0.6 }, // friends inside take no damage
 };
 export const specialOf = (cls: HeroClass, w: Weapon): SpecialDef => SPECIALS[`${cls}:${w}`] ?? SPECIALS['rogue:dagger'];

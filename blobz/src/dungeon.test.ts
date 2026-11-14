@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { KEYS } from './i18n';
 import {
-  AIM_WARN, BITE_TIME, BITE_WARN, bossHp, BURST, BURST_DMG, BURST_GAP, BURST_SPREAD, CLASS_HP, CLASSES, DASH_TIME, DASH_WARN, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, GH, GW,
+  AIM_WARN, BITE_TIME, CLASS_WEAPONS, BITE_WARN, bossHp, BURST, BURST_DMG, BURST_GAP, BURST_SPREAD, CLASS_HP, CLASSES, DASH_TIME, DASH_WARN, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, GH, GW,
   HEAL_HP, heroMods, refresh, inSwing, isWall, ITEMS, itemOf, KO_SECONDS, LEVEL_XP, LOOT_SECONDS, makeFloor, makeGoo, newRun, POTION_HP, REGEN_EVERY,
   skillIcon, skillOf, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
 } from './dungeon';
@@ -70,6 +70,17 @@ describe('dungeon', () => {
     expect(bossHp(3)).toBe(660);
     const d = newRun(3, { a: 'sword', b: 'bow' });
     expect(d.enemies.find((e) => e.kind === 0)!.mx).toBe(Math.round(ENEMY_HP[0] * floorHp(1, 2)));
+  });
+
+  it('weapon balance (Stefan): no spear on offer; the crossbow hits clearly softer than melee; the Riddare below the sword', () => {
+    expect(CLASS_WEAPONS.rogue).not.toContain('spear');
+    expect(WEAPON_STATS.spear).toBeDefined(); // the code stays
+    const dps = (w: keyof typeof WEAPON_STATS) => WEAPON_STATS[w].dmg / WEAPON_STATS[w].cd;
+    expect(WEAPON_STATS.bow.dmg).toBeLessThan(WEAPON_STATS.sword.dmg * 0.7);
+    expect(dps('bow')).toBeLessThanOrEqual(dps('sword') * 0.7);
+    expect(dps('bow')).toBeLessThan(dps('dagger') * 0.7);
+    expect(dps('shield')).toBeLessThan(dps('sword'));
+    expect(WEAPON_STATS.shield.kb).toBeGreaterThan(WEAPON_STATS.sword.kb); // heavier: more knockback
   });
 
   it('weapons: sword arc, hammer all around, spear long and narrow', () => {
