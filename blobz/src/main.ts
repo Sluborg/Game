@@ -779,7 +779,7 @@ void lanNamespace();
 $('btn-leave').onclick = () => location.reload();
 $('btn-menu').onclick = () => location.reload();
 
-if (new URLSearchParams(location.search).get('demo') === 'monsters') void import('./dungeonDemo').then((m) => m.runDemo()); // [dungeon hook] Ninja monster demo
+if (new URLSearchParams(location.search).get('demo') === 'monsters' || new URLSearchParams(location.search).has('dgdemo')) void import('./dungeonDemo').then((m) => m.runDemo()); // [dungeon hook] Ninja monster demo
 const DEBUG = new URLSearchParams(location.search).has('debug');
 // Optional round length for quick games/tests: ?t=60
 const roundSecs = Math.max(0, Math.min(600, Number(new URLSearchParams(location.search).get('t')) || 0));
