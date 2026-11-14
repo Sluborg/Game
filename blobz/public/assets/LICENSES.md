@@ -8,6 +8,10 @@
 | Tiny Battle 1.0 | Kenney (www.kenney.nl) | CC0 1.0 | https://opengameart.org/content/tiny-battle | `kenney-tiny-battle/tilemap_packed.png`, `kenney-tiny-battle/License.txt` |
 | Tiny Ski 1.0 | Kenney (www.kenney.nl) | CC0 1.0 | https://opengameart.org/content/tiny-ski | `kenney-tiny-ski/tilemap_packed.png`, `kenney-tiny-ski/License.txt` |
 | Pixel Platformer | Kenney (www.kenney.nl) | CC0 1.0 | https://opengameart.org/content/pixel-platformer-0 | `kenney-pixel-platformer/tilemap_packed.png` (18px tiles), `kenney-pixel-platformer/License.txt` |
+| Game Icons | Kenney (www.kenney.nl) | CC0 1.0 | https://opengameart.org/content/game-icons | not vendored yet: only in `docs/art-review/icons-A.png` (icon family test) |
+| Board Game Icons | Kenney (www.kenney.nl) | CC0 1.0 | https://opengameart.org/content/board-game-icons | not vendored yet: only in `docs/art-review/icons-A.png` |
+| 1-Bit Pack 1.1 | Kenney (www.kenney.nl) | CC0 1.0 | https://opengameart.org/content/1-bit-pack | not vendored yet: only in `docs/art-review/icons-B.png` |
+| Tiny Creatures 1.0 | Kenney (www.kenney.nl) | CC0 1.0 | https://opengameart.org/content/tiny-creatures | not vendored yet: only in `docs/art-review/enemy-options.png` |
 
 
 
