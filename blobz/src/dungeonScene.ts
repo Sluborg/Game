@@ -43,9 +43,6 @@ const CLASS_HAT: Partial<Record<HeroClass, number>> = { healer: 0, marksman: 1, 
 const WORLD = { w: GW * DT, h: GH * DT };
 // Kenney Tiny Dungeon frames (12 per row)
 // Art's fine ground tiles (art/fine/tiles, 32 px, drawn at scale 1): floor plain/specks/stones, wall bricks/banner
-const FLOOR_TILES = [0, 0, 0, 0, 1, 1, 2];
-const WALL_FACE = 0;
-const WALL_DECOR = 1;
 const TP = 32; // baked px per tile
 
 interface HeroGfx {
@@ -63,6 +60,7 @@ interface HeroGfx {
   spin: number; // seconds left of a spin special (weapon whirls around)
   fx?: { spr: Phaser.GameObjects.Sprite; kind: 'spin' | 'charge'; a: number }; // special fx that rides along with the blob
   dome?: Phaser.GameObjects.Sprite;
+  hb?: LifeBar; // friends' Ninja life bar
   wshadow?: Phaser.GameObjects.Ellipse; // the hovering weapon's small shadow on the ground
   weapon2?: Phaser.GameObjects.Sprite; // the rogue's second dagger / the Riddare's guarding shield
   arcFor?: number; // which swing already has its slash fx
@@ -71,7 +69,9 @@ interface HeroGfx {
 interface GooGfx {
   img: Phaser.GameObjects.Sprite; shadow: Phaser.GameObjects.Ellipse; bar?: Phaser.GameObjects.Graphics; x: number; y: number; flash: number; kind: number;
   dir: number; tele: Phaser.GameObjects.Sprite[]; teleKey: string; // telegraph sprites for the current action
+  hb?: LifeBar;
 }
+interface LifeBar { u: Phaser.GameObjects.Image; p: Phaser.GameObjects.Image }
 // ---- Ninja Adventure monsters (CC0, docs/ART_MAP.md): sheet, frame size, origin = centre of the visible body ----
 const NA = 'assets/ninja-adventure/';
 const MON = [
@@ -108,7 +108,7 @@ export class DungeonScene extends Phaser.Scene {
   private stairs!: Phaser.GameObjects.Image;
   private heroes = new Map<string, HeroGfx>();
   private goo = new Map<number, GooGfx>();
-  private coins = new Map<number, Phaser.GameObjects.Image>();
+  private coins = new Map<number, Phaser.GameObjects.Sprite>();
   private spits = new Map<number, { s: Phaser.GameObjects.Sprite; o: Phaser.GameObjects.Sprite; px: number; py: number }>();
   private ringG!: Phaser.GameObjects.Graphics;
   private auraG!: Phaser.GameObjects.Graphics;
@@ -153,6 +153,15 @@ export class DungeonScene extends Phaser.Scene {
     sheet('dg-sparkle', 'art/fine/fx/coin-sparkle.png', 22, 22); // own key: the meadow still uses the 11 px one
     sheet('dungeon', 'assets/kenney-tiny-dungeon/tilemap_packed.png', 16, 16);
     for (const k of Object.keys(WIMG)) img('w-' + k, `art/dungeon/weapons/${k}.png`);
+    // Ninja Adventure dungeon art (docs/ART_MAP.md section 12 + loot): floor, walls, stairs, chest, coins, potion, bars
+    img('na-floor', NA + 'Backgrounds/Tilesets/Interior/TilesetInteriorFloor.png');
+    img('na-walls', NA + 'Backgrounds/Tilesets/Interior/TilesetWallSimple.png');
+    img('na-elem', NA + 'Backgrounds/Tilesets/TilesetElement.png');
+    sheet('na-chest', NA + 'Items/Treasure/BigTreasureChest.png', 16, 14);
+    sheet('na-coin', NA + 'Items/Treasure/Coin2.png', 10, 10);
+    img('na-potion', NA + 'Items/Potion/LifePot.png');
+    img('na-lbu', NA + 'Ui/Receptacle/LifeBarMiniUnder.png');
+    img('na-lbp', NA + 'Ui/Receptacle/LifeBarMiniProgress.png');
     for (const m of MON) sheet(m.key, NA + m.file, m.key === 'na-boss' ? 62 : 16, m.key === 'na-boss' ? 52 : 16);
     sheet('na-boss-jump', NA + 'Actor/Boss/GiantSlime/Jump.png', 62, 52);
     sheet('na-boss-hit', NA + 'Actor/Boss/GiantSlime/Hit.png', 62, 52);
@@ -170,6 +179,7 @@ export class DungeonScene extends Phaser.Scene {
       MON_DIRS.forEach((dn, c) => anim(`${m.key}-${dn}`, m.key, [c, c + 4, c + 8, c + 12], 7, -1));
     }
     anim('na-boss-jump', 'na-boss-jump', [...Array(13).keys()], 16);
+    anim('na-coin', 'na-coin', [0, 1, 2, 3], 8, -1);
     anim('na-boss-hit', 'na-boss-hit', [0, 1, 2, 3, 4], 14);
     for (const [k, , , , fps, loop] of NFX) if (k !== 'nf-chev') anim(k, k, [...Array(this.textures.get(k).frameTotal - 1).keys()], fps, loop ? -1 : 0);
     anim('dg-revive', 'dg-revive', [0, 1, 2], 8);
@@ -222,33 +232,51 @@ export class DungeonScene extends Phaser.Scene {
       c.width = GW * TP; c.height = GH * TP;
       const g = c.getContext('2d')!;
       g.imageSmoothingEnabled = false;
-      const fl = this.textures.get('dg-floor').getSourceImage() as HTMLImageElement, wl = this.textures.get('dg-wall').getSourceImage() as HTMLImageElement;
-      const tile = (sheetImg: HTMLImageElement, fr: number, tx: number, ty: number) => g.drawImage(sheetImg, fr * TP, 0, TP, TP, tx * TP, ty * TP, TP, TP);
+      // Ninja Adventure tiles at 2x (16 px -> one 32 px dungeon tile): stone-brick floor, the brown wall frame
+      // (TilesetWallSimple) around every floor area, dark void inside the rock
+      const fl = this.textures.get('na-floor').getSourceImage() as HTMLImageElement, wl = this.textures.get('na-walls').getSourceImage() as HTMLImageElement;
+      const put = (im: HTMLImageElement, sx: number, sy: number, tx: number, ty: number, flip = false) => {
+        if (!flip) { g.drawImage(im, sx, sy, 16, 16, tx * TP, ty * TP, TP, TP); return; }
+        g.save(); g.translate(tx * TP + TP, ty * TP); g.scale(-1, 1); g.drawImage(im, sx, sy, 16, 16, 0, 0, TP, TP); g.restore();
+      };
       const solid = (tx: number, ty: number) => tx < 0 || ty < 0 || tx >= GW || ty >= GH || f.solid[ty * GW + tx] === 1;
       let n = seed + floor * 7;
       const rnd = () => { n = (n * 1103515245 + 12345) & 0x7fffffff; return n / 0x7fffffff; };
-      g.fillStyle = '#1b1018';
+      g.fillStyle = '#141b1b';
       g.fillRect(0, 0, c.width, c.height);
       for (let ty = 0; ty < GH; ty++) for (let tx = 0; tx < GW; tx++) {
-        if (!solid(tx, ty)) { tile(fl, FLOOR_TILES[Math.floor(rnd() * FLOOR_TILES.length)], tx, ty); continue; }
-        if (!solid(tx, ty + 1)) { tile(wl, rnd() < 0.08 ? WALL_DECOR : WALL_FACE, tx, ty); continue; } // wall face above a floor
-        // wall top: dark stone, with a lighter rim next to floors
-        const nearFloor = !solid(tx - 1, ty) || !solid(tx + 1, ty) || !solid(tx, ty - 1) || !solid(tx - 1, ty + 1) || !solid(tx + 1, ty + 1);
-        g.fillStyle = nearFloor ? '#4a3a52' : '#2a1d2e';
-        g.fillRect(tx * TP, ty * TP, TP, TP);
-        if (nearFloor) { g.fillStyle = '#3f2631'; g.fillRect(tx * TP, ty * TP + TP - 4, TP, 4); }
+        if (!solid(tx, ty)) { put(fl, 192, 208, tx, ty, rnd() < 0.5); continue; }
+        // a wall next to floor gets the frame piece facing that floor (edges first, then outer corners)
+        const S = !solid(tx, ty + 1), N = !solid(tx, ty - 1), E = !solid(tx + 1, ty), W = !solid(tx - 1, ty);
+        if (S) put(wl, 48, 96, tx, ty); // top edge of the room below
+        else if (N) put(wl, 48, 160, tx, ty); // bottom edge
+        else if (E) put(wl, 0, 112, tx, ty); // left edge
+        else if (W) put(wl, 64, 112, tx, ty); // right edge
+        else if (!solid(tx + 1, ty + 1)) put(wl, 0, 96, tx, ty); // corners: floor only diagonal
+        else if (!solid(tx - 1, ty + 1)) put(wl, 64, 96, tx, ty);
+        else if (!solid(tx + 1, ty - 1)) put(wl, 0, 160, tx, ty);
+        else if (!solid(tx - 1, ty - 1)) put(wl, 64, 160, tx, ty);
       }
       // underground: a touch darker overall
-      g.fillStyle = 'rgba(20, 8, 30, 0.22)';
+      g.fillStyle = 'rgba(20, 8, 30, 0.12)';
       g.fillRect(0, 0, c.width, c.height);
       this.textures.addCanvas(key, c)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
     this.mapObjs.push(this.add.image(0, 0, key).setOrigin(0).setScale(DT / TP).setDepth(-1000));
     // stairs: down (floors 1-2) or the way out after the boss (floor 3); floor 1 also has the exit up
-    this.stairs = this.add.image(f.stairs.x, f.stairs.y, floor < FLOORS ? 'dg-stairs-down' : 'dg-stairs-up').setScale(1).setDepth(-900);
+    // Ninja stairs (TilesetElement, green stone): down at 144,176, up at 144,192; drawn 3x
+    if (!this.textures.exists('na-stairs-down')) {
+      const el = this.textures.get('na-elem').getSourceImage() as HTMLImageElement;
+      for (const [k, sy] of [['na-stairs-down', 176], ['na-stairs-up', 192]] as const) {
+        const cv = document.createElement('canvas'); cv.width = cv.height = 16;
+        cv.getContext('2d')!.drawImage(el, 144, sy, 16, 16, 0, 0, 16, 16);
+        this.textures.addCanvas(k, cv)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
+      }
+    }
+    this.stairs = this.add.image(f.stairs.x, f.stairs.y, floor < FLOORS ? 'na-stairs-down' : 'na-stairs-up').setScale(3).setDepth(-900);
     this.mapObjs.push(this.stairs);
-    if (floor === 1) this.mapObjs.push(this.add.image(f.exit.x, f.exit.y, 'dg-stairs-up').setScale(1).setDepth(-900));
-    this.chests = f.chests.map((c) => this.add.image(c.x, c.y + 8, 'dg-chest-closed').setScale(1.5).setOrigin(0.5, 1).setDepth(c.y));
+    if (floor === 1) this.mapObjs.push(this.add.image(f.exit.x, f.exit.y, 'na-stairs-up').setScale(3).setDepth(-900));
+    this.chests = f.chests.map((c) => this.add.image(c.x, c.y + 8, 'na-chest', 0).setScale(3).setOrigin(0.5, 1).setDepth(c.y));
     this.mapObjs.push(...this.chests);
     // a big floor banner
     const banner = this.add.text(f.start.x, f.start.y - 90, t(floor === FLOORS ? 'dg.floorBoss' : 'dg.floorBanner', { n: floor }), { fontFamily: FONT, fontSize: '34px', color: '#ffe08a', fontStyle: 'bold', stroke: '#3f2631', strokeThickness: 7 })
@@ -274,7 +302,7 @@ export class DungeonScene extends Phaser.Scene {
     const k = Math.min(1, dt * 14);
 
     // ---- chests ----
-    d.opened.forEach((o, i) => { const c = this.chests[i]; if (c && o && c.texture.key !== 'dg-chest-open') c.setTexture('dg-chest-open'); });
+    d.opened.forEach((o, i) => { const c = this.chests[i]; if (c && o && c.frame.name !== '1') c.setFrame(1); });
     // the boss exit glows only once the boss is gone
     const bossAlive = d.enemies.some((e) => e.kind === 2);
     this.stairs.setAlpha(d.floor === FLOORS && bossAlive ? 0.35 : 1);
@@ -284,7 +312,7 @@ export class DungeonScene extends Phaser.Scene {
     for (const c of d.coins) {
       seenC.add(c.id);
       let img = this.coins.get(c.id);
-      if (!img) { img = c.k === 1 ? this.add.image(c.x, c.y, 'dg-potion').setScale(1) : this.add.image(c.x, c.y, 'dg-coin-pile-s').setScale(1); this.coins.set(c.id, img); }
+      if (!img) { img = c.k === 1 ? this.add.sprite(c.x, c.y, 'na-potion').setScale(2.5) : this.add.sprite(c.x, c.y, 'na-coin', 0).setScale(2.4).play('na-coin'); this.coins.set(c.id, img); }
       img.x += (c.x - img.x) * (smooth ? k : 1); img.y += (c.y - 4 - Math.abs(Math.sin(now / 200 + c.id)) * 4 - img.y) * (smooth ? k : 1);
       img.setDepth(c.y - 5);
     }
@@ -353,13 +381,12 @@ export class DungeonScene extends Phaser.Scene {
       else g.img.clearTint();
       this.telegraph(g, e, now);
       // health bar: the boss always (big), other monsters once hurt (small)
-      g.bar!.clear().setDepth(5000);
-      if ((e.kind === 2 || e.hp < e.mx) && dy >= g.y - 40) {
-        const w = e.kind === 2 ? 90 : ENEMY_R[e.kind] * 2 + 4, x = g.x - w / 2, y = g.y - ENEMY_R[e.kind] - (e.kind === 2 ? 22 : 12), hh = e.kind === 2 ? 7 : 4;
-        g.bar!.fillStyle(0x3f2631, 1).fillRect(x - 2, y - 2, w + 4, hh + 4).fillStyle(e.kind === 2 && e.hp < e.mx / 2 ? 0xff3b3b : 0xb3261e, 1).fillRect(x, y, w * Math.min(1, Math.max(0, e.hp) / Math.max(1, e.mx)), hh);
-      }
+      // Ninja mini life bar (LifeBarMiniUnder + Progress): the boss big (5x), others small (2x) once hurt
+      const showBar = (e.kind === 2 || e.hp < e.mx) && dy >= g.y - 40;
+      if (!g.hb) g.hb = this.lifeBar();
+      this.setBar(g.hb, showBar, g.x, g.y - ENEMY_R[e.kind] - (e.kind === 2 ? 24 : 12), e.kind === 2 ? 5 : 2, e.hp / Math.max(1, e.mx), e.kind === 2 && e.hp < e.mx / 2 ? 0xff9a9a : undefined);
     }
-    for (const [id, g] of this.goo) if (!seenE.has(id)) { g.img.destroy(); g.shadow.destroy(); g.bar?.destroy(); g.tele.forEach((t) => t.destroy()); this.goo.delete(id); }
+    for (const [id, g] of this.goo) if (!seenE.has(id)) { g.img.destroy(); g.shadow.destroy(); g.bar?.destroy(); g.hb?.u.destroy(); g.hb?.p.destroy(); g.tele.forEach((t) => t.destroy()); this.goo.delete(id); }
 
     // ---- blobz ----
     this.ringG.clear(); this.auraG.clear();
@@ -412,10 +439,10 @@ export class DungeonScene extends Phaser.Scene {
         .setAlpha(h?.dodge ? 0.45 : h?.inv && !ko ? (Math.floor(now / 90) % 2 ? 0.4 : 1) : 1);
       b.label.setPosition(b.x, b.y + 24).setDepth(b.y + 2);
       b.me.setPosition(b.x, b.y - 50).setDepth(b.y + 3);
-      if (h && !ko && p.id !== this.s.myId) {
-        const w = 36, x = b.x - w / 2, y = b.y - 46, fr = Math.max(0, Math.min(1, h.hp / Math.max(1, h.maxHp)));
-        this.ringG.fillStyle(0x1b1018, 0.9).fillRect(x - 1, y - 1, w + 2, 6).fillStyle(fr <= 0.3 ? 0xff3b3b : 0x6cc644, 1).fillRect(x, y, w * fr, 4);
-      }
+      // friends' health: the Ninja mini life bar (green, red when low)
+      if (!b.hb) b.hb = this.lifeBar();
+      const hfr = h ? h.hp / Math.max(1, h.maxHp) : 1;
+      this.setBar(b.hb, !!h && !ko && p.id !== this.s.myId, b.x, b.y - 46, 2, hfr, hfr <= 0.3 ? undefined : 0x7dff8a);
       if (h && !ko && h.wallT > 0) {
         // the wall's reach on the ground + Art's dome over it (rises, then holds on the last frame)
         const r = specialOf(h.cls, h.weapon).r * heroMods(h).spR;
@@ -434,7 +461,7 @@ export class DungeonScene extends Phaser.Scene {
         else b.fx.spr.setPosition(b.x - Math.cos(b.fx.a) * 12, cy - Math.sin(b.fx.a) * 12).setDepth(b.y - 1);
       }
     }
-    for (const [id, b] of this.heroes) if (!seenP.has(id)) { for (const o of [b.shadow, b.body, b.label, b.weapon, b.stars, b.me]) o.destroy(); b.fx?.spr.destroy(); b.dome?.destroy(); b.weapon2?.destroy(); b.wshadow?.destroy(); this.heroes.delete(id); }
+    for (const [id, b] of this.heroes) if (!seenP.has(id)) { for (const o of [b.shadow, b.body, b.label, b.weapon, b.stars, b.me]) o.destroy(); b.fx?.spr.destroy(); b.dome?.destroy(); b.weapon2?.destroy(); b.wshadow?.destroy(); b.hb?.u.destroy(); b.hb?.p.destroy(); this.heroes.delete(id); }
 
     // ---- stairs: progress ring + "2/3" bubble when someone stands on them ----
     this.bubble.setVisible(false);
@@ -621,6 +648,20 @@ export class DungeonScene extends Phaser.Scene {
       const dd = this.add.circle(x, y, 3, color).setDepth(5000);
       this.tweens.add({ targets: dd, x: x + Math.cos(a) * dist, y: y + Math.sin(a) * dist, alpha: 0, duration: 350, onComplete: () => dd.destroy() });
     }
+  }
+
+  /** A Ninja mini life bar (18x4 art): frame + red progress cropped to the fraction; optional tint (friends green). */
+  private lifeBar(): LifeBar {
+    return { u: this.add.image(0, 0, 'na-lbu').setOrigin(0, 0.5).setDepth(5000), p: this.add.image(0, 0, 'na-lbp').setOrigin(0, 0.5).setDepth(5001) };
+  }
+  private setBar(bar: LifeBar, show: boolean, x: number, y: number, scale: number, frac: number, tint?: number) {
+    bar.u.setVisible(show); bar.p.setVisible(show);
+    if (!show) return;
+    const f = Math.max(0, Math.min(1, frac)), left = x - 9 * scale;
+    bar.u.setPosition(left, y).setScale(scale);
+    // the progress art has a 1 px frame: crop its inside to the fraction, keep the left cap
+    bar.p.setPosition(left, y).setScale(scale).setCrop(0, 0, 1 + Math.round(16 * f), 4);
+    if (tint !== undefined) bar.p.setTint(tint); else bar.p.clearTint();
   }
 
   /** A one-shot Ninja FX at a point (tinted when a colour is given). */
