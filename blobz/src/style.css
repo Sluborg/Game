@@ -398,3 +398,20 @@ button.link .icon { height: 18px; margin-right: 6px; vertical-align: -3px; }
 }
 #btn-rescan { align-self: center; min-width: 200px; }
 #lobby-lan.warn { color: #c0392b; }
+
+/* ---------- team bank + 2x badge (milestone 40), under the clock ---------- */
+#hud-bank, #hud-double {
+  position: absolute; right: max(12px, env(safe-area-inset-right)); display: flex; align-items: center; gap: 6px;
+  background: none; font-weight: 700; font-size: 26px; color: var(--plum); padding: 0 4px;
+  border-style: solid; border-width: 12px; border-image: url('/art/ui/panel.png') 4 fill / 12px stretch;
+  image-rendering: pixelated; filter: drop-shadow(0 6px 0 #3f263140);
+}
+#hud-bank { top: calc(max(14px, env(safe-area-inset-top)) + 70px); }
+#hud-bank .icon { height: 28px; }
+#hud-bank.pop { animation: pop 0.4s ease-out; }
+#hud-double { top: calc(max(14px, env(safe-area-inset-top)) + 132px); border-image-source: url('/art/ui/btn-yellow.png'); border-image-slice: 3 fill; font-size: 22px; }
+#hud-double b { font-size: 26px; color: #d62839; }
+@media (orientation: landscape) and (max-height: 520px) {
+  #hud-bank { top: auto; bottom: max(130px, env(safe-area-inset-bottom)); }
+  #hud-double { top: auto; bottom: max(192px, env(safe-area-inset-bottom)); }
+}
