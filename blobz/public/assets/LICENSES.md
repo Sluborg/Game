@@ -38,3 +38,6 @@ Blobz are drawn in code (`src/blob.ts`) as pixel SVG/canvas: color, eyes, mouth 
 | `art/base/*.png` | Own art (CC0) by `scripts/base_art.py` | Base cottage (3 levels), base buildings (site + finished), build spot marker |
 | `art/dungeon/*.png` | Own art (CC0) by `scripts/dungeon_art.py` (hit flashes are recoloured `art/enemies/goo-*.png`) | Weapons, picker cards, attack icon, entrance and stairs, hearts, XP bar, level badge, KO/revive, slam warning, shockwave, chest |
 | `art/base/cottage-1.png` | Cut from Stefan's ChatGPT loading-screen art (`art/loading.png`) by `scripts/cut_loading_house.py` | Base cottage level 1 |
+| `art/fine/**/*.png` | Own art (CC0) by `scripts/fine_art.py` (fine 2x redraws of own sprites, ground tiles in the Kenney Tiny palette) | Fine-resolution world sprites, fx and ground tiles |
+| Water shore autotiles (proposal, `docs/art-review/variants-water.png`) | Kenney Tiny Battle 1.0 (CC0, vendored above): frames 18-20, 36-38, 54-56 (shore), 37/92 (water), 90/91 (inner corners), 39 (halves for the south inner corners); variant B = Scale2x pass by `scripts/water_variants.py`, variant C = own art in the same palette | Meadow water corner (pending the board pick) |
+| `art/fine/icons/*` hint icons | Own art (CC0) by `scripts/hint_icons.py` | Quest / hint / tutorial icons |

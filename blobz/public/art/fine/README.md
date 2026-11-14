@@ -52,3 +52,21 @@ Same rule: path `art/fine/<old path>`, **half the old setScale**, strips keep fr
 | `tiles/dirt.png` | 2: plain with specks, pebbles | spare: paths / yard (yard is drawn by code today) |
 | `tiles/dungeon-floor.png` | 3: plain, specks, stones | tiny-dungeon 48, 49, 42 (`FLOOR_TILES`) |
 | `tiles/dungeon-wall.png` | 2: bricks, bricks + banner | tiny-dungeon 40 (`WALL_FACE`), 29 (`WALL_DECOR`) |
+
+## Hint / quest icons (Code's batch, `scripts/hint_icons.py`, review `docs/art-review/hint-icons.png`)
+Fine 2x of the 16 px `icons/` style: draw at **half** the scale a 16 px icon would get (16 px at 2 -> these at 1).
+
+| File | Size | Shows |
+|---|---|---|
+| `icons/carry-4.png` | 32x32 | blob carrying 4 stacked items (log, stone, log, berry) |
+| `icons/hit-minus.png` | 32x32 | axe biting a tree, red -1 |
+| `icons/speed.png` | 32x32 | blob with speed lines |
+| `icons/berry-plus.png` | 32x32 | berry bush + green plus |
+| `icons/berry-x2-home.png` | 32x32 | berry + house, gold x2 |
+| `icons/arrow-to-resource.png` | 32x32 | arrow pointing at a tree and a stone |
+| `icons/new-corner.png` | 32x32 | bridge over water + chest |
+| `icons/carry-plus-1.png` | 32x32 | blob carrying a log, green +1 |
+| `icons/regrow-fast.png` | 32x32 | berry bush + fast clock |
+| `icons/quest-home.png` | 40x36 | house with a down arrow |
+| `icons/base-marker.png` | 32x48 | sign on a post with a house; anchor bottom centre (post foot) |
+| `icons/village-badge.png` | 32x32 | gold shield badge with a house (lobby row) |
