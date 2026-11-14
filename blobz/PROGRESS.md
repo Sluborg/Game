@@ -154,3 +154,7 @@
 - Merged `claude/blobz-code` (c543ad8..4b02a2d): Wi-Fi discovery via hashed public IP (STUN srflx, SHA-256, 10 hex) and PeerJS slots `blobz-v2-<hash>-<1..8>`; Joina screen lists "Joina <name> n/5" (full = grey, started = "pågår"); no codes anywhere; "Hittar inga spel. Är ni på samma Wi-Fi?" + "Leta igen".
 - Lead review: conflicts with v020b gem row resolved (kept gem row, dropped HUD code box). 13 tests, build, Code e2e `node e2e/lan-join.cjs <url>` ALL PASSED (uses `?lan=` because the sandbox has no STUN/UDP); screenshots checked.
 - Risk: real STUN path only verifiable on two phones on the same Wi-Fi.
+
+## 2026-11-14 - v022: fine-pixel parts set (Art batch merged)
+- Merged `claude/blobz-art` (baa44b2, 28bc966): 16 eyes, 12 mouths, 21 hats hand-drawn in fine pixels; old indices stable, new appended; headphones/bandana procedural per shape. Review sheet `docs/art-review/parts-sheet.png`.
+- Lead review: 19 tests, build, designer portrait/landscape, in-game close-up, Code e2e ALL PASSED. Open: designer grid cramped in landscape (Code), blush weak on red/pink bodies (Art).
