@@ -47,3 +47,11 @@
   Chest helper marker is now a mini blob instead of the old slime tile.
 - `docs/ART_ORDERS.md`: 7 art orders + one self-contained ChatGPT prompt ("go" / "next").
 - Verified: 9 tests, build, 390x844 + 844x390 screenshots, 3-player run, seams checked at 2x zoom.
+
+## 2026-11-14 - UI kit from ChatGPT (order 10)
+- `scripts/slice_sheet.py`: cuts a transparent art sheet into sprites in reading order and snaps them to
+  their pixel grid (`--native`). Reusable for orders 20-70.
+- 12 UI sprites in `public/art/ui/` wired as CSS 9-slice (`border-image`, pixelated): panels/cards, HUD boxes,
+  orange/blue/yellow buttons with pressed states, tabs, inputs, option tiles, lobby rows, room code, dash
+  button, thumbstick. Old outline recipe stays as fallback.
+- Verified: build, 390x844 + 844x390 screenshots, 3-player run with HUD/lobby/end screens.

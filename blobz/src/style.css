@@ -199,3 +199,61 @@ input:focus { outline: none; box-shadow: var(--o4), inset 0 4px 0 0 #e9dfc9, 0 0
 @media (orientation: portrait) {
   #menu.screen, #lobby.screen { align-items: flex-start; padding-top: max(28px, env(safe-area-inset-top)); background-position: 38% 100%; }
 }
+
+/* ---------- UI kit skin (art/ui/*.png, ChatGPT order 10, snapped to its pixel grid) ----------
+   9-slice via border-image: corners keep their pixels, edges/centre stretch. 1 art pixel = 4 CSS px
+   (3 for small controls). Falls back to the outline recipe above if an image is missing. */
+.card, .hudbox, #hud-score, #hud-time, #hud-code, button.big, .chip, .edit, input, .tab, .opt, .me, #lobby-list li, .code canvas, #dash {
+  border-style: solid; border-color: var(--plum); image-rendering: pixelated;
+}
+.card, #hud-score, #hud-time, #hud-code {
+  box-shadow: none; background: none; border-width: 16px;
+  border-image: url('/art/ui/panel.png') 4 fill / 16px stretch;
+  filter: drop-shadow(0 8px 0 #3f263140);
+}
+.card { padding: 4px 2px; margin: 0; }
+#hud-score { padding: 0 6px 2px; }
+#hud-time, #hud-code { padding: 0 2px; border-width: 12px; border-image-width: 12px; }
+button.big {
+  box-shadow: none; background: none; margin: 0; border-width: 16px; padding: 0 6px 4px; min-height: 64px;
+  border-image: url('/art/ui/btn-orange.png') 4 fill / 16px stretch;
+}
+button.big:active { box-shadow: none; transform: translateY(3px); border-image-source: url('/art/ui/btn-orange-down.png'); }
+button.big.alt { border-image-source: url('/art/ui/btn-blue.png'); }
+button.big.alt:active { border-image-source: url('/art/ui/btn-blue-down.png'); }
+.chip, .edit {
+  box-shadow: none; background: none; margin: 0; padding: 0 4px 2px; border-width: 9px;
+  border-image: url('/art/ui/btn-yellow.png') 3 fill / 9px stretch;
+}
+.chip:active { border-image-source: url('/art/ui/btn-yellow-down.png'); }
+.edit { border-image-source: url('/art/ui/btn-blue.png'); border-image-slice: 4 fill; }
+input {
+  box-shadow: none; background: none; margin: 0; width: 100%; padding: 2px 8px; border-width: 12px;
+  border-image: url('/art/ui/input.png') 4 fill / 12px stretch;
+}
+input:focus { box-shadow: none; filter: drop-shadow(0 0 0 #3fa9f5) drop-shadow(0 0 4px #3fa9f5aa); }
+.tabs { background: none; box-shadow: none; gap: 4px; margin: 0; }
+.tab {
+  background: none; box-shadow: none !important; padding: 0 0 2px; border-width: 9px;
+  border-image: url('/art/ui/tab-off.png') 3 fill / 9px stretch;
+}
+.tab.on { border-image-source: url('/art/ui/tab-on.png'); }
+.opt, .me, #lobby-list li {
+  box-shadow: none; background: none; border-width: 9px;
+  border-image: url('/art/ui/input.png') 4 fill / 9px stretch;
+}
+.opt { padding: 0 0 2px; }
+.opt.on { box-shadow: none; background: none; border-image-source: url('/art/ui/btn-yellow.png'); border-image-slice: 3 fill; }
+.opt.swatch-opt { padding: 0; }
+.me { margin: 0; width: 100%; padding: 0 6px 2px 2px; border-width: 12px; border-image-width: 12px; }
+#lobby-list li { padding: 0 6px; }
+.code canvas { box-shadow: none; background: none; padding: 0 4px 4px; border-width: 12px; border-image: url('/art/ui/btn-blue.png') 4 fill / 12px stretch; }
+#dash {
+  box-shadow: none; background: none; border-width: 16px;
+  border-image: url('/art/ui/btn-orange.png') 4 fill / 16px stretch;
+  filter: drop-shadow(0 6px 0 #3f263140);
+}
+#dash:active { box-shadow: none; border-image-source: url('/art/ui/btn-orange-down.png'); }
+#dash.cd { filter: saturate(0.15) brightness(0.9) drop-shadow(0 6px 0 #3f263140); }
+#stick { border: 0; border-radius: 0; background: url('/art/ui/stick-base.png') center / 100% 100% no-repeat; image-rendering: pixelated; opacity: 0.85; }
+#knob { border-radius: 0; box-shadow: none; background: url('/art/ui/stick-knob.png') center / 100% 100% no-repeat; image-rendering: pixelated; }

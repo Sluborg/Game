@@ -7,7 +7,7 @@ order left-to-right, top-to-bottom), names the files and wires them into the gam
 
 | Order | Status | File | Used for |
 |---|---|---|---|
-| 10 | ordered | `art/ui-kit.png` | Buttons, panels, tabs, input frame |
+| 10 | done | `art/ui/*.png` | Buttons, panels, tabs, input frame, thumbstick (wired as CSS 9-slice) |
 | 20 | ordered | `art/icons.png` | HUD + menu icons (replaces Kenney stand-ins) |
 | 30 | ordered | `art/props.png` | Bigger trees, rocks, bushes, pressure plates, gate |
 | 40 | ordered | `art/totems.png` | Base totems for team power-ups (milestone 40) |
