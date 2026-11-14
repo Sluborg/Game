@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  bossHp, CLASS_HEARTS, SKILLS, dungeonChoice, LOOT_SECONDS, OFFER_SECONDS, skillOf,
   DONE_SECONDS, DT, dsnap, dview, ENEMY_HP, FLOORS, GH, GW, inSwing, isWall, KO_SECONDS, LEVEL_XP, makeFloor, newRun, SLAM_DMG, START_HEARTS,
   stepDungeon, TOUCH_DMG, WEAPON_STATS, type DFx, type DState,
 } from './dungeon';
 import { createState, DUNGEON_ENABLED, ENTRANCE_R, entranceOf, makePuzzles, makeTrees, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
 
+/** Art's skill icons in the repo (vite glob, no node fs types needed). */
+const ART_SKILLS = Object.keys(import.meta.glob('../public/art/dungeon/skills/*.png')).map((k) => k.split('/').pop());
 const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 });
 type B = { id: string; x: number; y: number; vx: number; vy: number; dashT: number; lastDash: number };
 const body = (id: string, x: number, y: number): B => ({ id, x, y, vx: 0, vy: 0, dashT: 0, lastDash: 0 });
@@ -149,19 +152,99 @@ describe('dungeon v1', () => {
     expect(d.heroes.a.hearts).toBe(START_HEARTS);
   });
 
-  it('team XP levels up: alternately +1 heart and +damage', () => {
-    const d = quiet(newRun(8, { a: 'sword', b: 'spear' }));
+  it('team XP level-up: every blob gets 3 cards from its own class; a pick applies, 10 s auto-picks', () => {
+    const d = quiet(newRun(8, { a: 'sword', b: 'staff' }));
     d.xp = LEVEL_XP[0] - 1;
     d.enemies.push({ id: 1, kind: 0, x: 0, y: 0, vx: 0, vy: 0, hp: 0, awake: false, stun: 0, slamT: 9, slam: null });
-    const { fx } = run1(d, [body('a', d.map.start.x, d.map.start.y), body('b', d.map.start.x, d.map.start.y)]);
+    const bs = [body('a', d.map.start.x, d.map.start.y), body('b', d.map.start.x + 40, d.map.start.y)];
+    const { fx } = run1(d, bs);
     expect(d.level).toBe(2);
-    expect(d.heroes.a.maxHearts).toBe(START_HEARTS + 1);
-    expect(fx.some((f) => f.t === 'level' && f.bonus === 'heart')).toBe(true);
-    d.xp = LEVEL_XP[1];
-    d.enemies.push({ id: 2, kind: 0, x: 0, y: 0, vx: 0, vy: 0, hp: 0, awake: false, stun: 0, slamT: 9, slam: null });
-    run1(d, [body('a', d.map.start.x, d.map.start.y)]);
-    expect(d.level).toBe(3);
-    expect(d.dmgBonus).toBe(1);
+    expect(fx.some((f) => f.t === 'level')).toBe(true);
+    expect(d.heroes.a.offer).toHaveLength(3);
+    expect(d.heroes.a.offer.every((id) => skillOf(id)!.cls === 'krigare')).toBe(true);
+    expect(d.heroes.b.offer.every((id) => skillOf(id)!.cls === 'prast')).toBe(true);
+    d.heroes.a.offer = ['krigare-extraheart', 'krigare-power', 'krigare-rage'];
+    dungeonChoice(d, 'a', 'skill:krigare-extraheart');
+    expect(d.heroes.a.skills).toEqual(['krigare-extraheart']);
+    expect(d.heroes.a.maxHearts).toBe(CLASS_HEARTS.krigare + 1);
+    dungeonChoice(d, 'a', 'skill:krigare-power'); // not offered any more: ignored
+    expect(d.heroes.a.skills).toHaveLength(1);
+    run1(d, bs, undefined, OFFER_SECONDS + 0.2);
+    expect(d.heroes.b.skills).toHaveLength(1);
+    expect(d.heroes.b.offer).toHaveLength(0);
+  });
+
+  it('classes: hearts per class; archer shoots in sight only; priest heals and revives; knight wall blocks', () => {
+    const d = quiet(newRun(14, { k: 'sword', p: 'staff', b: 'bow', r: 'shield' }));
+    expect(d.heroes.r.maxHearts).toBe(CLASS_HEARTS.riddare);
+    expect(d.heroes.b.maxHearts).toBe(CLASS_HEARTS.bagskytt);
+    const st = d.map.start;
+    // archer: a goo 150 px away in the open gets an arrow
+    const b = body('b', st.x - 70, st.y);
+    d.enemies.push({ id: 7, kind: 1, x: st.x + 60, y: st.y, vx: 0, vy: 0, hp: 3, awake: true, stun: 99, slamT: 99, slam: null });
+    d.heroes.b.inv = 99;
+    const { fx } = run1(d, [b]);
+    expect(fx.some((f) => f.t === 'shot')).toBe(true);
+    expect(d.enemies[0].hp).toBe(2);
+    d.enemies = [];
+    // priest: special heals a hurt friend and revives a knocked-out one
+    const p = body('p', st.x, st.y), k = body('k', st.x + 40, st.y), r = body('r', st.x - 40, st.y);
+    run1(d, [p, k, r], new Map([['p', 0]]));
+    d.heroes.k.hearts = 2; d.heroes.r.hearts = 0; d.heroes.r.ko = 4; d.heroes.r.kx = r.x; d.heroes.r.ky = r.y;
+    run1(d, [p, k, r], new Map([['p', 1]]));
+    expect(d.heroes.k.hearts).toBe(3);
+    expect(d.heroes.r.ko).toBe(0);
+    // knight: the wall keeps friends inside safe from goo
+    d.heroes.k.inv = 0; d.heroes.k.dodge = 0; d.heroes.r.inv = 0;
+    run1(d, [p, k, r], new Map([['r', 0]]));
+    run1(d, [p, k, r], new Map([['r', 1]]));
+    expect(d.heroes.r.wallT).toBeGreaterThan(2);
+    const before = d.heroes.k.hearts;
+    d.enemies.push({ id: 8, kind: 0, x: k.x + 25, y: k.y, vx: 0, vy: 0, hp: 9, awake: true, stun: 0, slamT: 99, slam: null });
+    d.heroes.k.atkCd = 99; d.heroes.p.atkCd = 99; d.heroes.r.atkCd = 99; d.heroes.k.inv = 0;
+    const r2 = run1(d, [p, k, r]);
+    expect(d.heroes.k.hearts).toBe(before);
+    expect(r2.fx.some((f) => f.t === 'block')).toBe(true);
+  });
+
+  it('loot: a chest starts a roll/pass vote; the highest roll wears the item; potions heal everyone', () => {
+    const d = quiet(newRun(15, { a: 'sword', b: 'bow' }));
+    const c = d.map.chests[0];
+    const bs = [body('a', c.x, c.y), body('b', d.map.start.x, d.map.start.y)];
+    run1(d, bs);
+    expect(d.loot).not.toBeNull();
+    const item = d.loot!.item;
+    dungeonChoice(d, 'a', 'loot:roll');
+    dungeonChoice(d, 'b', 'loot:pass');
+    const { fx } = run1(d, bs);
+    expect(d.heroes.a.item).toBe(item);
+    expect(d.heroes.b.item).toBeNull();
+    expect(fx.some((f) => f.t === 'loot' && f.win === 'a')).toBe(true);
+    // nobody decides: after 10 s nobody gets it
+    d.lootLast = null; d.lootQ.push('ring');
+    run1(d, bs, undefined, LOOT_SECONDS + 0.5);
+    expect(d.heroes.b.item).toBeNull();
+    expect(d.heroes.a.item).toBe(item);
+    // potion: +1 heart for every blob
+    d.heroes.a.hearts = 2; d.heroes.b.hearts = 1;
+    d.coins.push({ id: 99, x: bs[0].x, y: bs[0].y, v: 0, k: 1 });
+    run1(d, bs);
+    expect(d.heroes.a.hearts).toBe(3);
+    expect(d.heroes.b.hearts).toBe(2);
+  });
+
+  it('skills: 6 per class, ids match Art\'s icons', () => {
+    for (const c of ['krigare', 'prast', 'bagskytt', 'riddare'] as const) {
+      const ids = SKILLS.filter((k) => k.cls === c).map((k) => k.id);
+      expect(ids).toHaveLength(6);
+      for (const id of ids) { expect(id.startsWith(c + '-')).toBe(true); expect(ART_SKILLS).toContain(`${id}.png`); }
+    }
+  });
+
+  it('boss HP grows with the team', () => {
+    expect(bossHp(1)).toBe(15);
+    expect(bossHp(3)).toBe(30);
+    expect(bossHp(5)).toBe(45);
   });
 
   it('boss slam is telegraphed, then hurts blobz inside the circle', () => {

@@ -524,3 +524,23 @@ h2, button.big, .tab, .chip, .edit, #score, #hud-time, .me-text b, .lantext b, #
   .lobbycard .mapcard b { font-size: 17px; }
   .lobbycard button.big { min-height: 52px; }
 }
+
+/* Nunito sits higher than the pixel font did: move text down a few px, and keep the 5 designer tabs inside the card */
+button.big { padding: 4px 6px 0; }
+.chip, .edit { padding: 2px 4px 0; }
+.tab { padding: 3px 0 0; }
+.tabs { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.tab { font-size: 14px; min-width: 0; overflow: hidden; letter-spacing: -0.2px; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+/* lobby polish (Stefan v032e): map cards fit, players without a box, "Ny by" is a real button */
+.mappick { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mapcard { min-width: 0; }
+.mapimg { overflow: hidden; }
+.mapimg img { height: 46px; max-width: 32%; object-fit: contain; }
+.mapimg img:nth-child(2) { height: 30px; }
+#lobby-list li { border: 0 !important; border-image: none !important; background: none !important; box-shadow: none !important; padding: 0 4px; line-height: 1; }
+#lobby-list li > span, #lobby-list li { padding-top: 2px; }
+.newvillage { align-self: center; display: inline-flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 900; min-height: 40px; padding: 2px 12px 0; }
+.newvillage img { height: 20px; image-rendering: pixelated; }
+.newvillage { justify-self: center; width: auto; justify-content: center; }

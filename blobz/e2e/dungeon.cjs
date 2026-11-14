@@ -27,17 +27,23 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     // all three: weapon cards on every phone
     await place(host, 2, ent.x, ent.y + 16);
     for (const p of pages) await p.waitForSelector('#weapon-pick:not(.hidden)', { timeout: 6000 });
-    ok(true, 'everyone on the entrance 1.5 s -> weapon cards on all 3 phones');
+    ok(true, 'everyone on the entrance 1.5 s -> class cards on all 3 phones');
+    // Stefan: Krigare -> weapon step -> Svärd; Ada: Präst; Bo: Bågskytt (one weapon each, picked at once)
+    await host.click('.wcard[data-w="krigare"]');
+    await host.waitForSelector('.wcard[data-w="sword"]', { timeout: 3000 });
+    if (shots) { await ada.screenshot({ path: `${shots}/dg-class-portrait.png` }); await host.screenshot({ path: `${shots}/dg-weapon-portrait.png` }); await bo.screenshot({ path: `${shots}/dg-class-landscape.png` }); }
     await host.click('.wcard[data-w="sword"]');
-    await ada.click('.wcard[data-w="hammer"]');
-    if (shots) { await ada.waitForTimeout(300); await ada.screenshot({ path: `${shots}/dg-pick-portrait.png` }); await bo.screenshot({ path: `${shots}/dg-pick-landscape.png` }); }
-    await bo.click('.wcard[data-w="spear"]');
+    await ada.click('.wcard[data-w="prast"]');
+    await bo.click('.wcard[data-w="bagskytt"]');
     for (const p of pages) await p.waitForFunction(() => window.__blobzView.mode === 'dungeon' && !!window.__blobzView.dungeon, null, { timeout: 6000 });
     for (const p of pages) await p.waitForSelector('#hud-dg:not(.hidden)', { timeout: 6000 });
     const ids = await host.evaluate(() => window.__blobz.state.players.map((p) => p.id));
     let d = await dg(bo);
-    ok(d.floor === 1 && d.heroes[ids[0]].weapon === 'sword' && d.heroes[ids[1]].weapon === 'hammer' && d.heroes[ids[2]].weapon === 'spear',
-      'down together: floor 1, weapons sword / hammer / spear on every phone');
+    const hs = ids.map((id) => d.heroes[id]);
+    ok(d.floor === 1 && hs[0].cls === 'krigare' && hs[0].weapon === 'sword' && hs[1].cls === 'prast' && hs[2].cls === 'bagskytt',
+      'down together: Krigare (svärd) / Präst / Bågskytt on every phone');
+    ok(hs[2].maxHearts === 4 && hs[0].maxHearts === 5, 'hearts follow the class (Bågskytt 4, Krigare 5)');
+    ok(d.bossMax === 30, `boss HP scales with 3 players (${d.bossMax})`);
     ok(await bo.isVisible('#attack') && await host.isVisible('#attack'), 'special button shows underground');
 
     // quiet floor around the start: remove goo, keep everyone at the start
@@ -48,33 +54,67 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     ok(true, 'auto-attack: the sword kills a small goo with no button pressed');
     await bo.waitForFunction(() => window.__blobzView.dungeon.gold >= 1, null, { timeout: 5000 });
     ok(true, `coins picked up: team gold ${(await dg(bo)).gold}`);
+    // ranged: Bo's bow shoots a goo 130 px away
+    const k0 = (await dg(bo)).kills;
+    // a floor spot 110-170 px from Bo with a clear line (the start room can be small)
+    await sim(host, (s) => {
+      const p = s.players[2], m = s.dg.map, wall = (x, y) => m.solid[Math.floor(y / 32) * 40 + Math.floor(x / 32)] !== 0;
+      for (let r = 170; r >= 110; r -= 20) for (let a = 0; a < 16; a++) {
+        const x = p.x + Math.cos(a * Math.PI / 8) * r, y = p.y + Math.sin(a * Math.PI / 8) * r;
+        let clear = true;
+        for (let i = 1; i <= 20; i++) if (wall(p.x + (x - p.x) * i / 20, p.y + (y - p.y) * i / 20)) clear = false;
+        if (!clear || [-16, 16].some((o) => wall(x + o, y) || wall(x, y + o))) continue;
+        s.dg.enemies.push({ id: s.dg.nextId++, kind: 0, x, y, vx: 0, vy: 0, hp: 1, awake: true, stun: 9, slamT: 99, slam: null });
+        return;
+      }
+    });
+    await bo.waitForFunction((k) => window.__blobzView.dungeon.kills > k, k0, { timeout: 5000 });
+    ok(true, 'Bågskytt: auto-arrow kills a goo at range');
 
-    // special attack: Ada's hammer slam hits medium goo all around
-    await sim(host, (s) => { s.dg.heroes[s.players[1].id].atkCd = 99; });
-    await gooAt(host, 1, 1, -60, 0);
-    await gooAt(host, 1, 1, 0, 64);
-    if (shots) { await ada.waitForTimeout(300); await ada.screenshot({ path: `${shots}/dg-fight-portrait.png` }); }
+    // Präst special heals a hurt friend
+    await sim(host, (s) => { const h = s.dg.heroes[s.players[0].id]; h.hearts = 2; s.players[0].x = s.players[1].x + 40; s.players[0].y = s.players[1].y; });
     await ada.click('#attack');
-    await ada.waitForFunction((id) => window.__blobzView.dungeon.heroes[id].spCd > 0, ids[1], { timeout: 3000 });
-    const after = await host.evaluate(() => ({ hp: window.__blobz.state.dg.enemies.map((e) => e.hp), kills: window.__blobz.state.dg.kills }));
-    ok(after.kills === 3 || (after.hp.length === 2 && after.hp.every((h) => h < 3)), `hammer slam hits both goo (kills ${after.kills}); cooldown ring runs`);
-    await ada.waitForTimeout(200);
-    if (shots) await ada.screenshot({ path: `${shots}/dg-special-portrait.png` });
-    await sim(host, (s) => { s.dg.heroes[s.players[1].id].atkCd = 0; });
-
-    // spear charge (Bo) and sword spin (Stefan) + Stefan's sidestep: Art's fx sprites show
-    await gooAt(host, 2, 0, 90, 0);
+    await bo.waitForFunction((id) => window.__blobzView.dungeon.heroes[id].hearts > 2, ids[0], { timeout: 4000 });
+    ok(true, 'Präst special (Läkljus) heals Stefan on every phone');
+    await ada.waitForTimeout(120);
+    if (shots) await ada.screenshot({ path: `${shots}/dg-heal-portrait.png` });
+    // Bågskytt volley + Krigare spin
+    await gooAt(host, 2, 1, 90, 30); await gooAt(host, 2, 1, -90, 40);
     await bo.click('#attack');
-    await bo.waitForTimeout(120);
-    if (shots) await bo.screenshot({ path: `${shots}/dg-charge-landscape.png` });
+    await bo.waitForTimeout(150);
+    if (shots) await bo.screenshot({ path: `${shots}/dg-volley-landscape.png` });
     await host.click('#attack');
     await host.click('#dash');
-    await host.waitForTimeout(120);
-    if (shots) await host.screenshot({ path: `${shots}/dg-spin-portrait.png` });
-    const sp = await bo.evaluate((id) => Object.values(window.__blobzView.dungeon.heroes).map((h) => h.spCd > 0), ids);
-    ok(sp.every(Boolean), 'all three specials on cooldown (spin, slam, charge)');
+    const sp = await bo.evaluate(() => Object.values(window.__blobzView.dungeon.heroes).map((h) => h.spCd > 0));
+    ok(sp.every(Boolean), 'all three class specials on cooldown (spin, heal, volley)');
+    await sim(host, (s) => { s.dg.enemies = []; });
 
-    // a mini boss for Bo (spear): telegraphed slam ring shows
+    // level-up: 1 of 3 skill cards on every phone, from each one's own class
+    await sim(host, (s) => { s.dg.xp = 4; });
+    await gooAt(host, 0, 0, 34, 0);
+    for (const p of pages) await p.waitForSelector('#dg-cards:not(.hidden) .skcard', { timeout: 6000 });
+    const offers = (await dg(bo)).heroes;
+    ok(offers[ids[0]].offer.every((x) => x.startsWith('krigare-')) && offers[ids[1]].offer.every((x) => x.startsWith('prast-')) && offers[ids[2]].offer.every((x) => x.startsWith('bagskytt-')),
+      'level 2: 3 cards per phone from the own class pool');
+    if (shots) { await ada.screenshot({ path: `${shots}/dg-skills-portrait.png` }); await bo.screenshot({ path: `${shots}/dg-skills-landscape.png` }); }
+    for (const p of pages) await p.click('#dg-cards .skcard');
+    await bo.waitForFunction((ids) => ids.every((id) => window.__blobzView.dungeon.heroes[id].skills.length === 1), ids, { timeout: 4000 });
+    for (const p of pages) await p.waitForSelector('#dg-cards', { state: 'hidden', timeout: 3000 });
+    ok(true, 'each phone picked a skill card; cards close');
+
+    // rare loot from a chest: roll/pass card on every phone, highest roll wears it
+    await sim(host, (s) => { const c = s.dg.map.chests[0]; const p = s.players[0]; p.x = c.x; p.y = c.y; p.vx = 0; p.vy = 0; });
+    for (const p of pages) await p.waitForSelector('#dg-loot:not(.hidden) #dg-roll', { timeout: 6000 });
+    if (shots) { await ada.screenshot({ path: `${shots}/dg-loot-portrait.png` }); await bo.screenshot({ path: `${shots}/dg-loot-landscape.png` }); }
+    await host.click('#dg-roll'); await ada.click('#dg-pass'); await bo.click('#dg-pass');
+    await bo.waitForFunction((id) => !!window.__blobzView.dungeon.heroes[id].item, ids[0], { timeout: 5000 });
+    ok(true, `loot: Stefan rolled, the others passed -> Stefan wears ${(await dg(bo)).heroes[ids[0]].item}`);
+    await ada.waitForTimeout(400);
+    if (shots) await ada.screenshot({ path: `${shots}/dg-loot-won-portrait.png` });
+    await sim(host, (s) => { s.dg.lootQ = []; s.dg.loot = null; }); // a medium goo may have dropped another item
+    await ada.waitForSelector('#dg-loot', { state: 'hidden', timeout: 5000 });
+
+    // a mini boss for Bo (bow): telegraphed slam ring shows
     await gooAt(host, 2, 2, 150, 0);
     await sim(host, (s) => { const e = s.dg.enemies.find((q) => q.kind === 2); e.slamT = 0.1; });
     await bo.waitForFunction(() => window.__blobzView.dungeon.enemies.some((e) => e.slam), null, { timeout: 4000 });

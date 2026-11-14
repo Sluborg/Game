@@ -42,7 +42,7 @@ shrinking clockwise from 12 o'clock). A code arc scales cleanly to any button si
 ## Entrance and stairs
 | File | Size | Use |
 |---|---|---|
-| `entrance.png` | 48x40 | Dungeon entrance on the meadow: rock mound, cave mouth, steps going down. Anchor bottom centre |
+| `entrance.png` / `entrance-snow.png` | 48x40 | Dungeon entrance on the meadow: rock mound, cave mouth, steps going down. Anchor bottom centre |
 | `stairs-up.png` | 32x32 | Exit stairs up (2x2 Tiny Dungeon tiles), daylight at the top |
 | `stairs-down.png` | 32x32 | Stairs down to the next floor |
 
@@ -77,6 +77,7 @@ All three are head-shaped hoods, so they fit every body shape. Krigare keeps the
 |---|---|---|
 | `gear-staff.png` | raised, wind-down, cast forward, follow-through (swing like the sword) | Präst |
 | `gear-bow.png` | idle, drawing, full draw with arrow, release (fixed, pointing forward) | Bågskytt |
+| `gear-crossbow.png` | loaded, aim (slightly raised), fire (bolt gone), reload — alternative to gear-bow (Stefan: crossbow reads better) | Bågskytt |
 | `gear-shield.png` | resting low, raising, block (in front), hold (shield moves, never rotates) | Riddare |
 | `weapon-sword/hammer/spear.png` | see above | Krigare |
 
@@ -93,3 +94,19 @@ Round badge in the class colour with a cream symbol and plum outline; readable a
 | krigare | rage, knockback, whirlwind, extraheart, lifesteal, power |
 | riddare | block, taunt, armor, charge, stun, guard |
 Ids were proposed to Code 2; if the dungeon code uses other names, Art renames the files.
+
+## Class specials, loot and class fx
+| File | Size | Use |
+|---|---|---|
+| `btn-special-staff.png` | 20x20 | Präst special: heal light (staff + plus) |
+| `btn-special-bow.png` | 20x20 | Bågskytt special: arrow rain (three falling arrows) |
+| `btn-special-shield.png` | 20x20 | Riddare special: shield wall (two shields) |
+| `arrow.png` | 13x5 | Flying arrow, pointing right (rotate in code; red fletching at the back) |
+| `fx-heal.png` | 4 x 40x24 | Green-gold ring growing on the ground + rising plus sparkles; centre (20, 15) on the healer's feet |
+| `fx-wall.png` | 3 x 48x40 | Blue shield dome rising then holding (dithered so blobz inside stay visible); anchor bottom centre |
+| `fx-block.png` | 3 x 16x16 | White-gold spark where a hit lands on a shield |
+| `item-ring/helm/gloves/amulet/cape/stone.png` | 16x16 | Loot (ring with red gem, steel helm, mitten, blue amulet, red cape, purple rune stone) |
+| `potion.png` | 16x16 | Red health flask lying on the ground |
+
+`icon-crossbow.png` (20x20, cream): crossbow icon for buttons, alternative to the bow.
+Class-card style variants for the board: `docs/art-review/class-cards-A.png` (blob in action) and `class-cards-B.png` (big symbol), made by `scripts/class_cards.py`; the chosen variant replaces `card-class-*.png`.
