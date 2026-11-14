@@ -3,7 +3,7 @@
 // Also draws the dungeon entrance on the meadow (dungeonFrame is the one hook GameScene calls).
 import Phaser from 'phaser';
 import { blobCanvas, BODY_CY, clampLook } from './blob';
-import { DT, ENEMY_R, FLOORS, GH, GW, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type Weapon } from './dungeon';
+import { DT, ENEMY_R, FLOORS, GH, GW, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
 /** Weapons without Art's strip yet: a Kenney Tiny Dungeon tile in hand (bow: drawn in code). */
 const WEAPON_TILE: Partial<Record<Weapon, number>> = { staff: 130, shield: 102 };
 import type { Session } from './game';
@@ -15,7 +15,10 @@ const FONT = "'Nunito', sans-serif"; // same as the meadow
 /** Weapon strips (art/dungeon/README.md): frame size + pivot. */
 const WEAPON_FRAME: Partial<Record<Weapon, { w: number; h: number; px: number; py: number }>> = {
   sword: { w: 44, h: 48, px: 16, py: 28 }, hammer: { w: 44, h: 48, px: 16, py: 28 }, spear: { w: 68, h: 48, px: 16, py: 28 },
+  staff: { w: 44, h: 48, px: 16, py: 28 }, bow: { w: 44, h: 48, px: 16, py: 28 }, shield: { w: 44, h: 48, px: 16, py: 28 }, // Art's gear-*.png
 };
+/** Class hats in blob.ts CLASS_HATS (Krigare keeps the skin hat). */
+const CLASS_HAT: Partial<Record<HeroClass, number>> = { prast: 0, bagskytt: 1, riddare: 2 };
 const GOO = ['goo-small', 'goo-medium', 'goo-boss'];
 const GOO_SCALE = [2, 2, 3];
 const WORLD = { w: GW * DT, h: GH * DT };
@@ -71,6 +74,7 @@ export class DungeonScene extends Phaser.Scene {
     for (const n of [...GOO, 'goo-splat']) img('dg-' + n, `art/enemies/${n}.png`);
     for (const n of ['coin-pile-s', 'coin-pile-m']) img('dg-' + n, `art/fx/${n}.png`);
     for (const w of ['sword', 'hammer', 'spear'] as Weapon[]) sheet('dg-weapon-' + w, `art/dungeon/weapon-${w}.png`, WEAPON_FRAME[w]!.w, WEAPON_FRAME[w]!.h);
+    for (const w of ['staff', 'bow', 'shield'] as Weapon[]) sheet('dg-weapon-' + w, `art/dungeon/gear-${w}.png`, 44, 48); // Art's class gear strips
     sheet('dg-ko-stars', 'art/dungeon/ko-stars.png', 20, 9);
     sheet('dg-revive', 'art/dungeon/revive.png', 16, 20);
     sheet('dg-shockwave', 'art/dungeon/shockwave.png', 48, 24);
@@ -240,8 +244,9 @@ export class DungeonScene extends Phaser.Scene {
       const h = d.heroes[p.id];
       const info = infos.get(p.id) ?? { id: p.id, name: '?', color: 0xcccccc, shape: 0, eyes: 0, mouth: 0, hat: 0 };
       const look = clampLook(info);
-      const texKey = `blob-${look.color}-${look.shape}-${look.eyes}-${look.mouth}-${look.hat}`;
-      if (!this.textures.exists(texKey)) this.textures.addCanvas(texKey, blobCanvas(look, 1))!.setFilter(Phaser.Textures.FilterMode.NEAREST);
+      const ch = h ? CLASS_HAT[h.cls] : undefined; // Prästluva / Fjädermössa / Riddarhjälm replace the skin hat underground
+      const texKey = `blob-${look.color}-${look.shape}-${look.eyes}-${look.mouth}-${look.hat}` + (ch !== undefined ? `-c${ch}` : '');
+      if (!this.textures.exists(texKey)) this.textures.addCanvas(texKey, blobCanvas(look, 1, ch))!.setFilter(Phaser.Textures.FilterMode.NEAREST);
       let b = this.heroes.get(p.id);
       const w = h?.weapon ?? 'sword';
       if (!b) {

@@ -94,7 +94,7 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     await gooAt(host, 0, 0, 34, 0);
     for (const p of pages) await p.waitForSelector('#dg-cards:not(.hidden) .skcard', { timeout: 6000 });
     const offers = (await dg(bo)).heroes;
-    ok(offers[ids[0]].offer.every((x) => x.startsWith('k-')) && offers[ids[1]].offer.every((x) => x.startsWith('p-')) && offers[ids[2]].offer.every((x) => x.startsWith('b-')),
+    ok(offers[ids[0]].offer.every((x) => x.startsWith('krigare-')) && offers[ids[1]].offer.every((x) => x.startsWith('prast-')) && offers[ids[2]].offer.every((x) => x.startsWith('bagskytt-')),
       'level 2: 3 cards per phone from the own class pool');
     if (shots) { await ada.screenshot({ path: `${shots}/dg-skills-portrait.png` }); await bo.screenshot({ path: `${shots}/dg-skills-landscape.png` }); }
     for (const p of pages) await p.click('#dg-cards .skcard');

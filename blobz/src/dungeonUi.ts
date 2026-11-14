@@ -55,7 +55,7 @@ function buildCards() {
   const h2 = $('weapon-pick').querySelector('h2');
   if (!pickClass) {
     if (h2) h2.textContent = 'Välj klass';
-    root.replaceChildren(...CLASSES.map((c) => card(c, icon(`art/dungeon/card-${c}.png`, CLASS_TILE[c], 6, 'cardimg'), CLASS_NAMES[c], CLASS_HINT[c], () => {
+    root.replaceChildren(...CLASSES.map((c) => card(c, icon(`art/dungeon/card-class-${c}.png`, CLASS_TILE[c], 6, 'cardimg'), CLASS_NAMES[c], CLASS_HINT[c], () => {
       const ws = CLASS_WEAPONS[c];
       if (ws.length === 1) { myPick = ws[0]; pickClass = c; sendPick(ws[0]); markCards(); return; }
       pickClass = c; buildCards();
@@ -130,8 +130,10 @@ function renderHud(d: DView, myId: string) {
   btn.setAttribute('aria-label', h ? specialOf(h.cls, h.weapon).name : 'Special');
   // Art's icon per weapon special (spin / slam / charge)
   const spIcon = document.getElementById('attack-icon') as HTMLImageElement | null;
-  const src = `art/dungeon/btn-special-${h?.weapon ?? 'sword'}.png`;
-  if (spIcon && !spIcon.src.endsWith(src)) { spIcon.onerror = () => { spIcon.onerror = null; spIcon.src = 'art/dungeon/btn-attack.png'; }; spIcon.src = src; }
+  // Art's icons exist for the Krigare weapons; the other classes use the generic attack icon until theirs arrive
+  const w = h?.weapon ?? 'sword';
+  const src = ['sword', 'hammer', 'spear'].includes(w) ? `art/dungeon/btn-special-${w}.png` : 'art/dungeon/btn-attack.png';
+  if (spIcon && !spIcon.src.endsWith(src)) spIcon.src = src;
   // my loot item next to the gold
   const key = h?.item ?? '';
   const slot = $('dg-item');
@@ -158,7 +160,7 @@ function renderOffer(d: DView, myId: string) {
       const sk = skillOf(id)!;
       const b = document.createElement('button');
       b.className = 'skcard'; b.type = 'button'; b.dataset.s = id;
-      b.append(icon(`art/dungeon/skill-${id}.png`, sk.icon, 3));
+      b.append(icon(`art/dungeon/skills/${id}.png`, sk.icon, 3));
       b.insertAdjacentHTML('beforeend', `<b>${sk.name}</b>`);
       b.onclick = () => { sfx.pick(); sendPick('skill:' + id); b.classList.add('on'); };
       return b;
