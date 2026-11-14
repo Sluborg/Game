@@ -191,3 +191,6 @@
 
 ## 2026-11-14 - v027b: hats rest on the head (Art fix)
 - Drawn hats overlap the head top by at most 2 fine px (`restOnHead`); new test. Ears/bands/hoods/headphones/halo unchanged by design. 41 tests, build.
+
+## 2026-11-14 - v027c: Wi-Fi discovery hotfix (Lead)
+- Stefan: phones on the same Wi-Fi did not find each other. Likely cause: the first STUN srflx was IPv6, unique per phone. Now all srflx candidates are collected briefly; IPv4 wins, else the IPv6 /64 prefix (shared by one Wi-Fi). Two Google STUN servers. Join screen and host lobby show a short "nät XXXX" code so two phones can be compared. 43 tests, lan-join e2e passed. Real-phone check needed.

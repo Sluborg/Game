@@ -111,8 +111,9 @@ let emptyRounds = 0;
 let retryTimer = 0;
 const SEARCHING = 'Letar efter spel på ditt Wi-Fi...';
 const NOTHING = 'Hittar inga spel. Är ni på samma Wi-Fi?';
+let netCode = '';
 function lanStatus(text: string, rescan = false) {
-  $('lan-status').textContent = text;
+  $('lan-status').textContent = netCode ? `${text} (nät ${netCode})` : text;
   $('lan-status').classList.toggle('static', rescan);
   show('btn-rescan', rescan);
 }
@@ -131,6 +132,8 @@ function startScan() {
       retryTimer = window.setTimeout(tryNs, 5000);
       return;
     }
+    netCode = ns.slice(0, 4).toUpperCase();
+    lanStatus(SEARCHING);
     scanner = new Scanner(ns, clampLook);
     scanner.onUpdate = renderRooms;
     scanner.start();
@@ -307,7 +310,8 @@ async function hostGame() {
     if (net.peer.destroyed) return;
     const ns = await lanNamespace();
     const slot = ns ? await net.openSlot(ns) : 0;
-    $('lobby-lan').innerHTML = slot ? LAN_OK : 'Letar efter ditt Wi-Fi... Kompisarna ser inte spelet än.';
+    const code = ns ? ` <span class="netcode">(nät ${ns.slice(0, 4).toUpperCase()})</span>` : '';
+    $('lobby-lan').innerHTML = (slot ? LAN_OK : 'Letar efter ditt Wi-Fi... Kompisarna ser inte spelet än.') + code;
     $('lobby-lan').classList.toggle('warn', !slot);
     if (!slot) setTimeout(() => void advertise(), 5000);
   };
