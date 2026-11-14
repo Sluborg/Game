@@ -13,6 +13,9 @@ ordered from ChatGPT: Art writes the prompt, Lead gives it to Stefan, Art slices
 Flow: Art makes 3 rough variants (SVG/PNG) -> Lead posts them on the board -> Stefan picks -> Art writes the ChatGPT
 prompt from the pick -> Stefan runs it -> Art slices and integrates.
 
+**Queue:** all ChatGPT orders live in `docs/ART_ORDERS.md` (statuses READY/WAITING/DONE, one prompt per order).
+Art keeps it current and pushes it; Lead merges it to the deploy branch right away, because ChatGPT reads it from there.
+
 ## Branches
 | Role | Branch | Pushes to |
 |---|---|---|
