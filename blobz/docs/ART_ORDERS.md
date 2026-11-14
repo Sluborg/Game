@@ -33,12 +33,12 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. All orders below are cancelled.
-ChatGPT has no READY order. New orders only for pieces the pack lacks.**
+ChatGPT works only on N-orders (READY ones). New orders only for pieces the pack lacks.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
 | N-1 | WAITING (game name on the board) | Title header / logo in Ninja Adventure style | `art/logo.png` |
-| N-2 | WAITING (after N-1 is rated 4-5) | Start screen background (portrait + landscape) | `art/title.png` |
+| N-2 | READY | Start screen background (portrait + landscape) | `art/title.png` |
 | N-3 | WAITING (after N-2 is rated 4-5) | Loading screen (portrait + landscape) | `art/loading.png`, `art/loading-landscape.png` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |

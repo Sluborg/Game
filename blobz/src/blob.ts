@@ -166,11 +166,43 @@ export function hatSize(headW: number) { return headW < 8 ? 0 : headW <= 10 ? 1 
 /** Fitted hats follow the head's curve: the hat body is the scalp (head rows above the eyes) plus the outline ring
  *  around it, so its bottom edge hugs the head and wraps a little down the sides; the decoration goes on top. */
 export const FITTED = ['Keps', 'Krona', 'Mössa', 'Trollkarl'];
+/** A band of even thickness along the head's top outline: the outline ring above `yLim` plus the head pixels within
+ *  `depth` steps of it. `line` = the next layer in: the hat's bottom border, which steps down with the head's curve. */
+function headBand(L: BodyLayout, depth: number, yLim: number): { body: Set<number>; line: Set<number> } {
+  const dist = new Map<number, number>();
+  let front = [...outlineOf(L.mask)];
+  for (const k of front) dist.set(k, 0);
+  for (let d = 1; front.length && d <= depth + 1; d++) {
+    const next: number[] = [];
+    for (const k of front) {
+      const x = k % GRID_W, y = Math.floor(k / GRID_W);
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const n = key(x + dx, y + dy);
+        if (L.mask.has(n) && !dist.has(n)) { dist.set(n, d); next.push(n); }
+      }
+    }
+    front = next;
+  }
+  const body = new Set<number>(), line = new Set<number>();
+  for (const [k, d] of dist) {
+    const y = Math.floor(k / GRID_W);
+    if (y > yLim) continue;
+    if (d <= depth) body.add(k); else if (L.mask.has(k)) line.add(k);
+  }
+  // close the band's ends: the head pixel right under its lowest pixels on each side
+  for (const k of body) {
+    const below = k + GRID_W;
+    if (Math.floor(k / GRID_W) === yLim && L.mask.has(below) && !body.has(below)) line.add(below);
+  }
+  for (const k of line) if (Math.floor(k / GRID_W) > L.eye[1] - 2) line.delete(k); // never touch the row above the eyes' gap
+  return { body, line };
+}
+
 function fittedHat(name: string, L: BodyLayout, size: number): { px: Px; line: Set<number> } {
-  const depth = Math.max(0, Math.min(2, L.eye[1] - L.top - 2)); // scalp rows covered; leaves >= 1 row above the eyes
-  const ring = outlineOf(L.mask);
-  const body = new Set<number>();
-  for (const k of [...L.mask, ...ring]) if (Math.floor(k / GRID_W) < L.top + depth) body.add(k);
+  // the hat band follows the head's curve; it stays >= 1 free row above the eyes
+  const yLim = Math.max(L.top - 1, Math.min(L.earY, L.eye[1] - 3)); // a very short head (Platt): the outline row only
+  const band = headBand(L, 1, yLim);
+  const body = band.body;
   const xs = [...body].map((k) => k % GRID_W), x0 = Math.min(...xs), x1 = Math.max(...xs);
   const col = { Keps: ['R', 'r'], Krona: ['Y', 'y'], Mössa: ['B', 'b'], Trollkarl: ['V', 'v'] }[name]!;
   const px: Px = new Map();
@@ -181,8 +213,8 @@ function fittedHat(name: string, L: BodyLayout, size: number): { px: Px; line: S
   if (name === 'Keps') { // rounded crown above the scalp + a bill sticking out toward the face (right)
     const w = x1 - x0 + 1;
     for (let x = x0 + 2; x <= x1 - 2; x++) at(x, topY - 1, x > x0 + (w * 2) / 3 ? 'r' : 'R');
-    const billY = topY + depth, bx = x1;
-    for (let i = 1; i <= 2 + size; i++) at(bx + i, billY - (depth ? 1 : 0), 'r');
+    const billY = Math.max(...[...body].map((k) => Math.floor(k / GRID_W))), bx = Math.max(...[...body].filter((k) => Math.floor(k / GRID_W) === billY).map((k) => k % GRID_W));
+    for (let i = 1; i <= 2 + size; i++) at(bx + i, billY, 'r'); // the bill leaves the band's lowest front pixel
   } else if (name === 'Mössa') { // knit band + pompom
     for (let x = x0 + 2; x <= x1 - 2; x++) at(x, topY - 1, 'B');
     at(cx, topY - 2, 'W'); at(cx + 1, topY - 2, 'W');
@@ -196,10 +228,7 @@ function fittedHat(name: string, L: BodyLayout, size: number): { px: Px; line: S
       for (let x = cx - half + (j > h - 2 ? 1 : 0); x <= cx + half + (j > h - 2 ? 1 : 0); x++) at(x, topY - j, x > cx ? 'v' : 'V');
     }
   }
-  // the dividing line between hat and head: the head row right under the scalp
-  const line = new Set<number>();
-  for (const k of L.mask) if (Math.floor(k / GRID_W) === L.top + depth && depth > 0) line.add(k);
-  return { px, line };
+  return { px, line: band.line };
 }
 
 // ---------------------------------------------------------------- look direction (compat + new)
@@ -258,11 +287,12 @@ export function blobGrid(look: BlobLook, classHat?: number, face?: Face, frame =
   for (const [x, y] of [[gx, gy], [gx + 1, gy], [gx, gy + 1]]) if (mask.has(key(x, y))) px.set(key(x, y), white);
   // class hoods / helmets wrap the head above the eyes
   if (classHat !== undefined) {
-    const hood = new Set<number>();
-    for (const k of L.mask) if (Math.floor(k / GRID_W) < L.eye[1] - 1) hood.add(k);
+    const band = headBand(L, 2, Math.max(L.top - 1, L.eye[1] - 3)); // hood / helmet: a thicker band that follows the head's curve
+    const hood = band.body;
     const fill = classHat === 0 ? PAL.C : classHat === 1 ? PAL.G : PAL.T;
     const sh = classHat === 0 ? '#e2cfb2' : classHat === 1 ? PAL.g : PAL.t;
-    for (const k of outlineOf(hood)) if (!L.mask.has(k) || Math.floor(k / GRID_W) === L.eye[1] - 1) px.set(k, INK);
+    for (const k of outlineOf(hood)) if (!L.mask.has(k)) px.set(k, INK);
+    for (const k of band.line) px.set(k, INK);
     for (const k of hood) { const x = k % GRID_W; px.set(k, x > 10 ? sh : fill); }
     const top = L.top;
     if (classHat === 0) for (const [dx, dy] of [[0, 1], [-1, 2], [0, 2], [1, 2], [0, 3]]) px.set(key(FACE_X + dx, top + dy), PAL.R); // red cross
