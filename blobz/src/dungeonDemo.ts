@@ -1,12 +1,13 @@
 // Ninja Adventure monster demo (Code 2), opened with ?demo=monsters or ?dgdemo. Standalone: not wired into the dungeon.
-// Top-down like the real dungeon: one room, the blob in the middle, six Ninja monsters around it at different angles.
-// They attack in turns (then the Giant Slime drops in from above): telegraph -> dash or shot -> the blob sidesteps
-// across the line -> glides in and hits back -> every second hit the monster dies in a smoke puff and returns.
-// Every effect is a Ninja FX sprite (code draws only a tint flash and the blob): dash wind-up = aura + sparks and red
-// chevrons along the path; shot = rune at the mouth, spark dots along the aim, ring on the target, Ninja projectile +
-// elemental impact; boss = growing red rune on the landing spot, thunder, then rock spikes + rocks + dust. 3x, pixelArt.
+// Top-down like the real dungeon: one room, the blobz v2 test blob in the middle, six Ninja monsters around it.
+// They attack in turns (then the Giant Slime): telegraph -> dash or shot -> the blob sidesteps across the line ->
+// glides in and hits back (star spark + slash + knockback + shake + hit-stop) -> every second hit the monster dies.
+// Telegraphs share one language: chevrons along the attack line (dash red; shot in the shot's colour, marching),
+// plus the charging shot swelling at the mouth and a spinning rune on the target; the boss crouches, leaps out of
+// view and red chevrons close in on a growing red rune where it will crash. Only Ninja FX sprites; code draws only
+// the tint flash. Art at 3x, pixelArt, files from docs/ART_MAP.md.
 import Phaser from 'phaser';
-import { blobCanvas, BODY_CY, clampLook, COLORS, FACE_DIRS, faceIndex } from './blob';
+import { blobCanvas, BLOB_FRAMES, BODY_CY, clampLook, COLORS } from './blob';
 
 const NA = 'assets/ninja-adventure/';
 const SCALE = 3;
@@ -24,6 +25,8 @@ const FX: [string, string, number, number, number, boolean][] = [
   ['fx-ring', 'FX/Magic/Circle/SpriteSheetOrange.png', 32, 32, 10, false],
   ['fx-dot', 'FX/Particle/Spark.png', 10, 8, 12, true],
   ['fx-thunder', 'FX/Elemental/Thunder/SpriteSheet.png', 20, 28, 16, false],
+  ['fx-star', 'FX/Magic/Circle/SpriteSheetSpark.png', 32, 32, 20, false],
+  ['fx-boost', 'FX/Magic/Boost/SpriteSheet.png', 53, 35, 14, true],
   ['p-plant', 'FX/Projectile/PlantSpike.png', 24, 20, 12, true],
   ['p-ball', 'FX/Projectile/BigEnergyBall.png', 24, 24, 12, true],
   ['p-fire', 'FX/Projectile/Fireball.png', 16, 16, 12, true],
@@ -36,22 +39,22 @@ const FX: [string, string, number, number, number, boolean][] = [
 ];
 
 type Kind = 'dash' | 'shot';
-interface Mon { key: string; file: string; name: string; kind: Kind; ang: number; shot?: string; hit?: string }
+interface Mon { key: string; file: string; name: string; kind: Kind; ang: number; shot?: string; hit?: string; col?: number }
 // spread around the blob (deg, screen y down): diagonals above, sides, diagonals below; the boss drops in from above
 const MONS: Mon[] = [
   { key: 'bat', file: 'Actor/Monster/BlueBat/SpriteSheet.png', name: 'Bat', kind: 'dash', ang: -140 },
-  { key: 'octopus', file: 'Actor/Monster/Octopus/SpriteSheet.png', name: 'Octopus', kind: 'shot', ang: 65, shot: 'p-ball', hit: 'i-water' },
+  { key: 'octopus', file: 'Actor/Monster/Octopus/SpriteSheet.png', name: 'Octopus', kind: 'shot', ang: 65, shot: 'p-ball', hit: 'i-water', col: 0x6fe3ff },
   { key: 'slime3', file: 'Actor/Monster/Slime3/Slime3.png', name: 'Slime', kind: 'dash', ang: 10 },
-  { key: 'eye', file: 'Actor/Monster/Eye/Eye.png', name: 'Eye', kind: 'shot', ang: -40, shot: 'p-fire', hit: 'i-flam' },
+  { key: 'eye', file: 'Actor/Monster/Eye/Eye.png', name: 'Eye', kind: 'shot', ang: -40, shot: 'p-fire', hit: 'i-flam', col: 0xffa040 },
   { key: 'skull', file: 'Actor/Monster/Skull/SpriteSheet.png', name: 'Skull', kind: 'dash', ang: 115 },
-  { key: 'slime2', file: 'Actor/Monster/Slime2/Slime2.png', name: 'Spitter', kind: 'shot', ang: 170, shot: 'p-plant', hit: 'i-plant' },
+  { key: 'slime2', file: 'Actor/Monster/Slime2/Slime2.png', name: 'Spitter', kind: 'shot', ang: 170, shot: 'p-plant', hit: 'i-plant', col: 0x9dff5a },
 ];
 const DIRS = ['down', 'up', 'left', 'right'] as const;
 /** sheet column for a facing: 0 down, 1 up, 2 left, 3 right */
 const facing = (dx: number, dy: number) => (Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 2 : 3) : dy < 0 ? 1 : 0);
 
 const T = { warn: 650, attack: 380, back: 500, gap: 350 };
-const BLOB_SCALE = 1.45; // same as the dungeon
+const BLOB_SCALE = 3; // blobz v2, same as the meadow and the dungeon
 
 class DemoScene extends Phaser.Scene {
   private objs: Phaser.GameObjects.GameObject[] = [];
@@ -77,9 +80,9 @@ class DemoScene extends Phaser.Scene {
     a.create({ key: 'boss-jump', frames: a.generateFrameNumbers('boss-jump', {}), frameRate: 16 });
     a.create({ key: 'boss-hit', frames: a.generateFrameNumbers('boss-hit', {}), frameRate: 14 });
     for (const [k, , , , fps, loop] of FX) a.create({ key: k, frames: a.generateFrameNumbers(k, {}), frameRate: fps, repeat: loop ? -1 : 0 });
-    // the current blob (Code wires blobz v2 separately), one texture per face direction
-    const look = clampLook({ color: COLORS[1], shape: 0, eyes: 0, mouth: 1, hat: 1 });
-    FACE_DIRS.forEach((fd, i) => this.textures.addCanvas(`demo-blob-f${i}`, blobCanvas(look, 1, undefined, fd))!.setFilter(Phaser.Textures.FilterMode.NEAREST));
+    // blobz v2 test blob: frame 0 idle, 1 glide; mirrored (flipX) when facing left
+    const look = clampLook({ color: COLORS[1], shape: 0, eyes: 0, mouth: 0, hat: 2 });
+    for (let f = 0; f < BLOB_FRAMES; f++) this.textures.addCanvas(`demo-blob-${f}`, blobCanvas(look, 1, undefined, undefined, f))!.setFilter(Phaser.Textures.FilterMode.NEAREST);
     this.layout();
     this.scale.on('resize', () => this.layout());
   }
@@ -112,7 +115,7 @@ class DemoScene extends Phaser.Scene {
     const { ox, oy } = this.bakeRoom(W, H);
     this.objs.push(this.add.image(ox, oy, 'room').setOrigin(0));
     this.cx = W / 2; this.cy = H / 2 + (W > H ? 30 : 40);
-    this.blob = this.add.image(this.cx, this.cy, 'demo-blob-f0').setOrigin(0.5, BODY_CY).setScale(BLOB_SCALE).setDepth(3);
+    this.blob = this.add.image(this.cx, this.cy, 'demo-blob-0').setOrigin(0.5, BODY_CY).setScale(BLOB_SCALE).setDepth(3);
     this.objs.push(this.blob);
     this.cap = this.add.text(W / 2, H - TILE - 30, '', { fontFamily: 'Fredoka, sans-serif', fontSize: '18px', color: '#ffe9a8', stroke: '#000', strokeThickness: 4 }).setOrigin(0.5, 0).setDepth(9);
     this.objs.push(this.cap);
@@ -141,10 +144,33 @@ class DemoScene extends Phaser.Scene {
 
   private later(ms: number, fn: () => void) { this.timers.push(this.time.delayedCall(ms, fn)); }
 
-  /** blob eyes look at a point */
+  /** the blob turns toward a point (blobz v2 only mirrors left/right) */
   private look(x: number, y: number) {
-    const i = faceIndex((x - this.blob.x) / 100, (y - this.blob.y) / 100, 0.1);
-    this.blob.setTexture(`demo-blob-f${i}`);
+    if (Math.abs(x - this.blob.x) > 4) this.blob.setFlipX(x < this.blob.x);
+  }
+
+  /** the blob glides: glide frame + facing the way it moves, idle frame when it stops */
+  private glide(x: number, y: number, duration: number, ease = 'Sine.easeInOut', done?: () => void) {
+    this.look(x, y);
+    this.blob.setTexture('demo-blob-1');
+    this.tweens.add({ targets: this.blob, x, y, duration, ease, onComplete: () => { this.blob.setTexture('demo-blob-0'); done?.(); } });
+  }
+
+  /** hit-stop: freeze tweens, animations and timers for a few frames so a hit lands with weight */
+  private hitStop(ms: number) {
+    this.tweens.pauseAll(); this.anims.pauseAll(); this.time.paused = true;
+    window.setTimeout(() => { if (!this.sys.isActive()) return; this.tweens.resumeAll(); this.anims.resumeAll(); this.time.paused = false; }, ms);
+  }
+
+  /** a punchy hit on a monster: big star spark + slash + knockback + white flash + small shake + hit-stop */
+  private punch(target: Phaser.GameObjects.Sprite, fromX: number, fromY: number, big = 1) {
+    const ang = Math.atan2(target.y - fromY, target.x - fromX), deg = (ang * 180) / Math.PI;
+    this.fx('fx-star', target.x, target.y - 4, 3 * big, 7);
+    this.fx('fx-arc', (fromX + target.x) / 2, (fromY + target.y) / 2, 2.8 * big, 6, deg);
+    this.flash(target, 2, 70, 0xffffff);
+    this.tweens.add({ targets: target, x: target.x + Math.cos(ang) * 18 * big, y: target.y + Math.sin(ang) * 18 * big, duration: 90, yoyo: true, ease: 'Quad.easeOut' });
+    this.cameras.main.shake(110, 0.004 * big);
+    this.hitStop(70 * big);
   }
 
   /** subtle tint flash (the only code-made effect) */
@@ -174,16 +200,12 @@ class DemoScene extends Phaser.Scene {
   /** the blob sidesteps across the attack line, then glides back and hits the attacker with a Ninja slash */
   private dodgeAndHit(ux: number, uy: number, side: number, tx: number, ty: number, target: Phaser.GameObjects.Sprite, after: () => void, extra = 0) {
     const sx = this.cx - uy * side * 62, sy = this.cy + ux * side * 62;
-    this.later(T.warn - 120, () => this.tweens.add({ targets: this.blob, x: sx, y: sy, duration: 160, ease: 'Quad.easeOut' }));
+    this.later(T.warn - 120, () => this.glide(sx, sy, 160, 'Quad.easeOut'));
     this.later(T.warn + T.attack + T.back + extra, () => {
       const hx = tx - ux * 46, hy = ty - uy * 46;
-      this.tweens.add({ targets: this.blob, x: hx, y: hy, duration: 240, ease: 'Sine.easeInOut' });
-      this.later(220, () => {
-        this.fx('fx-arc', (hx + tx) / 2, (hy + ty) / 2, 2.4, 6, (Math.atan2(ty - hy, tx - hx) * 180) / Math.PI);
-        this.flash(target, 2, 70, 0xffffff);
-        this.tweens.add({ targets: target, x: target.x + ux * 10, y: target.y + uy * 10, duration: 110, yoyo: true });
-      });
-      this.later(520, () => this.tweens.add({ targets: this.blob, x: this.cx, y: this.cy, duration: 300, ease: 'Sine.easeInOut', onComplete: () => this.later(T.gap, after) }));
+      this.glide(hx, hy, 240);
+      this.later(230, () => { this.look(tx, ty); this.punch(target, hx, hy); });
+      this.later(560, () => this.glide(this.cx, this.cy, 300, 'Sine.easeInOut', () => this.later(T.gap, after)));
     });
   }
 
@@ -211,12 +233,27 @@ class DemoScene extends Phaser.Scene {
       }
       this.flash(s, 3, T.warn / 6);
     } else {
-      // charge: a rune at the mouth, spark dots run along the aim line, a ring on the target
-      this.hold('fx-rune', x + ux * 22, y + uy * 22, T.warn, 1.6, 4);
-      const n = Math.floor((L - 50) / 26);
-      for (let k = 1; k <= n; k++) this.later((k - 1) * 40, () => this.hold('fx-dot', x + ux * (30 + k * 26), y + uy * (30 + k * 26), T.warn - (k - 1) * 40, 2.4, 1, 0.9, deg));
-      this.hold('fx-ring', this.cx, this.cy, T.warn, 1.8, 1, 0.9);
-      this.flash(s, 3, T.warn / 6, 0xfff0a0);
+      // charge: the shot itself swells at the mouth with sparkles, chevrons in the shot's colour march along the
+      // line toward the blob (same language as the dash), and a spinning rune in that colour marks the target
+      const col = m.col ?? 0xffffff;
+      this.tweens.add({ targets: s, x: x - ux * 6, y: y - uy * 6, duration: T.warn * 0.8, ease: 'Quad.easeOut' });
+      const orb = this.add.sprite(x + ux * 26, y + uy * 26, m.shot!).play(m.shot!).setAngle(deg).setScale(0.3).setDepth(4);
+      this.objs.push(orb);
+      this.tweens.add({ targets: orb, scale: 2.6, duration: T.warn * 0.85, ease: 'Back.easeOut' });
+      this.later(T.warn, () => orb.destroy());
+      this.hold('fx-boost', x, y - 8, T.warn, 1.3, 4);
+      const n = Math.floor((L - 20) / 30);
+      for (let k = 1; k <= n; k++) {
+        this.later((k - 1) * ((T.warn * 0.45) / n), () => {
+          const a = this.add.sprite(x + ux * (20 + k * 30), y + uy * (20 + k * 30), 'fx-thunder', 2).setScale(1.3).setAngle(deg).setTint(col).setDepth(1);
+          this.objs.push(a);
+          this.tweens.add({ targets: a, alpha: 0.35, duration: 150, yoyo: true, repeat: -1, delay: k * 50 });
+          this.later(T.warn - (k - 1) * ((T.warn * 0.45) / n), () => a.destroy());
+        });
+      }
+      const mark = this.hold('fx-rune', this.cx, this.cy + 6, T.warn, 2.2, 1, 0.95).setTint(col);
+      this.tweens.add({ targets: mark, angle: 180, duration: T.warn });
+      this.flash(s, 3, T.warn / 6, col);
     }
     this.later(T.warn, () => {
       s.setScale(SCALE).anims.resume();
@@ -227,18 +264,33 @@ class DemoScene extends Phaser.Scene {
         this.later(T.attack - 60, () => this.fx('fx-dust', ex, ey + 18, 2.4));
         this.later(T.attack + 40, () => this.tweens.add({ targets: s, x, y, duration: T.back, ease: 'Sine.easeInOut' }));
       } else {
-        const p = this.add.sprite(x + ux * 20, y + uy * 20, m.shot!).setScale(2.4).setAngle(deg).play(m.shot!).setDepth(4);
+        const p = this.add.sprite(x + ux * 26, y + uy * 26, m.shot!).setScale(2.6).setAngle(deg).play(m.shot!).setDepth(4);
         this.objs.push(p);
-        this.tweens.add({ targets: p, x: this.cx + ux * 10, y: this.cy + uy * 10, duration: T.attack * 1.3, onComplete: () => { this.fx(m.hit!, p.x, p.y - 6, 2.2); p.destroy(); } });
+        this.cameras.main.shake(60, 0.002);
+        let tr = 0;
+        this.tweens.add({
+          targets: p, x: this.cx + ux * 10, y: this.cy + uy * 10, duration: T.attack * 1.2, ease: 'Quad.easeIn',
+          onUpdate: () => {
+            if (++tr % 3) return; // a short trail of sparks in the shot's colour that fade out
+            const d = this.add.sprite(p.x, p.y, 'fx-dot').play('fx-dot').setScale(2.2).setDepth(3).setAngle(deg).setTint(m.col ?? 0xffffff);
+            this.objs.push(d);
+            this.tweens.add({ targets: d, alpha: 0, scale: 1, duration: 260, onComplete: () => d.destroy() });
+          },
+          onComplete: () => { this.fx(m.hit!, p.x, p.y - 6, 2.8); this.cameras.main.shake(90, 0.003); p.destroy(); },
+        });
       }
     });
     this.later(T.warn + T.attack + T.back, () => this.look(x, y));
     this.dodgeAndHit(ux, uy, side, x, y, s, () => {
       // every second hit the monster dies in a Ninja smoke puff and comes back
       if (++o.hits % 2 === 0) {
-        this.fx('fx-smoke', s.x, s.y);
-        s.setAlpha(0);
-        this.later(1600, () => this.tweens.add({ targets: s, alpha: 1, duration: 300 }));
+        this.fx('i-boom', s.x, s.y, 2, 6);
+        this.fx('fx-smoke', s.x, s.y, 4, 7);
+        this.fx('fx-star', s.x, s.y, 4, 7);
+        this.cameras.main.shake(140, 0.006);
+        this.hitStop(110);
+        this.tweens.add({ targets: s, scale: SCALE * 1.4, alpha: 0, duration: 140 });
+        this.later(1600, () => { s.setScale(SCALE); this.tweens.add({ targets: s, alpha: 1, duration: 300 }); });
       }
       after();
     });
@@ -247,42 +299,54 @@ class DemoScene extends Phaser.Scene {
   private bossTurn(s: Phaser.GameObjects.Sprite, side: number, after: () => void) {
     this.cap.setText('Giant Slime: jump slam');
     const bs = s.scaleX, hx = s.x, hy = s.y;
-    // it lands just beside the blob (the blob is in the ring and has to step out)
+    // it lands just beside the blob (the blob stands in the marked zone and has to get out)
     const tx = this.cx + side * 20, ty = this.cy - 6, R = 26 * bs;
     this.look(hx, hy);
-    // telegraph (0.9 s): a red rune circle grows on the landing spot, thunder over the boss
-    const warn = 900;
-    const rune = this.add.sprite(tx, ty + 8, 'fx-rune').play('fx-rune').setTint(0xff6050).setDepth(1).setScale(0.6).setAlpha(0.95);
+    const warn = 1000;
+    // crouch + thunder: it is about to jump
+    this.tweens.add({ targets: s, scaleX: bs * 1.15, scaleY: bs * 0.8, duration: 260, yoyo: true, ease: 'Quad.easeOut' });
+    this.fx('fx-thunder', hx - 30, hy - 40, bs * 0.8, 4);
+    this.later(160, () => this.fx('fx-thunder', hx + 30, hy - 40, bs * 0.8, 4));
+    this.flash(s, 2, 90);
+    // it leaps out of view ...
+    this.later(330, () => {
+      s.play('boss-jump');
+      this.fx('fx-dust', hx, hy + 24, bs * 1.4, 2);
+      this.tweens.add({ targets: s, y: -160, scale: bs * 1.3, duration: 320, ease: 'Quad.easeIn' });
+    });
+    // ... and the landing zone lights up: a red rune grows, red chevrons close in from all sides
+    const rune = this.add.sprite(tx, ty + 8, 'fx-rune').play('fx-rune').setTint(0xff4030).setDepth(1).setScale(0.6).setAlpha(0.95);
     this.objs.push(rune);
-    this.tweens.add({ targets: rune, scale: (R * 2.2) / 32, duration: warn, ease: 'Sine.easeOut' });
-    this.later(80, () => this.fx('fx-thunder', hx - 30, hy - 40, bs * 0.8, 4));
-    this.later(380, () => this.fx('fx-thunder', hx + 30, hy - 40, bs * 0.8, 4));
-    this.flash(s, 4, warn / 8);
-    this.later(warn - 260, () => this.tweens.add({ targets: this.blob, x: tx - side * (R + 44), y: this.cy + 30, duration: 180 }));
-    this.later(warn - 300, () => {
-      s.play('boss-jump');
-      this.tweens.add({ targets: s, x: tx, duration: 600, ease: 'Sine.easeInOut' });
-      this.tweens.add({ targets: s, y: Math.min(hy, ty) - 60, duration: 280, ease: 'Quad.easeOut', onComplete: () => this.tweens.add({ targets: s, y: ty, duration: 320, ease: 'Quad.easeIn' }) });
-    });
-    this.later(warn + 330, () => {
-      rune.destroy();
-      for (const [ox, oy] of [[-R * 0.8, 6], [R * 0.8, 6], [0, R * 0.55]]) this.fx('i-spike', tx + ox, ty + oy - 20, bs * 0.9, 2);
-      this.fx('i-rock', tx, ty + 10, bs * 1.4, 4);
-      this.fx('fx-dust', tx, ty + 30, bs * 1.6, 2);
-      this.cameras.main.shake(140, 0.006);
-    });
-    this.later(warn + 800, () => {
+    this.tweens.add({ targets: rune, scale: (R * 2.6) / 32, angle: 120, duration: warn, ease: 'Sine.easeOut' });
+    const chev: Phaser.GameObjects.Sprite[] = [];
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * Math.PI * 2, c = this.add.sprite(tx + Math.cos(a) * R * 2, ty + 8 + Math.sin(a) * R * 1.4, 'fx-thunder', 2)
+        .setScale(1.5).setAngle((a * 180) / Math.PI + 180).setTint(0xff4030).setDepth(1).setAlpha(0);
+      this.objs.push(c); chev.push(c);
+      this.tweens.add({ targets: c, alpha: 1, x: tx + Math.cos(a) * R * 1.25, y: ty + 8 + Math.sin(a) * R * 0.9, duration: warn * 0.8, delay: 120, ease: 'Sine.easeIn' });
+    }
+    this.later(warn - 240, () => this.glide(tx - side * (R + 52), this.cy + 30, 190, 'Quad.easeOut'));
+    // the crash: it falls onto the zone, rock spikes burst out, big shake + hit-stop
+    this.later(warn - 200, () => { s.setPosition(tx, -160).setScale(bs * 1.3); this.tweens.add({ targets: s, y: ty, scale: bs, duration: 200, ease: 'Quad.easeIn' }); });
+    this.later(warn, () => {
+      rune.destroy(); chev.forEach((c) => c.destroy());
       s.play('boss-idle');
-      this.look(tx, ty);
-      const bx = this.blob.x, by = this.blob.y;
-      this.fx('fx-arc', (bx + tx) / 2, (by + ty) / 2, bs * 1.2, 6, (Math.atan2(ty - by, tx - bx) * 180) / Math.PI);
-      this.later(60, () => s.play('boss-hit').once('animationcomplete', () => s.play('boss-idle')));
-      this.flash(s, 2, 80, 0xffffff);
+      for (const [ox, oy] of [[-R, 4], [R, 4], [-R * 0.5, R * 0.6], [R * 0.5, R * 0.6], [0, -R * 0.4]]) this.fx('i-spike', tx + ox, ty + oy - 20, bs * 0.9, 2);
+      this.fx('i-rock', tx, ty + 10, bs * 1.6, 4);
+      this.fx('fx-dust', tx, ty + 30, bs * 2, 2);
+      this.cameras.main.shake(280, 0.014);
+      this.hitStop(110);
     });
-    this.later(warn + 1400, () => {
-      this.tweens.add({ targets: this.blob, x: this.cx, y: this.cy, duration: 400, ease: 'Sine.easeInOut' });
+    // the blob hits back
+    this.later(warn + 650, () => {
+      this.look(tx, ty);
+      this.later(60, () => s.play('boss-hit').once('animationcomplete', () => s.play('boss-idle')));
+      this.punch(s, this.blob.x, this.blob.y, 1.4);
+    });
+    this.later(warn + 1250, () => {
+      this.glide(this.cx, this.cy, 400);
       s.play('boss-jump');
-      this.tweens.add({ targets: s, x: hx, y: hy, duration: 600, ease: 'Sine.easeInOut', onComplete: () => { s.play('boss-idle'); this.later(T.gap, after); } });
+      this.tweens.add({ targets: s, x: hx, y: hy, duration: 600, ease: 'Sine.easeInOut', onComplete: () => { s.setScale(bs).play('boss-idle'); this.later(T.gap, after); } });
     });
   }
 }
