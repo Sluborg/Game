@@ -6,7 +6,8 @@ import { dungeonFrame } from './dungeonScene'; // [dungeon hook]
 import { BASE, GATE_W, makePuzzles, makeTrees, PLATE_R, rng, WORLD_H, WORLD_W } from './sim';
 import { canAfford, isSolid, PAD_R, RES, TOTEM_KINDS, TOTEM_MAX, TOTEM_PADS, totemPrice } from './sim';
 import { BUILDING_ENABLED, BUILD_COST, BUILD_EFFECT, BUILD_KINDS, BUILD_NAMES, BUILD_R, BUILD_SPOTS, COTTAGE_BONUS, COTTAGE_COST, COTTAGE_MAX, COTTAGE_PAD, makeWater, nodeRes } from './sim';
-import type { BuildKind } from './sim';
+import type { Biome, BuildKind } from './sim';
+import { makeIce } from './sim';
 import type { PuzzleLayout, Res, Tool, TotemKind } from './sim';
 import type { FxEvent, Input, ItemKind, PlayerInfo, View } from './sim';
 
@@ -14,6 +15,7 @@ export interface Session {
   role: 'host' | 'client';
   myId: string;
   seed: number;
+  biome?: Biome; // 'meadow' (default) or 'snow'
   infos(): Map<string, PlayerInfo>;
   tick(dt: number, input: Input): void;
   view(): View | null;
@@ -32,6 +34,17 @@ const GATHER = ['bush-berries', 'bush-empty', 'rubble', 'item-stone', 'item-berr
 const TOOL_FRAME = { w: 44, h: 48, px: 16, py: 28 }; // tool strip frame + pivot (art/gather/README.md)
 // Obstacles (sim kinds 0-4) and decor from ChatGPT order 30 (public/art/props)
 const OBSTACLE_ART: [string, number][] = [['pr-tree-green', 3], ['pr-tree-orange', 3], ['pr-tree-pine', 3], ['pr-rock', 3], ['pr-boulder', 3], ['g-bush-berries', 3]];
+/** Snow map: Art's winter props (art/props-winter), integer scales. Kinds without winter art yet use a
+ *  cold-tinted meadow sprite; a dedicated file is picked up automatically once it exists (WINTER_WANTED). */
+const WINTER_ART: [string, number][] = [['w-tree-snow-round', 3], ['w-tree-snow-pine', 3], ['w-tree-snow-small', 4], ['w-rock-snow', 3], ['w-ice-rock', 3], ['w-bush-berries-snow', 3]];
+const WINTER_SPENT: [string, number][] = [['w-stump-snow', 3], ['w-stump-snow', 3], ['w-stump-snow', 3], ['w-rubble-snow', 3], ['w-rubble-snow', 3], ['w-bush-empty-snow', 3]];
+/** Missing winter files and their tinted stand-ins (key -> [placeholder, tint]). */
+const WINTER_WANTED: Record<string, [string, number]> = {
+  'w-ice-rock': ['pr-boulder', 0xcfe6ff], 'w-bush-berries-snow': ['g-bush-berries', 0xdbeaff], 'w-bush-empty-snow': ['g-bush-empty', 0xdbeaff],
+  'w-stump-snow': ['pr-stump', 0xe8f2ff], 'w-rubble-snow': ['g-rubble', 0xe8f2ff],
+};
+const WINTER = ['tree-snow-round', 'tree-snow-pine', 'tree-snow-small', 'rock-snow', 'snowman', 'igloo', 'ice', 'tree-bare', ...Object.keys(WINTER_WANTED).map((k) => k.slice(2))];
+
 /** Look of a used-up node: stump, rubble, picked bush. */
 const SPENT_ART: [string, number][] = [['pr-stump', 3], ['pr-stump', 3], ['pr-stump', 3], ['g-rubble', 3], ['g-rubble', 3], ['g-bush-empty', 3]];
 const PROPS = ['tree-green', 'tree-orange', 'tree-pine', 'rock', 'boulder', 'bush', 'flowers', 'stump', 'pond', 'fence', 'sign', 'plate', 'plate-down', 'gate', 'gate-open', 'gate-post'];
@@ -143,6 +156,19 @@ export class GameScene extends Phaser.Scene {
     sheet('dungeon', 'kenney-tiny-dungeon');
     sheet('farm', 'kenney-tiny-farm');
     sheet('battle', 'kenney-tiny-battle');
+    if (this.s.biome === 'snow') {
+      this.load.on('loaderror', () => { /* winter art not drawn yet: tinted stand-ins below */ });
+      for (const n of WINTER) this.load.image('w-' + n, `art/props-winter/${n}.png`);
+    }
+  }
+
+  /** Texture, scale and tint for a node (biome aware, with stand-ins for missing winter art). */
+  private nodeArt(kind: number, spent: boolean): [string, number, number] {
+    if (this.s.biome !== 'snow') { const [k, sc] = (spent ? SPENT_ART : OBSTACLE_ART)[kind] ?? OBSTACLE_ART[0]; return [k, sc, 0xffffff]; }
+    const [k, sc] = (spent ? WINTER_SPENT : WINTER_ART)[kind] ?? WINTER_ART[0];
+    if (this.textures.exists(k)) return [k, sc, 0xffffff];
+    const [stand, tint] = WINTER_WANTED[k] ?? ['pr-tree-green', 0xffffff];
+    return [stand, (spent ? SPENT_ART : OBSTACLE_ART)[kind]?.[1] ?? sc, tint];
   }
 
   create() {
@@ -161,19 +187,31 @@ export class GameScene extends Phaser.Scene {
           row.push(0);
         } else {
           const v = r();
-          row.push(v < 0.8 ? 0 : v < 0.99 ? 1 : 2); // few flower tiles
+          // meadow: grass + a few flower tiles; snow: Tiny Ski snow with a few sparkly/drift tiles
+          row.push(v < 0.8 ? 0 : v < 0.99 ? 1 : 2);
         }
       }
       data.push(row);
     }
     // Ground baked into ONE canvas (a tilemap layer shows seams between tiles at fractional zoom)
-    const groundKey = `ground-${this.s.seed}`;
+    const groundKey = `ground-${this.s.biome ?? 'meadow'}-${this.s.seed}`;
     if (!this.textures.exists(groundKey)) {
       const src = this.textures.get('town').getSourceImage() as HTMLImageElement;
       const gc = document.createElement('canvas');
       gc.width = cols * 16; gc.height = rows * 16;
       const gx = gc.getContext('2d')!;
-      data.forEach((row, ty) => row.forEach((f, tx) => gx.drawImage(src, (f % 12) * 16, Math.floor(f / 12) * 16, 16, 16, tx * 16, ty * 16, 16, 16)));
+      if (this.s.biome === 'snow') {
+        // snow: flat white with soft blue drifts and a few sparkles, in art pixels (no tile seams)
+        gx.fillStyle = '#eef6fb'; gx.fillRect(0, 0, gc.width, gc.height);
+        for (let i = 0; i < cols * rows * 0.6; i++) {
+          const x = Math.floor(r() * gc.width), y = Math.floor(r() * gc.height);
+          gx.fillStyle = '#d6e8f3'; gx.fillRect(x, y, 3 + Math.floor(r() * 4), 1); // a drift line
+        }
+        for (let i = 0; i < cols * rows * 0.25; i++) {
+          gx.fillStyle = r() < 0.5 ? '#ffffff' : '#c3dcec';
+          gx.fillRect(Math.floor(r() * gc.width), Math.floor(r() * gc.height), 1, 1);
+        }
+      } else data.forEach((row, ty) => row.forEach((f, tx) => gx.drawImage(src, (f % 12) * 16, Math.floor(f / 12) * 16, 16, 16, tx * 16, ty * 16, 16, 16)));
       this.textures.addCanvas(groundKey, gc)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
     this.add.image(0, 0, groundKey).setOrigin(0).setScale(2).setDepth(-1000);
@@ -211,26 +249,37 @@ export class GameScene extends Phaser.Scene {
     // resource nodes (same layout as the host sim, from the shared seed); textures swap when used up
     this.nodes = makeTrees(this.s.seed).map((t) => {
       this.add.ellipse(t.x, t.y + 6, isSolid(t.kind) ? 34 : 40, 12, 0x000000, 0.18).setDepth(-500);
-      const [key, sc] = OBSTACLE_ART[t.kind] ?? OBSTACLE_ART[0];
-      const img = this.add.image(t.x, t.y + 10, key).setScale(sc).setOrigin(0.5, t.kind < 3 ? 0.95 : 0.8).setDepth(isSolid(t.kind) ? t.y : t.y - 30);
+      const [key, sc, tint] = this.nodeArt(t.kind, false);
+      const img = this.add.image(t.x, t.y + 10, key).setScale(sc).setTint(tint).setOrigin(0.5, t.kind < 3 ? 0.95 : 0.8).setDepth(isSolid(t.kind) ? t.y : t.y - 30);
       return { img, kind: t.kind, left: t.left, x: t.x, y: t.y, sc };
     });
 
     // flat decorations (no collision), from the same seed on every phone; never on the puzzle pens/plates
     const trees = makeTrees(this.s.seed);
     const zones = makePuzzles(this.s.seed).map((l) => l.zone);
+    const ice = this.s.biome === 'snow' ? makeIce(this.s.seed) : [];
+    for (const i of ice) zones.push({ x0: i.x - 70, x1: i.x + 70, y0: i.y - 40, y1: i.y + 40 });
     const inZone = (x: number, y: number, pad: number) => zones.some((z) => x > z.x0 - pad && x < z.x1 + pad && y > z.y0 - pad && y < z.y1 + pad)
       || TOTEM_PADS.some((p) => Math.hypot(p.x - x, p.y - y) < 60 + pad)
       || (BUILDING_ENABLED && [...Object.values(BUILD_SPOTS), COTTAGE_PAD].some((p) => Math.hypot(p.x - x, p.y - y) < 60 + pad))
       || (BUILDING_ENABLED && [water.area, ...water.water].some((z) => x > z.x0 - pad && x < z.x1 + pad && y > z.y0 - pad && y < z.y1 + pad));
     for (let i = 0; i < 22; i++) {
       const x = 30 + r() * (WORLD_W - 60), y = 30 + r() * (WORLD_H - 60);
-      const [key, sc] = DECOR[Math.floor(r() * DECOR.length)];
+      const [key, sc] = this.s.biome === 'snow' ? (r() < 0.7 ? ['w-snowman', 3] as [string, number] : ['w-tree-bare', 3] as [string, number]) : DECOR[Math.floor(r() * DECOR.length)];
       if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 30 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 46) || inZone(x, y, 20)) continue;
-      this.add.image(x, y, key).setScale(sc).setDepth(-600);
+      this.add.image(x, y, key).setScale(sc).setOrigin(0.5, 0.9).setDepth(key === 'pr-flowers' ? -600 : y);
+    }
+    if (this.s.biome === 'snow') {
+      // frozen ponds (slippery in the sim) + an igloo or two
+      for (const i of ice) this.add.image(i.x, i.y, 'w-ice').setScale(5).setDepth(-650);
+      for (let i = 0, placed = 0; i < 40 && placed < 2; i++) {
+        const x = 120 + r() * (WORLD_W - 240), y = 120 + r() * (WORLD_H - 240);
+        if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 220 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 80) || inZone(x, y, 40)) continue;
+        this.add.image(x, y, 'w-igloo').setScale(3).setOrigin(0.5, 0.9).setDepth(y); placed++;
+      }
     }
 
-    for (let i = 0, placed = 0; i < 40 && placed < 2; i++) {
+    for (let i = 0, placed = 0; this.s.biome !== 'snow' && i < 40 && placed < 2; i++) {
       const x = 120 + r() * (WORLD_W - 240), y = 120 + r() * (WORLD_H - 240);
       if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 120 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 80) || inZone(x, y, 40)) continue;
       this.add.image(x, y, 'pr-pond').setScale(2).setDepth(-650); placed++;
@@ -252,7 +301,7 @@ export class GameScene extends Phaser.Scene {
     this.pickG = this.add.graphics().setDepth(-450);
     this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
     this.cameras.main.setRoundPixels(true);
-    this.cameras.main.setBackgroundColor('#2b6b3a');
+    this.cameras.main.setBackgroundColor(this.s.biome === 'snow' ? '#dfeefa' : '#2b6b3a');
     this.fitCamera();
     this.scale.on('resize', this.fitCamera, this);
     this.events.once('shutdown', () => this.scale.off('resize', this.fitCamera, this));
@@ -332,8 +381,8 @@ export class GameScene extends Phaser.Scene {
       const n = this.nodes[i];
       if (!n || (left > 0) === (n.left > 0)) { if (n) n.left = left; return; }
       n.left = left;
-      const [key, sc] = left > 0 ? OBSTACLE_ART[n.kind] : SPENT_ART[n.kind];
-      n.img.setTexture(key).setScale(sc).setOrigin(0.5, left > 0 && n.kind < 3 ? 0.95 : 0.8);
+      const [key, sc, tint] = this.nodeArt(n.kind, left <= 0);
+      n.img.setTexture(key).setScale(sc).setTint(tint).setOrigin(0.5, left > 0 && n.kind < 3 ? 0.95 : 0.8);
       n.sc = sc;
       if (left > 0) { n.img.setScale(sc * 0.3); this.tweens.add({ targets: n.img, scale: sc, duration: 300, ease: 'Back.Out' }); }
     });

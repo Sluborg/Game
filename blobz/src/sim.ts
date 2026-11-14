@@ -273,6 +273,8 @@ export interface State {
   phase: 'play' | 'end';
   time: number; // seconds of daylight left
   seed: number;
+  biome: Biome;
+  ice: { x: number; y: number }[]; // frozen ponds (snow only)
   entrance: { x: number; y: number }; // dungeon cave on the meadow (entranceOf(seed))
   mode: Mode;
   entry: number; // seconds every blob has stood on the dungeon entrance
@@ -360,7 +362,36 @@ export function makeTrees(seed: number): Tree[] {
   return trees;
 }
 
-export function createState(infos: PlayerInfo[], seed: number, village: Village = newVillage()): State {
+// ---- biomes: the same loop on a green meadow or a snowy one with slippery frozen ponds ----
+export type Biome = 'meadow' | 'snow';
+export const BIOMES: Biome[] = ['meadow', 'snow'];
+export const cleanBiome = (b: unknown): Biome => (b === 'snow' ? 'snow' : 'meadow');
+export const ICE_RX = 64, ICE_RY = 34; // frozen pond ellipse (world px)
+const ICE_DRAG = 0.55; // on ice: long glide ...
+const ICE_GRIP = 0.4; // ... and little grip
+/** Frozen ponds on the snow map: 3 spots clear of nodes, the base, build spots, puzzles, the dungeon cave and the water corner. */
+export function makeIce(seed: number): { x: number; y: number }[] {
+  const r = rng(seed * 43 + 19);
+  const trees = makeTrees(seed);
+  const zones = [...makePuzzles(seed).map((p) => p.zone)];
+  const w = makeWater(seed);
+  if (BUILDING_ENABLED) zones.push(w.area, ...w.water);
+  const pads = [...TOTEM_PADS, ...(BUILDING_ENABLED ? [...Object.values(BUILD_SPOTS), COTTAGE_PAD] : []), entranceOf(seed)];
+  const out: { x: number; y: number }[] = [];
+  for (let tries = 0; out.length < 3 && tries < 3000; tries++) {
+    const x = 90 + r() * (WORLD_W - 180), y = 70 + r() * (WORLD_H - 140);
+    if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + BUILD_RING + 30) continue;
+    if (trees.some((t) => Math.hypot((t.x - x) / (ICE_RX + 16), (t.y - y) / (ICE_RY + 16)) < 1)) continue;
+    if (zones.some((z) => inRect(z, x, y, ICE_RX + 10))) continue;
+    if (pads.some((p) => Math.hypot(p.x - x, p.y - y) < ICE_RX + 50)) continue;
+    if (out.some((o) => Math.hypot(o.x - x, o.y - y) < 200)) continue;
+    out.push({ x, y });
+  }
+  return out;
+}
+export const onIce = (ice: { x: number; y: number }[], x: number, y: number) => ice.some((i) => ((x - i.x) / ICE_RX) ** 2 + ((y - i.y) / ICE_RY) ** 2 < 1);
+
+export function createState(infos: PlayerInfo[], seed: number, village: Village = newVillage(), biome: Biome = 'meadow'): State {
   const trees = makeTrees(seed);
   const layout = makePuzzles(seed);
   const needs = puzzleNeeds(infos.length);
@@ -368,7 +399,7 @@ export function createState(infos: PlayerInfo[], seed: number, village: Village 
   const water = makeWater(seed);
   const s: State = {
     phase: 'play', time: ROUND_SECONDS,
-    seed, entrance: entranceOf(seed), mode: 'meadow', entry: 0, picks: {}, pickT: 0, runs: 0, dg: null,
+    seed, biome: cleanBiome(biome), ice: cleanBiome(biome) === 'snow' ? makeIce(seed) : [], entrance: entranceOf(seed), mode: 'meadow', entry: 0, picks: {}, pickT: 0, runs: 0, dg: null,
     bank: { ...vil.bank }, delivered: res(), quest: questTargets(infos.length, vil.cottage),
     builds: BUILD_KINDS.map((kind) => ({ kind, state: vil.builds[kind] ? 2 : 0, paid: res(), buy: 0, armed: true })),
     cottage: { level: vil.cottage, state: 0, paid: res(), buy: 0, armed: true }, water,
@@ -503,11 +534,12 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     const il = Math.hypot(ix, iy);
     if (il > 1) { ix /= il; iy /= il; }
     const mul = speedMul;
-    p.vx += ix * ACCEL * mul * dt;
-    p.vy += iy * ACCEL * mul * dt;
+    const ice = s.mode === 'meadow' && s.ice.length > 0 && onIce(s.ice, p.x, p.y); // frozen pond: slippery
+    p.vx += ix * ACCEL * mul * (ice ? ICE_GRIP : 1) * dt;
+    p.vy += iy * ACCEL * mul * (ice ? ICE_GRIP : 1) * dt;
     // shield charges refill one at a time
     if (p.shield < shieldMax) { p.shieldT += dt; if (p.shieldT >= SHIELD_RECHARGE) { p.shield++; p.shieldT = 0; } } else p.shieldT = 0;
-    const drag = Math.exp(-DRAG * dt);
+    const drag = Math.exp(-(ice ? ICE_DRAG : DRAG) * dt);
     p.vx *= drag; p.vy *= drag;
     p.dashCd = Math.max(0, p.dashCd - dt);
     p.dashT = Math.max(0, p.dashT - dt);

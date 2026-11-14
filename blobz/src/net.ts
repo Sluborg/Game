@@ -18,8 +18,8 @@ export type ToClient =
   | { t: 'full' }
   | { t: 'version'; v: string }
   | { t: 'info'; info: RoomInfo }
-  | { t: 'lobby'; players: PlayerInfo[] }
-  | { t: 'start'; seed: number }
+  | { t: 'lobby'; players: PlayerInfo[]; map?: string }
+  | { t: 'start'; seed: number; map?: string }
   | { t: 's'; s: Snapshot };
 
 /** Random part of the host's own (never shown) PeerJS id `blobz-v1-XXXX`. */

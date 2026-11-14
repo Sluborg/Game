@@ -5,9 +5,17 @@ const { LANDSCAPE, ok, startGame, sim, place, view } = require('./helpers.cjs');
 const base = process.argv[2] || 'http://localhost:4173/';
 const shots = process.argv[3] || '';
 
-/** Index of a node of the given kinds with no other node within 110 px (so the tool is unambiguous). */
-const pick = (host, kinds) => sim(host, (s, ks) => s.trees.findIndex((t, j) => ks.includes(t.kind)
-  && s.trees.every((o, k) => k === j || Math.hypot(o.x - t.x, o.y - t.y) > 110)), kinds);
+/** The most isolated node of the given kinds (so the tool is unambiguous; some seeds have no node
+ *  with 110 px free around it, so take the best one rather than requiring a fixed gap). */
+const pick = (host, kinds) => sim(host, (s, ks) => {
+  let best = -1, gap = -1;
+  s.trees.forEach((t, j) => {
+    if (!ks.includes(t.kind) || t.x < 60 || t.y < 60 || t.x > 1220 || t.y > 900) return;
+    const g = Math.min(...s.trees.filter((o, k) => k !== j).map((o) => Math.hypot(o.x - t.x, o.y - t.y)));
+    if (g > gap) { gap = g; best = j; }
+  });
+  return best;
+}, kinds);
 /** Park player #i just right of node n (keep them there: blobz drift a little after a bump). */
 const beside = (host, i, n) => sim(host, (s, a) => {
   const t = s.trees[a.n]; const p = s.players[a.i];

@@ -38,6 +38,16 @@ for (const [title, key, names] of [['Eyes', 'eyes', EYES], ['Mouths', 'mouth', M
     grid.append(cell);
   });
 }
+{ // dungeon class hats (blobGrid classHat), all 6 shapes
+  const h = document.createElement('h2'); h.textContent = 'Class hats'; document.body.append(h);
+  const grid = document.createElement('div'); grid.className = 'grid'; document.body.append(grid);
+  CLASS_HATS.forEach((name, i) => {
+    const cell = document.createElement('div'); cell.className = 'cell';
+    for (const c of all6) cell.append(blobCanvas({ ...base, ...c }, 3, i));
+    const label = document.createElement('div'); label.textContent = 'class ' + i + ' ' + name; cell.append(label);
+    grid.append(cell);
+  });
+}
 document.body.dataset.done = '1';
 </script>`;
 
