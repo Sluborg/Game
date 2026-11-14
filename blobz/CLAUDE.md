@@ -33,6 +33,10 @@ Stefan works phone-only; replies in Swedish or English, docs and code in English
   modify `web/`, `app/` or other Asset Report code. Only shared touch point: the Pages workflow
   builds `blobz/` and serves it at `/Game/blobz/` (main) and `/Game/dev/blobz/` (dev).
 
+## 25. Reply first, then work
+- Before any tool call, answer Stefan in 1-3 lines: what you understood, what you will do, any
+  question that blocks it. Only then start working. Long jobs: post short status lines along the way.
+
 ## 30. Workflow (light: changes go straight into the live game)
 build -> verify -> push = live
 1. **Build** in small conventional commits on the Blobz branch (`claude/mobile-game-5-players-8qthjq`).
