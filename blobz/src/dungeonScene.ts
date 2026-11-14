@@ -9,7 +9,7 @@ import { sfx } from './sfx';
 import { ENTRANCE, ENTRANCE_R, DUNGEON_ENABLED, type View } from './sim';
 
 const BLOB_SCALE = 1.45; // same as the meadow (game.ts)
-const FONT = "'Pixelify Sans', sans-serif";
+const FONT = "'Nunito', sans-serif"; // same as the meadow
 /** Weapon strips (art/dungeon/README.md): frame size + pivot. */
 const WEAPON_FRAME: Record<Weapon, { w: number; h: number; px: number; py: number }> = {
   sword: { w: 44, h: 48, px: 16, py: 28 }, hammer: { w: 44, h: 48, px: 16, py: 28 }, spear: { w: 68, h: 48, px: 16, py: 28 },

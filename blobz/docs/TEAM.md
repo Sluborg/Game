@@ -12,8 +12,8 @@ integrates them, and tells Lead whether a new ChatGPT round is needed and with w
 |---|---|---|
 | Lead | `claude/mobile-game-5-players-8qthjq` (deploy branch, GitHub Pages builds it) | itself |
 | Art | `claude/blobz-art` | its own branch only |
-| Code | `claude/blobz-code` | its own branch only (base building, meadow features) |
-| Code 2 | `claude/blobz-dungeon` | its own branch only (dungeon mode) |
+| Code (session "Blobz Code Base") | `claude/blobz-code` | its own branch only (base building, meadow features) |
+| Code 2 (session "Blobz Code Dungeon") | `claude/blobz-dungeon` | its own branch only (dungeon mode) |
 
 - Start every task by merging the latest deploy branch into your branch:
   `git fetch origin claude/mobile-game-5-players-8qthjq && git merge origin/claude/mobile-game-5-players-8qthjq`.

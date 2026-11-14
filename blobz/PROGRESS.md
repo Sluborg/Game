@@ -220,3 +220,6 @@
 
 ## 2026-11-14 - v028f: clean back arrow
 - Hand-placed 13x9 pixel back arrow replaces the sliced one. Font choice posted on the board (4 rendered options).
+
+## 2026-11-14 - dungeon special fx merged (Art, not wired)
+- Special-attack icons (sword spin, hammer slam, spear charge, sidestep) and fx strips; cooldown ring is drawn in code.

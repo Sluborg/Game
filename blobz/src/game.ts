@@ -5,7 +5,7 @@ import { sfx } from './sfx';
 import { dungeonFrame } from './dungeonScene'; // [dungeon hook]
 import { BASE, GATE_W, makePuzzles, makeTrees, PLATE_R, rng, WORLD_H, WORLD_W } from './sim';
 import { canAfford, isSolid, PAD_R, RES, TOTEM_KINDS, TOTEM_MAX, TOTEM_PADS, totemPrice } from './sim';
-import { BRIDGE_Y, BUILDING_ENABLED, BUILD_COST, BUILD_KINDS, BUILD_NAMES, BUILD_R, BUILD_SPOTS, COTTAGE_COST, COTTAGE_MAX, COTTAGE_PAD, nodeRes, RIVER } from './sim';
+import { BUILDING_ENABLED, BUILD_COST, BUILD_EFFECT, BUILD_KINDS, BUILD_NAMES, BUILD_R, BUILD_SPOTS, COTTAGE_BONUS, COTTAGE_COST, COTTAGE_MAX, COTTAGE_PAD, makeWater, nodeRes } from './sim';
 import type { BuildKind } from './sim';
 import type { PuzzleLayout, Res, Tool, TotemKind } from './sim';
 import type { FxEvent, Input, ItemKind, PlayerInfo, View } from './sim';
@@ -92,6 +92,8 @@ export class GameScene extends Phaser.Scene {
   private pz: PuzzleGfx[] = [];
   private bgfx = new Map<BuildKind | 'cottage', { img: Phaser.GameObjects.Image; spot: Phaser.GameObjects.Image; tag: Phaser.GameObjects.Container; key: string }>();
   private cottageImg!: Phaser.GameObjects.Image;
+  private water!: ReturnType<typeof makeWater>;
+  private bridgeImg?: Phaser.GameObjects.Image;
   private nodes: { img: Phaser.GameObjects.Image; kind: number; left: number; x: number; y: number; sc: number }[] = [];
   private dusk!: Phaser.GameObjects.Rectangle;
   private totems: TotemGfx[] = [];
@@ -186,14 +188,25 @@ export class GameScene extends Phaser.Scene {
     this.add.ellipse(BASE.x, BASE.y + 26, 110, 26, 0x000000, 0.18).setDepth(-880);
     // cottage (Art's base set, level 1-3), integer scale 2, anchored bottom centre
     this.cottageImg = this.add.image(BASE.x, BASE.y + 30, 'b-cottage-1').setScale(2).setOrigin(0.5, 1).setDepth(BASE.y - 40);
-    // the river with the east meadow behind it (base building only)
-    const river = this.add.graphics().setDepth(-940).setVisible(BUILDING_ENABLED);
-    river.fillStyle(0x2f86c8, 1).fillRect(RIVER.x0, 0, RIVER.x1 - RIVER.x0, WORLD_H);
-    river.fillStyle(0x3fa9f5, 1).fillRect(RIVER.x0 + 6, 0, RIVER.x1 - RIVER.x0 - 12, WORLD_H);
-    river.fillStyle(0x6b4a2a, 1).fillRect(RIVER.x0 - 4, 0, 4, WORLD_H).fillRect(RIVER.x1, 0, 4, WORLD_H);
-    for (let y = 12; y < WORLD_H; y += 46) river.fillStyle(0x8fd3ff, 0.8).fillRect(RIVER.x0 + 14 + ((y / 46) % 3) * 10, y, 12, 3);
-    if (BUILDING_ENABLED) this.buildBase();
-    this.add.text(BASE.x, BASE.y + 52, 'BAS', { fontFamily: "'Pixelify Sans', sans-serif", fontSize: '20px', color: '#fff7e6', fontStyle: 'bold', stroke: '#3f2631', strokeThickness: 5 }).setOrigin(0.5).setDepth(-800);
+    // the water corner (an L of water around a seeded corner; the bridge opens it)
+    const water = makeWater(this.s.seed);
+    this.water = water;
+    if (BUILDING_ENABLED) {
+      const wg = this.add.graphics().setDepth(-940);
+      for (const w of water.water) {
+        const x0 = Math.max(0, w.x0), x1 = Math.min(WORLD_W, w.x1), y0 = Math.max(0, w.y0), y1 = Math.min(WORLD_H, w.y1);
+        wg.fillStyle(0x6b4a2a, 1).fillRect(x0 - 3, y0 - 3, x1 - x0 + 6, y1 - y0 + 6);
+        wg.fillStyle(0x2f86c8, 1).fillRect(x0, y0, x1 - x0, y1 - y0);
+        wg.fillStyle(0x3fa9f5, 1).fillRect(x0 + 5, y0 + 5, x1 - x0 - 10, y1 - y0 - 10);
+      }
+      for (const w of water.water) for (let i = 0; i < 8; i++) {
+        const x = Math.max(0, w.x0) + 10 + ((i * 37) % Math.max(20, Math.min(WORLD_W, w.x1) - Math.max(0, w.x0) - 30));
+        const y = Math.max(0, w.y0) + 10 + ((i * 53) % Math.max(20, Math.min(WORLD_H, w.y1) - Math.max(0, w.y0) - 20));
+        wg.fillStyle(0x8fd3ff, 0.8).fillRect(x, y, 12, 3);
+      }
+      this.buildBase();
+    }
+    this.add.text(BASE.x, BASE.y + 52, 'BAS', { fontFamily: "'Nunito', sans-serif", fontSize: '20px', color: '#fff7e6', fontStyle: 'bold', stroke: '#3f2631', strokeThickness: 5 }).setOrigin(0.5).setDepth(-800);
 
     // resource nodes (same layout as the host sim, from the shared seed); textures swap when used up
     this.nodes = makeTrees(this.s.seed).map((t) => {
@@ -207,16 +220,18 @@ export class GameScene extends Phaser.Scene {
     const trees = makeTrees(this.s.seed);
     const zones = makePuzzles(this.s.seed).map((l) => l.zone);
     const inZone = (x: number, y: number, pad: number) => zones.some((z) => x > z.x0 - pad && x < z.x1 + pad && y > z.y0 - pad && y < z.y1 + pad)
-      || TOTEM_PADS.some((p) => Math.hypot(p.x - x, p.y - y) < 60 + pad);
+      || TOTEM_PADS.some((p) => Math.hypot(p.x - x, p.y - y) < 60 + pad)
+      || (BUILDING_ENABLED && [...Object.values(BUILD_SPOTS), COTTAGE_PAD].some((p) => Math.hypot(p.x - x, p.y - y) < 60 + pad))
+      || (BUILDING_ENABLED && [water.area, ...water.water].some((z) => x > z.x0 - pad && x < z.x1 + pad && y > z.y0 - pad && y < z.y1 + pad));
     for (let i = 0; i < 22; i++) {
-      const x = 30 + r() * (RIVER.x0 - 60), y = 30 + r() * (WORLD_H - 60);
+      const x = 30 + r() * (WORLD_W - 60), y = 30 + r() * (WORLD_H - 60);
       const [key, sc] = DECOR[Math.floor(r() * DECOR.length)];
       if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 30 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 46) || inZone(x, y, 20)) continue;
       this.add.image(x, y, key).setScale(sc).setDepth(-600);
     }
 
     for (let i = 0, placed = 0; i < 40 && placed < 2; i++) {
-      const x = 120 + r() * (RIVER.x0 - 240), y = 120 + r() * (WORLD_H - 240);
+      const x = 120 + r() * (WORLD_W - 240), y = 120 + r() * (WORLD_H - 240);
       if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 120 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 80) || inZone(x, y, 40)) continue;
       this.add.image(x, y, 'pr-pond').setScale(2).setDepth(-650); placed++;
     }
@@ -371,7 +386,7 @@ export class GameScene extends Phaser.Scene {
           aura: this.add.graphics(),
           body: this.add.image(p.x, p.y, texKey).setOrigin(0.5, BODY_CY).setScale(baseScale),
           eyes: this.add.graphics(),
-          label: this.add.text(p.x, p.y, info.name, { fontFamily: "'Pixelify Sans', sans-serif", fontSize: '13px', color: '#ffffff', fontStyle: 'bold', stroke: '#000000', strokeThickness: 3 }).setOrigin(0.5),
+          label: this.add.text(p.x, p.y, info.name, { fontFamily: "'Nunito', sans-serif", fontSize: '13px', color: '#ffffff', fontStyle: 'bold', stroke: '#000000', strokeThickness: 3 }).setOrigin(0.5),
           carry: [], swingT: 0, faceLeft: false, x: p.x, y: p.y, vx: 0, vy: 0, look: { x: 0, y: 1 }, trail: [], texKey, blinkT: 2 + Math.random() * 3, baseScale, pixel,
         };
         this.blobs.set(p.id, b);
@@ -467,30 +482,33 @@ export class GameScene extends Phaser.Scene {
   private buildBase() {
     this.bgfx.clear();
     const mk = (kind: BuildKind | 'cottage', at: { x: number; y: number }) => {
-      const bridge = kind === 'bridge';
-      // the building stands just behind the spot (the bridge spans the river)
-      const bx = bridge ? (RIVER.x0 + RIVER.x1) / 2 : at.x, by = bridge ? BRIDGE_Y + 24 : at.y - BUILD_R + 4;
-      const img = this.add.image(bx, by, kind === 'cottage' ? 'b-build-spot' : 'b-' + kind).setScale(2).setOrigin(0.5, 1).setDepth(bridge ? -930 : by);
+      // the building stands just behind its spot (the bridge's spot shows a preview; the real one spans the water)
+      const by = at.y - BUILD_R + 4;
+      const img = this.add.image(at.x, by, kind === 'cottage' ? 'b-build-spot' : 'b-' + kind).setScale(2).setOrigin(0.5, 1).setDepth(by);
       const spot = this.add.image(at.x, at.y + 15, 'b-build-spot').setScale(2).setOrigin(0.5, 1).setDepth(-690);
       const tag = this.add.container(at.x, at.y - 96).setDepth(3900);
       this.bgfx.set(kind, { img, spot, tag, key: '' });
     };
     for (const k of BUILD_KINDS) mk(k, BUILD_SPOTS[k]);
+    const w = this.water;
+    this.bridgeImg = this.add.image(w.bridge.x, w.bridge.y + 24, 'b-bridge').setScale(2).setOrigin(0.5, 1).setDepth(-930).setVisible(false);
     mk('cottage', COTTAGE_PAD);
     this.bgfx.get('cottage')!.img.setVisible(false);
   }
 
   /** Name + one icon/amount per resource still needed (amounts turn green when the bank covers them). */
-  private signTag(tag: Phaser.GameObjects.Container, title: string, need: Partial<Res>, bank: Res | undefined) {
+  private signTag(tag: Phaser.GameObjects.Container, title: string, need: Partial<Res>, bank: Res | undefined, effect = '') {
     tag.removeAll(true);
     const parts = RES.filter((k) => (need[k] ?? 0) > 0);
-    const w = Math.max(96, 42 * parts.length + 8);
-    tag.add(this.add.rectangle(0, 0, w, 50, 0xfff7e6).setStrokeStyle(3, 0x3f2631));
-    tag.add(this.add.text(0, -12, title, { fontFamily: "'Pixelify Sans', sans-serif", fontSize: '15px', color: '#3f2631', fontStyle: 'bold' }).setOrigin(0.5));
+    const w = Math.max(!title ? 0 : effect ? 126 : 96, 42 * parts.length + 8);
+    const h = !title ? 30 : effect ? 66 : 50, cy = !title ? 0 : effect ? 20 : 12;
+    tag.add(this.add.rectangle(0, 0, w, h, 0xfff7e6).setStrokeStyle(3, 0x3f2631));
+    if (title) tag.add(this.add.text(0, effect ? -20 : -12, title, { fontFamily: "'Nunito', sans-serif", fontSize: '15px', color: '#3f2631', fontStyle: 'bold' }).setOrigin(0.5));
+    if (effect) tag.add(this.add.text(0, -3, effect, { fontFamily: "'Nunito', sans-serif", fontSize: '12px', color: '#8a7466' }).setOrigin(0.5));
     parts.forEach((k, j) => {
       const x = -(42 * parts.length) / 2 + j * 42 + 4;
-      tag.add(this.add.image(x + 9, 12, ITEM_ICON[k]).setScale(k === 'wood' ? 1 : 2));
-      tag.add(this.add.text(x + 20, 12, String(need[k]), { fontFamily: "'Pixelify Sans', sans-serif", fontSize: '17px', color: (bank?.[k] ?? 0) >= need[k]! ? '#2f8a2f' : '#b3261e', fontStyle: 'bold' }).setOrigin(0, 0.5));
+      tag.add(this.add.image(x + 9, cy, ITEM_ICON[k]).setScale(k === 'wood' ? 1 : 2));
+      tag.add(this.add.text(x + 20, cy, String(need[k]), { fontFamily: "'Nunito', sans-serif", fontSize: '17px', color: (bank?.[k] ?? 0) >= need[k]! ? '#2f8a2f' : '#b3261e', fontStyle: 'bold' }).setOrigin(0, 0.5));
     });
   }
 
@@ -499,27 +517,32 @@ export class GameScene extends Phaser.Scene {
     const ck = 'b-cottage-' + Math.max(1, Math.min(3, v.cottage.level));
     if (this.cottageImg.texture.key !== ck) this.cottageImg.setTexture(ck);
     const pads = [
-      ...v.builds.map((b) => ({ kind: b.kind as BuildKind | 'cottage', at: BUILD_SPOTS[b.kind], state: b.state, paid: b.paid, buy: b.buy, cost: BUILD_COST[b.kind] as Res | null, title: BUILD_NAMES[b.kind] })),
+      ...v.builds.map((b) => ({ kind: b.kind as BuildKind | 'cottage', at: BUILD_SPOTS[b.kind], state: b.state, paid: b.paid, buy: b.buy, cost: BUILD_COST[b.kind] as Res | null, title: BUILD_NAMES[b.kind], effect: BUILD_EFFECT[b.kind] })),
       { kind: 'cottage' as const, at: COTTAGE_PAD, state: v.cottage.state as 0 | 1 | 2, paid: v.cottage.paid, buy: v.cottage.buy,
-        cost: v.cottage.level >= COTTAGE_MAX ? null : COTTAGE_COST[v.cottage.level - 1], title: `Stuga nivå ${v.cottage.level + 1}` },
+        cost: v.cottage.level >= COTTAGE_MAX ? null : COTTAGE_COST[v.cottage.level - 1], title: `Stuga nivå ${v.cottage.level + 1}`, effect: COTTAGE_BONUS[v.cottage.level] ?? '' },
     ];
     for (const p of pads) {
       const g = this.bgfx.get(p.kind);
       if (!g) continue;
       const done = p.state === 2 || !p.cost;
+      const can = !done && !!v.bank && canAfford(v.bank, p.cost!);
       if (p.kind !== 'cottage') {
-        const tex = 'b-' + p.kind + (p.state === 1 ? '-site' : '');
+        // not affordable: a faded ghost; affordable: the construction site ("build me!"); built: the building
+        const tex = 'b-' + p.kind + (!done && can ? '-site' : '');
         if (g.img.texture.key !== tex) g.img.setTexture(tex);
-        // empty spot: a faded ghost of what will stand here
-        g.img.setAlpha(p.state === 0 ? 0.35 : 1);
+        g.img.setAlpha(done || can ? 1 : 0.35);
+        if (p.kind === 'bridge') { g.img.setVisible(!done); this.bridgeImg?.setVisible(done); }
       }
       g.spot.setVisible(!done);
       g.tag.setVisible(!done);
       if (!done) {
         const need = RES.reduce((o, k) => ({ ...o, [k]: Math.max(0, p.cost![k] - p.paid[k]) }), {} as Res);
-        const key = `${p.title}|${RES.map((k) => need[k] + ':' + ((v.bank?.[k] ?? 0) >= need[k] ? 1 : 0)).join(',')}`;
-        if (key !== g.key) { g.key = key; this.signTag(g.tag, p.title, need, v.bank); }
-        g.tag.setY(p.at.y - 96 + (p.state === 1 ? Math.sin(now / 300) * 2 : 0));
+        // compact (icons + cost) until a blob comes close, then name + effect too; lower spots show it below
+        const near = v.players.some((q) => Math.hypot(q.x - p.at.x, q.y - p.at.y) < 110);
+        const key = `${near ? 1 : 0}|${p.title}|${RES.map((k) => need[k] + ':' + ((v.bank?.[k] ?? 0) >= need[k] ? 1 : 0)).join(',')}`;
+        if (key !== g.key) { g.key = key; this.signTag(g.tag, near ? p.title : '', need, v.bank, near ? p.effect : ''); }
+        const below = p.at.y > BASE.y + 40;
+        g.tag.setY(p.at.y + (below ? 58 : -104) + (can ? Math.sin(now / 250) * 3 : 0)).setDepth(near ? 3950 : 3900);
         if (p.buy > 0) {
           this.buyG.lineStyle(10, 0x3f2631, 0.85).strokeCircle(p.at.x, p.at.y, BUILD_R + 4);
           this.buyG.lineStyle(6, 0x6cc644, 1).beginPath();
@@ -627,7 +650,7 @@ export class GameScene extends Phaser.Scene {
     parts.forEach((k, j) => {
       const x = -w / 2 + 8 + j * 42;
       g.tag.add(this.add.image(x + 9, 0, ITEM_ICON[k]).setScale(k === 'wood' ? 1 : 2));
-      const txt = this.add.text(x + 20, 0, String(price[k]), { fontFamily: "'Pixelify Sans', sans-serif", fontSize: '19px', color: '#3f2631', fontStyle: 'bold' }).setOrigin(0, 0.5);
+      const txt = this.add.text(x + 20, 0, String(price[k]), { fontFamily: "'Nunito', sans-serif", fontSize: '19px', color: '#3f2631', fontStyle: 'bold' }).setOrigin(0, 0.5);
       g.tag.add(txt);
       g.price.push({ k, n: price[k]!, txt });
     });
@@ -695,7 +718,7 @@ export class GameScene extends Phaser.Scene {
     const plates = l.plates.map((p) => this.add.image(p.x, p.y, 'pr-plate').setScale(4).setDepth(-700).setVisible(false));
     const glows = l.plates.map((p) => this.add.image(p.x, p.y + 2, 'fx-plate-glow').setScale(4).setDepth(-690).setVisible(false));
     const bubbles = l.plates.map((p) => this.add.text(p.x, p.y - 72, '', {
-      fontFamily: "'Pixelify Sans', sans-serif", fontSize: '20px', color: '#3f2631', fontStyle: 'bold',
+      fontFamily: "'Nunito', sans-serif", fontSize: '20px', color: '#3f2631', fontStyle: 'bold',
       backgroundColor: '#fff7e6', padding: { x: 7, y: 2 }, stroke: '#fff7e6', strokeThickness: 1,
     }).setOrigin(0.5).setDepth(4000).setVisible(false));
     return { l, plates, glows, bubbles, gate, chest, glow, open: false, taken: false };
@@ -752,7 +775,7 @@ export class GameScene extends Phaser.Scene {
       const parts = RES.filter((k) => f.r[k] > 0);
       parts.forEach((k, j) => {
         const y = f.y - j * 30;
-        const t = this.add.text(f.x - 6, y, '+' + f.r[k], { fontFamily: "'Pixelify Sans', sans-serif", fontSize: '26px', color: '#ffe08a', fontStyle: 'bold', stroke: '#6b4a2a', strokeThickness: 5 }).setOrigin(1, 0.5);
+        const t = this.add.text(f.x - 6, y, '+' + f.r[k], { fontFamily: "'Nunito', sans-serif", fontSize: '26px', color: '#ffe08a', fontStyle: 'bold', stroke: '#6b4a2a', strokeThickness: 5 }).setOrigin(1, 0.5);
         const ic = this.add.image(f.x + 14, y, ITEM_ICON[k]).setScale(k === 'wood' ? 2 : 3);
         const c = this.add.container(0, 0, [t, ic]).setDepth(5000);
         this.tweens.add({ targets: c, y: -50, alpha: 0, duration: 1100, delay: j * 80, ease: 'Cubic.Out', onComplete: () => c.destroy() });

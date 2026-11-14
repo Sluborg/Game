@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   BASE, createState, makeTrees, NODE_HITS, NODE_REGROW, NODE_YIELD, nodeTool, OBSTACLE_R, snapshot, starsFor, step,
-  toolNode, viewFromSnapshot, questTargets, type Input, type State,
+  toolNode, viewFromSnapshot, questTargets, makeWater, type Input, type State,
 } from './sim';
 
 const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 });
@@ -31,7 +31,8 @@ describe('gathering with tools', () => {
 
   it('every map has trees, stones and several berry bushes', () => {
     for (const seed of [1, 2, 3, 99, 12345]) {
-      const kinds = makeTrees(seed).filter((t) => t.x < 1280).map((t) => nodeTool(t.kind)); // main meadow
+      const w = makeWater(seed).area; // the water corner has its own extra nodes
+      const kinds = makeTrees(seed).filter((t) => !(t.x > w.x0 && t.x < w.x1 && t.y > w.y0 && t.y < w.y1)).map((t) => nodeTool(t.kind));
       expect(kinds.filter((k) => k === 'axe').length).toBeGreaterThan(8);
       expect(kinds.filter((k) => k === 'pickaxe').length).toBeGreaterThan(2);
       expect(kinds.filter((k) => k === 'rake').length).toBe(8);

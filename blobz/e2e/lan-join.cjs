@@ -25,8 +25,8 @@ const ok = (cond, msg) => { if (!cond) throw new Error('FAIL: ' + msg); console.
     await host.click('#btn-host');
     await host.waitForSelector('#lobby:not(.hidden)', { timeout: 20000 });
     ok((await host.locator('#lobby-code, #hud-code, #code').count()) === 0, 'no room code anywhere in the UI');
-    await host.waitForFunction(() => !document.querySelector('#lobby-lan.warn') && /Joina/.test(document.querySelector('#lobby-lan').textContent), null, { timeout: 20000 });
-    ok(true, 'host lobby says friends on the same Wi-Fi can tap Joina');
+    await host.waitForFunction(() => !document.querySelector('#lobby-lan.warn') && document.querySelector('#lobby-lan').textContent === '', null, { timeout: 20000 });
+    ok(true, 'host lobby is open on the Wi-Fi (no explainer text)');
 
     const joiners = [];
     for (const [i, name] of ['Ada', 'Bo'].entries()) {
