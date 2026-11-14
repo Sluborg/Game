@@ -168,3 +168,6 @@
 
 ## 2026-11-14 - v023b: art cleanup (Art batch merged)
 - `scripts/clean_art.py`: hard alpha + merged generation-noise colors on all sliced ChatGPT sprites (props, icons, enemies, totems); before/after in `docs/art-review/clean-before-after.png`. Review notes for Code in `docs/ART_REVIEW.md` (unify prop scales, integer scales, rock vs boulder, wire fx).
+
+## 2026-11-14 - v023c: blush fix (Art)
+- "Rosiga" cheeks: dark-rose edge + light-pink core, readable on all 12 body colors.
