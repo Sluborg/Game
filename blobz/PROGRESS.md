@@ -114,3 +114,6 @@
   `apple-touch-icon.png` (180), id/scope, grass theme color, and a pass-through service worker (`sw.js`,
   caches nothing) so Android installs it as an app instead of a browser shortcut.
 - Stefan must remove the old home-screen app and add it again (Android caches the icon).
+
+## 2026-11-14 - v018f: clean dice icon
+- Replaced the blurry sliced dice with a hand-placed 12x12 pixel die (5 pips) in `public/art/icons/dice.png`.
