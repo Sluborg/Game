@@ -31,6 +31,10 @@ body {
   background-image: radial-gradient(var(--grass-deep) 1.5px, transparent 1.6px); background-size: 22px 22px;
 }
 .wrap { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+html, body { overflow-x: hidden; }
+.wrap, .card { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.card img { max-width: 100%; height: auto; display: block; }
+.opts { grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr)); }
 header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 h1 { font-family: var(--display); font-size: 34px; margin: 0; color: var(--cream); text-shadow: 0 3px 0 var(--plum), 2px 0 0 var(--plum), -2px 0 0 var(--plum), 0 -2px 0 var(--plum); letter-spacing: 1px; }
 .sub { margin: 0; color: var(--cream); font-weight: 700; }
@@ -229,7 +233,7 @@ function renderQuestion(q) {
     for (const [v, col, title] of RATE) {
       const on = d.choice === v;
       const b = el('button', { type: 'button', role: 'radio', 'aria-checked': String(on), 'aria-label': v + ' ' + title, title, text: v,
-        style: 'flex:1;min-height:52px;font:700 24px var(--display);border:0;cursor:pointer;color:' + (on ? '#fff' : 'var(--plum)') + ';background:' + (on ? col : '#fff7e6') + ';box-shadow:0 0 0 3px ' + (on ? 'var(--plum)' : col) + ' inset' + (on ? ',0 4px 0 0 var(--plum)' : '') + ';transform:' + (on ? 'translateY(-2px)' : 'none') });
+        style: 'flex:1;min-width:0;min-height:52px;font:700 24px var(--display);border:0;cursor:pointer;color:' + (on ? '#fff' : 'var(--plum)') + ';background:' + (on ? col : '#fff7e6') + ';box-shadow:0 0 0 3px ' + (on ? 'var(--plum)' : col) + ' inset' + (on ? ',0 4px 0 0 var(--plum)' : '') + ';transform:' + (on ? 'translateY(-2px)' : 'none') });
       b.addEventListener('click', () => { d.choice = on ? null : v; renderQuestions(); });
       seg.append(b);
     }
