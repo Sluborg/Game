@@ -3,7 +3,7 @@
 // Also draws the dungeon entrance on the meadow (dungeonFrame is the one hook GameScene calls).
 import Phaser from 'phaser';
 import { blobCanvas, BLOB_FRAMES, BODY_CY, clampLook, facingFromVelocity, type Facing } from './blob';
-import { DT, ENEMY_R, GOO_ART, GOO_SCALE, WEAPON_STATS, FLOORS, GH, GW, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
+import { AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, GH, GW, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
 /** Weapons without Art's strip yet: a Kenney Tiny Dungeon tile in hand (bow: drawn in code). */
 const WEAPON_TILE: Partial<Record<Weapon, number>> = { staff: 130, shield: 102, dagger: 103 }; // dagger tile: blade up
 import type { Session } from './game';
@@ -31,7 +31,6 @@ const WEAPON_FRAME: Partial<Record<Weapon, { w: number; h: number; px: number; p
 };
 /** Class hats in blob.ts CLASS_HATS (Krigare keeps the skin hat). */
 const CLASS_HAT: Partial<Record<HeroClass, number>> = { healer: 0, marksman: 1, tank: 2 }; // the rogue keeps the skin hat
-const GOO = ['goo-small', 'goo-medium', 'goo-boss', 'goo-small']; // 3 = spitter (small art, larger, tinted green)
 const WORLD = { w: GW * DT, h: GH * DT };
 // Kenney Tiny Dungeon frames (12 per row)
 // Art's fine ground tiles (art/fine/tiles, 32 px, drawn at scale 1): floor plain/specks/stones, wall bricks/banner
@@ -58,7 +57,36 @@ interface HeroGfx {
   wshadow?: Phaser.GameObjects.Ellipse; // the hovering weapon's small shadow on the ground
   weapon2?: Phaser.GameObjects.Sprite; // the rogue's off-hand dagger // knight's shield wall (Art's fx-wall)
 }
-interface GooGfx { img: Phaser.GameObjects.Image; shadow: Phaser.GameObjects.Ellipse; warn?: Phaser.GameObjects.Image; bar?: Phaser.GameObjects.Graphics; x: number; y: number; flash: number; kind: number }
+interface GooGfx {
+  img: Phaser.GameObjects.Sprite; shadow: Phaser.GameObjects.Ellipse; bar?: Phaser.GameObjects.Graphics; x: number; y: number; flash: number; kind: number;
+  dir: number; tele: Phaser.GameObjects.Sprite[]; teleKey: string; // telegraph sprites for the current action
+}
+// ---- Ninja Adventure monsters (CC0, docs/ART_MAP.md): sheet, frame size, origin = centre of the visible body ----
+const NA = 'assets/ninja-adventure/';
+const MON = [
+  { key: 'na-bat', file: 'Actor/Monster/BlueBat/SpriteSheet.png', ox: 0.5, oy: 7.5 / 16 },
+  { key: 'na-slime', file: 'Actor/Monster/Slime3/Slime3.png', ox: 0.5, oy: 9 / 16 },
+  { key: 'na-boss', file: 'Actor/Boss/GiantSlime/Idle.png', ox: 31 / 62, oy: 35 / 52 },
+  { key: 'na-eye', file: 'Actor/Monster/Eye/Eye.png', ox: 0.5, oy: 0.5 },
+];
+const MON_DIRS = ['down', 'up', 'left', 'right'] as const; // sheet columns
+/** Colour language: enemy warnings and attacks hostile (red / orange / purple, dark outline), player attacks friendly. */
+const HOSTILE = { red: 0xff3b2f, orange: 0xff8a1f, purple: 0xc04dff, outline: 0x1a0612 };
+// Ninja FX used for the monsters: [key, file, frame w, frame h, fps, loop]
+const NFX: [string, string, number, number, number, boolean][] = [
+  ['nf-chev', 'FX/Elemental/Thunder/SpriteSheet.png', 20, 28, 1, false],
+  ['nf-dot', 'FX/Particle/Spark.png', 10, 8, 12, true],
+  ['nf-aura', 'FX/Magic/Aura/SpriteSheet.png', 25, 24, 12, true],
+  ['nf-rune', 'FX/Magic/Circle/SpriteSheetSpark2.png', 32, 32, 10, true],
+  ['nf-fire', 'FX/Projectile/Fireball.png', 16, 16, 12, true],
+  ['nf-claw', 'FX/Attack/Claw/SpriteSheet.png', 32, 32, 18, false],
+  ['nf-smoke', 'FX/Smoke/Smoke/SpriteSheet.png', 32, 32, 14, false],
+  ['nf-star', 'FX/Magic/Circle/SpriteSheetSpark.png', 32, 32, 20, false],
+  ['nf-dust', 'FX/Smoke/SmokeCircular/SpriteSheet.png', 30, 14, 16, false],
+  ['nf-rock', 'FX/Elemental/Rock/SpriteSheet.png', 30, 30, 20, false],
+  ['nf-spike', 'FX/Elemental/RockSpike/SpriteSheet.png', 54, 48, 16, false],
+  ['nf-boom', 'FX/Elemental/Explosion/SpriteSheet.png', 40, 40, 18, false],
+];
 
 export class DungeonScene extends Phaser.Scene {
   private s!: Session;
@@ -70,7 +98,7 @@ export class DungeonScene extends Phaser.Scene {
   private heroes = new Map<string, HeroGfx>();
   private goo = new Map<number, GooGfx>();
   private coins = new Map<number, Phaser.GameObjects.Image>();
-  private spits = new Map<number, Phaser.GameObjects.Arc>();
+  private spits = new Map<number, { s: Phaser.GameObjects.Sprite; o: Phaser.GameObjects.Sprite; px: number; py: number }>();
   private ringG!: Phaser.GameObjects.Graphics;
   private auraG!: Phaser.GameObjects.Graphics;
   private hitG!: Phaser.GameObjects.Graphics;
@@ -91,9 +119,7 @@ export class DungeonScene extends Phaser.Scene {
     const img = (key: string, url: string) => { if (!this.textures.exists(key)) this.load.image(key, url); };
     const sheet = (key: string, url: string, w: number, h: number) => { if (!this.textures.exists(key)) this.load.spritesheet(key, url, { frameWidth: w, frameHeight: h }); };
     // Art's fine batch 2 (art/fine/..., twice the pixels: half the old scale, doubled frame sizes)
-    for (const n of ['stairs-down', 'stairs-up', 'chest-closed', 'chest-open', 'slam-warning']) img('dg-' + n, `art/fine/dungeon/${n}.png`);
-    for (const n of ['flash-goo-small', 'flash-goo-medium', 'flash-goo-boss']) img('dg-' + n, `art/dungeon/${n}.png`);
-    for (const n of [...GOO, 'goo-splat']) img('dg-' + n, `art/enemies/${n}.png`);
+    for (const n of ['stairs-down', 'stairs-up', 'chest-closed', 'chest-open']) img('dg-' + n, `art/fine/dungeon/${n}.png`);
     for (const n of ['coin-pile-s', 'coin-pile-m', 'coin-pile-l']) img('dg-' + n, `art/fine/fx/${n}.png`);
     sheet('dg-floor', 'art/fine/tiles/dungeon-floor.png', 32, 32);
     sheet('na-arc', 'assets/ninja-adventure/FX/Slash/SpriteSheetArc.png', 38, 34); // Ninja slash arc (CC0) for slashing weapons
@@ -115,6 +141,10 @@ export class DungeonScene extends Phaser.Scene {
     img('dg-potion', 'art/fine/dungeon/potion.png');
     sheet('dg-sparkle', 'art/fine/fx/coin-sparkle.png', 22, 22); // own key: the meadow still uses the 11 px one
     sheet('dungeon', 'assets/kenney-tiny-dungeon/tilemap_packed.png', 16, 16);
+    for (const m of MON) sheet(m.key, NA + m.file, m.key === 'na-boss' ? 62 : 16, m.key === 'na-boss' ? 52 : 16);
+    sheet('na-boss-jump', NA + 'Actor/Boss/GiantSlime/Jump.png', 62, 52);
+    sheet('na-boss-hit', NA + 'Actor/Boss/GiantSlime/Hit.png', 62, 52);
+    for (const [k, f, w, h] of NFX) sheet(k, NA + f, w, h);
   }
 
   create() {
@@ -123,6 +153,13 @@ export class DungeonScene extends Phaser.Scene {
       if (!this.anims.exists(key)) this.anims.create({ key, frames: this.anims.generateFrameNumbers(tex, { frames }), frameRate: rate, repeat });
     };
     anim('dg-ko', 'dg-ko-stars', [0, 1], 4, -1);
+    for (const m of MON) {
+      if (m.key === 'na-boss') { anim('na-boss', 'na-boss', [0, 1, 2, 3, 4], 8, -1); continue; }
+      MON_DIRS.forEach((dn, c) => anim(`${m.key}-${dn}`, m.key, [c, c + 4, c + 8, c + 12], 7, -1));
+    }
+    anim('na-boss-jump', 'na-boss-jump', [...Array(13).keys()], 16);
+    anim('na-boss-hit', 'na-boss-hit', [0, 1, 2, 3, 4], 14);
+    for (const [k, , , , fps, loop] of NFX) if (k !== 'nf-chev') anim(k, k, [...Array(this.textures.get(k).frameTotal - 1).keys()], fps, loop ? -1 : 0);
     anim('dg-revive', 'dg-revive', [0, 1, 2], 8);
     anim('dg-shock', 'dg-shockwave', [0, 1, 2], 12);
     anim('dg-spin', 'dg-fx-spin', [0, 1, 2, 3], 12);
@@ -241,50 +278,76 @@ export class DungeonScene extends Phaser.Scene {
     }
     for (const [id, img] of this.coins) if (!seenC.has(id)) { img.destroy(); this.coins.delete(id); }
 
-    // ---- goo spit (dodge it with a sidestep) ----
+    // ---- monster shots (dodge them with a sidestep): Ninja fireballs, hostile orange (boss: purple), dark outline ----
     const seenS = new Set<number>();
     for (const sp of d.spit) {
       seenS.add(sp.id);
       let c = this.spits.get(sp.id);
-      if (!c) { c = this.add.circle(sp.x, sp.y, 7, 0x8be36b).setStrokeStyle(2, 0x2f5a1e); this.spits.set(sp.id, c); }
-      c.x += (sp.x - c.x) * (smooth ? k : 1); c.y += (sp.y - c.y) * (smooth ? k : 1);
-      c.setDepth(c.y + 10);
+      if (!c) {
+        const boss = d.enemies.some((e) => e.kind === 2 && Math.hypot(e.x - sp.x, e.y - sp.y) < 80);
+        const col = boss ? HOSTILE.purple : HOSTILE.orange;
+        const o = this.add.sprite(sp.x, sp.y, 'nf-fire').play('nf-fire').setScale(2.4).setTintFill(HOSTILE.outline);
+        c = { s: this.add.sprite(sp.x, sp.y, 'nf-fire').play('nf-fire').setScale(2).setTint(col), o, px: sp.x, py: sp.y };
+        this.spits.set(sp.id, c);
+      }
+      const nx = c.s.x + (sp.x - c.s.x) * (smooth ? k : 1), ny = c.s.y + (sp.y - c.s.y) * (smooth ? k : 1);
+      const a = Math.atan2(ny - c.py, nx - c.px);
+      if (Math.hypot(nx - c.px, ny - c.py) > 0.5) { c.s.setRotation(a); c.o.setRotation(a); c.px = nx; c.py = ny; }
+      c.s.setPosition(nx, ny).setDepth(ny + 11); c.o.setPosition(nx, ny).setDepth(ny + 10);
     }
-    for (const [id, c] of this.spits) if (!seenS.has(id)) { c.destroy(); this.spits.delete(id); }
+    for (const [id, c] of this.spits) if (!seenS.has(id)) { c.s.destroy(); c.o.destroy(); this.spits.delete(id); }
 
-    // ---- goo ----
+    // ---- monsters (Ninja Adventure): sprite turned toward its target, telegraphs drawn from the snapshot ----
     const seenE = new Set<number>();
     for (const e of d.enemies) {
       seenE.add(e.id);
       let g = this.goo.get(e.id);
+      const m = MON[e.kind];
       if (!g) {
-        g = { img: this.add.image(e.x, e.y, 'dg-' + GOO[e.kind]).setScale(GOO_SCALE[e.kind]).setOrigin(0.5, 0.5), shadow: this.add.ellipse(e.x, e.y, ENEMY_R[e.kind] * 2, ENEMY_R[e.kind] * 0.6, 0x000000, 0.3), x: e.x, y: e.y, flash: 0, kind: e.kind };
-        if (e.kind === 2) g.warn = this.add.image(0, 0, 'dg-slam-warning').setVisible(false);
+        const img = this.add.sprite(e.x, e.y, m.key, 0).setScale(GOO_SCALE[e.kind]).setOrigin(m.ox, m.oy);
+        g = { img, shadow: this.add.ellipse(e.x, e.y, ENEMY_R[e.kind] * 2, ENEMY_R[e.kind] * 0.6, 0x000000, 0.3), x: e.x, y: e.y, flash: 0, kind: e.kind, dir: 0, tele: [], teleKey: '' };
         g.bar = this.add.graphics();
         this.goo.set(e.id, g);
       }
+      const ox = g.x, oy = g.y;
       g.x += (e.x - g.x) * (smooth ? k : 1); g.y += (e.y - g.y) * (smooth ? k : 1);
       g.flash = Math.max(0, g.flash - dt);
-      const tex = 'dg-' + (g.flash > 0 ? 'flash-' : '') + GOO[e.kind];
-      if (g.img.texture.key !== tex) g.img.setTexture(tex);
-      const sq = 1 + Math.sin(now / 160 + e.id) * 0.06;
-      // the sprite is centred on the hitbox (dungeon.ts ENEMY_R is the drawn size), squash from the centre
-      g.img.setPosition(g.x, g.y).setScale(GOO_SCALE[e.kind] * sq, GOO_SCALE[e.kind] / sq).setDepth(g.y);
-      g.shadow.setPosition(g.x, g.y + (GOO_ART[e.kind][1] * GOO_SCALE[e.kind]) / 2 - 2).setDepth(g.y - 30);
-      if (g.warn) {
-        g.warn.setVisible(!!e.slam);
-        if (e.slam) g.warn.setPosition(e.slam.x, e.slam.y).setScale((SLAM_R * 2) / 96 * (1 + Math.max(0, e.slam.t) * 0.15)).setDepth(-500).setAlpha(0.55 + Math.sin(now / 60) * 0.35);
+      // facing: the attack direction while acting, else the way it moves, else toward the nearest blob
+      let fa: number | null = e.act ? e.ang : Math.hypot(g.x - ox, g.y - oy) > 0.3 ? Math.atan2(g.y - oy, g.x - ox) : null;
+      if (fa === null) { let bd = 1e9; for (const p of v.players) { const dd = Math.hypot(p.x - g.x, p.y - g.y); if (dd < bd) { bd = dd; fa = Math.atan2(p.y - g.y, p.x - g.x); } } }
+      if (fa !== null) { const cx = Math.cos(fa), cy = Math.sin(fa); g.dir = Math.abs(cx) > Math.abs(cy) ? (cx < 0 ? 2 : 3) : cy < 0 ? 1 : 0; }
+      let dx = g.x, dy = g.y, sc = GOO_SCALE[e.kind], sy = 1;
+      if (e.kind === 2) {
+        // boss: idle; during the slam warning it crouches, leaps out of view and crashes down on the marked spot
+        const p = e.slam ? 1 - Math.max(0, e.slam.t) / SLAM_WARN : -1;
+        const want = p >= 0.3 ? 'na-boss-jump' : 'na-boss';
+        if (g.img.anims.currentAnim?.key !== want && !(g.img.anims.currentAnim?.key === 'na-boss-hit' && g.img.anims.isPlaying)) g.img.play(want);
+        if (p >= 0 && p < 0.3) sy = 1 - p; // crouch
+        else if (p >= 0.3 && p < 0.75) dy = g.y - ((p - 0.3) / 0.45) * 520;
+        else if (p >= 0.75 && e.slam) { dx = e.slam.x; dy = e.slam.y - ((1 - p) / 0.25) * 520; }
+      } else {
+        const want = `${m.key}-${MON_DIRS[g.dir]}`;
+        if (g.img.anims.currentAnim?.key !== want) g.img.play(want);
+        if (e.act === 1 || e.act === 3 || e.act === 5) g.img.anims.pause(); else if (g.img.anims.isPaused) g.img.anims.resume();
+        if (e.act === 1) sc *= 1 + 0.12 * (1 - e.at / DASH_WARN); // swells while winding up
       }
-      // health bar: the boss always (big), other goo once hurt (small)
+      g.img.setPosition(dx, dy).setScale(sc * (2 - sy), sc * sy).setDepth(dy);
+      g.shadow.setPosition(g.x, g.y + (GOO_ART[e.kind][1] * GOO_SCALE[e.kind]) / 2 - 2).setDepth(g.y - 30).setVisible(dy >= g.y - 40);
+      // tint: white flash when hit (friendly), hostile red/orange flicker while winding up, phase-2 boss red
+      const winding = e.act === 1 || e.act === 3 || e.act === 5 || (e.kind === 2 && !!e.slam);
+      if (g.flash > 0) g.img.setTintFill(0xffffff);
+      else if (winding && Math.floor(now / 90) % 2) g.img.setTint(e.act === 5 ? HOSTILE.orange : HOSTILE.red);
+      else if (e.kind === 2 && e.hp < e.mx / 2) g.img.setTint(0xff8a8a);
+      else g.img.clearTint();
+      this.telegraph(g, e, now);
+      // health bar: the boss always (big), other monsters once hurt (small)
       g.bar!.clear().setDepth(5000);
-      if (e.kind === 2 || e.hp < e.mx) {
+      if ((e.kind === 2 || e.hp < e.mx) && dy >= g.y - 40) {
         const w = e.kind === 2 ? 90 : ENEMY_R[e.kind] * 2 + 4, x = g.x - w / 2, y = g.y - ENEMY_R[e.kind] - (e.kind === 2 ? 22 : 12), hh = e.kind === 2 ? 7 : 4;
         g.bar!.fillStyle(0x3f2631, 1).fillRect(x - 2, y - 2, w + 4, hh + 4).fillStyle(e.kind === 2 && e.hp < e.mx / 2 ? 0xff3b3b : 0xb3261e, 1).fillRect(x, y, w * Math.min(1, Math.max(0, e.hp) / Math.max(1, e.mx)), hh);
       }
-      // spitters: greener; the angry boss (phase 2): red
-      if (e.kind === 3) g.img.setTint(0x9dff7a); else if (e.kind === 2 && e.hp < e.mx / 2) g.img.setTint(0xff8a8a); else g.img.clearTint();
     }
-    for (const [id, g] of this.goo) if (!seenE.has(id)) { g.img.destroy(); g.shadow.destroy(); g.warn?.destroy(); g.bar?.destroy(); this.goo.delete(id); }
+    for (const [id, g] of this.goo) if (!seenE.has(id)) { g.img.destroy(); g.shadow.destroy(); g.bar?.destroy(); g.tele.forEach((t) => t.destroy()); this.goo.delete(id); }
 
     // ---- blobz ----
     this.ringG.clear(); this.auraG.clear();
@@ -500,6 +563,74 @@ export class DungeonScene extends Phaser.Scene {
     }
   }
 
+  /** A one-shot Ninja FX at a point (tinted when a colour is given). */
+  private nfx(key: string, x: number, y: number, scale: number, tint?: number) {
+    const s = this.add.sprite(x, y, key, 0).setScale(scale).setDepth(y + 40);
+    if (tint !== undefined) s.setTint(tint);
+    s.play(key).once('animationcomplete', () => s.destroy());
+  }
+
+  /** A hostile Ninja FX sprite with a dark outline (a dark copy behind it), for monster warnings and attacks. */
+  private hostile(list: Phaser.GameObjects.Sprite[], key: string, x: number, y: number, scale: number, color: number, angle = 0, frame?: number, depth = -300) {
+    const anim = this.anims.exists(key);
+    const o = this.add.sprite(x, y, key, frame ?? 0).setScale(scale * 1.25).setTintFill(HOSTILE.outline).setAlpha(0.85).setRotation(angle).setDepth(depth);
+    const s = this.add.sprite(x, y, key, frame ?? 0).setScale(scale).setTint(color).setRotation(angle).setDepth(depth + 1);
+    if (anim && frame === undefined) { o.play(key); s.play(key); }
+    list.push(o, s);
+    return s;
+  }
+
+  /** Telegraphs from the snapshot: dash = red chevrons along the path + purple aura; bite = 3 short chevrons;
+   *  aim = a thin dotted orange line + a small rune on the target spot; boss slam = a growing red rune on the landing
+   *  spot with chevrons closing in. Rebuilt when the action changes, pulsing while it lasts. */
+  private telegraph(g: GooGfx, e: View['dungeon'] extends infer D ? D extends { enemies: (infer E)[] } ? E : never : never, now: number) {
+    const key = e.kind === 2 ? (e.slam ? `slam:${e.slam.x},${e.slam.y}` : '') : e.act === 1 || e.act === 3 || e.act === 5 ? `${e.act}:${e.ang}` : '';
+    if (key !== g.teleKey) {
+      g.tele.forEach((t) => t.destroy()); g.tele = []; g.teleKey = key;
+      if (key) {
+        const a = e.ang, ux = Math.cos(a), uy = Math.sin(a), x0 = e.x, y0 = e.y, fl = this.map;
+        if (e.kind === 2 && e.slam) {
+          const r = this.hostile(g.tele, 'nf-rune', e.slam.x, e.slam.y + 8, 0.6, HOSTILE.red);
+          r.setData('grow', (SLAM_R * 2.4) / 32);
+          for (let i = 0; i < 8; i++) {
+            const b = (i / 8) * Math.PI * 2;
+            const c = this.hostile(g.tele, 'nf-chev', e.slam.x + Math.cos(b) * SLAM_R * 1.6, e.slam.y + 8 + Math.sin(b) * SLAM_R * 1.1, 1.5, HOSTILE.red, b + Math.PI, 2);
+            c.setData('in', { cx: e.slam.x, cy: e.slam.y + 8, b });
+          }
+        } else if (e.act === 1) {
+          this.hostile(g.tele, 'nf-aura', x0, y0 - 6, 2.4, HOSTILE.purple, 0, undefined, y0 - 1);
+          const len = DASH_SPEED * DASH_TIME + ENEMY_R[e.kind];
+          for (let d = ENEMY_R[e.kind] + 10; d <= len; d += 26) {
+            const x = x0 + ux * d, y = y0 + uy * d;
+            if (fl && isWall(fl, x, y)) break;
+            this.hostile(g.tele, 'nf-chev', x, y, 1.3, HOSTILE.red, a, 2).setData('d', d);
+          }
+        } else if (e.act === 3) {
+          for (let k2 = 1; k2 <= 3; k2++) this.hostile(g.tele, 'nf-chev', x0 + ux * (ENEMY_R[e.kind] + k2 * 20), y0 + uy * (ENEMY_R[e.kind] + k2 * 20), 1.1, HOSTILE.red, a, 2);
+        } else if (e.act === 5) {
+          let d = ENEMY_R[e.kind] + 12, x = x0, y = y0;
+          for (; d <= 300; d += 13) { x = x0 + ux * d; y = y0 + uy * d; if (fl && isWall(fl, x, y)) break; this.hostile(g.tele, 'nf-dot', x, y, 1.7, HOSTILE.orange, a).setData('d', d); }
+          this.hostile(g.tele, 'nf-rune', x, y, 1.1, HOSTILE.orange);
+        }
+      }
+    }
+    if (!g.tele.length) return;
+    // progress 0..1 through the warning
+    const p = e.kind === 2 && e.slam ? 1 - Math.max(0, e.slam.t) / SLAM_WARN : 1 - e.at / (e.act === 1 ? DASH_WARN : e.act === 3 ? BITE_WARN : AIM_WARN);
+    for (const t of g.tele) {
+      const grow = t.getData('grow') as number | undefined, inn = t.getData('in') as { cx: number; cy: number; b: number } | undefined, d = t.getData('d') as number | undefined;
+      const pulse = 0.65 + 0.35 * Math.sin(now / 70);
+      if (grow) { const s2 = 0.6 + (grow - 0.6) * Math.min(1, p * 1.3); t.setScale(s2); t.setRotation(p * 2); }
+      if (inn) { const rr = SLAM_R * (1.6 - 0.6 * p); t.setPosition(inn.cx + Math.cos(inn.b) * rr, inn.cy + Math.sin(inn.b) * rr * 0.7); }
+      // the line fills out from the monster as the warning runs, then pulses
+      if (d !== undefined) t.setVisible(d <= 30 + p * 2.2 * 300);
+      if (!t.isTinted || t.tintFill) { t.setAlpha(0.6 + 0.25 * pulse); continue; }
+      t.setAlpha(pulse);
+    }
+    // keep the outline copies in step with their sprites (pairs: outline, sprite)
+    for (let i = 0; i + 1 < g.tele.length; i += 2) { const o = g.tele[i], s2 = g.tele[i + 1]; o.setPosition(s2.x, s2.y).setRotation(s2.rotation).setScale(s2.scaleX * 1.25).setVisible(s2.visible); }
+  }
+
   private playFx(f: DFx) {
     switch (f.t) {
       case 'swing': {
@@ -545,15 +676,23 @@ export class DungeonScene extends Phaser.Scene {
         break;
       }
       case 'dodge': { const c = this.add.sprite(f.x, f.y + 14, 'dg-fx-sidestep', 0).setOrigin(0.5, 1).setScale(1).setDepth(f.y - 2); c.play('dg-sidestep'); c.once('animationcomplete', () => c.destroy()); sfx.dash(); break; }
-      case 'hurt': { const g = this.goo.get(f.e); if (g) g.flash = 0.12; this.burst(f.x, f.y, 0x8be36b, 4, 16); break; }
+      case 'hurt': { const g = this.goo.get(f.e); if (g) g.flash = 0.12; this.nfx('nf-star', f.x, f.y - 4, 1.6, 0xffffff); break; } // a friendly white spark on the monster
+      case 'mdash': this.nfx('nf-dust', f.x, f.y + 14, 2.2); break;
+      case 'bite': { const l: Phaser.GameObjects.Sprite[] = []; const c = this.hostile(l, 'nf-claw', f.x + Math.cos(f.a) * 34, f.y + Math.sin(f.a) * 34, 2.2, HOSTILE.red, f.a, undefined, f.y + 20); c.once('animationcomplete', () => l.forEach((o) => o.destroy())); break; }
       case 'kill': {
-        const sp = this.add.image(f.x, f.y + 6, 'dg-goo-splat').setScale(GOO_SCALE[f.kind]).setDepth(-600);
-        this.tweens.add({ targets: sp, alpha: 0, delay: 2500, duration: 800, onComplete: () => sp.destroy() });
-        this.burst(f.x, f.y, 0x8be36b, f.kind === 2 ? 16 : 8, f.kind === 2 ? 60 : 30);
+        // Ninja smoke puff + star (the boss explodes)
+        if (f.kind === 2) this.nfx('nf-boom', f.x, f.y, 3);
+        this.nfx('nf-smoke', f.x, f.y, f.kind === 2 ? 5 : 3);
+        this.nfx('nf-star', f.x, f.y, f.kind === 2 ? 4 : 2.4, 0xffffff);
         if (f.kind === 2) { this.cameras.main.shake(300, 0.01); sfx.star(); } else sfx.bump();
         break;
       }
-      case 'ouch': { this.cameras.main.shake(90, 0.004); sfx.bump(); const b = this.heroes.get(f.id); if (b) this.tweens.add({ targets: b.body, alpha: 0.3, yoyo: true, duration: 80 }); break; }
+      case 'ouch': {
+        this.cameras.main.shake(90, 0.004); sfx.bump();
+        const b = this.heroes.get(f.id); if (b) this.tweens.add({ targets: b.body, alpha: 0.3, yoyo: true, duration: 80 });
+        const l: Phaser.GameObjects.Sprite[] = []; const c = this.hostile(l, 'nf-claw', f.x, f.y - 8, 1.6, HOSTILE.red, 0, undefined, f.y + 30); c.once('animationcomplete', () => l.forEach((o) => o.destroy())); // an enemy hit: hostile red
+        break;
+      }
       case 'ko': this.floatText(f.x, f.y - 50, t('dg.ko'), '#ffffff', 22); break;
       case 'revive': { const r = this.add.sprite(f.x, f.y - 16, 'dg-revive', 0).setScale(1.5).setDepth(5000); r.play('dg-revive'); r.once('animationcomplete', () => r.destroy()); sfx.power(); break; }
       case 'coin': {
@@ -570,9 +709,10 @@ export class DungeonScene extends Phaser.Scene {
         break;
       }
       case 'slam': {
-        const sw = this.add.sprite(f.x, f.y, 'dg-shockwave', 0).setScale((SLAM_R * 2) / 96).setDepth(-400);
-        sw.play('dg-shock'); sw.once('animationcomplete', () => sw.destroy());
-        this.cameras.main.shake(220, 0.01); sfx.bump();
+        // the Giant Slime crashes down: rock spikes burst out around it, rocks + dust, a big shake
+        for (let i = 0; i < 5; i++) { const b = (i / 5) * Math.PI * 2 + 0.3; this.nfx('nf-spike', f.x + Math.cos(b) * SLAM_R * 0.8, f.y + Math.sin(b) * SLAM_R * 0.55 - 20, 1.8); }
+        this.nfx('nf-rock', f.x, f.y + 10, 3.5); this.nfx('nf-dust', f.x, f.y + 30, 4.5);
+        this.cameras.main.shake(260, 0.014); sfx.bump();
         break;
       }
       case 'floor': sfx.power(); break;
