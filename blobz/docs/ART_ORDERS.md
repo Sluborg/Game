@@ -36,7 +36,7 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (N-5b is TO DO now). New orders only for pieces the pack lacks.**
+ChatGPT works only on N-orders with status TO DO (N-5b and N-7b are TO DO now). New orders only for pieces the pack lacks.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
@@ -50,7 +50,8 @@ ChatGPT works only on N-orders with status TO DO (N-5b is TO DO now). New orders
 | N-8 | CANCELLED (snow map removed, no map picker) | Map picker pictures: Meadow and Snow (2 small scenes) | `art/map-meadow.png`, `art/map-snow.png` |
 | N-9 | DONE | Bärregn mini game background (sunset meadow, portrait) | `mini/bg.png` |
 | N-10 | DONE | Small UI icons: check mark, star, empty star (one small sheet) | `art/icons/check.png`, `art/gather/star.png`, `art/gather/star-empty.png` |
-| N-5b | TO DO | Rogue class card only: daggers float beside the blob | `dungeon/card-class-rogue.png` |
+| N-5b | TO DO | Rogue class card only: ONE plain dagger beside the blob (not a sai) | `dungeon/card-class-rogue.png` |
+| N-7b | TO DO | App icon round 2: no background, no hands, no sparkles | app/PWA icon |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
@@ -118,9 +119,14 @@ shade), each icon 16x16 art pixels, spaced apart on a grid, no text:
 Same size and outline thickness for all three.
 ```
 
-### N-5b Rogue card, daggers fix
+### N-5b Rogue card, one dagger
 ```
-Redo ONLY the Rogue card from the class-card sheet (reference: https://raw.githubusercontent.com/sluborg/Game/claude/blobz-art/blobz/docs/art-review/n5-class-cards.png, the second card). Keep everything the same (purple blob, dark bandana, card frame, dungeon background, size and style) with ONE change: the two daggers float BESIDE the blob, one on each side at body height, blades pointing up and slightly outward, not crossed under or in front of the body. Blobz have no hands. No text.
+Redo ONLY the Rogue card from the class-card sheet (reference: https://raw.githubusercontent.com/sluborg/Game/claude/blobz-art/blobz/docs/art-review/n5-class-cards.png, the second card). Keep everything the same (purple blob, dark bandana, card frame, dungeon background, size and style) with ONE change: the rogue has ONE plain straight dagger (a short steel blade, simple crossguard, NOT a sai, no blood) floating BESIDE the blob at eye height, blade pointing up and slightly outward. Blobz have no hands. No text.
+```
+
+### N-7b App icon, round 2
+```
+Redo the app icon (reference: https://raw.githubusercontent.com/sluborg/Game/claude/blobz-art/blobz/docs/art-review/n7-app-icon.png) with these changes: NO background (transparent around the castle and blob), the blob has NO hands or arms (it just peeks over the castle wall), NO sparkles. Same blob, same castle, same style. Square 1:1.
 ```
 
 ## Ninja style block (for N-orders)
