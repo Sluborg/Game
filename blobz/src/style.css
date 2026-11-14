@@ -2,7 +2,7 @@
    Every box uses the same recipe: 4 offset shadows = a plum outline with stepped (pixel) corners,
    plus inset light/dark rows for a chunky bevel. */
 :root {
-  color-scheme: only light;
+  color-scheme: light dark;
   --plum: #3f2631;
   --cream: #fff7e6;
   --cream-2: #f1e4c6;
@@ -26,7 +26,8 @@ html, body {
 #game, #game canvas { position: fixed; inset: 0; }
 canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; }
 .hidden { display: none !important; }
-button { font-family: var(--font); }
+button { font-family: var(--font); color: var(--ink); }
+input, button, label, p, h1, h2, b, span, li { forced-color-adjust: none; }
 
 /* ---------- screens + panels ---------- */
 .screen {

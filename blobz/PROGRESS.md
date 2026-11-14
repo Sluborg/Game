@@ -86,3 +86,9 @@
 - Totems (4 kinds x 3 levels, sliced at 9 px/art-pixel to keep the symbols) in `art/totems/`, goo enemies
   (small, medium, boss, splat) in `art/enemies/`. Installed only; they need milestone 40/50 gameplay.
 - Remaining art order: 70 (hat/face ideas).
+
+## 2026-11-14 - v017b: dark-mode fix, take 2
+- `only light` did not stop Samsung Internet / Chrome force-dark on Stefan's phone (still grey/inverted).
+  Now the page declares `color-scheme: light dark` (meta + :root): force-dark skips pages that support
+  dark, and all colors are explicit so it renders the same. Checked with a dark preference in Chromium;
+  the real force-dark path cannot be reproduced headless, verify on the phone.
