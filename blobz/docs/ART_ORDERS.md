@@ -36,19 +36,20 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (N-2, N-5..N-9 are TO DO now). New orders only for pieces the pack lacks.**
+ChatGPT works only on N-orders with status TO DO (N-7, N-9, N-10 are TO DO now). New orders only for pieces the pack lacks.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
 | N-1 | DONE (C chosen) | Title header / logo in Ninja Adventure style | `art/logo.png` |
-| N-2 | TO DO | Start screen background, round 3: LANDSCAPE 16:9 ONLY (portrait approved 4/5; make it even if you made a landscape before) | `art/title.png` |
+| N-2 | DONE (portrait + landscape) | Start screen background | `art/title.png` |
 | N-3 | DONE | Loading screen (portrait + landscape approved) | `art/loading.png`, `art/loading-landscape.png` |
 | N-4 | CANCELLED (switched to Ninja's own 16 px weapons) | Hovering weapons, round 2: crossbow with bolt further back | `dungeon/weapons/*.png` |
-| N-5 | TO DO | Class cards: Healer, Rogue, Tank, Marksman (4 cards on one sheet) | `dungeon/card-class-*.png` |
-| N-6 | TO DO | End screen: blobz cheering by the cottage with their haul (portrait) | `art/victory.png` |
+| N-5 | DONE | Class cards: Healer, Rogue, Tank, Marksman (4 cards on one sheet) | `dungeon/card-class-*.png` |
+| N-6 | DONE | End screen: blobz cheering by the cottage with their haul (portrait) | `art/victory.png` |
 | N-7 | TO DO | App icon (square) | app/PWA icon |
-| N-8 | TO DO | Map picker pictures: Meadow and Snow (2 small scenes) | `art/map-meadow.png`, `art/map-snow.png` |
+| N-8 | CANCELLED (snow map removed, no map picker) | Map picker pictures: Meadow and Snow (2 small scenes) | `art/map-meadow.png`, `art/map-snow.png` |
 | N-9 | TO DO | Bärregn mini game background (sunset meadow, portrait) | `mini/bg.png` |
+| N-10 | TO DO | Small UI icons: check mark, star, empty star (one small sheet) | `art/icons/check.png`, `art/gather/star.png`, `art/gather/star-empty.png` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
@@ -104,6 +105,16 @@ Same framing and size for both, so they work as two buttons. No text.
 Portrait 9:16, Ninja Adventure style (style block). A meadow at sunset seen from the side-top: a low wooden fence
 along the bottom, a few berry bushes, warm orange-pink sky with soft clouds. The middle 70% must be calm and open
 (berries and bombs fall there and a blob catches them with a basket at the bottom). No blobz, no text.
+```
+
+### N-10 Small UI icons (one sheet)
+```
+One small sheet, transparent background, Ninja Adventure pixel style (1 px dark outline #141b1b, flat colours, one
+shade), each icon 16x16 art pixels, spaced apart on a grid, no text:
+1 Check mark: a bold green tick.
+2 Star (earned): a chunky gold 5-point star with a light glint.
+3 Star (empty): the same star shape, dark grey-plum fill with the same outline (reads as "not yet").
+Same size and outline thickness for all three.
 ```
 
 ## Ninja style block (for N-orders)
