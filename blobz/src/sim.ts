@@ -305,7 +305,7 @@ export interface State {
 
 export { rng } from './rng';
 import { rng } from './rng';
-import { dsnap, dview, newRun, READY_SECONDS, stepDungeon, WEAPONS, type DFx, type DSnap, type DState, type DView, type Weapon } from './dungeon';
+import { dsnap, dungeonChoice, dview, newRun, READY_SECONDS, stepDungeon, WEAPONS, type DFx, type DSnap, type DState, type DView, type Weapon } from './dungeon';
 
 
 function nearBase(x: number, y: number, extra: number) {
@@ -459,6 +459,8 @@ function clampSpeed(p: Player, speedMul: number) {
 
 /** A blob picks its weapon on the pick screen (host applies its own and the joiners' messages). */
 export function pickWeapon(s: State, id: string, w: string) {
+  // [dungeon hook] level-up cards and loot votes travel the same way: 'skill:<id>', 'loot:roll', 'loot:pass'
+  if (s.mode === 'dungeon' && s.dg && /^(skill|loot):/.test(w)) { dungeonChoice(s.dg, id, w, s.fx as DFx[]); return; }
   if (s.mode === 'pick' && (WEAPONS as string[]).includes(w) && s.players.some((p) => p.id === id)) s.picks[id] = w as Weapon;
 }
 

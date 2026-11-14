@@ -372,7 +372,7 @@ function villageText() {
 
 function onView(v: View) {
   if (DEBUG) (window as unknown as { __blobzView: View }).__blobzView = v;
-  if (dungeonUi(v, session?.myId, controls)) return; // [dungeon hook, Code 2] pick cards / dungeon HUD
+  if (dungeonUi(v, session?.myId, controls, (id) => infos.get(id)?.name ?? '?')) return; // [dungeon hook, Code 2] pick cards / dungeon HUD
   renderQuestRows($('hud-quest'), v);
   renderBuildGoal(v);
   const st = starsFor(v.delivered, v.quest);

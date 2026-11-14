@@ -3,7 +3,9 @@
 // Also draws the dungeon entrance on the meadow (dungeonFrame is the one hook GameScene calls).
 import Phaser from 'phaser';
 import { blobCanvas, BODY_CY, clampLook } from './blob';
-import { DT, ENEMY_R, FLOORS, GH, GW, makeFloor, SLAM_R, STAIRS_R, type DFx, type Floor, type Weapon } from './dungeon';
+import { DT, ENEMY_R, FLOORS, GH, GW, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type Weapon } from './dungeon';
+/** Weapons without Art's strip yet: a Kenney Tiny Dungeon tile in hand (bow: drawn in code). */
+const WEAPON_TILE: Partial<Record<Weapon, number>> = { staff: 130, shield: 102 };
 import type { Session } from './game';
 import { sfx } from './sfx';
 import { entranceOf, ENTRANCE_R, DUNGEON_ENABLED, type View } from './sim';
@@ -11,7 +13,7 @@ import { entranceOf, ENTRANCE_R, DUNGEON_ENABLED, type View } from './sim';
 const BLOB_SCALE = 1.45; // same as the meadow (game.ts)
 const FONT = "'Nunito', sans-serif"; // same as the meadow
 /** Weapon strips (art/dungeon/README.md): frame size + pivot. */
-const WEAPON_FRAME: Record<Weapon, { w: number; h: number; px: number; py: number }> = {
+const WEAPON_FRAME: Partial<Record<Weapon, { w: number; h: number; px: number; py: number }>> = {
   sword: { w: 44, h: 48, px: 16, py: 28 }, hammer: { w: 44, h: 48, px: 16, py: 28 }, spear: { w: 68, h: 48, px: 16, py: 28 },
 };
 const GOO = ['goo-small', 'goo-medium', 'goo-boss'];
@@ -48,6 +50,7 @@ export class DungeonScene extends Phaser.Scene {
   private goo = new Map<number, GooGfx>();
   private coins = new Map<number, Phaser.GameObjects.Image>();
   private ringG!: Phaser.GameObjects.Graphics;
+  private auraG!: Phaser.GameObjects.Graphics;
   private bubble!: Phaser.GameObjects.Text;
   private lastClock = 0;
   private camTarget = { x: 0, y: 0 };
@@ -67,7 +70,7 @@ export class DungeonScene extends Phaser.Scene {
     for (const n of ['stairs-down', 'stairs-up', 'chest-closed', 'chest-open', 'slam-warning', 'flash-goo-small', 'flash-goo-medium', 'flash-goo-boss']) img('dg-' + n, `art/dungeon/${n}.png`);
     for (const n of [...GOO, 'goo-splat']) img('dg-' + n, `art/enemies/${n}.png`);
     for (const n of ['coin-pile-s', 'coin-pile-m']) img('dg-' + n, `art/fx/${n}.png`);
-    for (const w of ['sword', 'hammer', 'spear'] as Weapon[]) sheet('dg-weapon-' + w, `art/dungeon/weapon-${w}.png`, WEAPON_FRAME[w].w, WEAPON_FRAME[w].h);
+    for (const w of ['sword', 'hammer', 'spear'] as Weapon[]) sheet('dg-weapon-' + w, `art/dungeon/weapon-${w}.png`, WEAPON_FRAME[w]!.w, WEAPON_FRAME[w]!.h);
     sheet('dg-ko-stars', 'art/dungeon/ko-stars.png', 20, 9);
     sheet('dg-revive', 'art/dungeon/revive.png', 16, 20);
     sheet('dg-shockwave', 'art/dungeon/shockwave.png', 48, 24);
@@ -92,6 +95,16 @@ export class DungeonScene extends Phaser.Scene {
     anim('dg-charge', 'dg-fx-charge', [0, 1, 2], 10);
     anim('dg-sidestep', 'dg-fx-sidestep', [0, 1, 2], 10);
     anim('sparkle', 'fx-sparkle', [0, 1, 2, 1, 0], 16);
+    if (!this.textures.exists('dg-bow-ph')) {
+      // placeholder bow until Art's weapon-bow.png: brown arc + string, 16x16 pixels
+      const c = document.createElement('canvas'); c.width = 16; c.height = 16;
+      const g = c.getContext('2d')!;
+      g.fillStyle = '#3f2631'; for (let y = 1; y < 15; y++) { const x = 4 + Math.round(4 * Math.sin((y / 15) * Math.PI)); g.fillRect(x - 1, y, 3, 1); }
+      g.fillStyle = '#a0643c'; for (let y = 2; y < 14; y++) { const x = 4 + Math.round(4 * Math.sin((y / 15) * Math.PI)); g.fillRect(x, y, 1, 1); }
+      g.fillStyle = '#fff7e6'; g.fillRect(4, 2, 1, 12);
+      this.textures.addCanvas('dg-bow-ph', c)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    }
+    this.auraG = this.add.graphics().setDepth(-300);
     this.ringG = this.add.graphics().setDepth(4000);
     this.bubble = this.add.text(0, 0, '', { fontFamily: FONT, fontSize: '22px', color: '#3f2631', fontStyle: 'bold', backgroundColor: '#fff7e6', padding: { x: 8, y: 2 } })
       .setOrigin(0.5, 1).setDepth(6000).setVisible(false);
@@ -183,7 +196,7 @@ export class DungeonScene extends Phaser.Scene {
     for (const c of d.coins) {
       seenC.add(c.id);
       let img = this.coins.get(c.id);
-      if (!img) { img = this.add.image(c.x, c.y, 'dg-coin-pile-s').setScale(2); this.coins.set(c.id, img); }
+      if (!img) { img = c.k === 1 ? this.add.image(c.x, c.y, 'dungeon', 115).setScale(2) : this.add.image(c.x, c.y, 'dg-coin-pile-s').setScale(2); this.coins.set(c.id, img); }
       img.x += (c.x - img.x) * (smooth ? k : 1); img.y += (c.y - 4 - Math.abs(Math.sin(now / 200 + c.id)) * 4 - img.y) * (smooth ? k : 1);
       img.setDepth(c.y - 5);
     }
@@ -213,12 +226,13 @@ export class DungeonScene extends Phaser.Scene {
       if (g.bar) {
         g.bar.clear().setDepth(5000);
         const w = 80, x = g.x - w / 2, y = g.y - 74;
-        g.bar.fillStyle(0x3f2631, 1).fillRect(x - 3, y - 3, w + 6, 12).fillStyle(0xb3261e, 1).fillRect(x, y, w * Math.max(0, e.hp) / 15, 6);
+        g.bar.fillStyle(0x3f2631, 1).fillRect(x - 3, y - 3, w + 6, 12).fillStyle(0xb3261e, 1).fillRect(x, y, w * Math.max(0, e.hp) / Math.max(1, d.bossMax), 6);
       }
     }
     for (const [id, g] of this.goo) if (!seenE.has(id)) { g.img.destroy(); g.shadow.destroy(); g.warn?.destroy(); g.bar?.destroy(); this.goo.delete(id); }
 
     // ---- blobz ----
+    this.ringG.clear(); this.auraG.clear();
     const infos = this.s.infos();
     const seenP = new Set<string>();
     for (const p of v.players) {
@@ -235,7 +249,7 @@ export class DungeonScene extends Phaser.Scene {
           shadow: this.add.ellipse(p.x, p.y, 34, 12, 0x000000, 0.3),
           body: this.add.image(p.x, p.y, texKey).setOrigin(0.5, BODY_CY).setScale(BLOB_SCALE),
           label: this.add.text(p.x, p.y, info.name, { fontFamily: FONT, fontSize: '13px', color: '#ffffff', fontStyle: 'bold', stroke: '#000000', strokeThickness: 3 }).setOrigin(0.5),
-          weapon: this.add.sprite(p.x, p.y, 'dg-weapon-' + w, 0),
+          weapon: this.add.sprite(p.x, p.y, WEAPON_FRAME[w] ? 'dg-weapon-' + w : 'dg-bow-ph', 0),
           stars: this.add.sprite(p.x, p.y, 'dg-ko-stars', 0).setScale(2).setVisible(false),
           me: this.add.triangle(p.x, p.y, 0, 0, 12, 0, 6, 8, 0xffffff, 0.9).setVisible(p.id === this.s.myId),
           texKey, x: p.x, y: p.y, vx: 0, vy: 0, swingT: 0, swingDur: 0.3, spin: 0,
@@ -257,6 +271,11 @@ export class DungeonScene extends Phaser.Scene {
         .setAlpha(h?.dodge ? 0.45 : h?.inv && !ko ? (Math.floor(now / 90) % 2 ? 0.4 : 1) : 1);
       b.label.setPosition(b.x, b.y + 24).setDepth(b.y + 2);
       b.me.setPosition(b.x, b.y - 58).setDepth(b.y + 3);
+      if (h && !ko && h.wallT > 0) {
+        const r = specialOf(h.cls, h.weapon).r * heroMods(h).spR;
+        this.auraG.fillStyle(0x5ec8ff, 0.14 + Math.sin(now / 120) * 0.04).fillCircle(b.x, b.y, r).lineStyle(4, 0x8fd3ff, 0.8).strokeCircle(b.x, b.y, r);
+      }
+      if (h && !ko && h.shield > 0) this.ringG.lineStyle(3, 0x8fd3ff, 0.9).strokeCircle(b.x, b.y - 6, 28);
       b.stars.setVisible(ko).setPosition(b.x, b.y - 30).setDepth(b.y + 4);
       this.drawWeapon(b, w, h?.face ?? 0, ko, dt);
       if (b.fx) {
@@ -268,7 +287,6 @@ export class DungeonScene extends Phaser.Scene {
     for (const [id, b] of this.heroes) if (!seenP.has(id)) { for (const o of [b.shadow, b.body, b.label, b.weapon, b.stars, b.me]) o.destroy(); b.fx?.spr.destroy(); this.heroes.delete(id); }
 
     // ---- stairs: progress ring + "2/3" bubble when someone stands on them ----
-    this.ringG.clear();
     this.bubble.setVisible(false);
     const alive = v.players.filter((p) => (d.heroes[p.id]?.ko ?? 0) <= 0);
     const spots = [{ at: f.stairs, open: d.floor < FLOORS || !bossAlive }, ...(d.floor === 1 ? [{ at: f.exit, open: true }] : [])];
@@ -297,9 +315,6 @@ export class DungeonScene extends Phaser.Scene {
 
   /** Weapon in hand: idle = first frame; a swing plays the 4-frame strip; the spin special whirls it. */
   private drawWeapon(b: HeroGfx, w: Weapon, face: number, ko: boolean, dt: number) {
-    const key = 'dg-weapon-' + w;
-    if (b.weapon.texture.key !== key) b.weapon.setTexture(key, 0);
-    if (ko) { b.weapon.setVisible(false); return; }
     const fr = WEAPON_FRAME[w];
     b.swingT = Math.max(0, b.swingT - dt);
     b.spin = Math.max(0, b.spin - dt);
@@ -307,6 +322,20 @@ export class DungeonScene extends Phaser.Scene {
     const sc = BLOB_SCALE;
     const gx = b.body.x - 18 * sc, gy = b.body.y - BODY_CY * 48 * sc;
     const hx = gx + (left ? 2 : 33) * sc, hy = gy + 33 * sc;
+    if (!fr) {
+      // placeholder: one tile in the hand, tilts forward on each attack
+      const tile = WEAPON_TILE[w];
+      if (tile !== undefined) { if (b.weapon.texture.key !== 'dungeon' || Number(b.weapon.frame.name) !== tile) b.weapon.setTexture('dungeon', tile); }
+      else if (b.weapon.texture.key !== 'dg-bow-ph') b.weapon.setTexture('dg-bow-ph');
+      if (ko) { b.weapon.setVisible(false); return; }
+      const tilt = b.swingT > 0 ? Math.sin((1 - b.swingT / b.swingDur) * Math.PI) * 0.9 : 0;
+      b.weapon.setVisible(true).setScale(2).setFlipX(left).setOrigin(0.5, 0.75)
+        .setPosition(hx, hy).setDepth(b.body.depth + 1).setRotation((left ? -1 : 1) * (w === 'bow' ? 0 : 0.3 + tilt));
+      return;
+    }
+    const key = 'dg-weapon-' + w;
+    if (b.weapon.texture.key !== key) b.weapon.setTexture(key, 0);
+    if (ko) { b.weapon.setVisible(false); return; }
     const frame = b.swingT > 0 ? Math.min(3, Math.floor((1 - b.swingT / b.swingDur) * 4)) : 0;
     b.weapon.setVisible(true).setFrame(frame).setScale(sc).setFlipX(left)
       .setOrigin((left ? fr.w - fr.px : fr.px) / fr.w, fr.py / fr.h)
@@ -358,6 +387,14 @@ export class DungeonScene extends Phaser.Scene {
           sw.play('dg-slam'); sw.once('animationcomplete', () => sw.destroy());
           if (b) { b.swingDur = 0.4; b.swingT = 0.4; }
           this.cameras.main.shake(160, 0.006); sfx.bump();
+        } else if (f.k === 'heal' || f.k === 'wall') {
+          const col = f.k === 'heal' ? 0x6cc644 : 0x5ec8ff;
+          const c = this.add.circle(f.x, f.y, f.r * 0.3, col, 0.25).setStrokeStyle(5, col, 0.9).setDepth(4500);
+          this.tweens.add({ targets: c, scale: 3.3, alpha: 0, duration: 450, ease: 'Cubic.Out', onComplete: () => c.destroy() });
+          if (f.k === 'wall') this.cameras.main.shake(120, 0.004);
+          sfx.power();
+        } else if (f.k === 'volley') {
+          sfx.dash();
         } else if (f.k === 'lunge') {
           // speed streaks behind the blob: right edge at its back, flipped when it charges left
           if (b) { b.swingDur = 0.35; b.swingT = 0.35; this.ride(b, 'dg-fx-charge', 'dg-charge', 'charge', f.a, 1, 0.5, 2); }
@@ -386,7 +423,7 @@ export class DungeonScene extends Phaser.Scene {
       case 'chest': this.floatText(f.x, f.y - 40, '+' + f.n, '#ffe08a', 28); this.burst(f.x, f.y - 10, 0xffe08a, 12, 40); sfx.score(); break;
       case 'level': {
         const me = this.heroes.get(this.s.myId);
-        this.floatText(me?.x ?? 0, (me?.y ?? 0) - 80, `Nivå ${f.level}! ${f.bonus === 'heart' ? '+1 hjärta' : '+skada'}`, '#8fd3ff', 26);
+        this.floatText(me?.x ?? 0, (me?.y ?? 0) - 80, `Nivå ${f.level}!`, '#8fd3ff', 30);
         sfx.star();
         break;
       }
@@ -397,6 +434,28 @@ export class DungeonScene extends Phaser.Scene {
         break;
       }
       case 'floor': sfx.power(); break;
+      case 'shot': {
+        // arrow flies from the archer to the goo
+        const a = Math.atan2(f.ty - f.y, f.tx - f.x);
+        const ar = this.add.rectangle(f.x, f.y - 10, 18, 3, 0xfff7e6).setStrokeStyle(1, 0x3f2631).setRotation(a).setDepth(4500);
+        this.tweens.add({ targets: ar, x: f.tx, y: f.ty - 6, duration: Math.max(60, Math.hypot(f.tx - f.x, f.ty - f.y) / 1.2), onComplete: () => ar.destroy() });
+        break;
+      }
+      case 'heal': {
+        const c = this.add.circle(f.x, f.y - 6, 20, 0x6cc644, 0.35).setStrokeStyle(3, 0xb6f09c).setDepth(4500);
+        this.tweens.add({ targets: c, scale: 1.8, alpha: 0, duration: 450, onComplete: () => c.destroy() });
+        this.floatText(f.x, f.y - 40, '+', '#6cc644', 30); sfx.power();
+        break;
+      }
+      case 'block': {
+        const c = this.add.circle(f.x, f.y - 6, 26, 0x5ec8ff, 0.3).setStrokeStyle(3, 0x8fd3ff).setDepth(4500);
+        this.tweens.add({ targets: c, scale: 1.4, alpha: 0, duration: 300, onComplete: () => c.destroy() });
+        sfx.tool('pickaxe', false);
+        break;
+      }
+      case 'potion': this.floatText(f.x, f.y - 30, '+1 hjärta åt alla', '#ff8a8a', 22); sfx.score(); break;
+      case 'skill': { const b = this.heroes.get(f.id); const sk = skillOf(f.s); if (b && sk) this.floatText(b.x, b.y - 70, sk.name, '#ffe08a', 20); break; }
+      case 'loot': { const b = f.win ? this.heroes.get(f.win) : undefined; const it = itemOf(f.item); if (b && it) { this.floatText(b.x, b.y - 70, it.name, '#c58bff', 22); this.burst(b.x, b.y - 10, 0xc58bff, 10, 36); } break; }
     }
   }
 }
