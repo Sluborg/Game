@@ -1,6 +1,7 @@
 // Floating thumbstick (touch anywhere on the left/middle of the screen),
 // a big dash button, plus keyboard (WASD / arrows + space) for desktop.
 import type { Input } from './sim';
+import { t } from './i18n';
 
 export class Controls {
   private sx = 0; private sy = 0;
@@ -135,7 +136,7 @@ export class Controls {
     this.tool = tool;
     const img = this.dashBtn.querySelector('img');
     if (img) img.src = tool ? `art/gather/btn-${tool}.png` : 'art/icons/dash-arrow.png'; // keep the original >> for dash
-    this.dashBtn.setAttribute('aria-label', tool === 'axe' ? 'Yxa' : tool === 'pickaxe' ? 'Hacka' : tool === 'rake' ? 'Räfsa' : 'Fart');
+    this.dashBtn.setAttribute('aria-label', t(tool === 'axe' ? 'tool.axe' : tool === 'pickaxe' ? 'tool.pickaxe' : tool === 'rake' ? 'tool.rake' : 'hud.dash'));
     this.dashBtn.classList.toggle('tool', !!tool);
   }
 }
