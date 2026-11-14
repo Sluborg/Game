@@ -2,10 +2,11 @@
 // Top-down like the real dungeon: one room, the blobz v2 test blob in the middle, six Ninja monsters around it.
 // They attack in turns (then the Giant Slime): telegraph -> dash or shot -> the blob sidesteps across the line ->
 // glides in and hits back (star spark + slash + knockback + shake + hit-stop) -> every second hit the monster dies.
-// Telegraphs share one language: chevrons along the attack line (dash red; shot in the shot's colour, marching),
-// plus the charging shot swelling at the mouth and a spinning rune on the target; the boss crouches, leaps out of
-// view and red chevrons close in on a growing red rune where it will crash. Only Ninja FX sprites; code draws only
-// the tint flash. Art at 3x, pixelArt, files from docs/ART_MAP.md.
+// Telegraphs: dash = big red chevrons along the path (Slime and Skull then keep the pressure on with a short second
+// wind-up and a lunge + bite where they land; the Bat hits and runs); shot = a thin dotted line of many small sparks
+// in the shot's colour + a small rune on the target, then a burst of 3 small shots; boss = crouch, leap out of view,
+// red chevrons close in on a growing red rune where it crashes. Only Ninja FX sprites; code draws only the tint
+// flash. Art at 3x, pixelArt, files from docs/ART_MAP.md.
 import Phaser from 'phaser';
 import { blobCanvas, BLOB_FRAMES, BODY_CY, clampLook, COLORS } from './blob';
 
@@ -25,6 +26,7 @@ const FX: [string, string, number, number, number, boolean][] = [
   ['fx-ring', 'FX/Magic/Circle/SpriteSheetOrange.png', 32, 32, 10, false],
   ['fx-dot', 'FX/Particle/Spark.png', 10, 8, 12, true],
   ['fx-thunder', 'FX/Elemental/Thunder/SpriteSheet.png', 20, 28, 16, false],
+  ['fx-claw', 'FX/Attack/Claw/SpriteSheet.png', 32, 32, 18, false],
   ['fx-star', 'FX/Magic/Circle/SpriteSheetSpark.png', 32, 32, 20, false],
   ['fx-boost', 'FX/Magic/Boost/SpriteSheet.png', 53, 35, 14, true],
   ['p-plant', 'FX/Projectile/PlantSpike.png', 24, 20, 12, true],
@@ -39,14 +41,14 @@ const FX: [string, string, number, number, number, boolean][] = [
 ];
 
 type Kind = 'dash' | 'shot';
-interface Mon { key: string; file: string; name: string; kind: Kind; ang: number; shot?: string; hit?: string; col?: number }
+interface Mon { key: string; file: string; name: string; kind: Kind; ang: number; shot?: string; hit?: string; col?: number; stay?: boolean }
 // spread around the blob (deg, screen y down): diagonals above, sides, diagonals below; the boss drops in from above
 const MONS: Mon[] = [
   { key: 'bat', file: 'Actor/Monster/BlueBat/SpriteSheet.png', name: 'Bat', kind: 'dash', ang: -140 },
   { key: 'octopus', file: 'Actor/Monster/Octopus/SpriteSheet.png', name: 'Octopus', kind: 'shot', ang: 65, shot: 'p-ball', hit: 'i-water', col: 0x6fe3ff },
-  { key: 'slime3', file: 'Actor/Monster/Slime3/Slime3.png', name: 'Slime', kind: 'dash', ang: 10 },
+  { key: 'slime3', file: 'Actor/Monster/Slime3/Slime3.png', name: 'Slime', kind: 'dash', ang: 10, stay: true },
   { key: 'eye', file: 'Actor/Monster/Eye/Eye.png', name: 'Eye', kind: 'shot', ang: -40, shot: 'p-fire', hit: 'i-flam', col: 0xffa040 },
-  { key: 'skull', file: 'Actor/Monster/Skull/SpriteSheet.png', name: 'Skull', kind: 'dash', ang: 115 },
+  { key: 'skull', file: 'Actor/Monster/Skull/SpriteSheet.png', name: 'Skull', kind: 'dash', ang: 115, stay: true },
   { key: 'slime2', file: 'Actor/Monster/Slime2/Slime2.png', name: 'Spitter', kind: 'shot', ang: 170, shot: 'p-plant', hit: 'i-plant', col: 0x9dff5a },
 ];
 const DIRS = ['down', 'up', 'left', 'right'] as const;
@@ -202,7 +204,10 @@ class DemoScene extends Phaser.Scene {
     const sx = this.cx - uy * side * 62, sy = this.cy + ux * side * 62;
     this.later(T.warn - 120, () => this.glide(sx, sy, 160, 'Quad.easeOut'));
     this.later(T.warn + T.attack + T.back + extra, () => {
-      const hx = tx - ux * 46, hy = ty - uy * 46;
+      // glide in toward wherever the attacker is now (it may have stayed where its dash ended)
+      tx = target.x; ty = target.y;
+      const vx = tx - this.blob.x, vy = ty - this.blob.y, vl = Math.hypot(vx, vy) || 1;
+      const hx = tx - (vx / vl) * 46, hy = ty - (vy / vl) * 46;
       this.glide(hx, hy, 240);
       this.later(230, () => { this.look(tx, ty); this.punch(target, hx, hy); });
       this.later(560, () => this.glide(this.cx, this.cy, 300, 'Sine.easeInOut', () => this.later(T.gap, after)));
@@ -211,7 +216,7 @@ class DemoScene extends Phaser.Scene {
 
   private monTurn(o: { m: Mon; s: Phaser.GameObjects.Sprite; x: number; y: number; hits: number }, side: number, after: () => void) {
     const { m, s, x, y } = o;
-    this.cap.setText(`${m.name}: ${m.kind === 'dash' ? 'dash' : 'shot'}`);
+    this.cap.setText(`${m.name}: ${m.kind === 'shot' ? 'burst of 3 shots' : m.stay ? 'dash + bite' : 'dash, hit and run'}`);
     const dx = this.cx - x, dy = this.cy - y, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
     const deg = (Math.atan2(dy, dx) * 180) / Math.PI;
     const anim = `${m.key}-${DIRS[facing(dx, dy)]}`;
@@ -233,25 +238,24 @@ class DemoScene extends Phaser.Scene {
       }
       this.flash(s, 3, T.warn / 6);
     } else {
-      // charge: the shot itself swells at the mouth with sparkles, chevrons in the shot's colour march along the
-      // line toward the blob (same language as the dash), and a spinning rune in that colour marks the target
+      // charge: a small shot swells at the mouth, then a THIN dotted line of many small sparks in the shot's colour
+      // runs out to the blob (clearly unlike the big dash chevrons), and a small rune in that colour marks the target
       const col = m.col ?? 0xffffff;
       this.tweens.add({ targets: s, x: x - ux * 6, y: y - uy * 6, duration: T.warn * 0.8, ease: 'Quad.easeOut' });
-      const orb = this.add.sprite(x + ux * 26, y + uy * 26, m.shot!).play(m.shot!).setAngle(deg).setScale(0.3).setDepth(4);
+      const orb = this.add.sprite(x + ux * 24, y + uy * 24, m.shot!).play(m.shot!).setAngle(deg).setScale(0.3).setDepth(4);
       this.objs.push(orb);
-      this.tweens.add({ targets: orb, scale: 2.6, duration: T.warn * 0.85, ease: 'Back.easeOut' });
+      this.tweens.add({ targets: orb, scale: 1.6, duration: T.warn * 0.85, ease: 'Back.easeOut' });
       this.later(T.warn, () => orb.destroy());
-      this.hold('fx-boost', x, y - 8, T.warn, 1.3, 4);
-      const n = Math.floor((L - 20) / 30);
+      this.hold('fx-boost', x, y - 8, T.warn, 1.1, 4);
+      const n = Math.floor((L - 30) / 13);
       for (let k = 1; k <= n; k++) {
-        this.later((k - 1) * ((T.warn * 0.45) / n), () => {
-          const a = this.add.sprite(x + ux * (20 + k * 30), y + uy * (20 + k * 30), 'fx-thunder', 2).setScale(1.3).setAngle(deg).setTint(col).setDepth(1);
-          this.objs.push(a);
-          this.tweens.add({ targets: a, alpha: 0.35, duration: 150, yoyo: true, repeat: -1, delay: k * 50 });
-          this.later(T.warn - (k - 1) * ((T.warn * 0.45) / n), () => a.destroy());
+        const t0 = (k - 1) * ((T.warn * 0.4) / n);
+        this.later(t0, () => {
+          const d = this.hold('fx-dot', x + ux * (24 + k * 13), y + uy * (24 + k * 13), T.warn - t0, 1.9, 1, 1, deg).setTint(col);
+          this.tweens.add({ targets: d, alpha: 0.6, duration: 120, yoyo: true, repeat: -1, delay: (k % 4) * 60 });
         });
       }
-      const mark = this.hold('fx-rune', this.cx, this.cy + 6, T.warn, 2.2, 1, 0.95).setTint(col);
+      const mark = this.hold('fx-rune', this.cx, this.cy + 6, T.warn, 1.4, 1, 0.95).setTint(col);
       this.tweens.add({ targets: mark, angle: 180, duration: T.warn });
       this.flash(s, 3, T.warn / 6, col);
     }
@@ -262,26 +266,58 @@ class DemoScene extends Phaser.Scene {
         this.fx('fx-dust', s.x, s.y + 18);
         this.tweens.add({ targets: s, x: ex, y: ey, duration: T.attack, ease: 'Quad.easeIn' });
         this.later(T.attack - 60, () => this.fx('fx-dust', ex, ey + 18, 2.4));
-        this.later(T.attack + 40, () => this.tweens.add({ targets: s, x, y, duration: T.back, ease: 'Sine.easeInOut' }));
+        if (!m.stay) this.later(T.attack + 40, () => this.tweens.add({ targets: s, x, y, duration: T.back, ease: 'Sine.easeInOut' })); // hit and run
       } else {
-        const p = this.add.sprite(x + ux * 26, y + uy * 26, m.shot!).setScale(2.6).setAngle(deg).play(m.shot!).setDepth(4);
-        this.objs.push(p);
-        this.cameras.main.shake(60, 0.002);
-        let tr = 0;
-        this.tweens.add({
-          targets: p, x: this.cx + ux * 10, y: this.cy + uy * 10, duration: T.attack * 1.2, ease: 'Quad.easeIn',
-          onUpdate: () => {
-            if (++tr % 3) return; // a short trail of sparks in the shot's colour that fade out
-            const d = this.add.sprite(p.x, p.y, 'fx-dot').play('fx-dot').setScale(2.2).setDepth(3).setAngle(deg).setTint(m.col ?? 0xffffff);
-            this.objs.push(d);
-            this.tweens.add({ targets: d, alpha: 0, scale: 1, duration: 260, onComplete: () => d.destroy() });
-          },
-          onComplete: () => { this.fx(m.hit!, p.x, p.y - 6, 2.8); this.cameras.main.shake(90, 0.003); p.destroy(); },
+        // a burst of 3 small shots, aimed where the blob stood
+        for (let k = 0; k < 3; k++) this.later(k * 110, () => {
+          const spread = (k - 1) * 0.09, a = Math.atan2(uy, ux) + spread, vx = Math.cos(a), vy = Math.sin(a);
+          const p = this.add.sprite(x + vx * 24, y + vy * 24, m.shot!).setScale(1.6).setAngle((a * 180) / Math.PI).play(m.shot!).setDepth(4);
+          this.objs.push(p);
+          this.cameras.main.shake(40, 0.0015);
+          let tr = 0;
+          this.tweens.add({
+            targets: p, x: x + vx * (L + 20), y: y + vy * (L + 20), duration: T.attack * 1.1, ease: 'Linear',
+            onUpdate: () => {
+              if (++tr % 4) return; // a short trail of small sparks in the shot's colour
+              const d = this.add.sprite(p.x, p.y, 'fx-dot').play('fx-dot').setScale(1.4).setDepth(3).setTint(m.col ?? 0xffffff);
+              this.objs.push(d);
+              this.tweens.add({ targets: d, alpha: 0, scale: 0.6, duration: 220, onComplete: () => d.destroy() });
+            },
+            onComplete: () => { this.fx(m.hit!, p.x, p.y - 6, 1.8); p.destroy(); },
+          });
         });
       }
     });
-    this.later(T.warn + T.attack + T.back, () => this.look(x, y));
+    // most dashers keep the pressure on where they land: a short second wind-up, then a lunge + bite at the blob's
+    // new spot (the blob steps away again); then it is hit there and walks back. The bat hits and runs.
+    let extra = m.kind === 'shot' ? 200 : 0;
+    if (m.kind === 'dash' && m.stay) {
+      extra = 420;
+      const t1 = T.warn + T.attack + 120, w2 = 380;
+      this.later(t1, () => {
+        const ex = s.x, ey = s.y, bx = this.blob.x, by = this.blob.y;
+        const vx = bx - ex, vy = by - ey, vl = Math.hypot(vx, vy) || 1, wx = vx / vl, wy = vy / vl, d2 = (Math.atan2(vy, vx) * 180) / Math.PI;
+        s.play(`${m.key}-${DIRS[facing(vx, vy)]}`).anims.pause();
+        this.look(ex, ey);
+        this.hold('fx-spark', ex, ey - 14, w2, 1.3, 4);
+        for (let k = 1; k <= 3; k++) this.later((k - 1) * 50, () => {
+          const c = this.add.sprite(ex + wx * (10 + k * 22), ey + wy * (10 + k * 22), 'fx-thunder', 2).setScale(1.1).setAngle(d2).setTint(0xff5a40).setDepth(1);
+          this.objs.push(c);
+          this.later(w2 - (k - 1) * 50, () => c.destroy());
+        });
+        this.flash(s, 2, w2 / 4);
+        // the blob steps away across the lunge just in time
+        this.later(w2 - 110, () => this.glide(bx - wy * 58 * side, by + wx * 58 * side, 150, 'Quad.easeOut'));
+        this.later(w2, () => {
+          s.anims.resume();
+          this.tweens.add({ targets: s, x: bx - wx * 6, y: by - wy * 6, duration: 170, ease: 'Quad.easeIn' });
+          this.later(150, () => { this.fx('fx-claw', bx, by - 4, 2.6, 6, d2); this.cameras.main.shake(70, 0.003); });
+        });
+      });
+    }
+    this.later(T.warn + T.attack + T.back + extra - 40, () => this.look(s.x, s.y));
     this.dodgeAndHit(ux, uy, side, x, y, s, () => {
+      if (m.stay) this.tweens.add({ targets: s, x, y, duration: 450, ease: 'Sine.easeInOut' });
       // every second hit the monster dies in a Ninja smoke puff and comes back
       if (++o.hits % 2 === 0) {
         this.fx('i-boom', s.x, s.y, 2, 6);
@@ -293,7 +329,7 @@ class DemoScene extends Phaser.Scene {
         this.later(1600, () => { s.setScale(SCALE); this.tweens.add({ targets: s, alpha: 1, duration: 300 }); });
       }
       after();
-    });
+    }, extra);
   }
 
   private bossTurn(s: Phaser.GameObjects.Sprite, side: number, after: () => void) {
