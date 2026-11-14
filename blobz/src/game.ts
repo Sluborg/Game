@@ -31,7 +31,7 @@ const ITEM_ICON: Record<ItemKind, string> = { wood: 'ic-log', stone: 'g-item-sto
 // 16px icons 2 (items) / 1 (carried, tags); the camera zoom does the rest. Blobz keep BLOB_SCALE.
 // Fine art (public/art/fine, README there): items, chips, dust, level-up and plate glow are redrawn with twice the
 // pixels to match the blobz, so they are drawn at HALF the old scale.
-const FINE = ['icons/log', 'gather/item-stone', 'gather/item-berries'];
+const FINE = ['icons/log', 'icons/chest', 'icons/boot', 'icons/magnet', 'gather/item-stone', 'gather/item-berries'];
 const ITEM_SCALE: Record<ItemKind, number> = { wood: 1, stone: 1.5, berry: 1.5 };
 const CARRY_SCALE: Record<ItemKind, number> = { wood: 0.5, stone: 1, berry: 1 };
 const GATHER = ['bush-berries', 'bush-empty', 'rubble', 'item-stone', 'item-berries', 'hud-wood', 'hud-stone', 'hud-berries'];
@@ -141,18 +141,21 @@ export class GameScene extends Phaser.Scene {
   preload() {
     const art = (path: string) => `art/${FINE.includes(path) ? 'fine/' : ''}${path}.png`;
     for (const n of ['log', 'chest', 'boot', 'magnet', 'house']) this.load.image('ic-' + n, art(`icons/${n}`));
+    this.load.spritesheet('f-grass', 'art/fine/tiles/grass.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('f-dirt', 'art/fine/tiles/dirt.png', { frameWidth: 32, frameHeight: 32 });
     for (const n of GATHER) this.load.image('g-' + n, art(`gather/${n}`));
     for (const t of ['axe', 'pickaxe', 'rake']) this.load.spritesheet('tool-' + t, `art/gather/tool-${t}.png`, { frameWidth: TOOL_FRAME.w, frameHeight: TOOL_FRAME.h });
     for (const c of ['wood', 'stone']) this.load.spritesheet('chips-' + c, `art/fine/gather/chips-${c}.png`, { frameWidth: 32, frameHeight: 24 });
     for (const n of PROPS) this.load.image('pr-' + n, `art/props/${n}.png`);
     this.load.spritesheet('fx-levelup', 'art/fine/fx/levelup.png', { frameWidth: 64, frameHeight: 44 });
     this.load.spritesheet('fx-dust', 'art/fine/fx/dust.png', { frameWidth: 28, frameHeight: 24 });
-    this.load.spritesheet('fx-sparkle', 'art/fx/coin-sparkle.png', { frameWidth: 11, frameHeight: 11 });
+    // meadow keys ('m-sparkle'): the dungeon scene loads the old 11 px 'fx-sparkle' into the shared texture cache
+    this.load.spritesheet('m-sparkle', 'art/fine/fx/coin-sparkle.png', { frameWidth: 22, frameHeight: 22 });
     this.load.image('fx-plate-glow', 'art/fine/fx/plate-glow.png');
     // Bärregn placeholders from existing sprites (real art via the board later)
-    this.load.spritesheet('mini-ko', 'art/dungeon/ko-stars.png', { frameWidth: 20, frameHeight: 9 });
-    this.load.image('mini-warn', 'art/dungeon/slam-warning.png');
-    this.load.spritesheet('mini-wave', 'art/dungeon/shockwave.png', { frameWidth: 48, frameHeight: 24 });
+    this.load.spritesheet('mini-ko', 'art/fine/dungeon/ko-stars.png', { frameWidth: 40, frameHeight: 18 });
+    this.load.image('mini-warn', 'art/fine/dungeon/slam-warning.png');
+    this.load.spritesheet('mini-wave', 'art/fine/dungeon/shockwave.png', { frameWidth: 96, frameHeight: 48 });
     for (const n of ['cottage-1', 'cottage-2', 'cottage-3', 'build-spot', ...BUILD_KINDS.flatMap((k) => [k, k + '-site'])]) this.load.image('b-' + n, `art/base/${n}.png`);
     const sheet = (key: string, dir: string) => this.load.spritesheet(key, `assets/${dir}/tilemap_packed.png`, { frameWidth: 16, frameHeight: 16 });
     sheet('town', 'kenney-tiny-town');
@@ -199,10 +202,13 @@ export class GameScene extends Phaser.Scene {
     }
     // Ground baked into ONE canvas (a tilemap layer shows seams between tiles at fractional zoom)
     const groundKey = `ground-${this.s.biome ?? 'meadow'}-${this.s.seed}`;
+    const snow = this.s.biome === 'snow';
+    const TP = snow ? 16 : 32; // art px per tile: Art's fine grass (32 px) is drawn at scale 1
     if (!this.textures.exists(groundKey)) {
-      const src = this.textures.get('town').getSourceImage() as HTMLImageElement;
+      const grass = this.textures.get('f-grass').getSourceImage() as HTMLImageElement;
+      const dirt = this.textures.get('f-dirt').getSourceImage() as HTMLImageElement;
       const gc = document.createElement('canvas');
-      gc.width = cols * 16; gc.height = rows * 16;
+      gc.width = cols * TP; gc.height = rows * TP;
       const gx = gc.getContext('2d')!;
       if (this.s.biome === 'snow') {
         // snow: flat white with soft blue drifts and a few sparkles, in art pixels (no tile seams)
@@ -215,19 +221,32 @@ export class GameScene extends Phaser.Scene {
           gx.fillStyle = r() < 0.5 ? '#ffffff' : '#c3dcec';
           gx.fillRect(Math.floor(r() * gc.width), Math.floor(r() * gc.height), 1, 1);
         }
-      } else data.forEach((row, ty) => row.forEach((f, tx) => gx.drawImage(src, (f % 12) * 16, Math.floor(f / 12) * 16, 16, 16, tx * 16, ty * 16, 16, 16)));
+      } else {
+        // grass frames 0 plain, 1 tufts, 2 flowers (same odds as the old Tiny Town tiles)
+        data.forEach((row, ty) => row.forEach((f, tx) => gx.drawImage(grass, f * 32, 0, 32, 32, tx * 32, ty * 32, 32, 32)));
+        // the yard: a dark rim, then Art's dirt tiles (plain / pebbles) inside the circle
+        gx.fillStyle = '#8a5a3c'; gx.beginPath(); gx.arc(BASE.x, BASE.y, BASE.r + 4, 0, Math.PI * 2); gx.fill();
+        gx.save(); gx.beginPath(); gx.arc(BASE.x, BASE.y, BASE.r, 0, Math.PI * 2); gx.clip();
+        for (let ty = Math.floor((BASE.y - BASE.r) / 32); ty <= Math.floor((BASE.y + BASE.r) / 32); ty++) {
+          for (let tx = Math.floor((BASE.x - BASE.r) / 32); tx <= Math.floor((BASE.x + BASE.r) / 32); tx++) gx.drawImage(dirt, r() < 0.7 ? 0 : 32, 0, 32, 32, tx * 32, ty * 32, 32, 32);
+        }
+        gx.strokeStyle = 'rgba(90, 55, 30, 0.25)'; gx.lineWidth = 8; gx.beginPath(); gx.arc(BASE.x, BASE.y, BASE.r - 4, 0, Math.PI * 2); gx.stroke();
+        gx.restore();
+      }
       this.textures.addCanvas(groundKey, gc)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
-    this.add.image(0, 0, groundKey).setOrigin(0).setScale(2).setDepth(-1000);
+    this.add.image(0, 0, groundKey).setOrigin(0).setScale(32 / TP).setDepth(-1000);
 
     // base: round dirt yard with the cottage in the middle + glowing drop-off ring
-    const yard = this.add.graphics().setDepth(-950);
-    // meadow: dirt; snow: packed snow (light blue-white, darker blue-grey edge)
-    const [edge, fill, shade] = this.s.biome === 'snow' ? [0x7d93a8, 0xdfeaf3, 0xc9d9e6] : [0x8a5a3c, 0xe2b27a, 0xd09a62];
-    yard.fillStyle(edge, 1).fillCircle(BASE.x, BASE.y, BASE.r + 4);
-    yard.fillStyle(fill, 1).fillCircle(BASE.x, BASE.y, BASE.r);
-    yard.fillStyle(shade, 1).fillCircle(BASE.x, BASE.y + 6, BASE.r - 14);
-    yard.fillStyle(fill, 1).fillCircle(BASE.x, BASE.y, BASE.r - 18);
+    // meadow: the dirt-tile yard is baked into the ground above; snow: packed snow drawn here
+    if (snow) {
+      const yard = this.add.graphics().setDepth(-950);
+      const [edge, fill, shade] = [0x7d93a8, 0xdfeaf3, 0xc9d9e6];
+      yard.fillStyle(edge, 1).fillCircle(BASE.x, BASE.y, BASE.r + 4);
+      yard.fillStyle(fill, 1).fillCircle(BASE.x, BASE.y, BASE.r);
+      yard.fillStyle(shade, 1).fillCircle(BASE.x, BASE.y + 6, BASE.r - 14);
+      yard.fillStyle(fill, 1).fillCircle(BASE.x, BASE.y, BASE.r - 18);
+    }
     this.baseG = this.add.graphics().setDepth(-900);
     this.add.ellipse(BASE.x, BASE.y + 26, 110, 26, 0x000000, 0.18).setDepth(-880);
     // cottage (Art's base set, level 1-3), integer scale 2, anchored bottom centre
@@ -304,7 +323,7 @@ export class GameScene extends Phaser.Scene {
     if (!this.anims.exists('mini-ko')) this.anims.create({ key: 'mini-ko', frames: this.anims.generateFrameNumbers('mini-ko', { start: 0, end: 1 }), frameRate: 6, repeat: -1 });
     if (!this.anims.exists('mini-wave')) this.anims.create({ key: 'mini-wave', frames: this.anims.generateFrameNumbers('mini-wave', { start: 0, end: 2 }), frameRate: 12 });
     if (!this.anims.exists('dust')) this.anims.create({ key: 'dust', frames: this.anims.generateFrameNumbers('fx-dust', { start: 0, end: 3 }), frameRate: 10 });
-    if (!this.anims.exists('sparkle')) this.anims.create({ key: 'sparkle', frames: this.anims.generateFrameNumbers('fx-sparkle', { frames: [0, 1, 2, 1, 0] }), frameRate: 16 });
+    if (!this.anims.exists('m-sparkle')) this.anims.create({ key: 'm-sparkle', frames: this.anims.generateFrameNumbers('m-sparkle', { frames: [0, 1, 2, 1, 0] }), frameRate: 16 });
     if (!this.anims.exists('levelup')) this.anims.create({ key: 'levelup', frames: this.anims.generateFrameNumbers('fx-levelup', { start: 0, end: 3 }), frameRate: 10 });
 
     this.trailG = this.add.graphics().setDepth(-400);
@@ -384,7 +403,7 @@ export class GameScene extends Phaser.Scene {
       seenG.add(g.id);
       let e = this.gems.get(g.id);
       if (!e) {
-        e = { g: this.add.graphics(), img: this.add.image(g.x, g.y, 'ic-chest').setScale(3), t: [0, 1].map(() => this.add.image(0, 0, this.miniBlob()).setScale(0.8)), x: g.x, y: g.y };
+        e = { g: this.add.graphics(), img: this.add.image(g.x, g.y, 'ic-chest').setScale(1.5), t: [0, 1].map(() => this.add.image(0, 0, this.miniBlob()).setScale(0.8)), x: g.x, y: g.y };
         this.gems.set(g.id, e);
       }
       e.x += (g.x - e.x) * (smooth ? k : 1);
@@ -429,7 +448,7 @@ export class GameScene extends Phaser.Scene {
       let c = this.powers.get(w.id);
       if (!c) {
         const bg = this.add.circle(0, 0, 18, w.kind === 'speed' ? 0x5ec8ff : 0xff6b8b, 0.35).setStrokeStyle(2, 0xffffff, 0.8);
-        const ic = this.add.image(0, -1, w.kind === 'speed' ? 'ic-boot' : 'ic-magnet').setScale(2);
+        const ic = this.add.image(0, -1, w.kind === 'speed' ? 'ic-boot' : 'ic-magnet').setScale(1);
         c = this.add.container(w.x, w.y, [bg, ic]);
         this.powers.set(w.id, c);
       }
@@ -742,7 +761,7 @@ export class GameScene extends Phaser.Scene {
     }
     const gate = this.add.image(l.cx, l.gate.y1 + 4, 'pr-gate').setOrigin(0.5, 1).setDisplaySize(GATE_W + 2, 12 * S + 4).setDepth(l.gate.y1);
     const glow = this.add.graphics().setDepth(-460);
-    const chest = this.add.image(l.chest.x, l.chest.y, 'ic-chest').setScale(3).setDepth(l.chest.y);
+    const chest = this.add.image(l.chest.x, l.chest.y, 'ic-chest').setScale(1.5).setDepth(l.chest.y);
     const plates = l.plates.map((p) => this.add.image(p.x, p.y, 'pr-plate').setScale(4).setDepth(-700).setVisible(false));
     const glows = l.plates.map((p) => this.add.image(p.x, p.y + 2, 'fx-plate-glow').setScale(2).setDepth(-690).setVisible(false));
     const bubbles = l.plates.map((p) => this.add.text(p.x, p.y - 72, '', {
@@ -824,8 +843,8 @@ export class GameScene extends Phaser.Scene {
       sfx.tool(f.tool, f.drop);
     } else if (f.t === 'pick') {
       sfx.pick();
-      const sp = this.add.sprite(f.x, f.y - 8, 'fx-sparkle', 0).setScale(3).setDepth(5000);
-      sp.play('sparkle');
+      const sp = this.add.sprite(f.x, f.y - 8, 'm-sparkle', 0).setScale(1.5).setDepth(5000);
+      sp.play('m-sparkle');
       sp.once('animationcomplete', () => sp.destroy());
     } else if (f.t === 'bump') {
       sfx.bump();
@@ -833,8 +852,8 @@ export class GameScene extends Phaser.Scene {
       this.cameras.main.shake(80, 0.003);
     } else if (f.t === 'catch') {
       sfx.pick();
-      const sp = this.add.sprite(f.x, f.y - 20, 'fx-sparkle', 0).setScale(3).setDepth(20000);
-      sp.play('sparkle'); sp.once('animationcomplete', () => sp.destroy());
+      const sp = this.add.sprite(f.x, f.y - 20, 'm-sparkle', 0).setScale(1.5).setDepth(20000);
+      sp.play('m-sparkle'); sp.once('animationcomplete', () => sp.destroy());
       const t = this.add.text(f.x, f.y - 40, '+1', { fontFamily: "'Nunito', sans-serif", fontSize: '24px', color: '#ffe08a', fontStyle: 'bold', stroke: '#6b4a2a', strokeThickness: 5 }).setOrigin(0.5).setDepth(20000);
       this.tweens.add({ targets: t, y: f.y - 80, alpha: 0, duration: 700, onComplete: () => t.destroy() });
     } else if (f.t === 'miss') {
@@ -851,7 +870,7 @@ export class GameScene extends Phaser.Scene {
     } else if (f.t === 'stun') {
       const b = this.blobs.get(f.id);
       if (b) {
-        const st = this.add.sprite(b.x, b.y - 46, 'mini-ko', 0).setScale(2).setDepth(20001);
+        const st = this.add.sprite(b.x, b.y - 46, 'mini-ko', 0).setScale(1).setDepth(20001);
         st.play('mini-ko');
         const follow = this.time.addEvent({ delay: 16, loop: true, callback: () => st.setPosition(b.x, b.y - 46) });
         const blink = this.tweens.add({ targets: b.body, alpha: 0.45, duration: 110, yoyo: true, repeat: -1 });
