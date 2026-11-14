@@ -18,14 +18,14 @@ PEND = 'PENDING (Art piece, waits for Stefan rating): '
 # (area, old file under public/, where used, owner, replacement)
 ROWS = [
     # ---------------- screens / illustrations ----------------
-    ('Screens', 'art/title.png', 'start screen bg (style.css #start, i18n)', C, 'GAP: ChatGPT N-2 (landscape) + start-portrait'),
+    ('Screens', 'art/title.png', 'start screen bg landscape (style.css #start, i18n)', C, 'DONE by ChatGPT N-2 landscape (556f547); not Ninja, approved route'),
     ('Screens', 'art/start-portrait.png', 'start screen portrait bg (style.css)', C, 'GAP: ChatGPT N-2 (portrait approved 4/5)'),
     ('Screens', 'art/lobby.png', 'lobby bg (style.css #lobby, index.html, net.ts)', C, 'GAP: needs ChatGPT (no N-order yet; or reuse N-2 art)'),
     ('Screens', 'art/loading.png', 'loading screen (index.html, main.ts, style.css)', C, 'GAP: needs ChatGPT (no N-order yet; or reuse N-2 art)'),
     ('Screens', 'art/loading-portrait.png', 'loading screen portrait (style.css)', C, 'GAP: needs ChatGPT (with loading.png)'),
     ('Screens', 'art/loading-landscape.png', 'loading screen landscape (style.css)', C, 'GAP: needs ChatGPT (with loading.png)'),
     ('Screens', 'art/logo.png', 'logo on loading/start (index.html, main.ts)', C, 'GAP: needs ChatGPT (logo; fallback text uses Kenney Ski font)'),
-    ('Screens', 'art/victory.png', 'end screen bg (style.css #end)', C, 'GAP: ChatGPT N-6 (Art alt public/art/victory-ninja.png waits for rating)'),
+    ('Screens', 'art/victory.png', 'end screen bg (style.css #end)', C, 'GAP: ChatGPT N-6'),
     # ---------------- UI kit ----------------
     ('UI kit', 'art/ui/panel.png', 'all panels / cards (style.css border-image 4)', C, f'{W}nine_path_panel.png, border-image slice 6 6 5 5 fill (white text fill: nine_path_panel_3)'),
     ('UI kit', 'art/ui/btn-orange.png', 'big buttons, #dash, #attack (style.css, dungeon.css)', 'Code + Code 2', f'{W}button_normal.png 16x8, slice 2 fill'),
@@ -235,13 +235,15 @@ def kind(r):
         return 'pending'
     if rep.startswith('GAP'):
         return 'gap'
+    if rep.startswith('DONE'):
+        return 'done'
     return 'mapped'
 
 
 def main():
     for r in ROWS:
         assert os.path.exists(os.path.join(ROOT, 'public', r[1])), r[1]
-    n = {'mapped': 0, 'pending': 0, 'gap': 0}
+    n = {'mapped': 0, 'pending': 0, 'gap': 0, 'done': 0}
     for r in ROWS:
         n[kind(r)] += 1
     out = ['# Old art checklist: every non-Ninja image still used, and its Ninja replacement', '',
@@ -254,13 +256,13 @@ def main():
            '- **PENDING** = an Art piece made before the "no own art" rule; it waits for Stefan\'s rating.',
            '- Owner = who swaps the reference: Code (meadow, UI, `game.ts`/`main.ts`/`style.css`/`index.html`), Code 2 (`dungeon*`).',
            '- Tick the box when the game no longer loads the old file.', '',
-           f'**Counts: {len(ROWS)} total / {n["mapped"]} mapped to Ninja / {n["pending"]} pending Art rating / {n["gap"]} gaps.**', '']
+           f'**Counts: {len(ROWS)} total / {n["mapped"]} mapped to Ninja / {n["pending"]} pending Art rating / {n["gap"]} gaps / {n["done"]} done.**', '']
     area = None
     for r in ROWS:
         if r[0] != area:
             area = r[0]
             out += ['', f'## {area}', '', '| Done | Old file (public/) | Used in | Owner | Ninja replacement |', '|---|---|---|---|---|']
-        out.append(f'| [ ] | `{r[1]}` | {r[2]} | {r[3]} | {r[4]} |')
+        out.append(f'| {"[x]" if kind(r) == "done" else "[ ]"} | `{r[1]}` | {r[2]} | {r[3]} | {r[4]} |')
     out += ['', '## Not counted (on disk but not loaded)', '',
             'Old files nothing references any more (safe to delete later, by Lead): `art/icons/{boot,chest,log,magnet,dash,clock,diamond*,gem*,',
             'mushroom,sparkle,team}.png`, `art/gather/{item-stone,chips-*,btn-dash}.png`, `art/fx/*`, `art/fine/base/build-spot.png`,',

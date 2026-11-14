@@ -11,21 +11,21 @@ deploy branch `claude/mobile-game-5-players-8qthjq` (cd8ceb3) plus the heads of 
 - Owner = who swaps the reference: Code (meadow, UI, `game.ts`/`main.ts`/`style.css`/`index.html`), Code 2 (`dungeon*`).
 - Tick the box when the game no longer loads the old file.
 
-**Counts: 209 total / 169 mapped to Ninja / 4 pending Art rating / 36 gaps.**
+**Counts: 209 total / 169 mapped to Ninja / 4 pending Art rating / 35 gaps / 1 done.**
 
 
 ## Screens
 
 | Done | Old file (public/) | Used in | Owner | Ninja replacement |
 |---|---|---|---|---|
-| [ ] | `art/title.png` | start screen bg (style.css #start, i18n) | Code | GAP: ChatGPT N-2 (landscape) + start-portrait |
+| [x] | `art/title.png` | start screen bg landscape (style.css #start, i18n) | Code | DONE by ChatGPT N-2 landscape (556f547); not Ninja, approved route |
 | [ ] | `art/start-portrait.png` | start screen portrait bg (style.css) | Code | GAP: ChatGPT N-2 (portrait approved 4/5) |
 | [ ] | `art/lobby.png` | lobby bg (style.css #lobby, index.html, net.ts) | Code | GAP: needs ChatGPT (no N-order yet; or reuse N-2 art) |
 | [ ] | `art/loading.png` | loading screen (index.html, main.ts, style.css) | Code | GAP: needs ChatGPT (no N-order yet; or reuse N-2 art) |
 | [ ] | `art/loading-portrait.png` | loading screen portrait (style.css) | Code | GAP: needs ChatGPT (with loading.png) |
 | [ ] | `art/loading-landscape.png` | loading screen landscape (style.css) | Code | GAP: needs ChatGPT (with loading.png) |
 | [ ] | `art/logo.png` | logo on loading/start (index.html, main.ts) | Code | GAP: needs ChatGPT (logo; fallback text uses Kenney Ski font) |
-| [ ] | `art/victory.png` | end screen bg (style.css #end) | Code | GAP: ChatGPT N-6 (Art alt public/art/victory-ninja.png waits for rating) |
+| [ ] | `art/victory.png` | end screen bg (style.css #end) | Code | GAP: ChatGPT N-6 |
 
 ## UI kit
 
