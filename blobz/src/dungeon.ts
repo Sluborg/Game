@@ -14,9 +14,8 @@ const BLOB_R = 17;
 export type HeroClass = 'rogue' | 'healer' | 'marksman' | 'tank';
 export const CLASSES: HeroClass[] = ['healer', 'rogue', 'tank', 'marksman'];
 // Player-facing names live in src/i18n.ts ('dg.class.*', 'dg.weapon.*', 'dg.skill.*' ...), see dungeonText.ts.
-/** Art's file names still use the old class ids (card-class-<x>.png, skills/<x>-<id>.png) until Art renames them. */
-export const ART_CLASS: Record<HeroClass, string> = { healer: 'healer', rogue: 'rogue', tank: 'tank', marksman: 'marksman' }; // art files use the class ids since the rename
-export const skillIcon = (id: string) => { const [c, ...rest] = id.split('-'); return `art/dungeon/skills/${ART_CLASS[c as HeroClass] ?? c}-${rest.join('-')}.png`; };
+/** Art's skill icon: art/dungeon/skills/<class>-<id>.png (file names = skill ids). */
+export const skillIcon = (id: string) => `art/dungeon/skills/${id}.png`;
 export const CLASS_HEARTS: Record<HeroClass, number> = { rogue: 5, healer: 5, marksman: 4, tank: 7 };
 export type Weapon = 'sword' | 'hammer' | 'spear' | 'staff' | 'bow' | 'shield' | 'dagger';
 /** Order is the snapshot index: only append. */

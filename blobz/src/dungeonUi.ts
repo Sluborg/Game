@@ -6,7 +6,7 @@ import './dungeon.css';
 import { tileCanvas } from './art';
 import type { Controls } from './controls';
 import {
-  ART_CLASS, skillIcon, CLASS_WEAPONS, CLASSES, FLOORS, heroMods, itemOf, LEVEL_XP, LOOT_SECONDS, skillOf, specialOf,
+  skillIcon, CLASS_WEAPONS, CLASSES, FLOORS, heroMods, itemOf, LEVEL_XP, LOOT_SECONDS, skillOf, specialOf,
   type DView, type HeroClass, type Weapon,
 } from './dungeon';
 import { sfx } from './sfx';
@@ -55,7 +55,7 @@ function buildCards() {
   const h2 = $('weapon-pick').querySelector('h2');
   if (!pickClass) {
     if (h2) h2.textContent = t('dg.pickClass');
-    root.replaceChildren(...CLASSES.map((c) => card(c, icon(`art/dungeon/card-class-${ART_CLASS[c]}.png`, CLASS_TILE[c], 6, 'cardimg'), tClass(c), tClassHint(c), () => {
+    root.replaceChildren(...CLASSES.map((c) => card(c, icon(`art/dungeon/card-class-${c}.png`, CLASS_TILE[c], 6, 'cardimg'), tClass(c), tClassHint(c), () => {
       const ws = CLASS_WEAPONS[c];
       if (ws.length === 1) { myPick = ws[0]; pickClass = c; sendPick(ws[0]); markCards(); return; }
       pickClass = c; buildCards();
