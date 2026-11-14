@@ -275,6 +275,19 @@ def main(scale=6):
             out.alpha_composite(big(im), (pad + 90 + k * cell, y))
         y += FH * scale + 6
     y += FH * scale + 10
+    y += 8
+    d.text((pad, y), '5  Emotes (Ninja Ui/Emote above the blob): dizzy after a bomb, needs help (knocked out), happy after building, sleepy, confused', fill=WHITE, font_size=16)
+    y += 24
+    em = [('dizzy', 3, 'dome', 'sleepy', 'open', None), ('help!', 22, 'ball', 'big', 'open', 'cap'), ('happy', 27, 'tall', 'happy', 'grin', 'sprout'),
+          ('sleepy', 28, 'cube', 'sleepy', 'flat', 'beanie'), ('confused', 23, 'pear', 'dot', 'cat', 'bow')]
+    for k, (lab, n, sh, e, mo, h) in enumerate(em):
+        x0 = pad + k * (cell + 30)
+        bub = Image.open(os.path.join(NA, 'Ui', 'Emote', f'emote{n}.png')).convert('RGBA')
+        bl = compose(sh, COLOURS[k], e, mo, h, mirror=k % 2 == 1)
+        out.alpha_composite(big(bub), (x0 + (FW * scale - bub.width * scale) // 2 + 3 * scale, y))
+        out.alpha_composite(big(bl), (x0, y + (bub.height - 2) * scale))
+        d.text((x0 + 4, y + (bub.height - 2 + FH) * scale + 2), lab, fill=WHITE, font_size=14)
+    y += (13 - 2 + FH) * scale + 24
     out.crop((0, 0, w, y)).save(OUT)
     print(OUT, (w, y))
 
