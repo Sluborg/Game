@@ -27,3 +27,8 @@ UI icons (diamonds, dash arrow, pixel letters) are cut from these packs; no emoj
 | `icon-192.png`, `icon-512.png` | Generated with ChatGPT image generation, supplied by Stefan | App icon (resized) |
 
 Blobz are drawn in code (`src/blob.ts`) as pixel SVG/canvas: color, eyes, mouth and hat are separate parts.
+
+## Own art (CC0)
+| File | Source | Note |
+|---|---|---|
+| `art/fx/*.png` | Drawn in code by `scripts/fx_sheet.py` (Blobz Art) | Effects: dust, goo splat, coin sparkle, totem level-up, coin piles, plate glow |
