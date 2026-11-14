@@ -153,8 +153,31 @@ def own_files():
     return sorted(out)
 
 
+def runtime():
+    """docs/asset-runtime.json from scripts/asset_runtime.cjs (None if it was never run)."""
+    import json
+    p = os.path.join(ROOT, 'docs', 'asset-runtime.json')
+    if not os.path.exists(p):
+        return None
+    j = json.load(open(p, encoding='utf-8'))
+    return j, set(j['requested']), set(j['shown'])
+
+
+def rt_state(rel, hits, rt):
+    if rt is None:
+        return '?'
+    _, req, shown = rt
+    if rel in shown:
+        return 'IN GAME'
+    if hits:
+        return 'CODE ONLY' + (' (loaded, not shown)' if rel in req else '')
+    return 'UNUSED'
+
+
 def main():
     texts = code_texts()
+    rt = runtime()
+    rtc, in_game = {}, {'Claude-drawn': [], 'Kenney': []}
     rows, counts, unused = [], {}, []
     for rel in own_files():
         src, lic, ok = source_of(rel)
@@ -164,7 +187,11 @@ def main():
         kind = {'ChatGPT': 'ChatGPT', 'Kenney': 'Kenney', 'Cut': 'ChatGPT'}.get(kind, kind)
         counts[kind] = counts.get(kind, 0) + 1
         where = ', '.join(hits[:3]) + (f' (+{len(hits) - 3})' if len(hits) > 3 else '') if hits else 'UNUSED'
-        rows.append(f'| `{rel}` | {size(os.path.join(PUB, rel))} | {src} | {lic} | {where} | {st} |')
+        state = rt_state(rel, hits, rt)
+        rtc[state.split(' (')[0]] = rtc.get(state.split(' (')[0], 0) + 1
+        if state == 'IN GAME' and kind in in_game:
+            in_game[kind].append(rel)
+        rows.append(f'| `{rel}` | {size(os.path.join(PUB, rel))} | {src} | {lic} | {state} | {where} | {st} |')
         if st == 'delete':
             unused.append(rel)
     nused = ninja_uses(texts)
@@ -177,7 +204,8 @@ def main():
                 folders.setdefault(rel.split('/')[0] if '/' in rel else '', []).append(rel)
     nrows = []
     for rel in sorted(nused):
-        nrows.append(f'| `{NA}{rel}` | {size(os.path.join(base, rel))} | Ninja Adventure | CC0 1.0 | referenced by code | keep |')
+        nst = rt_state(NA + rel, True, rt)
+        nrows.append(f'| `{NA}{rel}` | {size(os.path.join(base, rel))} | Ninja Adventure | CC0 1.0 | {nst} | referenced by code | keep |')
     ntotal = sum(len(v) for v in folders.values())
     counts['Ninja'] = ntotal
     frows = [f'| `{NA}{k}/**` | {len(v)} files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | {sum(1 for r in v if r in nused)} referenced (rows above) | keep (the art source) |'
@@ -190,13 +218,19 @@ def main():
           '`docs/OLD_ART_CHECKLIST.md`. Ninja rects: `docs/ART_MAP.md`.', '',
           '- **Status:** keep / replace (old art still used, a Ninja or ChatGPT replacement is mapped) / delete (no code',
           '  reference found: a candidate only, Lead decides).',
-          '- "Used where" is a grep of `src/` + `index.html`; dynamic paths are matched by their template prefix or quoted stem.', '',
+          '- "Used where" is a grep of `src/` + `index.html`; dynamic paths are matched by their template prefix or quoted stem.',
+          '- **Runtime** (`node scripts/asset_runtime.cjs`, the whole e2e suite with a hook): IN GAME = drawn on screen (visible DOM',
+          '  image / CSS background or border image / canvas icon, or a WebGL texture bound at a Phaser draw call); CODE ONLY =',
+          '  referenced but never shown in the run (remove the reference and the file); UNUSED = no reference and never shown.',
+          *(['', f'**Runtime run:** {rt[0]["date"]}, e2e {rt[0]["e2e"]}. **Own files:** ' + ' / '.join(f'{k} {v}' for k, v in sorted(rtc.items())) + '.',
+             '', '**Claude-drawn still IN GAME** (' + str(len(in_game['Claude-drawn'])) + '): ' + (', '.join(f'`{f}`' for f in in_game['Claude-drawn']) or 'none'),
+             '', '**Kenney still IN GAME** (' + str(len(in_game['Kenney'])) + '): ' + (', '.join(f'`{f}`' for f in in_game['Kenney']) or 'none')] if rt else []), '',
           '**Counts by source:** ' + ' / '.join(f'{k} {v}' for k, v in sorted(counts.items())) +
           f' (Ninja: {len(nused)} referenced by code). **Own files:** {len(rows)}, {len(unused)} delete candidates.', '',
-          '## Own files (art, Kenney, app icons)', '', '| Path (public/) | Size | Source | License | Used where | Status |',
-          '|---|---|---|---|---|---|', *rows, '',
-          '## Ninja Adventure files referenced by code', '', '| Path (public/) | Size | Source | License | Used where | Status |',
-          '|---|---|---|---|---|---|', *nrows, '',
+          '## Own files (art, Kenney, app icons)', '', '| Path (public/) | Size | Source | License | Runtime | Used where | Status |',
+          '|---|---|---|---|---|---|---|', *rows, '',
+          '## Ninja Adventure files referenced by code', '', '| Path (public/) | Size | Source | License | Runtime | Used where | Status |',
+          '|---|---|---|---|---|---|---|', *nrows, '',
           '## Ninja Adventure folders (cover every other pack file)', '', '| Folder | Files | Source | License | Used | Status |',
           '|---|---|---|---|---|---|', *frows, '',
           '## Delete candidates (UNUSED, Lead decides)', '', *[f'- `{u}`' for u in unused], '']
