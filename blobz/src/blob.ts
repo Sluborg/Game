@@ -16,7 +16,7 @@ export const SHAPES = ['Kupol', 'Boll', 'Lång', 'Platt', 'Päron', 'Kub'];
 export const EYES = ['Prick', 'Stora', 'Glada', 'Sömniga', 'Blink'];
 export const MOUTHS = ['Leende', 'Öppen', 'Lugn', 'Flin', 'Katt'];
 export const HATS = ['Ingen', 'Keps', 'Krona', 'Grodd', 'Mössa', 'Trollkarl', 'Rosett', 'Lurar',
-  'Kattöron', 'Enhörning', 'Kaninöron', 'Djävulshorn', 'Antenn', 'Gloria'];
+  'Kattöron', 'Enhörning', 'Kaninöron', 'Djävulshorn', 'Antenn', 'Gloria', 'Drottningkrona'];
 /** Dungeon class gear, worn instead of the skin hat (blobGrid's `classHat`). */
 export const CLASS_HATS = ['Prästluva', 'Fjädermössa', 'Riddarhjälm'];
 
@@ -90,17 +90,19 @@ const BOW = sp(['RR.RR', 'RrRrR', 'RR.RR'], 2, 1);
 /** "Top changers" that grow out of the head (S / M / L). pair: left piece, the right one is mirrored and sits at
  *  the other end of the head's top row; centre: one piece on top; float: hovers above (halo). M / m / P = the blob's
  *  own colour, its shade and an inner-ear pink. Anchor = bottom row; for pairs the outer column. */
-type Top = { kind: 'pair' | 'centre' | 'float'; sizes: Sprite[] };
+type Top = { kind: 'pair' | 'fixed' | 'centre' | 'float'; sizes: Sprite[] };
 const TOPS: Record<string, Top> = {
-  Kattöron: { kind: 'pair', sizes: [sp(['M.', 'MM'], 0, 1), sp(['M..', 'MM.', 'MPM'], 0, 2), sp(['M...', 'MM..', 'MPM.', 'MPPM'], 0, 3)] },
-  Kaninöron: { kind: 'pair', sizes: [sp(['MM', 'MP', 'MP'], 0, 2), sp(['MM', 'MP', 'MP', 'MP'], 0, 3), sp(['.MM', 'MPM', 'MPM', 'MPM', 'MPM'], 0, 4)] },
-  Djävulshorn: { kind: 'pair', sizes: [sp(['R.', 'RR'], 0, 1), sp(['R..', 'Rr.', '.RR'], 0, 2), sp(['R...', 'Rr..', '.Rr.', '..RR'], 0, 3)] },
-  Enhörning: { kind: 'centre', sizes: [sp(['Y', 'y', 'Y'], 0, 2), sp(['.Y', 'Yy', 'yY', 'YY'], 1, 3), sp(['..Y', '.Yy', '.yY', 'Yy.', 'YYy'], 1, 4)] },
-  Antenn: { kind: 'centre', sizes: [sp(['R', 'K', 'K'], 0, 2), sp(['RR', 'RR', '.K', '.K'], 1, 3), sp(['RR.', 'RR.', '.K.', '.K.', '.K.'], 1, 4)] },
-  Gloria: { kind: 'float', sizes: [sp(['YYYY'], 2, 0), sp(['.YYYY.', 'Y....Y', '.YYYY.'], 3, 2), sp(['.YYYYYY.', 'Y......Y', '.YYYYYY.'], 4, 2)] },
+  // cat ears: never smaller than 3x3, tips pointing outward
+  Kattöron: { kind: 'pair', sizes: [sp(['M..', 'MM.', 'MPM'], 0, 2), sp(['M..', 'MM.', 'MPM'], 0, 2), sp(['M...', 'MM..', 'MPM.', 'MPPM'], 0, 3)] },
+  // bunny ears: one size, rounded tops, the same spacing on every head ('fixed')
+  Kaninöron: { kind: 'fixed', sizes: [0, 1, 2].map(() => sp(['MM', 'MP', 'MP', 'MP'], 0, 3)) }, // the approved dome/ball ears
+  // devil horns: wide base on the head, curving out and up to a tip
+  Djävulshorn: { kind: 'pair', sizes: [sp(['R..', 'Rr.', '.rR'], 0, 2), sp(['R...', 'R...', 'Rr..', '.rRR'], 0, 3), sp(['R....', 'R....', 'Rr...', '.Rr..', '..rRR'], 0, 4)] },
+  // unicorn: a white spiral horn pointing forward (toward the face)
+  Enhörning: { kind: 'centre', sizes: [sp(['..W', '.Wt', 'WW.'], 0, 2), sp(['...W', '..Wt', '.tW.', 'WWt.'], 0, 3), sp(['....W', '...Wt', '..tW.', '.Wt..', 'WWt..'], 0, 4)] },
+  Antenn: { kind: 'centre', sizes: [0, 1, 2].map(() => sp(['RR', 'RR', '.K', '.K'], 1, 3)) },
+  Gloria: { kind: 'float', sizes: [sp(['.YYYY.', 'Y....Y', '.YYYY.'], 3, 2), sp(['.YYYY.', 'Y....Y', '.YYYY.'], 3, 2), sp(['.YYYYYY.', 'Y......Y', '.YYYYYY.'], 4, 2)] },
 };
-const PLUME = sp(['.R', 'RR', 'R.'], 1, 2);
-const FEATHER = sp(['R.', 'RR', '.R', '.R'], 0, 3);
 
 /** Part tables, exported for tests only. */
 export const PART_TABLES = { bodies: BODY_ROWS, eyes: EYE_SPRITES, mouths: MOUTH_SPRITES, hats: HAT_SIZES, tops: TOPS, palette: PAL };
@@ -165,7 +167,7 @@ export function hatSize(headW: number) { return headW < 8 ? 0 : headW <= 10 ? 1 
 
 /** Fitted hats follow the head's curve: the hat body is the scalp (head rows above the eyes) plus the outline ring
  *  around it, so its bottom edge hugs the head and wraps a little down the sides; the decoration goes on top. */
-export const FITTED = ['Keps', 'Krona', 'Mössa', 'Trollkarl'];
+export const FITTED = ['Keps', 'Krona', 'Mössa', 'Trollkarl', 'Drottningkrona'];
 /** A band of even thickness along the head's top outline: the outline ring above `yLim` plus the head pixels within
  *  `depth` steps of it. `line` = the next layer in: the hat's bottom border, which steps down with the head's curve. */
 function headBand(L: BodyLayout, depth: number, yLim: number): { body: Set<number>; line: Set<number> } {
@@ -204,7 +206,7 @@ function fittedHat(name: string, L: BodyLayout, size: number): { px: Px; line: S
   const band = headBand(L, 1, yLim);
   const body = band.body;
   const xs = [...body].map((k) => k % GRID_W), x0 = Math.min(...xs), x1 = Math.max(...xs);
-  const col = { Keps: ['R', 'r'], Krona: ['Y', 'y'], Mössa: ['B', 'b'], Trollkarl: ['V', 'v'] }[name]!;
+  const col = { Keps: ['R', 'r'], Krona: ['Y', 'y'], Drottningkrona: ['Y', 'y'], Mössa: ['B', 'b'], Trollkarl: ['V', 'v'] }[name]!;
   const px: Px = new Map();
   for (const k of body) px.set(k, PAL[(k % GRID_W) > x0 + ((x1 - x0) * 2) / 3 ? col[1] : col[0]]);
   const topY = Math.min(...[...body].map((k) => Math.floor(k / GRID_W)));
@@ -218,7 +220,14 @@ function fittedHat(name: string, L: BodyLayout, size: number): { px: Px; line: S
   } else if (name === 'Mössa') { // knit band + pompom
     for (let x = x0 + 2; x <= x1 - 2; x++) at(x, topY - 1, 'B');
     at(cx, topY - 2, 'W'); at(cx + 1, topY - 2, 'W');
-  } else if (name === 'Krona') { // points on the band
+  } else if (name === 'Krona') { // classic crown: three spikes (left, middle, right), jewels on the band
+    const spikes = size === 0 ? [x0 + 1, x1 - 1] : [x0 + 1, cx, x1 - 1];
+    for (const sx of spikes) {
+      at(sx - 1, topY - 1, 'Y'); at(sx, topY - 1, 'Y'); at(sx + 1, topY - 1, 'y'); at(sx, topY - 2, 'Y');
+      if (size > 0) at(sx, topY - 3, 'Y');
+    }
+    at(cx, topY, 'R');
+  } else if (name === 'Drottningkrona') { // the queen crown: little points all along the band
     for (let x = x0 + 1; x <= x1 - 1; x += 2) { at(x, topY - 1, 'Y'); if (size > 0 && (x - x0) % 4 === 1) at(x, topY - 2, 'Y'); }
     at(cx, topY - 1, 'R');
   } else if (name === 'Trollkarl') { // cone, leaning toward the face
@@ -258,6 +267,51 @@ function shade(c: number, f: number) {
   return `rgb(${ch[0]},${ch[1]},${ch[2]})`;
 }
 
+/** Dungeon class gear (CLASS_HATS), fitted to the head's curve. */
+function gear(px: Px, L: BodyLayout, classHat: number) {
+  const short = L.eye[1] - 3 < L.top; // Platt: no scalp row to cover above the eyes
+  const ring = outlineOf(L.mask);
+  let body: Set<number>, line: Set<number>;
+  if (short) { // a band around the head instead: outline ring + one more ring outside, the head's top row as the border
+    const ring2 = outlineOf(new Set([...L.mask, ...ring]));
+    body = new Set([...ring, ...ring2].filter((k) => Math.floor(k / GRID_W) < L.top + 1 && Math.floor(k / GRID_W) <= L.earY));
+    line = new Set([...L.mask].filter((k) => Math.floor(k / GRID_W) === L.top));
+  } else ({ body, line } = headBand(L, 2, L.eye[1] - 3));
+  const [fill, sh] = classHat === 0 ? [PAL.C, '#e2cfb2'] : classHat === 1 ? [PAL.G, PAL.g] : [PAL.T, PAL.t];
+  const xs = [...body].map((k) => k % GRID_W), x0 = Math.min(...xs), x1 = Math.max(...xs), cx = (x0 + x1) >> 1;
+  const ys = [...body].map((k) => Math.floor(k / GRID_W)), topY = Math.min(...ys), botY = Math.max(...ys.filter((y) => y < L.eye[1]));
+  const extra: Px = new Map();
+  const at = (x: number, y: number, c: string) => extra.set(key(x, y), c);
+  if (classHat === 1) { // archer cap: peak pointing forward, feather in the middle pointing up and back
+    for (let x = cx; x <= x1 + 1; x++) at(x, topY - 1, x > cx + 2 ? PAL.g : PAL.G);
+    at(x1 + 2, topY, PAL.g); at(x1 + 1, topY, PAL.g);
+    const len = Math.min(4, topY - 2);
+    for (let i = 1; i <= len; i++) at(cx - (i >> 1), topY - 1 - i, i === len ? PAL.r : PAL.R);
+  } else if (classHat === 2) { // knight helm: steel dome, ridge, cheek guard at the back, visor slit, red plume
+    for (const k of ring) {
+      const x = k % GRID_W, y = Math.floor(k / GRID_W);
+      if (x < 8 && y >= topY && y <= Math.min(L.eye[1] + 2, L.bottom - 3)) body.add(k); // back cheek guard
+    }
+    for (let y = topY + 1; y <= botY; y++) at(cx, y, '#e8edf3'); // ridge
+    for (let x = FACE_X - 1; x <= x1 - 1; x++) if (body.has(key(x, botY))) at(x, botY, INK); // visor slit
+    at(cx, topY - 1, PAL.R); at(cx - 1, topY - 2, PAL.R); at(cx - 2, topY - 2, PAL.r); at(cx - 2, topY - 3, PAL.R); // plume, blowing back
+  }
+  const all = new Set([...body, ...extra.keys()]);
+  for (const k of outlineOf(all)) if (!L.mask.has(k) || Math.floor(k / GRID_W) < L.eye[1] - 1) if (!line.has(k)) px.set(k, INK);
+  for (const k of line) if (Math.floor(k / GRID_W) < L.eye[1]) px.set(k, INK);
+  for (const k of body) px.set(k, (k % GRID_W) > x0 + ((x1 - x0) * 2) / 3 ? sh : fill);
+  for (const [k, c] of extra) px.set(k, c);
+  if (classHat === 0) { // priest: a raised cream badge with a red cross, front-middle of the hood
+    const bx = FACE_X - 1, by = Math.min(topY + 1, L.eye[1] - 3);
+    for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+      const edge = Math.abs(dx) === 2 || Math.abs(dy) === 2;
+      if (Math.abs(dx) === 2 && Math.abs(dy) === 2) continue;
+      if (by + dy >= L.eye[1]) continue;
+      px.set(key(bx + dx, by + dy), edge ? INK : (dx === 0 || dy === 0) ? PAL.R : PAL.C);
+    }
+  }
+}
+
 /** Pixel grid of CSS colours (null = transparent). `classHat`: index into CLASS_HATS, replaces the skin hat.
  *  `face`: dx < 0 = facing left (mirrored). `frame`: 0 idle, 1 glide. */
 export function blobGrid(look: BlobLook, classHat?: number, face?: Face, frame = 0): (string | null)[][] {
@@ -286,20 +340,7 @@ export function blobGrid(look: BlobLook, classHat?: number, face?: Face, frame =
   const gy = L.top + 1, gx = 8 - (L.rows[1] >> 1) + 1; // glint on the back (left) side
   for (const [x, y] of [[gx, gy], [gx + 1, gy], [gx, gy + 1]]) if (mask.has(key(x, y))) px.set(key(x, y), white);
   // class hoods / helmets wrap the head above the eyes
-  if (classHat !== undefined) {
-    const band = headBand(L, 2, Math.max(L.top - 1, L.eye[1] - 3)); // hood / helmet: a thicker band that follows the head's curve
-    const hood = band.body;
-    const fill = classHat === 0 ? PAL.C : classHat === 1 ? PAL.G : PAL.T;
-    const sh = classHat === 0 ? '#e2cfb2' : classHat === 1 ? PAL.g : PAL.t;
-    for (const k of outlineOf(hood)) if (!L.mask.has(k)) px.set(k, INK);
-    for (const k of band.line) px.set(k, INK);
-    for (const k of hood) { const x = k % GRID_W; px.set(k, x > 10 ? sh : fill); }
-    const top = L.top;
-    if (classHat === 0) for (const [dx, dy] of [[0, 1], [-1, 2], [0, 2], [1, 2], [0, 3]]) px.set(key(FACE_X + dx, top + dy), PAL.R); // red cross
-    const extra = classHat === 1 ? spritePx(FEATHER, 8 - (L.rows[0] >> 1), top) : classHat === 2 ? spritePx(PLUME, 8, top - 1) : new Map();
-    for (const k of outlineOf(new Set(extra.keys()))) if (!hood.has(k) && !L.mask.has(k)) px.set(k, INK);
-    for (const [k, c] of extra) px.set(k, c);
-  }
+  if (classHat !== undefined) gear(px, L, classHat);
   // face
   const inBody = (k: number) => L.mask.has(k);
   for (const [k, c] of spritePx(EYE_SPRITES[look.eyes] ?? EYE_SPRITES[0], L.eye[0], L.eye[1])) if (inBody(k)) px.set(k, c);
@@ -313,13 +354,15 @@ export function blobGrid(look: BlobLook, classHat?: number, face?: Face, frame =
   } else if (hat) {
     for (const k of outlineOf(new Set(hat.keys()))) if (!mask.has(k)) px.set(k, INK); // the hat's own outline, never over the head
     for (const [k, c] of hat) px.set(k, c);
-  } else if (hatName === 'Rosett') { // a bow ON the head's top-right outline (its bottom row is the outline row)
-    const y = L.top - 2, x = Math.min(GRID_W - 3, 8 + (L.rows[0] >> 1));
-    const bow = spritePx(BOW, x, y);
-    for (const k of outlineOf(new Set(bow.keys()))) if (!L.mask.has(k)) px.set(k, INK);
+  } else if (hatName === 'Rosett') { // a hair bow on the forehead, right above the eyes (it may cover the outline)
+    const bow = spritePx(BOW, FACE_X, Math.max(L.top - 1, L.eye[1] - 2));
+    for (const k of outlineOf(new Set(bow.keys()))) if (Math.floor(k / GRID_W) < L.eye[1]) px.set(k, INK);
     for (const [k, c] of bow) px.set(k, c);
-  } else if (hatName === 'Lurar') { // headphones: the band IS the head's top outline, cups outside the sides at ear height
-    for (const k of outlineOf(L.mask)) if (Math.floor(k / GRID_W) < L.earY - 1) px.set(k, PAL.S);
+  } else if (hatName === 'Lurar') { // ear muffs: a headband one px outside the head's outline + muffs at ear height
+    const ring = outlineOf(L.mask);
+    const band = new Set([...outlineOf(new Set([...L.mask, ...ring]))].filter((k) => Math.floor(k / GRID_W) < L.earY));
+    for (const k of outlineOf(band)) if (!L.mask.has(k) && !ring.has(k)) px.set(k, INK);
+    for (const k of band) px.set(k, PAL.S);
     const row = L.rows[L.earY - L.top], xl = 8 - (row >> 1) - 1, xr = 8 + (row >> 1);
     const cups = new Set<number>();
     for (const x of [xl - 1, xl, xr, xr + 1]) for (const dy of [-1, 0, 1]) if (!L.mask.has(key(x, L.earY + dy))) cups.add(key(x, L.earY + dy));
@@ -330,8 +373,8 @@ export function blobGrid(look: BlobLook, classHat?: number, face?: Face, frame =
     const own = { M: base, m: dark, P: '#f4a0b4' };
     const oy = L.top - 1; // the top outline row: the pieces' bottom row replaces it, so they grow out of the head
     const parts: Px[] = [];
-    if (t.kind === 'pair') { // at the ends of the second row (wider than a pointy top), each on its own column's outline
-      const half = L.rows[1] >> 1, xl = 8 - half, xr = 8 + half - 1;
+    if (t.kind === 'pair' || t.kind === 'fixed') { // at the ends of the second row (or fixed spacing), on each column's outline
+      const half = t.kind === 'fixed' ? 4 : L.rows[1] >> 1, xl = 8 - half, xr = 8 + half - 1;
       parts.push(spritePx(spr, xl, topOutline(L.mask, xl), own), spritePx(spr, xr, topOutline(L.mask, xr), own, true));
     } else if (t.kind === 'centre') parts.push(spritePx(spr, 9, oy, own));
     else parts.push(spritePx(spr, 8, oy - 1, own)); // halo: one free row above the head
