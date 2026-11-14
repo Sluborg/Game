@@ -93,3 +93,16 @@ Round badge in the class colour with a cream symbol and plum outline; readable a
 | krigare | rage, knockback, whirlwind, extraheart, lifesteal, power |
 | riddare | block, taunt, armor, charge, stun, guard |
 Ids were proposed to Code 2; if the dungeon code uses other names, Art renames the files.
+
+## Class specials, loot and class fx
+| File | Size | Use |
+|---|---|---|
+| `btn-special-staff.png` | 20x20 | Präst special: heal light (staff + plus) |
+| `btn-special-bow.png` | 20x20 | Bågskytt special: arrow rain (three falling arrows) |
+| `btn-special-shield.png` | 20x20 | Riddare special: shield wall (two shields) |
+| `arrow.png` | 13x5 | Flying arrow, pointing right (rotate in code; red fletching at the back) |
+| `fx-heal.png` | 4 x 40x24 | Green-gold ring growing on the ground + rising plus sparkles; centre (20, 15) on the healer's feet |
+| `fx-wall.png` | 3 x 48x40 | Blue shield dome rising then holding (dithered so blobz inside stay visible); anchor bottom centre |
+| `fx-block.png` | 3 x 16x16 | White-gold spark where a hit lands on a shield |
+| `item-ring/helm/gloves/amulet/cape/stone.png` | 16x16 | Loot (ring with red gem, steel helm, mitten, blue amulet, red cape, purple rune stone) |
+| `potion.png` | 16x16 | Red health flask lying on the ground |

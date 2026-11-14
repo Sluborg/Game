@@ -500,6 +500,116 @@ def chest(open_):
     return c.image()
 
 
+# ---------------------------------------------------------------- class specials, loot and class fx
+def special_staff():
+    """Heal light: staff with a plus burst at its orb."""
+    def d(c):
+        ba.comp(c, {(2 + i, 18 - i) for i in range(10)}, CREAM)  # thin staff
+        ba.comp(c, ba.ellipse(13.5, 6.5, 3, 3), CREAM)  # orb
+        ba.comp(c, ba.rect(15, 11, 16, 18) | ba.rect(12, 14, 19, 15), CREAM)  # heal plus
+        ba.comp(c, {(7, 4), (19, 2)}, CREAM)
+    return mono_icon(d)
+
+
+def special_bow():
+    """Arrow rain: three arrows falling."""
+    def d(c):
+        for x, y0 in ((4, 2), (10, 5), (16, 1)):
+            ba.comp(c, ba.rect(x, y0, x, y0 + 9) | ba.poly([(x - 2.5, y0 + 9), (x + 3.5, y0 + 9), (x + 0.5, y0 + 13)]), CREAM)
+        ba.comp(c, ba.rect(2, 18, 18, 18), CREAM)
+    return mono_icon(d)
+
+
+def special_shield():
+    """Shield wall: two shields side by side."""
+    def d(c):
+        for x0 in (1, 10):
+            ba.comp(c, ba.poly([(x0, 4), (x0 + 9, 4), (x0 + 9, 11), (x0 + 4.5, 17), (x0, 11)]), CREAM)
+    return mono_icon(d)
+
+
+def arrow_img():
+    c = Canvas(13, 5)
+    ba.comp(c, ba.rect(3, 2, 9, 2), ba.WOOD[0])
+    ba.comp(c, ba.poly([(9, 0.5), (12.5, 2.5), (9, 4.5)]), ba.STONE[1])
+    ba.comp(c, {(0, 1), (1, 1), (0, 3), (1, 3), (2, 2)}, ba.rgb(230, 57, 70), outline=False)
+    return c.image()
+
+
+def heal_ring():
+    """4 frames, 40x24: green-gold ring growing on the ground with rising plus sparkles."""
+    frames = []
+    for i, rx in enumerate((6, 11, 15, 18)):
+        c = Canvas(40, 24)
+        ring = ba.ellipse(20, 15, rx, rx * 0.45) - ba.ellipse(20, 15, rx - 1.6, rx * 0.45 - 1.4)
+        ba.comp(c, ring, GREEN[1] if i % 2 else GOLD[1])
+        for (x, y0) in ((10, 12), (28, 11), (20, 8)):
+            y = y0 - i * 2
+            if i >= 1:
+                ba.comp(c, {(x, y - 1), (x - 1, y), (x, y), (x + 1, y), (x, y + 1)}, GREEN[1] if (x + i) % 2 else GOLD[0])
+        frames.append(c.image())
+    return strip(frames)
+
+
+def wall_dome():
+    """3 frames, 48x40: blue shield dome (dithered so the blobz stay visible inside), rising then holding."""
+    frames = []
+    for i, h in enumerate((10, 18, 18)):
+        c = Canvas(48, 40)
+        dome = {(x, y) for (x, y) in ba.ellipse(24, 36, 22, h * 1.6) if y <= 36}
+        rim = dome - {(x, y) for (x, y) in ba.ellipse(24, 36, 20.5, h * 1.6 - 1.5) if y <= 36}
+        fill = {(x, y) for (x, y) in dome - rim if (x + y + i) % 3 == 0}
+        ba.comp(c, fill, ba.rgb(140, 190, 250), outline=False)
+        ba.comp(c, rim, ba.rgb(120, 170, 244))
+        if i == 2:
+            ba.comp(c, {(14 + k, 36 - h - 4 + k // 2) for k in range(5)}, CREAM, outline=False)  # glint
+        frames.append(c.image())
+    return strip(frames)
+
+
+def block_spark():
+    """3 frames, 16x16: white-gold spark when a hit lands on a shield."""
+    frames = []
+    for r in (3, 6, 4):
+        c = Canvas(16, 16)
+        ba.comp(c, star_pts(8, 8, r + 1), CREAM if r != 6 else GOLD[1])
+        if r == 6:
+            for (x, y) in ((2, 2), (13, 3), (3, 13), (13, 13)):
+                ba.comp(c, {(x, y)}, CREAM)
+        frames.append(c.image())
+    return strip(frames)
+
+
+def loot(kind):
+    c = Canvas(16, 16)
+    if kind == 'ring':
+        ba.comp(c, ba.ellipse(8, 10, 5, 4.5) - ba.ellipse(8, 10, 3, 2.6), ba.shaded(GOLD))
+        ba.comp(c, ba.ellipse(8, 4.5, 2.6, 2.4), ba.shaded((ba.rgb(230, 57, 70), ba.rgb(255, 150, 160), ba.rgb(160, 24, 40))))
+    elif kind == 'helm':
+        ba.comp(c, ba.ellipse(8, 9, 6.5, 6.5) & ba.rect(0, 0, 16, 11), ba.shaded(ba.STONE))
+        ba.comp(c, ba.rect(1, 11, 14, 13), ba.shaded(ba.METAL))
+        ba.comp(c, ba.rect(7, 4, 8, 13), ba.METAL[2], outline=False)
+    elif kind == 'gloves':
+        ba.comp(c, ba.ellipse(9, 7, 4.5, 5.5) | ba.rect(5, 7, 13, 11), ba.shaded(ba.WOOD))  # mitten
+        ba.comp(c, ba.ellipse(4, 8, 2, 2.6), ba.shaded(ba.WOOD))  # thumb
+        ba.comp(c, ba.rect(5, 12, 13, 14), ba.shaded(ba.DARKWOOD))  # cuff
+    elif kind == 'amulet':
+        ba.comp(c, {(x, y) for (x, y) in ba.ellipse(8, 5, 6, 5) - ba.ellipse(8, 5, 5, 4) if y <= 7}, GOLD[2], outline=False)
+        ba.comp(c, ba.poly([(8, 7), (12, 11), (8, 15), (4, 11)]), ba.shaded((ba.rgb(86, 170, 240), ba.rgb(190, 230, 255), ba.rgb(52, 120, 200))))
+    elif kind == 'cape':
+        ba.comp(c, ba.poly([(5, 1), (11, 1), (14, 14), (8, 15), (2, 14)]), ba.shaded(RED))
+        ba.comp(c, ba.rect(5, 1, 10, 2), ba.shaded(GOLD))
+    elif kind == 'stone':  # magic rune stone
+        ba.comp(c, ba.ellipse(8, 9, 6, 5.5), ba.shaded((ba.rgb(150, 110, 210), ba.rgb(200, 170, 250), ba.rgb(100, 70, 160))))
+        ba.comp(c, ba.rect(8, 6, 8, 12) | {(6, 8), (7, 9), (9, 9), (10, 8)}, CREAM, outline=False)
+    elif kind == 'potion':
+        ba.comp(c, ba.ellipse(8, 10.5, 5, 4.5), ba.shaded((ba.rgb(230, 57, 70), ba.rgb(255, 150, 160), ba.rgb(160, 24, 40))))
+        ba.comp(c, ba.rect(6, 3, 9, 6), ba.shaded((ba.rgb(220, 236, 248), ba.rgb(255, 255, 255), ba.rgb(170, 190, 210))))
+        ba.comp(c, ba.rect(6, 1, 9, 2), ba.shaded(ba.WOOD))  # cork
+        ba.comp(c, {(5, 9), (5, 10), (6, 8)}, ba.rgb(255, 200, 206), outline=False)
+    return c.image()
+
+
 # ---------------------------------------------------------------- special-attack and sidestep fx
 def spin_arc():
     """4 frames, 48x40: a white slash arc sweeping around the blob (centre 24,22)."""
@@ -575,6 +685,15 @@ def main():
         'fx-slam.png': slam_ring(),
         'fx-charge.png': charge_streak(),
         'fx-sidestep.png': sidestep_puff(),
+        'btn-special-staff.png': special_staff(),
+        'btn-special-bow.png': special_bow(),
+        'btn-special-shield.png': special_shield(),
+        'arrow.png': arrow_img(),
+        'fx-heal.png': heal_ring(),
+        'fx-wall.png': wall_dome(),
+        'fx-block.png': block_spark(),
+        **{f'item-{k}.png': loot(k) for k in ('ring', 'helm', 'gloves', 'amulet', 'cape', 'stone')},
+        'potion.png': loot('potion'),
         'entrance.png': entrance(),
         'stairs-up.png': stairs(True),
         'stairs-down.png': stairs(False),
