@@ -197,6 +197,13 @@ const GARDEN_EVERY = 12; // the garden grows a berry this often (max 3 waiting)
 const GARDEN_NEAR = 320; // berry bushes this close to the base regrow 2x with a garden
 const WELL_NEAR = 260; // team speed buff near the base with a well
 
+// ---- test dungeon v1: everyone stands on the entrance, picks a weapon, goes down together ----
+export const ENTRANCE = { x: BASE.x, y: BASE.y - 236 };
+export const ENTRANCE_R = 46;
+export const PICK_SECONDS = 20; // unpicked blobz get the sword after this
+export type Mode = 'meadow' | 'pick' | 'dungeon';
+export const MODES: Mode[] = ['meadow', 'pick', 'dungeon'];
+
 /** Plates per puzzle: 2 and 3, but never more than the players at round start (min 1). */
 export function puzzleNeeds(players: number): number[] {
   const n = Math.max(1, players);
@@ -216,7 +223,7 @@ export interface Gem { id: number; x: number; y: number; vx: number; vy: number;
 export interface Power { id: number; kind: PowerKind; x: number; y: number }
 /** A resource node. `left` items remain; 0 = stump / rubble / empty bush until `regrow` runs out. */
 export interface Tree { x: number; y: number; kind: number; cd: number; left: number; hits: number; regrow: number }
-export interface Input { x: number; y: number; dash: number }
+export interface Input { x: number; y: number; dash: number; atk?: number }
 export type FxEvent =
   | { t: 'gain'; x: number; y: number; r: Res } // resources added to the bank
   | { t: 'hit'; id: string; x: number; y: number; node: number; tool: Tool; drop: boolean }
@@ -225,11 +232,20 @@ export type FxEvent =
   | { t: 'power'; x: number; y: number; kind: PowerKind }
   | { t: 'gate'; x: number; y: number }
   | { t: 'totem'; x: number; y: number; kind: TotemKind; level: number }
-  | { t: 'build'; x: number; y: number; kind: BuildKind | 'cottage'; done: boolean };
+  | { t: 'build'; x: number; y: number; kind: BuildKind | 'cottage'; done: boolean }
+  | { t: 'enter' } | { t: 'leave'; done: boolean }
+  | DFx;
 
 export interface State {
   phase: 'play' | 'end';
   time: number; // seconds of daylight left
+  seed: number;
+  mode: Mode;
+  entry: number; // seconds every blob has stood on the dungeon entrance
+  picks: Record<string, Weapon>; // weapon chosen per blob (pick screen)
+  pickT: number;
+  runs: number; // dungeon runs this round (seeds a new dungeon each time)
+  dg: DState | null;
   bank: Res; // spendable team resources (totems, buildings)
   builds: Build[];
   cottage: Cottage;
@@ -252,14 +268,9 @@ export interface State {
   gemT: number; powerT: number;
 }
 
-/** Small seeded RNG so the map layout is reproducible from a seed. */
-export function rng(seed: number) {
-  let s = seed >>> 0 || 1;
-  return () => {
-    s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0;
-    return s / 4294967296;
-  };
-}
+export { rng } from './rng';
+import { rng } from './rng';
+import { newRun, READY_SECONDS, stepDungeon, WEAPONS, type DFx, type DState, type Weapon } from './dungeon';
 
 
 function nearBase(x: number, y: number, extra: number) {
@@ -316,6 +327,7 @@ export function createState(infos: PlayerInfo[], seed: number, village: Village 
   const vil = BUILDING_ENABLED ? cleanVillage(village) : newVillage();
   const s: State = {
     phase: 'play', time: ROUND_SECONDS,
+    seed, mode: 'meadow', entry: 0, picks: {}, pickT: 0, runs: 0, dg: null,
     bank: res(), delivered: res(), quest: questTargets(infos.length, vil.cottage),
     builds: BUILD_KINDS.map((kind) => ({ kind, state: vil.builds[kind].state, paid: { ...vil.builds[kind].paid }, buy: 0, armed: true })),
     cottage: { level: vil.cottage, state: vil.cottageState, paid: { ...vil.cottagePaid }, buy: 0, armed: true },
@@ -333,8 +345,10 @@ export function createState(infos: PlayerInfo[], seed: number, village: Village 
 export function addPlayer(s: State, p: PlayerInfo, slot = s.players.length) {
   if (s.players.some((q) => q.id === p.id) || s.players.length >= MAX_PLAYERS) return;
   const a = (slot / MAX_PLAYERS) * Math.PI * 2;
+  // a late joiner during a dungeon run appears at the floor's start (the host creates their hero)
+  const home = s.mode === 'dungeon' && s.dg ? s.dg.map.start : { x: BASE.x + Math.cos(a) * 50, y: BASE.y + Math.sin(a) * 50 };
   s.players.push({
-    ...p, x: BASE.x + Math.cos(a) * 50, y: BASE.y + Math.sin(a) * 50, vx: 0, vy: 0,
+    ...p, x: home.x, y: home.y, vx: 0, vy: 0,
     carry: [], shield: 0, shieldT: 0, dashCd: 0, dashT: 0, boostT: 0, magnetT: 0, toolCd: 0, lastDash: 0,
   });
 }
@@ -399,9 +413,37 @@ function clampSpeed(p: Player, speedMul: number) {
   if (sp > max) { p.vx *= max / sp; p.vy *= max / sp; }
 }
 
+/** A blob picks its weapon on the pick screen (host applies its own and the joiners' messages). */
+export function pickWeapon(s: State, id: string, w: string) {
+  if (s.mode === 'pick' && (WEAPONS as string[]).includes(w) && s.players.some((p) => p.id === id)) s.picks[id] = w as Weapon;
+}
+
+function enterDungeon(s: State) {
+  for (const p of s.players) s.picks[p.id] ??= 'sword';
+  s.runs++;
+  s.dg = newRun(s.seed * 7919 + s.runs * 104729, s.picks);
+  s.mode = 'dungeon';
+  for (const p of s.players) { p.x = s.dg.map.start.x + (Math.random() - 0.5) * 30; p.y = s.dg.map.start.y + (Math.random() - 0.5) * 30; p.vx = 0; p.vy = 0; p.carry = []; }
+  s.fx.push({ t: 'floor', floor: 1 });
+}
+
+function leaveDungeon(s: State) {
+  const done = !!s.dg && s.dg.done !== 0;
+  s.mode = 'meadow'; s.dg = null; s.entry = 0; s.picks = {};
+  s.players.forEach((p, i) => { p.x = ENTRANCE.x - 40 + i * 20; p.y = ENTRANCE.y + 70; p.vx = 0; p.vy = 0; });
+  s.fx.push({ t: 'leave', done });
+}
+
 export function step(s: State, inputs: Map<string, Input>, dt: number) {
   if (s.phase !== 'play') return;
-  s.time = Math.max(0, s.time - dt);
+  if (s.mode === 'pick') {
+    // weapon cards on every phone; go down when all picked (or after PICK_SECONDS)
+    s.pickT -= dt;
+    if (s.players.every((p) => s.picks[p.id]) || s.pickT <= 0) enterDungeon(s);
+    return;
+  }
+  const inDungeon = s.mode === 'dungeon';
+  if (!inDungeon) s.time = Math.max(0, s.time - dt); // the sun waits while the team is underground
   s.doubleT = Math.max(0, s.doubleT - dt);
   const speedMul = 1 + 0.1 * totemLevel(s, 'speed');
   const pickR = PICKUP_R + 10 * totemLevel(s, 'magnet');
@@ -430,7 +472,7 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     if (inp.dash !== p.lastDash) {
       p.lastDash = inp.dash;
       // contextual action: a node in reach gets the right tool, otherwise dash
-      const node = toolNode(s.trees, (i) => s.trees[i].left, p.x, p.y);
+      const node = inDungeon ? -1 : toolNode(s.trees, (i) => s.trees[i].left, p.x, p.y);
       if (node >= 0) {
         if (p.toolCd <= 0) { hitNode(s, p, node); p.toolCd = TOOL_COOLDOWN; }
       } else if (p.dashCd <= 0) {
@@ -450,6 +492,19 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     if (p.y < BLOB_R) { p.y = BLOB_R; p.vy = Math.abs(p.vy) * 0.6; }
     if (p.y > WORLD_H - BLOB_R) { p.y = WORLD_H - BLOB_R; p.vy = -Math.abs(p.vy) * 0.6; }
   }
+
+  if (inDungeon && s.dg) {
+    const atk = new Map<string, number>();
+    for (const [id, inp] of inputs) if (inp.atk !== undefined) atk.set(id, inp.atk);
+    if (stepDungeon(s.dg, s.players, atk, s.seed * 7919 + s.runs * 104729, dt, s.fx as DFx[]) === 'out') leaveDungeon(s);
+    return;
+  }
+
+  // --- dungeon entrance: everyone on it for 1.5 s ---
+  if (s.players.length && s.players.every((p) => Math.hypot(p.x - ENTRANCE.x, p.y - ENTRANCE.y) < ENTRANCE_R)) {
+    s.entry += dt;
+    if (s.entry >= READY_SECONDS) { s.entry = 0; s.mode = 'pick'; s.picks = {}; s.pickT = PICK_SECONDS; s.fx.push({ t: 'enter' }); return; }
+  } else s.entry = 0;
 
   // --- nodes: solid; used-up nodes regrow ---
   for (const t of s.trees) {
@@ -702,6 +757,8 @@ export interface Snapshot {
   k: [number, number][]; d: number; // totems [level, buy%], double seconds left
   bd: [number, number, number, number, number][]; // builds (BUILD_KINDS order) then cottage: state|level, paid w,s,b, buy%
   cs: number; // cottage: 0 idle, 1 upgrading
+  md?: number; en?: number; pk?: string[]; pt?: number; // mode (MODES index), entrance ready %, picked blobz, pick seconds left
+  dg?: DSnap;
   bn: string; // buildings finished this round (comma list)
   fx: FxEvent[];
 }
@@ -726,6 +783,8 @@ export function snapshot(s: State): Snapshot {
     bd: [...s.builds.map((b) => [b.state, ...resArr(b.paid), Math.round(b.buy * 100)] as [number, number, number, number, number]),
       [s.cottage.level, ...resArr(s.cottage.paid), Math.round(s.cottage.buy * 100)] as [number, number, number, number, number]],
     cs: s.cottage.state, bn: s.builtNow.join(','),
+    md: MODES.indexOf(s.mode), en: Math.round((s.entry / READY_SECONDS) * 100), pk: Object.keys(s.picks), pt: Math.ceil(s.pickT),
+    dg: s.dg ? dsnap(s.dg, s.seed * 7919 + s.runs * 104729) : undefined,
     fx: s.fx,
   };
 }
@@ -742,6 +801,8 @@ export interface View {
   builds: { kind: BuildKind; state: 0 | 1 | 2; paid: Res; buy: number }[];
   cottage: { level: number; state: 0 | 1; paid: Res; buy: number };
   builtNow: BuildKind[];
+  mode: Mode; entry: number; picked: string[]; pickT: number;
+  dungeon: DView | null;
 }
 
 export function viewFromState(s: State): View {
@@ -751,6 +812,8 @@ export function viewFromState(s: State): View {
     players: s.players.map((p) => ({ id: p.id, x: p.x, y: p.y, vx: p.vx, vy: p.vy, carry: p.carry, boostT: p.boostT, magnetT: p.magnetT, dashCd: p.dashCd, shield: p.shield })),
     items: s.items, gems: s.gems, powers: s.powers, puzzles: s.puzzles,
     totems: s.totems, doubleT: s.doubleT, builds: s.builds, cottage: s.cottage, builtNow: s.builtNow,
+    mode: s.mode, entry: s.entry / READY_SECONDS, picked: Object.keys(s.picks), pickT: s.pickT,
+    dungeon: s.dg ? dview(dsnap(s.dg, s.seed * 7919 + s.runs * 104729)) : null,
   };
 }
 
@@ -769,7 +832,43 @@ export function viewFromSnapshot(n: Snapshot): View {
       return { kind, state: (b[0] === 2 ? 2 : b[0] === 1 ? 1 : 0) as 0 | 1 | 2, paid: res(b[1], b[2], b[3]), buy: b[4] / 100 };
     }),
     cottage: (() => { const c = n.bd?.[BUILD_KINDS.length] ?? [1, 0, 0, 0, 0]; return { level: c[0] || 1, state: (n.cs ? 1 : 0) as 0 | 1, paid: res(c[1], c[2], c[3]), buy: c[4] / 100 }; })(),
+    mode: MODES[n.md ?? 0] ?? 'meadow', entry: (n.en ?? 0) / 100, picked: n.pk ?? [], pickT: n.pt ?? 0,
+    dungeon: n.dg ? dview(n.dg) : null,
     builtNow: (n.bn ?? '').split(',').filter((k): k is BuildKind => (BUILD_KINDS as string[]).includes(k)),
     totems: TOTEM_KINDS.map((kind, i) => ({ kind, level: n.k?.[i]?.[0] ?? 0, buy: (n.k?.[i]?.[1] ?? 0) / 100 })), doubleT: n.d ?? 0,
+  };
+}
+
+// ---- dungeon snapshot / view ----
+export interface DSnap {
+  sd: number; f: number; g: number; xp: number; lv: number; k: number; rd: number; dn: number;
+  e: [number, number, number, number, number, number, number, number][]; // id, kind, x, y, hp, slam x, slam y, slam t (-1 none)
+  c: [number, number, number][]; // coin id, x, y
+  op: string; // opened chests '0101'
+  h: [string, number, number, number, number, number, number][]; // id, hearts, max, ko, weapon, facing (rad*100), swing (s*100)
+}
+export interface DView {
+  seed: number; floor: number; gold: number; xp: number; level: number; kills: number; ready: number; done: number;
+  enemies: { id: number; kind: 0 | 1 | 2; x: number; y: number; hp: number; slam: { x: number; y: number; t: number } | null }[];
+  coins: { id: number; x: number; y: number }[];
+  opened: boolean[];
+  heroes: Record<string, { hearts: number; maxHearts: number; ko: number; weapon: Weapon; face: number; swing: number }>;
+}
+function dsnap(d: DState, seed: number): DSnap {
+  return {
+    sd: seed, f: d.floor, g: d.gold, xp: d.xp, lv: d.level, k: d.kills, rd: Math.round((d.ready / READY_SECONDS) * 100), dn: r1(d.done),
+    e: d.enemies.map((e) => [e.id, e.kind, r1(e.x), r1(e.y), e.hp, e.slam ? r1(e.slam.x) : 0, e.slam ? r1(e.slam.y) : 0, e.slam ? r1(e.slam.t) : -1]),
+    c: d.coins.map((c) => [c.id, r1(c.x), r1(c.y)]),
+    op: d.opened.map((o) => (o ? '1' : '0')).join(''),
+    h: Object.entries(d.heroes).map(([id, h]) => [id, h.hearts, h.maxHearts, r1(h.ko), WEAPONS.indexOf(h.weapon), Math.round(Math.atan2(h.fy, h.fx) * 100), Math.round(h.swing * 100)]),
+  };
+}
+function dview(n: DSnap): DView {
+  return {
+    seed: n.sd, floor: n.f, gold: n.g, xp: n.xp, level: n.lv, kills: n.k, ready: n.rd / 100, done: n.dn,
+    enemies: n.e.map(([id, kind, x, y, hp, sx, sy, st]) => ({ id, kind: kind as 0 | 1 | 2, x, y, hp, slam: st >= 0 ? { x: sx, y: sy, t: st } : null })),
+    coins: n.c.map(([id, x, y]) => ({ id, x, y })),
+    opened: [...n.op].map((c) => c === '1'),
+    heroes: Object.fromEntries(n.h.map(([id, hearts, maxHearts, ko, w, face, swing]) => [id, { hearts, maxHearts, ko, weapon: WEAPONS[w] ?? 'sword', face: face / 100, swing: swing / 100 }])),
   };
 }
