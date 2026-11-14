@@ -259,7 +259,7 @@ function fitHat(index: number, shape: number, hat: HatPart, bottom: number) {
   const ext = headExtents();
   let rows = hat.rows;
   const fits = (r: string[]) => {
-    const w = r[0].length, x0 = Math.floor(GRID_W / 2 - w / 2) + (hat.dx ?? 0), y0 = bottom - r.length + 1;
+    const w = r[0].length, x0 = Math.floor(GRID_W / 2 - w / 2) + (hat.dx ?? 0), y0 = restOnHead(r, x0, bottom - r.length + 1);
     return r.every((row, ry) => [...row].every((ch, rx) => {
       if (ch === '.' || y0 + ry < 0) return true;
       const e = ext[Math.min(GRID_H - 1, y0 + ry)];
@@ -282,6 +282,25 @@ function fitHat(index: number, shape: number, hat: HatPart, bottom: number) {
   }
   fitCache.set(key, rows);
   return rows;
+}
+
+/** How many fine px a resting hat may overlap the head outline (its lowest row vs the head top, per column). */
+export const HAT_REST_OVERLAP = 2;
+/** Top row y for a hat so it rests ON the head: per column, its lowest opaque pixel overlaps the head's
+ *  top outline by at most HAT_REST_OVERLAP px. Never lower than `maxY0` (keeps clear of the eyes). */
+function restOnHead(rows: string[], x0: number, maxY0: number) {
+  let y0 = maxY0;
+  for (let rx = 0; rx < rows[0].length; rx++) {
+    let low = -1;
+    rows.forEach((row, ry) => { if (row[rx] !== '.') low = ry; });
+    if (low < 0) continue;
+    const x = x0 + rx;
+    let top = 0;
+    while (top < GRID_H && !inSilhouette(x, top)) top++;
+    if (top >= 23) continue; // no head under this column (overhanging brim)
+    y0 = Math.min(y0, top + HAT_REST_OVERLAP - 1 - low);
+  }
+  return y0;
 }
 
 /** Headphones: a band hugging the head (any shape) and two cups at eye height on the sides. */
@@ -399,15 +418,17 @@ export function blobGrid(look: BlobLook): (string | null)[][] {
     // the hat's bottom row sits just above the eyes (row 23) on every shape; tall hats clip at the top
     const bottom = hat.float ? headTop() - 3 : Math.min(top + 2, 11) * S - 1;
     const ext = headExtents();
-        let hx0 = 0, hw = 0;
+        let hx0 = 0, hw = 0, hy0 = bottom;
     if (hat.rows.length) {
       const rows = fitHat(look.hat, look.shape, hat, bottom);
       hw = rows[0].length;
       hx0 = hat.anchor !== undefined ? Math.round(ext[0]![0] + (ext[0]![1] - ext[0]![0] + 1) * hat.anchor - hw / 2) : Math.floor(GRID_W / 2 - hw / 2) + (hat.dx ?? 0);
-      paint(rows, hx0, bottom - rows.length + 1);
+      hy0 = hat.float ? bottom - rows.length + 1 : restOnHead(rows, hx0, bottom - rows.length + 1);
+      paint(rows, hx0, hy0);
     }
     if (hat.pair) {
-      const pw = hat.pair.rows[0].length, py = bottom + (hat.pair.dy ?? 0) - hat.pair.rows.length + 1;
+      const hatBottom = hat.rows.length ? hy0 + hat.rows.length - 1 : bottom; // horns follow the helmet; ears keep the head row
+      const pw = hat.pair.rows[0].length, py = hatBottom + (hat.pair.dy ?? 0) - hat.pair.rows.length + 1;
       const [tl, tr] = ext[0]!; // head-top row: ears/horns rise above it, so they must stay within it
       const px = hat.pair.at !== undefined ? tl + Math.round((tr - tl + 1) * hat.pair.at) - 2 : hx0 - pw + 2;
       paint(hat.pair.rows, px, py);
