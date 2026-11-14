@@ -35,3 +35,4 @@ Blobz are drawn in code (`src/blob.ts`) as pixel SVG/canvas: color, eyes, mouth 
 | `art/props-winter/tree-snow-pine.png`, `tree-snow-small.png`, `tree-bare.png`, `snowman.png`, `rock-snow.png` | Kenney Tiny Ski (CC0), cut from `assets/kenney-tiny-ski/tilemap_packed.png` by `scripts/winter_props.py` (outline thinned to 1 px) | Snow map props |
 | `art/props-winter/tree-snow-round.png`, `ice.png`, `igloo.png` | Own art (CC0) by `scripts/winter_props.py`; snowy round tree is `art/props/tree-green.png` with a snow cap | Snow map props, igloo = base (same 19x17 footprint as `icons/house.png`) |
 | `art/gather/*.png` | Own art (CC0) by `scripts/gather_art.py` | Tools, action icons, berry bush, rubble, chips, items, HUD (resources, sun, day bar, stars, quest card) |
+| `art/base/*.png` | Own art (CC0) by `scripts/base_art.py` | Base cottage (3 levels), base buildings (site + finished), build spot marker |
