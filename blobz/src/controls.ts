@@ -14,24 +14,38 @@ export class Controls {
   readonly knob = document.getElementById('knob')!;
   readonly dashBtn = document.getElementById('dash')!;
   private readonly R = 56;
+  private holdTimer = 0;
+  /** Tool the action button uses right now (null = dash). Holding the button repeats tool swings. */
+  tool: 'axe' | 'pickaxe' | 'rake' | null = null;
+  static readonly REPEAT_MS = 350;
 
   constructor() {
     window.addEventListener('pointerdown', this.down, { passive: false });
     window.addEventListener('pointermove', this.move, { passive: false });
     window.addEventListener('pointerup', this.up);
     window.addEventListener('pointercancel', this.up);
-    this.dashBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); this.dash(); });
+    this.dashBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); this.press(); });
+    for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) this.dashBtn.addEventListener(ev, () => this.stopHold());
     window.addEventListener('keydown', (e) => {
       if ((e.target as HTMLElement)?.tagName === 'INPUT') return;
-      if (e.code === 'Space' && !e.repeat) this.dash();
+      if (e.code === 'Space' && !e.repeat) this.press();
       this.keys.add(e.code);
       this.updateKeys();
     });
-    window.addEventListener('keyup', (e) => { this.keys.delete(e.code); this.updateKeys(); });
-    window.addEventListener('blur', () => { this.keys.clear(); this.updateKeys(); this.release(); });
+    window.addEventListener('keyup', (e) => { if (e.code === 'Space') this.stopHold(); this.keys.delete(e.code); this.updateKeys(); });
+    window.addEventListener('blur', () => { this.keys.clear(); this.updateKeys(); this.release(); this.stopHold(); });
   }
 
   private active() { return !document.getElementById('hud')!.classList.contains('hidden'); }
+
+  /** One action now, then one every REPEAT_MS while held (only while a tool is in use, never repeat-dash). */
+  private press() {
+    this.dash();
+    this.stopHold();
+    this.holdTimer = window.setInterval(() => { if (this.tool) this.dash(); }, Controls.REPEAT_MS);
+  }
+
+  private stopHold() { clearInterval(this.holdTimer); this.holdTimer = 0; }
 
   private dash() {
     if (!this.active()) return;
@@ -90,5 +104,15 @@ export class Controls {
     return { x: Math.round(x * 100) / 100, y: Math.round(y * 100) / 100, dash: this.dashCount };
   }
 
-  setCooldown(on: boolean) { this.dashBtn.classList.toggle('cd', on); }
+  setCooldown(on: boolean) { this.dashBtn.classList.toggle('cd', on && !this.tool); }
+
+  /** Switch the action button between dash and a tool (icon from art/gather/btn-*.png). */
+  setTool(tool: Controls['tool']) {
+    if (tool === this.tool) return;
+    this.tool = tool;
+    const img = this.dashBtn.querySelector('img');
+    if (img) img.src = tool ? `art/gather/btn-${tool}.png` : 'art/icons/dash-arrow.png'; // keep the original >> for dash
+    this.dashBtn.setAttribute('aria-label', tool === 'axe' ? 'Yxa' : tool === 'pickaxe' ? 'Hacka' : tool === 'rake' ? 'Räfsa' : 'Fart');
+    this.dashBtn.classList.toggle('tool', !!tool);
+  }
 }

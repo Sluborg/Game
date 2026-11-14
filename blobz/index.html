@@ -85,21 +85,27 @@
 
     <!-- HUD -->
     <div id="hud" class="hidden">
-      <div id="hud-score"><span class="scorerow"><i data-icon="coin"></i><span id="score">0</span></span><div id="gems"><i class="s1"></i><i class="s2"></i><i class="s3"></i></div><div id="starbar"><div id="starfill"></div></div></div>
-      <div id="hud-time"><i data-icon="clock"></i><span id="time">3:00</span></div>
-      <div id="hud-bank" aria-label="Lagets kassa"><img src="art/fx/coin-pile-m.png" alt="" class="icon" /><span id="bank">0</span></div>
+      <div id="hud-quest" aria-label="Uppdrag: samla till basen">
+        <div class="qtitle">Samla till basen</div>
+        <div class="qrow" data-k="wood"><img src="art/gather/hud-wood.png" alt="Trä" class="qicon" /><div class="qbar"><div class="qfill"></div></div><span class="qnum">0/0</span><img src="art/gather/star-empty.png" alt="" class="qstar" /></div>
+        <div class="qrow" data-k="stone"><img src="art/gather/hud-stone.png" alt="Sten" class="qicon" /><div class="qbar"><div class="qfill"></div></div><span class="qnum">0/0</span><img src="art/gather/star-empty.png" alt="" class="qstar" /></div>
+        <div class="qrow" data-k="berry"><img src="art/gather/hud-berries.png" alt="Bär" class="qicon" /><div class="qbar"><div class="qfill"></div></div><span class="qnum">0/0</span><img src="art/gather/star-empty.png" alt="" class="qstar" /></div>
+      </div>
+      <div id="hud-day" aria-label="Dagen"><div class="dbar"><div class="dfill"></div></div><img src="art/gather/sun.png" alt="" class="sun" /></div>
+      <div id="hud-bank" aria-label="Lagets förråd"><img src="art/gather/hud-wood.png" alt="Trä" /><span id="bank-wood">0</span><img src="art/gather/hud-stone.png" alt="Sten" /><span id="bank-stone">0</span><img src="art/gather/hud-berries.png" alt="Bär" /><span id="bank-berry">0</span></div>
       <div id="hud-double" class="hidden"><b>2x</b><span id="double-t"></span></div>
       <div id="stick"><div id="knob"></div></div>
       <button id="dash" aria-label="Fart"><i data-icon="dash-arrow"></i></button>
-      <div id="hint">Dra för att åka · <i data-icon="dash-arrow"></i> = fart · Krocka i träd · Bär kistor tillsammans</div>
+      <div id="hint">Dra för att åka · Knappen hugger, hackar och räfsar · Bär hem trä, sten och bär</div>
     </div>
 
     <!-- End -->
     <section id="end" class="screen hidden">
       <div class="card">
-        <h2>Bra jobbat!</h2>
+        <h2 id="end-title">Solen gick ner!</h2>
         <div id="end-stars" class="stars"></div>
-        <p id="end-score" class="tag"></p>
+        <div id="end-rows" class="endrows"></div>
+        <p class="tag">Bra jobbat!</p>
         <button id="btn-again" class="big">Spela igen</button>
         <p id="end-wait" class="msg">Väntar på värden...</p>
         <button id="btn-menu" class="link">Till menyn</button>
