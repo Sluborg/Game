@@ -224,15 +224,16 @@ function renderQuestion(q) {
   if (q.body) card.append(el('p', { class: 'body', text: q.body }));
   if (q.rate) {
     for (const src of (q.imgs || (q.img ? [q.img] : []))) card.append(el('img', { src, alt: q.title, style: 'width:100%;height:auto;image-rendering:pixelated;box-shadow:0 0 0 3px var(--plum)' }));
-    const RATE = [['1', '1 Dålig'], ['2', '2 Svag'], ['3', '3 Okej'], ['4', '4 Bra nog'], ['5', '5 Perfekt, mer av detta']];
-    const seg = el('div', { class: 'seg', role: 'radiogroup', 'aria-label': 'Betyg', style: 'flex-wrap:wrap' });
-    for (const [v, label] of RATE) {
+    const RATE = [['1', '#e0574f', 'Dålig'], ['2', '#ef8a4a', 'Svag'], ['3', '#f2c14e', 'Okej'], ['4', '#8cc84b', 'Bra nog'], ['5', '#3fae5a', 'Perfekt, mer av detta']];
+    const seg = el('div', { role: 'radiogroup', 'aria-label': 'Betyg 1 till 5', style: 'display:flex;gap:8px;width:100%' });
+    for (const [v, col, title] of RATE) {
       const on = d.choice === v;
-      const b = el('button', { type: 'button', class: on ? 'on' : '', role: 'radio', 'aria-checked': String(on), text: label });
+      const b = el('button', { type: 'button', role: 'radio', 'aria-checked': String(on), 'aria-label': v + ' ' + title, title, text: v,
+        style: 'flex:1;min-height:52px;font:700 24px var(--display);border:0;cursor:pointer;color:' + (on ? '#fff' : 'var(--plum)') + ';background:' + (on ? col : '#fff7e6') + ';box-shadow:0 0 0 3px ' + (on ? 'var(--plum)' : col) + ' inset' + (on ? ',0 4px 0 0 var(--plum)' : '') + ';transform:' + (on ? 'translateY(-2px)' : 'none') });
       b.addEventListener('click', () => { d.choice = on ? null : v; renderQuestions(); });
       seg.append(b);
     }
-    card.append(el('div', { class: 'row' }, el('span', { class: 'lbl', text: 'Betyg' }), seg));
+    card.append(seg);
   }
   const options = (!q.rate && Array.isArray(q.options)) ? q.options : [];
   if (options.length) {
