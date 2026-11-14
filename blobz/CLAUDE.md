@@ -50,6 +50,8 @@ Stefan works phone-only; replies in Swedish or English, docs and code in English
 - Every reply where the decision board has something new (a new question, a followup, a changed Pågående row Stefan should see) includes the board link https://claude.ai/artifact/7pHh1Z6QmDvtAYWweGvkAL.
 - Art made in code is only for simple shapes (icons, tiles, UI, small fx, blob parts). Illustrations (class cards,
   buildings, characters, scenes) are ordered from ChatGPT with a prompt Stefan can paste (see docs/TEAM.md).
+- Art pipeline for non-trivial art: Art makes 3 rough SVG/PNG variants -> board question with pictures -> Stefan picks
+  -> Art writes a ChatGPT prompt from the pick -> Stefan runs it -> Art slices and integrates.
 - Reporting to Stefan: only when a whole batch is merged and live (Art: a full part set; Code: a whole
   feature), or when a decision from him blocks work. No progress pings about single images or steps.
 

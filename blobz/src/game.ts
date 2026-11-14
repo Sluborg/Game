@@ -219,14 +219,16 @@ export class GameScene extends Phaser.Scene {
 
     // base: round dirt yard with the cottage in the middle + glowing drop-off ring
     const yard = this.add.graphics().setDepth(-950);
-    yard.fillStyle(0x8a5a3c, 1).fillCircle(BASE.x, BASE.y, BASE.r + 4);
-    yard.fillStyle(0xe2b27a, 1).fillCircle(BASE.x, BASE.y, BASE.r);
-    yard.fillStyle(0xd09a62, 1).fillCircle(BASE.x, BASE.y + 6, BASE.r - 14);
-    yard.fillStyle(0xe2b27a, 1).fillCircle(BASE.x, BASE.y, BASE.r - 18);
+    // meadow: dirt; snow: packed snow (light blue-white, darker blue-grey edge)
+    const [edge, fill, shade] = this.s.biome === 'snow' ? [0x7d93a8, 0xdfeaf3, 0xc9d9e6] : [0x8a5a3c, 0xe2b27a, 0xd09a62];
+    yard.fillStyle(edge, 1).fillCircle(BASE.x, BASE.y, BASE.r + 4);
+    yard.fillStyle(fill, 1).fillCircle(BASE.x, BASE.y, BASE.r);
+    yard.fillStyle(shade, 1).fillCircle(BASE.x, BASE.y + 6, BASE.r - 14);
+    yard.fillStyle(fill, 1).fillCircle(BASE.x, BASE.y, BASE.r - 18);
     this.baseG = this.add.graphics().setDepth(-900);
     this.add.ellipse(BASE.x, BASE.y + 26, 110, 26, 0x000000, 0.18).setDepth(-880);
     // cottage (Art's base set, level 1-3), integer scale 2, anchored bottom centre
-    this.cottageImg = this.add.image(BASE.x, BASE.y + 30, this.s.biome === 'snow' ? 'w-igloo' : 'b-cottage-1').setScale(this.s.biome === 'snow' ? 4 : 2).setOrigin(0.5, 1).setDepth(BASE.y - 40);
+    this.cottageImg = this.add.image(BASE.x, BASE.y + 30, this.s.biome === 'snow' ? 'w-igloo' : 'b-cottage-1').setScale(this.s.biome === 'snow' ? 4 : 3).setOrigin(0.5, 1).setDepth(BASE.y - 40);
     // the water corner (an L of water around a seeded corner; the bridge opens it)
     const water = makeWater(this.s.seed);
     this.water = water;
@@ -572,7 +574,7 @@ export class GameScene extends Phaser.Scene {
     // snow map: the igloo is the level-1 base (Art: cottage footprint); upgrades use the cottage art
     const lvl = Math.max(1, Math.min(3, v.cottage.level));
     const ck = this.s.biome === 'snow' && lvl === 1 ? 'w-igloo' : 'b-cottage-' + lvl;
-    if (this.cottageImg.texture.key !== ck) this.cottageImg.setTexture(ck).setScale(ck === 'w-igloo' ? 4 : 2);
+    if (this.cottageImg.texture.key !== ck) this.cottageImg.setTexture(ck).setScale(ck === 'w-igloo' ? 4 : ck === 'b-cottage-1' ? 3 : 2);
     const pads = [
       ...v.builds.map((b) => ({ kind: b.kind as BuildKind | 'cottage', at: BUILD_SPOTS[b.kind], state: b.state, paid: b.paid, buy: b.buy, cost: BUILD_COST[b.kind] as Res | null, title: BUILD_NAMES[b.kind], effect: BUILD_EFFECT[b.kind] })),
       { kind: 'cottage' as const, at: COTTAGE_PAD, state: v.cottage.state as 0 | 1 | 2, paid: v.cottage.paid, buy: v.cottage.buy,

@@ -39,19 +39,23 @@ const shots = process.argv[3] || '';
     ok(true, 'the round starts on the snow map on all three phones');
     ok(await host.evaluate(() => window.__blobz.state.biome === 'snow' && window.__blobz.state.ice.length === 3), 'host sim: biome snow with 3 frozen ponds');
 
-    // slippery: the same push glides much further on a frozen pond
-    const glide = async (onIce) => {
-      await sim(host, (s, onIce) => {
-        const pond = s.ice[0];
-        const p = s.players[1];
-        Object.assign(p, onIce ? { x: pond.x - 50, y: pond.y } : { x: pond.x - 50, y: pond.y - 140 }, { vx: 150, vy: 0 });
-        window.__x0 = p.x;
-      }, onIce);
-      await ada.waitForTimeout(500);
-      return sim(host, (s) => s.players[1].x - window.__x0);
-    };
-    const onIce = await glide(true), onSnow = await glide(false);
-    ok(onIce > onSnow * 1.25, `frozen pond is slippery: glide ${Math.round(onIce)} px on ice vs ${Math.round(onSnow)} px on snow`);
+    // slippery: measure how fast a blob's speed decays (k in v = v0 * e^-kt), timed inside the page so a
+    // slow frame or a busy machine cannot skew it (the old distance-after-500ms check flaked 1 in 5)
+    const decay = (onIce) => host.evaluate(async (onIce) => {
+      const s = window.__blobz.state;
+      const pond = s.ice[0];
+      const clear = (x, y) => s.trees.every((t) => Math.hypot(t.x - x, t.y - y) > 110) && !s.ice.some((i) => Math.hypot(i.x - x, i.y - y) < 160);
+      let spot = { x: pond.x - 40, y: pond.y };
+      if (!onIce) for (let y = 120; y < 840 && spot.y === pond.y; y += 20) for (let x = 120; x < 1160; x += 20) if (clear(x, y) && clear(x + 80, y)) { spot = { x, y }; break; }
+      const p = s.players[1];
+      Object.assign(p, spot, { vx: 120, vy: 0 });
+      const t0 = performance.now();
+      await new Promise((r) => setTimeout(r, 300));
+      const t = (performance.now() - t0) / 1000;
+      return -Math.log(Math.max(1, Math.hypot(p.vx, p.vy)) / 120) / t;
+    }, onIce);
+    const kIce = await decay(true), kSnow = await decay(false);
+    ok(kIce < 1.2 && kSnow > 1.6, `frozen pond is slippery: speed decays at ${kIce.toFixed(2)}/s on ice vs ${kSnow.toFixed(2)}/s on snow`);
 
     // gather loop works on snow: chop a snowy tree with the real button, deliver
     const tree = await sim(host, (s) => s.trees.findIndex((t, j) => t.kind < 3 && s.trees.every((o, k) => k === j || Math.hypot(o.x - t.x, o.y - t.y) > 110)));
