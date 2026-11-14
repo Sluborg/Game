@@ -134,9 +134,9 @@ input:focus { outline: none; box-shadow: var(--o4), inset 0 4px 0 0 #e9dfc9, 0 0
 .stars { display: flex; justify-content: center; gap: 12px; }
 .stars canvas { width: 72px; height: 72px; }
 .stars canvas.off { filter: brightness(0) opacity(0.22); }
-.stars canvas.on { animation: pop 0.5s ease-out both; }
-.stars canvas.on:nth-child(2) { animation-delay: 0.25s; }
-.stars canvas.on:nth-child(3) { animation-delay: 0.5s; }
+.stars canvas.on, .stars .icon.on { animation: pop 0.5s ease-out both; }
+.stars .on:nth-child(2) { animation-delay: 0.25s; }
+.stars .on:nth-child(3) { animation-delay: 0.5s; }
 @keyframes pop { 0% { transform: scale(0); } 70% { transform: scale(1.25); } 100% { transform: scale(1); } }
 
 /* ---------- HUD ---------- */
@@ -257,3 +257,20 @@ input:focus { box-shadow: none; filter: drop-shadow(0 0 0 #3fa9f5) drop-shadow(0
 #dash.cd { filter: saturate(0.15) brightness(0.9) drop-shadow(0 6px 0 #3f263140); }
 #stick { border: 0; border-radius: 0; background: url('/art/ui/stick-base.png') center / 100% 100% no-repeat; image-rendering: pixelated; opacity: 0.85; }
 #knob { border-radius: 0; box-shadow: none; background: url('/art/ui/stick-knob.png') center / 100% 100% no-repeat; image-rendering: pixelated; }
+
+/* ---------- icons (art/icons, ChatGPT order 20) ---------- */
+.icon { image-rendering: pixelated; height: 1.25em; width: auto; vertical-align: -0.25em; pointer-events: none; }
+button .icon { height: 28px; margin-right: 10px; vertical-align: -6px; filter: drop-shadow(0 2px 0 #3f263160); }
+.chip .icon { height: 20px; margin-right: 6px; vertical-align: -4px; }
+button.link .icon { height: 18px; margin-right: 6px; vertical-align: -3px; }
+.scorerow { display: inline-flex; align-items: center; gap: 8px; }
+.scorerow .icon { height: 26px; }
+#hud-time { display: flex; align-items: center; gap: 6px; }
+#hud-time .icon { height: 24px; }
+#dash .icon { height: 46px; margin: 0; filter: none; }
+#hint .icon { height: 18px; vertical-align: -3px; }
+#starbar i .icon { height: 28px; display: block; }
+#starbar i { filter: grayscale(1) brightness(0.55) opacity(0.6); }
+#starbar i.on { filter: drop-shadow(0 2px 0 var(--plum)); }
+.stars .icon { height: 64px; }
+.stars .icon.off { filter: none; opacity: 0.9; }

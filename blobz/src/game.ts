@@ -17,7 +17,7 @@ export interface Session {
 }
 
 const T = 32; // rendered tile size (16px tiles at 2x)
-const ITEM_FRAME: Record<ItemKind, number> = { wood: 106, shroom: 29, coin: 93 };
+const ITEM_ICON: Record<ItemKind, string> = { wood: 'ic-log', shroom: 'ic-mushroom', coin: 'ic-coin' };
 const TREE_FRAMES = [16, 28, 27];
 const BLOB_SCALE = 2.9; // 18x24 pixel blob grid
 // decorations from Tiny Farm (sheet 'farm') and Tiny Town ('town')
@@ -82,6 +82,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   preload() {
+    for (const n of ['log', 'mushroom', 'coin', 'chest', 'boot', 'magnet']) this.load.image('ic-' + n, `art/icons/${n}.png`);
     const sheet = (key: string, dir: string) => this.load.spritesheet(key, `assets/${dir}/tilemap_packed.png`, { frameWidth: 16, frameHeight: 16 });
     sheet('town', 'kenney-tiny-town');
     sheet('dungeon', 'kenney-tiny-dungeon');
@@ -193,8 +194,8 @@ export class GameScene extends Phaser.Scene {
       seenI.add(it.id);
       let img = this.items.get(it.id);
       if (!img) {
-        img = this.add.image(it.x, it.y, this.tex('town', ITEM_FRAME[it.kind])).setScale(0.2);
-        this.tweens.add({ targets: img, scale: 2, duration: 250, ease: 'Back.Out' });
+        img = this.add.image(it.x, it.y, ITEM_ICON[it.kind]).setScale(0.2);
+        this.tweens.add({ targets: img, scale: 1.8, duration: 250, ease: 'Back.Out' });
         this.items.set(it.id, img);
       }
       img.x += (it.x - img.x) * (smooth ? k : 1);
@@ -210,7 +211,7 @@ export class GameScene extends Phaser.Scene {
       seenG.add(g.id);
       let e = this.gems.get(g.id);
       if (!e) {
-        e = { g: this.add.graphics(), img: this.add.image(g.x, g.y, this.tex('dungeon', 89)).setScale(3.4), t: [0, 1].map(() => this.add.image(0, 0, this.miniBlob()).setScale(1.6)), x: g.x, y: g.y };
+        e = { g: this.add.graphics(), img: this.add.image(g.x, g.y, 'ic-chest').setScale(3), t: [0, 1].map(() => this.add.image(0, 0, this.miniBlob()).setScale(1.6)), x: g.x, y: g.y };
         this.gems.set(g.id, e);
       }
       e.x += (g.x - e.x) * (smooth ? k : 1);
@@ -230,7 +231,7 @@ export class GameScene extends Phaser.Scene {
       let c = this.powers.get(w.id);
       if (!c) {
         const bg = this.add.circle(0, 0, 18, w.kind === 'speed' ? 0x5ec8ff : 0xff6b8b, 0.35).setStrokeStyle(2, 0xffffff, 0.8);
-        const ic = this.add.image(0, -2, this.tex('dungeon', w.kind === 'speed' ? 116 : 115)).setScale(2.4);
+        const ic = this.add.image(0, -1, w.kind === 'speed' ? 'ic-boot' : 'ic-magnet').setScale(1.9);
         c = this.add.container(w.x, w.y, [bg, ic]);
         this.powers.set(w.id, c);
       }
@@ -326,11 +327,11 @@ export class GameScene extends Phaser.Scene {
     b.label.setPosition(b.x, b.y + 24).setDepth(b.y + 2);
 
     // carried items stack
-    while (b.carry.length < p.carry.length) b.carry.push(this.add.image(0, 0, this.tex('town', 0)).setScale(1.4));
+    while (b.carry.length < p.carry.length) b.carry.push(this.add.image(0, 0, 'ic-coin').setScale(1.2));
     while (b.carry.length > p.carry.length) b.carry.pop()!.destroy();
     p.carry.forEach((k, i) => {
       const img = b.carry[i];
-      img.setTexture(this.tex('town', ITEM_FRAME[k]));
+      img.setTexture(ITEM_ICON[k]);
       img.setPosition(b.x + (i - (p.carry.length - 1) / 2) * 14, b.y - 44 + hover - Math.abs(i - 1) * 2).setDepth(b.y + 3);
     });
   }

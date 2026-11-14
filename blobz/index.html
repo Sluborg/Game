@@ -25,8 +25,8 @@
           <span class="me-text"><b id="me-name">Blob</b><span class="edit">Ändra blob</span></span>
         </button>
         <div class="actions">
-          <button id="btn-host" class="big">Starta nytt spel</button>
-          <button id="btn-show-join" class="big alt">Gå med i spel</button>
+          <button id="btn-host" class="big"><i data-icon="house"></i>Starta nytt spel</button>
+          <button id="btn-show-join" class="big alt"><i data-icon="team"></i>Gå med i spel</button>
           <p class="help">Starta på en telefon. Kompisarna trycker <b>Gå med</b> och skriver koden.</p>
           <p id="menu-msg" class="msg"></p>
         </div>
@@ -37,7 +37,7 @@
         <h2>Blob-designer</h2>
         <div class="stage">
           <span id="preview2" class="blob bounce"></span>
-          <button id="btn-random" class="chip" type="button">Slumpa</button>
+          <button id="btn-random" class="chip" type="button"><i data-icon="dice"></i>Slumpa</button>
         </div>
         <div class="fields">
           <label class="lbl" for="name">Namn</label>
@@ -50,7 +50,7 @@
             <button role="tab" data-part="hat" class="tab">Hatt</button>
           </div>
           <div id="opts" class="opts" role="tabpanel"></div>
-          <button id="btn-custom-done" class="big">Klar</button>
+          <button id="btn-custom-done" class="big"><i data-icon="check"></i>Klar</button>
         </div>
       </div>
 
@@ -61,7 +61,7 @@
         <input id="code" class="codebox" maxlength="4" placeholder="ABCD" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" />
         <button id="btn-join" class="big alt">Gå med</button>
         <p id="join-msg" class="msg"></p>
-        <button id="btn-join-back" class="link">Tillbaka</button>
+        <button id="btn-join-back" class="link"><i data-icon="back"></i>Tillbaka</button>
       </div>
     </section>
 
@@ -81,11 +81,11 @@
     <!-- HUD -->
     <div id="hud" class="hidden">
       <div id="hud-code"></div>
-      <div id="hud-score"><span id="score">0</span><div id="starbar"><div id="starfill"></div><i class="s1"></i><i class="s2"></i><i class="s3"></i></div></div>
-      <div id="hud-time">3:00</div>
+      <div id="hud-score"><span class="scorerow"><i data-icon="coin"></i><span id="score">0</span></span><div id="starbar"><div id="starfill"></div><i class="s1"></i><i class="s2"></i><i class="s3"></i></div></div>
+      <div id="hud-time"><i data-icon="clock"></i><span id="time">3:00</span></div>
       <div id="stick"><div id="knob"></div></div>
-      <button id="dash" aria-label="Fart"></button>
-      <div id="hint">Dra för att åka · <span id="hint-dash"></span> = fart · Krocka i träd · Bär kistor tillsammans</div>
+      <button id="dash" aria-label="Fart"><i data-icon="dash"></i></button>
+      <div id="hint">Dra för att åka · <i data-icon="dash"></i> = fart · Krocka i träd · Bär kistor tillsammans</div>
     </div>
 
     <!-- End -->

@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Cut a ChatGPT art sheet (transparent PNG) into separate sprites, in reading order.
 
-usage: slice_sheet.py SHEET OUT_DIR name1 name2 ... [--native]
+usage: slice_sheet.py SHEET OUT_DIR name1 name2 ... [--native] [--grid=CxR] [--px=N]
   --native  also snap each sprite back to its pixel-art grid (estimated from the outline
             thickness) so it can be upscaled crisply with image-rendering: pixelated.
+  --grid=CxR  the sheet is an even C x R grid: one sprite per cell (keeps multi-part icons whole).
+  --px=N    size of one art pixel in the sheet (overrides the per-sprite estimate).
 Objects are found as connected areas of non-transparent pixels (8-neighbour); tiny specks are dropped.
 """
 import sys
@@ -58,21 +60,31 @@ def outline_px(img):
 
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
-    native = '--native' in sys.argv
+    opts = dict(a[2:].split('=', 1) for a in sys.argv[1:] if a.startswith('--') and '=' in a)
+    native = '--native' in sys.argv or 'px' in opts
     sheet, out, names = args[0], args[1], args[2:]
     im = Image.open(sheet).convert('RGBA')
     w, h = im.size
-    alpha = im.getchannel('A').tobytes()
-    boxes = reading_order(components(alpha, w, h))
+    if 'grid' in opts:
+        cols, rows = (int(v) for v in opts['grid'].lower().split('x'))
+        boxes = []
+        for r in range(rows):
+            for c in range(cols):
+                cell = (c * w // cols, r * h // rows, (c + 1) * w // cols, (r + 1) * h // rows)
+                bb = im.crop(cell).getchannel('A').point(lambda v: 255 if v >= 40 else 0).getbbox()
+                if bb: boxes.append((cell[0] + bb[0], cell[1] + bb[1], cell[0] + bb[2], cell[1] + bb[3]))
+    else:
+        alpha = im.getchannel('A').tobytes()
+        boxes = reading_order(components(alpha, w, h))
     print(f'found {len(boxes)} objects, {len(names)} names')
     for i, b in enumerate(boxes):
         name = names[i] if i < len(names) else f'extra-{i + 1}'
         crop = im.crop(b)
         if native:
-            px = outline_px(crop)
+            px = float(opts['px']) if 'px' in opts else outline_px(crop)
             nw, nh = max(1, round(crop.width / px)), max(1, round(crop.height / px))
             crop = crop.resize((nw, nh), Image.NEAREST)
-            print(f'  {name}: box {b} pixel~{px} -> {nw}x{nh}')
+            print(f'  {name}: box {b} pixel~{px:g} -> {nw}x{nh}')
         else:
             print(f'  {name}: box {b}')
         crop.save(f'{out}/{name}.png')

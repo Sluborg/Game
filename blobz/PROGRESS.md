@@ -60,3 +60,11 @@
 - Eyes and mouths drawn in near-black #1b1018 (was plum, read as grey on darker bodies); every eye type
   has white around the pupil, bigger mouths, "Pärlor" became "Runda". Brown/grey body colors lightened.
   In-game blob scale 2.6 -> 2.9.
+
+## 2026-11-14 - Crisp faces in game + icon sheet (order 20)
+- Root cause of "grey" faces: Phaser smoothed the blob texture. Game now runs with `pixelArt: true`
+  (no texture smoothing, rounded pixels), so eyes and mouths render pure black.
+- 16 icons sliced (`slice_sheet.py` gained `--grid=CxR` and `--px=N`) into `public/art/icons/`: HUD (coin by
+  score, clock by timer, diamonds for stars), button icons (house, team, dice, check, back), dash button,
+  and in-game items (log, mushroom, coin), treasure chest and power-ups (winged boot, magnet).
+- ChatGPT prompt now ends each reply with a progress line ("Order 30 done - 3/7 complete. Next: ...").

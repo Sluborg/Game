@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import '@fontsource/pixelify-sans/400.css';
 import '@fontsource/pixelify-sans/700.css';
-import { loadArt, pixelText, tileCanvas } from './art';
+import { loadArt, pixelText } from './art';
 import { blobEl, clampLook, COLORS, EYES, HATS, MOUTHS, randomLook, SHAPES, type BlobLook } from './blob';
 import { Controls } from './controls';
 import { GameScene, type Session } from './game';
@@ -82,7 +82,10 @@ $('btn-random').onclick = () => { profile.look = randomLook(); saveLook(); rende
 saveLook();
 
 // ---------- Kenney UI icons ----------
-const GEM = () => tileCanvas('pp', 67, 4); // Pixel Platformer diamond = "star"
+/** ChatGPT order 20 icon (public/art/icons/NAME.png), crisp at any size. */
+const icon = (name: string, cls = '') => { const i = new Image(); i.src = `art/icons/${name}.png`; i.alt = ''; i.className = 'icon ' + cls; i.draggable = false; return i; };
+const GEM = (on = true) => icon(on ? 'diamond' : 'diamond-empty');
+document.querySelectorAll<HTMLElement>('[data-icon]').forEach((el) => el.replaceWith(icon(el.dataset.icon!)));
 let roomCode = '';
 function renderIcons() {
   const logo = $('logo');
@@ -92,8 +95,6 @@ function renderIcons() {
   img.onerror = () => logo.replaceChildren(pixelText('BLOBZ', 4));
   logo.replaceChildren(img);
   ['s1', 's2', 's3'].forEach((c) => document.querySelector('#starbar .' + c)!.replaceChildren(GEM()));
-  $('dash').replaceChildren(tileCanvas('battle', 43, 4)); // Tiny Battle arrow
-  $('hint-dash').replaceChildren(tileCanvas('battle', 43, 2));
   if (roomCode) $('lobby-code').replaceChildren(pixelText(roomCode, 4, 0));
 }
 function setRoomCode(code: string) {
@@ -157,7 +158,7 @@ function startScene(session: Session) {
       parent: 'game',
       backgroundColor: '#2b6b3a',
       scale: { mode: Phaser.Scale.RESIZE, width: window.innerWidth, height: window.innerHeight },
-      render: { antialias: true, pixelArt: false },
+      render: { pixelArt: true, antialias: false, roundPixels: true },
       scene: [],
     });
     game.scene.add('game', GameScene, false);
@@ -184,13 +185,13 @@ function onView(v: View) {
     el.classList.toggle('on', st > i);
   });
   if (st > lastStars) { sfx.star(); lastStars = st; }
-  $('hud-time').textContent = fmtTime(v.time);
+  $('time').textContent = fmtTime(v.time);
   $('hud-time').classList.toggle('low', v.time < 20);
   const me = v.players.find((p) => p.id === session?.myId);
   controls.setCooldown(!!me && me.dashCd > 0);
   if (v.phase === 'end' && !endShown) {
     endShown = true;
-    $('end-stars').replaceChildren(...[0, 1, 2].map((i) => { const g = GEM(); g.classList.add(i < st ? 'on' : 'off'); return g; }));
+    $('end-stars').replaceChildren(...[0, 1, 2].map((i) => { const g = GEM(i < st); g.classList.add(i < st ? 'on' : 'off'); return g; }));
     $('end-score').textContent = `Lagets poäng: ${v.score}`;
     show('btn-again', isHost); show('end-wait', !isHost);
     show('end');

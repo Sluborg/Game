@@ -8,7 +8,7 @@ order left-to-right, top-to-bottom), names the files and wires them into the gam
 | Order | Status | File | Used for |
 |---|---|---|---|
 | 10 | done | `art/ui/*.png` | Buttons, panels, tabs, input frame, thumbstick (wired as CSS 9-slice) |
-| 20 | ordered | `art/icons.png` | HUD + menu icons (replaces Kenney stand-ins) |
+| 20 | done | `art/icons/*.png` | HUD, menu buttons, items, chest, power-ups |
 | 30 | ordered | `art/props.png` | Bigger trees, rocks, bushes, pressure plates, gate |
 | 40 | ordered | `art/totems.png` | Base totems for team power-ups (milestone 40) |
 | 50 | ordered | `art/enemies.png` | Slime waves that attack the base (milestone 50) |
@@ -36,6 +36,9 @@ SHEET RULES (so the images can be cut automatically)
 
 WORKFLOW
 Make ONE image per reply, in the order below. After each image stop and wait. I type "go" for the first and "next" for each following one. If I type "redo", make the same order again with fixes I describe.
+After EVERY image, end your reply with exactly one progress line, for example:
+"Order 30 done - 3/7 complete. Next: Order 40 (base totems). Type next."
+After the last order write: "All 7 orders done - 7/7 complete."
 
 ORDER 10 - UI kit (square sheet, 4 columns):
 1 empty panel/window frame: cream fill #fff7e6, thick plum pixel border with stepped (pixel-rounded) corners, subtle darker cream bottom edge. Wide rectangle.
