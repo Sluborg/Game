@@ -13,16 +13,16 @@ html, body {
   touch-action: none; user-select: none; -webkit-user-select: none;
 }
 #game, #game canvas { position: fixed; inset: 0; }
-#intro-bg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 9; image-rendering: pixelated; }
 canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; }
 .hidden { display: none !important; }
 
 .screen {
   position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
-  padding: 16px; background: transparent; z-index: 10;
+  padding: 16px; z-index: 10;
+  background: #8fcf3c url('/art/title.png') center 70% / cover no-repeat; image-rendering: pixelated;
   overflow-y: auto;
 }
-#end.screen { background: rgba(20, 40, 25, 0.7); }
+#end.screen { background: rgba(20, 40, 25, 0.7); image-rendering: auto; }
 .card {
   width: 100%; max-width: 360px; background: #fffaf0f2; border-radius: 6px; padding: 20px 18px;
   text-align: center; display: flex; flex-direction: column; gap: 10px;
@@ -36,7 +36,7 @@ canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; }
 h2 { margin: 0; font-size: 30px; }
 .tag { margin: 0; color: var(--muted); font-size: 15px; }
 .tag.small { font-size: 13px; }
-#preview { align-self: center; width: 120px; height: 120px; image-rendering: pixelated; }
+
 input {
   font: inherit; font-size: 20px; padding: 10px 12px; border-radius: 14px; border: 3px solid #e3dccb;
   text-align: center; width: 100%; background: #fff; color: var(--ink); touch-action: manipulation;
@@ -62,9 +62,7 @@ button.big.alt { background: var(--accent2); box-shadow: 0 5px 0 #1d6fa899; }
 button.big:active { transform: translateY(3px); box-shadow: 0 2px 0 #0003; }
 button.big:disabled { opacity: 0.5; }
 button.link { font: inherit; background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; }
-.join { display: flex; gap: 8px; }
-.join input { width: 40%; text-transform: uppercase; letter-spacing: 3px; font-weight: bold; }
-.join button { flex: 1; }
+
 .msg { margin: 0; min-height: 20px; color: #c0392b; font-size: 15px; }
 #lobby-wait, #end-wait { color: var(--muted); }
 .code { font-size: 56px; font-weight: bold; letter-spacing: 8px; color: var(--accent); display: flex; justify-content: center; }
@@ -119,4 +117,54 @@ button.link { font: inherit; background: none; border: 0; color: var(--muted); t
 #hint {
   position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); width: min(90%, 520px); text-align: center;
   background: #0007; color: #fff; padding: 8px 12px; border-radius: 12px; font-size: 14px; transition: opacity 1s;
+}
+
+/* ---------- menu panels ---------- */
+.panel { gap: 12px; }
+.panel h2 { font-size: 26px; }
+.help { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.35; }
+.lbl { display: block; text-align: left; font-weight: bold; font-size: 14px; color: var(--muted); margin: 2px 0 -4px 4px; }
+.home .logo canvas { max-width: 92%; }
+.logo-img { display: block; width: 88%; max-width: 300px; height: auto; margin: -6px auto -2px; filter: drop-shadow(0 4px 0 #3f263133); }
+.me {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px 14px 8px 8px; border-radius: 16px;
+  background: #fff; border: 3px solid #e3dccb; cursor: pointer; font: inherit; color: var(--ink); text-align: left;
+}
+.me:active { transform: translateY(2px); }
+.me canvas { width: 88px; height: 88px; flex: none; }
+.me-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.me-text b { font-size: 22px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.edit { align-self: flex-start; font-size: 14px; font-weight: bold; color: #fff; background: var(--accent2); border-radius: 999px; padding: 4px 12px; }
+.actions { display: flex; flex-direction: column; gap: 12px; }
+.custom canvas#preview2 { align-self: center; width: 110px; height: 110px; }
+.fields { display: flex; flex-direction: column; gap: 10px; }
+.codebox {
+  font-size: 44px; font-weight: bold; letter-spacing: 14px; text-transform: uppercase; padding: 10px 0 10px 14px;
+  border-width: 4px;
+}
+.codebox::placeholder { color: #ddd5c4; }
+canvas.bounce { animation: bounce 1.2s ease-in-out infinite; }
+button.big { min-height: 56px; }
+
+/* phones held sideways: two columns so nothing scrolls */
+@media (orientation: landscape) and (max-height: 520px) {
+  .screen { padding: 10px; }
+  .card { max-width: 640px; padding: 14px 18px; }
+  .home { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr; column-gap: 18px; align-items: center; }
+  .home .logo { grid-column: 1 / -1; }
+  .home .logo canvas { max-height: 52px; width: auto; }
+  .home .logo-img { width: auto; max-height: 76px; }
+  .home .me { flex-direction: column; text-align: center; padding: 10px; }
+  .home .me-text { align-items: center; }
+  .home .edit { align-self: center; }
+  .custom { display: grid; grid-template-columns: 150px 1fr; grid-template-rows: auto 1fr; column-gap: 18px; }
+  .custom h2 { grid-column: 1; align-self: end; }
+  .custom canvas#preview2 { grid-column: 1; grid-row: 2; align-self: start; width: 132px; height: 132px; }
+  .custom .fields { grid-column: 2; grid-row: 1 / span 2; gap: 8px; }
+  .joinp { max-width: 420px; }
+}
+
+/* phones held upright: card at the top so the blobz in the title art stay visible below */
+@media (orientation: portrait) {
+  #menu.screen, #lobby.screen { align-items: flex-start; padding-top: max(28px, env(safe-area-inset-top)); background-position: 38% 100%; }
 }

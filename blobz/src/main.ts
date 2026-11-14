@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import { COLORS, HATS, loadArt, pixelPreviewInto as previewInto, pixelText, tileCanvas } from './art';
-import { IntroBackdrop } from './intro';
 import { Controls } from './controls';
 import { GameScene, type Session } from './game';
 import { ClientNet, HostNet, friendlyError, type ToClient } from './net';
@@ -34,6 +33,8 @@ function myInfo(): Omit<PlayerInfo, 'id'> {
 }
 function renderPicker() {
   previewInto($<HTMLCanvasElement>('preview'), profile.color, profile.hat);
+  previewInto($<HTMLCanvasElement>('preview2'), profile.color, profile.hat);
+  $('me-name').textContent = nameInput.value.trim() || 'Blob';
   $('colors').replaceChildren(...COLORS.map((c) => {
     const b = document.createElement('button');
     b.className = 'swatch' + (c === profile.color ? ' on' : '');
@@ -58,11 +59,11 @@ const GEM = () => tileCanvas('pp', 67, 4); // Pixel Platformer diamond = "star"
 let roomCode = '';
 function renderIcons() {
   const logo = $('logo');
-  logo.replaceChildren(pixelText('BLOBZ', 4));
-  const blob = document.createElement('canvas');
-  blob.width = 88; blob.height = 88; blob.className = 'px bounce';
-  previewInto(blob, profile.color, profile.hat);
-  logo.append(blob);
+  // AI-generated logo (public/art/logo.png); Kenney pixel letters if it fails to load
+  const img = new Image();
+  img.src = 'art/logo.png'; img.alt = 'Blobz'; img.className = 'logo-img';
+  img.onerror = () => logo.replaceChildren(pixelText('BLOBZ', 4));
+  logo.replaceChildren(img);
   ['s1', 's2', 's3'].forEach((c) => document.querySelector('#starbar .' + c)!.replaceChildren(GEM()));
   $('dash').replaceChildren(tileCanvas('battle', 43, 4)); // Tiny Battle arrow
   $('hint-dash').replaceChildren(tileCanvas('battle', 43, 2));
@@ -75,10 +76,28 @@ function setRoomCode(code: string) {
   $('lobby-code').replaceChildren(pixelText(code, 4, 0));
 }
 
-const intro = new IntroBackdrop($<HTMLCanvasElement>('intro-bg'));
-intro.start();
+// ---------- menu panels: home -> (customize | join) ----------
+function panel(id: 'home' | 'custom' | 'join') {
+  for (const p of ['home', 'custom', 'join']) show(p, p === id);
+  $('menu-msg').textContent = ''; $('join-msg').textContent = '';
+  if (id === 'join') setTimeout(() => $<HTMLInputElement>('code').focus(), 50);
+}
+$('me').onclick = () => panel('custom');
+$('btn-custom-done').onclick = () => { myInfo(); renderPicker(); panel('home'); };
+nameInput.addEventListener('input', () => { $('me-name').textContent = nameInput.value.trim() || 'Blob'; });
+nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') nameInput.blur(); });
+$('btn-show-join').onclick = () => panel('join');
+$('btn-join-back').onclick = () => panel('home');
+const codeInput = $<HTMLInputElement>('code');
+codeInput.addEventListener('input', () => {
+  codeInput.value = codeInput.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+  if (codeInput.value.length === 4) void joinGame(); // auto-join on the 4th letter
+});
+
 renderPicker();
-void loadArt().then(() => { renderPicker(); renderLobby(); renderIcons(); intro.refresh(); });
+// First visit: pick your blob before anything else.
+if (!store.get('name')) panel('custom');
+void loadArt().then(() => { renderPicker(); renderLobby(); renderIcons(); });
 
 // ---------- shared game plumbing ----------
 const controls = new Controls();
@@ -112,7 +131,6 @@ function renderLobby() {
 function startScene(session: Session) {
   endShown = false; lastStars = 0;
   show('menu', false); show('lobby', false); show('end', false); show('hud');
-  intro.stop(); show('intro-bg', false);
   try { (navigator as Navigator & { wakeLock?: { request(t: string): Promise<unknown> } }).wakeLock?.request('screen').catch(() => {}); } catch { /* optional */ }
   if (!game) {
     game = new Phaser.Game({
@@ -248,10 +266,11 @@ async function hostGame() {
 async function joinGame() {
   unlockAudio();
   const code = $<HTMLInputElement>('code').value.trim().toUpperCase();
-  if (code.length !== 4) { $('menu-msg').textContent = 'Skriv rummets 4 bokstäver.'; return; }
+  if (code.length !== 4) { $('join-msg').textContent = 'Skriv rummets 4 bokstäver.'; return; }
+  if ($<HTMLButtonElement>('btn-join').disabled) return;
   isHost = false;
   const net = new ClientNet();
-  $('menu-msg').textContent = 'Ansluter...';
+  $('join-msg').textContent = 'Ansluter...';
   $<HTMLButtonElement>('btn-join').disabled = true;
   let latest: Snapshot | null = null;
   const fx: FxEvent[] = [];
@@ -294,7 +313,7 @@ async function joinGame() {
   } catch (e) {
     $<HTMLButtonElement>('btn-join').disabled = false;
     const why = String(e);
-    $('menu-msg').textContent = why === 'full' ? 'Rummet är fullt (max 5).' : why === 'timeout' ? 'Ingen svarade. Rätt kod?' : friendlyError(why);
+    $('join-msg').textContent = why === 'full' ? 'Rummet är fullt (max 5).' : why === 'timeout' ? 'Ingen svarade. Rätt kod?' : friendlyError(why);
     return;
   }
   setRoomCode(code);
@@ -305,7 +324,7 @@ async function joinGame() {
 
 $('btn-host').onclick = () => void hostGame();
 $('btn-join').onclick = () => void joinGame();
-$<HTMLInputElement>('code').addEventListener('keydown', (e) => { if (e.key === 'Enter') void joinGame(); });
+codeInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') void joinGame(); });
 $('btn-leave').onclick = () => location.reload();
 $('btn-menu').onclick = () => location.reload();
 
@@ -314,4 +333,4 @@ const roundSecs = Math.max(0, Math.min(600, Number(new URLSearchParams(location.
 
 // Join link support: ?room=ABCD prefills the code.
 const room = new URLSearchParams(location.search).get('room');
-if (room) $<HTMLInputElement>('code').value = room.slice(0, 4).toUpperCase();
+if (room) { codeInput.value = room.slice(0, 4).toUpperCase(); panel('join'); }

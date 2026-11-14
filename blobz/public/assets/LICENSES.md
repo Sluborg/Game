@@ -13,3 +13,9 @@ The blob sprite is Tiny Dungeon's slime, recolored per skin in code; hats and th
 
 
 UI icons (diamonds, dash arrows, pixel letters, app icon) are cut from these packs; no emoji or custom SVG.
+
+## Generated art (not CC0)
+| File | Source | Note |
+|---|---|---|
+| `art/title.png` | Generated with ChatGPT image generation from `docs/ART_PROMPTS.md`, supplied by Stefan | Menu/lobby background |
+| `art/logo.png` | Generated with ChatGPT image generation, supplied by Stefan | Menu logo (cropped, resized) |

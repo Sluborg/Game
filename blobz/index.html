@@ -14,23 +14,47 @@
   </head>
   <body>
     <div id="game"></div>
-    <canvas id="intro-bg"></canvas>
 
-    <!-- Menu -->
+    <!-- Menu: three small panels instead of one crowded form -->
     <section id="menu" class="screen">
-      <div class="card">
+      <!-- Home -->
+      <div id="home" class="card panel home">
         <h1 class="logo" id="logo" aria-label="Blobz">Blobz</h1>
-        <p class="tag">Samla, bygg och samarbeta, 1-5 spelare</p>
-        <canvas id="preview" width="120" height="120"></canvas>
-        <input id="name" maxlength="10" placeholder="Ditt namn" autocomplete="off" />
-        <div id="colors" class="row"></div>
-        <div id="hats" class="row"></div>
-        <button id="btn-host" class="big">Skapa rum</button>
-        <div class="join">
-          <input id="code" maxlength="4" placeholder="KOD" autocomplete="off" autocapitalize="characters" />
-          <button id="btn-join" class="big alt">Gå med</button>
+        <button id="me" class="me" aria-label="Ändra din blob">
+          <canvas id="preview" class="px bounce" width="132" height="132"></canvas>
+          <span class="me-text"><b id="me-name">Blob</b><span class="edit">Ändra blob</span></span>
+        </button>
+        <div class="actions">
+          <button id="btn-host" class="big">Starta nytt spel</button>
+          <button id="btn-show-join" class="big alt">Gå med i spel</button>
+          <p class="help">Starta på en telefon. Kompisarna trycker <b>Gå med</b> och skriver koden.</p>
+          <p id="menu-msg" class="msg"></p>
         </div>
-        <p id="menu-msg" class="msg"></p>
+      </div>
+
+      <!-- Customize -->
+      <div id="custom" class="card panel custom hidden">
+        <h2>Din blob</h2>
+        <canvas id="preview2" class="px bounce" width="132" height="132"></canvas>
+        <div class="fields">
+          <label class="lbl" for="name">Namn</label>
+          <input id="name" maxlength="10" placeholder="Skriv ditt namn" autocomplete="off" />
+          <span class="lbl">Färg</span>
+          <div id="colors" class="row"></div>
+          <span class="lbl">Hatt</span>
+          <div id="hats" class="row"></div>
+          <button id="btn-custom-done" class="big">Klar</button>
+        </div>
+      </div>
+
+      <!-- Join -->
+      <div id="join" class="card panel joinp hidden">
+        <h2>Gå med i spel</h2>
+        <p class="help">Skriv koden som syns på värdens skärm</p>
+        <input id="code" class="codebox" maxlength="4" placeholder="ABCD" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" />
+        <button id="btn-join" class="big alt">Gå med</button>
+        <p id="join-msg" class="msg"></p>
+        <button id="btn-join-back" class="link">Tillbaka</button>
       </div>
     </section>
 

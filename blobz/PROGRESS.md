@@ -20,3 +20,11 @@
   Tiny Ski pixel font. Added pack: Pixel Platformer.
 - `docs/ART_PROMPTS.md`: prompts for title art, logo and app icon in the Kenney Tiny style.
 - Verified: build green, 5 tests, 3-player headless run, no page errors.
+
+## 2026-11-14 - Clearer menu + Stefan's title art
+- Menu split into 3 small panels: Home (your blob card, "Starta nytt spel", "Gå med i spel", one-line help),
+  "Din blob" (name, color, hat; shown first on a first visit) and "Gå med" (one big code box, auto-joins on
+  the 4th letter, `?room=ABCD` opens it prefilled). Two-column layout for phones held sideways.
+- Backgrounds: `public/art/title.png`, logo: `public/art/logo.png` (ChatGPT-generated, listed under
+  "Generated art" in LICENSES.md). Removed the canvas meadow intro (`src/intro.ts`).
+- Verified in headless Chromium at 390x844 and 844x390 (screenshots 08-11), 3-player run green, 5 tests.
