@@ -15,7 +15,8 @@ export const COLORS = [
 export const SHAPES = ['Kupol', 'Boll', 'Lång', 'Platt', 'Päron', 'Kub'];
 export const EYES = ['Prick', 'Stora', 'Glada', 'Sömniga', 'Blink'];
 export const MOUTHS = ['Leende', 'Öppen', 'Lugn', 'Flin', 'Katt'];
-export const HATS = ['Ingen', 'Keps', 'Krona', 'Grodd', 'Mössa', 'Trollkarl', 'Rosett', 'Lurar'];
+export const HATS = ['Ingen', 'Keps', 'Krona', 'Grodd', 'Mössa', 'Trollkarl', 'Rosett', 'Lurar',
+  'Kattöron', 'Enhörning', 'Kaninöron', 'Djävulshorn', 'Antenn', 'Gloria'];
 /** Dungeon class gear, worn instead of the skin hat (blobGrid's `classHat`). */
 export const CLASS_HATS = ['Prästluva', 'Fjädermössa', 'Riddarhjälm'];
 
@@ -86,11 +87,23 @@ const HAT_SIZES: Record<string, Sprite[]> = {
     sp(['.....V.....', '....VVV....', '...VVVVV...', '..VVVVVVV..', 'vvvvvvvvvvv'], 5, 4)],
 };
 const BOW = sp(['RR.RR', 'RrRrR', 'RR.RR'], 2, 1);
+/** "Top changers" that grow out of the head (S / M / L). pair: left piece, the right one is mirrored and sits at
+ *  the other end of the head's top row; centre: one piece on top; float: hovers above (halo). M / m / P = the blob's
+ *  own colour, its shade and an inner-ear pink. Anchor = bottom row; for pairs the outer column. */
+type Top = { kind: 'pair' | 'centre' | 'float'; sizes: Sprite[] };
+const TOPS: Record<string, Top> = {
+  Kattöron: { kind: 'pair', sizes: [sp(['M.', 'MM'], 0, 1), sp(['M..', 'MM.', 'MPM'], 0, 2), sp(['M...', 'MM..', 'MPM.', 'MPPM'], 0, 3)] },
+  Kaninöron: { kind: 'pair', sizes: [sp(['MM', 'MP', 'MP'], 0, 2), sp(['MM', 'MP', 'MP', 'MP'], 0, 3), sp(['.MM', 'MPM', 'MPM', 'MPM', 'MPM'], 0, 4)] },
+  Djävulshorn: { kind: 'pair', sizes: [sp(['R.', 'RR'], 0, 1), sp(['R..', 'Rr.', '.RR'], 0, 2), sp(['R...', 'Rr..', '.Rr.', '..RR'], 0, 3)] },
+  Enhörning: { kind: 'centre', sizes: [sp(['Y', 'y', 'Y'], 0, 2), sp(['.Y', 'Yy', 'yY', 'YY'], 1, 3), sp(['..Y', '.Yy', '.yY', 'Yy.', 'YYy'], 1, 4)] },
+  Antenn: { kind: 'centre', sizes: [sp(['R', 'K', 'K'], 0, 2), sp(['RR', 'RR', '.K', '.K'], 1, 3), sp(['RR.', 'RR.', '.K.', '.K.', '.K.'], 1, 4)] },
+  Gloria: { kind: 'float', sizes: [sp(['YYYY'], 2, 0), sp(['.YYYY.', 'Y....Y', '.YYYY.'], 3, 2), sp(['.YYYYYY.', 'Y......Y', '.YYYYYY.'], 4, 2)] },
+};
 const PLUME = sp(['.R', 'RR', 'R.'], 1, 2);
 const FEATHER = sp(['R.', 'RR', '.R', '.R'], 0, 3);
 
 /** Part tables, exported for tests only. */
-export const PART_TABLES = { bodies: BODY_ROWS, eyes: EYE_SPRITES, mouths: MOUTH_SPRITES, hats: HAT_SIZES, palette: PAL };
+export const PART_TABLES = { bodies: BODY_ROWS, eyes: EYE_SPRITES, mouths: MOUTH_SPRITES, hats: HAT_SIZES, tops: TOPS, palette: PAL };
 
 // ---------------------------------------------------------------- layout
 export interface BodyLayout {
@@ -121,9 +134,13 @@ export function bodyLayout(shape: number, frame = 0): BodyLayout {
   };
 }
 
-function spritePx(s: Sprite, ax: number, ay: number): Px {
+function spritePx(s: Sprite, ax: number, ay: number, extra: Record<string, string> = {}, mirror = false): Px {
   const out: Px = new Map();
-  s.rows.forEach((row, j) => [...row].forEach((ch, i) => { if (ch !== '.') out.set(key(ax - s.ax + i, ay - s.ay + j), PAL[ch]); }));
+  s.rows.forEach((row, j) => [...row].forEach((ch, i) => {
+    if (ch === '.') return;
+    const dx = mirror ? -(i - s.ax) : i - s.ax; // mirrored: the piece grows the other way from its anchor
+    out.set(key(ax + dx, ay - s.ay + j), extra[ch] ?? PAL[ch]);
+  }));
   return out;
 }
 function outlineOf(pts: Set<number>): Set<number> {
@@ -233,6 +250,19 @@ export function blobGrid(look: BlobLook, classHat?: number, face?: Face, frame =
     for (const x of [xl - 1, xl, xr, xr + 1]) for (const dy of [-1, 0, 1]) if (!L.mask.has(key(x, L.earY + dy))) cups.add(key(x, L.earY + dy));
     for (const k of outlineOf(cups)) if (!L.mask.has(k)) px.set(k, INK);
     for (const k of cups) px.set(k, PAL.R);
+  } else if (TOPS[hatName]) { // top changers: grow out of the head's top outline row (pairs at both ends of the top row)
+    const t = TOPS[hatName], spr = t.sizes[hatSize(L.headW)];
+    const own = { M: base, m: dark, P: '#f4a0b4' };
+    const oy = L.top - 1; // the top outline row: the pieces' bottom row replaces it, so they grow out of the head
+    const parts: Px[] = [];
+    if (t.kind === 'pair') { // at the ends of the second row (wider than a pointy top), each on its own column's outline
+      const half = L.rows[1] >> 1, xl = 8 - half, xr = 8 + half - 1;
+      parts.push(spritePx(spr, xl, topOutline(L.mask, xl), own), spritePx(spr, xr, topOutline(L.mask, xr), own, true));
+    } else if (t.kind === 'centre') parts.push(spritePx(spr, 9, oy, own));
+    else parts.push(spritePx(spr, 8, oy - 1, own)); // halo: one free row above the head
+    const all = new Map(parts.flatMap((p) => [...p]).filter(([k]) => !L.mask.has(k))); // grows out of, never into, the head
+    for (const k of outlineOf(new Set(all.keys()))) if (!L.mask.has(k)) px.set(k, INK);
+    for (const [k, c] of all) px.set(k, c);
   }
   const g: (string | null)[][] = Array.from({ length: GRID_H }, () => Array<string | null>(GRID_W).fill(null));
   for (const [k, c] of px) {

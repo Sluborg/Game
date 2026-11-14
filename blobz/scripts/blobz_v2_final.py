@@ -37,7 +37,7 @@ def render(reqs):
 
 
 def main(scale=6):
-    hats = ['none', 'cap', 'crown', 'sprout', 'beanie', 'wizard', 'bow', 'headphones']
+    hats = ['none', 'cap', 'crown', 'sprout', 'beanie', 'wizard', 'bow', 'headphones', 'cat-ears', 'unicorn', 'bunny-ears', 'devil-horns', 'antenna', 'halo']
     shapes = ['dome', 'ball', 'tall', 'flat', 'pear', 'cube']
     reqs, labels = [], []
     for h in range(len(hats)):
@@ -69,6 +69,18 @@ def main(scale=6):
             out.alpha_composite(ims[k].resize((16 * scale, 18 * scale), Image.NEAREST), (lab_w + s * cell, y))
             k += 1
         y += cell
+    cells = os.path.join(ROOT, 'docs', 'art-review', 'hats')
+    os.makedirs(cells, exist_ok=True)
+    for hi, h in enumerate(hats):
+        for si, sh in enumerate(shapes):
+            tile = Image.new('RGBA', (cell, cell), (98, 150, 72, 255))
+            tile.alpha_composite(ims[hi * 6 + si].resize((16 * scale, 18 * scale), Image.NEAREST), ((cell - 16 * scale) // 2, 0))
+            tile.save(os.path.join(cells, f'{h}-{sh}.png'))
+    for ci, name in enumerate(('priest-hood', 'archer-cap', 'knight-helm')):
+        for si, sh in enumerate(shapes):
+            tile = Image.new('RGBA', (cell, cell), (98, 150, 72, 255))
+            tile.alpha_composite(ims[len(hats) * 6 + ci * 6 + si].resize((16 * scale, 18 * scale), Image.NEAREST), ((cell - 16 * scale) // 2, 0))
+            tile.save(os.path.join(cells, f'{name}-{sh}.png'))
     for name in ('priest hood', 'archer cap', 'knight helm'):
         d.text((10, y + cell // 2 - 10), name, fill=(255, 255, 255, 255), font_size=16)
         for s in range(6):

@@ -48,7 +48,7 @@ describe('blobz v2 (16 px Ninja grid, one 3/4 view)', () => {
   });
 
   it('hats sit on top of or around the head: never over the face, head-top hats never inside the head', () => {
-    const onTop = ['Keps', 'Krona', 'Grodd', 'Mössa', 'Trollkarl', 'Rosett', 'Lurar'];
+    const onTop = ['Keps', 'Krona', 'Grodd', 'Mössa', 'Trollkarl', 'Rosett', 'Lurar', 'Kattöron', 'Enhörning', 'Kaninöron', 'Djävulshorn', 'Antenn', 'Gloria'];
     for (let s = 0; s < SHAPES.length; s++) for (let f = 0; f < BLOB_FRAMES; f++) {
       const L = bodyLayout(s, f);
       const bare = blobGrid(look({ shape: s }), undefined, undefined, f);
