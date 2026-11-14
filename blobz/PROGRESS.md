@@ -198,3 +198,7 @@
 ## 2026-11-14 - v027d: version guard (Lead)
 - Info cards and hello carry the app version; Joina list greys out rooms on another version ("Annan version, ladda om sidan") and a mismatched join gets a clear message.
 - `version.json` is emitted at build; on start (and when the menu becomes visible again) the page fetches it with no-store and reloads onto the live version (`?v=` busts the ~10 min Pages cache, loop-guarded). Sigurd was stuck on v027b while Stefan had v027c.
+
+## 2026-11-14 - v028: smooth designer + visual polish (Code) + base art (Art)
+- Designer: bigger bouncing preview, swipe between tabs, remembers tab, scrolls selection into view, fixed 64 px tiles in landscape. Polish: integer scales for props, small rock collision 15, dust/coin-sparkle/plate-glow fx. Art: new cottage lv1-3 + 6 buildings + build spot in `public/art/base/` (wired by the base-building batch).
+- Lead review: version guard kept after merge, 43 tests, build, e2e lan-join/gather/totems/puzzles/designer ALL PASSED.
