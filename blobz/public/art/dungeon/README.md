@@ -18,8 +18,26 @@ facing left: flip X, pivot on (2, 33). Scale with the blob (`BLOB_SCALE`), draw 
 `card-sword.png`, `card-hammer.png`, `card-spear.png`: 48x64 parchment cards, weapon picture + colour ribbon
 (red / orange / blue). No text, so the name can be drawn by code if wanted.
 
-## Buttons
-`btn-attack.png` (20x20, crossed swords, cream/white for the orange or red button), `btn-dash-small.png` (8x5).
+## Buttons (cream/white, for the orange or red round buttons)
+| File | Size | Use |
+|---|---|---|
+| `btn-special-sword.png` | 20x20 | Special attack, sword: spin (sword in a circular arrow) |
+| `btn-special-hammer.png` | 20x20 | Special attack, hammer: slam (hammer coming down, impact lines) |
+| `btn-special-spear.png` | 20x20 | Special attack, spear: charge (spear with speed lines) |
+| `btn-sidestep.png` | 20x20 | Small button: sidestep (blob with sideways arrows) |
+| `btn-attack.png` | 20x20 | Generic attack (crossed swords), spare now that the blob auto-attacks |
+| `btn-dash-small.png` | 8x5 | Small dash chevrons |
+
+Cooldown ring: **drawn by Code** (Phaser `Graphics.arc`, dark plum `#3f2631` at ~55% alpha over the button,
+shrinking clockwise from 12 o'clock). A code arc scales cleanly to any button size; no sprite needed.
+
+## Special-attack and sidestep fx (horizontal strips)
+| File | Frames | Frame | Use |
+|---|---|---|---|
+| `fx-spin.png` | 4 | 48x40 | Sword spin: white slash arc sweeping around the blob; centre (24, 22) on the blob's body centre |
+| `fx-slam.png` | 4 | 56x28 | Hammer slam: ground ring expanding with stone chips; centre (28, 15) on the impact point |
+| `fx-charge.png` | 3 | 48x16 | Spear charge: speed streaks behind the blob; right edge at the blob's back, flip X when facing left |
+| `fx-sidestep.png` | 3 | 24x24 | Sidestep: fading dotted afterimage + dust where the blob stood; anchor bottom centre |
 
 ## Entrance and stairs
 | File | Size | Use |
