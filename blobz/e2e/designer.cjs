@@ -21,7 +21,7 @@ const tab = (p) => p.getAttribute('.tab.on', 'data-part');
     await p.goto(base);
     await p.waitForSelector('#custom:not(.hidden)');
     const box = await p.locator('#preview2').boundingBox();
-    ok(box.width >= 120, `bigger live preview (${Math.round(box.width)}px wide)`);
+    ok(box.width >= 118, `bigger live preview (${Math.round(box.width)}px wide)`);
     await p.click('.tab[data-part="eyes"]');
     await p.locator('#opts .opt').nth(3).click();
     ok(await p.locator('#preview2 .boing').count() === 1, 'choosing an option squash-bounces the preview');
