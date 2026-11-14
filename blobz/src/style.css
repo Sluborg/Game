@@ -742,3 +742,18 @@ body { font-weight: 500; } /* Fredoka (Stefan's pick on the board) */
   #loading-logo { width: 74%; }
 }
 @media (orientation: landscape) and (max-height: 520px) { .home .logo-img { max-height: 92px; } }
+
+/* ---- blobz frame 20x20 (Art, wider for headphones/brims): menu blobz at whole multiples of 20 ---- */
+.me .blob { width: 60px; height: 60px; }
+#menu .home .me .blob { width: 60px; height: 60px; }
+#preview2 { width: 120px; height: 120px; }
+.opt .blob { width: 60px; height: 60px; }
+#lobby-list .blob { width: 40px; height: 40px; }
+.lanrow .blob { width: 60px; height: 60px; }
+.mi-blob .blob { width: 60px; height: 60px; }
+@media (orientation: landscape) and (max-height: 520px) {
+  #preview2 { width: 100px; height: 100px; }
+  .opt .blob { width: 40px; height: 40px; }
+  #lobby-list .blob { width: 40px; height: 40px; }
+  .lanrow .blob { width: 40px; height: 40px; }
+}

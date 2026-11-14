@@ -174,20 +174,22 @@ export function cleanVillage(raw: unknown): Village {
 export const built = (s: { builds: { kind: BuildKind; state: number }[] }, k: BuildKind) => s.builds.some((b) => b.kind === k && b.state === 2);
 
 // ---- the water corner: a seeded corner (not a puzzle corner) behind water; the bridge opens it ----
-/** Water channel = 2 tiles of 32 px; the corner area is a whole number of tiles, so all water sits on the 32 px grid. */
-export const WATER_W = 64;
-const AREA_W = 288, AREA_H = 256;
+/** Ninja ground tiles are 16 px drawn at 3x = 48 world px. The water channel is 2 tiles wide and every water edge sits
+ *  on that 48 px grid (counted from the world's top-left), so the shore autotiles line up with the collision. */
+export const WATER_TILE = 48;
+export const WATER_W = 2 * WATER_TILE;
+const AREA_W = 6 * WATER_TILE, AREA_H = 5 * WATER_TILE;
+const snapDown = (v: number) => Math.floor(v / WATER_TILE) * WATER_TILE;
 export interface WaterLayout { corner: number; area: Rect; water: Rect[]; withBridge: Rect[]; bridge: { x: number; y: number } }
 export function makeWater(seed: number): WaterLayout {
   const used = puzzleCorners(seed);
   const free = [0, 1, 2, 3].filter((c) => !used.includes(c));
   const corner = free[Math.floor(rng(seed * 17 + 3)() * free.length)];
   const left = corner % 2 === 0, top = corner < 2;
-  const ax0 = left ? 0 : WORLD_W - AREA_W, ay0 = top ? 0 : WORLD_H - AREA_H;
-  const area = { x0: ax0, y0: ay0, x1: ax0 + AREA_W, y1: ay0 + AREA_H };
-  // an L of water along the area's two inner sides
-  const vx0 = left ? area.x1 : area.x0 - WATER_W;
-  const hy0 = top ? area.y1 : area.y0 - WATER_W;
+  // an L of water along the area's two inner sides, on the 48 px grid; the right/bottom areas run to the map edge
+  const vx0 = left ? AREA_W : snapDown(WORLD_W - AREA_W - WATER_W);
+  const hy0 = top ? AREA_H : snapDown(WORLD_H - AREA_H - WATER_W);
+  const area: Rect = { x0: left ? 0 : vx0 + WATER_W, x1: left ? vx0 : WORLD_W, y0: top ? 0 : hy0 + WATER_W, y1: top ? hy0 : WORLD_H };
   const vert = { x0: vx0, x1: vx0 + WATER_W, y0: top ? -60 : hy0, y1: top ? hy0 + WATER_W : WORLD_H + 60 };
   const horiz = { x0: left ? -60 : vx0, x1: left ? vx0 + WATER_W : WORLD_W + 60, y0: hy0, y1: hy0 + WATER_W };
   const by = (area.y0 + area.y1) / 2;
