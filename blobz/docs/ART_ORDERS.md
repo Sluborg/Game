@@ -37,6 +37,9 @@ ChatGPT has no READY order. New orders only for pieces the pack lacks.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
+| N-1 | WAITING (game name on the board) | Title header / logo in Ninja Adventure style | `art/logo.png` |
+| N-2 | WAITING (after N-1 is rated 4-5) | Start screen background (portrait + landscape) | `art/title.png` |
+| N-3 | WAITING (after N-2 is rated 4-5) | Loading screen (portrait + landscape) | `art/loading.png`, `art/loading-landscape.png` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
@@ -51,6 +54,38 @@ ChatGPT has no READY order. New orders only for pieces the pack lacks.**
 | A-8 | CANCELLED (Ninja Adventure chosen) | Dungeon buttons, goo enemies, skill icons, back arrow | `dungeon/btn-*`, `enemies/*`, `dungeon/skills/*`, `icons/back.png` |
 | A-9 | CANCELLED (Ninja Adventure chosen) | Bärregn mini game: bomb, falling berries, basket, plop, fence | `mini/bomb.png`, `mini/berries.png`, `mini/basket.png`, `mini/plop.png`, `mini/fence-*.png` |
 | A-10 | CANCELLED (Ninja Adventure chosen) | Winter props in the same style as A-7 | `props-winter/*` |
+
+## Ninja style block (for N-orders)
+```
+Match the pixel art of the free "Ninja Adventure" asset pack exactly: 16x16 tile grid, crisp pixels scaled up with
+nearest-neighbour, warm cozy colours, dark near-black outline (rgb 20,27,27), simple 2-3 tone shading, no gradients,
+no blur, no anti-aliasing. Reference images (open them): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/assets/ninja-adventure/preview-part-1.png
+https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/assets/ninja-adventure/preview-part-2.png https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/ninja-overview.png
+The heroes are "blobz": small soft jelly blobs on the same 16 px grid, seen in 3/4 view, two big white eyes, a small
+mouth, optional hat, bright body colours (blue, pink, green, yellow, purple, orange). Reference: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/blobz-v2.png
+```
+
+### N-1 Title header / logo
+```
+A game logo for a cozy co-op adventure called "<NAME>" (the exact word is in this file's queue note once chosen).
+Chunky rounded pixel letters in the Ninja Adventure style, warm orange/cream letters with the dark outline and a
+small drop shadow, one small blob peeking over a letter. Transparent background (or flat magenta #ff00ff).
+Wide format 3:1. Make 3 variants side by side on one image so Stefan can pick.
+```
+
+### N-2 Start screen background
+```
+A cozy scene for the start screen, made only of Ninja Adventure style tiles and props: a sunny village meadow with a
+small orange-roofed cottage, trees, a path, flowers, a pond. 4-5 blobz having fun (one waving, one carrying wood, one
+gliding with speed lines). Keep the top 45% calm (sky/grass) for the logo and buttons. Portrait 9:16, then the same
+scene landscape 16:9 with key content in the central 60%. No text.
+```
+
+### N-3 Loading screen
+```
+Same world as N-2, a different moment: blobz walking toward a dungeon entrance at dusk with lanterns, or gathering
+around a campfire. Calm lower third for a progress bar. Portrait 9:16 and landscape 16:9. No text.
+```
 
 ### D-1 Direction test 1: style probe (small)
 Goal: lock the art direction with ONE small image before any big order. Stefan judges it and Art writes the next test.
