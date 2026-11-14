@@ -1,16 +1,12 @@
 // Authoritative game simulation. Pure TypeScript, no Phaser, no network.
 // Runs on the host only; clients render the snapshots it produces.
 
-/** Base building (paused for the dungeon, Lead 2026-11-14): OFF hides the river, east meadow,
- *  build spots, cottage upgrades and the saved village. Flip to true to resume. */
-export const BUILDING_ENABLED = false;
-/** The meadow (x < MAIN_W) plus, past a river, the east meadow that the bridge opens. */
+/** Base building: build spots, cottage upgrades, the water corner and the saved village. */
+export const BUILDING_ENABLED = true;
 export const MAIN_W = 1280;
-export const RIVER = { x0: 1288, x1: 1352 };
-export const WORLD_W = BUILDING_ENABLED ? 1600 : MAIN_W;
+export const WORLD_W = MAIN_W;
 export const WORLD_H = 960;
-export const BRIDGE_Y = 480;
-export const BRIDGE_HALF = 34; // half-width of the walkable deck
+export const BRIDGE_HALF = 34; // half-width of the walkable bridge deck
 export const BASE = { x: MAIN_W / 2, y: WORLD_H / 2, r: 92 };
 export const ROUND_SECONDS = 180;
 export const MAX_PLAYERS = 5;
@@ -53,8 +49,8 @@ export const CHEST_BUNDLE = 3;
 export const QUEST_BASE: Res = res(10, 6, 5); // for 1-2 players
 /** Round goal: deliver this much of each resource; every finished bar is a star. x(1 + 0.35*(n-2)) for 3-5. */
 export function questTargets(players: number, cottage = 1): Res {
-  // bigger cottage, bigger goals: x1.25 at level 2, x1.5 at level 3
-  const f = (1 + 0.35 * Math.max(0, Math.min(MAX_PLAYERS, players) - 2)) * (1 + 0.25 * (Math.max(1, Math.min(3, cottage)) - 1));
+  // bigger cottage, bigger goals: +20% per level
+  const f = (1 + 0.35 * Math.max(0, Math.min(MAX_PLAYERS, players) - 2)) * (1 + 0.2 * (Math.max(1, Math.min(3, cottage)) - 1));
   return res(Math.ceil(QUEST_BASE.wood * f - 1e-9), Math.ceil(QUEST_BASE.stone * f - 1e-9), Math.ceil(QUEST_BASE.berry * f - 1e-9));
 }
 export const starsFor = (delivered: Res, quest: Res) => RES.filter((k) => delivered[k] >= quest[k]).length;
@@ -84,13 +80,20 @@ export interface Puzzle { need: number; mask: number; open: boolean; taken: bool
 
 const inRect = (r: Rect, x: number, y: number, pad = 0) => x > r.x0 - pad && x < r.x1 + pad && y > r.y0 - pad && y < r.y1 + pad;
 
+const puzzleCornerOrder = (c: number[]) => c;
+/** The two map corners the puzzle pens use (0 TL, 1 TR, 2 BL, 3 BR). */
+export function puzzleCorners(seed: number): number[] {
+  const r = rng(seed * 13 + 5);
+  const first = Math.floor(r() * 4);
+  return [first, (first + 1 + Math.floor(r() * 3)) % 4];
+}
 /** Two pens in two of the four map corners, gate facing the base. Deterministic from the seed. */
 export function makePuzzles(seed: number): PuzzleLayout[] {
   const r = rng(seed * 13 + 5);
   const corners = [[250, 210], [MAIN_W - 250, 210], [250, WORLD_H - 210], [MAIN_W - 250, WORLD_H - 210]];
   const first = Math.floor(r() * 4);
   const second = (first + 1 + Math.floor(r() * 3)) % 4; // any other corner
-  return [first, second].map((ci) => {
+  return puzzleCornerOrder([first, second]).map((ci) => {
     const [bx, by] = corners[ci];
     const cx = Math.round(bx + (r() - 0.5) * 80), cy = Math.round(by + (r() - 0.5) * 50);
     const gateDown = cy < BASE.y;
@@ -131,7 +134,7 @@ export const BUY_SECONDS = 1;
 export const DOUBLE_SECONDS = 20;
 export const SHIELD_RECHARGE = 8;
 /** Pads on the four diagonals around the cottage (same order as TOTEM_KINDS). */
-export const TOTEM_PADS = [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([dx, dy]) => ({ x: BASE.x + dx * 112, y: BASE.y + dy * 104 }));
+export const TOTEM_PADS = [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([dx, dy]) => ({ x: BASE.x + dx * 88, y: BASE.y + dy * 88 })); // ~125 px, inside the build ring
 export interface Totem { kind: TotemKind; level: number; buy: number; armed: boolean }
 export const totemPrice = (t: { kind: TotemKind; level: number }): Partial<Res> => (t.level >= TOTEM_MAX ? {} : TOTEM_PRICES[t.kind][t.level]);
 const totemLevel = (s: State, k: TotemKind) => s.totems.find((t) => t.kind === k)?.level ?? 0;
@@ -144,58 +147,75 @@ export const BUILD_NAMES: Record<BuildKind, string> = {
   bridge: 'Bro', watchtower: 'Utkikstorn', garden: 'Odling', workshop: 'Verkstad', storage: 'Förråd', well: 'Brunn',
 };
 export const BUILD_COST: Record<BuildKind, Res> = {
-  bridge: res(10, 4, 0), watchtower: res(6, 4, 0), garden: res(4, 0, 4),
-  workshop: res(8, 6, 0), storage: res(8, 2, 2), well: res(2, 8, 0),
+  storage: res(6, 0, 0), workshop: res(8, 4, 0), garden: res(6, 0, 4),
+  well: res(0, 6, 0), watchtower: res(10, 6, 0), bridge: res(12, 8, 0),
 };
-/** Where each building goes: five around the cottage, the bridge on the river bank. */
-export const BUILD_SPOTS: Record<BuildKind, { x: number; y: number }> = {
-  bridge: { x: RIVER.x0 - 52, y: BRIDGE_Y + 70 }, watchtower: { x: BASE.x, y: BASE.y - 236 },
-  garden: { x: BASE.x - 214, y: BASE.y }, workshop: { x: BASE.x + 214, y: BASE.y },
-  storage: { x: BASE.x, y: BASE.y + 236 }, well: { x: BASE.x - 196, y: BASE.y + 190 },
+/** One line per building for the sign / report (Swedish, kid-short). */
+export const BUILD_EFFECT: Record<BuildKind, string> = {
+  storage: 'Bär 4 saker', workshop: 'Färre slag', garden: 'Mer bär', well: 'Totem räcker längre',
+  watchtower: 'Pilar till resurser', bridge: 'Nytt hörn med resurser',
 };
+/** Six fixed spots in a ring ~180 px around the cottage, one building each. */
+export const BUILD_RING = 180;
+const RING_ORDER: BuildKind[] = ['workshop', 'storage', 'garden', 'well', 'watchtower', 'bridge']; // 0, 60, ... 300 degrees
+export const BUILD_SPOTS = Object.fromEntries(RING_ORDER.map((k, i) => {
+  const a = (i * 60 * Math.PI) / 180;
+  return [k, { x: Math.round(BASE.x + Math.cos(a) * BUILD_RING), y: Math.round(BASE.y + Math.sin(a) * BUILD_RING) }];
+})) as Record<BuildKind, { x: number; y: number }>;
 export const COTTAGE_PAD = { x: BASE.x, y: BASE.y + 124 };
-export const COTTAGE_COST: Res[] = [res(15, 10, 6), res(25, 18, 12)]; // to level 2, to level 3
+export const COTTAGE_COST: Res[] = [res(20, 15, 10), res(40, 30, 20)]; // to level 2, to level 3
 export const COTTAGE_MAX = 3;
-export const BUILD_R = 30; // stand this close to a spot to start building
-/** Building / upgrade progress: 0 = empty spot, 1 = construction site being paid, 2 = done. */
+/** Team bonus per cottage level (besides +20% quest): level 2 carries one more, level 3 regrows faster. */
+export const COTTAGE_BONUS = ['', 'Bär 1 sak till', 'Snabbare återväxt'];
+export const BUILD_R = 30; // stand this close to a spot to build
+/** state: 0 = empty spot, 2 = built (1 is unused: buildings are bought at once, like totems). */
 export interface Build { kind: BuildKind; state: 0 | 1 | 2; paid: Res; buy: number; armed: boolean }
 export interface Cottage { level: number; state: 0 | 1; paid: Res; buy: number; armed: boolean }
-/** What the host saves between rounds (localStorage 'blobz.village'). */
-export interface Village { v: 1; cottage: number; cottageState: 0 | 1; cottagePaid: Res; builds: Record<BuildKind, { state: 0 | 1 | 2; paid: Res }> }
-export const VILLAGE_VERSION = 1;
+/** What the host saves between rounds (localStorage 'blobz.village'): buildings, cottage level, bank. */
+export interface Village { v: 2; cottage: number; builds: Record<BuildKind, boolean>; bank: Res }
+export const VILLAGE_VERSION = 2;
 export const newVillage = (): Village => ({
-  v: 1, cottage: 1, cottageState: 0, cottagePaid: res(),
-  builds: Object.fromEntries(BUILD_KINDS.map((k) => [k, { state: 0, paid: res() }])) as Village['builds'],
+  v: 2, cottage: 1, builds: Object.fromEntries(BUILD_KINDS.map((k) => [k, false])) as Village['builds'], bank: res(),
 });
 const cleanRes = (r: unknown): Res => {
   const o = (r ?? {}) as Partial<Res>;
-  const n = (x: unknown) => Math.max(0, Math.min(999, Math.floor(Number(x)) || 0));
+  const n = (x: unknown) => Math.max(0, Math.min(9999, Math.floor(Number(x)) || 0));
   return res(n(o.wood), n(o.stone), n(o.berry));
 };
-/** Validate a saved village (untrusted storage); anything unknown starts fresh. */
+/** Validate a saved village (untrusted storage); another version or junk starts fresh. */
 export function cleanVillage(raw: unknown): Village {
   const v = raw as Partial<Village> | null;
   const out = newVillage();
   if (!v || typeof v !== 'object' || v.v !== VILLAGE_VERSION) return out;
   out.cottage = Math.max(1, Math.min(COTTAGE_MAX, Math.floor(Number(v.cottage)) || 1));
-  out.cottageState = v.cottageState === 1 && out.cottage < COTTAGE_MAX ? 1 : 0;
-  out.cottagePaid = out.cottageState ? cleanRes(v.cottagePaid) : res();
-  for (const k of BUILD_KINDS) {
-    const b = v.builds?.[k];
-    const st = b?.state === 2 ? 2 : b?.state === 1 ? 1 : 0;
-    out.builds[k] = { state: st, paid: st === 1 ? cleanRes(b?.paid) : res() };
-  }
+  for (const k of BUILD_KINDS) out.builds[k] = v.builds?.[k] === true;
+  out.bank = cleanRes(v.bank);
   return out;
 }
 export const built = (s: { builds: { kind: BuildKind; state: number }[] }, k: BuildKind) => s.builds.some((b) => b.kind === k && b.state === 2);
-/** Solid river; the bridge leaves a gap for its deck. */
-export function riverWalls(bridge: boolean): Rect[] {
-  if (!bridge) return [{ x0: RIVER.x0, x1: RIVER.x1, y0: -60, y1: WORLD_H + 60 }];
-  return [{ x0: RIVER.x0, x1: RIVER.x1, y0: -60, y1: BRIDGE_Y - BRIDGE_HALF }, { x0: RIVER.x0, x1: RIVER.x1, y0: BRIDGE_Y + BRIDGE_HALF, y1: WORLD_H + 60 }];
+
+// ---- the water corner: a seeded corner (not a puzzle corner) behind water; the bridge opens it ----
+export const WATER_W = 48;
+const AREA_W = 300, AREA_H = 250;
+export interface WaterLayout { corner: number; area: Rect; water: Rect[]; withBridge: Rect[]; bridge: { x: number; y: number } }
+export function makeWater(seed: number): WaterLayout {
+  const used = puzzleCorners(seed);
+  const free = [0, 1, 2, 3].filter((c) => !used.includes(c));
+  const corner = free[Math.floor(rng(seed * 17 + 3)() * free.length)];
+  const left = corner % 2 === 0, top = corner < 2;
+  const ax0 = left ? 0 : WORLD_W - AREA_W, ay0 = top ? 0 : WORLD_H - AREA_H;
+  const area = { x0: ax0, y0: ay0, x1: ax0 + AREA_W, y1: ay0 + AREA_H };
+  // an L of water along the area's two inner sides
+  const vx0 = left ? area.x1 : area.x0 - WATER_W;
+  const hy0 = top ? area.y1 : area.y0 - WATER_W;
+  const vert = { x0: vx0, x1: vx0 + WATER_W, y0: top ? -60 : hy0, y1: top ? hy0 + WATER_W : WORLD_H + 60 };
+  const horiz = { x0: left ? -60 : vx0, x1: left ? vx0 + WATER_W : WORLD_W + 60, y0: hy0, y1: hy0 + WATER_W };
+  const by = (area.y0 + area.y1) / 2;
+  const bridge = { x: vx0 + WATER_W / 2, y: by };
+  const withBridge = [{ ...vert, y1: by - BRIDGE_HALF }, { ...vert, y0: by + BRIDGE_HALF }, horiz];
+  return { corner, area, water: [vert, horiz], withBridge, bridge };
 }
 const GARDEN_EVERY = 12; // the garden grows a berry this often (max 3 waiting)
-const GARDEN_NEAR = 320; // berry bushes this close to the base regrow 2x with a garden
-const WELL_NEAR = 260; // team speed buff near the base with a well
 
 // ---- test dungeon v1: everyone stands on the entrance, picks a weapon, goes down together ----
 /** Dungeon (handed off to Code 2, WIP): OFF = no entrance on the meadow, nothing of it shows. */
@@ -252,6 +272,7 @@ export interface State {
   builds: Build[];
   cottage: Cottage;
   builtNow: BuildKind[]; // finished this round (quest goal)
+  water: WaterLayout;
   villageDirty: boolean; // the host should save the village
   gardenT: number;
   delivered: Res; // everything brought home this round (quest progress, never spent)
@@ -282,7 +303,9 @@ function nearBase(x: number, y: number, extra: number) {
 export function makeTrees(seed: number): Tree[] {
   const r = rng(seed);
   const zones = makePuzzles(seed).map((p) => p.zone);
-  const spots = [...Object.values(BUILD_SPOTS), COTTAGE_PAD];
+  const wl = makeWater(seed);
+  if (BUILDING_ENABLED) zones.push(wl.area, ...wl.water);
+  const spots = BUILDING_ENABLED ? [...Object.values(BUILD_SPOTS), COTTAGE_PAD] : [];
   const trees: Tree[] = [];
   let tries = 0;
   while (trees.length < 34 && tries++ < 2000) {
@@ -305,13 +328,14 @@ export function makeTrees(seed: number): Tree[] {
     else if (count((k) => k === 3 || k === 4) < 5) trees[i].kind = 3;
     else break;
   }
-  // the east meadow past the river: a rich patch (more stone and berries), reachable over the bridge
+  // the water corner: a rich patch (more stone and berries), reachable over the bridge
   const e = rng(seed * 31 + 7);
+  const a = wl.area;
   let n = 0;
-  for (let tries2 = 0; BUILDING_ENABLED && n < 14 && tries2 < 800; tries2++) {
-    const x = RIVER.x1 + 50 + e() * (WORLD_W - RIVER.x1 - 90), y = 70 + e() * (WORLD_H - 130);
-    if (Math.abs(y - BRIDGE_Y) < 90 && x < RIVER.x1 + 110) continue; // keep the bridge landing clear
-    if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < 70)) continue;
+  for (let tries2 = 0; BUILDING_ENABLED && n < 7 && tries2 < 600; tries2++) {
+    const x = a.x0 + 40 + e() * (a.x1 - a.x0 - 80), y = a.y0 + 40 + e() * (a.y1 - a.y0 - 80);
+    if (Math.hypot(x - wl.bridge.x, y - wl.bridge.y) < 110) continue; // keep the bridge landing clear
+    if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < 64)) continue;
     const roll = e();
     const kind = roll < 0.3 ? Math.floor(e() * 3) : roll < 0.5 ? 3 : roll < 0.7 ? 4 : 5;
     trees.push({ x, y, kind, cd: 0, left: 0, hits: 0, regrow: 0 });
@@ -320,19 +344,19 @@ export function makeTrees(seed: number): Tree[] {
   for (const t of trees) t.left = NODE_YIELD[t.kind];
   return trees;
 }
-export const isEast = (x: number) => x > RIVER.x1;
 
 export function createState(infos: PlayerInfo[], seed: number, village: Village = newVillage()): State {
   const trees = makeTrees(seed);
   const layout = makePuzzles(seed);
   const needs = puzzleNeeds(infos.length);
   const vil = BUILDING_ENABLED ? cleanVillage(village) : newVillage();
+  const water = makeWater(seed);
   const s: State = {
     phase: 'play', time: ROUND_SECONDS,
     seed, mode: 'meadow', entry: 0, picks: {}, pickT: 0, runs: 0, dg: null,
-    bank: res(), delivered: res(), quest: questTargets(infos.length, vil.cottage),
-    builds: BUILD_KINDS.map((kind) => ({ kind, state: vil.builds[kind].state, paid: { ...vil.builds[kind].paid }, buy: 0, armed: true })),
-    cottage: { level: vil.cottage, state: vil.cottageState, paid: { ...vil.cottagePaid }, buy: 0, armed: true },
+    bank: { ...vil.bank }, delivered: res(), quest: questTargets(infos.length, vil.cottage),
+    builds: BUILD_KINDS.map((kind) => ({ kind, state: vil.builds[kind] ? 2 : 0, paid: res(), buy: 0, armed: true })),
+    cottage: { level: vil.cottage, state: 0, paid: res(), buy: 0, armed: true }, water,
     builtNow: [], villageDirty: false, gardenT: GARDEN_EVERY,
     players: [], items: [], gems: [], powers: [], trees,
     layout, puzzles: layout.map((_, i) => ({ need: needs[i], mask: 0, open: false, taken: false })),
@@ -368,6 +392,7 @@ function freeSpot(s: State, minBase = 60): { x: number; y: number } {
     if (s.layout.some((l) => inRect(l.zone, x, y, 20))) continue;
     if (TOTEM_PADS.some((p) => Math.hypot(p.x - x, p.y - y) < PAD_R + 30)) continue;
     if ([...Object.values(BUILD_SPOTS), COTTAGE_PAD].some((p) => Math.hypot(p.x - x, p.y - y) < BUILD_R + 40)) continue;
+    if (BUILDING_ENABLED && [s.water.area, ...s.water.water].some((r) => inRect(r, x, y, 30))) continue;
     return { x, y };
   }
   return { x: 80, y: 80 };
@@ -389,6 +414,7 @@ function award(s: State, x: number, y: number, r: Res) {
   const m = s.doubleT > 0 ? 2 : 1;
   const got = res(r.wood * m, r.stone * m, r.berry * m);
   for (const k of RES) { s.bank[k] += got[k]; s.delivered[k] += got[k]; }
+  s.villageDirty = true; // the bank is part of the saved village
   s.fx.push({ t: 'gain', x, y, r: got });
 }
 
@@ -450,8 +476,7 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
   const speedMul = 1 + 0.1 * totemLevel(s, 'speed');
   const pickR = PICKUP_R + 10 * totemLevel(s, 'magnet');
   const shieldMax = totemLevel(s, 'shield');
-  const carryMax = CARRY_MAX + (built(s, 'storage') ? 1 : 0);
-  const wellBuff = built(s, 'well') ? 1.15 : 1;
+  const carryMax = CARRY_MAX + (built(s, 'storage') ? 1 : 0) + (s.cottage.level >= 2 ? 1 : 0);
 
   // --- players: glide physics ---
   for (const p of s.players) {
@@ -459,11 +484,11 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     let ix = inp.x, iy = inp.y;
     const il = Math.hypot(ix, iy);
     if (il > 1) { ix /= il; iy /= il; }
-    const mul = speedMul * (wellBuff > 1 && Math.hypot(p.x - BASE.x, p.y - BASE.y) < WELL_NEAR ? wellBuff : 1);
+    const mul = speedMul;
     p.vx += ix * ACCEL * mul * dt;
     p.vy += iy * ACCEL * mul * dt;
     // shield charges refill one at a time
-    if (p.shield < shieldMax) { p.shieldT += dt; if (p.shieldT >= SHIELD_RECHARGE * (built(s, 'well') ? 0.6 : 1)) { p.shield++; p.shieldT = 0; } } else p.shieldT = 0;
+    if (p.shield < shieldMax) { p.shieldT += dt; if (p.shieldT >= SHIELD_RECHARGE) { p.shield++; p.shieldT = 0; } } else p.shieldT = 0;
     const drag = Math.exp(-DRAG * dt);
     p.vx *= drag; p.vy *= drag;
     p.dashCd = Math.max(0, p.dashCd - dt);
@@ -511,7 +536,8 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
   // --- nodes: solid; used-up nodes regrow ---
   for (const t of s.trees) {
     t.cd = Math.max(0, t.cd - dt);
-    if (t.left <= 0) { t.regrow -= dt * (t.kind === 5 && built(s, 'garden') && Math.hypot(t.x - BASE.x, t.y - BASE.y) < GARDEN_NEAR ? 2 : 1); if (t.regrow <= 0) { t.left = NODE_YIELD[t.kind]; t.hits = 0; t.regrow = 0; } }
+    // garden: berry bushes regrow 2x; cottage level 3: everything regrows 25% faster
+    if (t.left <= 0) { t.regrow -= dt * (t.kind === 5 && built(s, 'garden') ? 2 : 1) * (s.cottage.level >= 3 ? 1.25 : 1); if (t.regrow <= 0) { t.left = NODE_YIELD[t.kind]; t.hits = 0; t.regrow = 0; } }
     if (!isSolid(t.kind)) continue; // blobz glide through berry bushes
     for (const p of s.players) {
       const dx = p.x - t.x, dy = p.y - t.y;
@@ -530,8 +556,9 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
   }
 
   // --- river: solid until the bridge is built ---
-  const river = BUILDING_ENABLED ? riverWalls(built(s, 'bridge')) : [];
-  for (const p of s.players) for (const b of river) collideBox(p, b);
+  // --- the water corner: solid water until the bridge is built ---
+  const water = BUILDING_ENABLED ? (built(s, 'bridge') ? s.water.withBridge : s.water.water) : [];
+  for (const p of s.players) for (const b of water) collideBox(p, b);
 
   // --- fences + closed gates: solid boxes ---
   s.layout.forEach((l, i) => {
@@ -642,8 +669,9 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     t.buy = Math.min(1, t.buy + dt / BUY_SECONDS);
     if (t.buy >= 1) {
       for (const k of RES) s.bank[k] -= price[k] ?? 0;
+      s.villageDirty = true;
       t.level++; t.buy = 0; t.armed = false;
-      if (t.kind === 'double') s.doubleT = DOUBLE_SECONDS * (built(s, 'well') ? 1.5 : 1);
+      if (t.kind === 'double') s.doubleT = DOUBLE_SECONDS * (built(s, 'well') ? 1.5 : 1); // well: totems last +50%
       if (t.kind === 'shield') for (const p of s.players) p.shield = Math.max(p.shield, t.level); // first charge right away
       s.fx.push({ t: 'totem', x: pad.x, y: pad.y, kind: t.kind, level: t.level });
     }
@@ -671,61 +699,45 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
   if (s.time <= 0) s.phase = 'end';
 }
 
-/** Stand 1 s on a spot to start a construction site; it then pays itself from the bank until done. */
+/** Build like totems: stand 1 s on a spot when the bank covers the price; step off before the next buy. */
 function stepBuilding(s: State, dt: number) {
-  const pads: { b: Build | Cottage; at: { x: number; y: number }; cost: () => Res | null; kind: BuildKind | 'cottage' }[] = [
-    ...s.builds.map((b) => ({ b, at: BUILD_SPOTS[b.kind], cost: () => (b.state === 2 ? null : BUILD_COST[b.kind]), kind: b.kind })),
-    { b: s.cottage, at: COTTAGE_PAD, cost: () => (s.cottage.level >= COTTAGE_MAX ? null : COTTAGE_COST[s.cottage.level - 1]), kind: 'cottage' as const },
+  const pads: { b: Build | Cottage; at: { x: number; y: number }; cost: Res | null; kind: BuildKind | 'cottage' }[] = [
+    ...s.builds.map((b) => ({ b, at: BUILD_SPOTS[b.kind], cost: b.state === 2 ? null : BUILD_COST[b.kind], kind: b.kind })),
+    { b: s.cottage, at: COTTAGE_PAD, cost: s.cottage.level >= COTTAGE_MAX ? null : COTTAGE_COST[s.cottage.level - 1], kind: 'cottage' as const },
   ];
   for (const { b, at, cost, kind } of pads) {
-    const c = cost();
-    if (!c) { b.buy = 0; continue; }
-    if (b.state === 0) {
-      const on = s.players.some((p) => Math.hypot(p.x - at.x, p.y - at.y) < BUILD_R);
-      if (!on) { b.buy = 0; b.armed = true; continue; }
-      if (!b.armed) continue;
-      b.buy = Math.min(1, b.buy + dt / BUY_SECONDS);
-      if (b.buy < 1) continue;
-      b.buy = 0; b.armed = false; b.state = 1;
-      s.villageDirty = true;
-      s.fx.push({ t: 'build', x: at.x, y: at.y, kind, done: false });
-    }
-    // construction site: take what the bank has, finish when fully paid
-    let moved = false;
-    for (const k of RES) {
-      const give = Math.min(s.bank[k], c[k] - b.paid[k]);
-      if (give > 0) { s.bank[k] -= give; b.paid[k] += give; moved = true; }
-    }
-    if (moved) s.villageDirty = true;
-    if (RES.every((k) => b.paid[k] >= c[k])) {
-      b.paid = res();
-      if (kind === 'cottage') {
-        s.cottage.level++; s.cottage.state = 0;
-        s.quest = questTargets(s.players.length, s.cottage.level);
-      } else { (b as Build).state = 2; s.builtNow.push(kind); }
-      if (kind !== 'cottage') b.buy = 0;
-      s.villageDirty = true;
-      s.fx.push({ t: 'build', x: at.x, y: at.y, kind, done: true });
-    }
+    const on = s.players.some((p) => Math.hypot(p.x - at.x, p.y - at.y) < BUILD_R);
+    if (!on) { b.buy = 0; b.armed = true; continue; }
+    if (!cost || !b.armed || !canAfford(s.bank, cost)) { b.buy = 0; continue; }
+    b.buy = Math.min(1, b.buy + dt / BUY_SECONDS);
+    if (b.buy < 1) continue;
+    b.buy = 0; b.armed = false;
+    for (const k of RES) s.bank[k] -= cost[k];
+    if (kind === 'cottage') {
+      s.cottage.level++;
+      s.quest = questTargets(s.players.length, s.cottage.level);
+    } else { (b as Build).state = 2; s.builtNow.push(kind); }
+    s.villageDirty = true;
+    s.fx.push({ t: 'build', x: at.x, y: at.y, kind, done: true });
   }
-  // garden: grows berries beside it (max 3 waiting)
+  // garden: a small farm patch beside it grows berries (max 3 waiting)
   if (built(s, 'garden')) {
     s.gardenT -= dt;
     const g = BUILD_SPOTS.garden;
     if (s.gardenT <= 0) {
       s.gardenT = GARDEN_EVERY;
-      if (s.items.filter((it) => Math.hypot(it.x - g.x, it.y - (g.y + 50)) < 70).length < 3) {
-        s.items.push({ id: s.nextId++, kind: 'berry', x: g.x - 30 + Math.random() * 60, y: g.y + 40 + Math.random() * 24 });
+      if (s.items.filter((it) => Math.hypot(it.x - g.x, it.y - (g.y + 46)) < 70).length < 3) {
+        s.items.push({ id: s.nextId++, kind: 'berry', x: g.x - 30 + Math.random() * 60, y: g.y + 36 + Math.random() * 24 });
       }
     }
   }
 }
 
-/** The village to save after (or during) a round. */
+/** The village to save (host): buildings, cottage level and the bank. The quest resets each round. */
 export function villageOf(s: State): Village {
   return {
-    v: 1, cottage: s.cottage.level, cottageState: s.cottage.state, cottagePaid: { ...s.cottage.paid },
-    builds: Object.fromEntries(s.builds.map((b) => [b.kind, { state: b.state, paid: { ...b.paid } }])) as Village['builds'],
+    v: 2, cottage: s.cottage.level, bank: { ...s.bank },
+    builds: Object.fromEntries(s.builds.map((b) => [b.kind, b.state === 2])) as Village['builds'],
   };
 }
 
