@@ -467,3 +467,7 @@ button.link .icon { height: 18px; margin-right: 6px; vertical-align: -3px; }
 .edge .arr { position: absolute; inset: -14px; }
 .edge .arr::after { content: ''; position: absolute; right: -2px; top: 50%; margin-top: -8px; border: 8px solid transparent; border-left: 12px solid #3f2631; }
 #lobby-village:empty { display: none; }
+
+.ask { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.ask p { margin: 0; font-weight: 700; font-size: 18px; color: #b3261e; }
+.askrow { display: flex; gap: 14px; }

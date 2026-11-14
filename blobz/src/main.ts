@@ -314,6 +314,7 @@ function renderQuestRows(root: ParentNode, v: View) {
   });
 }
 const QUEST_ROWS = () => $('hud-quest').innerHTML.split('<div class="qrow"').slice(1).map((r) => '<div class="qrow"' + r).join('');
+let savedAt = 0;
 let treesFor = { seed: -1, trees: [] as ReturnType<typeof makeTrees> };
 
 /** Building goal on the quest card: "Byggt: X" after a build this round, else "Bygg X" when the bank covers one. */
@@ -337,8 +338,9 @@ function renderBuildGoal(v: View) {
 const loadVillage = () => { try { return cleanVillage(JSON.parse(store.get('village') ?? 'null')); } catch { return cleanVillage(null); } };
 function villageText() {
   const v = loadVillage();
-  const n = Object.values(v.builds).filter((b) => b.state === 2).length;
-  return n || v.cottage > 1 ? `Din by: stuga nivå ${v.cottage} · ${n} ${n === 1 ? 'byggnad' : 'byggnader'}` : '';
+  const n = Object.values(v.builds).filter(Boolean).length;
+  const bank = v.bank.wood + v.bank.stone + v.bank.berry;
+  return n || v.cottage > 1 || bank ? `Din by: stuga nivå ${v.cottage} · ${n} ${n === 1 ? 'byggnad' : 'byggnader'} · förråd ${v.bank.wood}/${v.bank.stone}/${v.bank.berry}` : '';
 }
 
 function onView(v: View) {
@@ -456,7 +458,11 @@ async function hostGame() {
         while (acc >= 1 / 60) {
           step(state, inputs, 1 / 60);
           // keep the village saved on this (host) phone whenever it changes
-          if (BUILDING_ENABLED && state.villageDirty) { state.villageDirty = false; store.set('village', JSON.stringify(villageOf(state))); }
+          // (bank changes often: at most every 2 s, and always at sunset)
+          if (BUILDING_ENABLED && state.villageDirty && (performance.now() - savedAt > 2000 || state.phase === 'end')) {
+            state.villageDirty = false; savedAt = performance.now();
+            store.set('village', JSON.stringify(villageOf(state)));
+          }
           localFx.push(...state.fx); netFx.push(...state.fx); state.fx = [];
           acc -= 1 / 60;
         }
@@ -480,9 +486,12 @@ async function hostGame() {
   $('btn-start').onclick = () => { unlockAudio(); newRound(); };
   $('lobby-village').textContent = BUILDING_ENABLED ? villageText() : '';
   show('btn-newvillage', BUILDING_ENABLED);
-  $('btn-newvillage').onclick = () => {
-    if (!confirm('Börja om med en ny by? Allt ni har byggt försvinner.')) return;
+  // "Ny by": confirmed in the page (no browser dialog)
+  $('btn-newvillage').onclick = () => { show('newvillage-ask'); show('btn-newvillage', false); };
+  $('btn-newvillage-no').onclick = () => { show('newvillage-ask', false); show('btn-newvillage'); };
+  $('btn-newvillage-yes').onclick = () => {
     try { localStorage.removeItem('blobz.village'); } catch { /* private mode */ }
+    show('newvillage-ask', false); show('btn-newvillage');
     $('lobby-village').textContent = 'Ny by! Allt börjar om från början.';
   };
   $('btn-again').onclick = () => newRound();

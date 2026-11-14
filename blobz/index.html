@@ -82,6 +82,10 @@
         <button id="btn-start" class="big">Starta</button>
         <p id="lobby-wait" class="msg">Väntar på att värden startar...</p>
         <button id="btn-newvillage" class="link hidden" type="button">Ny by</button>
+        <div id="newvillage-ask" class="ask hidden">
+          <p>Riv byn och börja om?</p>
+          <div class="askrow"><button id="btn-newvillage-yes" class="chip" type="button">Ja, riv</button><button id="btn-newvillage-no" class="chip" type="button">Nej</button></div>
+        </div>
       </div>
     </section>
 
@@ -91,8 +95,8 @@
         <div class="qtitle">Samla till basen</div>
         <div class="qrow" data-k="wood"><img src="art/gather/hud-wood.png" alt="Trä" class="qicon" /><div class="qbar"><div class="qfill"></div></div><span class="qnum">0/0</span><img src="art/gather/star-empty.png" alt="" class="qstar" /></div>
         <div class="qrow" data-k="stone"><img src="art/gather/hud-stone.png" alt="Sten" class="qicon" /><div class="qbar"><div class="qfill"></div></div><span class="qnum">0/0</span><img src="art/gather/star-empty.png" alt="" class="qstar" /></div>
-        <div id="q-build" class="qbuild hidden"><img src="art/gather/star-empty.png" alt="" class="qstar" /><span></span></div>
         <div class="qrow" data-k="berry"><img src="art/gather/hud-berries.png" alt="Bär" class="qicon" /><div class="qbar"><div class="qfill"></div></div><span class="qnum">0/0</span><img src="art/gather/star-empty.png" alt="" class="qstar" /></div>
+        <div id="q-build" class="qbuild hidden"><img src="art/gather/star-empty.png" alt="" class="qstar" /><span></span></div>
       </div>
       <div id="hud-day" aria-label="Dagen"><div class="dbar"><div class="dfill"></div></div><img src="art/gather/sun.png" alt="" class="sun" /></div>
       <div id="hud-bank" aria-label="Lagets förråd"><img src="art/gather/hud-wood.png" alt="Trä" /><span id="bank-wood">0</span><img src="art/gather/hud-stone.png" alt="Sten" /><span id="bank-stone">0</span><img src="art/gather/hud-berries.png" alt="Bär" /><span id="bank-berry">0</span></div>
