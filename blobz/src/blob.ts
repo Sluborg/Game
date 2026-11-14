@@ -174,10 +174,18 @@ export function blobCanvas(look: BlobLook, scale = 1): HTMLCanvasElement {
 }
 
 /** <span> holding the SVG, for menus. */
+// Menus show blobz as PNG <img> (not inline SVG): phone "force dark" modes recolor inline SVG fills,
+// raster images are left alone. Cached per look.
+const pngCache = new Map<string, string>();
 export function blobEl(look: BlobLook, cls = 'blob') {
+  const key = JSON.stringify(look);
+  let url = pngCache.get(key);
+  if (!url) { url = blobCanvas(look, 6).toDataURL('image/png'); pngCache.set(key, url); }
   const s = document.createElement('span');
   s.className = cls;
-  s.innerHTML = blobSvg(look);
+  const img = new Image();
+  img.src = url; img.alt = ''; img.draggable = false;
+  s.append(img);
   return s;
 }
 

@@ -99,3 +99,10 @@
   Antenn, Grodd; eyes Kär (hearts), Stjärnor, Arga (brows), Rosiga (cheeks). 20 hats, 10 eyes in total.
 - Option grid scrolls inside the designer card; 4 columns portrait / 8 landscape.
 - All 7 art orders delivered.
+
+## 2026-11-14 - v018c: harder dark-mode lock
+- Still grey on Stefan's phone (in-app browser with "Open in Samsung Browser"). Added: a full
+  `@media (prefers-color-scheme: dark)` theme with identical colors (Samsung Internet skips forced dark on
+  sites with their own dark theme), `darkreader-lock` + `supported-color-schemes` metas, menu blobz as PNG
+  `<img>` instead of inline SVG. Version line shows " D" when the browser reports dark mode (diagnostics).
+- Cannot reproduce the phone's forced dark headless; verify on the phone.

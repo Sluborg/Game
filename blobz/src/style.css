@@ -95,7 +95,7 @@ input:focus { outline: none; box-shadow: var(--o4), inset 0 4px 0 0 #e9dfc9, 0 0
 }
 .me:active { transform: translateY(2px); }
 .blob { display: inline-block; line-height: 0; }
-.blob svg { width: 100%; height: 100%; display: block; }
+.blob svg, .blob img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
 .bounce { animation: bounce 1.2s ease-in-out infinite; transform-origin: 50% 100%; }
 @keyframes bounce { 0%, 100% { transform: translateY(0) scale(1, 1); } 50% { transform: translateY(-6px) scale(0.96, 1.04); } }
 .me .blob { width: 66px; height: 88px; flex: none; }
@@ -293,3 +293,15 @@ button.link .icon { height: 18px; margin-right: 6px; vertical-align: -3px; }
 .opt { min-width: 0; overflow: hidden; }
 .opt { white-space: nowrap; }
 @media (orientation: landscape) and (max-height: 520px) { .opts { max-height: 150px; grid-template-columns: repeat(8, minmax(0, 1fr)); } }
+
+/* The page ships its own "dark theme" (identical colors). Browsers with a forced dark mode
+   (Samsung Internet, Chrome auto-dark) skip pages that support dark themselves. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --plum: #3f2631; --cream: #fff7e6; --cream-2: #f1e4c6; --ink: #3f2631; --muted: #8a7466;
+    --orange: #ff8a3d; --blue: #3fa9f5; --yellow: #ffc93c; --green: #6cc644;
+  }
+  html, body { background: #6cbf45; color: #3f2631; }
+  input { background: #fff; color: #3f2631; }
+}

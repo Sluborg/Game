@@ -122,7 +122,7 @@ codeInput.addEventListener('input', () => {
   if (codeInput.value.length === 4) void joinGame(); // auto-join on the 4th letter
 });
 
-$('version').textContent = __APP_VERSION__;
+$('version').textContent = __APP_VERSION__ + (matchMedia('(prefers-color-scheme: dark)').matches ? ' D' : '');
 $('version').title = __APP_COMMIT__;
 renderPicker();
 // First visit: pick your blob before anything else.
