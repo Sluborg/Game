@@ -1,4 +1,129 @@
-# Blobz art orders (for ChatGPT image generation)
+# Blobz art orders: the live queue
+
+This file is the ONE source of truth for art made with ChatGPT. ChatGPT reads it from GitHub
+(https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/ART_ORDERS.md), so orders change here, never in ChatGPT's project instructions.
+Owners: Art keeps the queue and statuses current; Lead reviews. Stefan only says "next".
+
+## For ChatGPT: how to work (read every time)
+1. Re-read this file at the start of every chat and every time Stefan writes "next" (it changes often).
+2. Make the FIRST order in the queue with status **READY** that you have not already made in this chat.
+   Skip WAITING and DONE orders.
+3. ONE image per reply. Apply the style block below to every image.
+4. End every reply with one line: "<order id> done. Next READY: <order id or 'none'>. Type next."
+5. If Stefan writes "redo", make the same order again with his fixes.
+6. Reference images: when an order lists a reference URL, open it and match it.
+
+## Style block (applies to every order)
+```
+You are the pixel artist for "Blobz", a cozy co-op party game for phones (kids 8+ and adults). Players are cute slime
+blobz (shapes: dome, ball, tall, flat, pear, cube) with big white eyes, dark plum outline and black pupils.
+STYLE: Kenney "Tiny Town" look, crisp pixel art, one consistent pixel size per image, nearest-neighbour, no blur,
+no anti-aliasing, no gradients. 1px dark plum outline #3f2631 around every object. Flat colours with one highlight
+(top-left) and one shadow (bottom-right). Palette: grass #6cbf45, cream #fff7e6, plum #3f2631, orange #ff8a3d,
+blue #3fa9f5, yellow #ffc93c, pink #ff6b8b, purple #b18cff, red #e63946, wood #ba7640, stone #a39fa8.
+Top-down 3/4 view. No text, letters or numbers. No people or humans, only blobz.
+SHEET RULES: transparent background (or solid magenta #ff00ff), objects in a neat grid in EXACTLY the listed order,
+left-to-right then top-to-bottom, at least 32 px empty space between objects, nothing touching, no ground shadows.
+Make ONE image per reply and wait for "next".
+```
+
+## Queue
+| Id | Status | Order | Replaces (Art slices into) |
+|---|---|---|---|
+| A-1 | READY | Class cards, round 2 | `dungeon/card-class-*.png` |
+| A-2 | READY | Cottage level 2 and 3 + snow igloo, matching the loading-screen house | `base/cottage-2.png`, `cottage-3.png`, `props-winter/igloo.png` |
+| A-3 | READY | Landscape loading screen | `art/loading-landscape.png` |
+| A-4 | READY | Dungeon entrance, meadow + snow | `dungeon/entrance.png`, `entrance-snow.png` |
+| A-5 | WAITING (base redesign in progress) | Base buildings | `base/*` buildings |
+| A-6 | WAITING (Rogue weapon decision) | Weapon cards | `dungeon/card-sword.png`, `card-hammer.png`, `card-spear.png` |
+| A-7 | WAITING (style pick on the board) | Meadow props incl. berry bush | `props/*`, `gather/bush-*` |
+| A-8 | WAITING (variants on the board) | Dungeon buttons, goo enemies, skill icons, back arrow | `dungeon/btn-*`, `enemies/*`, `dungeon/skills/*`, `icons/back.png` |
+
+### A-1 Class cards, round 2
+Classes: Healer, Rogue, Tank, Archer.
+```
+Redo the 4 class cards with these changes. Keep everything else from the last image: the same parchment card
+frame, cute round blobz with big white eyes and small smiles, crisp pixel art, 1px dark plum outline, no text.
+Cards in this order, evenly spaced, same size, transparent background (or solid magenta #ff00ff):
+1 HEALER: the same white blob in the white priest hood with the gold cross and the staff, but the card theme is
+  RED: a red ribbon at the bottom and ONE big red heart above the blob to show healing. No green, no plus signs.
+2 ROGUE (replaces the viking): a YELLOW blob wearing a black bandana tied on its head, holding a short dagger
+  in each hand, ready stance. Yellow ribbon.
+3 TANK: the blue blob with a steel knight helmet that sits centred and straight on its head (symmetrical, the
+  visor above the eyes so both eyes show), holding a plain round steel shield with rivets (grey metal, no cross,
+  no flag, no emblem). Blue ribbon.
+4 ARCHER: the same green blob with the green feathered cap, aiming the crossbow. Green ribbon.
+NO effects: no swing trails, no sparks or explosions, no flying arrows or bolts, no motion lines.
+```
+
+### A-2 Cottage levels 2-3 + snow igloo
+Reference (level 1 is the house in this image): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/art/loading.png
+```
+Sheet, 3 columns x 1 row, same top-down 3/4 view and the same pixel size, bottom-centre aligned:
+1 LEVEL 2: the SAME house as in the reference image (red tile roof, timber frame, white plaster, chimney with smoke,
+  round wooden door, flower boxes), now bigger with a second floor, a small porch and a lantern.
+2 LEVEL 3: the same house grown into a proud two-storey home with a little tower and a flag, a stone base,
+  a short garden fence and a few barrels.
+3 SNOW HOME: an igloo of ice blocks with a wooden door frame, a small snowy chimney with smoke, a lantern and snow piles,
+  about the size of level 1.
+```
+
+### A-3 Landscape loading screen
+Reference (portrait version): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/art/loading.png
+```
+1920x1080 landscape, the same scene and style as the reference portrait loading screen: the same cottage, blobz
+with white eyes, dark plum outline, black pupils, small smile; shapes dome/ball/tall/pear/cube. Keep all key content
+inside the central 60% so phones can crop the sides. Calm lower third for a progress bar. No text or letters.
+```
+
+### A-4 Dungeon entrance
+```
+Order I-3: dungeon entrance seen from the meadow, 2 columns x 1 row: 1 a mossy rock mound with a dark cave mouth and
+stone steps going down inside, a few grass tufts and a small torch on each side; 2 the same entrance covered in snow,
+icicles on the cave edge, no grass. Both the same size and angle, about as wide as a small house.
+```
+
+### A-5 Base buildings (WAITING)
+```
+Order I-1: base buildings the blob team builds around their cottage, sheet 4 columns x 3 rows, each building twice:
+first as a CONSTRUCTION SITE (wooden scaffold, half-built walls, a plank pile and a stone, dirt patch), then FINISHED.
+Same footprint and camera angle for both versions of a building. Order:
+1 bridge site, 2 bridge finished (small wooden arched bridge with railings, for a 2-3 tile water gap, left-right),
+3 watchtower site, 4 watchtower finished (tall wooden lookout with ladder, platform and red roof),
+5 garden site (fenced tilled soil), 6 garden finished (same fence, carrots and cabbages),
+7 workshop site, 8 workshop finished (open wooden shed, workbench with a saw, anvil),
+9 storage site, 10 storage finished (small wooden hut with a crate and a barrel),
+11 well site, 12 well finished (round stone well with a little red roof and a bucket).
+Sizes relative to each other: watchtower tallest, bridge widest, well smallest.
+```
+
+### A-6 Weapon cards (WAITING)
+```
+Order I-2: three upright weapon cards, 3 columns x 1 row, portrait 3:4, parchment card with a dark plum border and a
+coloured ribbon at the bottom (sword red, hammer orange, spear blue), no text. On each card a blob in action:
+1 a blob swinging a sword with a white swoosh, 2 a blob slamming a big hammer into the ground with cracks and dust,
+3 a blob charging forward with a long spear and speed lines. Blobz wear no hats. Same card frame as the class cards.
+```
+
+### A-7 Meadow props (WAITING)
+```
+Order I-4: meadow props, sheet 5 columns x 3 rows, in this order: 1 round green tree, 2 orange autumn tree,
+3 pine tree, 4 small rock, 5 big boulder, 6 berry bush full of red berries, 7 the same bush picked empty,
+8 tree stump, 9 rock rubble (broken stones), 10 small flower patch, 11 wood log item, 12 stone item,
+13 berries item, 14 small pond, 15 grass tuft. Items (11-13) a bit bigger and very readable for kids.
+[Add the chosen direction here: A "polished current", B "cozy storybook: warmer colours, soft light, light outline
+glow on items", or C "chunky bold: thick outlines, few colours, high contrast".]
+Also: the berry bush (full and picked) must look lush and appetising: fluffy round leaves, 6-8 big shiny red berries.
+```
+
+### A-8 Buttons, enemies, skill icons, back arrow (WAITING)
+The prompt is written after Stefan picks a variant on the decision board.
+
+## For Stefan: delivering images
+Save each image as PNG and send it to the Lead session in Claude Code with the order id ("A-1").
+Art slices it, wires it into the game, and sets the order to DONE here (or adds a "redo" note).
+
+## History: first order round (orders 10-70, all done)
 
 How it works: paste the **prompt at the bottom** into a new ChatGPT chat once. Then type `go` for the
 first order and `next` for each following one. Save every image as PNG and hand them to Claude Code;

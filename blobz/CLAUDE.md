@@ -52,6 +52,9 @@ Stefan works phone-only; replies in Swedish or English, docs and code in English
   buildings, characters, scenes) are ordered from ChatGPT with a prompt Stefan can paste (see docs/TEAM.md).
 - Art pipeline for non-trivial art: Art makes 3 rough SVG/PNG variants -> board question with pictures -> Stefan picks
   -> Art writes a ChatGPT prompt from the pick -> Stefan runs it -> Art slices and integrates.
+- **ChatGPT art queue = `docs/ART_ORDERS.md`** (ChatGPT reads it from GitHub raw on every "next"). Every new order,
+  status change (READY/WAITING/DONE) or prompt fix goes into that file and is pushed to the deploy branch. Never ask
+  Stefan to change ChatGPT's project instructions.
 - Reporting to Stefan: only when a whole batch is merged and live (Art: a full part set; Code: a whole
   feature), or when a decision from him blocks work. No progress pings about single images or steps.
 
