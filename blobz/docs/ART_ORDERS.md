@@ -10,10 +10,13 @@ Owners: Art keeps the queue and statuses current; Lead reviews. Stefan only says
    Make the FIRST order in the queue with status **READY** that you have not already made in this chat
    **in its current round** (an order whose title says "round N" higher than the one you made must be made again).
    Skip WAITING and DONE orders.
-3. ONE image per reply. Apply the style block below to every image.
+3. Start every reply with one line: "Order <id> - <N> READY orders left in the queue after this one."
+   Then ONE image per reply. Apply the style block below to every image.
 4. End every reply with one line: "<order id> done. Next READY: <order id or 'none'>. Type next."
-5. If Stefan writes "redo", make the same order again with his fixes.
-6. Reference images: when an order lists a reference URL, open it and match it.
+5. If Stefan writes "next all": make every remaining READY order one after another in the same chat, one image per
+   reply, without waiting for "next" between them, each starting with the line from rule 3.
+6. If Stefan writes "redo", make the same order again with his fixes.
+7. Reference images: when an order lists a reference URL, open it and match it.
 
 ## Style block (applies to every order)
 ```
@@ -37,10 +40,10 @@ ChatGPT works only on N-orders (READY ones). New orders only for pieces the pack
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
-| N-1 | READY | Title header / logo in Ninja Adventure style | `art/logo.png` |
+| N-1 | DONE (C chosen) | Title header / logo in Ninja Adventure style | `art/logo.png` |
 | N-2 | READY | Start screen background, round 2: LANDSCAPE ONLY (portrait approved 4/5) | `art/title.png` |
 | N-3 | DONE | Loading screen (portrait + landscape approved) | `art/loading.png`, `art/loading-landscape.png` |
-| N-4 | READY | Hovering weapons sheet (7 weapons) in Ninja style | `dungeon/weapons/*.png` |
+| N-4 | READY | Hovering weapons, round 2: CROSSBOW ONLY (bolt further back) | `dungeon/weapons/*.png` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
@@ -67,6 +70,9 @@ mouth, optional hat, bright body colours (blue, pink, green, yellow, purple, ora
 ```
 
 ### N-4 Hovering weapons (7)
+Round 2 (do this): redraw ONLY the crossbow from your weapons sheet, same style, size and direction (pointing right),
+with ONE change: the bolt sits further back, nocked at the string/stock, its tip just past the front of the bow
+(not sticking far out). Reference: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n4-weapons.png
 ```
 One sprite sheet, 7 columns x 1 row, transparent background (or flat magenta #ff00ff), in the Ninja Adventure style
 (see the style block): crisp pixel art, dark near-black outline, warm colours, no blur, no text.
