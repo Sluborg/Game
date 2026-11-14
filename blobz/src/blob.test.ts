@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { blobGrid, blobSvg, clampLook, COLORS, EYES, GRID_H, GRID_W, HAT_OVERHANG, HAT_REST_OVERLAP, HATS, MOUTHS, PART_TABLES, SHAPES } from './blob';
+import { blobGrid, blobSvg, CLASS_HATS, clampLook, COLORS, EYES, GRID_H, GRID_W, HAT_OVERHANG, HAT_REST_OVERLAP, HATS, MOUTHS, PART_TABLES, SHAPES } from './blob';
 
 const diff = (a: (string | null)[][], b: (string | null)[][]) => {
   const out: [number, number][] = [];
@@ -32,7 +32,7 @@ describe('blob', () => {
   it('part patterns are rectangular and use only palette letters', () => {
     const ok = new Set([...Object.keys(PART_TABLES.palette), '.', 'M', 'm']);
     const all = [...PART_TABLES.eyes.flatMap((e) => [e.rows, e.right ?? []]), ...PART_TABLES.mouths.map((m) => m.rows),
-      ...PART_TABLES.hats.flatMap((h) => [h.rows, h.pair?.rows ?? []])].filter((rows) => rows.length);
+      ...[...PART_TABLES.hats, ...PART_TABLES.classHats].flatMap((h) => [h.rows, h.pair?.rows ?? []])].filter((rows) => rows.length);
     for (const rows of all) {
       for (const r of rows) {
         expect(r.length).toBe(rows[0].length);
@@ -120,6 +120,16 @@ describe('blob', () => {
         // wrapping hats (wreath, beanie) have their own, deeper bound
         expect(worst, `${HATS[h]} on ${SHAPES[s]}`).toBeLessThanOrEqual(HAT_REST_OVERLAP + (PART_TABLES.hats[h].wrap ?? 0));
       }
+    }
+  });
+
+  it('class hats render on every shape, change the head and never cover the face', () => {
+    expect(PART_TABLES.classHats).toHaveLength(CLASS_HATS.length);
+    for (let s = 0; s < SHAPES.length; s++) for (const color of COLORS) for (let c = 0; c < CLASS_HATS.length; c++) {
+      const bare = blobGrid({ color, shape: s, eyes: 0, mouth: 0, hat: 0 });
+      const d = diff(bare, blobGrid({ color, shape: s, eyes: 0, mouth: 0, hat: 7 }, c));
+      expect(d.length, `${CLASS_HATS[c]} on ${SHAPES[s]}`).toBeGreaterThan(20);
+      expect(d.filter(([x, y]) => y >= 23 && y <= 40 && x >= 7 && x <= 28), `${CLASS_HATS[c]} on ${SHAPES[s]}`).toEqual([]);
     }
   });
 

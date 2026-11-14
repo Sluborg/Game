@@ -81,6 +81,79 @@ def spear_strip():
     return strip(frames)
 
 
+# ---------------------------------------------------------------- class gear held in hand
+def staff(u, v):
+    if -3 <= u <= 17 and abs(v) <= 1:
+        return 'H' if v < 0 else 'h' if v < 0.5 else 'd'
+    if (u - 19.5) ** 2 + v * v <= 3.2 ** 2:  # glowing orb
+        return 'M' if u < 19 and v < 0 else 'B' if (u - 19.5) ** 2 + v * v <= 2 ** 2 else 'b'
+    if 16 <= u <= 17.5 and abs(v) <= 2.4:
+        return 'Y'
+    return None
+
+
+def bow(pull, arrow):
+    """Bow held upright in front (tool space: v runs along the bow, +u forward). pull = string draw."""
+    def f(u, v):
+        if abs(v) <= 11:
+            cu = 6 - (v * v) / 22  # limb curve
+            if abs(u - cu) <= 1.1:
+                return 'h' if abs(v) < 2 else 'H' if v < 0 else 'd'
+            # string: straight between the tips, or a V when pulled
+            su = 6 - 121 / 22 - pull * (1 - abs(v) / 11)
+            if abs(u - su) <= 0.5 and abs(v) <= 10.5:
+                return 'M'
+        if arrow and 6 - 121 / 22 - pull <= u <= 15 and abs(v) <= 0.6:
+            return 'n' if u < 13 else 'M'
+        if arrow and 13 <= u <= 16 and abs(v) <= 1.6 * (16 - u) / 3:
+            return 'M'
+        return None
+    return f
+
+
+def shield(u, v):
+    """Kite shield, held with its centre about 8 px out from the hand."""
+    w = 6 if u <= 9 else 6 * max(0, (15 - u) / 6)
+    if 1 <= u <= 15 and abs(v) <= w:
+        edge = abs(v) > w - 1.2 or u < 2.2
+        if edge:
+            return 'n'
+        if abs(v) <= 1.2 or 6.5 <= u <= 8.5:
+            return 'Y'  # cross
+        return 'B' if v < 0 else 'b'
+    return None
+
+
+BOW_FRAMES = [(0, False), (2.5, True), (5, True), (0, False)]  # idle, draw, full draw, release
+SHIELD_ANGLES = [80, 45, 5, 30]  # resting down, raising, block (in front), hold
+
+
+def bow_strip():
+    return strip([ga.tool_frame(bow(p, a), 0, size=(44, 48), pivot=ga.PIVOT, scale=1.0) for p, a in BOW_FRAMES])
+
+
+def shield_img():
+    """Upright kite shield, 15x18: blue with a gold cross and steel rim."""
+    c = Canvas(15, 18)
+    body = ba.poly([(1, 1.5), (14, 1.5), (14, 9), (7.5, 17), (1, 9)]) | ba.rect(2, 1, 12, 1)
+    ba.comp(c, body, ba.shaded((ba.rgb(66, 118, 210), ba.rgb(120, 170, 244), ba.rgb(40, 76, 160))))
+    ba.comp(c, ba.rect(7, 3, 8, 13) | ba.rect(3, 6, 12, 7), GOLD[0], outline=False)
+    return c.image()
+
+
+SHIELD_POSES = [(21, 33), (23, 27), (27, 21), (25, 26)]  # shield centre per frame: resting low, raising, block, hold
+
+
+def shield_strip():
+    sh = shield_img()
+    frames = []
+    for cx, cy in SHIELD_POSES:
+        f = Image.new('RGBA', (44, 48))
+        f.alpha_composite(sh, (cx - sh.width // 2, cy - sh.height // 2))
+        frames.append(f)
+    return strip(frames)
+
+
 # ---------------------------------------------------------------- picker cards 48x64
 def card(shape, ribbon, scale, angle=-45, pivot=(9, 33)):
     c = Canvas(48, 64)
@@ -96,6 +169,115 @@ def card(shape, ribbon, scale, angle=-45, pivot=(9, 33)):
     ba.comp(rb, ba.poly([(41, 47), (46, 47), (46, 56), (43.5, 53.5), (41, 56)]), ribbon[2])
     im.alpha_composite(rb.image())
     return im
+
+
+CLASS_COLORS = {
+    'prast': (ba.rgb(236, 176, 48), ba.rgb(255, 214, 110), ba.rgb(184, 124, 24)),
+    'bagskytt': (ba.rgb(70, 156, 72), ba.rgb(124, 200, 110), ba.rgb(40, 104, 48)),
+    'krigare': (ba.rgb(214, 62, 70), ba.rgb(250, 120, 120), ba.rgb(150, 30, 44)),
+    'riddare': (ba.rgb(66, 118, 210), ba.rgb(120, 170, 244), ba.rgb(40, 76, 160)),
+}
+
+
+def class_cards():
+    return {
+        'card-class-prast.png': card(staff, CLASS_COLORS['prast'], 1.15),
+        'card-class-bagskytt.png': card(bow(4, True), CLASS_COLORS['bagskytt'], 1.2, angle=-45, pivot=(14, 26)),
+        'card-class-krigare.png': card(sword, CLASS_COLORS['krigare'], 1.25),
+        'card-class-riddare.png': shield_card(),
+    }
+
+
+def shield_card():
+    im = card(lambda u, v: None, CLASS_COLORS['riddare'], 1.0)
+    sh = shield_img()
+    big = sh.resize((sh.width * 2, sh.height * 2), Image.NEAREST)
+    im.alpha_composite(big, ((48 - big.width) // 2, 10))
+    return im
+
+
+# ---------------------------------------------------------------- skill icons (24x24 badge + cream symbol)
+def heart_pts(cx, cy, r=3.0):
+    return ba.ellipse(cx - r, cy - 1, r, r) | ba.ellipse(cx + r, cy - 1, r, r) | ba.poly([(cx - 2 * r - 0.3, cy), (cx + 2 * r + 0.3, cy), (cx, cy + 2 * r + 0.5)])
+
+
+def plus_pts(cx, cy, a=4, t=1):
+    return ba.rect(cx - t, cy - a, cx + t - 1 + 1, cy + a) | ba.rect(cx - a, cy - t, cx + a, cy + t - 1 + 1)
+
+
+def arrow_right(y, x0, x1, head=3):
+    return ba.rect(x0, y, x1 - head, y) | ba.poly([(x1 - head, y - head + 0.5), (x1 + 1, y + 0.5), (x1 - head, y + head + 0.5)])
+
+
+def star_pts(cx, cy, r):
+    pts = []
+    for i in range(10):
+        a = -math.pi / 2 + i * math.pi / 5
+        rr = r if i % 2 == 0 else r * 0.45
+        pts.append((cx + rr * math.cos(a), cy + rr * math.sin(a)))
+    return ba.poly(pts)
+
+
+def shield_pts(cx=12, top=5, w=6, h=14):
+    return ba.poly([(cx - w, top), (cx + w + 1, top), (cx + w + 1, top + h * 0.5), (cx + 0.5, top + h), (cx - w, top + h * 0.5)])
+
+
+RED_A = ba.rgb(230, 57, 70)
+GREEN_A = ba.rgb(98, 196, 88)
+GOLD_A = ba.rgb(255, 201, 60)
+SKILLS = {
+    'prast': {
+        'heal': lambda: [(plus_pts(12, 12, 6, 2), CREAM)],
+        'regen': lambda: [(heart_pts(12, 10, 3.2), CREAM), (plus_pts(12, 11, 2, 1), GREEN_A)],
+        'bubble': lambda: [(ba.ellipse(12, 12, 7.5, 7.5) - ba.ellipse(12, 12, 5.5, 5.5), CREAM), (ba.rect(8, 8, 9, 9), CREAM)],
+        'revive': lambda: [(ba.poly([(12, 4), (19, 11.5), (14.5, 11.5), (14.5, 19), (9.5, 19), (9.5, 11.5), (5, 11.5)]), CREAM)],
+        'holy': lambda: [(ba.ellipse(12, 12, 3.5, 3.5), GOLD_A)] + [(ba.rect(11, 3, 12, 6) | ba.rect(11, 18, 12, 21) | ba.rect(3, 11, 6, 12) | ba.rect(18, 11, 21, 12), CREAM)],
+        'cleanse': lambda: [(ba.ellipse(12, 14.5, 4.6, 4.6) | ba.poly([(12, 4), (7.5, 13), (16.5, 13)]), CREAM), (ba.rect(10, 13, 10, 15), ba.rgb(200, 230, 255))],
+    },
+    'bagskytt': {
+        'multishot': lambda: [(arrow_right(6, 4, 17) | arrow_right(12, 4, 19) | arrow_right(18, 4, 17), CREAM)],
+        'pierce': lambda: [(ba.ellipse(14, 12, 5, 5) - ba.ellipse(14, 12, 3, 3), RED_A), (arrow_right(12, 3, 20), CREAM)],
+        'crit': lambda: [(ba.ellipse(12, 12, 7.5, 7.5) - ba.ellipse(12, 12, 5.5, 5.5), CREAM), (ba.ellipse(12, 12, 2.6, 2.6), RED_A)],
+        'speed': lambda: [(ba.poly([(5, 6), (10, 12), (5, 18), (7.5, 18), (12.5, 12), (7.5, 6)]) | ba.poly([(11, 6), (16, 12), (11, 18), (13.5, 18), (18.5, 12), (13.5, 6)]), CREAM)],
+        'poison': lambda: [(ba.ellipse(12, 14.5, 4.6, 4.6) | ba.poly([(12, 4), (7.5, 13), (16.5, 13)]), GREEN_A), (ba.ellipse(17, 6, 1.6, 1.6) | ba.ellipse(6, 8, 1.2, 1.2), CREAM)],
+        'trap': lambda: [(ba.poly([(4, 18), (7, 9), (10, 18)]) | ba.poly([(9, 18), (12, 7), (15, 18)]) | ba.poly([(14, 18), (17, 9), (20, 18)]) | ba.rect(4, 18, 19, 19), CREAM)],
+    },
+    'krigare': {
+        'rage': lambda: [(ba.poly([(12, 3), (17, 11), (16, 9), (18, 15), (15, 20), (9, 20), (6, 15), (8, 9), (8.5, 12)]), ba.rgb(255, 138, 61)), (ba.poly([(12, 11), (14.5, 16), (12, 19.5), (9.5, 16)]), GOLD_A)],
+        'knockback': lambda: [(arrow_right(12, 4, 15, 4), CREAM), (ba.rect(18, 5, 19, 19), CREAM)],
+        'whirlwind': lambda: [(ring_cut(12, 12, 6, 8, 20, 300), CREAM), (ring_cut(12, 12, 2, 3.6, 200, 120), CREAM)],
+        'extraheart': lambda: [(heart_pts(11, 11, 3.2), CREAM), (plus_pts(18, 6, 2, 1), GOLD_A)],
+        'lifesteal': lambda: [(heart_pts(12, 10, 3.6), CREAM), (ba.ellipse(12, 12.5, 1.8, 1.8) | ba.poly([(12, 8.5), (10.4, 12), (13.6, 12)]), RED_A)],
+        'power': lambda: [(ba.rect(11, 4, 12, 14) | ba.rect(8, 15, 15, 16) | ba.rect(11, 17, 12, 20), CREAM), (ba.poly([(18, 4), (21, 8), (19, 8), (19, 11), (17, 11), (17, 8), (15, 8)]), GOLD_A)],
+    },
+    'riddare': {
+        'block': lambda: [(shield_pts(), CREAM)],
+        'taunt': lambda: [(ba.rect(11, 4, 13, 14) | ba.rect(11, 17, 13, 19), CREAM)],
+        'armor': lambda: [(ba.poly([(4, 7), (8, 4), (10, 4), (12, 7), (14, 4), (16, 4), (20, 7), (18, 11), (17, 11), (17, 19), (7, 19), (7, 11), (6, 11)]), CREAM),
+                          (ba.rect(11, 10, 12, 17), ba.rgb(170, 178, 190))],
+        'charge': lambda: [(arrow_right(9, 3, 20, 4) | ba.rect(3, 15, 9, 15) | ba.rect(5, 18, 12, 18), CREAM)],
+        'stun': lambda: [(star_pts(8, 9, 4.5), GOLD_A), (star_pts(16, 15, 4.5), CREAM)],
+        'guard': lambda: [(shield_pts(), CREAM), (plus_pts(12, 11, 3, 1), CLASS_COLORS['riddare'][0])],
+    },
+}
+
+
+def ring_cut(cx, cy, r0, r1, a0, span):
+    return ring_pts(cx, cy, r0, r1, a0, a0 + span)
+
+
+def skill_icon(cls, name):
+    c = Canvas(24, 24)
+    mat = CLASS_COLORS[cls]
+    disc = ba.ellipse(12, 12, 11.5, 11.5)
+    ba.comp(c, disc, ba.shaded(mat))
+    for pts, col in SKILLS[cls][name]():
+        ba.comp(c, {(x, y) for (x, y) in pts if 0 <= x < 24 and 0 <= y < 24}, col)
+    return c.image()
+
+
+def skill_icons():
+    return {f'skills/{cls}-{name}.png': skill_icon(cls, name) for cls in SKILLS for name in SKILLS[cls]}
 
 
 # ---------------------------------------------------------------- button icons
@@ -411,8 +593,13 @@ def main():
         'shockwave.png': shockwave(),
         'chest-closed.png': chest(False),
         'chest-open.png': chest(True),
+        'gear-staff.png': ga.tool_strip(staff),
+        'gear-bow.png': bow_strip(),
+        'gear-shield.png': shield_strip(),
     }
-    os.makedirs(OUT_DIR, exist_ok=True)
+    out.update(class_cards())
+    out.update(skill_icons())
+    os.makedirs(os.path.join(OUT_DIR, 'skills'), exist_ok=True)
     for name, im in out.items():
         im.save(os.path.join(OUT_DIR, name))
         print(f'{name:22s} {im.size}')

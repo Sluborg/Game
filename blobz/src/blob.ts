@@ -106,7 +106,7 @@ const MOUTH_PARTS: MouthPart[] = [
 interface HatPart {
   rows: string[]; dx?: number; float?: boolean; brim?: boolean; anchor?: number; wrap?: number;
   pair?: { rows: string[]; at?: number; dy?: number };
-  proc?: 'phones' | 'bandana' | 'ninja' | 'dino';
+  proc?: 'phones' | 'bandana' | 'ninja' | 'dino' | 'priest' | 'archer' | 'helmet';
 }
 const HAT_PARTS: HatPart[] = [
   { rows: [] }, // Ingen
@@ -180,8 +180,16 @@ const HAT_PARTS: HatPart[] = [
     'UoooooyU', 'UUUUUUUU'] },
 ];
 
+// Dungeon class gear, worn instead of the skin hat when a class is picked (blobGrid's `classHat`).
+export const CLASS_HATS = ['Prästluva', 'Fjädermössa', 'Riddarhjälm'];
+const CLASS_HAT_PARTS: HatPart[] = [
+  { proc: 'priest', rows: [] }, // Prästluva
+  { proc: 'archer', rows: [] }, // Fjädermössa (green cap shaped to the head, red feather)
+  { proc: 'helmet', rows: [] }, // Riddarhjälm (steel helmet shaped to the head, red plume)
+];
+
 /** Part tables, exported for tests only. */
-export const PART_TABLES = { eyes: EYE_PARTS, mouths: MOUTH_PARTS, hats: HAT_PARTS, palette: PAL };
+export const PART_TABLES = { eyes: EYE_PARTS, mouths: MOUTH_PARTS, hats: HAT_PARTS, classHats: CLASS_HAT_PARTS, palette: PAL };
 
 function rgb(c: number) { return [(c >> 16) & 255, (c >> 8) & 255, c & 255]; }
 function css([r, g, b]: number[]) { return `rgb(${r | 0},${g | 0},${b | 0})`; }
@@ -348,13 +356,51 @@ function drawDino(set: Setter, color: number) {
   const [r, g, b] = rgb(color);
   const greenBody = g > r + 30 && g > b;
   const [fill, shade] = greenBody ? [PAL.P, PAL.p] : [PAL.L, PAL.l];
+  drawHood(set, fill, shade, true);
+}
+
+/** Priest hood: cream hood over the head top with a gold trim and a small gold cross. */
+function drawPriestHood(set: Setter) {
+  drawHood(set, PAL.W, '#e2cfb2', false, PAL.Y);
+  [[17, 15], [18, 15], [17, 16], [18, 16], [15, 17], [16, 17], [17, 17], [18, 17], [19, 17], [20, 17], [17, 18], [18, 18]]
+    .forEach(([x, y]) => set(x, y, PAL.Y));
+}
+
+/** Top row of the head-shaped hood at column x (the head raised 3 px). */
+function hoodTop(x: number) {
+  let y = 0;
+  while (y < GRID_H && !(inBody(x, y) || inBody(x, y + 3))) y++;
+  return y;
+}
+function paintAt(set: Setter, x0: number, y0: number, rows: string[]) {
+  rows.forEach((row, ry) => [...row].forEach((ch, rx) => { if (ch !== '.') set(x0 + rx, y0 + ry, PAL[ch]); }));
+}
+
+/** Archer cap: green cap over the head top with a red feather sticking up on the right. */
+function drawArcherCap(set: Setter) {
+  drawHood(set, PAL.L, PAL.l, false, PAL.l);
+  const fx = 23, top = hoodTop(fx);
+  paintAt(set, fx - 1, top - 7, ['...UU', '..UeU', '..UeU', '.UeU.', '.UeU.', 'UeU..', 'UeU..', 'UU...']);
+}
+
+/** Knight helmet: steel over the head top, rivet band at the rim, red plume on top. */
+function drawHelmet(set: Setter) {
+  drawHood(set, PAL.a, PAL.g, false, PAL.g);
+  for (let x = 0; x < GRID_W; x += 4) if (inBody(x, 19)) set(x, 19, PAL.W);
+  const top = hoodTop(17);
+  paintAt(set, 15, top - 5, ['.UUUU.', 'UeeeeU', 'UeeeeU', '.UeeU.', '..UU..', '..UU..']);
+}
+
+/** A hood shaped like the head top (raised 3 px so flat heads get one too); optional dino teeth/spikes. */
+function drawHood(set: Setter, fill: string, shade: string, dino: boolean, trim?: string) {
   const rim = 20, lift = 3; // the hood is the head top raised by `lift` px, so flat heads get a hood too
   const hood = (x: number, y: number) => y <= rim && (inBody(x, y) || inBody(x, y + lift));
   for (let y = 0; y <= rim; y++) for (let x = 0; x < GRID_W; x++) {
     if (!hood(x, y)) continue;
     const edge = y === rim || [[1, 0], [-1, 0], [0, -1]].some(([dx, dy]) => !hood(x + dx, y + dy));
-    set(x, y, edge ? OUT : !hood(x + 3, y) || !hood(x, y + 1) ? shade : fill);
+    set(x, y, edge ? OUT : trim && y === rim - 1 ? trim : !hood(x + 3, y) || !hood(x, y + 1) ? shade : fill);
   }
+  if (!dino) return;
   for (let x = 0; x < GRID_W; x++) { // teeth hang into the gap row above the eyes (rows 21-22)
     const t = x % 5;
     if (!inBody(x, 22) || x < 6 || x > 29) continue;
@@ -372,7 +418,8 @@ function drawDino(set: Setter, color: number) {
 }
 
 /** Pixel grid of CSS colors (null = transparent). */
-export function blobGrid(look: BlobLook): (string | null)[][] {
+/** `classHat`: index into CLASS_HATS; replaces the skin hat (dungeon class gear). */
+export function blobGrid(look: BlobLook, classHat?: number): (string | null)[][] {
   const g: (string | null)[][] = Array.from({ length: GRID_H }, () => Array<string | null>(GRID_W).fill(null));
   const set = (x: number, y: number, col: string | null) => { if (x >= 0 && x < GRID_W && y >= 0 && y < GRID_H && col) g[y][x] = col; };
   curShape = look.shape;
@@ -410,18 +457,23 @@ export function blobGrid(look: BlobLook): (string | null)[][] {
   }
   const mouth = MOUTH_PARTS[look.mouth] ?? MOUTH_PARTS[0];
   paint(mouth.rows, GRID_W / 2 - Math.floor(mouth.rows[0].length / 2), 33 + (mouth.dy ?? 0));
-  const hat = HAT_PARTS[look.hat] ?? HAT_PARTS[0];
+  const cls = classHat !== undefined ? CLASS_HAT_PARTS[classHat] : undefined;
+  const hat = cls ?? HAT_PARTS[look.hat] ?? HAT_PARTS[0];
+  const hatKey = cls ? 1000 + classHat! : look.hat;
   if (hat.proc === 'phones') drawPhones(set);
   else if (hat.proc === 'bandana') drawBandana(set, look.color);
   else if (hat.proc === 'ninja') drawBandana(set, look.color, true);
   else if (hat.proc === 'dino') drawDino(set, look.color);
+  else if (hat.proc === 'priest') drawPriestHood(set);
+  else if (hat.proc === 'archer') drawArcherCap(set);
+  else if (hat.proc === 'helmet') drawHelmet(set);
   else {
     // the hat's bottom row sits just above the eyes (row 23) on every shape; tall hats clip at the top
     const bottom = hat.float ? headTop() - 3 : Math.min(top + 2, 11) * S - 1;
     const ext = headExtents();
         let hx0 = 0, hw = 0, hy0 = bottom;
     if (hat.rows.length) {
-      const rows = fitHat(look.hat, look.shape, hat, bottom);
+      const rows = fitHat(hatKey, look.shape, hat, bottom);
       hw = rows[0].length;
       hx0 = hat.anchor !== undefined ? Math.round(ext[0]![0] + (ext[0]![1] - ext[0]![0] + 1) * hat.anchor - hw / 2) : Math.floor(GRID_W / 2 - hw / 2) + (hat.dx ?? 0);
       hy0 = hat.float ? bottom - rows.length + 1 : restOnHead(rows, hx0, bottom - rows.length + 1, hat.wrap);
@@ -458,11 +510,11 @@ export function blobSvg(look: BlobLook): string {
 }
 
 /** Canvas at integer scale (Phaser textures, previews). */
-export function blobCanvas(look: BlobLook, scale = 1): HTMLCanvasElement {
+export function blobCanvas(look: BlobLook, scale = 1, classHat?: number): HTMLCanvasElement {
   const c = document.createElement('canvas');
   c.width = GRID_W * scale; c.height = GRID_H * scale;
   const ctx = c.getContext('2d')!;
-  blobGrid(look).forEach((row, y) => row.forEach((col, x) => {
+  blobGrid(look, classHat).forEach((row, y) => row.forEach((col, x) => {
     if (!col) return;
     ctx.fillStyle = col;
     ctx.fillRect(x * scale, y * scale, scale, scale);

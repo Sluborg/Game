@@ -66,3 +66,30 @@ shrinking clockwise from 12 o'clock). A code arc scales cleanly to any button si
 ## Loot
 `chest-closed.png` / `chest-open.png` (18x16, same footprint). Gold drop: reuse `art/fx/coin-pile-s.png` /
 `coin-pile-m.png` and `art/fx/coin-sparkle.png`.
+
+## Classes (Präst, Bågskytt, Krigare, Riddare)
+**Class hats** are drawn by `src/blob.ts`: `CLASS_HATS = ['Prästluva', 'Fjädermössa', 'Riddarhjälm']` and an optional
+`classHat` index on `blobGrid(look, classHat)` / `blobCanvas(look, scale, classHat)`, which replaces the skin hat.
+All three are head-shaped hoods, so they fit every body shape. Krigare keeps the skin hat.
+
+**Held gear** (4-frame strips, 44x48, pivot (16, 28), same placement as the weapons):
+| File | Frames | Class |
+|---|---|---|
+| `gear-staff.png` | raised, wind-down, cast forward, follow-through (swing like the sword) | Präst |
+| `gear-bow.png` | idle, drawing, full draw with arrow, release (fixed, pointing forward) | Bågskytt |
+| `gear-shield.png` | resting low, raising, block (in front), hold (shield moves, never rotates) | Riddare |
+| `weapon-sword/hammer/spear.png` | see above | Krigare |
+
+**Class cards** (48x64, same parchment card as the weapon cards, ribbon in the class colour):
+`card-class-prast.png` (gold, staff), `card-class-bagskytt.png` (green, bow), `card-class-krigare.png` (red, sword),
+`card-class-riddare.png` (blue, shield).
+
+## Skill icons (`skills/<class>-<id>.png`, 24x24)
+Round badge in the class colour with a cream symbol and plum outline; readable at 1x in a 48 px button.
+| Class | Ids |
+|---|---|
+| prast | heal, regen, bubble, revive, holy, cleanse |
+| bagskytt | multishot, pierce, crit, speed, poison, trap |
+| krigare | rage, knockback, whirlwind, extraheart, lifesteal, power |
+| riddare | block, taunt, armor, charge, stun, guard |
+Ids were proposed to Code 2; if the dungeon code uses other names, Art renames the files.
