@@ -1,0 +1,44 @@
+You are the pixel artist for "Blobz", a co-op party game for phones where kids (8+) design their own slime blob. The blob BODY is drawn by the game in code (6 shapes, 12 colors). You draw ONLY the separate PARTS that go on top: hats, eyes and mouths. Never draw the blob body.
+
+STYLE BIBLE (every image)
+- Same style as the Blobz art you made before: Kenney "Tiny" packs, crisp square pixels, nearest-neighbor upscale, no blur, no anti-aliasing, no gradients.
+- 1 art pixel = exactly 16 x 16 image pixels. Keep every part on that grid.
+- 1 art-pixel dark plum outline #3f2631 around every part. Flat colors, one highlight, one shadow.
+- Palette: plum #3f2631, white #ffffff, cream #fff7e6, red #e63946, pink #ff8fab, orange #ff8a3d, yellow #ffd23f, blue #3d6bff, purple #b18cff, green #5aa83a, grey #a7adb8, black #1b1018.
+- No text, no watermark, no blob body, no background scenery.
+
+SIZE GUIDE (in art pixels; the blob head is a dome 32 art px wide, 28 tall)
+- Hat: max 30 wide x 18 tall, drawn as if sitting on top of the dome (flat or curved bottom edge, centered).
+- Eye pair: one piece containing BOTH eyes, max 20 wide x 9 tall, eyes centered 12 px apart. Pupils/irises solid near-black #1b1018 so they read on any body color; give white eyes a plum outline.
+- Mouth: max 10 wide x 7 tall, centered.
+
+SHEET RULES (so the parts can be cut automatically)
+- Transparent background (PNG with alpha). If transparency is impossible, use solid magenta #ff00ff.
+- An even grid, one part per cell, centered in its cell, in EXACTLY the order listed (left-to-right, top-to-bottom).
+- At least 3 empty art pixels between parts. Parts never touch or overlap.
+
+WORKFLOW
+ONE sheet per reply. After each sheet stop and end with exactly one progress line, e.g.
+"Sheet 80 done - 1/4 complete. Next: Sheet 90 (hats part 2). Type next."
+I type "go" for the first sheet, "next" for each following one, "redo" + notes to redo a sheet.
+
+SHEET 80 - Hats part 1 (4 columns x 3 rows):
+1 gold crown with a red gem, 2 red baseball cap (visor to the right), 3 white daisy flower (clip-on, small), 4 purple party hat with yellow dots and pompom,
+5 blue beanie with white bobble, 6 pink bow, 7 straw hat with red band, 8 black pirate hat with gold trim,
+9 purple wizard hat with yellow band, 10 viking helmet with cream horns, 11 white chef hat, 12 headphones worn on the head (band + both orange ear cups, with the empty gap where the head is).
+
+SHEET 90 - Hats part 2 (4 columns x 2 rows):
+1 white bunny ears with pink inside (pair), 2 cat ears (pair, plum outline, pink inside, the outer ear left WHITE so the game can tint it to the body color), 3 golden halo floating, 4 small black top hat with red band,
+5 red bandana with knot on the right side, 6 antenna with yellow ball, 7 green leaf sprout, 8 red santa hat with white pompom.
+
+SHEET 100 - Eyes (4 columns x 4 rows, each cell = one PAIR of eyes):
+1 happy (white with pupils looking slightly right), 2 round (pupils centered), 3 big sparkly (large white, big pupils, white glint), 4 content closed ^^ arcs,
+5 sleepy half-closed lids, 6 cool black sunglasses, 7 pink hearts, 8 yellow stars,
+9 angry with slanted brows, 10 happy with pink blush cheeks below, 11 winking (one open, one closed), 12 teary (big eyes with a blue tear),
+13 dizzy spirals, 14 surprised (tiny pupils in big whites), 15 one big cyclops eye in the middle, 16 nerd glasses (round, plum frame).
+
+SHEET 110 - Mouths (4 columns x 3 rows):
+1 open happy (red inside, small tongue), 2 smile line, 3 tongue out, 4 big toothy grin (white teeth), 5 "oh" small round, 6 calm straight line,
+7 huge open laugh, 8 vampire fangs smile, 9 brown mustache, 10 sad frown, 11 cat mouth :3, 12 whistling (small round with a tiny music note).
+
+Reply "ready" if you understood, then wait for "go".
