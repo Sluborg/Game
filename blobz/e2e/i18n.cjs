@@ -64,7 +64,7 @@ async function phone(browser, name, locale, size = PORTRAIT) {
     await sv.locator('.lanrow', { hasText: 'Joina Stefan' }).click({ timeout: 25000 });
     await sv.waitForSelector('#lobby:not(.hidden)', { timeout: 20000 });
     await en.waitForFunction(() => document.querySelectorAll('#lobby-list li').length === 2, null, { timeout: 10000 });
-    ok((await en.textContent('#btn-start')).trim() === 'Start' && (await en.textContent('#map-pick')).includes('Meadow'), 'host lobby in English ("Start", "Meadow")');
+    ok((await en.textContent('#btn-start')).trim() === 'Start' && !(await en.isVisible('#map-pick')), 'host lobby in English ("Start"), no map picker (snow map archived)');
     ok((await sv.textContent('#lobby-wait')).includes('Väntar på att värden startar'), 'joiner lobby stays Swedish');
     await noSwedish(en, 'lobby');
     if (shots) await en.screenshot({ path: `${shots}/i18n-lobby-en.png` });
