@@ -76,3 +76,60 @@
 #dg-end { z-index: 30; }
 #dg-end .dgstat { font-size: 20px; margin: 6px 0; }
 #dg-end .dgstat .icon { height: 22px; }
+
+/* class cards (Kenney tile until Art's card-<class>.png) */
+.wcard .cardimg { width: 96px; height: 128px; image-rendering: pixelated; object-fit: contain; max-width: 100%; }
+.wcard canvas.cardimg { width: 84px; height: 84px; margin: 22px 0; }
+.wcard .back { display: flex; align-items: center; justify-content: center; font-size: 48px; color: #3f2631; height: 128px; }
+.wcards { flex-wrap: wrap; }
+.wcard { flex: 1 1 calc(50% - 10px); max-width: 160px; }
+@media (min-width: 560px) { .wcard { flex: 1 1 0; } }
+@media (orientation: landscape) and (max-height: 500px) {
+  .wcard .cardimg { width: 54px; height: 72px; }
+  .wcard canvas.cardimg { width: 54px; height: 54px; margin: 9px 0; }
+  .wcard .back { height: 72px; }
+  .wcard { flex: 1 1 0; }
+}
+.dgicon { width: 32px; height: 32px; image-rendering: pixelated; }
+#dg-item { display: inline-flex; padding: 1px; background: #fff7e630; box-shadow: 0 0 0 2px #ffe08a; }
+#dg-item .dgicon { width: 24px; height: 24px; }
+
+/* level-up: 1 of 3 skill cards (the game keeps going; 10 s then the first card is taken) */
+#dg-cards, #dg-loot {
+  position: absolute; left: 50%; transform: translateX(-50%); pointer-events: auto; z-index: 8;
+  background: #fff7e6; box-shadow: var(--o3), 0 6px 0 0 #3f263140; padding: 8px 10px; font-family: var(--font); color: #3f2631; text-align: center;
+}
+#dg-cards { top: max(150px, calc(env(safe-area-inset-top) + 150px)); width: min(94vw, 420px); }
+#dg-cards-title, #dg-loot-title { font-weight: 900; font-size: 20px; margin-bottom: 6px; }
+#dg-cards-row { display: flex; gap: 8px; justify-content: center; }
+.skcard {
+  flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; border: 0; cursor: pointer;
+  background: #ffe08a; box-shadow: var(--o3), 0 4px 0 0 #3f263140; font-family: var(--font); color: #3f2631;
+}
+.skcard .dgicon { width: 48px; height: 48px; }
+.skcard b { font-size: 15px; line-height: 1.1; }
+.skcard.on { background: #6cc644; }
+.dgbar { height: 6px; margin-top: 8px; background: #3f263130; }
+.dgbar i { display: block; height: 100%; background: var(--orange); }
+@media (orientation: landscape) and (max-height: 500px) {
+  #dg-cards { top: 8px; left: auto; right: max(130px, calc(env(safe-area-inset-right) + 130px)); transform: none; width: min(calc(100vw - 400px), 420px); }
+  .skcard .dgicon { width: 36px; height: 36px; }
+}
+
+/* rare loot: my item vs the new one, roll or pass */
+#dg-loot { bottom: max(150px, calc(env(safe-area-inset-bottom) + 150px)); width: min(86vw, 340px); }
+#dg-loot-items { display: flex; align-items: center; justify-content: center; gap: 12px; }
+#dg-loot-items > .dgicon { width: 64px; height: 64px; }
+.lootside { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 90px; }
+.lootside .dgicon { width: 56px; height: 56px; }
+.lootside i { display: block; width: 56px; height: 56px; background: #3f263118; }
+.lootside small { color: #8a7466; font-weight: 700; }
+.lootarrow { font-size: 28px; font-weight: 900; }
+#dg-loot-btns { display: flex; gap: 10px; justify-content: center; margin: 8px 0 4px; }
+#dg-loot-btns button { font-family: var(--font); font-weight: 900; font-size: 20px; padding: 8px 18px; border: 0; cursor: pointer; box-shadow: var(--o3), 0 4px 0 0 #3f263140; }
+#dg-roll { background: #6cc644; color: #fff; }
+#dg-pass { background: #f1e4c6; color: #3f2631; }
+#dg-loot-msg { font-size: 14px; color: #8a7466; min-height: 18px; }
+@media (orientation: landscape) and (max-height: 500px) {
+  #dg-loot { bottom: auto; top: 8px; left: auto; right: 140px; transform: none; width: 300px; }
+}
