@@ -17,7 +17,7 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 
 **Kenney still IN GAME** (0): none
 
-**Counts by source:** ChatGPT 83 / Claude-drawn 64 / Kenney 11 / Ninja 2037 (Ninja: 107 referenced by code). **Own files:** 158, 0 delete candidates.
+**Counts by source:** ChatGPT 83 / Claude-drawn 64 / Kenney 11 / Ninja 2037 (Ninja: 106 referenced by code). **Own files:** 158, 0 delete candidates.
 
 ## Own files (art, Kenney, app icons)
 
@@ -48,7 +48,7 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/base/workshop.png` | 44x38 | Claude-drawn: scripts/base_art.py | Own art (CC0) | IN GAME | src/game.ts:227, src/main.ts:410 | replace (see OLD_ART_CHECKLIST) |
 | `art/dungeon/card-class-healer.png` | 55x61 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:62 | keep |
 | `art/dungeon/card-class-marksman.png` | 54x60 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:62 | keep |
-| `art/dungeon/card-class-rogue.png` | 53x59 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:62 | keep |
+| `art/dungeon/card-class-rogue.png` | 55x57 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:62 | keep |
 | `art/dungeon/card-class-tank.png` | 53x59 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:62 | keep |
 | `art/dungeon/ko-stars.png` | 40x9 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | IN GAME | src/style.css:674 | replace (see OLD_ART_CHECKLIST) |
 | `art/dungeon/potion.png` | 16x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | CODE ONLY | src/dungeonScene.ts:807 | replace (see OLD_ART_CHECKLIST) |
@@ -246,7 +246,6 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `assets/ninja-adventure/Items/Tool/Pickaxe.png` | 16x16 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Items/Treasure/BigTreasureChest.png` | 32x14 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Items/Treasure/Coin2.png` | 40x10 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
-| `assets/ninja-adventure/Items/Treasure/GoldCoin.png` | 7x7 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Items/Weapons/Hammer/Sprite.png` | 9x16 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Items/Weapons/Lance/Sprite.png` | 6x23 | Ninja Adventure | CC0 1.0 | CODE ONLY (loaded, not shown) | referenced by code | keep |
 | `assets/ninja-adventure/Items/Weapons/MagicWand/Sprite.png` | 5x18 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
@@ -301,7 +300,7 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `assets/ninja-adventure/Actor/**` | 1366 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 13 referenced (rows above) | keep (the art source) |
 | `assets/ninja-adventure/Backgrounds/**` | 61 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 7 referenced (rows above) | keep (the art source) |
 | `assets/ninja-adventure/FX/**` | 105 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 28 referenced (rows above) | keep (the art source) |
-| `assets/ninja-adventure/Items/**` | 142 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 18 referenced (rows above) | keep (the art source) |
+| `assets/ninja-adventure/Items/**` | 142 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 17 referenced (rows above) | keep (the art source) |
 | `assets/ninja-adventure/Ui/**` | 360 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 41 referenced (rows above) | keep (the art source) |
 | `assets/ninja-adventure/Palette.png` | 10x9 | Ninja Adventure (pack preview / palette) | CC0 1.0 | UNUSED | keep (reference) |
 | `assets/ninja-adventure/preview-part-1.png` | 641x417 | Ninja Adventure (pack preview / palette) | CC0 1.0 | UNUSED | keep (reference) |
