@@ -36,7 +36,7 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (N-7..N-10 are TO DO now). New orders only for pieces the pack lacks.**
+ChatGPT works only on N-orders with status TO DO (N-7, N-9, N-10 are TO DO now). New orders only for pieces the pack lacks.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
@@ -47,7 +47,7 @@ ChatGPT works only on N-orders with status TO DO (N-7..N-10 are TO DO now). New 
 | N-5 | DONE | Class cards: Healer, Rogue, Tank, Marksman (4 cards on one sheet) | `dungeon/card-class-*.png` |
 | N-6 | DONE | End screen: blobz cheering by the cottage with their haul (portrait) | `art/victory.png` |
 | N-7 | TO DO | App icon (square) | app/PWA icon |
-| N-8 | TO DO | Map picker pictures: Meadow and Snow (2 small scenes) | `art/map-meadow.png`, `art/map-snow.png` |
+| N-8 | CANCELLED (snow map removed, no map picker) | Map picker pictures: Meadow and Snow (2 small scenes) | `art/map-meadow.png`, `art/map-snow.png` |
 | N-9 | TO DO | Bärregn mini game background (sunset meadow, portrait) | `mini/bg.png` |
 | N-10 | TO DO | Small UI icons: check mark, star, empty star (one small sheet) | `art/icons/check.png`, `art/gather/star.png`, `art/gather/star-empty.png` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
