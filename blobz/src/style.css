@@ -723,3 +723,15 @@ body { font-weight: 500; } /* Fredoka (Stefan's pick on the board) */
   #loading { background: #263f24 url('/art/loading-portrait.png') 58% top / cover no-repeat;
     align-items: flex-end; padding-top: 0; padding-bottom: max(9vh, env(safe-area-inset-bottom)); }
 }
+
+/* loading screen in landscape (ChatGPT N-3 landscape, Stefan 4/5): the cave scene fills the screen, a small logo +
+   bar sit in the calm grass at the bottom */
+@media (orientation: landscape) {
+  #loading { background: #213e1f url('/art/loading-landscape.png') center bottom / cover no-repeat;
+    align-items: flex-end; justify-content: flex-end;
+    padding: 0 max(5vw, env(safe-area-inset-right)) max(3vh, env(safe-area-inset-bottom)) 0; }
+  #loading::after { content: none; }
+  #loading .load-ui { width: min(34vw, 260px); gap: 4px; }
+  #loading-logo { width: 70%; }
+  #loading-text { font-size: 16px; }
+}
