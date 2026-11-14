@@ -50,6 +50,10 @@ Stefan works phone-only; replies in Swedish or English, docs and code in English
 - Every message that announces a new version includes the link https://sluborg.github.io/Game/ and the version number.
 - **Board card rule (Stefan):** whenever anything waits for Stefan on the board, end the reply with an `Artifact` action "open" on the board URL so he gets a tappable card. Never just paste the link when items are waiting.
 - Every reply where the decision board has something new (a new question, a followup, a changed Pågående row Stefan should see) includes the board link https://claude.ai/artifact/7pHh1Z6QmDvtAYWweGvkAL.
+- **Claude-drawn art needs Stefan's OK first (Stefan 2026-11-14):** he is sceptical of art drawn by Claude. Default to
+  ready Ninja Adventure pieces or a ChatGPT order. Art may only draw its own pieces (generated/hand-pixelled) after Stefan
+  says yes to that specific piece. If he rates Claude-drawn art 1-3: STOP, no new attempts; ask him how to proceed
+  (Ninja piece, ChatGPT order, or drop it).
 - Art made in code is only for simple shapes (icons, tiles, UI, small fx, blob parts). Illustrations (class cards,
   buildings, characters, scenes) are ordered from ChatGPT with a prompt Stefan can paste (see docs/TEAM.md).
 - Art pipeline for non-trivial art: Art makes 3 rough SVG/PNG variants -> board question with pictures -> Stefan picks
