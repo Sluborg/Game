@@ -171,7 +171,7 @@ details.archive[open] summary { margin-bottom: 12px; }
 
 <script>
 const $ = (s) => document.querySelector(s);
-const state = { questions: [], answers: {}, drafts: {}, work: [], backlog: [], prio: {}, comments: [], commentDrafts: {}, art: [], artctl: {} };
+const state = { flags: {}, flagNotes: {}, questions: [], answers: {}, drafts: {}, work: [], backlog: [], prio: {}, comments: [], commentDrafts: {}, art: [], artctl: {} };
 let db = null;
 const TABS = ['fragor', 'pagaende', 'backlog', 'art'];
 const PRIO = [['hog', 'Hög'], ['medel', 'Medel'], ['lag', 'Låg']];
@@ -238,6 +238,34 @@ function renderQuestion(q) {
       seg.append(b);
     }
     card.append(seg);
+  }
+  if (Array.isArray(q.flagRows)) {
+    const f = state.flags[q.id] || { flagged: [], notes: {} };
+    const save = async (next, st) => { if (!needDb(st)) return; try { await db.doc('flags/' + q.id).set({ ...next, at: new Date().toISOString() }); } catch (e) { st.textContent = 'Kunde inte spara (' + (e && e.code || 'fel') + ').'; st.className = 'status err'; } };
+    for (const row of q.flagRows) {
+      const box = el('div', { style: 'border-top:2px solid var(--cream-2);padding-top:8px;display:flex;flex-direction:column;gap:6px' });
+      box.append(el('b', { text: row.label }));
+      const line = el('div', { style: 'display:grid;grid-template-columns:repeat(' + row.cells.length + ',minmax(0,1fr));gap:6px' });
+      const st = el('span', { class: 'status' });
+      for (const c of row.cells) {
+        const bad = f.flagged.includes(c.id);
+        const b = el('button', { type: 'button', 'aria-pressed': String(bad), title: c.label || c.id,
+          style: 'position:relative;padding:2px;border:0;cursor:pointer;background:' + (bad ? '#f6c9c4' : '#fff7e6') + ';box-shadow:0 0 0 3px ' + (bad ? '#e0574f' : 'var(--cream-2)') + ' inset' });
+        b.append(el('img', { src: c.img, alt: c.label || c.id, style: 'width:100%;height:auto;image-rendering:pixelated;display:block' }));
+        if (bad) b.append(el('span', { text: '✕', style: 'position:absolute;top:0;right:4px;color:#e0574f;font:700 20px var(--display)' }));
+        b.addEventListener('click', () => { const fl = new Set(f.flagged); bad ? fl.delete(c.id) : fl.add(c.id); f.flagged = [...fl]; state.flags[q.id] = f; renderQuestions(); save({ flagged: f.flagged, notes: f.notes }, st); });
+        line.append(b);
+      }
+      box.append(line);
+      const key = q.id + '/' + row.id;
+      const ta = el('textarea', { id: 'fn-' + key.replace('/', '-'), placeholder: 'Kommentar om ' + row.label, style: 'min-height:44px' });
+      ta.value = state.flagNotes[key] ?? (f.notes[row.id] || '');
+      ta.addEventListener('input', () => { state.flagNotes[key] = ta.value; });
+      ta.addEventListener('blur', () => { f.notes = { ...f.notes, [row.id]: ta.value.trim() }; state.flags[q.id] = f; save({ flagged: f.flagged, notes: f.notes }, st); st.textContent = 'Sparad.'; st.className = 'status ok'; });
+      box.append(ta, st);
+      card.append(box);
+    }
+    card.append(el('p', { class: 'body', text: 'Tryck på rutor som inte är bra nog (röd = dålig). Kommentarer sparas när du lämnar fältet.' }));
   }
   const options = (!q.rate && Array.isArray(q.options)) ? q.options : [];
   if (options.length) {
@@ -478,6 +506,7 @@ renderAll();
   db.collection('backlog').onSnapshot((s) => { state.backlog = rows(s); renderBacklog(); }, fail('backloggen'));
   db.collection('prio').onSnapshot((s) => { const p = {}; for (const d of s.docs) p[d.id] = d.data().level; state.prio = p; renderBacklog(); }, () => {});
   db.collection('comments').onSnapshot((s) => { state.comments = rows(s); renderBacklog(); renderArt(); }, () => {});
+  db.collection('flags').onSnapshot((s) => { const m = {}; for (const d of s.docs) m[d.id] = d.data(); state.flags = m; renderQuestions(); }, () => {});
   db.collection('art').onSnapshot((s) => { state.art = rows(s); renderArt(); }, () => {});
   db.collection('artctl').onSnapshot((s) => { const m = {}; for (const d of s.docs) m[d.id] = d.data(); state.artctl = m; renderArt(); }, () => {});
 })();
