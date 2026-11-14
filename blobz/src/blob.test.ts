@@ -15,11 +15,11 @@ describe('blob', () => {
     expect(l.hat).toBe(0);
   });
 
-  it('has a name for every part (16 eyes, 12 mouths, 21 hats)', () => {
+  it('has a name for every part (16 eyes, 12 mouths, 27 hats)', () => {
     expect(PART_TABLES.eyes).toHaveLength(EYES.length);
     expect(PART_TABLES.mouths).toHaveLength(MOUTHS.length);
     expect(PART_TABLES.hats).toHaveLength(HATS.length);
-    expect([EYES.length, MOUTHS.length, HATS.length]).toEqual([16, 12, 21]);
+    expect([EYES.length, MOUTHS.length, HATS.length]).toEqual([16, 12, 27]);
   });
 
   it('keeps saved-look indices stable for the original parts', () => {
