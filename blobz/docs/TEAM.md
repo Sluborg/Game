@@ -7,6 +7,10 @@ Claude Code sessions on their own branches and never push to the deploy branch.
 Stefan may give ChatGPT-generated images directly to **Art**. Art judges them (style, cleanliness, fit), slices and
 integrates them, and tells Lead whether a new ChatGPT round is needed and with which prompt changes.
 
+**Rule (Stefan 2026-11-14):** Art's generator scripts are only for simple shapes (icons, tiles, UI frames, small fx,
+blob parts). Anything illustrative (class cards, buildings like the cottage, characters, scenes, loading art) is
+ordered from ChatGPT: Art writes the prompt, Lead gives it to Stefan, Art slices the result.
+
 ## Branches
 | Role | Branch | Pushes to |
 |---|---|---|
