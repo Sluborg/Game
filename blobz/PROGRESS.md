@@ -80,3 +80,9 @@
   World obstacles are now ChatGPT trees (green/orange/pine, drop wood when bumped) plus rocks and boulders
   (solid, no wood; sim `OBSTACLE_R` per kind). Decor: bushes, flowers, stumps, 2 ponds. Plates, gate, sign
   and fence are installed for the co-op milestone.
+
+## 2026-11-14 - Orders 40, 50, 60
+- Lobby background (`art/lobby.png`): card on top in portrait, card left / picnic right in landscape.
+- Totems (4 kinds x 3 levels, sliced at 9 px/art-pixel to keep the symbols) in `art/totems/`, goo enemies
+  (small, medium, boss, splat) in `art/enemies/`. Installed only; they need milestone 40/50 gameplay.
+- Remaining art order: 70 (hat/face ideas).
