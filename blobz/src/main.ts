@@ -9,7 +9,7 @@ import { ClientNet, HostNet, friendlyError, type ToClient } from './net';
 import { lanNamespace, Scanner, type FoundRoom } from './discovery';
 import { sfx, unlockAudio } from './sfx';
 import {
-  addPlayer, createState, makeTrees, MAX_PLAYERS, nodeTool, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
+  addPlayer, BUILDING_ENABLED, BUILD_COST, BUILD_NAMES, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
   toolNode, viewFromSnapshot, viewFromState,
 } from './sim';
 import type { FxEvent, Input, PlayerInfo, Snapshot, State, View } from './sim';
@@ -341,9 +341,35 @@ function renderQuestRows(root: ParentNode, v: View) {
 const QUEST_ROWS = () => $('hud-quest').innerHTML.split('<div class="qrow"').slice(1).map((r) => '<div class="qrow"' + r).join('');
 let treesFor = { seed: -1, trees: [] as ReturnType<typeof makeTrees> };
 
+/** Building goal on the quest card: "Byggt: X" after a build this round, else "Bygg X" when the bank covers one. */
+function renderBuildGoal(v: View) {
+  const row = $('q-build');
+  if (!BUILDING_ENABLED) { show('q-build', false); return; }
+  const doneK = v.builtNow?.[v.builtNow.length - 1];
+  const next = !doneK ? v.builds?.find((b) => b.state !== 2 && canAfford(v.bank, RES.reduce((o, k) => ({ ...o, [k]: BUILD_COST[b.kind][k] - b.paid[k] }), {}))) : undefined;
+  const text = doneK ? 'Byggt: ' + BUILD_NAMES[doneK] : next ? 'Bygg ' + BUILD_NAMES[next.kind] : '';
+  show('q-build', !!text);
+  if (!text) return;
+  const span = row.querySelector('span')!;
+  if (span.textContent !== text) span.textContent = text;
+  row.classList.toggle('done', !!doneK);
+  const src = `art/gather/star${doneK ? '' : '-empty'}.png`;
+  const img = row.querySelector<HTMLImageElement>('img')!;
+  if (!img.src.endsWith(src)) img.src = src;
+}
+
+// ---------- the village: saved on the host between rounds ----------
+const loadVillage = () => { try { return cleanVillage(JSON.parse(store.get('village') ?? 'null')); } catch { return cleanVillage(null); } };
+function villageText() {
+  const v = loadVillage();
+  const n = Object.values(v.builds).filter((b) => b.state === 2).length;
+  return n || v.cottage > 1 ? `Din by: stuga nivå ${v.cottage} · ${n} ${n === 1 ? 'byggnad' : 'byggnader'}` : '';
+}
+
 function onView(v: View) {
   if (DEBUG) (window as unknown as { __blobzView: View }).__blobzView = v;
   renderQuestRows($('hud-quest'), v);
+  renderBuildGoal(v);
   const st = starsFor(v.delivered, v.quest);
   if (st > lastStars) { sfx.star(); lastStars = st; }
   // day bar: the sun rides left -> right; dusk in the last 20 s
@@ -437,7 +463,7 @@ async function hostGame() {
 
   const newRound = () => {
     seed = Math.floor(Math.random() * 1e9);
-    state = createState([...infos.values()], seed);
+    state = createState([...infos.values()], seed, loadVillage());
     // Test hook (?debug): lets Playwright place blobz on plates etc. Never set in normal play.
     if (DEBUG) (window as unknown as { __blobz: unknown }).__blobz = { state };
     if (roundSecs) state.time = roundSecs;
@@ -453,6 +479,8 @@ async function hostGame() {
         acc += dt;
         while (acc >= 1 / 60) {
           step(state, inputs, 1 / 60);
+          // keep the village saved on this (host) phone whenever it changes
+          if (BUILDING_ENABLED && state.villageDirty) { state.villageDirty = false; store.set('village', JSON.stringify(villageOf(state))); }
           localFx.push(...state.fx); netFx.push(...state.fx); state.fx = [];
           acc -= 1 / 60;
         }
@@ -474,6 +502,13 @@ async function hostGame() {
   show('btn-start'); show('lobby-wait', false);
   show('menu', false); show('lobby');
   $('btn-start').onclick = () => { unlockAudio(); newRound(); };
+  $('lobby-village').textContent = BUILDING_ENABLED ? villageText() : '';
+  show('btn-newvillage', BUILDING_ENABLED);
+  $('btn-newvillage').onclick = () => {
+    if (!confirm('Börja om med en ny by? Allt ni har byggt försvinner.')) return;
+    try { localStorage.removeItem('blobz.village'); } catch { /* private mode */ }
+    $('lobby-village').textContent = 'Ny by! Allt börjar om från början.';
+  };
   $('btn-again').onclick = () => newRound();
 }
 
@@ -509,9 +544,11 @@ async function joinGame(target: string, row?: HTMLButtonElement) {
         readInput: () => controls.read(),
         tick(dt, input) {
           sendAcc += dt;
-          const key = `${input.x},${input.y},${input.dash}`;
+          const key = `${input.x},${input.y},${input.dash},${input.atk ?? 0}`;
           if (key !== lastSent || sendAcc > 0.25) {
-            if (sendAcc >= 1 / 30 || input.dash !== Number(lastSent.split(',')[2])) {
+            const prev = lastSent.split(',');
+            // button presses go out at once; stick moves at most 30x a second
+            if (sendAcc >= 1 / 30 || input.dash !== Number(prev[2]) || (input.atk ?? 0) !== Number(prev[3])) {
               net.send({ t: 'in', ...input });
               lastSent = key; sendAcc = 0;
             }

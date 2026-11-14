@@ -31,7 +31,7 @@ describe('gathering with tools', () => {
 
   it('every map has trees, stones and several berry bushes', () => {
     for (const seed of [1, 2, 3, 99, 12345]) {
-      const kinds = makeTrees(seed).map((t) => nodeTool(t.kind));
+      const kinds = makeTrees(seed).filter((t) => t.x < 1280).map((t) => nodeTool(t.kind)); // main meadow
       expect(kinds.filter((k) => k === 'axe').length).toBeGreaterThan(8);
       expect(kinds.filter((k) => k === 'pickaxe').length).toBeGreaterThan(2);
       expect(kinds.filter((k) => k === 'rake').length).toBe(8);
