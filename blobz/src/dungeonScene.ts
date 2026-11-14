@@ -22,7 +22,7 @@ const WEAPON_FRAME: Partial<Record<Weapon, { w: number; h: number; px: number; p
 };
 /** Class hats in blob.ts CLASS_HATS (Krigare keeps the skin hat). */
 const CLASS_HAT: Partial<Record<HeroClass, number>> = { healer: 0, marksman: 1, tank: 2 }; // the rogue keeps the skin hat
-const GOO = ['goo-small', 'goo-medium', 'goo-boss'];
+const GOO = ['goo-small', 'goo-medium', 'goo-boss', 'goo-small']; // 3 = spitter (small art, larger, tinted green)
 const WORLD = { w: GW * DT, h: GH * DT };
 // Kenney Tiny Dungeon frames (12 per row)
 // Art's fine ground tiles (art/fine/tiles, 32 px, drawn at scale 1): floor plain/specks/stones, wall bricks/banner
@@ -59,6 +59,7 @@ export class DungeonScene extends Phaser.Scene {
   private heroes = new Map<string, HeroGfx>();
   private goo = new Map<number, GooGfx>();
   private coins = new Map<number, Phaser.GameObjects.Image>();
+  private spits = new Map<number, Phaser.GameObjects.Arc>();
   private ringG!: Phaser.GameObjects.Graphics;
   private auraG!: Phaser.GameObjects.Graphics;
   private hitG!: Phaser.GameObjects.Graphics;
@@ -71,7 +72,7 @@ export class DungeonScene extends Phaser.Scene {
   init(data: { session: Session }) {
     this.s = data.session;
     this.floorKey = ''; this.map = null; this.mapObjs = []; this.chests = [];
-    this.heroes.clear(); this.goo.clear(); this.coins.clear();
+    this.heroes.clear(); this.goo.clear(); this.coins.clear(); this.spits.clear();
     this.lastClock = 0;
   }
 
@@ -228,6 +229,17 @@ export class DungeonScene extends Phaser.Scene {
     }
     for (const [id, img] of this.coins) if (!seenC.has(id)) { img.destroy(); this.coins.delete(id); }
 
+    // ---- goo spit (dodge it with a sidestep) ----
+    const seenS = new Set<number>();
+    for (const sp of d.spit) {
+      seenS.add(sp.id);
+      let c = this.spits.get(sp.id);
+      if (!c) { c = this.add.circle(sp.x, sp.y, 7, 0x8be36b).setStrokeStyle(2, 0x2f5a1e); this.spits.set(sp.id, c); }
+      c.x += (sp.x - c.x) * (smooth ? k : 1); c.y += (sp.y - c.y) * (smooth ? k : 1);
+      c.setDepth(c.y + 10);
+    }
+    for (const [id, c] of this.spits) if (!seenS.has(id)) { c.destroy(); this.spits.delete(id); }
+
     // ---- goo ----
     const seenE = new Set<number>();
     for (const e of d.enemies) {
@@ -235,7 +247,8 @@ export class DungeonScene extends Phaser.Scene {
       let g = this.goo.get(e.id);
       if (!g) {
         g = { img: this.add.image(e.x, e.y, 'dg-' + GOO[e.kind]).setScale(GOO_SCALE[e.kind]).setOrigin(0.5, 0.5), shadow: this.add.ellipse(e.x, e.y, ENEMY_R[e.kind] * 2, ENEMY_R[e.kind] * 0.6, 0x000000, 0.3), x: e.x, y: e.y, flash: 0, kind: e.kind };
-        if (e.kind === 2) { g.warn = this.add.image(0, 0, 'dg-slam-warning').setVisible(false); g.bar = this.add.graphics(); }
+        if (e.kind === 2) g.warn = this.add.image(0, 0, 'dg-slam-warning').setVisible(false);
+        g.bar = this.add.graphics();
         this.goo.set(e.id, g);
       }
       g.x += (e.x - g.x) * (smooth ? k : 1); g.y += (e.y - g.y) * (smooth ? k : 1);
@@ -250,11 +263,14 @@ export class DungeonScene extends Phaser.Scene {
         g.warn.setVisible(!!e.slam);
         if (e.slam) g.warn.setPosition(e.slam.x, e.slam.y).setScale((SLAM_R * 2) / 96 * (1 + Math.max(0, e.slam.t) * 0.15)).setDepth(-500).setAlpha(0.55 + Math.sin(now / 60) * 0.35);
       }
-      if (g.bar) {
-        g.bar.clear().setDepth(5000);
-        const w = 80, x = g.x - w / 2, y = g.y - ENEMY_R[e.kind] - 22;
-        g.bar.fillStyle(0x3f2631, 1).fillRect(x - 3, y - 3, w + 6, 12).fillStyle(0xb3261e, 1).fillRect(x, y, w * Math.min(1, Math.max(0, e.hp) / Math.max(1, d.bossMax)), 6);
+      // health bar: the boss always (big), other goo once hurt (small)
+      g.bar!.clear().setDepth(5000);
+      if (e.kind === 2 || e.hp < e.mx) {
+        const w = e.kind === 2 ? 90 : ENEMY_R[e.kind] * 2 + 4, x = g.x - w / 2, y = g.y - ENEMY_R[e.kind] - (e.kind === 2 ? 22 : 12), hh = e.kind === 2 ? 7 : 4;
+        g.bar!.fillStyle(0x3f2631, 1).fillRect(x - 2, y - 2, w + 4, hh + 4).fillStyle(e.kind === 2 && e.hp < e.mx / 2 ? 0xff3b3b : 0xb3261e, 1).fillRect(x, y, w * Math.min(1, Math.max(0, e.hp) / Math.max(1, e.mx)), hh);
       }
+      // spitters: greener; the angry boss (phase 2): red
+      if (e.kind === 3) g.img.setTint(0x9dff7a); else if (e.kind === 2 && e.hp < e.mx / 2) g.img.setTint(0xff8a8a); else g.img.clearTint();
     }
     for (const [id, g] of this.goo) if (!seenE.has(id)) { g.img.destroy(); g.shadow.destroy(); g.warn?.destroy(); g.bar?.destroy(); this.goo.delete(id); }
 
@@ -307,6 +323,10 @@ export class DungeonScene extends Phaser.Scene {
         .setAlpha(h?.dodge ? 0.45 : h?.inv && !ko ? (Math.floor(now / 90) % 2 ? 0.4 : 1) : 1);
       b.label.setPosition(b.x, b.y + 24).setDepth(b.y + 2);
       b.me.setPosition(b.x, b.y - 58).setDepth(b.y + 3);
+      if (h && !ko && p.id !== this.s.myId) {
+        const w = 36, x = b.x - w / 2, y = b.y - 52, fr = Math.max(0, Math.min(1, h.hp / Math.max(1, h.maxHp)));
+        this.ringG.fillStyle(0x1b1018, 0.9).fillRect(x - 1, y - 1, w + 2, 6).fillStyle(fr <= 0.3 ? 0xff3b3b : 0x6cc644, 1).fillRect(x, y, w * fr, 4);
+      }
       if (h && !ko && h.wallT > 0) {
         // the wall's reach on the ground + Art's dome over it (rises, then holds on the last frame)
         const r = specialOf(h.cls, h.weapon).r * heroMods(h).spR;
@@ -515,6 +535,8 @@ export class DungeonScene extends Phaser.Scene {
         break;
       }
       case 'floor': sfx.power(); break;
+      case 'spit': sfx.tool('rake', false); break;
+      case 'phase2': this.cameras.main.shake(400, 0.012); this.burst(f.x, f.y, 0xff3b3b, 18, 70); sfx.bump(); break;
       case 'shot': {
         // arrow flies from the archer to the goo
         const a = Math.atan2(f.ty - f.y, f.tx - f.x);

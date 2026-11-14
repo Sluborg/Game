@@ -9,7 +9,7 @@ const dg = (page) => page.evaluate(() => window.__blobzView.dungeon);
 /** Put a goo right next to player #i (host sim). */
 const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
   const p = s.players[a.i], d = s.dg;
-  d.enemies.push({ id: d.nextId++, kind: a.kind, x: p.x + a.dx, y: p.y + a.dy, vx: 0, vy: 0, hp: [1, 3, 15][a.kind], awake: true, stun: 0.5, slamT: 99, slam: null });
+  d.enemies.push({ id: d.nextId++, kind: a.kind, x: p.x + a.dx, y: p.y + a.dy, vx: 0, vy: 0, hp: [20, 50, 300, 30][a.kind], mx: [20, 50, 300, 30][a.kind], awake: true, stun: 0.5, slamT: 99, slam: null });
 }, { i, kind, dx, dy });
 
 (async () => {
@@ -42,8 +42,8 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     const hs = ids.map((id) => d.heroes[id]);
     ok(d.floor === 1 && hs[0].cls === 'rogue' && hs[0].weapon === 'sword' && hs[1].cls === 'healer' && hs[2].cls === 'marksman',
       'down together: Krigare (svärd) / Präst / Bågskytt on every phone');
-    ok(hs[2].maxHearts === 4 && hs[0].maxHearts === 5, 'hearts follow the class (Bågskytt 4, Krigare 5)');
-    ok(d.bossMax === 30, `boss HP scales with 3 players (${d.bossMax})`);
+    ok(hs[2].maxHp === 80 && hs[0].maxHp === 100, 'health follows the class (Skytt 80, Rogue 100)');
+    ok(d.bossMax === 660, `boss health scales with 3 players (${d.bossMax})`);
     ok(await bo.isVisible('#attack') && await host.isVisible('#attack'), 'special button shows underground');
 
     // quiet floor around the start: remove goo, keep everyone at the start
@@ -66,7 +66,7 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
         let clear = true;
         for (let i = 1; i <= 20; i++) if (wall(p.x + (x - p.x) * i / 20, p.y + (y - p.y) * i / 20)) clear = false;
         if (!clear || [-16, 16].some((o) => wall(x + o, y) || wall(x, y + o))) continue;
-        s.dg.enemies.push({ id: s.dg.nextId++, kind: 0, x, y, vx: 0, vy: 0, hp: 1, awake: true, stun: 9, slamT: 99, slam: null });
+        s.dg.enemies.push({ id: s.dg.nextId++, kind: 0, x, y, vx: 0, vy: 0, hp: 1, mx: 1, awake: true, stun: 9, slamT: 99, slam: null });
         return;
       }
     });
@@ -74,9 +74,9 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     ok(true, 'Bågskytt: auto-arrow kills a goo at range');
 
     // Präst special heals a hurt friend
-    await sim(host, (s) => { const h = s.dg.heroes[s.players[0].id]; h.hearts = 2; s.players[0].x = s.players[1].x + 40; s.players[0].y = s.players[1].y; });
+    await sim(host, (s) => { const h = s.dg.heroes[s.players[0].id]; h.hp = 30; s.players[0].x = s.players[1].x + 40; s.players[0].y = s.players[1].y; });
     await ada.click('#attack');
-    await bo.waitForFunction((id) => window.__blobzView.dungeon.heroes[id].hearts > 2, ids[0], { timeout: 4000 });
+    await bo.waitForFunction((id) => window.__blobzView.dungeon.heroes[id].hp > 30, ids[0], { timeout: 4000 });
     ok(true, 'Präst special (Läkljus) heals Stefan on every phone');
     await ada.waitForTimeout(120);
     if (shots) await ada.screenshot({ path: `${shots}/dg-heal-portrait.png` });
@@ -100,10 +100,10 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
       'level 2: 3 cards per phone from the own class pool');
     if (shots) { await ada.screenshot({ path: `${shots}/dg-skills-portrait.png` }); await bo.screenshot({ path: `${shots}/dg-skills-landscape.png` }); }
     // no timer: after 11 s the cards are still open; the blob stands still and takes no damage
-    const before = await host.evaluate(() => { const s = window.__blobz.state, p = s.players[1]; return { x: p.x, y: p.y, h: s.dg.heroes[p.id].hearts }; });
-    await sim(host, (s) => { const p = s.players[1]; s.dg.enemies.push({ id: s.dg.nextId++, kind: 0, x: p.x + 20, y: p.y, vx: 0, vy: 0, hp: 99, awake: true, stun: 0, slamT: 99, slam: null }); });
+    const before = await host.evaluate(() => { const s = window.__blobz.state, p = s.players[1]; return { x: p.x, y: p.y, h: s.dg.heroes[p.id].hp }; });
+    await sim(host, (s) => { const p = s.players[1]; s.dg.enemies.push({ id: s.dg.nextId++, kind: 0, x: p.x + 20, y: p.y, vx: 0, vy: 0, hp: 99, mx: 99, awake: true, stun: 0, slamT: 99, slam: null }); });
     await ada.waitForTimeout(11000);
-    const after = await host.evaluate(() => { const s = window.__blobz.state, p = s.players[1]; return { x: p.x, y: p.y, h: s.dg.heroes[p.id].hearts, open: s.dg.heroes[p.id].offer.length }; });
+    const after = await host.evaluate(() => { const s = window.__blobz.state, p = s.players[1]; return { x: p.x, y: p.y, h: s.dg.heroes[p.id].hp, open: s.dg.heroes[p.id].offer.length }; });
     ok(after.open === 3 && Math.hypot(after.x - before.x, after.y - before.y) < 1 && after.h === before.h, 'cards wait with no timer; the picking blob is frozen and safe from goo');
     await sim(host, (s) => { s.dg.enemies = []; });
     for (const p of pages) await p.click('#dg-cards .skcard');
@@ -111,9 +111,10 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     for (const p of pages) await p.waitForSelector('#dg-cards', { state: 'hidden', timeout: 3000 });
     ok(true, 'each phone picked a skill card; cards close');
 
-    // rare loot from a chest: roll/pass card on every phone, highest roll wears it
-    await sim(host, (s) => { const c = s.dg.map.chests[0]; const p = s.players[0]; p.x = c.x; p.y = c.y; p.vx = 0; p.vy = 0; });
+    // rare loot (boss/chest): roll/pass card on every phone ("Rulla" / "Avstå"), highest roll wears it
+    await sim(host, (s) => { s.dg.lootQ.push('ring'); });
     for (const p of pages) await p.waitForSelector('#dg-loot:not(.hidden) #dg-roll', { timeout: 6000 });
+    ok((await ada.textContent('#dg-roll')).trim() === 'Rulla' && (await ada.textContent('#dg-pass')).trim() === 'Avstå' && (await ada.textContent('#dg-loot')).includes('+20% skada'), 'loot card: Rulla / Avstå, the item shows its effect (+20% skada)');
     if (shots) { await ada.screenshot({ path: `${shots}/dg-loot-portrait.png` }); await bo.screenshot({ path: `${shots}/dg-loot-landscape.png` }); }
     await host.click('#dg-roll'); await ada.click('#dg-pass'); await bo.click('#dg-pass');
     await bo.waitForFunction((id) => !!window.__blobzView.dungeon.heroes[id].item, ids[0], { timeout: 5000 });

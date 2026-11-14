@@ -34,7 +34,7 @@ const angDiff = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)))
           });
           // a boss-size goo barely moves when hit, so it stays in reach
           const r = a.ranged ? 90 : 17 + 34 + 6, me = s.players[a.i];
-          s.dg.enemies.push({ id: s.dg.nextId++, kind: 2, x: me.x + Math.cos(t) * r, y: me.y + Math.sin(t) * r, vx: 0, vy: 0, hp: 999, awake: true, stun: 99, slamT: 99, slam: null });
+          s.dg.enemies.push({ id: s.dg.nextId++, kind: 2, x: me.x + Math.cos(t) * r, y: me.y + Math.sin(t) * r, vx: 0, vy: 0, hp: 999, mx: 999, awake: true, stun: 99, slamT: 99, slam: null });
         }, { w, cls: CLS[w], deg, ranged, i });
         // a fresh attack after the switch (2 more swings, so none is left over from the last weapon)
         const n0 = await p.evaluate((id) => window.__dgWeapon?.[id]?.n ?? 0, ids[i]);

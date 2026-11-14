@@ -10,7 +10,7 @@ import {
   type DView, type HeroClass, type Weapon,
 } from './dungeon';
 import { sfx } from './sfx';
-import { t, tClass, tClassHint, tItem, tSkill, tSpecial, tWeapon, tWeaponHint } from './dungeonText';
+import { t, tClass, tClassHint, tEffects, tItem, tSkill, tSpecial, tWeapon, tWeaponHint } from './dungeonText';
 import { applyI18n } from './i18n';
 import type { View } from './sim';
 
@@ -80,16 +80,18 @@ function markCards() {
   });
 }
 
-function renderHearts(hearts: number, max: number) {
-  const key = hearts + '/' + max;
+/** Health bar (Stefan: a bar, not hearts): fill + "80/100". Red when low. */
+function renderHearts(hp: number, max: number) {
+  const key = hp + '/' + max;
   if (key === heartsKey) return;
   heartsKey = key;
-  $('dg-hearts').replaceChildren(...Array.from({ length: max }, (_, i) => {
-    const img = new Image();
-    img.src = `art/dungeon/heart-${hearts >= i + 1 ? 'full' : hearts >= i + 0.5 ? 'half' : 'empty'}.png`;
-    img.alt = '';
-    return img;
-  }));
+  const box = $('dg-hearts');
+  if (!box.firstChild) box.innerHTML = '<div class="hpbar"><i></i></div><span class="hpnum"></span>';
+  const frac = Math.max(0, Math.min(1, hp / Math.max(1, max)));
+  const fill = box.querySelector<HTMLElement>('.hpbar i')!;
+  fill.style.width = Math.round(frac * 100) + '%';
+  fill.classList.toggle('low', frac <= 0.3);
+  setText(box.querySelector<HTMLElement>('.hpnum')!, `${Math.ceil(hp)}/${max}`);
 }
 
 function ensureExtras() {
@@ -109,7 +111,7 @@ const fmt = (t: number) => Math.floor(t / 60) + ':' + String(Math.max(0, Math.fl
 
 function renderHud(d: DView, myId: string) {
   const h = d.heroes[myId];
-  if (h) renderHearts(h.hearts, h.maxHearts);
+  if (h) renderHearts(h.hp, h.maxHp);
   setText($('dg-gold'), String(d.gold));
   setText($('dg-floor'), t('dg.floor', { n: d.floor, max: FLOORS }));
   setText($('dg-time'), fmt(d.time));
@@ -140,7 +142,7 @@ function renderHud(d: DView, myId: string) {
     slot.dataset.k = key;
     const it = itemOf(key);
     slot.replaceChildren(...(it ? [icon(`art/dungeon/item-${it.id}.png`, it.icon, 2)] : []));
-    slot.title = it ? tItem(it.id) : '';
+    slot.title = it ? `${tItem(it.id)}: ${tEffects(it.mod)}` : '';
     slot.classList.toggle('hidden', !it);
   }
 }
@@ -160,7 +162,7 @@ function renderOffer(d: DView, myId: string) {
       const b = document.createElement('button');
       b.className = 'skcard'; b.type = 'button'; b.dataset.s = id;
       b.append(icon(skillIcon(id), sk.icon, 3));
-      b.insertAdjacentHTML('beforeend', `<b>${tSkill(sk.id)}</b>`);
+      b.insertAdjacentHTML('beforeend', `<b>${tSkill(sk.id)}</b><small class="skfx">${tEffects(sk.mod)}</small>`);
       b.onclick = () => { sfx.pick(); sendPick('skill:' + id); b.classList.add('on'); };
       return b;
     }));
@@ -188,7 +190,7 @@ function renderLoot(d: DView, myId: string, nameOf: (id: string) => string) {
         col.className = 'lootside';
         col.insertAdjacentHTML('beforeend', `<small>${label}</small>`);
         col.append(x ? icon(`art/dungeon/item-${x.id}.png`, x.icon, 4) : document.createElement('i'));
-        col.insertAdjacentHTML('beforeend', `<b>${x ? tItem(x.id) : t('dg.lootNone')}</b>`);
+        col.insertAdjacentHTML('beforeend', `<b>${x ? tItem(x.id) : t('dg.lootNone')}</b>${x ? `<small class="skfx">${tEffects(x.mod)}</small>` : ''}`);
         return col;
       };
       const arrow = document.createElement('span'); arrow.className = 'lootarrow'; arrow.textContent = '→';
@@ -196,8 +198,11 @@ function renderLoot(d: DView, myId: string, nameOf: (id: string) => string) {
     }
     const my = v.rolls[myId] ?? 0;
     show('dg-loot-btns', my === -1);
+    // alone: no dice, just "Använd" / "Take"; with friends: "Rulla" / "Avstå"
+    const solo = Object.keys(v.rolls).length <= 1;
+    setText($('dg-roll'), t(solo ? 'dg.take' : 'dg.roll'));
     const others = Object.entries(v.rolls).map(([id, r]) => `${nameOf(id)}: ${r === -1 ? '...' : r === 0 ? t('dg.passes') : r}`).join(' · ');
-    setText($('dg-loot-msg'), `${others} · ${Math.max(0, Math.ceil(v.t))} s`);
+    setText($('dg-loot-msg'), Object.keys(v.rolls).length <= 1 ? '' : `${others} · ${Math.max(0, Math.ceil(v.t))} s`); // alone: no roll list
     setText($('dg-loot-title'), t('dg.lootTitle'));
   } else if (last) {
     const key = 'l:' + last.item + ':' + last.win;

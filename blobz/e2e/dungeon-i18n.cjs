@@ -60,7 +60,7 @@ async function phone(browser, name, locale, size = PORTRAIT) {
     await noSwedish(en, 'HUD');
 
     // level-up cards + loot card at once
-    await sim(en, (s) => { s.dg.enemies = []; s.dg.xp = 4; s.dg.level = 1; const p = s.players[0]; s.dg.enemies.push({ id: s.dg.nextId++, kind: 0, x: p.x + 30, y: p.y, vx: 0, vy: 0, hp: 1, awake: true, stun: 9, slamT: 99, slam: null }); s.dg.lootQ.push('ring'); });
+    await sim(en, (s) => { s.dg.enemies = []; s.dg.xp = 4; s.dg.level = 1; const p = s.players[0]; s.dg.enemies.push({ id: s.dg.nextId++, kind: 0, x: p.x + 30, y: p.y, vx: 0, vy: 0, hp: 1, mx: 1, awake: true, stun: 9, slamT: 99, slam: null }); s.dg.lootQ.push('ring'); });
     for (const p of [en, sv]) await p.waitForSelector('#dg-cards:not(.hidden) .skcard', { timeout: 6000 });
     for (const p of [en, sv]) await p.waitForSelector('#dg-loot:not(.hidden) #dg-roll', { timeout: 6000 });
     ok((await en.textContent('#dg-cards')).includes('Level 2! Pick one') && (await en.textContent('#dg-cards')).includes('You are safe'), 'EN level-up cards ("Level 2! Pick one")');
