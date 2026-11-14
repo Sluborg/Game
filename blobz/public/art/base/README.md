@@ -10,7 +10,7 @@ nearest neighbour. **Anchor:** bottom centre (`setOrigin(0.5, 1)`) on the ground
 ## Base cottage (replaces `icons/house.png` at 5.2x)
 | File | Size | World size at 2x | Look |
 |---|---|---|---|
-| `cottage-1.png` | 44x40 | 88x80 (~3x2.5 tiles) | Small cottage |
+| `cottage-1.png` | 44x31 | 88x62 at 2x | The house from Stefan's ChatGPT loading screen, cut by `scripts/cut_loading_house.py` (replaces the code-drawn level 1) |
 | `cottage-2.png` | 52x62 | 104x124 | Bigger, chimney with smoke (top 10 px is smoke headroom) |
 | `cottage-3.png` | 64x64 | 128x128 | Level 2 + stone tower with a flag |
 
