@@ -171,3 +171,6 @@
 
 ## 2026-11-14 - v023c: blush fix (Art)
 - "Rosiga" cheeks: dark-rose edge + light-pink core, readable on all 12 body colors.
+
+## 2026-11-14 - v024: 6 new hats + winter props (Art batch merged)
+- Hats 21-26: Ninja, Dino, Astronaut, Blomkrans, Propeller, Enhörning (27 hat choices). Winter props in `public/art/props-winter/` (not wired). 25 tests, build, lan-join e2e passed.
