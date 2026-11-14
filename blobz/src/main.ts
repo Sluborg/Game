@@ -361,18 +361,17 @@ let sendBuild: (k: BuildKind | 'cottage') => void = () => {};
 let panelOpen = false;
 const COST_ICON: Record<string, string> = { wood: 'art/gather/hud-wood.png', stone: 'art/gather/hud-stone.png', berry: 'art/gather/hud-berries.png' };
 const buildName = (k: BuildKind) => t(`build.name.${k}` as Key);
-/** What each building does, as pictures (no reading): sprite paths and short symbols (+1, x2, -1).
- *  Placeholders from existing art until Art's effect icons land (see the icon list sent to Lead). */
+/** What each building does, as pictures (no reading): Art's 2x-pixel hint icons (art/fine/icons). */
 const A = (p: string) => 'art/' + p + '.png';
 const BUILD_ICONS: Record<BuildKind | 'cottage2' | 'cottage3', string[]> = {
-  storage: [A('icons/log'), A('gather/item-stone'), A('gather/item-berries'), A('icons/log')], // carry 4 things
-  workshop: [A('gather/btn-axe'), '-1', A('icons/boot')], // one hit less, faster
-  garden: [A('gather/bush-berries'), '+'], // more berries
-  well: [A('gather/item-berries'), '×2', A('icons/house')], // berries count double at home
-  watchtower: [A('icons/dash-arrow'), A('props/tree-green')], // arrows to resources
-  bridge: [A('icons/dash-arrow'), A('icons/chest')], // a new corner with loot
-  cottage2: [A('icons/log'), '+1'], // carry one more
-  cottage3: [A('gather/bush-berries'), A('icons/clock')], // faster regrowth
+  storage: [A('fine/icons/carry-4')], // carry 4 things
+  workshop: [A('fine/icons/hit-minus'), A('fine/icons/speed')], // one hit less, faster
+  garden: [A('fine/icons/berry-plus')], // more berries
+  well: [A('fine/icons/berry-x2-home')], // berries count double at home
+  watchtower: [A('fine/icons/arrow-to-resource')], // arrows to resources
+  bridge: [A('fine/icons/new-corner')], // a new corner with loot
+  cottage2: [A('fine/icons/carry-plus-1')], // carry one more
+  cottage3: [A('fine/icons/regrow-fast')], // faster regrowth
 };
 function iconRow(items: string[]): Node[] {
   return items.map((it) => {
@@ -471,6 +470,7 @@ function renderVillage(el: HTMLElement) {
   const img = (src: string, cls: string) => { const im = new Image(); im.src = src; im.alt = ''; im.className = cls; return im; };
   const res = (src: string, n: number) => { const s = document.createElement('span'); s.className = 'vres'; s.append(img(src, ''), String(n)); return s; };
   el.replaceChildren(
+    img(A('fine/icons/village-badge'), 'vbadge'),
     img(A(`base/cottage-${v.cottage}`), 'vcot'),
     ...BUILD_KINDS.filter((k) => v.builds[k]).map((k) => img(A(`base/${k}`), 'vb')),
     res(A('gather/hud-wood'), v.bank.wood), res(A('gather/hud-stone'), v.bank.stone), res(A('gather/hud-berries'), v.bank.berry),
