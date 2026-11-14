@@ -3,7 +3,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Nunito:wght@400;600;700&display=swap">
 <style>
-/* Layout: one column of question cards (pixel-framed like the game UI); open questions first, decided ones collapsed below. */
+/* Layout: tab bar (Frågor / Pågående / Backlog) over one column of pixel-framed cards, styled like the game UI. */
 :root {
   --grass: #6cbf45;
   --grass-deep: #4f9a31;
@@ -15,6 +15,7 @@
   --orange-lo: #d4621f;
   --green: #3f9a2a;
   --blue: #3fa9f5;
+  --red: #c0392b;
   --display: 'Pixelify Sans', 'Trebuchet MS', system-ui, sans-serif;
   --body: 'Nunito', 'Segoe UI', system-ui, sans-serif;
   color-scheme: light;
@@ -30,19 +31,32 @@ body {
 header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 h1 { font-family: var(--display); font-size: 34px; margin: 0; color: var(--cream); text-shadow: 0 3px 0 var(--plum), 2px 0 0 var(--plum), -2px 0 0 var(--plum), 0 -2px 0 var(--plum); letter-spacing: 1px; }
 .sub { margin: 0; color: var(--cream); font-weight: 700; }
-.pill { font-family: var(--display); background: var(--cream); padding: 4px 10px; box-shadow: 0 0 0 3px var(--plum); font-size: 15px; }
 .note { background: var(--cream); padding: 10px 14px; box-shadow: 0 0 0 3px var(--plum); font-size: 14px; color: var(--muted); }
+nav.tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; box-shadow: 0 0 0 3px var(--plum); background: var(--cream-2); margin: 3px; }
+nav.tabs a {
+  font-family: var(--display); font-size: 18px; text-align: center; padding: 10px 4px 12px; color: var(--muted); text-decoration: none;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+nav.tabs a[aria-current="page"] { background: #fff; color: var(--plum); box-shadow: inset 0 -5px 0 0 var(--orange); }
+nav.tabs a:focus-visible { outline: 3px solid var(--blue); outline-offset: -3px; }
+.badge { font-family: var(--body); font-weight: 700; font-size: 12px; background: var(--orange); color: #fff; padding: 1px 7px; box-shadow: 0 0 0 2px var(--plum); }
+.badge:empty { display: none; }
 .card {
   background: var(--cream); padding: 16px; display: flex; flex-direction: column; gap: 12px;
   box-shadow: 0 -4px 0 0 var(--plum), 0 4px 0 0 var(--plum), -4px 0 0 0 var(--plum), 4px 0 0 0 var(--plum), inset 0 -5px 0 0 var(--cream-2), 0 10px 0 2px #3f263140;
   margin: 4px; min-width: 0;
 }
 .card h2 { font-family: var(--display); font-size: 22px; margin: 0; text-wrap: balance; }
-.card .body { margin: 0; line-height: 1.45; max-width: 65ch; }
+.card h3 { font-family: var(--display); font-size: 16px; margin: 0; }
+.card .body { margin: 0; line-height: 1.45; max-width: 65ch; white-space: pre-wrap; }
 .meta { font-size: 13px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .tag { font-family: var(--display); font-size: 13px; padding: 1px 8px; background: var(--cream-2); box-shadow: 0 0 0 2px var(--plum); }
 .tag.done { background: #d9f2c9; }
 .tag.new { background: #ffe1c9; }
+.tag.wait { background: #e3ecff; }
+.tag.prio-hog { background: #ffd2cc; }
+.tag.prio-medel { background: #fff0b8; }
+.tag.prio-lag { background: #e6efe0; }
 .opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
 .opt {
   font: inherit; color: inherit; text-align: left; cursor: pointer; background: #fff; border: 0; padding: 10px;
@@ -52,18 +66,19 @@ h1 { font-family: var(--display); font-size: 34px; margin: 0; color: var(--cream
 .opt img { width: 100%; aspect-ratio: 1 / 1; object-fit: contain; image-rendering: pixelated; background: var(--grass); box-shadow: 0 0 0 2px var(--plum); }
 .opt b { font-family: var(--display); font-size: 17px; }
 .opt span { font-size: 14px; color: var(--muted); line-height: 1.35; }
-.opt:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
+.opt:focus-visible, .seg button:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
 .opt.on { box-shadow: 0 0 0 5px var(--plum), inset 0 -4px 0 0 #efe4cd; background: #fffdf6; }
 .opt.on::after {
   content: '✓'; position: absolute; top: -12px; right: -12px; width: 28px; height: 28px; display: grid; place-items: center;
   background: var(--green); color: #fff; font-weight: 700; box-shadow: 0 0 0 3px var(--plum);
 }
 label.lbl { font-family: var(--display); font-size: 15px; }
-textarea {
-  font: inherit; width: 100%; min-height: 70px; padding: 10px; border: 0; resize: vertical; background: #fff; color: var(--plum);
+textarea, input[type=text] {
+  font: inherit; width: 100%; padding: 10px; border: 0; background: #fff; color: var(--plum);
   box-shadow: 0 0 0 3px var(--plum), inset 0 3px 0 0 #ece2cc;
 }
-textarea:focus { outline: 3px solid var(--blue); outline-offset: 3px; }
+textarea { min-height: 64px; resize: vertical; }
+textarea:focus, input[type=text]:focus { outline: 3px solid var(--blue); outline-offset: 3px; }
 .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .btn {
   font-family: var(--display); font-size: 18px; color: #fff; background: var(--orange); border: 0; padding: 10px 18px 13px; cursor: pointer;
@@ -71,11 +86,25 @@ textarea:focus { outline: 3px solid var(--blue); outline-offset: 3px; }
 }
 .btn:active { transform: translateY(2px); }
 .btn:disabled { filter: saturate(0.2); cursor: default; }
-.btn:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
+.btn:focus-visible, .linkbtn:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
+.linkbtn { font: inherit; font-size: 13px; background: none; border: 0; color: var(--red); text-decoration: underline; cursor: pointer; padding: 0; }
 .status { font-size: 14px; color: var(--muted); }
 .status.ok { color: var(--green); font-weight: 700; }
-.status.err { color: #b3261e; font-weight: 700; }
+.status.err { color: var(--red); font-weight: 700; }
 .decision { background: #e6f5dc; padding: 10px 12px; box-shadow: 0 0 0 2px var(--plum); font-size: 15px; }
+.seg { display: inline-flex; gap: 0; box-shadow: 0 0 0 3px var(--plum); }
+.seg button { font-family: var(--display); font-size: 15px; border: 0; padding: 6px 12px; background: #fff; color: var(--muted); cursor: pointer; }
+.seg button + button { box-shadow: inset 3px 0 0 0 var(--plum); }
+.seg button.on[data-level="hog"] { background: #ffb3a8; color: var(--plum); }
+.seg button.on[data-level="medel"] { background: #ffe27a; color: var(--plum); }
+.seg button.on[data-level="lag"] { background: #cfe8c0; color: var(--plum); }
+.comments { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.comments li { background: #fff; padding: 8px 10px; box-shadow: 0 0 0 2px var(--plum); display: flex; flex-direction: column; gap: 4px; }
+.comments li .c-text { white-space: pre-wrap; line-height: 1.4; }
+.comments li .c-meta { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); }
+.work { display: grid; grid-template-columns: auto 1fr; gap: 10px 12px; align-items: start; }
+.who { font-family: var(--display); font-size: 15px; padding: 4px 8px; background: var(--cream-2); box-shadow: 0 0 0 2px var(--plum); text-align: center; min-width: 56px; }
+.who.Art { background: #f3dcff; } .who.Code { background: #d8ecff; } .who.Lead { background: #ffe8c9; }
 details.archive summary { font-family: var(--display); font-size: 20px; color: var(--cream); cursor: pointer; text-shadow: 0 2px 0 var(--plum); list-style: none; }
 details.archive summary::-webkit-details-marker { display: none; }
 details.archive[open] summary { margin-bottom: 12px; }
@@ -87,22 +116,52 @@ details.archive[open] summary { margin-bottom: 12px; }
   <header>
     <div>
       <h1>Blobz Beslut</h1>
-      <p class="sub">Välj, kommentera, tryck Skicka. Claude läser allt härifrån.</p>
+      <p class="sub">Välj, kommentera, spara. Claude läser allt härifrån.</p>
     </div>
-    <span class="pill" id="count">Laddar...</span>
   </header>
+  <nav class="tabs" aria-label="Flikar">
+    <a href="#fragor" data-tab="fragor">Frågor <span class="badge" id="b-fragor"></span></a>
+    <a href="#pagaende" data-tab="pagaende">Pågående <span class="badge" id="b-pagaende"></span></a>
+    <a href="#backlog" data-tab="backlog">Backlog <span class="badge" id="b-backlog"></span></a>
+  </nav>
   <div class="note" id="conn" hidden></div>
-  <section id="open" class="wrap" aria-label="Öppna frågor"></section>
-  <details class="archive" id="archiveBox">
-    <summary id="archiveTitle">Avgjorda frågor</summary>
-    <section id="done" class="wrap" aria-label="Avgjorda frågor"></section>
-  </details>
+
+  <section id="tab-fragor" class="wrap" aria-label="Frågor">
+    <section id="open" class="wrap"></section>
+    <details class="archive" id="archiveBox">
+      <summary id="archiveTitle">Avgjorda frågor</summary>
+      <section id="done" class="wrap"></section>
+    </details>
+  </section>
+
+  <section id="tab-pagaende" class="wrap" aria-label="Pågående" hidden>
+    <section id="work-now" class="wrap"></section>
+    <details class="archive" id="workDoneBox">
+      <summary id="workDoneTitle">Klart</summary>
+      <section id="work-done" class="wrap"></section>
+    </details>
+  </section>
+
+  <section id="tab-backlog" class="wrap" aria-label="Backlog" hidden>
+    <article class="card" id="newIdea">
+      <h2>Ny idé</h2>
+      <label class="lbl" for="idea-title">Rubrik</label>
+      <input type="text" id="idea-title" maxlength="80" placeholder="Till exempel: Fiskedamm">
+      <label class="lbl" for="idea-text">Beskrivning</label>
+      <textarea id="idea-text" placeholder="Vad ska man kunna göra?"></textarea>
+      <div class="row"><button class="btn" type="button" id="idea-save">Lägg till</button><span class="status" id="idea-status"></span></div>
+    </article>
+    <section id="backlog-list" class="wrap"></section>
+  </section>
 </div>
 
 <script>
 const $ = (s) => document.querySelector(s);
-const state = { questions: [], answers: {}, drafts: {} };
+const state = { questions: [], answers: {}, drafts: {}, work: [], backlog: [], prio: {}, comments: [], commentDrafts: {} };
 let db = null;
+const TABS = ['fragor', 'pagaende', 'backlog'];
+const PRIO = [['hog', 'Hög'], ['medel', 'Medel'], ['lag', 'Låg']];
+const PRIO_RANK = { hog: 0, medel: 1, lag: 2 };
 
 function el(tag, attrs = {}, ...kids) {
   const e = document.createElement(tag);
@@ -113,7 +172,29 @@ function el(tag, attrs = {}, ...kids) {
   for (const c of kids) if (c) e.append(c);
   return e;
 }
+function fmt(ts) {
+  if (!ts) return '';
+  try { return new Date(ts).toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' }); } catch { return ''; }
+}
+function needDb(status) {
+  if (db) return true;
+  status.textContent = 'Kan inte spara här. Öppna sidan inloggad på claude.ai.'; status.className = 'status err';
+  return false;
+}
 
+/* ---------- tabs (hash routing) ---------- */
+function currentTab() { const h = location.hash.slice(1); return TABS.includes(h) ? h : 'fragor'; }
+function showTab() {
+  const t = currentTab();
+  for (const name of TABS) {
+    $('#tab-' + name).hidden = name !== t;
+    const a = document.querySelector(`nav.tabs a[data-tab="${name}"]`);
+    if (name === t) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+  }
+}
+window.addEventListener('hashchange', showTab);
+
+/* ---------- Frågor ---------- */
 function draftFor(q) {
   if (!state.drafts[q.id]) {
     const a = state.answers[q.id] || {};
@@ -121,23 +202,16 @@ function draftFor(q) {
   }
   return state.drafts[q.id];
 }
-
-function fmt(ts) {
-  if (!ts) return '';
-  try { return new Date(ts).toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' }); } catch { return ''; }
-}
-
-function renderCard(q) {
+function renderQuestion(q) {
   const a = state.answers[q.id];
   const d = draftFor(q);
   const card = el('article', { class: 'card', id: 'q-' + q.id });
-  const tags = el('div', { class: 'meta' },
-    q.decision ? el('span', { class: 'tag done', text: 'Avgjord' }) : a ? el('span', { class: 'tag', text: 'Besvarad' }) : el('span', { class: 'tag new', text: 'Ny' }),
+  card.append(el('div', { class: 'meta' },
+    q.decision ? el('span', { class: 'tag done', text: 'Avgjord' }) : a ? el('span', { class: 'tag wait', text: 'Besvarad, Claude jobbar' }) : el('span', { class: 'tag new', text: 'Obesvarad' }),
     q.area ? el('span', { text: q.area }) : null,
-    a && a.at ? el('span', { text: 'Ditt svar: ' + fmt(a.at) }) : null);
-  card.append(tags, el('h2', { text: q.title }));
+    a && a.at ? el('span', { text: 'Ditt svar: ' + fmt(a.at) }) : null));
+  card.append(el('h2', { text: q.title }));
   if (q.body) card.append(el('p', { class: 'body', text: q.body }));
-
   const options = Array.isArray(q.options) ? q.options : [];
   if (options.length) {
     const grid = el('div', { class: 'opts', role: 'radiogroup', 'aria-label': q.title });
@@ -146,74 +220,171 @@ function renderCard(q) {
       if (o.img) b.append(el('img', { src: o.img, alt: o.label || '' }));
       b.append(el('b', { text: o.label || o.id }));
       if (o.desc) b.append(el('span', { text: o.desc }));
-      b.addEventListener('click', () => { d.choice = d.choice === o.id ? null : o.id; renderAll(); });
+      b.addEventListener('click', () => { d.choice = d.choice === o.id ? null : o.id; renderQuestions(); });
       grid.append(b);
     }
     card.append(grid);
   }
-
   const taId = 'c-' + q.id;
   const ta = el('textarea', { id: taId, placeholder: options.length ? 'Kommentar (valfritt)' : 'Ditt svar' });
   ta.value = d.comment;
   ta.addEventListener('input', () => { d.comment = ta.value; });
   card.append(el('label', { class: 'lbl', for: taId, text: options.length ? 'Kommentar' : 'Svar' }), ta);
-
   const status = el('span', { class: 'status' });
   const send = el('button', { class: 'btn', type: 'button', text: a ? 'Uppdatera' : 'Skicka' });
   send.addEventListener('click', async () => {
-    if (!db) { status.textContent = 'Kan inte spara här. Öppna sidan inloggad på claude.ai.'; status.className = 'status err'; return; }
+    if (!needDb(status)) return;
     if (!d.choice && !d.comment.trim()) { status.textContent = 'Välj ett alternativ eller skriv något först.'; status.className = 'status err'; return; }
     send.disabled = true; status.textContent = 'Sparar...'; status.className = 'status';
     try {
       await db.doc('answers/' + q.id).set({ choice: d.choice, comment: d.comment.trim(), at: new Date().toISOString() });
       status.textContent = 'Skickat. Claude ser det.'; status.className = 'status ok';
-    } catch (e) {
-      status.textContent = 'Kunde inte spara (' + (e && e.code || 'fel') + '). Försök igen.'; status.className = 'status err';
-    } finally { send.disabled = false; }
+    } catch (e) { status.textContent = 'Kunde inte spara (' + (e && e.code || 'fel') + '). Försök igen.'; status.className = 'status err'; }
+    finally { send.disabled = false; }
   });
   card.append(el('div', { class: 'row' }, send, status));
   if (q.decision) card.append(el('div', { class: 'decision', text: 'Beslut: ' + q.decision }));
   return card;
 }
-
-function renderAll() {
+function renderQuestions() {
   const qs = [...state.questions].sort((x, y) => (y.order || 0) - (x.order || 0));
   const open = qs.filter((q) => !q.decision), done = qs.filter((q) => q.decision);
-  const openBox = $('#open'), doneBox = $('#done');
+  open.sort((x, y) => (state.answers[x.id] ? 1 : 0) - (state.answers[y.id] ? 1 : 0));
   const focusId = document.activeElement && document.activeElement.id;
-  openBox.replaceChildren(...(open.length ? open.map(renderCard) : [el('div', { class: 'card empty' }, el('h2', { text: 'Inga öppna frågor just nu' }), el('p', { class: 'body', text: 'När Claude behöver ett beslut dyker frågan upp här, med alternativ att välja mellan.' }))]));
-  doneBox.replaceChildren(...done.map(renderCard));
+  $('#open').replaceChildren(...(open.length ? open.map(renderQuestion) : [el('div', { class: 'card empty' }, el('h2', { text: 'Inga öppna frågor just nu' }), el('p', { class: 'body', text: 'När Claude behöver ett beslut dyker frågan upp här, med alternativ att välja mellan.' }))]));
+  $('#done').replaceChildren(...done.map(renderQuestion));
   $('#archiveBox').hidden = done.length === 0;
   $('#archiveTitle').textContent = 'Avgjorda frågor (' + done.length + ')';
   const unanswered = open.filter((q) => !state.answers[q.id]).length;
-  $('#count').textContent = open.length ? unanswered + ' obesvarade av ' + open.length : 'Allt besvarat';
+  $('#b-fragor').textContent = unanswered ? String(unanswered) : '';
   if (focusId && focusId.startsWith('c-')) { const t = document.getElementById(focusId); if (t) t.focus(); }
 }
 
+/* ---------- Pågående ---------- */
+function renderWorkItem(w) {
+  const statusTag = w.status === 'klar' ? el('span', { class: 'tag done', text: 'Klar' }) : w.status === 'väntar' ? el('span', { class: 'tag wait', text: 'Väntar' }) : el('span', { class: 'tag new', text: 'Pågår' });
+  const card = el('article', { class: 'card' });
+  const right = el('div', { class: 'wrap', style: 'gap:6px;min-width:0' },
+    el('div', { class: 'meta' }, statusTag, w.version ? el('span', { text: w.version }) : null, w.updatedAt ? el('span', { text: fmt(w.updatedAt) }) : null),
+    el('h3', { text: w.title || '' }),
+    w.note ? el('p', { class: 'body', text: w.note }) : null);
+  card.append(el('div', { class: 'work' }, el('span', { class: 'who ' + (w.who || ''), text: w.who || '' }), right));
+  return card;
+}
+function renderWork() {
+  const ws = [...state.work].sort((x, y) => (y.order || 0) - (x.order || 0));
+  const now = ws.filter((w) => w.status !== 'klar'), done = ws.filter((w) => w.status === 'klar');
+  $('#work-now').replaceChildren(...(now.length ? now.map(renderWorkItem) : [el('div', { class: 'card empty' }, el('h2', { text: 'Inget pågår just nu' }))]));
+  $('#work-done').replaceChildren(...done.map(renderWorkItem));
+  $('#workDoneBox').hidden = done.length === 0;
+  $('#workDoneTitle').textContent = 'Klart (' + done.length + ')';
+  $('#b-pagaende').textContent = now.length ? String(now.length) : '';
+}
+
+/* ---------- Backlog ---------- */
+function renderBacklogItem(b) {
+  const level = state.prio[b.id];
+  const card = el('article', { class: 'card', id: 'b-' + b.id });
+  card.append(el('div', { class: 'meta' },
+    level ? el('span', { class: 'tag prio-' + level, text: 'Prio: ' + Object.fromEntries(PRIO)[level] }) : el('span', { class: 'tag', text: 'Ingen prio' }),
+    b.area ? el('span', { text: b.area }) : null,
+    b.by === 'stefan' ? el('span', { text: 'Din idé' }) : null));
+  card.append(el('h2', { text: b.title || '' }));
+  if (b.desc) card.append(el('p', { class: 'body', text: b.desc }));
+  const seg = el('div', { class: 'seg', role: 'radiogroup', 'aria-label': 'Prio för ' + (b.title || '') });
+  const pStatus = el('span', { class: 'status' });
+  for (const [id, label] of PRIO) {
+    const btn = el('button', { type: 'button', 'data-level': id, class: level === id ? 'on' : '', role: 'radio', 'aria-checked': String(level === id), text: label });
+    btn.addEventListener('click', async () => {
+      if (!needDb(pStatus)) return;
+      try {
+        if (level === id) await db.doc('prio/' + b.id).delete(); else await db.doc('prio/' + b.id).set({ level: id, at: new Date().toISOString() });
+      } catch (e) { pStatus.textContent = 'Kunde inte spara prio (' + (e && e.code || 'fel') + ').'; pStatus.className = 'status err'; }
+    });
+    seg.append(btn);
+  }
+  card.append(el('div', { class: 'row' }, el('span', { class: 'lbl', text: 'Prio' }), seg, pStatus));
+
+  const mine = state.comments.filter((c) => c.item === b.id).sort((x, y) => String(x.at).localeCompare(String(y.at)));
+  if (mine.length) {
+    const ul = el('ul', { class: 'comments', 'aria-label': 'Kommentarer' });
+    for (const c of mine) {
+      const del = el('button', { class: 'linkbtn', type: 'button', text: 'Ta bort' });
+      del.addEventListener('click', async () => { if (!db) return; try { await db.doc('comments/' + c.id).delete(); } catch { /* shown by the list staying */ } });
+      ul.append(el('li', {}, el('span', { class: 'c-text', text: c.text || '' }), el('span', { class: 'c-meta' }, el('span', { text: (c.by === 'claude' ? 'Claude · ' : '') + fmt(c.at) }), c.by === 'claude' ? null : del)));
+    }
+    card.append(ul);
+  }
+  const taId = 'bc-' + b.id;
+  const ta = el('textarea', { id: taId, placeholder: 'Lägg till en kommentar' });
+  ta.value = state.commentDrafts[b.id] || '';
+  ta.addEventListener('input', () => { state.commentDrafts[b.id] = ta.value; });
+  const status = el('span', { class: 'status' });
+  const save = el('button', { class: 'btn', type: 'button', text: 'Spara' });
+  save.addEventListener('click', async () => {
+    if (!needDb(status)) return;
+    const text = (state.commentDrafts[b.id] || '').trim();
+    if (!text) { status.textContent = 'Skriv något först.'; status.className = 'status err'; return; }
+    save.disabled = true;
+    try {
+      await db.collection('comments').add({ item: b.id, text, by: 'stefan', at: new Date().toISOString() });
+      state.commentDrafts[b.id] = ''; status.textContent = 'Sparad.'; status.className = 'status ok';
+      renderBacklog();
+    } catch (e) { status.textContent = 'Kunde inte spara (' + (e && e.code || 'fel') + ').'; status.className = 'status err'; }
+    finally { save.disabled = false; }
+  });
+  card.append(el('label', { class: 'lbl', for: taId, text: 'Kommentar' }), ta, el('div', { class: 'row' }, save, status));
+  return card;
+}
+function renderBacklog() {
+  const items = [...state.backlog].sort((x, y) => {
+    const px = PRIO_RANK[state.prio[x.id]] ?? 3, py = PRIO_RANK[state.prio[y.id]] ?? 3;
+    return px - py || (y.order || 0) - (x.order || 0);
+  });
+  const focusId = document.activeElement && document.activeElement.id;
+  $('#backlog-list').replaceChildren(...(items.length ? items.map(renderBacklogItem) : [el('div', { class: 'card empty' }, el('h2', { text: 'Backloggen är tom' }), el('p', { class: 'body', text: 'Lägg till en idé ovanför.' }))]));
+  const noPrio = items.filter((b) => !state.prio[b.id]).length;
+  $('#b-backlog').textContent = noPrio ? String(noPrio) : '';
+  if (focusId && focusId.startsWith('bc-')) { const t = document.getElementById(focusId); if (t) t.focus(); }
+}
+$('#idea-save').addEventListener('click', async () => {
+  const status = $('#idea-status');
+  if (!needDb(status)) return;
+  const title = $('#idea-title').value.trim(), desc = $('#idea-text').value.trim();
+  if (!title) { status.textContent = 'Skriv en rubrik först.'; status.className = 'status err'; return; }
+  $('#idea-save').disabled = true;
+  try {
+    await db.collection('backlog').add({ title, desc, by: 'stefan', area: 'Idé', order: Date.now() / 1e9, at: new Date().toISOString() });
+    $('#idea-title').value = ''; $('#idea-text').value = '';
+    status.textContent = 'Tillagd i backloggen.'; status.className = 'status ok';
+  } catch (e) { status.textContent = 'Kunde inte spara (' + (e && e.code || 'fel') + ').'; status.className = 'status err'; }
+  finally { $('#idea-save').disabled = false; }
+});
+
+function renderAll() { renderQuestions(); renderWork(); renderBacklog(); }
+showTab();
 renderAll();
-$('#count').textContent = 'Laddar...';
 
 (async () => {
-  const timer = setTimeout(() => { const c = $('#conn'); c.hidden = false; c.textContent = 'Får inte kontakt med databasen än. Frågorna dyker upp när anslutningen är klar.'; }, 10000);
+  const timer = setTimeout(() => { const c = $('#conn'); c.hidden = false; c.textContent = 'Får inte kontakt med databasen än. Innehållet dyker upp när anslutningen är klar.'; }, 10000);
   db = await (window.claude ? window.claude.use('db') : null);
   if (!db) {
     clearTimeout(timer);
-    const c = $('#conn'); c.hidden = false; c.textContent = 'Den här vyn kan inte läsa frågorna. Öppna sidan inloggad på claude.ai.';
-    $('#count').textContent = '–';
+    const c = $('#conn'); c.hidden = false; c.textContent = 'Den här vyn kan inte läsa tavlan. Öppna sidan inloggad på claude.ai.';
     return;
   }
   const clear = () => { clearTimeout(timer); $('#conn').hidden = true; };
-  db.collection('questions').onSnapshot((snap) => {
-    if (!snap.metadata.fromCache) clear();
-    state.questions = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    renderAll();
-  }, (e) => { clear(); const c = $('#conn'); c.hidden = false; c.textContent = 'Kunde inte läsa frågorna (' + (e && e.code) + ').'; });
-  db.collection('answers').onSnapshot((snap) => {
-    const next = {};
-    for (const d of snap.docs) next[d.id] = d.data();
-    state.answers = next;
-    for (const id of Object.keys(next)) if (!state.drafts[id]) delete state.drafts[id];
-    renderAll();
+  const fail = (what) => (e) => { clear(); const c = $('#conn'); c.hidden = false; c.textContent = 'Kunde inte läsa ' + what + ' (' + (e && e.code) + ').'; };
+  const rows = (snap) => snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  db.collection('questions').onSnapshot((s) => { if (!s.metadata.fromCache) clear(); state.questions = rows(s); renderQuestions(); }, fail('frågorna'));
+  db.collection('answers').onSnapshot((s) => {
+    const next = {}; for (const d of s.docs) next[d.id] = d.data();
+    state.answers = next; for (const id of Object.keys(next)) delete state.drafts[id];
+    renderQuestions();
   }, () => {});
+  db.collection('work').onSnapshot((s) => { state.work = rows(s); renderWork(); }, fail('pågående arbete'));
+  db.collection('backlog').onSnapshot((s) => { state.backlog = rows(s); renderBacklog(); }, fail('backloggen'));
+  db.collection('prio').onSnapshot((s) => { const p = {}; for (const d of s.docs) p[d.id] = d.data().level; state.prio = p; renderBacklog(); }, () => {});
+  db.collection('comments').onSnapshot((s) => { state.comments = rows(s); renderBacklog(); }, () => {});
 })();
 </script>

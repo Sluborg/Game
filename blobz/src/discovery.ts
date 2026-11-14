@@ -13,7 +13,7 @@ export const SLOTS = 8;
 export const STUN = 'stun:stun.l.google.com:19302';
 
 /** What a host tells a probing phone (`info?` -> `info`). */
-export interface RoomInfo { name: string; look: BlobLook; players: number; max: number; started: boolean }
+export interface RoomInfo { name: string; look: BlobLook; players: number; max: number; started: boolean; v: string }
 
 export function slotId(ns: string, slot: number) { return `${SLOT_PREFIX}${ns}-${slot}`; }
 export function slotIds(ns: string) { return Array.from({ length: SLOTS }, (_, i) => slotId(ns, i + 1)); }
@@ -39,22 +39,50 @@ export async function hashNs(seed: string): Promise<string> {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 10);
 }
 
-/** Public IP via STUN, or null after `ms` (strict NAT, IPv6-only, UDP blocked). Never sent anywhere. */
+/** IPv6 addresses are unique per phone; phones on one Wi-Fi share the /64 prefix. IPv4 is shared as is. */
+export function networkKey(addr: string): string {
+  if (!addr.includes(':')) return addr;
+  const [head, tail = ''] = addr.toLowerCase().split('::');
+  const h = head ? head.split(':') : [];
+  const t = tail ? tail.split(':') : [];
+  const full = [...h, ...Array(Math.max(0, 8 - h.length - t.length)).fill('0'), ...t];
+  return full.slice(0, 4).map((x) => x.replace(/^0+(?=.)/, '')).join(':') + '::/64';
+}
+
+/** Pick the namespace seed from all srflx addresses: any IPv4 wins, else the IPv6 /64 prefix. */
+export function pickSeed(addrs: string[]): string | null {
+  const v4 = addrs.filter((a) => !a.includes(':')).sort();
+  if (v4.length) return v4[0];
+  const v6 = addrs.filter((a) => a.includes(':')).map(networkKey).sort();
+  return v6[0] ?? null;
+}
+
+/** Public network via STUN, or null after `ms` (strict NAT, UDP blocked). Collects every srflx
+ *  candidate for a short while (phones often report IPv6 first) before choosing. Never sent anywhere. */
 export function publicIp(ms = 4000): Promise<string | null> {
   return new Promise((resolve) => {
     let pc: RTCPeerConnection | null = null;
-    const done = (ip: string | null) => { clearTimeout(timer); try { pc?.close(); } catch { /* closed */ } pc = null; resolve(ip); };
-    const timer = setTimeout(() => done(null), ms);
+    const found: string[] = [];
+    let settle = 0;
+    const done = () => {
+      clearTimeout(timer); clearTimeout(settle);
+      try { pc?.close(); } catch { /* closed */ }
+      pc = null; resolve(pickSeed(found));
+    };
+    const timer = window.setTimeout(done, ms);
     try {
-      pc = new RTCPeerConnection({ iceServers: [{ urls: STUN }] });
+      pc = new RTCPeerConnection({ iceServers: [{ urls: [STUN, 'stun:stun1.l.google.com:19302'] }] });
       pc.createDataChannel('ns');
       pc.onicecandidate = (e) => {
-        if (!e.candidate) return; // gathering finished without srflx: wait for the timer
+        if (!e.candidate) { if (found.length) done(); return; } // gathering finished
         const ip = srflxAddress(e.candidate.candidate);
-        if (ip) done(ip);
+        if (!ip || found.includes(ip)) return;
+        found.push(ip);
+        if (!ip.includes(':')) { done(); return; } // IPv4 is the best key, stop now
+        clearTimeout(settle); settle = window.setTimeout(done, 1500); // give IPv4 a moment to show up
       };
-      pc.createOffer().then((o) => pc?.setLocalDescription(o)).catch(() => done(null));
-    } catch { done(null); }
+      pc.createOffer().then((o) => pc?.setLocalDescription(o)).catch(() => done());
+    } catch { done(); }
   });
 }
 
@@ -82,6 +110,7 @@ export function cleanInfo(raw: unknown, clampLook: (l: Partial<BlobLook>) => Blo
     players: Math.max(0, Math.min(max, Math.floor(Number(r.players)) || 0)),
     max,
     started: !!r.started,
+    v: String(r.v ?? '').slice(0, 12), // '' = a host from before version checks
   };
 }
 

@@ -1,5 +1,12 @@
 # Blobz backlog (ideas, not scheduled)
 
+## Decided on the board (2026-11-14)
+- Combat only in dungeons (meadow stays peaceful; goo waves in the meadow cancelled).
+- Dungeon classes: all four (Präst, Bågskytt, Krigare, Riddare). Level up = pick 1 of 3, each class has its own unique skills in the draw.
+- Loot: mixed (common items for everyone, rare items roll/pass with a side-by-side comparison).
+- Next big feature: base building (in progress after the designer batch). Round length: open, Stefan is curious about an endless/expandable mode; the persistent village is a first step.
+
+
 Decisions on these are collected on the decision board:
 https://claude.ai/artifact/7pHh1Z6QmDvtAYWweGvkAL
 

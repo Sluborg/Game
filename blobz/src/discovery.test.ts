@@ -38,3 +38,16 @@ describe('discovery helpers', () => {
     expect(cleanInfo({}, clamp)).toMatchObject({ name: 'Blob', players: 0, max: 5, started: false });
   });
 });
+
+import { networkKey, pickSeed } from './discovery';
+describe('network key', () => {
+  it('IPv6 phones on one Wi-Fi share the /64 prefix', () => {
+    expect(networkKey('2001:db8:aa:bb:1111:2222:3333:4444')).toBe(networkKey('2001:db8:aa:bb:9:8:7:6'));
+    expect(networkKey('2001:db8::1')).toBe('2001:db8:0:0::/64');
+  });
+  it('IPv4 wins over IPv6', () => {
+    expect(pickSeed(['2001:db8:aa:bb::5', '203.0.113.7'])).toBe('203.0.113.7');
+    expect(pickSeed(['2001:db8:aa:bb::5'])).toBe('2001:db8:aa:bb::/64');
+    expect(pickSeed([])).toBeNull();
+  });
+});
