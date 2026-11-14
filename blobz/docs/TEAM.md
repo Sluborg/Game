@@ -3,6 +3,10 @@
 Stefan talks only to **Lead**. Lead plans, tests, reviews, merges and deploys. Art and Code work in their own
 Claude Code sessions on their own branches and never push to the deploy branch.
 
+## ChatGPT art intake
+Stefan may give ChatGPT-generated images directly to **Art**. Art judges them (style, cleanliness, fit), slices and
+integrates them, and tells Lead whether a new ChatGPT round is needed and with which prompt changes.
+
 ## Branches
 | Role | Branch | Pushes to |
 |---|---|---|

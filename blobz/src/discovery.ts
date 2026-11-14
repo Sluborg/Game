@@ -123,6 +123,9 @@ export class Scanner {
   private stopped = false;
   private misses = new Map<number, number>();
   private rooms = new Map<number, FoundRoom>();
+  /** Slots whose host the broker knows but whose WebRTC link is still connecting (phones can take 3-6 s). */
+  pending = new Set<number>();
+  private unavailable = new Set<string>();
   onUpdate: (rooms: FoundRoom[]) => void = () => {};
 
   constructor(private ns: string, private clamp: (l: Partial<BlobLook>) => BlobLook, private every = 3000) {}
@@ -131,8 +134,14 @@ export class Scanner {
     const peer = new Peer({ debug: 0 });
     this.peer = peer;
     peer.on('open', () => void this.round());
-    // peer-unavailable just means an empty slot; a lost broker connection is retried by the next round
-    peer.on('error', () => {});
+    // peer-unavailable = an empty slot (the message names the id): end that probe right away.
+    // A lost broker connection is retried by the next round.
+    peer.on('error', (e) => {
+      const err = e as { type?: string; message?: string };
+      if (err.type !== 'peer-unavailable') return;
+      const m = /blobz-v2-[0-9a-f]{10}-[1-8]/.exec(err.message ?? '');
+      if (m) this.unavailable.add(m[0]);
+    });
   }
 
   stop() {
@@ -155,17 +164,26 @@ export class Scanner {
         try { conn?.close(); } catch { /* gone */ }
         resolve(r);
       };
-      const t = setTimeout(() => end(null), 2500);
+      // real phones need several seconds for ICE (mDNS / TURN); empty slots are cut short below
+      const t = setTimeout(() => end(null), 9000);
+      this.unavailable.delete(peerId);
+      const poll = setInterval(() => {
+        if (settled) { clearInterval(poll); return; }
+        if (this.unavailable.has(peerId)) { clearInterval(poll); end(null); return; }
+      }, 150);
+      // no "unavailable" after 1.5 s: the broker knows this host, show "ansluter..." meanwhile
+      setTimeout(() => { if (!settled && !this.unavailable.has(peerId)) { this.pending.add(slot); this.onUpdate([...this.rooms.values()]); } }, 1500);
       try { conn = peer.connect(peerId, { reliable: true, serialization: 'json' }); } catch { end(null); return; }
       conn.on('open', () => conn.send({ t: 'info?' }));
       conn.on('data', (raw) => {
         const m = raw as { t?: string; info?: unknown };
         if (m?.t !== 'info') return;
         const info = cleanInfo(m.info, this.clamp);
+        this.pending.delete(slot);
         end(info ? { ...info, slot, peerId } : null);
       });
-      conn.on('close', () => end(null));
-      conn.on('error', () => end(null));
+      conn.on('close', () => { this.pending.delete(slot); end(null); });
+      conn.on('error', () => { this.pending.delete(slot); end(null); });
     });
   }
 
@@ -173,6 +191,7 @@ export class Scanner {
     if (this.stopped) return;
     if (this.peer?.disconnected && !this.peer.destroyed) this.peer.reconnect();
     const found = await Promise.all(Array.from({ length: SLOTS }, (_, i) => this.probe(i + 1)));
+    found.forEach((r, i) => { if (!r) this.pending.delete(i + 1); });
     if (this.stopped) return;
     found.forEach((r, i) => {
       const slot = i + 1;
