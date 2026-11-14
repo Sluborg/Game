@@ -217,3 +217,6 @@
 
 ## 2026-11-14 - dungeon art merged (Art batch, not wired; no version bump)
 - `public/art/dungeon/`: weapons (sword/hammer/spear strips), weapon cards, attack/dash icons, entrance + stairs, hearts, XP bar, level badge, KO/revive, goo flash, slam warning, shockwave, chest. For Code's dungeon v1.
+
+## 2026-11-14 - v028f: clean back arrow
+- Hand-placed 13x9 pixel back arrow replaces the sliced one. Font choice posted on the board (4 rendered options).
