@@ -496,3 +496,18 @@ h2, button.big, .tab, .chip, .edit, #score, #hud-time, .me-text b, .lantext b, #
 .ask p { margin: 0; font-weight: 700; font-size: 18px; color: #b3261e; }
 .askrow { display: flex; gap: 14px; }
 #hint:empty { display: none; }
+
+/* ---------- lobby map pick: two big picture cards ---------- */
+.mappick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mapcard { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 0 0 4px; cursor: pointer; background: none;
+  border-style: solid; border-width: 9px; border-image: url('/art/ui/input.png') 4 fill / 9px stretch; image-rendering: pixelated; color: var(--plum); }
+.mapcard b { font-size: 20px; font-weight: 900; }
+.mapimg { display: flex; align-items: flex-end; justify-content: center; gap: 2px; width: 100%; height: 66px; padding-bottom: 4px; }
+.mapimg.meadow { background: #6cbf45; box-shadow: inset 0 -6px 0 #5aa83a; }
+.mapimg.snow { background: #e9f4fb; box-shadow: inset 0 -6px 0 #cfe3f0; }
+.mapimg img { height: 54px; width: auto; image-rendering: pixelated; }
+.mapimg img:nth-child(2) { height: 34px; }
+.mapcard.on { border-image-source: url('/art/ui/btn-yellow.png'); border-image-slice: 3 fill; box-shadow: 0 0 0 4px var(--plum); }
+.mapcard:disabled { cursor: default; }
+.mapcard:disabled:not(.on) { filter: grayscale(0.7) opacity(0.6); }
+@media (orientation: landscape) and (max-height: 520px) { .mapimg { height: 46px; } .mapimg img { height: 38px; } .mapimg img:nth-child(2) { height: 24px; } }
