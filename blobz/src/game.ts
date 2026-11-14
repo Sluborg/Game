@@ -1,6 +1,6 @@
 // Phaser scene: renders a View (from the host sim or from network snapshots).
 import Phaser from 'phaser';
-import { blobCanvas, BODY_CY, clampLook, FACE_DIRS, faceIndex } from './blob';
+import { blobCanvas, BLOB_FRAMES, BODY_CY, clampLook, facingFromVelocity, GRID_H, GRID_W, type Facing } from './blob';
 import { sfx } from './sfx';
 import { dungeonFrame } from './dungeonScene'; // [dungeon hook]
 import { BASE, GATE_W, makePuzzles, makeTrees, PLATE_R, rng, WORLD_H, WORLD_W } from './sim';
@@ -56,7 +56,8 @@ export const YARD_ENABLED = true;
 const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.search).has('debug');
 /** Below this speed (px/s) the face looks straight ahead. */
 const FACE_DEAD = 40;
-const BLOB_SCALE = 1.45; // 36x48 blob grid // 18x24 pixel blob grid
+const BLOB_SCALE = 3; // blobz v2: 16x18 grid on the Ninja 16 px grid, drawn at the Ninja world scale
+const TOOL_SCALE = 1.45; // the tool strips keep their old size
 // decorations from Tiny Farm (sheet 'farm') and Tiny Town ('town')
 const DECOR: [string, number][] = [['pr-flowers', 2]]; // no decor bushes: bushes are berry nodes now
 
@@ -82,7 +83,8 @@ interface BlobGfx {
   aura: Phaser.GameObjects.Graphics;
   tool?: Phaser.GameObjects.Sprite;
   swingT: number; // seconds left of the current tool swing
-  faceLeft: boolean;
+  faceLeft: boolean; // tool swing direction
+  facing: Facing; // body mirror (left = flipX)
   x: number; y: number; vx: number; vy: number;
   look: { x: number; y: number };
   trail: { x: number; y: number; a: number }[];
@@ -395,7 +397,7 @@ export class GameScene extends Phaser.Scene {
       seenG.add(g.id);
       let e = this.gems.get(g.id);
       if (!e) {
-        e = { g: this.add.graphics(), img: this.add.image(g.x, g.y, 'ic-chest').setScale(1.5), t: [0, 1].map(() => this.add.image(0, 0, this.miniBlob()).setScale(0.8)), x: g.x, y: g.y };
+        e = { g: this.add.graphics(), img: this.add.image(g.x, g.y, 'ic-chest').setScale(1.5), t: [0, 1].map(() => this.add.image(0, 0, this.miniBlob()).setScale(1.8)), x: g.x, y: g.y };
         this.gems.set(g.id, e);
       }
       e.x += (g.x - e.x) * (smooth ? k : 1);
@@ -457,15 +459,14 @@ export class GameScene extends Phaser.Scene {
       const info = infos.get(p.id) ?? { id: p.id, name: '?', color: 0xcccccc, shape: 0, eyes: 0, mouth: 0, hat: 0 };
       let b = this.blobs.get(p.id);
       const look = clampLook(info);
-      // the face looks where the blob glides: 9 pre-baked textures per look (centre + 8 directions)
-      const lookKey = `blob-${look.color}-${look.shape}-${look.eyes}-${look.mouth}-${look.hat}`;
-      if (!this.textures.exists(lookKey + '-f0')) FACE_DIRS.forEach((f, i) => {
-        this.textures.addCanvas(`${lookKey}-f${i}`, blobCanvas(look, 1, undefined, f));
-        this.textures.get(`${lookKey}-f${i}`).setFilter(Phaser.Textures.FilterMode.NEAREST);
-      });
-      const face = faceIndex(p.vx, p.vy, FACE_DEAD);
-      const texKey = `${lookKey}-f${face}`;
-      if (DEBUG) ((window as unknown as { __blobzFace?: Record<string, number> }).__blobzFace ??= {})[p.id] = face; // e2e
+      // blobz v2: one 3/4 view, frame 0 idle / 1 glide, mirrored (flipX) when facing left
+      const lookKey = `blob2-${look.color}-${look.shape}-${look.eyes}-${look.mouth}-${look.hat}`;
+      if (!this.textures.exists(lookKey + '-0')) for (let f = 0; f < BLOB_FRAMES; f++) {
+        this.textures.addCanvas(`${lookKey}-${f}`, blobCanvas(look, 1, undefined, undefined, f));
+        this.textures.get(`${lookKey}-${f}`).setFilter(Phaser.Textures.FilterMode.NEAREST);
+      }
+      const frame = Math.hypot(p.vx, p.vy) >= FACE_DEAD ? 1 : 0;
+      const texKey = `${lookKey}-${frame}`;
       const pixel = true;
       const baseScale = BLOB_SCALE;
       if (!b) {
@@ -475,11 +476,15 @@ export class GameScene extends Phaser.Scene {
           body: this.add.image(p.x, p.y, texKey).setOrigin(0.5, BODY_CY).setScale(baseScale),
           eyes: this.add.graphics(),
           label: this.add.text(p.x, p.y, info.name, { fontFamily: "'Fredoka', sans-serif", fontSize: '13px', color: '#ffffff', fontStyle: 'bold', stroke: '#000000', strokeThickness: 3 }).setOrigin(0.5),
-          carry: [], swingT: 0, faceLeft: false, x: p.x, y: p.y, vx: 0, vy: 0, look: { x: 0, y: 1 }, trail: [], texKey, blinkT: 2 + Math.random() * 3, baseScale, pixel,
+          carry: [], swingT: 0, faceLeft: false, facing: 'right', x: p.x, y: p.y, vx: 0, vy: 0, look: { x: 0, y: 1 }, trail: [], texKey, blinkT: 2 + Math.random() * 3, baseScale, pixel,
         };
         this.blobs.set(p.id, b);
       }
       if (b.texKey !== texKey) { b.body.setTexture(texKey); b.texKey = texKey; }
+      // facing: from the glide direction, kept while still or moving straight up/down; a tool swing faces the node
+      b.facing = b.swingT > 0 ? (b.faceLeft ? 'left' : 'right') : facingFromVelocity(p.vx, p.vy, FACE_DEAD, b.facing);
+      b.body.setFlipX(b.facing === 'left');
+      if (DEBUG) ((window as unknown as { __blobzFace?: Record<string, { facing: Facing; frame: number }> }).__blobzFace ??= {})[p.id] = { facing: b.facing, frame }; // e2e
       if (b.label.text !== info.name) b.label.setText(info.name);
       if (smooth) {
         b.x += (p.x + p.vx * 0.06 - b.x) * k; b.y += (p.y + p.vy * 0.06 - b.y) * k;
@@ -725,10 +730,10 @@ export class GameScene extends Phaser.Scene {
     if (b.swingT <= 0) { b.tool.setVisible(false); return; }
     const sc = b.baseScale;
     const frame = Math.min(3, Math.floor((1 - b.swingT / 0.32) * 4));
-    // blob grid top-left, then the hand pixel (33,33) or (2,33) when facing left
-    const left = b.body.x - 18 * sc, top = b.body.y - BODY_CY * 48 * sc;
-    const hx = left + (b.faceLeft ? 2 : 33) * sc, hy = top + 33 * sc;
-    b.tool.setVisible(true).setFrame(frame).setScale(sc).setFlipX(b.faceLeft)
+    // blob grid top-left, then the hand at the body's side edge, ~2/3 down the grid (mirrored when facing left)
+    const left = b.body.x - (GRID_W / 2) * sc, top = b.body.y - BODY_CY * GRID_H * sc;
+    const hx = left + (b.faceLeft ? 1 : GRID_W - 1) * sc, hy = top + Math.round(GRID_H * 0.69) * sc;
+    b.tool.setVisible(true).setFrame(frame).setScale(TOOL_SCALE).setFlipX(b.faceLeft)
       .setOrigin((b.faceLeft ? TOOL_FRAME.w - TOOL_FRAME.px : TOOL_FRAME.px) / TOOL_FRAME.w, TOOL_FRAME.py / TOOL_FRAME.h)
       .setPosition(hx, hy).setDepth(b.body.depth + 1);
   }
