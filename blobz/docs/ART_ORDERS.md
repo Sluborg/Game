@@ -39,7 +39,7 @@ ChatGPT works only on N-orders (READY ones). New orders only for pieces the pack
 |---|---|---|---|
 | N-1 | WAITING (game name on the board) | Title header / logo in Ninja Adventure style | `art/logo.png` |
 | N-2 | READY | Start screen background, round 2: LANDSCAPE ONLY (portrait approved 4/5) | `art/title.png` |
-| N-3 | WAITING (after N-2 is rated 4-5) | Loading screen (portrait + landscape) | `art/loading.png`, `art/loading-landscape.png` |
+| N-3 | READY | Loading screen, round 2: PORTRAIT fix (scary entrance face) | `art/loading.png`, `art/loading-landscape.png` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
@@ -84,6 +84,10 @@ scene landscape 16:9 with key content in the central 60%. No text.
 ```
 
 ### N-3 Loading screen
+Round 2 (do this): redo the portrait image you made for N-3 (reference below) with ONE change: the stone face above
+the dungeon entrance must look SCARY and ANGRY (frowning heavy brows, glowing red eyes, jagged teeth or a snarl), not
+happy. Keep everything else the same: dusk sky, torches, blobz with their weapons on the path, calm lower third.
+Reference: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n3-loading-portrait.png
 ```
 Same world as N-2, a different moment: blobz walking toward a dungeon entrance at dusk with lanterns, or gathering
 around a campfire. Calm lower third for a progress bar. Portrait 9:16 and landscape 16:9. No text.
