@@ -520,9 +520,11 @@ async function joinGame(target: string, row?: HTMLButtonElement) {
         readInput: () => controls.read(),
         tick(dt, input) {
           sendAcc += dt;
-          const key = `${input.x},${input.y},${input.dash}`;
+          const key = `${input.x},${input.y},${input.dash},${input.atk ?? 0}`;
           if (key !== lastSent || sendAcc > 0.25) {
-            if (sendAcc >= 1 / 30 || input.dash !== Number(lastSent.split(',')[2])) {
+            const prev = lastSent.split(',');
+            // button presses go out at once; stick moves at most 30x a second
+            if (sendAcc >= 1 / 30 || input.dash !== Number(prev[2]) || (input.atk ?? 0) !== Number(prev[3])) {
               net.send({ t: 'in', ...input });
               lastSent = key; sendAcc = 0;
             }

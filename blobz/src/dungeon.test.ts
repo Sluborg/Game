@@ -3,7 +3,7 @@ import {
   DT, ENEMY_HP, FLOORS, GH, GW, inSwing, isWall, KO_SECONDS, LEVEL_XP, makeFloor, newRun, START_HEARTS, stepDungeon,
   type DFx, type DState,
 } from './dungeon';
-import { createState, ENTRANCE, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
+import { createState, DUNGEON_ENABLED, ENTRANCE, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
 
 const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 });
 type B = { id: string; x: number; y: number; vx: number; vy: number; dashT: number };
@@ -158,7 +158,7 @@ describe('dungeon v1', () => {
     expect(go(d.map.stairs.x, d.map.stairs.y, 4.2).r).toBe('out');
   });
 
-  it('meadow: all on the entrance -> weapon cards -> down together; the sun waits underground', () => {
+  it.skipIf(!DUNGEON_ENABLED)('meadow: all on the entrance -> weapon cards -> down together; the sun waits underground', () => {
     const s = createState([P('a'), P('b')], 11);
     const idle = new Map<string, Input>();
     for (const p of s.players) Object.assign(p, { x: ENTRANCE.x, y: ENTRANCE.y, vx: 0, vy: 0 });

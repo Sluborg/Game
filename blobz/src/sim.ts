@@ -198,6 +198,8 @@ const GARDEN_NEAR = 320; // berry bushes this close to the base regrow 2x with a
 const WELL_NEAR = 260; // team speed buff near the base with a well
 
 // ---- test dungeon v1: everyone stands on the entrance, picks a weapon, goes down together ----
+/** Dungeon (handed off to Code 2, WIP): OFF = no entrance on the meadow, nothing of it shows. */
+export const DUNGEON_ENABLED = false;
 export const ENTRANCE = { x: BASE.x, y: BASE.y - 236 };
 export const ENTRANCE_R = 46;
 export const PICK_SECONDS = 20; // unpicked blobz get the sword after this
@@ -501,7 +503,7 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
   }
 
   // --- dungeon entrance: everyone on it for 1.5 s ---
-  if (s.players.length && s.players.every((p) => Math.hypot(p.x - ENTRANCE.x, p.y - ENTRANCE.y) < ENTRANCE_R)) {
+  if (DUNGEON_ENABLED && s.players.length && s.players.every((p) => Math.hypot(p.x - ENTRANCE.x, p.y - ENTRANCE.y) < ENTRANCE_R)) {
     s.entry += dt;
     if (s.entry >= READY_SECONDS) { s.entry = 0; s.mode = 'pick'; s.picks = {}; s.pickT = PICK_SECONDS; s.fx.push({ t: 'enter' }); return; }
   } else s.entry = 0;

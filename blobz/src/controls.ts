@@ -6,6 +6,9 @@ export class Controls {
   private sx = 0; private sy = 0;
   private kx = 0; private ky = 0;
   private dashCount = 0;
+  private atkCount = 0;
+  private atkTimer = 0;
+  readonly atkBtn = document.getElementById('attack')!;
   private stickId: number | null = null;
   private ox = 0; private oy = 0;
   private keys = new Set<string>();
@@ -26,13 +29,17 @@ export class Controls {
     window.addEventListener('pointercancel', this.up);
     this.dashBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); this.press(); });
     for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) this.dashBtn.addEventListener(ev, () => this.stopHold());
+    // Attack (dungeon only): tap = one swing, hold = a swing every 0.3 s
+    this.atkBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); this.attackPress(); });
+    for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) this.atkBtn.addEventListener(ev, () => this.attackStop());
     window.addEventListener('keydown', (e) => {
       if ((e.target as HTMLElement)?.tagName === 'INPUT') return;
       if (e.code === 'Space' && !e.repeat) this.press();
+      if ((e.code === 'KeyJ' || e.code === 'KeyF') && !e.repeat) this.attackPress();
       this.keys.add(e.code);
       this.updateKeys();
     });
-    window.addEventListener('keyup', (e) => { if (e.code === 'Space') this.stopHold(); this.keys.delete(e.code); this.updateKeys(); });
+    window.addEventListener('keyup', (e) => { if (e.code === 'KeyJ' || e.code === 'KeyF') this.attackStop(); if (e.code === 'Space') this.stopHold(); this.keys.delete(e.code); this.updateKeys(); });
     window.addEventListener('blur', () => { this.keys.clear(); this.updateKeys(); this.release(); this.stopHold(); });
   }
 
@@ -43,6 +50,22 @@ export class Controls {
     this.dash();
     this.stopHold();
     this.holdTimer = window.setInterval(() => { if (this.tool) this.dash(); }, Controls.REPEAT_MS);
+  }
+
+  private attackPress() {
+    if (!this.active() || this.atkBtn.classList.contains('hidden')) return;
+    this.atkCount++;
+    this.attackStop();
+    this.atkTimer = window.setInterval(() => { this.atkCount++; }, 300);
+  }
+
+  private attackStop() { clearInterval(this.atkTimer); this.atkTimer = 0; }
+
+  /** Dungeon layout: big Attack button bottom-right, the action/dash button smaller above-left of it. */
+  setDungeon(on: boolean) {
+    this.atkBtn.classList.toggle('hidden', !on);
+    document.getElementById('hud')!.classList.toggle('dungeon', on);
+    if (!on) this.attackStop();
   }
 
   private stopHold() { clearInterval(this.holdTimer); this.holdTimer = 0; }
@@ -60,7 +83,7 @@ export class Controls {
   }
 
   private down = (e: PointerEvent) => {
-    if (!this.active() || this.stickId !== null || e.target === this.dashBtn) return;
+    if (!this.active() || this.stickId !== null || e.target === this.dashBtn || e.target === this.atkBtn) return;
     this.stickId = e.pointerId;
     this.ox = e.clientX; this.oy = e.clientY;
     this.stick.style.display = 'block';
@@ -101,7 +124,7 @@ export class Controls {
     let x = this.sx + this.kx, y = this.sy + this.ky;
     const l = Math.hypot(x, y);
     if (l > 1) { x /= l; y /= l; }
-    return { x: Math.round(x * 100) / 100, y: Math.round(y * 100) / 100, dash: this.dashCount };
+    return { x: Math.round(x * 100) / 100, y: Math.round(y * 100) / 100, dash: this.dashCount, atk: this.atkCount };
   }
 
   setCooldown(on: boolean) { this.dashBtn.classList.toggle('cd', on && !this.tool); }
