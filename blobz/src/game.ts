@@ -1,6 +1,6 @@
 // Phaser scene: renders a View (from the host sim or from network snapshots).
 import Phaser from 'phaser';
-import { blobCanvas, BODY_CY, clampLook } from './blob';
+import { blobCanvas, BODY_CY, clampLook, FACE_DIRS, faceIndex } from './blob';
 import { sfx } from './sfx';
 import { dungeonFrame } from './dungeonScene'; // [dungeon hook]
 import { BASE, GATE_W, makePuzzles, makeTrees, PLATE_R, rng, WORLD_H, WORLD_W } from './sim';
@@ -29,8 +29,11 @@ const ITEM_ICON: Record<ItemKind, string> = { wood: 'ic-log', stone: 'g-item-sto
 /** Ground/carry scale per item so all three read the same size (log is a 16px icon, the others fine pixels). */
 // Pixel density (ART_REVIEW.md): integer scales only. World props 3 world px per art pixel, small
 // 16px icons 2 (items) / 1 (carried, tags); the camera zoom does the rest. Blobz keep BLOB_SCALE.
-const ITEM_SCALE: Record<ItemKind, number> = { wood: 2, stone: 3, berry: 3 };
-const CARRY_SCALE: Record<ItemKind, number> = { wood: 1, stone: 2, berry: 2 };
+// Fine art (public/art/fine, README there): items, chips, dust, level-up and plate glow are redrawn with twice the
+// pixels to match the blobz, so they are drawn at HALF the old scale.
+const FINE = ['icons/log', 'gather/item-stone', 'gather/item-berries'];
+const ITEM_SCALE: Record<ItemKind, number> = { wood: 1, stone: 1.5, berry: 1.5 };
+const CARRY_SCALE: Record<ItemKind, number> = { wood: 0.5, stone: 1, berry: 1 };
 const GATHER = ['bush-berries', 'bush-empty', 'rubble', 'item-stone', 'item-berries', 'hud-wood', 'hud-stone', 'hud-berries'];
 const TOOL_FRAME = { w: 44, h: 48, px: 16, py: 28 }; // tool strip frame + pivot (art/gather/README.md)
 // Obstacles (sim kinds 0-4) and decor from ChatGPT order 30 (public/art/props)
@@ -48,6 +51,8 @@ const WINTER = ['tree-snow-round', 'tree-snow-pine', 'tree-snow-small', 'rock-sn
 /** Look of a used-up node: stump, rubble, picked bush. */
 const SPENT_ART: [string, number][] = [['pr-stump', 3], ['pr-stump', 3], ['pr-stump', 3], ['g-rubble', 3], ['g-rubble', 3], ['g-bush-empty', 3]];
 const PROPS = ['tree-green', 'tree-orange', 'tree-pine', 'rock', 'boulder', 'bush', 'flowers', 'stump', 'pond', 'fence', 'sign', 'plate', 'plate-down', 'gate', 'gate-open', 'gate-post'];
+/** Below this speed (px/s) the face looks straight ahead. */
+const FACE_DEAD = 40;
 const BLOB_SCALE = 1.45; // 36x48 blob grid // 18x24 pixel blob grid
 // decorations from Tiny Farm (sheet 'farm') and Tiny Town ('town')
 const DECOR: [string, number][] = [['pr-flowers', 2]]; // no decor bushes: bushes are berry nodes now
@@ -134,15 +139,16 @@ export class GameScene extends Phaser.Scene {
   }
 
   preload() {
-    for (const n of ['log', 'chest', 'boot', 'magnet', 'house']) this.load.image('ic-' + n, `art/icons/${n}.png`);
-    for (const n of GATHER) this.load.image('g-' + n, `art/gather/${n}.png`);
+    const art = (path: string) => `art/${FINE.includes(path) ? 'fine/' : ''}${path}.png`;
+    for (const n of ['log', 'chest', 'boot', 'magnet', 'house']) this.load.image('ic-' + n, art(`icons/${n}`));
+    for (const n of GATHER) this.load.image('g-' + n, art(`gather/${n}`));
     for (const t of ['axe', 'pickaxe', 'rake']) this.load.spritesheet('tool-' + t, `art/gather/tool-${t}.png`, { frameWidth: TOOL_FRAME.w, frameHeight: TOOL_FRAME.h });
-    for (const c of ['wood', 'stone']) this.load.spritesheet('chips-' + c, `art/gather/chips-${c}.png`, { frameWidth: 16, frameHeight: 12 });
+    for (const c of ['wood', 'stone']) this.load.spritesheet('chips-' + c, `art/fine/gather/chips-${c}.png`, { frameWidth: 32, frameHeight: 24 });
     for (const n of PROPS) this.load.image('pr-' + n, `art/props/${n}.png`);
-    this.load.spritesheet('fx-levelup', 'art/fx/levelup.png', { frameWidth: 32, frameHeight: 22 });
-    this.load.spritesheet('fx-dust', 'art/fx/dust.png', { frameWidth: 14, frameHeight: 12 });
+    this.load.spritesheet('fx-levelup', 'art/fine/fx/levelup.png', { frameWidth: 64, frameHeight: 44 });
+    this.load.spritesheet('fx-dust', 'art/fine/fx/dust.png', { frameWidth: 28, frameHeight: 24 });
     this.load.spritesheet('fx-sparkle', 'art/fx/coin-sparkle.png', { frameWidth: 11, frameHeight: 11 });
-    this.load.image('fx-plate-glow', 'art/fx/plate-glow.png');
+    this.load.image('fx-plate-glow', 'art/fine/fx/plate-glow.png');
     // Bärregn placeholders from existing sprites (real art via the board later)
     this.load.spritesheet('mini-ko', 'art/dungeon/ko-stars.png', { frameWidth: 20, frameHeight: 9 });
     this.load.image('mini-warn', 'art/dungeon/slam-warning.png');
@@ -359,7 +365,7 @@ export class GameScene extends Phaser.Scene {
       seenI.add(it.id);
       let img = this.items.get(it.id);
       if (!img) {
-        img = this.add.image(it.x, it.y, ITEM_ICON[it.kind] ?? 'ic-log').setScale(0.2);
+        img = this.add.image(it.x, it.y, ITEM_ICON[it.kind] ?? 'ic-log').setScale(0.1);
         this.tweens.add({ targets: img, scale: ITEM_SCALE[it.kind] ?? 1.8, duration: 250, ease: 'Back.Out' });
         this.items.set(it.id, img);
       }
@@ -440,11 +446,13 @@ export class GameScene extends Phaser.Scene {
       const info = infos.get(p.id) ?? { id: p.id, name: '?', color: 0xcccccc, shape: 0, eyes: 0, mouth: 0, hat: 0 };
       let b = this.blobs.get(p.id);
       const look = clampLook(info);
-      const texKey = `blob-${look.color}-${look.shape}-${look.eyes}-${look.mouth}-${look.hat}`;
-      if (!this.textures.exists(texKey)) {
-        this.textures.addCanvas(texKey, blobCanvas(look, 1));
-        this.textures.get(texKey).setFilter(Phaser.Textures.FilterMode.NEAREST);
-      }
+      // the face looks where the blob glides: 9 pre-baked textures per look (centre + 8 directions)
+      const lookKey = `blob-${look.color}-${look.shape}-${look.eyes}-${look.mouth}-${look.hat}`;
+      if (!this.textures.exists(lookKey + '-f0')) FACE_DIRS.forEach((f, i) => {
+        this.textures.addCanvas(`${lookKey}-f${i}`, blobCanvas(look, 1, undefined, f));
+        this.textures.get(`${lookKey}-f${i}`).setFilter(Phaser.Textures.FilterMode.NEAREST);
+      });
+      const texKey = `${lookKey}-f${faceIndex(p.vx, p.vy, FACE_DEAD)}`;
       const pixel = true;
       const baseScale = BLOB_SCALE;
       if (!b) {
@@ -537,11 +545,11 @@ export class GameScene extends Phaser.Scene {
     b.label.setPosition(b.x, b.y + 24).setDepth(this.dB + b.y + 2);
 
     // carried items stack
-    while (b.carry.length < p.carry.length) b.carry.push(this.add.image(0, 0, 'ic-log').setScale(1));
+    while (b.carry.length < p.carry.length) b.carry.push(this.add.image(0, 0, 'ic-log').setScale(0.5));
     while (b.carry.length > p.carry.length) b.carry.pop()!.destroy();
     p.carry.forEach((k, i) => {
       const img = b.carry[i];
-      img.setTexture(ITEM_ICON[k] ?? 'ic-log').setScale(CARRY_SCALE[k] ?? 1);
+      img.setTexture(ITEM_ICON[k] ?? 'ic-log').setScale(CARRY_SCALE[k] ?? 0.5);
       img.setPosition(b.x + (i - (p.carry.length - 1) / 2) * 14, b.y - 44 + hover - Math.abs(i - 1) * 2).setDepth(this.dB + b.y + 3);
     });
   }
@@ -627,7 +635,7 @@ export class GameScene extends Phaser.Scene {
       for (let i = 0; i < shown[col]; i++) {
         const row = i < 3 ? 0 : i < 5 ? 1 : 2, inRow = i < 3 ? i : i < 5 ? i - 3 : 0;
         const x = col * 34 + (inRow - (row === 0 ? 1 : row === 1 ? 0.5 : 0)) * 10, y = -row * 8;
-        this.pile.add(this.add.image(x, y, ITEM_ICON[k]).setScale(k === 'wood' ? 1 : 2));
+        this.pile.add(this.add.image(x, y, ITEM_ICON[k]).setScale(k === 'wood' ? 0.5 : 1));
       }
     });
   }
@@ -700,7 +708,7 @@ export class GameScene extends Phaser.Scene {
         e = {
           // bombs: Art's red slam ring marks the blast area; berries: a plain shadow
           mark: bomb ? this.add.image(d.x, d.y, 'mini-warn').setDisplaySize(BOMB_R * 2, BOMB_R).setDepth(9100) : this.add.ellipse(d.x, d.y + 4, 30, 10, 0x000000, 0.25).setDepth(9100),
-          item: bomb ? this.add.image(d.x, d.y, 'pr-rock').setScale(3).setTint(0x2e2a3a).setDepth(10000 + d.y + 5) : this.add.image(d.x, d.y, 'g-item-berries').setScale(3).setDepth(10000 + d.y + 5),
+          item: bomb ? this.add.image(d.x, d.y, 'pr-rock').setScale(3).setTint(0x2e2a3a).setDepth(10000 + d.y + 5) : this.add.image(d.x, d.y, 'g-item-berries').setScale(1.5).setDepth(10000 + d.y + 5),
         };
         this.drops.set(d.id, e);
       }
@@ -736,7 +744,7 @@ export class GameScene extends Phaser.Scene {
     const glow = this.add.graphics().setDepth(-460);
     const chest = this.add.image(l.chest.x, l.chest.y, 'ic-chest').setScale(3).setDepth(l.chest.y);
     const plates = l.plates.map((p) => this.add.image(p.x, p.y, 'pr-plate').setScale(4).setDepth(-700).setVisible(false));
-    const glows = l.plates.map((p) => this.add.image(p.x, p.y + 2, 'fx-plate-glow').setScale(4).setDepth(-690).setVisible(false));
+    const glows = l.plates.map((p) => this.add.image(p.x, p.y + 2, 'fx-plate-glow').setScale(2).setDepth(-690).setVisible(false));
     const bubbles = l.plates.map((p) => this.add.text(p.x, p.y - 72, '', {
       fontFamily: "'Nunito', sans-serif", fontSize: '20px', color: '#3f2631', fontStyle: 'bold',
       backgroundColor: '#fff7e6', padding: { x: 7, y: 2 }, stroke: '#fff7e6', strokeThickness: 1,
@@ -796,7 +804,7 @@ export class GameScene extends Phaser.Scene {
       parts.forEach((k, j) => {
         const y = f.y - j * 30;
         const t = this.add.text(f.x - 6, y, '+' + f.r[k], { fontFamily: "'Nunito', sans-serif", fontSize: '26px', color: '#ffe08a', fontStyle: 'bold', stroke: '#6b4a2a', strokeThickness: 5 }).setOrigin(1, 0.5);
-        const ic = this.add.image(f.x + 14, y, ITEM_ICON[k]).setScale(k === 'wood' ? 2 : 3);
+        const ic = this.add.image(f.x + 14, y, ITEM_ICON[k]).setScale(k === 'wood' ? 1 : 1.5);
         const c = this.add.container(0, 0, [t, ic]).setDepth(5000);
         this.tweens.add({ targets: c, y: -50, alpha: 0, duration: 1100, delay: j * 80, ease: 'Cubic.Out', onComplete: () => c.destroy() });
       });
@@ -808,7 +816,7 @@ export class GameScene extends Phaser.Scene {
         this.tweens.add({ targets: n.img, x: { from: n.x - 4, to: n.x }, duration: 140, ease: 'Bounce.Out' });
         const chips = f.tool === 'pickaxe' ? 'chips-stone' : 'chips-wood';
         if (f.tool !== 'rake') {
-          const c = this.add.sprite(n.x, n.y - 6, chips, 0).setScale(3).setOrigin(0.5, 1).setDepth(n.y + 50);
+          const c = this.add.sprite(n.x, n.y - 6, chips, 0).setScale(1.5).setOrigin(0.5, 1).setDepth(n.y + 50);
           this.time.delayedCall(90, () => c.setFrame(1));
           this.tweens.add({ targets: c, alpha: 0, y: n.y - 16, duration: 260, delay: 120, onComplete: () => c.destroy() });
         } else this.burst(n.x, n.y - 10, 0x6cc644, 6);
@@ -831,8 +839,8 @@ export class GameScene extends Phaser.Scene {
       this.tweens.add({ targets: t, y: f.y - 80, alpha: 0, duration: 700, onComplete: () => t.destroy() });
     } else if (f.t === 'miss') {
       // the berry splats flat on the grass and fades
-      const sq = this.add.image(f.x, f.y - 2, 'g-item-berries').setScale(3).setDepth(9200);
-      this.tweens.add({ targets: sq, scaleY: 0.8, scaleX: 3.8, alpha: 0, duration: 520, ease: 'Quad.Out', onComplete: () => sq.destroy() });
+      const sq = this.add.image(f.x, f.y - 2, 'g-item-berries').setScale(1.5).setDepth(9200);
+      this.tweens.add({ targets: sq, scaleY: 0.4, scaleX: 1.9, alpha: 0, duration: 520, ease: 'Quad.Out', onComplete: () => sq.destroy() });
       this.burst(f.x, f.y, 0xc0392b, 4);
     } else if (f.t === 'boom') {
       sfx.bump();
@@ -857,7 +865,7 @@ export class GameScene extends Phaser.Scene {
       if (g) { g.built = true; g.img.setVisible(true); }
       if (img) { const sc = img.scaleX; img.setScale(sc * 0.2); this.tweens.add({ targets: img, scale: sc, duration: 420, ease: 'Back.Out' }); }
       for (let i = 0; i < 3; i++) this.time.delayedCall(i * 90, () => this.puff(f.x + (i - 1) * 22, f.y + 6, (i - 1) * 60, -40, 6));
-      const fx = this.add.sprite(f.x, f.y - 6, 'fx-levelup').setScale(4).setDepth(4500);
+      const fx = this.add.sprite(f.x, f.y - 6, 'fx-levelup').setScale(2).setDepth(4500);
       fx.play('levelup');
       fx.once('animationcomplete', () => fx.destroy());
       this.cameras.main.shake(120, 0.003);
@@ -883,7 +891,7 @@ export class GameScene extends Phaser.Scene {
       const side = (Math.random() - 0.5) * 14;
       const sx = x + bx * 12 - by * side, sy = y + by * 8 + bx * side * 0.5;
       // Art's 4-frame dust puff (fx/dust.png), drifting back against the travel direction
-      const c = this.add.sprite(sx, sy, 'fx-dust', 0).setOrigin(0.5, 1).setScale(2).setDepth(sy - 15);
+      const c = this.add.sprite(sx, sy, 'fx-dust', 0).setOrigin(0.5, 1).setScale(1).setDepth(sy - 15);
       this.time.delayedCall(i * 18, () => c.active && c.play('dust'));
       this.tweens.add({ targets: c, x: sx + Math.cos(a) * reach, y: sy + Math.sin(a) * reach * 0.7, alpha: 0, duration: 420 + Math.random() * 140, delay: i * 18, ease: 'Cubic.Out', onComplete: () => c.destroy() });
     }
