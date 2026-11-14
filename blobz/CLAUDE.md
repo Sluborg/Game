@@ -50,6 +50,8 @@ Stefan works phone-only; replies in Swedish or English, docs and code in English
 - Every message that announces a new version includes the link https://sluborg.github.io/Game/ and the version number.
 - **Board card rule (Stefan):** whenever anything waits for Stefan on the board, end the reply with an `Artifact` action "open" on the board URL so he gets a tappable card. Never just paste the link when items are waiting.
 - Every reply where the decision board has something new (a new question, a followup, a changed Pågående row Stefan should see) includes the board link https://claude.ai/artifact/7pHh1Z6QmDvtAYWweGvkAL.
+- **Discuss before a redo (Stefan 2026-11-14):** when he rates something 1-3, Lead first writes him what will change
+  (bullets) and waits for his OK before any session builds the redo. No silent redo loops.
 - **Changed item = reset (Stefan 2026-11-14):** when the thing behind a board question changes (new image, new build),
   delete its `answers/<id>` doc (rating + comment), add " v2" (v3, ...) to the title, and start the body with
   "NYTT i v2: <what changed>". Never leave an old rating on a changed item. Rated items that are acted on get `decision`.
