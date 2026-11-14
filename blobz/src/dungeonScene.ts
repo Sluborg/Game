@@ -42,7 +42,6 @@ const DEBUG = new URLSearchParams(location.search).has('debug');
 const HITBOX = new URLSearchParams(location.search).has('hitbox'); // ?hitbox draws the sim's circles
 /** Class hats in blob.ts CLASS_HATS (Krigare keeps the skin hat). */
 const CLASS_HAT: Partial<Record<HeroClass, number>> = { healer: 0, marksman: 1, tank: 2 }; // the rogue keeps the skin hat
-const WORLD = { w: GW * DT, h: GH * DT };
 // Kenney Tiny Dungeon frames (12 per row)
 // Art's fine ground tiles (art/fine/tiles, 32 px, drawn at scale 1): floor plain/specks/stones, wall bricks/banner
 const TP = 32; // baked px per tile
@@ -187,10 +186,13 @@ export class DungeonScene extends Phaser.Scene {
     this.ringG = this.add.graphics().setDepth(4000);
     this.bubble = this.add.text(0, 0, '', { fontFamily: FONT, fontSize: '22px', color: '#3f2631', fontStyle: 'bold', backgroundColor: '#fff7e6', padding: { x: 8, y: 2 } })
       .setOrigin(0.5, 1).setDepth(6000).setVisible(false);
+    if (DEBUG) (window as unknown as { __dgScene?: Phaser.Scene }).__dgScene = this; // e2e: map + camera checks
     const cam = this.cameras.main;
-    cam.setBounds(-200, -200, WORLD.w + 400, WORLD.h + 400);
+    // no camera bounds: it always keeps my blob centred, even in rooms at the map's edge (Stefan: "it stops at the
+    // bottom of the screen"); outside the map shows the same dark rock colour as the void between rooms
+    cam.removeBounds();
     cam.setRoundPixels(true);
-    cam.setBackgroundColor('#1b1018');
+    cam.setBackgroundColor('#141b1b');
     this.fitCamera();
     this.scale.on('resize', this.fitCamera, this);
     this.events.once('shutdown', () => this.scale.off('resize', this.fitCamera, this));
@@ -238,9 +240,6 @@ export class DungeonScene extends Phaser.Scene {
         else if (!solid(tx + 1, ty - 1)) put(wl, 0, 160, tx, ty);
         else if (!solid(tx - 1, ty - 1)) put(wl, 64, 160, tx, ty);
       }
-      // underground: a touch darker overall
-      g.fillStyle = 'rgba(20, 8, 30, 0.12)';
-      g.fillRect(0, 0, c.width, c.height);
       this.textures.addCanvas(key, c)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
     this.mapObjs.push(this.add.image(0, 0, key).setOrigin(0).setScale(DT / TP).setDepth(-1000));
