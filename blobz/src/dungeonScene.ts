@@ -23,7 +23,8 @@ const LUNGE: Record<Weapon, number> = { sword: 4, hammer: 4, spear: 20, staff: 4
 // (the Riddare's id stays 'shield', but it slashes with a sword: the shield hovers on the other side as its guard)
 const SLASH: Partial<Record<Weapon, { sweep: number; slam?: boolean }>> = { sword: { sweep: 120 }, hammer: { sweep: 130, slam: true }, staff: { sweep: 100 }, shield: { sweep: 110 } };
 const DAGGER_SPREAD = 0.6, DAGGER_STAB = 13;
-/** Art's hovering weapon sprites (art/dungeon/weapons/README.md): one art px = one blob px (drawn at BLOB_SCALE),
+const WSCALE = 2; // Stefan: 3x (= blob scale) was too large; weapons draw at 2x (sword ~54 px next to the 48 px blob)
+/** Art's hovering weapon sprites (art/dungeon/weapons/README.md): drawn at WSCALE,
  *  pointing right, pivot = grip (shield: centre). The crossbow keeps its old strip until its sprite arrives. */
 const WIMG: Record<string, { w: number; h: number; px: number; py: number }> = {
   sword: { w: 27, h: 11, px: 2, py: 5 }, 'dagger-1': { w: 16, h: 6, px: 2, py: 2 }, 'dagger-2': { w: 16, h: 7, px: 2, py: 4 },
@@ -531,7 +532,7 @@ export class DungeonScene extends Phaser.Scene {
       if (b.weapon2!.texture.key !== 'w-dagger-2') b.weapon2!.setTexture('w-dagger-2');
       [b.weapon, b.weapon2!].forEach((spr, i) => {
         const im = WIMG[i ? 'dagger-2' : 'dagger-1'];
-        spr.setVisible(true).setFlipX(DL).setScale(BLOB_SCALE).setOrigin((DL ? im.w - im.px : im.px) / im.w, im.py / im.h)
+        spr.setVisible(true).setFlipX(DL).setScale(WSCALE).setOrigin((DL ? im.w - im.px : im.px) / im.w, im.py / im.h)
           .setPosition(pts[i].x, pts[i].y).setRotation(DL ? aim - Math.PI : aim).setDepth(b.body.depth + (Math.sin(aim) < -0.35 ? -1 : 1));
       });
       b.wshadow.setVisible(true).setPosition(cx + Math.cos(aim) * (EDGE_X + HOVER + 6), Math.max(pts[0].gy, cy) + 22).setDepth(b.body.depth - 2).setScale(1.3, 1);
@@ -561,8 +562,8 @@ export class DungeonScene extends Phaser.Scene {
       if (prog >= 0.08 && b.arcFor !== b.swings) {
         b.arcFor = b.swings;
         if (!this.anims.exists('na-arc')) this.anims.create({ key: 'na-arc', frames: this.anims.generateFrameNumbers('na-arc', {}), frameRate: 22 });
-        const r = EDGE_X + HOVER + 12, sweepT = b.swingDur * 0.6 * (1 - 0.08 / 0.6);
-        const arc = this.add.sprite(cx + Math.cos(aim) * r, cy + Math.sin(aim) * r * 0.75, 'na-arc', 0).setScale(w === 'hammer' ? 2 : 1.7)
+        const blade = (WIMG[art]?.w ?? 27) * WSCALE, r = EDGE_X + HOVER + blade * 0.35, sweepT = b.swingDur * 0.6 * (1 - 0.08 / 0.6);
+        const arc = this.add.sprite(cx + Math.cos(aim) * r, cy + Math.sin(aim) * r * 0.75, 'na-arc', 0).setScale(Math.max(0.9, (blade * 1.15) / 38))
           .setRotation(aim).setFlipY(dir < 0).setDepth(b.body.depth + 3);
         arc.play({ key: 'na-arc', frameRate: 6 / Math.max(0.1, sweepT) }).once('animationcomplete', () => arc.destroy());
       }
@@ -575,7 +576,7 @@ export class DungeonScene extends Phaser.Scene {
     const frame = !im && swinging ? Math.min(3, Math.floor(prog * 4)) : 0;
     const rot = (L ? A - Math.PI : A) + (b.spin > 0 ? (1 - b.spin / 0.35) * Math.PI * 2 * (L ? -1 : 1) : 0);
     if (!im) b.weapon.setFrame(frame);
-    b.weapon.setVisible(true).setScale(im ? BLOB_SCALE : sc).setFlipX(L)
+    b.weapon.setVisible(true).setScale(im ? WSCALE : sc).setFlipX(L)
       .setOrigin((L ? fw.w - fw.px : fw.px) / fw.w, fw.py / fw.h)
       .setPosition(px, py).setDepth(b.body.depth + (Math.sin(A) < -0.35 ? -1 : 1))
       .setRotation(rot);
@@ -586,7 +587,7 @@ export class DungeonScene extends Phaser.Scene {
       if (b.weapon2.texture.key !== 'w-shield') b.weapon2.setTexture('w-shield');
       const sa = guard ? aim : aim + (Math.cos(aim) < 0 ? 1 : -1) * 1.9;
       const sg = spot(sa, guard ? 6 : -4);
-      b.weapon2.setVisible(true).setFlipX(Math.cos(sa) < 0).setScale(BLOB_SCALE * (guard ? 1.2 : 1)).setRotation(0).setOrigin(0.5, 0.5)
+      b.weapon2.setVisible(true).setFlipX(Math.cos(sa) < 0).setScale(WSCALE * (guard ? 1.2 : 1)).setRotation(0).setOrigin(0.5, 0.5)
         .setPosition(sg.x, sg.y - bob).setDepth(b.body.depth + (guard || Math.sin(sa) > -0.35 ? 2 : -1));
     }
     // the shadow sits on the ground under the weapon's middle and stays still while the weapon bobs
