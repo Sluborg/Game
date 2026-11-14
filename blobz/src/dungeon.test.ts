@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DT, ENEMY_HP, FLOORS, GH, GW, inSwing, isWall, KO_SECONDS, LEVEL_XP, makeFloor, newRun, START_HEARTS, stepDungeon,
-  type DFx, type DState,
+  DONE_SECONDS, DT, dsnap, dview, ENEMY_HP, FLOORS, GH, GW, inSwing, isWall, KO_SECONDS, LEVEL_XP, makeFloor, newRun, SLAM_DMG, START_HEARTS,
+  stepDungeon, TOUCH_DMG, WEAPON_STATS, type DFx, type DState,
 } from './dungeon';
 import { createState, DUNGEON_ENABLED, ENTRANCE, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
 
 const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 });
-type B = { id: string; x: number; y: number; vx: number; vy: number; dashT: number };
-const body = (id: string, x: number, y: number): B => ({ id, x, y, vx: 0, vy: 0, dashT: 0 });
+type B = { id: string; x: number; y: number; vx: number; vy: number; dashT: number; lastDash: number };
+const body = (id: string, x: number, y: number): B => ({ id, x, y, vx: 0, vy: 0, dashT: 0, lastDash: 0 });
 /** Flood fill from the start: every room centre, chest and the stairs must be reachable. */
 function reachable(f: ReturnType<typeof makeFloor>, x: number, y: number) {
   const seen = new Uint8Array(GW * GH);
@@ -53,21 +53,20 @@ describe('dungeon v1', () => {
     expect(inSwing('spear', 0, 0, 1, 0, 40, 40, 14)).toBe(false);
   });
 
-  it('combat: small 1 hit, medium 3, boss 15; kills drop coins + XP; coins add gold', () => {
+  it('auto-attack: the nearest goo in reach gets hit at the weapon rate; small 1 hit, medium 3, boss 15; coins + XP', () => {
     for (const [kind, hits] of [[0, 1], [1, 3], [2, 15]] as [0 | 1 | 2, number][]) {
       const d = quiet(newRun(5, { a: 'sword' }));
       const st = d.map.start;
       d.enemies.push({ id: 900, kind, x: st.x + 40, y: st.y, vx: 0, vy: 0, hp: ENEMY_HP[kind], awake: false, stun: 9, slamT: 99, slam: null });
       const a = body('a', st.x, st.y);
-      let n = 0;
-      for (let h = 0; h < hits && d.enemies.length; h++) {
-        d.heroes.a.atkCd = 0; d.heroes.a.fx = 1; d.heroes.a.fy = 0; d.heroes.a.inv = 99;
-        const e = d.enemies[0]; e.x = st.x + 40; e.y = st.y; e.stun = 9;
-        a.x = st.x; a.y = st.y; a.vx = 0; a.vy = 0;
-        run1(d, [a], new Map([['a', ++n]]));
+      let swings = 0;
+      for (let t = 0; t < 60 * 30 && d.enemies.length; t++) {
+        const e = d.enemies[0]; e.x = st.x + 40; e.y = st.y; e.stun = 9; e.vx = 0; e.vy = 0;
+        a.x = st.x; a.y = st.y; a.vx = 0; a.vy = 0; d.heroes.a.inv = 99;
+        swings += run1(d, [a]).fx.filter((f) => f.t === 'swing').length;
       }
       expect(d.enemies).toHaveLength(0);
-      expect(n).toBe(hits);
+      expect(swings).toBe(hits);
       expect(d.kills).toBe(1);
       expect(d.coins.length).toBeGreaterThan(0);
       const gold = d.gold + d.coins.reduce((g, c) => g + c.v, 0); // some coins land right under the blob
@@ -77,14 +76,53 @@ describe('dungeon v1', () => {
     }
   });
 
+  it('auto-attack: nothing in reach = no swing; the rate follows the weapon', () => {
+    const d = quiet(newRun(5, { a: 'hammer', b: 'sword' }));
+    const st = d.map.start;
+    const a = body('a', st.x, st.y), b = body('b', st.x, st.y + 300);
+    d.enemies.push({ id: 1, kind: 2, x: st.x + 200, y: st.y, vx: 0, vy: 0, hp: 99, awake: false, stun: 99, slamT: 99, slam: null });
+    expect(run1(d, [a], undefined, 0.5).fx.some((f) => f.t === 'swing')).toBe(false);
+    d.enemies[0].x = st.x + 60; d.heroes.a.inv = 99;
+    const n = run1(d, [a], undefined, 2).fx.filter((f) => f.t === 'swing').length;
+    expect(n).toBeGreaterThanOrEqual(Math.floor(2 / WEAPON_STATS.hammer.cd) - 1);
+    expect(n).toBeLessThanOrEqual(Math.ceil(2 / WEAPON_STATS.hammer.cd) + 1);
+    void b;
+  });
+
+  it('special attack: big button, cooldown; sword spins all around, hammer slams, spear lunges and pierces', () => {
+    for (const w of ['sword', 'hammer', 'spear'] as const) {
+      const d = quiet(newRun(5, { a: w }));
+      const st = d.map.start;
+      const a = body('a', st.x, st.y);
+      run1(d, [a], new Map([['a', 0]])); // counter seen
+      // goo behind and beside (spear: in a line ahead)
+      const spots = w === 'spear' ? [[-10, 0], [30, 0]] : [[-60, 0], [0, 60]];
+      if (w === 'spear') a.x = st.x - 70; // the start room is at least 6 tiles wide
+      spots.forEach(([dx, dy], i) => d.enemies.push({ id: 50 + i, kind: 1, x: st.x + dx, y: st.y + dy, vx: 0, vy: 0, hp: 3, awake: true, stun: 99, slamT: 99, slam: null }));
+      d.heroes.a.atkCd = 99; d.heroes.a.inv = 99; d.heroes.a.fx = 1; d.heroes.a.fy = 0;
+      const fx: DFx[] = [];
+      for (let t = 0; t < (w === 'spear' ? 24 : 1); t++) { // the lunge moves the blob (the sim does that in game)
+        stepDungeon(d, [a], new Map([['a', 1]]), 1, 1 / 60, fx);
+        a.x += a.vx / 60; a.y += a.vy / 60; a.dashT = Math.max(0, a.dashT - 1 / 60);
+      }
+      expect(fx.some((f) => f.t === 'special')).toBe(true);
+      expect(d.enemies.every((e) => e.hp < 3)).toBe(true);
+      // on cooldown: a second press does nothing
+      const { fx: fx2 } = run1(d, [a], new Map([['a', 2]]));
+      expect(fx2.some((f) => f.t === 'special')).toBe(false);
+      expect(d.heroes.a.spCd).toBeGreaterThan(5);
+    }
+  });
+
   it('touching goo costs a heart; 0 hearts = knocked out, revive after 5 s at the stairs', () => {
     const d = quiet(newRun(6, { a: 'hammer' }));
     const st = d.map.start;
     const a = body('a', st.x, st.y);
+    d.heroes.a.atkCd = 999; // no auto-attack in this test
     d.enemies.push({ id: 1, kind: 0, x: st.x + 20, y: st.y, vx: 0, vy: 0, hp: 1, awake: true, stun: 0, slamT: 9, slam: null });
     run1(d, [a]);
-    expect(d.heroes.a.hearts).toBe(START_HEARTS - 1);
-    d.heroes.a.hearts = 1; d.heroes.a.inv = 0;
+    expect(d.heroes.a.hearts).toBe(START_HEARTS - TOUCH_DMG);
+    d.heroes.a.hearts = TOUCH_DMG; d.heroes.a.inv = 0;
     const e = d.enemies[0]; e.x = a.x + 20; e.y = a.y;
     const { fx } = run1(d, [a]);
     expect(d.heroes.a.ko).toBeGreaterThan(0);
@@ -97,10 +135,15 @@ describe('dungeon v1', () => {
     expect(Math.hypot(a.x - st.x, a.y - st.y)).toBeLessThan(20);
   });
 
-  it('a dash dodges damage', () => {
+  it('a sidestep (dash) dodges damage for 0.4 s', () => {
     const d = quiet(newRun(7, { a: 'sword' }));
     const st = d.map.start;
-    const a = { ...body('a', st.x, st.y), dashT: 0.3 };
+    const a = body('a', st.x, st.y);
+    run1(d, [a]);
+    a.lastDash = 1; a.dashT = 0.3; // the sim just dashed
+    run1(d, [a]);
+    a.dashT = 0;
+    expect(d.heroes.a.dodge).toBeGreaterThan(0.3);
     d.enemies.push({ id: 1, kind: 0, x: st.x + 20, y: st.y, vx: 0, vy: 0, hp: 1, awake: true, stun: 0, slamT: 9, slam: null });
     run1(d, [a]);
     expect(d.heroes.a.hearts).toBe(START_HEARTS);
@@ -130,14 +173,30 @@ describe('dungeon v1', () => {
     expect(d.enemies[0].slam).not.toBeNull();
     expect(d.heroes.a.hearts).toBe(START_HEARTS);
     run1(d, [a], undefined, 1.2);
-    expect(d.heroes.a.hearts).toBe(START_HEARTS - 1);
+    expect(d.heroes.a.hearts).toBe(START_HEARTS - SLAM_DMG);
   });
 
-  it('floor 1 has an exit up (not under the arrival point): standing on it 1.5 s leaves the dungeon', () => {
+  it('floor 1 has an exit up (not under the arrival point): standing on it 1.5 s ends the run', () => {
     const d = quiet(newRun(12, { a: 'sword' }));
     expect(Math.hypot(d.map.exit.x - d.map.start.x, d.map.exit.y - d.map.start.y)).toBeGreaterThan(40 + 17);
     expect(run1(d, [body('a', d.map.start.x, d.map.start.y)], undefined, 2).r).toBe('stay');
-    expect(run1(d, [body('a', d.map.exit.x, d.map.exit.y)], undefined, 1.6).r).toBe('out');
+    run1(d, [body('a', d.map.exit.x, d.map.exit.y)], undefined, 1.6);
+    expect(d.done).toBeGreaterThan(0);
+    expect(d.why).toBe('exit');
+    expect(run1(d, [body('a', d.map.exit.x, d.map.exit.y)], undefined, DONE_SECONDS + 0.2).r).toBe('out');
+  });
+
+  it('the run ends when its time is up; snapshot round-trips', () => {
+    const d = quiet(newRun(13, { a: 'spear' }));
+    d.time = 0.05;
+    run1(d, [body('a', d.map.start.x, d.map.start.y)], undefined, 0.2);
+    expect(d.done).toBeGreaterThan(0);
+    expect(d.why).toBe('time');
+    d.heroes.a.hearts = 3.5;
+    const v = dview(JSON.parse(JSON.stringify(dsnap(d, 13))));
+    expect(v.why).toBe('time');
+    expect(v.heroes.a.hearts).toBe(3.5);
+    expect(v.heroes.a.weapon).toBe('spear');
   });
 
   it('stairs: everyone on them 1.5 s goes down; the last floor exit needs the boss gone', () => {
@@ -155,7 +214,8 @@ describe('dungeon v1', () => {
     d.enemies = [];
     go(d.map.stairs.x, d.map.stairs.y, 1.6);
     expect(d.done).toBeGreaterThan(0);
-    expect(go(d.map.stairs.x, d.map.stairs.y, 4.2).r).toBe('out');
+    expect(d.why).toBe('boss');
+    expect(go(d.map.stairs.x, d.map.stairs.y, DONE_SECONDS + 0.2).r).toBe('out');
   });
 
   it.skipIf(!DUNGEON_ENABLED)('meadow: all on the entrance -> weapon cards -> down together; the sun waits underground', () => {

@@ -1,6 +1,7 @@
 // Test dungeon v1: generated floors, weapons, goo enemies, gold, team XP. Pure TypeScript (no Phaser).
 // The host runs it inside the normal sim (sim.ts, mode 'dungeon'); clients rebuild the same map from
-// seed + floor and render the snapshot.
+// seed + floor and render the snapshot (dsnap/dview below).
+// Started by Code (sim + tests), continued by Code 2: auto-attack, specials, sidestep, run timer.
 import { rng } from './rng';
 
 export const DT = 32; // one dungeon tile in world px (Kenney Tiny Dungeon 16 px at 2x)
@@ -9,15 +10,30 @@ export const GH = 30;
 export const FLOORS = 3;
 const BLOB_R = 17;
 
+// ---- classes, weapons, specials (data, so Präst / Riddare / Bågskytt can be added later) ----
+export type HeroClass = 'krigare';
 export type Weapon = 'sword' | 'hammer' | 'spear';
 export const WEAPONS: Weapon[] = ['sword', 'hammer', 'spear'];
 export const WEAPON_NAMES: Record<Weapon, string> = { sword: 'Svärd', hammer: 'Hammare', spear: 'Spjut' };
-/** reach (px from the blob centre), half-arc (radians, PI = all around), damage, cooldown (s), knockback */
+/** Auto-attack: reach (px from the blob centre to the goo's edge), half-arc (radians, PI = all around),
+ *  damage, seconds between swings, knockback. */
 export const WEAPON_STATS: Record<Weapon, { reach: number; arc: number; dmg: number; cd: number; kb: number }> = {
-  sword: { reach: 58, arc: 1.0, dmg: 1, cd: 0.32, kb: 160 },
-  hammer: { reach: 60, arc: Math.PI, dmg: 2, cd: 0.75, kb: 380 },
-  spear: { reach: 92, arc: 0.36, dmg: 1, cd: 0.45, kb: 200 },
+  sword: { reach: 56, arc: 1.0, dmg: 1, cd: 0.4, kb: 160 }, // fast, medium reach
+  hammer: { reach: 58, arc: Math.PI, dmg: 2, cd: 0.9, kb: 380 }, // slow, hits all around, big knockback
+  spear: { reach: 96, arc: 0.3, dmg: 1, cd: 0.55, kb: 200 }, // long and narrow, pierces a line
 };
+/** Special attack kinds. 'heal' (Präst), 'wall' (Riddare), 'volley' (Bågskytt) are reserved for later classes. */
+export type SpecialKind = 'spin' | 'slam' | 'lunge' | 'heal' | 'wall' | 'volley';
+export interface SpecialDef { kind: SpecialKind; name: string; cd: number; r: number; dmg: number; kb: number; stun: number }
+export const SPECIALS: Record<string, SpecialDef> = {
+  'krigare:sword': { kind: 'spin', name: 'Snurr', cd: 6, r: 84, dmg: 2, kb: 300, stun: 0.5 },
+  'krigare:hammer': { kind: 'slam', name: 'Markslag', cd: 8, r: 110, dmg: 3, kb: 480, stun: 0.9 },
+  'krigare:spear': { kind: 'lunge', name: 'Utfall', cd: 7, r: 30, dmg: 2, kb: 220, stun: 0.4 },
+};
+export const specialOf = (cls: HeroClass, w: Weapon): SpecialDef => SPECIALS[`${cls}:${w}`] ?? SPECIALS['krigare:sword'];
+const LUNGE_SPEED = 400; // the sim lets a dashing blob reach 1.7x its top speed (~408)
+const LUNGE_T = 0.35;
+export const DODGE_T = 0.4; // sidestep: invulnerable this long
 
 export type EnemyKind = 0 | 1 | 2; // small, medium, boss goo
 export const ENEMY_HP = [1, 3, 15];
@@ -27,10 +43,14 @@ export const ENEMY_GOLD = [1, 3, 15];
 export const ENEMY_XP = [1, 3, 10];
 const ENEMY_SIGHT = 300; // they wake up and chase within this range
 export const SLAM_EVERY = 4; // boss: telegraphed slam
-export const SLAM_WARN = 1.1; // shadow circle on the ground before it lands
+export const SLAM_WARN = 1.1; // red ring on the ground before it lands
 export const SLAM_R = 72;
 export const START_HEARTS = 5;
+export const TOUCH_DMG = 0.5; // goo touch: half a heart
+export const SLAM_DMG = 1;
 export const KO_SECONDS = 5;
+export const RUN_SECONDS = 300; // a run ends (back to the meadow) after 5 minutes at the latest
+export const DONE_SECONDS = 6; // "Dungeon klar!" stays this long
 const HURT_INV = 1; // invulnerable after a hit
 /** Team XP needed to reach level n+1 (index = current level - 1). */
 export const LEVEL_XP = [5, 12, 22, 35, 52, 75];
@@ -41,7 +61,7 @@ export interface Floor {
   solid: Uint8Array; // GW*GH, 1 = wall
   rooms: Room[];
   start: { x: number; y: number }; // world px: arrival (and revive) point
-  exit: { x: number; y: number }; // stairs up in the first room's corner (used on floor 1 to leave)
+  exit: { x: number; y: number }; // stairs up in the first room's corner: leave the dungeon
   stairs: { x: number; y: number }; // stairs down (floors 1-2) or the exit after the boss (floor 3)
   chests: { x: number; y: number }[];
   spawns: { kind: EnemyKind; x: number; y: number }[];
@@ -129,7 +149,16 @@ export function collideWalls(f: Floor, o: { x: number; y: number; vx: number; vy
 
 export interface Enemy { id: number; kind: EnemyKind; x: number; y: number; vx: number; vy: number; hp: number; awake: boolean; stun: number; slamT: number; slam: { x: number; y: number; t: number } | null }
 export interface Coin { id: number; x: number; y: number; v: number }
-export interface Hero { hearts: number; maxHearts: number; ko: number; inv: number; weapon: Weapon; fx: number; fy: number; atkCd: number; swing: number; lastAtk: number }
+export interface Hero {
+  cls: HeroClass; hearts: number; maxHearts: number; ko: number; inv: number; weapon: Weapon;
+  fx: number; fy: number; aim: number; // facing; aim > 0: facing the last target (movement does not turn it)
+  atkCd: number; swing: number;
+  spCd: number; spT: number; lastAtk: number; // special: cooldown, active time, last button counter
+  lunge: number[]; // goo ids already hit by the current lunge
+  dodge: number; lastDash: number; // sidestep invulnerability, last dash counter
+  kx: number; ky: number; // where a knocked-out blob lies
+}
+export type EndWhy = 'boss' | 'exit' | 'time';
 export interface DState {
   floor: number;
   map: Floor; // rebuilt from seed + floor, never sent
@@ -137,17 +166,22 @@ export interface DState {
   coins: Coin[];
   opened: boolean[]; // chests
   gold: number; xp: number; level: number; dmgBonus: number; kills: number;
+  time: number; // seconds left of the run
   ready: number; // seconds every blob has stood on the stairs (goes down / out at 1.5)
   done: number; // > 0: "Dungeon klar!" shows, counts down, then back to the meadow
+  why: EndWhy;
   heroes: Record<string, Hero>;
   nextId: number;
 }
 export type DFx =
   | { t: 'swing'; id: string; w: Weapon; a: number }
-  | { t: 'hurt'; x: number; y: number; kind: EnemyKind }
+  | { t: 'special'; id: string; k: SpecialKind; x: number; y: number; a: number; r: number }
+  | { t: 'dodge'; id: string; x: number; y: number }
+  | { t: 'hurt'; e: number; x: number; y: number; kind: EnemyKind }
   | { t: 'kill'; x: number; y: number; kind: EnemyKind }
   | { t: 'ouch'; id: string; x: number; y: number }
   | { t: 'ko'; id: string; x: number; y: number }
+  | { t: 'revive'; id: string; x: number; y: number }
   | { t: 'coin'; x: number; y: number; n: number }
   | { t: 'chest'; x: number; y: number; n: number }
   | { t: 'level'; level: number; bonus: 'heart' | 'dmg' }
@@ -157,10 +191,15 @@ export type DFx =
 export const STAIRS_R = 40;
 export const READY_SECONDS = 1.5;
 const CHEST_GOLD = 8;
+const CHEST_XP = 2;
 const COIN_R = 28;
+const COIN_MAGNET = 70; // coins slide to a blob this close (easier for small thumbs)
 
-export function newHero(weapon: Weapon, maxHearts = START_HEARTS): Hero {
-  return { hearts: maxHearts, maxHearts, ko: 0, inv: 0, weapon, fx: 0, fy: 1, atkCd: 0, swing: 0, lastAtk: 0 };
+export function newHero(weapon: Weapon, maxHearts = START_HEARTS, cls: HeroClass = 'krigare'): Hero {
+  return {
+    cls, hearts: maxHearts, maxHearts, ko: 0, inv: 0, weapon, fx: 0, fy: 1, aim: 0, atkCd: 0, swing: 0,
+    spCd: 0, spT: 0, lastAtk: -1, lunge: [], dodge: 0, lastDash: -1, kx: 0, ky: 0,
+  };
 }
 
 export function enterFloor(d: Omit<DState, 'map'> & { map?: Floor }, seed: number, floor: number, players: number): DState {
@@ -176,10 +215,13 @@ export function enterFloor(d: Omit<DState, 'map'> & { map?: Floor }, seed: numbe
 export function newRun(seed: number, picks: Record<string, Weapon>): DState {
   const heroes: Record<string, Hero> = {};
   for (const [id, w] of Object.entries(picks)) heroes[id] = newHero(w);
-  return enterFloor({ floor: 1, enemies: [], coins: [], opened: [], gold: 0, xp: 0, level: 1, dmgBonus: 0, kills: 0, ready: 0, done: 0, heroes, nextId: 1 }, seed, 1, Object.keys(picks).length);
+  return enterFloor({
+    floor: 1, enemies: [], coins: [], opened: [], gold: 0, xp: 0, level: 1, dmgBonus: 0, kills: 0,
+    time: RUN_SECONDS, ready: 0, done: 0, why: 'exit', heroes, nextId: 1,
+  }, seed, 1, Object.keys(picks).length);
 }
 
-interface Body { id: string; x: number; y: number; vx: number; vy: number; dashT: number }
+interface Body { id: string; x: number; y: number; vx: number; vy: number; dashT: number; lastDash?: number }
 
 /** Is a point inside a weapon's swing from (px,py) facing (fx,fy)? */
 export function inSwing(w: Weapon, px: number, py: number, fx: number, fy: number, tx: number, ty: number, tr: number): boolean {
@@ -191,6 +233,17 @@ export function inSwing(w: Weapon, px: number, py: number, fx: number, fy: numbe
   const cos = (dx * fx + dy * fy) / (d * fl);
   // generous for kids: the target's radius widens the arc
   return Math.acos(Math.max(-1, Math.min(1, cos))) <= st.arc + Math.atan2(tr, d);
+}
+
+/** Nearest living goo whose edge is within `reach` of (x,y), or null. */
+export function nearestEnemy(d: DState, x: number, y: number, reach: number): Enemy | null {
+  let best: Enemy | null = null, bd = Infinity;
+  for (const e of d.enemies) {
+    if (e.hp <= 0) continue;
+    const dd = Math.hypot(e.x - x, e.y - y) - ENEMY_R[e.kind];
+    if (dd <= reach && dd < bd) { bd = dd; best = e; }
+  }
+  return best;
 }
 
 function gainXp(d: DState, xp: number, fx: DFx[]) {
@@ -205,39 +258,105 @@ function gainXp(d: DState, xp: number, fx: DFx[]) {
   }
 }
 
-/** One dungeon tick after the players have moved (sim.ts moves them with the usual glide physics). */
+/** Damage + knockback on one goo from (fromX, fromY). */
+function hitEnemy(d: DState, e: Enemy, dmg: number, kb: number, stun: number, fromX: number, fromY: number, fx: DFx[]) {
+  e.hp -= dmg;
+  e.awake = true;
+  const dx = e.x - fromX, dy = e.y - fromY, dl = Math.hypot(dx, dy) || 1;
+  const k = kb * (e.kind === 2 ? 0.25 : 1);
+  e.vx = (dx / dl) * k; e.vy = (dy / dl) * k; e.stun = Math.max(e.stun, stun);
+  fx.push(e.hp > 0 ? { t: 'hurt', e: e.id, x: e.x, y: e.y, kind: e.kind } : { t: 'kill', x: e.x, y: e.y, kind: e.kind });
+}
+
+function face(h: Hero, b: Body, tx: number, ty: number) {
+  const dx = tx - b.x, dy = ty - b.y, dl = Math.hypot(dx, dy);
+  if (dl > 0.5) { h.fx = dx / dl; h.fy = dy / dl; }
+  h.aim = 0.45;
+}
+
+/** Big button: the class/weapon special. */
+function special(d: DState, h: Hero, b: Body, fx: DFx[]) {
+  const sp = specialOf(h.cls, h.weapon);
+  h.spCd = sp.cd;
+  const dmg = sp.dmg + d.dmgBonus;
+  if (sp.kind === 'lunge') {
+    // charge towards the nearest goo in sight (else the facing direction), piercing everything on the way
+    const t = nearestEnemy(d, b.x, b.y, 220);
+    if (t) face(h, b, t.x, t.y);
+    b.vx = h.fx * LUNGE_SPEED; b.vy = h.fy * LUNGE_SPEED; b.dashT = Math.max(b.dashT, LUNGE_T);
+    h.spT = LUNGE_T; h.lunge = [];
+    fx.push({ t: 'special', id: b.id, k: sp.kind, x: b.x, y: b.y, a: Math.atan2(h.fy, h.fx), r: sp.r });
+    return;
+  }
+  // spin (sword) and slam (hammer): everything around the blob
+  h.spT = 0.35;
+  for (const e of d.enemies) if (e.hp > 0 && Math.hypot(e.x - b.x, e.y - b.y) - ENEMY_R[e.kind] <= sp.r) hitEnemy(d, e, dmg, sp.kb, sp.stun, b.x, b.y, fx);
+  fx.push({ t: 'special', id: b.id, k: sp.kind, x: b.x, y: b.y, a: Math.atan2(h.fy, h.fx), r: sp.r });
+}
+
+/** One dungeon tick after the players have moved (sim.ts moves them with the usual glide physics).
+ *  `atk` = each blob's special-button counter (Input.atk). */
 export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>, seed: number, dt: number, fx: DFx[]): 'stay' | 'out' {
   const f = d.map;
-  if (d.done > 0) { d.done -= dt; return d.done <= 0 ? 'out' : 'stay'; }
+  if (d.done > 0) {
+    d.done -= dt;
+    for (const b of bodies) { b.vx = 0; b.vy = 0; collideWalls(f, b, BLOB_R); }
+    return d.done <= 0 ? 'out' : 'stay';
+  }
+  d.time = Math.max(0, d.time - dt);
+  if (d.time <= 0) { d.done = DONE_SECONDS; d.why = 'time'; return 'stay'; }
   const alive = bodies.filter((b) => (d.heroes[b.id]?.ko ?? 0) <= 0);
-  // heroes: facing, timers, attacks, KO/revive
+  // heroes: facing, timers, auto-attack, special, sidestep, KO/revive
   for (const b of bodies) {
-    const h = d.heroes[b.id] ??= newHero('sword', START_HEARTS + Math.floor((d.level - 1) / 2));
+    const h = d.heroes[b.id] ??= newHero('sword', START_HEARTS + Math.floor(d.level / 2));
     collideWalls(f, b, BLOB_R);
     h.atkCd = Math.max(0, h.atkCd - dt); h.inv = Math.max(0, h.inv - dt); h.swing = Math.max(0, h.swing - dt);
+    h.spCd = Math.max(0, h.spCd - dt); h.spT = Math.max(0, h.spT - dt); h.dodge = Math.max(0, h.dodge - dt); h.aim = Math.max(0, h.aim - dt);
+    const a = atk.get(b.id) ?? h.lastAtk;
+    if (h.lastAtk < 0) h.lastAtk = a; // first tick: whatever the counter was on the meadow
+    if (h.lastDash < 0) h.lastDash = b.lastDash ?? 0;
     if (h.ko > 0) {
       h.ko -= dt;
-      b.vx = 0; b.vy = 0;
-      if (h.ko <= 0) { h.ko = 0; h.hearts = h.maxHearts; h.inv = 2; b.x = f.start.x; b.y = f.start.y; }
+      b.x = h.kx; b.y = h.ky; b.vx = 0; b.vy = 0;
+      h.lastAtk = a; h.lastDash = b.lastDash ?? h.lastDash;
+      if (h.ko <= 0) {
+        h.ko = 0; h.hearts = h.maxHearts; h.inv = 2; b.x = f.start.x; b.y = f.start.y;
+        fx.push({ t: 'revive', id: b.id, x: b.x, y: b.y });
+      }
       continue;
     }
+    // sidestep: the sim already gave the dash impulse; here it makes the blob untouchable
+    if (b.lastDash !== undefined && b.lastDash !== h.lastDash) {
+      h.lastDash = b.lastDash;
+      if (b.dashT > 0.25) { h.dodge = DODGE_T; fx.push({ t: 'dodge', id: b.id, x: b.x, y: b.y }); }
+    }
     const sp = Math.hypot(b.vx, b.vy);
-    if (sp > 30) { h.fx = b.vx / sp; h.fy = b.vy / sp; }
-    const a = atk.get(b.id) ?? h.lastAtk;
+    if (sp > 30 && h.aim <= 0 && h.spT <= 0) { h.fx = b.vx / sp; h.fy = b.vy / sp; }
+    // special attack (big button)
     if (a !== h.lastAtk) {
       h.lastAtk = a;
-      if (h.atkCd <= 0) {
-        const st = WEAPON_STATS[h.weapon];
-        h.atkCd = st.cd; h.swing = 0.22;
+      if (h.spCd <= 0) special(d, h, b, fx);
+    }
+    // lunge in progress: pierce every goo it touches once
+    if (h.spT > 0 && specialOf(h.cls, h.weapon).kind === 'lunge') {
+      const def = specialOf(h.cls, h.weapon);
+      for (const e of d.enemies) {
+        if (e.hp <= 0 || h.lunge.includes(e.id) || Math.hypot(e.x - b.x, e.y - b.y) > BLOB_R + ENEMY_R[e.kind] + def.r) continue;
+        h.lunge.push(e.id);
+        hitEnemy(d, e, def.dmg + d.dmgBonus, def.kb, def.stun, b.x, b.y, fx);
+      }
+    }
+    // auto-attack: the nearest goo in weapon reach, at the weapon's rate, facing it
+    if (h.atkCd <= 0) {
+      const st = WEAPON_STATS[h.weapon];
+      const t = nearestEnemy(d, b.x, b.y, st.reach);
+      if (t) {
+        face(h, b, t.x, t.y);
+        h.atkCd = st.cd; h.swing = Math.min(0.3, st.cd * 0.8);
         fx.push({ t: 'swing', id: b.id, w: h.weapon, a: Math.atan2(h.fy, h.fx) });
         for (const e of d.enemies) {
           if (e.hp <= 0 || !inSwing(h.weapon, b.x, b.y, h.fx, h.fy, e.x, e.y, ENEMY_R[e.kind])) continue;
-          e.hp -= st.dmg + d.dmgBonus;
-          e.awake = true;
-          const dx = e.x - b.x, dy = e.y - b.y, dl = Math.hypot(dx, dy) || 1;
-          const kb = st.kb * (e.kind === 2 ? 0.25 : 1);
-          e.vx = (dx / dl) * kb; e.vy = (dy / dl) * kb; e.stun = 0.35;
-          fx.push(e.hp > 0 ? { t: 'hurt', x: e.x, y: e.y, kind: e.kind } : { t: 'kill', x: e.x, y: e.y, kind: e.kind });
+          hitEnemy(d, e, st.dmg + d.dmgBonus, st.kb, 0.35, b.x, b.y, fx);
         }
       }
     }
@@ -277,7 +396,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
         e.slam.t -= dt;
         if (e.slam.t <= 0) {
           fx.push({ t: 'slam', x: e.slam.x, y: e.slam.y });
-          for (const b of alive) if (Math.hypot(b.x - e.slam.x, b.y - e.slam.y) < SLAM_R + BLOB_R) hurt(d, b, e.slam.x, e.slam.y, fx);
+          for (const b of alive) if (Math.hypot(b.x - e.slam.x, b.y - e.slam.y) < SLAM_R + BLOB_R) hurt(d, b, e.slam.x, e.slam.y, SLAM_DMG, fx);
           e.slam = null;
         }
       } else if ((e.slamT -= dt) <= 0 && tgt) {
@@ -288,12 +407,27 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
     for (const b of alive) {
       const dd = Math.hypot(b.x - e.x, b.y - e.y), min = BLOB_R + ENEMY_R[e.kind];
       if (dd >= min || dd < 0.001) continue;
+      const hb = d.heroes[b.id];
+      if (hb && hb.spT > 0 && specialOf(hb.cls, hb.weapon).kind === 'lunge') continue; // a lunge goes right through
       const nx = (b.x - e.x) / dd, ny = (b.y - e.y) / dd;
       b.x = e.x + nx * min; b.y = e.y + ny * min;
-      hurt(d, b, e.x, e.y, fx);
+      hurt(d, b, e.x, e.y, TOUCH_DMG, fx);
     }
   }
-  // coins + chests
+  // goo don't stack on each other
+  for (let i = 0; i < d.enemies.length; i++) for (let j = i + 1; j < d.enemies.length; j++) {
+    const p = d.enemies[i], q = d.enemies[j];
+    const dx = q.x - p.x, dy = q.y - p.y, dd = Math.hypot(dx, dy), min = ENEMY_R[p.kind] + ENEMY_R[q.kind];
+    if (dd >= min || dd < 0.001) continue;
+    const push = (min - dd) / 2, nx = dx / dd, ny = dy / dd;
+    p.x -= nx * push; p.y -= ny * push; q.x += nx * push; q.y += ny * push;
+  }
+  // coins (slide to a near blob) + chests
+  for (const c of d.coins) {
+    let tb: Body | null = null, bd = COIN_MAGNET;
+    for (const b of alive) { const dd = Math.hypot(c.x - b.x, c.y - b.y); if (dd < bd) { bd = dd; tb = b; } }
+    if (tb && bd > 1) { c.x += ((tb.x - c.x) / bd) * 220 * dt; c.y += ((tb.y - c.y) / bd) * 220 * dt; }
+  }
   for (const b of alive) {
     for (let i = d.coins.length - 1; i >= 0; i--) {
       const c = d.coins[i];
@@ -305,6 +439,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
       if (d.opened[i] || Math.hypot(c.x - b.x, c.y - b.y) > BLOB_R + 20) return;
       d.opened[i] = true; d.gold += CHEST_GOLD;
       fx.push({ t: 'chest', x: c.x, y: c.y, n: CHEST_GOLD });
+      gainXp(d, CHEST_XP, fx);
     });
   }
   // stairs: everyone standing (KO'd blobz don't count) on them for 1.5 s; the last floor's exit needs the boss gone
@@ -315,21 +450,71 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
   if (onStairs || exitUp) d.ready += dt; else d.ready = 0;
   if (d.ready >= READY_SECONDS) {
     d.ready = 0;
-    if (exitUp && !onStairs) return 'out';
-    if (last) { d.done = 4; return 'stay'; }
+    if (exitUp && !onStairs) { d.done = DONE_SECONDS; d.why = 'exit'; return 'stay'; }
+    if (last) { d.done = DONE_SECONDS; d.why = 'boss'; return 'stay'; }
     enterFloor(d, seed, d.floor + 1, bodies.length);
-    for (const b of bodies) { b.x = d.map.start.x + (Math.random() - 0.5) * 20; b.y = d.map.start.y + (Math.random() - 0.5) * 20; b.vx = 0; b.vy = 0; }
+    for (const b of bodies) {
+      b.x = d.map.start.x + (Math.random() - 0.5) * 20; b.y = d.map.start.y + (Math.random() - 0.5) * 20; b.vx = 0; b.vy = 0;
+      const h = d.heroes[b.id];
+      if (h?.ko) { h.ko = 0.01; h.kx = b.x; h.ky = b.y; } // knocked-out blobz come along and wake up at once
+    }
     fx.push({ t: 'floor', floor: d.floor });
   }
   return 'stay';
 }
 
-function hurt(d: DState, b: Body, fromX: number, fromY: number, fx: DFx[]) {
+function hurt(d: DState, b: Body, fromX: number, fromY: number, dmg: number, fx: DFx[]) {
   const h = d.heroes[b.id];
-  if (!h || h.inv > 0 || h.ko > 0 || b.dashT > 0) return; // a dash dodges
-  h.hearts--; h.inv = HURT_INV;
+  if (!h || h.inv > 0 || h.ko > 0 || h.dodge > 0 || b.dashT > 0) return; // a sidestep (or lunge) dodges
+  h.hearts = Math.max(0, h.hearts - dmg); h.inv = HURT_INV;
   const dx = b.x - fromX, dy = b.y - fromY, dl = Math.hypot(dx, dy) || 1;
   b.vx = (dx / dl) * 260; b.vy = (dy / dl) * 260;
-  if (h.hearts <= 0) { h.hearts = 0; h.ko = KO_SECONDS; fx.push({ t: 'ko', id: b.id, x: b.x, y: b.y }); }
+  if (h.hearts <= 0) { h.ko = KO_SECONDS; h.kx = b.x; h.ky = b.y; fx.push({ t: 'ko', id: b.id, x: b.x, y: b.y }); }
   else fx.push({ t: 'ouch', id: b.id, x: b.x, y: b.y });
+}
+
+// ---- network snapshot / view (sim.ts puts it in its Snapshot as `dg`) ----
+const r1 = (n: number) => Math.round(n * 10) / 10;
+export interface DSnap {
+  sd: number; f: number; g: number; xp: number; lv: number; k: number; rd: number; dn: number; tm?: number; wy?: number;
+  e: [number, number, number, number, number, number, number, number][]; // id, kind, x, y, hp, slam x, slam y, slam t (-1 none)
+  c: [number, number, number][]; // coin id, x, y
+  op: string; // opened chests '0101'
+  // id, hearts*2, max, ko, weapon, facing (rad*100), swing (s*100), special cd (s*10), special active (s*100), dodge/inv flags
+  h: [string, number, number, number, number, number, number, number?, number?, number?][];
+}
+export interface DHeroView { hearts: number; maxHearts: number; ko: number; weapon: Weapon; face: number; swing: number; spCd: number; spMax: number; spT: number; dodge: boolean; inv: boolean }
+export interface DView {
+  seed: number; floor: number; gold: number; xp: number; level: number; kills: number; ready: number; done: number; time: number; why: EndWhy;
+  enemies: { id: number; kind: EnemyKind; x: number; y: number; hp: number; slam: { x: number; y: number; t: number } | null }[];
+  coins: { id: number; x: number; y: number }[];
+  opened: boolean[];
+  heroes: Record<string, DHeroView>;
+}
+const WHY: EndWhy[] = ['boss', 'exit', 'time'];
+export function dsnap(d: DState, seed: number): DSnap {
+  return {
+    sd: seed, f: d.floor, g: d.gold, xp: d.xp, lv: d.level, k: d.kills, rd: Math.round((d.ready / READY_SECONDS) * 100), dn: r1(d.done),
+    tm: Math.ceil(d.time), wy: WHY.indexOf(d.why),
+    e: d.enemies.map((e) => [e.id, e.kind, r1(e.x), r1(e.y), e.hp, e.slam ? r1(e.slam.x) : 0, e.slam ? r1(e.slam.y) : 0, e.slam ? r1(e.slam.t) : -1]),
+    c: d.coins.map((c) => [c.id, r1(c.x), r1(c.y)]),
+    op: d.opened.map((o) => (o ? '1' : '0')).join(''),
+    h: Object.entries(d.heroes).map(([id, h]) => [id, Math.round(h.hearts * 2), h.maxHearts, r1(h.ko), WEAPONS.indexOf(h.weapon), Math.round(Math.atan2(h.fy, h.fx) * 100),
+      Math.round(h.swing * 100), Math.ceil(h.spCd * 10), Math.round(h.spT * 100), (h.dodge > 0 ? 1 : 0) | (h.inv > 0 ? 2 : 0)]),
+  };
+}
+export function dview(n: DSnap): DView {
+  return {
+    seed: n.sd, floor: n.f, gold: n.g, xp: n.xp, level: n.lv, kills: n.k, ready: n.rd / 100, done: n.dn, time: n.tm ?? 0, why: WHY[n.wy ?? 1] ?? 'exit',
+    enemies: n.e.map(([id, kind, x, y, hp, sx, sy, st]) => ({ id, kind: kind as EnemyKind, x, y, hp, slam: st >= 0 ? { x: sx, y: sy, t: st } : null })),
+    coins: n.c.map(([id, x, y]) => ({ id, x, y })),
+    opened: [...n.op].map((c) => c === '1'),
+    heroes: Object.fromEntries(n.h.map(([id, hearts2, maxHearts, ko, w, face, swing, cd, spT, fl]) => {
+      const weapon = WEAPONS[w] ?? 'sword';
+      return [id, {
+        hearts: hearts2 / 2, maxHearts, ko, weapon, face: face / 100, swing: swing / 100,
+        spCd: (cd ?? 0) / 10, spMax: specialOf('krigare', weapon).cd, spT: (spT ?? 0) / 100, dodge: !!((fl ?? 0) & 1), inv: !!((fl ?? 0) & 2),
+      }];
+    })),
+  };
 }

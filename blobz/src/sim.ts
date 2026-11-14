@@ -272,7 +272,7 @@ export interface State {
 
 export { rng } from './rng';
 import { rng } from './rng';
-import { newRun, READY_SECONDS, stepDungeon, WEAPONS, type DFx, type DState, type Weapon } from './dungeon';
+import { dsnap, dview, newRun, READY_SECONDS, stepDungeon, WEAPONS, type DFx, type DSnap, type DState, type DView, type Weapon } from './dungeon';
 
 
 function nearBase(x: number, y: number, extra: number) {
@@ -838,39 +838,5 @@ export function viewFromSnapshot(n: Snapshot): View {
     dungeon: n.dg ? dview(n.dg) : null,
     builtNow: (n.bn ?? '').split(',').filter((k): k is BuildKind => (BUILD_KINDS as string[]).includes(k)),
     totems: TOTEM_KINDS.map((kind, i) => ({ kind, level: n.k?.[i]?.[0] ?? 0, buy: (n.k?.[i]?.[1] ?? 0) / 100 })), doubleT: n.d ?? 0,
-  };
-}
-
-// ---- dungeon snapshot / view ----
-export interface DSnap {
-  sd: number; f: number; g: number; xp: number; lv: number; k: number; rd: number; dn: number;
-  e: [number, number, number, number, number, number, number, number][]; // id, kind, x, y, hp, slam x, slam y, slam t (-1 none)
-  c: [number, number, number][]; // coin id, x, y
-  op: string; // opened chests '0101'
-  h: [string, number, number, number, number, number, number][]; // id, hearts, max, ko, weapon, facing (rad*100), swing (s*100)
-}
-export interface DView {
-  seed: number; floor: number; gold: number; xp: number; level: number; kills: number; ready: number; done: number;
-  enemies: { id: number; kind: 0 | 1 | 2; x: number; y: number; hp: number; slam: { x: number; y: number; t: number } | null }[];
-  coins: { id: number; x: number; y: number }[];
-  opened: boolean[];
-  heroes: Record<string, { hearts: number; maxHearts: number; ko: number; weapon: Weapon; face: number; swing: number }>;
-}
-function dsnap(d: DState, seed: number): DSnap {
-  return {
-    sd: seed, f: d.floor, g: d.gold, xp: d.xp, lv: d.level, k: d.kills, rd: Math.round((d.ready / READY_SECONDS) * 100), dn: r1(d.done),
-    e: d.enemies.map((e) => [e.id, e.kind, r1(e.x), r1(e.y), e.hp, e.slam ? r1(e.slam.x) : 0, e.slam ? r1(e.slam.y) : 0, e.slam ? r1(e.slam.t) : -1]),
-    c: d.coins.map((c) => [c.id, r1(c.x), r1(c.y)]),
-    op: d.opened.map((o) => (o ? '1' : '0')).join(''),
-    h: Object.entries(d.heroes).map(([id, h]) => [id, h.hearts, h.maxHearts, r1(h.ko), WEAPONS.indexOf(h.weapon), Math.round(Math.atan2(h.fy, h.fx) * 100), Math.round(h.swing * 100)]),
-  };
-}
-function dview(n: DSnap): DView {
-  return {
-    seed: n.sd, floor: n.f, gold: n.g, xp: n.xp, level: n.lv, kills: n.k, ready: n.rd / 100, done: n.dn,
-    enemies: n.e.map(([id, kind, x, y, hp, sx, sy, st]) => ({ id, kind: kind as 0 | 1 | 2, x, y, hp, slam: st >= 0 ? { x: sx, y: sy, t: st } : null })),
-    coins: n.c.map(([id, x, y]) => ({ id, x, y })),
-    opened: [...n.op].map((c) => c === '1'),
-    heroes: Object.fromEntries(n.h.map(([id, hearts, maxHearts, ko, w, face, swing]) => [id, { hearts, maxHearts, ko, weapon: WEAPONS[w] ?? 'sword', face: face / 100, swing: swing / 100 }])),
   };
 }
