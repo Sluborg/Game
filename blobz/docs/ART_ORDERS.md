@@ -36,7 +36,7 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (N-5b and N-7b are TO DO now). New orders only for pieces the pack lacks.**
+ChatGPT works only on N-orders with status TO DO (none are TO DO now; queue empty). New orders only for pieces the pack lacks.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
@@ -50,8 +50,8 @@ ChatGPT works only on N-orders with status TO DO (N-5b and N-7b are TO DO now). 
 | N-8 | CANCELLED (snow map removed, no map picker) | Map picker pictures: Meadow and Snow (2 small scenes) | `art/map-meadow.png`, `art/map-snow.png` |
 | N-9 | DONE | Bärregn mini game background (sunset meadow, portrait) | `mini/bg.png` |
 | N-10 | DONE | Small UI icons: check mark, star, empty star (one small sheet) | `art/icons/check.png`, `art/gather/star.png`, `art/gather/star-empty.png` |
-| N-5b | TO DO | Rogue class card only: ONE plain dagger beside the blob (not a sai) | `dungeon/card-class-rogue.png` |
-| N-7b | TO DO | App icon round 2: no background, no hands, no sparkles | app/PWA icon |
+| N-5b | DONE (received 2026-11-14) | Rogue class card only: ONE plain dagger beside the blob (not a sai) | `dungeon/card-class-rogue.png` |
+| N-7b | DONE (received 2026-11-14) | App icon round 2: no background, no hands, no sparkles | app/PWA icon |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
