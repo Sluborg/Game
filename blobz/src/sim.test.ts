@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BASE, createState, questTargets, step, type Input } from './sim';
+import { BASE, createState, finishMini, questTargets, step, type Input } from './sim';
 
 const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 });
 
@@ -41,10 +41,12 @@ describe('sim', () => {
     expect(s.gems[0].x).toBeGreaterThan(310);
   });
 
-  it('round ends at 0 seconds', () => {
+  it('sunset at 0 seconds starts Bärregn; the round ends after it', () => {
     const s = createState([P('a')], 4);
     s.time = 0.01;
     step(s, new Map(), 1 / 60);
+    expect(s.phase).toBe('mini');
+    finishMini(s);
     expect(s.phase).toBe('end');
   });
 
