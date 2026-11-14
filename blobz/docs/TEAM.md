@@ -1,4 +1,4 @@
-# Blobz team: Lead, Art, Code
+# Blobz team: Lead, Art, Code, Code 2
 
 Stefan talks only to **Lead**. Lead plans, tests, reviews, merges and deploys. Art and Code work in their own
 Claude Code sessions on their own branches and never push to the deploy branch.
@@ -12,7 +12,8 @@ integrates them, and tells Lead whether a new ChatGPT round is needed and with w
 |---|---|---|
 | Lead | `claude/mobile-game-5-players-8qthjq` (deploy branch, GitHub Pages builds it) | itself |
 | Art | `claude/blobz-art` | its own branch only |
-| Code | `claude/blobz-code` | its own branch only |
+| Code | `claude/blobz-code` | its own branch only (base building, meadow features) |
+| Code 2 | `claude/blobz-dungeon` | its own branch only (dungeon mode) |
 
 - Start every task by merging the latest deploy branch into your branch:
   `git fetch origin claude/mobile-game-5-players-8qthjq && git merge origin/claude/mobile-game-5-players-8qthjq`.
@@ -23,6 +24,7 @@ integrates them, and tells Lead whether a new ChatGPT round is needed and with w
 |---|---|
 | Art | `blobz/src/blob.ts`, `blobz/src/blob.test.ts`, `blobz/public/art/**`, `blobz/public/assets/**`, `blobz/docs/ART_*`, `blobz/docs/chatgpt-*`, `blobz/scripts/**` |
 | Code | `blobz/src/main.ts`, `net.ts`, `sim.ts`, `sim.test.ts`, `game.ts`, `controls.ts`, `sfx.ts`, `art.ts`, `blobz/index.html`, `blobz/src/style.css`, new feature files |
+| Code 2 | `blobz/src/dungeon*.ts`, `blobz/src/dungeon*.test.ts`, `blobz/e2e/dungeon*.cjs`; small, clearly marked hooks in shared files (main.ts, game.ts, sim.ts, net.ts, index.html, style.css) |
 | Lead | `blobz/VERSION`, `blobz/PROGRESS.md`, `blobz/CLAUDE.md`, `blobz/docs/TEAM.md`, `blobz/docs/screenshots/**`, merges |
 
 If you must touch a file you don't own, keep the change minimal and say so in your report.
