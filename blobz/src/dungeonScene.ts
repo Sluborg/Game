@@ -5,6 +5,7 @@ import Phaser from 'phaser';
 import { blobCanvas, BLOB_FRAMES, BODY_CY, clampLook, facingFromVelocity, type Facing } from './blob';
 import { drawGatherRing } from './gatherRing';
 import { onViewport } from './viewport';
+import { dpr, snapZoom } from './pixelScale';
 import { fw, fh, ft, inDoorway, makeRoom, roomCracks, roomGap, ROOM_TUNE, ROOMS, MINIBOSS_ROOM, SPAWN_WARN, AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
 /** Weapons without Art's strip yet: a Kenney Tiny Dungeon tile in hand (bow: drawn in code). */
 import type { Session } from './game';
@@ -247,9 +248,11 @@ export class DungeonScene extends Phaser.Scene {
     // rooms in portrait: exactly 3x (zoom 1: 1 art px = 3 CSS px); the room is as wide as the narrowest phone allows,
     // so on wider phones a dark margin shows left / right. Only a phone narrower than the room shrinks (never happens
     // when every phone reports its width). Landscape and the classic dungeon keep the fitted zoom.
-    const roomPx = this.rooms && this.map ? fw(this.map) * ft(this.map) : 0;
-    if (roomPx && h >= w) cam.setZoom(w >= roomPx ? 1 : w / roomPx);
-    else cam.setZoom(Math.max(0.55, Math.min(2.2, Math.min(Math.max(w, h) / 820, Math.min(w, h) / 430))));
+    // Device pixels (pixelScale.ts; the canvas is CSS size x dpr() once Code flips DPR_CANVAS): one art px (3 world px)
+    // = k WHOLE device px, k = round(3 x dpr) unless the room would not fit, then the largest k that fits.
+    const d = dpr(), roomPx = this.rooms && this.map ? fw(this.map) * ft(this.map) : 0;
+    if (roomPx && h >= w) { const k = Math.max(1, Math.min(Math.round(3 * d), Math.floor(w / (roomPx / 3)))); cam.setZoom(k / 3); }
+    else cam.setZoom(snapZoom(Math.max(0.55, Math.min(2.2, Math.min(Math.max(w, h) / d / 820, Math.min(w, h) / d / 430)))));
     if (this.rooms) cam.setBackgroundColor('#181425'); // the margin = the room's own dark
     // jump straight to where the camera should be for the new size (the easing would start from the stale view)
     const me = this.s ? this.heroes.get(this.s.myId) : undefined;
