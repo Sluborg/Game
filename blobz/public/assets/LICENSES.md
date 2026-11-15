@@ -1,5 +1,8 @@
 # Asset licenses
 
+> **2026-11-15:** the vendored Kenney packs (Tiny Town/Dungeon/Farm/Battle/Ski, Pixel Platformer) are no longer used
+> by the game and moved to `blobz/archive/assets/` (not shipped). Their rows stay below for the record.
+
 | Pack | Author | License | Source | Files |
 |---|---|---|---|---|
 | Tiny Town 1.1 | Kenney (www.kenney.nl) | CC0 1.0 | https://opengameart.org/content/tiny-town | `kenney-tiny-town/tilemap_packed.png`, `kenney-tiny-town/License.txt` |
