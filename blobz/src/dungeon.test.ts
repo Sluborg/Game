@@ -3,7 +3,7 @@ import { KEYS } from './i18n';
 import {
   AIM_WARN, BITE_TIME, CLASS_MOVE_COOLDOWN, DUNGEON_TIMER_ENABLED, CLASS_WEAPONS, BITE_WARN, bossHp, BURST, BURST_DMG, BURST_GAP, BURST_SPREAD, CLASS_HP, CLASSES, DASH_TIME, DASH_WARN, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, floorDmg, actMul, GH, GW,
   HEAL_BOLT, heroMods, refresh, inSwing, isWall, ITEMS, itemOf, KO_SECONDS, LEVEL_XP, LOOT_SECONDS, makeFloor, makeGoo, newRun as newRunAny, POTION_HP, roomCracks, REGEN_EVERY,
-  ITEM_ICON, skillIcon, skillOf, unstick, EARLY_ROOMS, ROOM_T, ROOMS_ENABLED, ROOMS, ROOM_W, MINIBOSS_ROOM, SPAWN_WARN, READY_SECONDS, makeRoom, roomType, roomClear, diffFloor, enterFloor, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
+  ITEM_ICON, skillIcon, skillOf, unstick, inDoorway, EARLY_ROOMS, ROOM_T, ROOMS_ENABLED, ROOMS, ROOM_W, MINIBOSS_ROOM, SPAWN_WARN, READY_SECONDS, makeRoom, roomType, roomClear, diffFloor, enterFloor, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
 } from './dungeon';
 import { cleanVillage, createState, DUNGEON_ENABLED, newVillage, villageOf, PICK_TIMER_ENABLED, ENTRANCE_R, entranceOf, makePuzzles, makeTrees, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
 
@@ -583,6 +583,23 @@ describe('dungeon', () => {
         return s.actT ?? 0;
       };
       expect(wind(2)).toBeGreaterThan(wind(4) * 1.25);
+    });
+    it('the open door: the doorway is walkable, the whole doorway + 1 tile below counts, no bumping inside it', () => {
+      const d = newRun(26, { a: 'sword', b: 'bow', c: 'staff' }, 1, true);
+      const T = d.map.dt!, sx = d.map.stairs.x;
+      expect(isWall(d.map, sx, 2.5 * T)).toBe(true); // closed: the wall face
+      d.wave = 99; d.pending = []; d.enemies = [];
+      expect(roomClear(d)).toBe(true);
+      // three blobz squeezed into the doorway, two of them overlapping: they stay put and the 1.5 s count runs
+      const bs = [body('a', sx - 50, 2.4 * T), body('b', sx, 2.6 * T), body('c', sx + 6, 2.6 * T)];
+      run1(d, bs, undefined, 0.5);
+      expect(isWall(d.map, sx, 2.5 * T)).toBe(false); // open: walk into it
+      expect(bs.every((b) => inDoorway(d.map, b.x, b.y))).toBe(true);
+      expect(Math.hypot(bs[1].x - bs[2].x, bs[1].y - bs[2].y)).toBeLessThan(10); // not pushed apart
+      expect(d.ready).toBeGreaterThan(0.4);
+      run1(d, bs, undefined, READY_SECONDS);
+      expect(d.floor).toBe(2);
+      expect(inDoorway(d.map, d.map.start.x, d.map.start.y)).toBe(false);
     });
     it('corridor: climbing past the line starts the next wave early; the difficulty spreads over the 10 rooms', () => {
       const d = newRun(22, { a: 'sword' }, 1, true);

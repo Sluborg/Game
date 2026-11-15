@@ -562,6 +562,9 @@ export type DFx =
   | { t: 'slam'; x: number; y: number };
 
 export const STAIRS_R = 40;
+/** rooms: the open doorway = the leaf's tiles in the wall face + 1 floor tile below (gathering there counts; blobz
+ *  don't push each other inside it) */
+export const inDoorway = (f: Floor, x: number, y: number) => Math.abs(x - f.stairs.x) < 1.5 * ft(f) && y > 1.8 * ft(f) && y < 4.3 * ft(f);
 export const READY_SECONDS = 1.5;
 const CHEST_GOLD = 8;
 const CHEST_XP = 2;
@@ -1110,8 +1113,10 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
     p.x -= nx * push; p.y -= ny * push; q.x += nx * push; q.y += ny * push;
   }
   // blobz don't stack either (the meadow's bouncy bumps are off underground)
+  const doorOpen = !!d.rooms && roomClear(d);
   for (let i = 0; i < alive.length; i++) for (let j = i + 1; j < alive.length; j++) {
     const p = alive[i], q = alive[j];
+    if (doorOpen && inDoorway(f, p.x, p.y) && inDoorway(f, q.x, q.y)) continue; // gathering at the door: no bumping
     const dx = q.x - p.x, dy = q.y - p.y, dd = Math.hypot(dx, dy), min = BLOB_R * 2 - 4;
     if (dd >= min) continue;
     const nx = dd > 0.001 ? dx / dd : 1, ny = dd > 0.001 ? dy / dd : 0, push = (min - dd) / 2;
@@ -1149,7 +1154,8 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
   const last = d.floor === lastFloor(d);
   const open = d.rooms ? roomClear(d) : !last || !d.enemies.some((e) => e.kind === 2);
   const exitUp = d.floor === 1 && alive.length > 0 && alive.every((b) => Math.hypot(b.x - f.exit.x, b.y - f.exit.y) < STAIRS_R);
-  const onStairs = open && alive.length > 0 && alive.every((b) => Math.hypot(b.x - f.stairs.x, b.y - f.stairs.y) < STAIRS_R);
+  if (d.rooms && open) { const w = fw(f), mt = Math.floor(f.stairs.x / ft(f)); for (let x = mt - 1; x <= mt + 1; x++) f.solid[2 * w + x] = 0; } // the open doorway is walkable
+  const onStairs = open && alive.length > 0 && alive.every((b) => (d.rooms ? inDoorway(f, b.x, b.y) : Math.hypot(b.x - f.stairs.x, b.y - f.stairs.y) < STAIRS_R));
   if (onStairs || exitUp) d.ready += dt; else d.ready = 0;
   if (d.ready >= READY_SECONDS) {
     d.ready = 0;
