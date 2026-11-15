@@ -101,8 +101,15 @@ export function puzzleCorners(seed: number): number[] {
   const first = Math.floor(r() * 4);
   return [first, (first + 1 + Math.floor(r() * 3)) % 4];
 }
-/** Two pens in two of the four map corners, gate facing the base. Deterministic from the seed. */
+/** Co-op puzzle pens are ON HOLD (Stefan 2026-11-15, docs/ARCHIVED.md): no pressure plates, "0/1" counters, fences,
+ *  gates or reward chests on the meadow. Code kept: flip the flag to bring them back. */
+export const PUZZLES_ENABLED = false;
+/** Two pens in two of the four map corners, gate facing the base. Deterministic from the seed. Empty while archived. */
 export function makePuzzles(seed: number): PuzzleLayout[] {
+  return PUZZLES_ENABLED ? penLayouts(seed) : [];
+}
+/** The seeded pen geometry, also while archived: the cave entrance keeps the spot it had next to the pens. */
+function penLayouts(seed: number): PuzzleLayout[] {
   const r = rng(seed * 13 + 5);
   const corners = [[250, 210], [MAIN_W - 250, 210], [250, WORLD_H - 210], [MAIN_W - 250, WORLD_H - 210]];
   const first = Math.floor(r() * 4);
@@ -225,7 +232,7 @@ export const ENTRANCE_R = 46;
  *  north) that is clear of the puzzle pens, the water corner, build spots and totem pads. Seeded, so every
  *  phone puts it in the same place. */
 export function entranceOf(seed: number): { x: number; y: number } {
-  const zones = makePuzzles(seed).map((l) => l.zone);
+  const zones = penLayouts(seed).map((l) => l.zone); // pens archived or not: the cave stays where it was
   if (BUILDING_ENABLED) { const w = makeWater(seed); zones.push(w.area, ...w.water); }
   const spots = [[BASE.x - 330, BASE.y], [BASE.x + 330, BASE.y], [BASE.x, BASE.y + 330], [BASE.x, BASE.y - 300]].map(([x, y]) => ({ x, y }));
   const clear = (p: { x: number; y: number }) => !zones.some((z) => inRect(z, p.x, p.y, ENTRANCE_R + 20))
