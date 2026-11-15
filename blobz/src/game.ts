@@ -1049,6 +1049,18 @@ export class GameScene extends Phaser.Scene {
         const c = this.add.container(0, 0, [t, ic]).setDepth(5000);
         this.tweens.add({ targets: c, y: -50, alpha: 0, duration: 1100, delay: j * 80, ease: 'Cubic.Out', onComplete: () => c.destroy() });
       });
+      // juice (PLAN step 5): the delivered items hop over to the storage pile beside the cottage, which bounces
+      let n = 0;
+      for (const k of parts) for (let i = 0; i < Math.min(4, f.r[k]); i++, n++) {
+        const it = this.add.image(f.x + (Math.random() - 0.5) * 20, f.y - 26, ITEM_ICON[k]).setScale(ITEM_SCALE[k] ?? 2).setDepth(5200);
+        const tx = this.pile.x + (Math.random() - 0.5) * 24, ty = this.pile.y - 6;
+        this.tweens.add({ targets: it, x: tx, duration: 420, delay: n * 70, ease: 'Sine.InOut' });
+        this.tweens.add({
+          targets: it, y: { from: it.y, to: ty }, duration: 420, delay: n * 70, ease: (t: number) => t * t, // falls into the pile
+          onStart: () => this.tweens.add({ targets: it, scale: (ITEM_SCALE[k] ?? 2) * 1.2, duration: 210, yoyo: true }),
+          onComplete: () => { it.destroy(); this.tweens.add({ targets: this.pile, scaleX: 1.12, scaleY: 0.9, duration: 90, yoyo: true }); },
+        });
+      }
     } else if (f.t === 'hit') {
       this.swing(f.id, f.tool, f.x);
       const n = this.nodes[f.node];
@@ -1105,8 +1117,16 @@ export class GameScene extends Phaser.Scene {
       const g = f.kind === 'cottage' ? null : this.bgfx.get(f.kind);
       const img = f.kind === 'cottage' ? this.cottageImg : g?.img;
       if (g) { g.built = true; g.img.setVisible(true); g.sh?.setVisible(true); }
-      if (img) { const sc = img.scaleX; img.setScale(sc * 0.2); this.tweens.add({ targets: img, scale: sc, duration: 420, ease: 'Back.Out' }); }
-      for (let i = 0; i < 3; i++) this.time.delayedCall(i * 90, () => this.puff(f.x + (i - 1) * 22, f.y + 6, (i - 1) * 60, -40, 6));
+      // juice (PLAN step 5): the building drops in from above, lands with a bounce, then the dust flies
+      if (img) {
+        const y0 = img.y;
+        img.setY(y0 - 90).setAlpha(0);
+        this.tweens.add({ targets: img, alpha: 1, duration: 120 });
+        this.tweens.add({
+          targets: img, y: y0, duration: 560, ease: 'Bounce.Out',
+          onComplete: () => { for (let i = 0; i < 3; i++) this.time.delayedCall(i * 60, () => this.puff(f.x + (i - 1) * 26, f.y + 6, (i - 1) * 70, -30, 7)); this.cameras.main.shake(90, 0.003); },
+        });
+      } else for (let i = 0; i < 3; i++) this.time.delayedCall(i * 90, () => this.puff(f.x + (i - 1) * 22, f.y + 6, (i - 1) * 60, -40, 6));
       const fx = this.add.sprite(f.x, f.y - 6, 'fx-levelup').setScale(2).setDepth(4500);
       fx.play('levelup');
       fx.once('animationcomplete', () => fx.destroy());
