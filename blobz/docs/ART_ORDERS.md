@@ -41,7 +41,7 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (N-15b and N-19b are TO DO now). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
+ChatGPT works only on N-orders with status TO DO (N-15b, N-19b and N-23 are TO DO now). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
@@ -71,6 +71,7 @@ ChatGPT works only on N-orders with status TO DO (N-15b and N-19b are TO DO now)
 | N-22 | DONE (received 2026-11-15) | Dungeon end screen illustration: treasure haul, portrait 9:16 + landscape 16:9 | `art/dungeon-end*.png` |
 | N-15b | TO DO | Speed power-up redo: winged boot fully INSIDE its glow circle (16x16 + 32x32) | `art/meadow/speed-*` |
 | N-19b | TO DO | Round combat button rings in exact small sizes: 24x24 and 18x18 art px, normal + pressed + disabled | `dungeon/ui/btn-round-*` |
+| N-23 | TO DO | Dungeon skill icons (24) + item icons (5), matching their effects (16x16) | `dungeon/skills/*`, `dungeon/items/*` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
@@ -265,6 +266,28 @@ Ninja Adventure style (style block). Redo ONLY the speed power-up from N-15 (ref
 ### N-19b Round button rings, exact sizes
 ```
 Same round wooden button as N-19 (reference: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n19-round-button.png): circular warm-brown wooden rim, dark 1 px outline, plain flat cream centre, empty middle. Three states: normal, pressed (centre darker, shifted 1 px down), disabled (grey wood). Draw them on EXACTLY a 24x24 art-pixel grid (rim about 3 px thick) AND again on EXACTLY an 18x18 art-pixel grid (rim about 2 px thick). Count the pixels: 24 and 18 art pixels across, no bigger.
+```
+
+### N-23 Skill + item icons
+```
+Ninja Adventure style (style block). Two sheets, every icon on EXACTLY a 16x16 art-pixel grid, solid magenta background,
+generous space between icons, no text, no blood.
+SHEET 1, 24 SKILL SYMBOLS (bold simple symbol only, NO frame or background disc; the game adds a round badge), 4 rows of 6:
+Rogue row: 1 faster hits (dagger with speed lines), 2 harder push (fist with a big push burst), 3 bigger whirl (spinning
+circular slash), 4 more health (heart with a plus), 5 heal on hit (small heart with a sparkle), 6 stronger (flexed blob arm
+/ upward red arrow on a blade).
+Healer row: 7 heal more (big green plus), 8 heal yourself (green swirl around a small heart), 9 shield bubble (round
+bubble shield), 10 faster revive (heart with a clock), 11 stronger wand (wand with a big spark), 12 faster wand (wand with
+speed lines).
+Marksman row: 13 more arrows (three arrows fanned), 14 arrow through (arrow passing through a ring), 15 bullseye (target
+with an arrow in the centre), 16 faster arrows (arrow with speed lines), 17 frost arrows (arrow with an ice crystal tip),
+18 freeze volley (snowflake over arrows).
+Knight row: 19 longer block (shield with a clock), 20 lure monsters (shield with a red exclamation mark), 21 thicker armor
+(chest plate with a plus), 22 stronger shield (shield with a spark/impact star), 23 stun (stars circling over a small
+monster), 24 faster sword (sword with speed lines).
+SHEET 2, 5 ITEMS (drawn objects, no frame), one row: 1 ruby ring (gold ring with a red gem), 2 iron helm (steel helmet),
+3 quick gloves (leather gloves with a small wind swirl), 4 star amulet (gold amulet with a star), 5 healing stone (green
+glowing gem drawn with hard pixels, no soft glow).
 ```
 
 ## Ninja style block (for N-orders)
