@@ -56,6 +56,9 @@ const SPENT_ART: [string, number][] = [['pr-stump', 3], ['pr-stump', 3], ['pr-st
  *  side. Sheets 'n-*' are Ninja tilesets, 'nx-*' single Ninja item files (or Art's Ninja-style berry bush). */
 type Crop = [string, number, number, number, number];
 /** The three tree kinds (sim kinds 0-2), one crop each: easy to swap after Stefan's pick. */
+/** A mined-out stone node: a little heap of grey pebbles (Nature 272,272: two small rocks), NOT the stump-like rock
+ *  at 288,144 (Stefan: "stone shows a tree stump"). One line to swap after Art's options sheet. */
+const RUBBLE_ART: Crop = ['n-nature', 272, 272, 32, 16];
 /** At most this many blossom trees per map (they read as pink pillows in a crowd). */
 const BLOSSOM_MAX = 2;
 const TREE_ART: Crop[] = [['n-nature', 96, 0, 32, 32], ['n-nature', 224, 0, 32, 32], ['n-nature', 32, 0, 32, 32]];
@@ -77,7 +80,7 @@ const NINJA_CROPS: Record<string, Crop | Crop[]> = {
   // trees (PLAN step 2): no mega-trunk round tree (Nature 0,0); the tree with roots, the blossom tree, the pine
   'pr-tree-green': TREE_ART[0], 'pr-tree-orange': TREE_ART[1], 'pr-tree-pine': TREE_ART[2],
   'pr-rock': ['n-nature', 112, 224, 32, 32], 'pr-boulder': ['n-nature', 144, 224, 32, 32],
-  'pr-stump': ['n-nature', 0, 128, 32, 32], 'g-rubble': ['n-nature', 288, 144, 16, 16],
+  'pr-stump': ['n-nature', 0, 128, 32, 32], 'g-rubble': RUBBLE_ART,
   'pr-flowers': ['n-nature', 96, 176, 16, 16],
   // wild veg + wheat tufts near the yard (decor only, no farming)
   'pr-wheat': ['n-nature', 112, 176, 16, 16], 'pr-veg': ['n-nature', 64, 176, 16, 16], 'pr-veg2': ['n-nature', 80, 176, 16, 16],
