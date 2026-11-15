@@ -61,8 +61,13 @@ type Crop = [string, number, number, number, number];
 const RUBBLE_ART: Crop = ['n-nature', 272, 272, 32, 16];
 /** At most this many blossom trees per map (they read as pink pillows in a crowd). */
 const BLOSSOM_MAX = 2;
+/** N-26 trees (Stefan 2026-11-15): round most common, apple rarest (apple is just a wood tree for now). */
+type TreeVariant = 'round' | 'pine' | 'apple';
+const treeVariant = (u: number): TreeVariant => (u < 0.6 ? 'round' : u < 0.88 ? 'pine' : 'apple');
+/** Foot row of the N-26 art: trees 32x48 stand on row 41, stumps 16x16 on row 13 (origin = foot / height). */
+const TREE_FOOT = 41 / 48, STUMP_FOOT = 13 / 16;
 /** Meadow declutter: at most this many groves, at least ~3 grove widths (3 x 192 px) apart; no wild wheat tufts. */
-const GROVE_MAX = 5, GROVE_GAP = 520, WILD_PATCHES = false;
+const GROVE_MAX = 0, GROVE_GAP = 520, WILD_PATCHES = false; // groves removed (Stefan 2026-11-15): only single trees
 const TREE_ART: Crop[] = [['n-nature', 96, 128, 32, 32], ['n-nature', 96, 128, 32, 32], ['n-nature', 96, 128, 32, 32]]; // round tree on a trunk (Stefan 2026-11-15)
 /** Big groves (decor, no collision) near the map edges and around the cave: pine, green, lime (Stefan 2026-11-15). */
 const GROVE_ART: Crop[] = [['n-nature', 0, 32, 64, 48], ['n-nature', 64, 32, 64, 48], ['n-nature', 256, 32, 64, 48]];
@@ -207,7 +212,7 @@ export class GameScene extends Phaser.Scene {
   private bgfx = new Map<BuildKind, { img: Phaser.GameObjects.Image; sh?: Phaser.GameObjects.Image; built: boolean }>();
   private cottageImg!: Phaser.GameObjects.Image;
   private water!: ReturnType<typeof makeWater>;
-  private nodes: { img: Phaser.GameObjects.Image; sh: Phaser.GameObjects.Image; kind: number; left: number; x: number; y: number; sc: number; fade: number; blossom: boolean }[] = [];
+  private nodes: { img: Phaser.GameObjects.Image; sh: Phaser.GameObjects.Image; kind: number; left: number; x: number; y: number; sc: number; fade: number; blossom: boolean; tree?: TreeVariant }[] = [];
   /** Decor groves (no collision), faded like trees when a blob is behind them. */
   private groves: { img: Phaser.GameObjects.Image; x: number; y: number; fade: number }[] = [];
   private dusk!: Phaser.GameObjects.Rectangle;
@@ -263,6 +268,10 @@ export class GameScene extends Phaser.Scene {
     // berry bush ChatGPT N-16 (full / picked), 32 px art at 3x
     this.load.image('st-you', 'art/icons/state/you-arrow-16.png'); // ChatGPT N-18
     this.load.image('pw-speed-32', 'art/meadow/speed-32.png'); // ChatGPT N-15b speed power-up (32 px art)
+    for (const v of ['round', 'pine', 'apple']) { // ChatGPT N-26 trees + matching stumps
+      this.load.image(`tree-${v}`, `art/props/tree-${v}.png`);
+      this.load.image(`stump-${v}`, `art/props/stump-${v}.png`);
+    }
     this.load.image('g-bush-berries', 'art/props/berry-bush-32.png');
     this.load.image('g-bush-empty', 'art/props/berry-bush-picked-32.png'); // Bärregn backdrop (ChatGPT N-9): sunset sky over the berry field
     if (this.s.biome === 'snow') { // archived snow map (SNOW_MAP_ENABLED): its own leftovers
@@ -292,10 +301,19 @@ export class GameScene extends Phaser.Scene {
     }).map((c) => (c as Phaser.GameObjects.Image).texture?.key ?? c.type);
   }
 
+  /** ChatGPT N-26 tree (32x48, strict 3x) or its own matching stump (16x16) once chopped; the foot sits on the node. */
+  private treeLook(n: { img: Phaser.GameObjects.Image; tree?: TreeVariant }, spent: boolean) {
+    if (!n.tree) return;
+    n.img.setTexture(spent ? `stump-${n.tree}` : `tree-${n.tree}`).setScale(3).setTint(0xffffff).setOrigin(0.5, spent ? STUMP_FOOT : TREE_FOOT);
+  }
+
   /** Put a node's shadow under the foot of its picture (the bottom edge), 70% of its width, just below its depth. */
-  private footShadow(n: { img: Phaser.GameObjects.Image; sh: Phaser.GameObjects.Image }) {
-    const im = n.img, foot = im.y + (1 - im.originY) * im.displayHeight;
-    n.sh.setPosition(im.x, foot - 3).setDisplaySize(Math.max(42, im.displayWidth * 0.8), 24).setAlpha(0.34).setDepth(im.depth - 1);
+  private footShadow(n: { img: Phaser.GameObjects.Image; sh: Phaser.GameObjects.Image; tree?: TreeVariant }) {
+    // N-26 art: the origin IS the foot row (the picture has empty rows below); other art stands on its bottom edge
+    const im = n.img, foot = n.tree ? im.y : im.y + (1 - im.originY) * im.displayHeight;
+    const sw = Math.max(36, im.displayWidth * 0.8), sh = Math.min(24, Math.round(sw * 0.36)); // flatter under small stumps
+    // Stefan 2026-11-15: N-26 tree + stump shadows sit 1 art px (3 screen px) lower
+    n.sh.setPosition(im.x, foot - sh / 2 + 4 + (n.tree ? 3 : 0)).setDisplaySize(sw, sh).setAlpha(0.34).setDepth(im.depth - 1);
   }
 
   /** Soft Ninja drop shadow (Actor/Character/Shadow.png, 12x7) stretched under a blob, prop or building. */
@@ -397,12 +415,15 @@ export class GameScene extends Phaser.Scene {
     // the pink blossom tree (sim kind 1) only for a couple of trees, away from the cave mouth
     const ent = entranceOf(this.s.seed);
     let blossoms = 0;
+    const vr = rng(this.s.seed * 13 + 5); // which N-26 tree each tree node shows (same on every phone)
     this.nodes = makeTrees(this.s.seed).map((t) => {
       const blossom = t.kind === 1 && blossoms < BLOSSOM_MAX && Math.hypot(t.x - ent.x, t.y - ent.y) > 260 && ++blossoms > 0;
       const sh = this.shadow(t.x, t.y, 60, 21);
       const [key, sc, tint] = this.nodeArt(t.kind, false, blossom);
       const img = this.add.image(t.x, t.y + 10, key).setScale(sc).setTint(tint).setOrigin(0.5, t.kind < 3 ? 0.95 : 0.8).setDepth(isSolid(t.kind) ? t.y : t.y - 30);
-      const n = { img, sh, kind: t.kind, left: t.left, x: t.x, y: t.y, sc, fade: 1, blossom };
+      const tree = t.kind < 3 && this.s.biome !== 'snow' ? treeVariant(vr()) : undefined;
+      const n = { img, sh, kind: t.kind, left: t.left, x: t.x, y: t.y, sc, fade: 1, blossom, tree };
+      if (tree) this.treeLook(n, false);
       this.footShadow(n);
       return n;
     });
@@ -577,16 +598,17 @@ export class GameScene extends Phaser.Scene {
       n.left = left;
       const [key, sc, tint] = this.nodeArt(n.kind, left <= 0, n.blossom);
       n.img.setTexture(key).setScale(sc).setTint(tint).setOrigin(0.5, left > 0 && n.kind < 3 ? 0.95 : 0.8);
+      if (n.tree) this.treeLook(n, left <= 0);
       this.footShadow(n);
       n.sc = sc;
       if (left > 0) { n.img.setScale(sc * 0.3); this.tweens.add({ targets: n.img, scale: sc, duration: 300, ease: 'Back.Out' }); }
     });
     // ---- foliage fades while a blob stands behind it (player visibility, PLAN step 2) ----
     for (const n of this.nodes) {
-      if (n.kind >= 3 && n.kind !== 5) continue; // trees + berry bushes only
-      const top = n.kind < 3 ? 96 : 66;
+      if ((n.kind >= 3 && n.kind !== 5) || n.left <= 0) continue; // standing trees + full berry bushes only (never a stump)
+      const top = n.kind < 3 ? (n.tree ? 112 : 96) : 66; // N-26 trees stand ~34 art px (102 world px) tall
       let hidden = false;
-      for (const b of this.blobs.values()) if (b.y < n.y + 4 && b.y > n.y - top && Math.abs(b.x - n.x) < 44) { hidden = true; break; }
+      for (const b of this.blobs.values()) if (b.y < n.y + 4 && b.y > n.y - top && Math.abs(b.x - n.x) < (n.tree ? 48 : 44)) { hidden = true; break; }
       const want = hidden ? 0.45 : 1;
       if (n.fade !== want) { n.fade += Math.sign(want - n.fade) * Math.min(Math.abs(want - n.fade), dt * 4); n.img.setAlpha(n.fade); }
     }
