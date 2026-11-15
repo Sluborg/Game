@@ -211,9 +211,13 @@ window.addEventListener('hashchange', showTab);
 
 /* ---------- Frågor ---------- */
 function draftFor(q) {
-  if (!state.drafts[q.id]) {
-    const a = state.answers[q.id] || {};
-    state.drafts[q.id] = { choice: a.choice || null, comment: a.comment || '' };
+  const sig = [q.title, q.img, (q.imgs || []).join(',')].join('|');
+  const ans = state.answers[q.id];
+  const d0 = state.drafts[q.id];
+  // reset when the question changed (new title/image) or its answer was removed by Claude
+  if (!d0 || d0.sig !== sig || (d0.fromAnswer && !ans) || (!d0.fromAnswer && ans && !d0.choice && !d0.comment)) {
+    const a = ans || {};
+    state.drafts[q.id] = { choice: a.choice || null, comment: a.comment || '', sig, fromAnswer: !!ans };
   }
   return state.drafts[q.id];
 }
