@@ -86,7 +86,7 @@ async function phone(browser, name, locale, size = PORTRAIT) {
     await en.click('#btn-build-close');
 
     // Bärregn + end screen
-    await sim(en, (s) => { s.time = 0.05; });
+    await sim(en, (s) => { s.delivered = { ...s.quest }; });
     await en.waitForSelector('#mini-hud:not(.hidden)', { timeout: 6000 });
     ok((await en.textContent('#mini-hud .mtitle')).trim() === 'Berry Rain!' && (await en.textContent('#btn-skip-mini')).trim() === 'Skip', 'Berry Rain HUD in English ("Berry Rain!", "Skip")');
     await noSwedish(en, 'Berry Rain');
