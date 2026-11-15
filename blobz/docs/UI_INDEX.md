@@ -155,6 +155,7 @@ In-world UI drawn by Phaser (`src/game.ts`).
 | meadow.youArrow | marker over my blob | ChatGPT | `art/icons/state/you-arrow-16.png` (N-18) at 3x, bobbing | game.ts:269 / 766 | KIT-A |
 | meadow.floatGain | "+N" pop-up with resource icon | Code + Ninja | Phaser text Fredoka 26 / 24 `#ffe08a` + item icon | game.ts:1142 / 1187 | KIT-A |
 | meadow.pile | pile of items at home | Ninja | item icons | game.ts:967 | KIT-A |
+| meadow.portalRing | gather ring on the portal (one segment per player, gold = standing on it, bright sweep = start countdown) | Code | `drawGatherRing` (`src/gatherRing.ts`), plum outline, cream track, gold `#ffc93c`; shared with Code 2's room doors | game.ts portalFrame | KIT-A |
 | meadow.plateBubble | "0/1" plate counter | Code | Phaser text bubble | game.ts:1084 | ARCH (puzzle pens) |
 
 ## 70 meadowEnd

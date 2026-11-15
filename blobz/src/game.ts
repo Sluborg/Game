@@ -7,7 +7,8 @@ import { BASE, GATE_W, makePuzzles, makeTrees, PLATE_R, rng, WORLD_H, WORLD_W } 
 import { isSolid, RES } from './sim';
 import { affordable, BUILDING_ENABLED, BUILD_KINDS, BUILD_R, BUILD_SPOTS, COTTAGE_PAD, makeWater, nodeRes } from './sim';
 import type { Biome, BuildKind } from './sim';
-import { DUNGEON_ENABLED, ENTRANCE_R, entranceOf, ICE_RX, ICE_RY, makeIce, WATER_TILE } from './sim';
+import { DUNGEON_ENABLED, ENTRANCE_RING, entranceOf, ICE_RX, ICE_RY, makeIce, onEntrance, WATER_TILE } from './sim';
+import { drawGatherRing } from './gatherRing';
 import { autotileMask, waterTiles, type Shore } from './water';
 import { cavePath } from './cavePath';
 import { isImgArt, RES_ART } from './resArt';
@@ -223,7 +224,7 @@ export class GameScene extends Phaser.Scene {
   private groves: { img: Phaser.GameObjects.Image; x: number; y: number; fade: number }[] = [];
   private dusk!: Phaser.GameObjects.Rectangle;
   private pile!: Phaser.GameObjects.Container;
-  private portal?: { glow: Phaser.GameObjects.Image; seed: number };
+  private portal?: { glow: Phaser.GameObjects.Image; ring: Phaser.GameObjects.Graphics; seed: number };
   private pileKey = '';
   private trailG!: Phaser.GameObjects.Graphics;
   private pickG!: Phaser.GameObjects.Graphics;
@@ -325,12 +326,20 @@ export class GameScene extends Phaser.Scene {
   private portalFrame(v: { players: { x: number; y: number }[]; entry: number; mode: string }) {
     const e = entranceOf(this.s.seed);
     if (!this.portal || this.portal.seed !== this.s.seed || !this.portal.glow.active) {
-      this.portal?.glow.destroy();
+      this.portal?.glow.destroy(); this.portal?.ring.destroy();
       // the art has 4 empty rows under the stones: the foot line is 12 px above the picture's bottom (y + 30)
       this.shadow(e.x, e.y + 16, 150, 26, 0.26).setDepth(e.y - 61);
-      this.portal = { seed: this.s.seed, glow: this.add.image(e.x, e.y + 30, 'portal-glow').setScale(3).setOrigin(0.5, 1).setDepth(e.y - 59) };
+      this.portal = {
+        seed: this.s.seed,
+        glow: this.add.image(e.x, e.y + 30, 'portal-glow').setScale(3).setOrigin(0.5, 1).setDepth(e.y - 59),
+        // the gather ring lies on the ground in front of the portal: under every blob standing on it
+        ring: this.add.graphics().setDepth(e.y + ENTRANCE_RING.dy - ENTRANCE_RING.ry - 2),
+      };
     }
-    const on = v.players.some((p) => Math.hypot(p.x - e.x, p.y - e.y) < ENTRANCE_R);
+    const inside = v.players.map((p) => onEntrance(e, p.x, p.y));
+    const on = inside.some(Boolean);
+    drawGatherRing(this.portal.ring, { x: e.x, y: e.y + ENTRANCE_RING.dy, rx: ENTRANCE_RING.rx, ry: ENTRANCE_RING.ry, inside, fill: v.entry, now: this.time.now });
+    this.portal.ring.setVisible(v.mode === 'meadow');
     const pulse = 0.5 - 0.5 * Math.cos(this.time.now / 900); // slow, about 5.7 s a cycle
     this.portal.glow.setVisible(v.mode === 'meadow').setAlpha(on || v.entry > 0 ? 1 : 0.15 + 0.45 * pulse);
   }
