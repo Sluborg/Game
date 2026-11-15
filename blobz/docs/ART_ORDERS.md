@@ -41,7 +41,7 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (N-16..N-22 are TO DO now). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
+ChatGPT works only on N-orders with status TO DO (none are TO DO now; queue empty, more orders coming). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
@@ -62,13 +62,13 @@ ChatGPT works only on N-orders with status TO DO (N-16..N-22 are TO DO now). Cha
 | N-13 | DONE (round 2 received 2026-11-15) | Combat FX frames, ROUND 2 (round 1 had glow halos):  KO stars, shockwave ring, slam warning, level-up burst, hit spark (32x32, 4 frames each) | `dungeon/fx/*` |
 | N-14 | DONE (received 2026-11-15) | Boss intro banner + boss portrait (portrait 64x64, banner 256x64) | `dungeon/boss-*` |
 | N-15 | DONE (received 2026-11-15) | Meadow extras: build-site marker, signpost, magnet power-up, speed power-up, home flag (16x16 + 32x32) | `art/meadow/*` |
-| N-16 | TO DO | Berry bush, full + picked (16x16 + 32x32) | `art/props/berry-bush-*` |
-| N-17 | TO DO | UI icon set for buttons and tabs, 16 icons (16x16 + 32x32) | `art/icons/ui/*` |
-| N-18 | TO DO | State badges + markers: can-build, lock, done stamp, green tick, gold tick, "you" arrow (16x16 + 32x32) | `art/icons/state/*` |
-| N-19 | TO DO | Round combat button: wooden rim, normal + pressed + disabled (48x48 + 64x64) | `dungeon/ui/btn-round-*` |
-| N-20 | TO DO | Lobby: waiting-blob silhouette, searching blob (4 frames), party platform (sizes in order) | `art/lobby/*` |
-| N-21 | TO DO | Boss + danger UI: boss health strip frame, hazard ring pattern (sizes in order) | `dungeon/ui/*` |
-| N-22 | TO DO | Dungeon end screen illustration: treasure haul, portrait 9:16 + landscape 16:9 | `art/dungeon-end*.png` |
+| N-16 | DONE (received 2026-11-15) | Berry bush, full + picked (16x16 + 32x32) | `art/props/berry-bush-*` |
+| N-17 | DONE (received 2026-11-15) | UI icon set for buttons and tabs, 16 icons (16x16 + 32x32) | `art/icons/ui/*` |
+| N-18 | DONE (received 2026-11-15) | State badges + markers: can-build, lock, done stamp, green tick, gold tick, "you" arrow (16x16 + 32x32) | `art/icons/state/*` |
+| N-19 | DONE (received 2026-11-15) | Round combat button: wooden rim, normal + pressed + disabled (48x48 + 64x64) | `dungeon/ui/btn-round-*` |
+| N-20 | DONE (received 2026-11-15) | Lobby: waiting-blob silhouette, searching blob (4 frames), party platform (sizes in order) | `art/lobby/*` |
+| N-21 | DONE (received 2026-11-15) | Boss + danger UI: boss health strip frame, hazard ring pattern (sizes in order) | `dungeon/ui/*` |
+| N-22 | DONE (received 2026-11-15) | Dungeon end screen illustration: treasure haul, portrait 9:16 + landscape 16:9 | `art/dungeon-end*.png` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
