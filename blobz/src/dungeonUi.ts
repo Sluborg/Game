@@ -326,6 +326,9 @@ export function dungeonUi(v: View, myId: string | undefined, controls: Controls,
     lastMode = mode;
   }
   show('weapon-pick', mode === 'pick');
+  // the dungeon flow hides the whole meadow HUD (quest bar, carried pill, meadow button): nothing dim behind the cards
+  document.body.classList.toggle('dgpick', mode === 'pick');
+  document.body.classList.toggle('dgflow', mode === 'pick' || mode === 'dungeon');
   if (mode === 'pick') {
     const picked = v.picked?.length ?? 0;
     const secs = Math.max(0, Math.ceil(v.pickT));

@@ -511,8 +511,11 @@ export class DungeonScene extends Phaser.Scene {
 
     // ---- camera follows my blob ----
     const me = this.heroes.get(this.s.myId);
-    if (me) { this.camTarget.x = me.x; this.camTarget.y = me.y; }
     const cam = this.cameras.main;
+    // landscape: the HUD sits top-left, so the camera keeps my blob a little right of centre (the room to its left stays
+    // visible instead of hiding monsters under the HUD)
+    const landscape = this.scale.width > this.scale.height;
+    if (me) { this.camTarget.x = me.x - (landscape ? 70 / cam.zoom : 0); this.camTarget.y = me.y; }
     cam.centerOn(cam.midPoint.x + (this.camTarget.x - cam.midPoint.x) * Math.min(1, dt * 6), cam.midPoint.y + (this.camTarget.y - cam.midPoint.y) * Math.min(1, dt * 6));
   }
 
@@ -713,19 +716,19 @@ export class DungeonScene extends Phaser.Scene {
             c.setData('in', { cx: e.slam.x, cy: e.slam.y + 8, b });
           }
         } else if (e.act === 1) {
-          this.hostile(g.tele, 'nf-aura', x0, y0 - 6, 2.4, HOSTILE.purple, 0, undefined, y0 - 1);
+          this.hostile(g.tele, 'nf-aura', x0, y0 - 6, 1.8, HOSTILE.purple); // under the blobz too (it could cover a blob standing above)
           const len = DASH_SPEED * DASH_TIME + ENEMY_R[e.kind];
           let ex = x0, ey = y0;
           for (let d = ENEMY_R[e.kind] + 10; d <= len; d += 26) {
             const x = x0 + ux * d, y = y0 + uy * d;
             if (fl && isWall(fl, x, y)) break;
             ex = x; ey = y;
-            this.hostile(g.tele, 'nf-chev', x, y, 1.3, HOSTILE.red, a, 2).setData('d', d);
+            this.hostile(g.tele, 'nf-chev', x, y, 0.9, HOSTILE.red, a, 2).setData('d', d); // thin, under the blobz (depth -300)
           }
           // N-13 slam-warning ring where the dash lands
           g.tele.push(this.add.sprite(ex, ey + 10, 'n13-slam-warning', 0).setScale(2.2).setDepth(-300).play({ key: 'n13-slam-warning', repeat: -1 }));
         } else if (e.act === 3) {
-          for (let k2 = 1; k2 <= 3; k2++) this.hostile(g.tele, 'nf-chev', x0 + ux * (ENEMY_R[e.kind] + k2 * 20), y0 + uy * (ENEMY_R[e.kind] + k2 * 20), 1.1, HOSTILE.red, a, 2);
+          for (let k2 = 1; k2 <= 3; k2++) this.hostile(g.tele, 'nf-chev', x0 + ux * (ENEMY_R[e.kind] + k2 * 20), y0 + uy * (ENEMY_R[e.kind] + k2 * 20), 0.8, HOSTILE.red, a, 2);
           g.tele.push(this.add.sprite(x0 + ux * (ENEMY_R[e.kind] + 50), y0 + uy * (ENEMY_R[e.kind] + 50) + 10, 'n13-slam-warning', 0).setScale(1.6).setDepth(-300).play({ key: 'n13-slam-warning', repeat: -1 }));
         } else if (e.act === 5) {
           let d = ENEMY_R[e.kind] + 12, x = x0, y = y0;
