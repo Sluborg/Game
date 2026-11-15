@@ -581,7 +581,8 @@ export class GameScene extends Phaser.Scene {
     this.baseG.clear();
     void pulse; // the dirt yard itself marks the drop-off zone (no glow ring)
 
-    // ---- items: pickups bob and sit on a pulsing light ring so they read as "take me" ----
+    // ---- items: pickups LIE STILL on the ground (Stefan 2026-11-15: nothing on the ground bobs or has a breathing
+    //      shadow), with a fixed foot shadow and a light ring so they read as "take me" ----
     const seenI = new Set<number>();
     this.pickG.clear();
     for (const it of v.items) {
@@ -592,11 +593,10 @@ export class GameScene extends Phaser.Scene {
         this.tweens.add({ targets: img, scale: ITEM_SCALE[it.kind] ?? 1.8, duration: 250, ease: 'Back.Out' });
         this.items.set(it.id, img);
       }
-      const bob = Math.abs(Math.sin(now / 260 + it.id)) * 5;
-      img.x = it.x; img.y = it.y - 4 - bob;
+      img.x = it.x; img.y = it.y - 4;
       img.setDepth(it.y - 10);
       const pr = 15;
-      this.pickG.fillStyle(0x000000, 0.18).fillEllipse(it.x, it.y + 9, 22 - bob, 7);
+      this.pickG.fillStyle(0x000000, 0.18).fillEllipse(it.x, it.y + 9, 22, 7);
       this.pickG.lineStyle(2, 0xffffff, 0.75).strokeEllipse(it.x, it.y + 6, pr * 2, pr);
     }
     for (const [id, img] of this.items) if (!seenI.has(id)) { img.destroy(); this.items.delete(id); }
@@ -675,7 +675,7 @@ export class GameScene extends Phaser.Scene {
           : this.add.container(w.x, w.y, [this.add.circle(0, 0, 32, 0xff6b8b, 0.4).setStrokeStyle(3, 0xffffff, 0.9), this.add.image(0, -1, 'ic-magnet').setScale(2)]);
         this.powers.set(w.id, c);
       }
-      c.setPosition(w.x, w.y + Math.sin(now / 250 + w.id) * 4).setDepth(w.y);
+      c.setPosition(w.x, w.y).setDepth(w.y); // power-ups rest on the ground too: no bob (Stefan 2026-11-15)
     }
     for (const [id, c] of this.powers) if (!seenW.has(id)) { c.destroy(); this.powers.delete(id); }
 
