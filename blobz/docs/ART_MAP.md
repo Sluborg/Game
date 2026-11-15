@@ -133,7 +133,7 @@ Reference for wiring art. **One art source:** CC0 "Ninja Adventure" pack, vendor
 | Wood | Items/Resource/Branch.png | 16x16 | A branch. For a chunkier log: camp log 0,0,32,16 or Nature 80,128,16,16. |
 | Stone | Items/Resource/Rock.png | 16x16 | Grey rock. |
 | Crystal | Items/Resource/GemRed.png / GemGreen.png / GemPurple.png / GemYellow.png | 15x15 / 16x16 / 16x16 / 14x14 | |
-| Berry | Items/Food/Nut2.png | 15x15 | MISSING a real berry: Nut2 is a dark-red round fruit, the closest. Or Art draws a 3-berry cluster in code. |
+| Berry / food | FORBIDDEN: Items/Food/Nut2.png (see Forbidden art) | | Food icon: Stefan picks from `docs/art-review/res-food.png`; berry bush = ChatGPT N-16. |
 | Extras | Items/Resource/Grass.png, Water.png, feather.png, Bar*.png | 16x16 | |
 
 ## 7. HUD / UI
@@ -263,6 +263,13 @@ Reference for wiring art. **One art source:** CC0 "Ninja Adventure" pack, vendor
 | Orbs on pedestals | TilesetDungeon.png | 48,32,80,16 (5 colours) | |
 | Pit / hole | Backgrounds/Tilesets/TilesetHole.png | 3x3 pit 0,0,48,48 | Dark hole with brown rim. |
 | Door | TilesetHouse.png | wooden doors 400,304,16,16 / 416,304,16,16 | MISSING a dungeon gate: use the stone arch, or Art draws in code. |
+
+## Forbidden art (Stefan, PLAN.md 2026-11-15)
+Never use these, not as a stand-in either:
+| Art | File / rect | Why / use instead |
+|---|---|---|
+| Nut2 as food | `Items/Food/Nut2.png` | Reads as a dark ball, not food. Pick a food from `docs/art-review/res-food.png` (board choice). |
+| The mega-trunk tree | `TilesetNature.png` 0,0,32,32 (Code's crop `public/art/ninja/tree.png`: the wide orange trunk slab) | Swap for the nicer Ninja trees (section 4: round 256,0 / 288,0, pine 32,0, big trees 48x48 at y288). |
 
 ## Gaps summary (MISSING)
 - Berry item: Items/Food/Nut2.png is the closest. Berry bush: none in the pack; Art's `public/art/props/berry-bush-ninja*.png` fill it.
