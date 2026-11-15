@@ -227,8 +227,8 @@ function renderQuestion(q) {
     a && a.at ? el('span', { text: 'Ditt svar: ' + fmt(a.at) }) : null));
   card.append(el('h2', { text: q.title }));
   if (q.body) card.append(el('p', { class: 'body', text: q.body }));
+  for (const src of (q.imgs || (q.img ? [q.img] : []))) card.append(el('img', { src, alt: q.title, style: 'width:100%;height:auto;image-rendering:pixelated;box-shadow:0 0 0 3px var(--plum)' }));
   if (q.rate) {
-    for (const src of (q.imgs || (q.img ? [q.img] : []))) card.append(el('img', { src, alt: q.title, style: 'width:100%;height:auto;image-rendering:pixelated;box-shadow:0 0 0 3px var(--plum)' }));
     const RATE = [['1', '#e0574f', 'Dålig'], ['2', '#ef8a4a', 'Svag'], ['3', '#f2c14e', 'Okej'], ['4', '#8cc84b', 'Bra nog'], ['5', '#3fae5a', 'Perfekt, mer av detta']];
     const seg = el('div', { role: 'radiogroup', 'aria-label': 'Betyg 1 till 5', style: 'display:flex;gap:8px;width:100%' });
     for (const [v, col, title] of RATE) {
