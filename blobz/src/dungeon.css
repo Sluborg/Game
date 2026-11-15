@@ -305,3 +305,14 @@ body.dgflow #hud > :not(#hud-dg):not(#attack):not(#dash):not(#stick):not(#dg-ko)
 .skcard[data-cls='tank'] { --badge: #b0503a; }
 .lootnew .dgicon, #dg-loot-items > .dgicon { border-radius: 0; }
 @media (orientation: landscape) and (max-height: 500px) { .skcard .dgicon { width: 36px; height: 36px; padding: 6px; } }
+
+/* landscape docking (Lead): the level-up cards sit top-left under the HUD (my blob stands right of centre, so they never
+   cover it); the loot card sits bottom-centre between them and the round buttons (the camera lifts my blob above it) */
+@media (orientation: landscape) and (max-height: 500px) {
+  #dg-cards { top: calc(max(8px, env(safe-area-inset-top)) + 92px); left: max(8px, env(safe-area-inset-left)); right: auto; transform: none; width: 354px; min-width: 0; }
+  #dg-loot { left: calc(max(8px, env(safe-area-inset-left)) + 364px); right: auto; bottom: 8px; width: 300px; }
+}
+/* the small round button: a dark centre disc behind the light N-12 symbol (contrast on the cream ring face) */
+#hud.dungeon #dash { background-image: radial-gradient(circle, #3b2416 0 14px, transparent 15px), url('/art/dungeon/ui/btn-round-normal-18.png'); background-size: auto, 54px 54px; }
+#hud.dungeon #dash:active { background-image: radial-gradient(circle, #2a1810 0 14px, transparent 15px), url('/art/dungeon/ui/btn-round-pressed-18.png'); }
+#hud.dungeon #dash.cd { background-image: radial-gradient(circle, #3b2416 0 14px, transparent 15px), url('/art/dungeon/ui/btn-round-disabled-18.png'); }
