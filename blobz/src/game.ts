@@ -158,6 +158,13 @@ function autoFrame(sh: Shore, bx: number, by: number, inner: Record<'inw' | 'ine
 }
 /** The organic dirt yard around the cottage and under buildings. false = plain grass everywhere ("no ground" test). */
 export const YARD_ENABLED = true;
+/** Nameplates (Stefan 2026-11-15, long names): at most NAME_MAX world px wide, so neighbours on the spawn row (48 px
+ *  apart) never overlap; a longer name is cut with an ellipsis ("WWWW…"). */
+const NAME_MAX = 46;
+function fitLabel(label: Phaser.GameObjects.Text, name: string) {
+  label.setText(name);
+  for (let n = name.length - 1; label.width > NAME_MAX && n > 0; n--) label.setText(name.slice(0, n) + '…');
+}
 const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.search).has('debug');
 const MAP_VIEW = DEBUG && new URLSearchParams(location.search).has('mapview');
 /** Below this speed (px/s) the face looks straight ahead. */
@@ -751,7 +758,7 @@ export class GameScene extends Phaser.Scene {
       b.facing = b.swingT > 0 ? (b.faceLeft ? 'left' : 'right') : facingFromVelocity(p.vx, p.vy, FACE_DEAD, b.facing);
       b.body.setFlipX(b.facing === 'left');
       if (DEBUG) ((window as unknown as { __blobzFace?: Record<string, { facing: Facing; frame: number }> }).__blobzFace ??= {})[p.id] = { facing: b.facing, frame }; // e2e
-      if (b.label.text !== info.name) b.label.setText(info.name);
+      if (b.label.getData('name') !== info.name) fitLabel(b.label.setData('name', info.name), info.name);
       if (smooth) {
         b.x += (p.x + p.vx * 0.06 - b.x) * k; b.y += (p.y + p.vy * 0.06 - b.y) * k;
         b.vx = p.vx; b.vy = p.vy;
@@ -829,6 +836,7 @@ export class GameScene extends Phaser.Scene {
     // nameplate: always on top of the world (tools, props); no "you" arrow any more (Stefan 2026-11-15)
     b.label.setPosition(b.x, b.y + 14).setDepth(this.dB + 19990);
     if (DEBUG) ((window as unknown as { __blobzCovers?: Record<string, () => string[]> }).__blobzCovers ??= {})[p.id] = () => this.coversOf(b.label); // e2e
+    if (DEBUG) ((window as unknown as { __blobzLabels?: Record<string, () => { x: number; w: number; y: number; h: number; text: string }> }).__blobzLabels ??= {})[p.id] = () => { const r = b.label.getBounds(); return { x: r.x, y: r.y, w: r.width, h: r.height, text: b.label.text }; }; // e2e
 
     // carried items stack
     while (b.carry.length < p.carry.length) b.carry.push(this.add.image(0, 0, 'ic-log').setScale(1));

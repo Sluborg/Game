@@ -358,7 +358,17 @@ function renderLobby() {
     return s;
   });
   $('lobby-list').replaceChildren(...players, ...free);
+  requestAnimationFrame(fitSeatNames);
 }
+/** Long names (Stefan 2026-11-15): a lobby name tag never reaches its neighbour's. It is at most its seat column wide
+ *  (CSS max-width); a name that does not fit shrinks from 14 px down to 12 px, then ends in an ellipsis. */
+function fitSeatNames() {
+  for (const el of document.querySelectorAll<HTMLElement>('#lobby-list .seatname')) {
+    el.style.fontSize = '';
+    for (let fs = 13; el.scrollWidth > el.clientWidth && fs >= 12; fs--) el.style.fontSize = fs + 'px';
+  }
+}
+onViewport(fitSeatNames);
 
 function startScene(session: Session) {
   wipe();

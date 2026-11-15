@@ -1441,3 +1441,7 @@ body.rotate-block #rotate b { background: var(--k-parch2); border: 2px solid var
 }
 #stick { width: 128px; height: 128px; }
 #knob { width: 44px; height: 44px; margin: -22px; }
+
+/* long names (Stefan 2026-11-15): a lobby name tag is at most its seat column wide (minus 3 px), so with 5 players
+   at 360 px no tag reaches its neighbour's; main.ts fitSeatNames shrinks it to 12 px before the ellipsis */
+#lobby #lobby-list .seat .seatname { max-width: calc(100% - 3px); }
