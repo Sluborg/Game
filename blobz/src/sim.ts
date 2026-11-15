@@ -545,7 +545,7 @@ export function pickWeapon(s: State, id: string, w: string) {
 function enterDungeon(s: State) {
   for (const p of s.players) s.picks[p.id] ??= 'dagger'; // [dungeon hook] unpicked = Rogue with two daggers
   s.runs++;
-  s.dg = newRun(s.seed * 7919 + s.runs * 104729, s.picks, s.dungeon, undefined, undefined, narrowest(s)); // [dungeon hook] rooms as wide as the narrowest phone
+  s.dg = newRun(s.seed * 7919 + s.runs * 104729, s.picks, s.dungeon, undefined, narrowest(s)); // [dungeon hook] rooms as wide as the narrowest phone
   s.mode = 'dungeon';
   for (const p of s.players) { p.x = s.dg.map.start.x + (Math.random() - 0.5) * 30; p.y = s.dg.map.start.y + (Math.random() - 0.5) * 30; p.vx = 0; p.vy = 0; p.carry = []; }
   s.fx.push({ t: 'floor', floor: 1 });

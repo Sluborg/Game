@@ -1,6 +1,6 @@
-// E2E (Code 2): every weapon is held at the body edge and attacks TOWARD the goo it hits.
-// Two phones (portrait host, landscape joiner); for each weapon a goo sits in a different direction and
-// the rendered weapon angle must point within 30 degrees of it. Screenshots mid-attack per weapon.
+// E2E (Code 2): no weapon sprites (Stefan 2026-11-15): every class attacks with an FX from the blob itself (slash,
+// cut, arrow, magic missile), projectiles start at the blob's edge, and no weapon sprite is drawn on any phone.
+// Two phones (portrait host, landscape joiner); a goo sits in a different direction per weapon.
 // Usage: npm run build && npx vite preview --port 4173 &  node e2e/dungeon-weapons.cjs [baseUrl] [shotDir]
 const { LANDSCAPE, ok, startGame, sim } = require('./helpers.cjs');
 const base = process.argv[2] || 'http://localhost:4173/';
@@ -8,7 +8,6 @@ const shots = process.argv[3] || '';
 const CLS = { dagger: 'rogue', sword: 'rogue', hammer: 'rogue', spear: 'rogue', staff: 'healer', bow: 'marksman', shield: 'tank' };
 // goo direction per weapon (deg, screen y down) so every one is checked at a different angle
 const DIRS = { dagger: -80, sword: 30, hammer: 150, spear: -35, staff: 200, bow: -140, shield: 90 };
-const angDiff = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
 
 (async () => {
   const { browser, pages } = await startGame(base, ['Stefan', 'Ada'], [undefined, LANDSCAPE], '&hitbox'); // screenshots show the sim's circles
@@ -36,25 +35,18 @@ const angDiff = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)))
           const r = a.ranged ? 90 : 17 + 34 + 6, me = s.players[a.i];
           s.dg.enemies.push({ id: s.dg.nextId++, kind: 2, x: me.x + Math.cos(t) * r, y: me.y + Math.sin(t) * r, vx: 0, vy: 0, hp: 999, mx: 999, awake: true, stun: 99, slamT: 99, slam: null });
         }, { w, cls: CLS[w], deg, ranged, i });
-        // a fresh attack after the switch (2 more swings, so none is left over from the last weapon)
-        const n0 = await p.evaluate((id) => window.__dgWeapon?.[id]?.n ?? 0, ids[i]);
-        const res = await p.waitForFunction(([id, w, n0]) => {
-          const g = window.__dgWeapon?.[id];
-          return g && g.swing && g.w === w && g.n >= n0 + 2 ? g : null;
-        }, [ids[i], w, n0], { timeout: 8000 }).then((h) => h.jsonValue());
-        const want = await host.evaluate(([i]) => { const s = window.__blobz.state, q = s.players[i], e = s.dg.enemies[0]; return Math.atan2(e.y - q.y, e.x - q.x); }, [i]);
-        // (the healer's wand points at the goo it shoots) the shield stays upright: it must sit on the body's edge toward the goo; everything else must point at it
-        // slashing weapons (and the Riddare's sword) sweep across the line: the swing is aimed at the goo and the blade
-        // stays within its arc; the daggers stab along the line (both sai point at it); spear / crossbow point at it
-        const got = res.slash ? res.aim : res.a;
-        const off = (angDiff(got, want) * 180) / Math.PI;
-        const blade = (angDiff(res.a, want) * 180) / Math.PI;
-        const held = Math.hypot(res.x - res.bx, res.y - res.by);
+        // no weapon sprite anywhere (host + joiner); each attack plays its FX from the blob, projectiles from its edge
+        const FX = { dagger: 'fx-cut', spear: 'fx-cut', sword: 'fx-slash', hammer: 'fx-slash', shield: 'fx-slash', bow: 'arrow', staff: 'fx-magic' }[w];
+        const n0 = await p.evaluate((k) => window.__dgAtkFx?.[k] ?? 0, FX);
+        await p.waitForFunction(([k, n0]) => (window.__dgAtkFx?.[k] ?? 0) >= n0 + 2, [FX, n0], { timeout: 8000 });
         const where = i ? 'joiner (landscape)' : 'host (portrait)';
-        if (w === 'dagger') {
-          ok(off <= 30 && held >= 18 && held <= 56, `dagger on ${where}: one dagger, held close, stabs at the goo (${off.toFixed(0)} deg off, <= 30), hovering ${held.toFixed(0)} px, stab ${Number(res.stab).toFixed(0)} px out`);
-        } else {
-          ok(off <= 30 && (!res.slash || blade <= (w === 'hammer' ? 85 : 75)) && held >= 18 && held <= 56, `${w} on ${where}: ${res.slash ? `slashes across the goo (aim ${off.toFixed(0)} deg off, blade ${blade.toFixed(0)} deg into its arc)` : `points ${off.toFixed(0)} deg off the goo`} (<= 30), hovering ${held.toFixed(0)} px from the body centre`);
+        for (const q of pages) {
+          const r = await q.evaluate(() => ({
+            sprites: window.__dgScene.children.list.filter((o) => o.visible && typeof o.texture?.key === 'string' && o.texture.key.startsWith('w-')).length,
+            flags: Object.values(window.__dgWeapon ?? {}).filter((g) => g.sprite).length,
+            edge: window.__dgAtkFx?.edge ?? 0,
+          }));
+          ok(r.sprites === 0 && r.flags === 0 && (!ranged || r.edge >= 28), `${w} (${CLS[w]}) on ${where}: attacks show ${FX}, no weapon sprite on ${q === host ? 'host' : 'joiner'}${ranged ? `, the projectile starts ${r.edge} px out (blob edge)` : ''}`);
         }
         if (shots) await p.screenshot({ path: `${shots}/dg-attack-${w}-${i ? 'landscape' : 'portrait'}.png` });
       }

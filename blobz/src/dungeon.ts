@@ -236,8 +236,7 @@ export const ROOMS_ENABLED = true;
 const urlHas = (k: string) => typeof location !== 'undefined' && new URLSearchParams(location.search).has(k);
 /** rooms on: the default (Stefan 2026-11-15); ?classic on the host's URL = the old 5-floor dungeon, ?rooms forces rooms */
 export const roomsOn = () => urlHas('rooms') || (ROOMS_ENABLED && !urlHas('classic'));
-/** ?noweapons on the host's URL (test, Stefan): weapons only show while attacking (+0.5 s), a class-colour ring instead */
-export const noWeaponsOn = () => urlHas('noweapons');
+
 export const ROOMS = 10; // rooms per dungeon (boss room last)
 export const MINIBOSS_ROOM = 5;
 export const ROOM_W = 7; // floor tiles between the side walls in the widest room (0x72 tiles at 3x: 9 x 48 = 432 px)
@@ -265,8 +264,26 @@ export const roomClear = (d: DState) => !!d.rooms && (d.wave ?? 0) >= (d.map.wav
  *  36 (corridor) / 31 (boss) tiles tall, +1 per player above 2. Start at the bottom, the door at the top. */
 export const ROOM_T = 48;
 /** rooms 1-3: max 1 shooter per wave, ~30 % slower shots, a longer wind-up (the ramp starts in room 4) */
-export const EARLY_ROOMS = 3, EARLY_SPIT = 0.7, EARLY_AIM = 1.4;
-const early = (d: DState) => !!d.rooms && d.floor <= EARLY_ROOMS;
+export const EARLY_ROOMS = 3;
+/** Rooms: how many monsters attack and how often (Stefan's playtest 2026-11-15; our own numbers, tune here; also in
+ *  docs/dungeon-rooms-plan.md). "Specials" = shooters (eye) + dashers (bat / slime); every other monster only chases
+ *  and bumps. The ramp makes attacks more frequent over the 10 rooms (never faster projectiles). */
+export const ROOM_TUNE = {
+  specialFrac: 1 / 3, // at most this share of a wave shoots or dashes ...
+  earlySpecials: 1, // ... and in rooms 1..EARLY_ROOMS at most 1 per wave
+  shootEvery: [2.5, 3.5] as const, // seconds between a shooter's bursts (random per burst)
+  aimWarn: 0.8, // the shooter's aim line before it fires
+  dashEvery: 4, // a dasher dashes at most this often (+0-25 % random)
+  ramp: 0.15, // room 10 attacks this much more often than room 1 (intervals x 0.85)
+  dungeonStep: 0.1, // each later dungeon: intervals 10 % shorter (down to x 0.75)
+  spitSpeed: 0.7, // monster shots fly at 70 % of SPIT_SPEED in every room (same range)
+};
+/** rooms: the interval multiplier for room / dungeon (1 = room 1 of Dungeon 1) */
+const roomPace = (d: DState) => (1 - ROOM_TUNE.ramp * (Math.min(ROOMS, Math.max(1, d.floor)) - 1) / (ROOMS - 1)) * Math.max(0.75, 1 - ROOM_TUNE.dungeonStep * ((d.dungeon ?? 1) - 1));
+/** rooms: seconds until this monster's next attack */
+const roomEvery = (d: DState, kind: EnemyKind) => roomPace(d) * (kind === 3 ? ROOM_TUNE.shootEvery[0] + Math.random() * (ROOM_TUNE.shootEvery[1] - ROOM_TUNE.shootEvery[0]) : ROOM_TUNE.dashEvery * (1 + Math.random() * 0.25));
+/** rooms: how many shooters + dashers one wave of `n` monsters may have */
+export const roomSpecials = (room: number, n: number) => (room <= EARLY_ROOMS ? ROOM_TUNE.earlySpecials : Math.max(1, Math.floor(n * ROOM_TUNE.specialFrac)));
 export function makeRoom(seed: number, room: number, players = 1, dungeon = 1, tiles = ROOM_W + 2): Floor {
   const rw = Math.max(5, Math.min(ROOM_W, tiles - 2)); // floor tiles between the side walls
   const r = rng(seed * 89 + room * 157 + 7);
@@ -290,7 +307,7 @@ export function makeRoom(seed: number, room: number, players = 1, dungeon = 1, t
     const out: { kind: EnemyKind; x: number; y: number }[] = [];
     for (let k = 0; k < n; k++) out.push({ kind: 0, ...band(a, b) });
     for (let k = 0; k < mediums; k++) out.push({ kind: 1, ...band(a, b) });
-    for (let k = 0; k < Math.min(spitters, room <= EARLY_ROOMS ? 1 : 9); k++) out.push({ kind: 3, ...band(a, Math.min(b, a + (b - a) / 2)) });
+    for (let k = 0; k < Math.min(spitters, roomSpecials(room, n + mediums + spitters)); k++) out.push({ kind: 3, ...band(a, Math.min(b, a + (b - a) / 2)) });
     return out;
   };
   const n = 2 + crowd + Math.min(3, extra);
@@ -368,7 +385,8 @@ function stepWaves(d: DState, alive: Body[], dt: number, fx: DFx[]) {
     d.pending.splice(i, 1);
     const e = makeGoo(d, p.kind, p.x, p.y);
     e.awake = true;
-    if (d.dungeon === 1 && d.floor === 1) e.calm = true;
+    if (p.calm || (d.dungeon === 1 && d.floor === 1)) e.calm = true; // calm = chases and bumps only
+    e.cd = roomEvery(d, e.kind) * (0.5 + Math.random() * 0.5); // the first attack comes a little sooner
     d.enemies.push(e);
   }
   const w = d.wave ?? 0;
@@ -377,12 +395,16 @@ function stepWaves(d: DState, alive: Body[], dt: number, fx: DFx[]) {
   if (d.enemies.length === 0 && !d.pending.length) d.waveT = (d.waveT ?? 0) - dt;
   if ((d.waveT ?? 0) > 0 && !climbed) return;
   d.wave = w + 1; d.waveT = WAVE_GAP;
-  for (const sp of waves[w]) {
+  // at most ROOM_TUNE.specialFrac of the wave shoots or dashes (rooms 1-3: one): shooters count first, the remaining
+  // slots go to random bats / slimes, every other monster only chases
+  const wv = waves[w], slots = Math.max(0, roomSpecials(d.floor, wv.length) - wv.filter((sp) => sp.kind === 3).length);
+  const dashers = new Set(wv.map((_, i) => i).filter((i) => wv[i].kind <= 1).sort(() => Math.random() - 0.5).slice(0, slots));
+  for (const [i, sp] of wv.entries()) {
     // never land on a blob: slide the spot away from anyone within 80 px
     let { x, y } = sp;
     for (const b of alive) if (Math.hypot(b.x - x, b.y - y) < 80) y = Math.max(4 * ft(d.map), b.y - 120);
     { const o = { x, y, vx: 0, vy: 0 }; unstick(d.map, o); x = o.x; y = o.y; } // never in a wall / column
-    d.pending.push({ kind: sp.kind, x, y, t: SPAWN_WARN });
+    d.pending.push({ kind: sp.kind, x, y, t: SPAWN_WARN, calm: sp.kind <= 1 && !dashers.has(i) });
     fx.push({ t: 'spawn', x, y });
   }
 }
@@ -529,10 +551,9 @@ export interface DState {
   bossMax: number; players: number;
   dungeon: number; // which dungeon (1, 2, ...): its difficulty step
   sw?: number; rw?: number; // narrowest player's portrait screen width (CSS px), this room's width in tiles
-  nw?: boolean; // ?noweapons test: weapons only while attacking, class rings (synced to joiners)
   rooms?: boolean; // Archero-style rooms mode (ROOMS_ENABLED / ?rooms): floor = room number
   wave?: number; waveT?: number; // rooms: waves started so far, delay before the next one
-  pending?: { kind: EnemyKind; x: number; y: number; t: number }[]; // rooms: spawns showing their landing ring
+  pending?: { kind: EnemyKind; x: number; y: number; t: number; calm?: boolean }[]; // rooms: spawns showing their landing ring
   time: number; // seconds left of the run
   ready: number; // seconds every blob has stood on the stairs (goes down / out at 1.5)
   done: number; // > 0: "Dungeon klar!" shows, counts down, then back to the meadow
@@ -628,11 +649,11 @@ export function enterFloor(d: Omit<DState, 'map'> & { map?: Floor }, seed: numbe
   return out;
 }
 
-export function newRun(seed: number, picks: Record<string, Weapon>, dungeon = 1, rooms = roomsOn(), noWeapons = noWeaponsOn(), sw = 0): DState {
+export function newRun(seed: number, picks: Record<string, Weapon>, dungeon = 1, rooms = roomsOn(), sw = 0): DState {
   const heroes: Record<string, Hero> = {};
   for (const [id, w] of Object.entries(picks)) heroes[id] = newHero(w);
   return enterFloor({
-    floor: 1, dungeon: Math.max(1, Math.floor(dungeon)), rooms, sw: sw || undefined, nw: noWeapons || undefined, enemies: [], coins: [], spit: [], opened: [], gold: 0, xp: 0, level: 1, kills: 0, bossMax: ENEMY_HP[2], players: 1,
+    floor: 1, dungeon: Math.max(1, Math.floor(dungeon)), rooms, sw: sw || undefined, enemies: [], coins: [], spit: [], opened: [], gold: 0, xp: 0, level: 1, kills: 0, bossMax: ENEMY_HP[2], players: 1,
     time: RUN_SECONDS, ready: 0, done: 0, why: 'exit', heroes, loot: null, lootQ: [], lootLast: null, nextId: 1,
   }, seed, 1, Object.keys(picks).length);
 }
@@ -690,7 +711,8 @@ function gainXp(d: DState, xp: number, fx: DFx[]) {
   while (d.level - 1 < LEVEL_XP.length && d.xp >= LEVEL_XP[d.level - 1]) {
     d.level++;
     // every blob picks 1 of 3 cards from its own class
-    for (const h of Object.values(d.heroes)) { h.pending++; if (!h.offer.length) makeOffer(h); }
+    // rooms: the cards wait until the room is clear (shown before the door); the classic dungeon shows them at once
+    for (const h of Object.values(d.heroes)) { h.pending++; if (!h.offer.length && !(d.rooms && !roomClear(d))) makeOffer(h); }
     fx.push({ t: 'level', level: d.level });
   }
 }
@@ -872,7 +894,7 @@ function autoAttack(d: DState, h: Hero, b: Body, m: Mods, fx: DFx[], bodies: Bod
 }
 
 function spitAt(d: DState, x: number, y: number, a: number, fx: DFx[], dmg?: number) {
-  const sp = SPIT_SPEED * (early(d) ? EARLY_SPIT : 1), life = SPIT_LIFE / (early(d) ? EARLY_SPIT : 1); // slower, same range
+  const k = d.rooms ? ROOM_TUNE.spitSpeed : 1, sp = SPIT_SPEED * k, life = SPIT_LIFE / k; // rooms: slower, same range
   d.spit.push({ id: d.nextId++, x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, t: life, dmg });
   fx.push({ t: 'spit', x, y });
 }
@@ -884,7 +906,7 @@ function stepAct(d: DState, e: Enemy, tgt: Body | null, dt: number, fx: DFx[]) {
   const a = e.ang ?? 0, ux = Math.cos(a), uy = Math.sin(a);
   const still = () => { e.vx *= Math.exp(-10 * dt); e.vy *= Math.exp(-10 * dt); };
   const go = (sp: number) => { e.vx = ux * sp; e.vy = uy * sp; };
-  const done = () => { e.act = 0; e.cd = ACT_CD[e.kind] * actMul(d.dungeon ?? 1, diffFloor(d)) * (0.85 + Math.random() * 0.3); };
+  const done = () => { e.act = 0; e.cd = d.rooms ? roomEvery(d, e.kind) : ACT_CD[e.kind] * actMul(d.dungeon ?? 1, diffFloor(d)) * (0.85 + Math.random() * 0.3); };
   switch (e.act) {
     case 1: still(); if (e.actT <= 0) { e.act = 2; e.actT = DASH_TIME; go(DASH_SPEED); fx.push({ t: 'mdash', x: e.x, y: e.y, a }); } break;
     case 2:
@@ -901,7 +923,8 @@ function stepAct(d: DState, e: Enemy, tgt: Body | null, dt: number, fx: DFx[]) {
       still();
       if (e.actT <= 0 && (e.shots ?? 0) > 0) {
         const k = BURST - (e.shots ?? 0);
-        spitAt(d, e.x + ux * 14, e.y + uy * 14, a + (k - 1) * BURST_SPREAD, fx, BURST_DMG);
+        const r0 = ENEMY_R[e.kind] + 6; // shots leave from the monster's edge, never on top of it
+        spitAt(d, e.x + ux * r0, e.y + uy * r0, a + (k - 1) * BURST_SPREAD, fx, BURST_DMG);
         e.shots = (e.shots ?? 1) - 1; e.actT = BURST_GAP;
       }
       if ((e.shots ?? 0) <= 0) done();
@@ -1047,7 +1070,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
       e.cd = (e.cd ?? ACT_CD[e.kind]) - dt;
       const a = Math.atan2(tgt.y - e.y, tgt.x - e.x);
       if (e.cd <= 0 && !e.calm && lineOfSight(f, e.x, e.y, tgt.x, tgt.y)) {
-        if (e.kind === 3 && dist < 320) { e.act = 5; e.actT = AIM_WARN * (early(d) ? EARLY_AIM : 1); e.ang = a; }
+        if (e.kind === 3 && dist < 320) { e.act = 5; e.actT = d.rooms ? ROOM_TUNE.aimWarn : AIM_WARN; e.ang = a; }
         else if (e.kind <= 1 && dist > DASH_MIN && dist < DASH_MAX) { e.act = 1; e.actT = DASH_WARN; e.ang = a; }
       }
     }
@@ -1076,7 +1099,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
           for (const b of alive) if (Math.hypot(b.x - e.slam.x, b.y - e.slam.y) < SLAM_R + BLOB_R) hurt(d, b, e.slam.x, e.slam.y, SLAM_DMG * dmgMul, fx, bodies);
           if (angry) {
             // phase 2: a ring of spit and two small goo from every slam
-            for (let k = 0; k < 8; k++) spitAt(d, e.x, e.y, (k / 8) * Math.PI * 2, fx);
+            for (let k = 0; k < 8; k++) { const ak = (k / 8) * Math.PI * 2, r0 = ENEMY_R[e.kind] + 6; spitAt(d, e.x + Math.cos(ak) * r0, e.y + Math.sin(ak) * r0, ak, fx); } // from the boss's edge
             if (d.enemies.length < 40) for (const s of [-1, 1]) { const g = makeGoo(d, 0, e.x + s * 50, e.y + 30); g.awake = true; d.enemies.push(g); }
           }
           e.slam = null;
@@ -1160,11 +1183,13 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
   stepLoot(d, dt, fx);
   // stairs: everyone standing (KO'd blobz don't count) on them for 1.5 s; the last floor's exit needs the boss gone
   if (d.rooms) stepWaves(d, alive, dt, fx);
+  if (d.rooms && roomClear(d)) for (const h of Object.values(d.heroes)) if (h.pending > 0 && !h.offer.length) makeOffer(h); // the level-ups gained in the room
   const last = d.floor === lastFloor(d);
   const open = d.rooms ? roomClear(d) : !last || !d.enemies.some((e) => e.kind === 2);
   const exitUp = d.floor === 1 && alive.length > 0 && alive.every((b) => Math.hypot(b.x - f.exit.x, b.y - f.exit.y) < STAIRS_R);
   if (d.rooms && open) { const w = fw(f), T = ft(f); for (let x = Math.floor(f.stairs.x / T - 1); x <= Math.floor((f.stairs.x + T - 1) / T); x++) f.solid[2 * w + x] = 0; } // the open doorway (under the 2-tile leaf) is walkable
-  const onStairs = open && alive.length > 0 && alive.every((b) => (d.rooms ? inDoorway(f, b.x, b.y) : Math.hypot(b.x - f.stairs.x, b.y - f.stairs.y) < STAIRS_R));
+  const picking = !!d.rooms && Object.values(d.heroes).some((h) => h.offer.length > 0); // rooms: everyone picks their cards before the door counts
+  const onStairs = open && !picking && alive.length > 0 && alive.every((b) => (d.rooms ? inDoorway(f, b.x, b.y) : Math.hypot(b.x - f.stairs.x, b.y - f.stairs.y) < STAIRS_R));
   if (onStairs || exitUp) d.ready += dt; else d.ready = 0;
   if (d.ready >= READY_SECONDS) {
     d.ready = 0;
@@ -1238,7 +1263,7 @@ function hurt(d: DState, b: Body, fromX: number, fromY: number, dmg: number, fx:
 const r1 = (n: number) => Math.round(n * 10) / 10;
 type HeroTuple = [string, number, number, number, number, number, number, number?, number?, number?, number?, number?, string?, string?, string?, number?, number?, number?];
 export interface DSnap {
-  sd: number; f: number; du?: number; rm?: [number, number, number, number?, number?]; nw?: 1; g: number; xp: number; lv: number; k: number; rd: number; dn: number; tm?: number; wy?: number; bm?: number; // rm: rooms mode [1, wave, waves]
+  sd: number; f: number; du?: number; rm?: [number, number, number, number?, number?]; g: number; xp: number; lv: number; k: number; rd: number; dn: number; tm?: number; wy?: number; bm?: number; // rm: rooms mode [1, wave, waves]
   e: [number, number, number, number, number, number, number, number, number?, number?, number?, number?][]; // id, kind, x, y, hp, slam x, slam y, slam t (-1 none), max hp, act, angle*100, act time*100
   c: [number, number, number, number?][]; // pickup id, x, y, kind
   sp?: [number, number, number][]; // spit id, x, y
@@ -1254,7 +1279,7 @@ export interface DHeroView {
   mode: number; guard: boolean; phase: boolean; mvCd: number; mvMax: number; charges: number; maxCharges: number; shield: number; wallT: number; item: string | null; skills: string[]; offer: string[]; offerT: number;
 }
 export interface DView {
-  seed: number; floor: number; dungeon: number; rooms: boolean; roomTiles: number; noWeapons: boolean; wave: number; waves: number; landing: number; gold: number; xp: number; level: number; kills: number; ready: number; done: number; time: number; why: EndWhy; bossMax: number;
+  seed: number; floor: number; dungeon: number; rooms: boolean; roomTiles: number; wave: number; waves: number; landing: number; gold: number; xp: number; level: number; kills: number; ready: number; done: number; time: number; why: EndWhy; bossMax: number;
   enemies: { id: number; kind: EnemyKind; x: number; y: number; hp: number; mx: number; slam: { x: number; y: number; t: number } | null; act: Act; ang: number; at: number }[];
   coins: { id: number; x: number; y: number; k: number }[];
   spit: { id: number; x: number; y: number }[];
@@ -1266,7 +1291,7 @@ export interface DView {
 const WHY: EndWhy[] = ['boss', 'exit', 'time'];
 export function dsnap(d: DState, seed: number): DSnap {
   return {
-    sd: seed, f: d.floor, du: d.dungeon ?? 1, rm: d.rooms ? [1, d.wave ?? 0, d.map.waves?.length ?? 0, d.pending?.length ?? 0, d.rw ?? roomTiles()] : undefined, nw: d.nw ? 1 : undefined, g: d.gold, xp: d.xp, lv: d.level, k: d.kills, rd: Math.round((d.ready / READY_SECONDS) * 100), dn: r1(d.done),
+    sd: seed, f: d.floor, du: d.dungeon ?? 1, rm: d.rooms ? [1, d.wave ?? 0, d.map.waves?.length ?? 0, d.pending?.length ?? 0, d.rw ?? roomTiles()] : undefined, g: d.gold, xp: d.xp, lv: d.level, k: d.kills, rd: Math.round((d.ready / READY_SECONDS) * 100), dn: r1(d.done),
     tm: Math.ceil(d.time), wy: WHY.indexOf(d.why), bm: d.bossMax,
     e: d.enemies.map((e) => [e.id, e.kind, r1(e.x), r1(e.y), Math.ceil(e.hp), e.slam ? r1(e.slam.x) : 0, e.slam ? r1(e.slam.y) : 0, e.slam ? r1(e.slam.t) : -1, e.mx, e.act ?? 0, Math.round((e.ang ?? 0) * 100), Math.round((e.actT ?? 0) * 100)]),
     c: d.coins.map((c) => [c.id, r1(c.x), r1(c.y), c.k ?? 0]),
@@ -1282,7 +1307,7 @@ export function dsnap(d: DState, seed: number): DSnap {
 const list = (s: string | undefined) => (s ? s.split(',').filter(Boolean) : []);
 export function dview(n: DSnap): DView {
   return {
-    seed: n.sd, floor: n.f, dungeon: n.du ?? 1, rooms: !!n.rm, roomTiles: n.rm?.[4] ?? roomTiles(), noWeapons: !!n.nw, wave: n.rm?.[1] ?? 0, waves: n.rm?.[2] ?? 0, landing: n.rm?.[3] ?? 0, gold: n.g, xp: n.xp, level: n.lv, kills: n.k, ready: n.rd / 100, done: n.dn, time: n.tm ?? 0, why: WHY[n.wy ?? 1] ?? 'exit', bossMax: n.bm ?? ENEMY_HP[2],
+    seed: n.sd, floor: n.f, dungeon: n.du ?? 1, rooms: !!n.rm, roomTiles: n.rm?.[4] ?? roomTiles(), wave: n.rm?.[1] ?? 0, waves: n.rm?.[2] ?? 0, landing: n.rm?.[3] ?? 0, gold: n.g, xp: n.xp, level: n.lv, kills: n.k, ready: n.rd / 100, done: n.dn, time: n.tm ?? 0, why: WHY[n.wy ?? 1] ?? 'exit', bossMax: n.bm ?? ENEMY_HP[2],
     enemies: n.e.map(([id, kind, x, y, hp, sx, sy, st, mx, act, ang, at]) => ({ id, kind: kind as EnemyKind, x, y, hp, mx: mx ?? hp, slam: st >= 0 ? { x: sx, y: sy, t: st } : null, act: (act ?? 0) as Act, ang: (ang ?? 0) / 100, at: (at ?? 0) / 100 })),
     coins: n.c.map(([id, x, y, k]) => ({ id, x, y, k: k ?? 0 })),
     spit: (n.sp ?? []).map(([id, x, y]) => ({ id, x, y })),

@@ -30,6 +30,11 @@ const shots = process.argv[3] || '';
     ok(true, 'taken at once; max health 80 -> 110');
     // level-up cards: numbers on every card
     await sim(p, (s) => { s.dg.lootQ = []; s.dg.loot = null; s.dg.lootLast = null; s.dg.xp = 4; const q = s.players[0]; s.dg.enemies.push({ id: s.dg.nextId++, kind: 0, x: q.x + 60, y: q.y, vx: 0, vy: 0, hp: 1, mx: 20, awake: true, stun: 9, slamT: 99, slam: null }); });
+    // rooms: the cards wait for a clear room (Stefan 2026-11-15)
+    await p.waitForFunction(() => window.__blobz.state.dg.level > 1, null, { timeout: 6000 });
+    const early = await p.evaluate(() => { const d = window.__blobz.state.dg; return { open: !!document.querySelector('#dg-cards:not(.hidden)'), busy: d.enemies.length > 0 || (d.pending?.length ?? 0) > 0 || d.wave < d.map.waves.length }; });
+    ok(!early.busy || !early.open, `level-up mid-room: the cards wait (${early.busy ? 'room busy, no cards' : 'room already clear'})`);
+    await sim(p, (s) => { s.dg.enemies = []; s.dg.pending = []; s.dg.wave = s.dg.map.waves.length; });
     await p.waitForSelector('#dg-cards:not(.hidden) .skcard', { timeout: 6000 });
     const fx = await p.$$eval('#dg-cards .skcard .skfx', (els) => els.map((e) => e.textContent));
     ok(fx.length === 3 && fx.every((t) => /\d/.test(t)), `every skill card shows a number (${fx.join(' | ')})`);
