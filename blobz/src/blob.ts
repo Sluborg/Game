@@ -13,7 +13,7 @@ export const COLORS = [
   0x4fe0c3, 0xf2f2f2, 0xe63946, 0x3d6bff, 0xc08850, 0x9aa0b4,
 ];
 export const SHAPES = ['Kupol', 'Boll', 'Lång', 'Platt', 'Päron', 'Kub'];
-export const EYES = ['Prick', 'Stora', 'Glada', 'Sömniga', 'Blink'];
+export const EYES = ['Prick', 'Stora', 'Glada', 'Sömniga', 'Blink', 'Prickögon hög', 'Prickögon bred'];
 export const MOUTHS = ['Leende', 'Öppen', 'Lugn', 'Flin', 'Katt'];
 export const HATS = ['Ingen', 'Keps', 'Krona', 'Grodd', 'Mössa', 'Trollkarl', 'Rosett', 'Lurar',
   'Kattöron', 'Enhörning', 'Kaninöron', 'Djävulshorn', 'Antenn', 'Gloria', 'Drottningkrona'];
@@ -61,6 +61,11 @@ const EYE_SPRITES: Sprite[] = [
   sp(['.K..K.', 'K.KK.K'], 3), // Glada
   sp(['KK.KK'], 2), // Sömniga
   sp(['WW...', 'WK.KK'], 2), // Blink
+  // dot eyes (Alea, Stefan 2026-11-15): 6 single pixels per eye, 1 px gaps so no dot touches another (not even
+  // diagonally), top-left and bottom-right dot white, the other four black. Tall = 2 cols x 3 rows per eye (5 rows,
+  // anchored 2 rows up so the face layout of every other eye style stays the same); wide = 3 cols x 2 rows per eye.
+  sp(['W.K.W.K', '.......', 'K.K.K.K', '.......', 'K.W.K.W'], 4, 2), // Prickögon hög (anchor 1 left of centre, like bred)
+  sp(['W.K.K.W.K.K', '...........', 'K.K.W.K.K.W'], 6), // Prickögon bred (anchor 1 left of centre: the face sits right in 3/4 view)
 ];
 /** Mouths: anchor = centre column, top row. */
 const MOUTH_SPRITES: Sprite[] = [
@@ -70,7 +75,7 @@ const MOUTH_SPRITES: Sprite[] = [
   sp(['KKKK', 'KWWK', '.KK.'], 2), // Flin
   sp(['K.K', '.K.'], 1), // Katt
 ];
-const MAX_EYE = Math.max(...EYE_SPRITES.map((s) => s.rows.length));
+const MAX_EYE = Math.max(...EYE_SPRITES.map((s) => s.rows.length - s.ay)); // rows from the eye row down
 const MAX_MOUTH = Math.max(...MOUTH_SPRITES.map((s) => s.rows.length));
 
 function cap(cw: number, h: number, bill: number): Sprite {

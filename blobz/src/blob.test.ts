@@ -134,6 +134,8 @@ const cropped = (g: (string | null)[][]) => {
 };
 const fnv = (s: string) => { let x = 2166136261 >>> 0; for (let i = 0; i < s.length; i++) { x ^= s.charCodeAt(i); x = Math.imul(x, 16777619) >>> 0; } return x.toString(16); };
 
+const DOT_EYES = ['Prickögon hög', 'Prickögon bred'];
+
 describe('blobz v2 (16 px Ninja grid, one 3/4 view)', () => {
   it('every look x frame x class hat renders a 16x18 grid with a body', () => {
     for (let s = 0; s < SHAPES.length; s++) for (let e = 0; e < EYES.length; e++) for (let m = 0; m < MOUTHS.length; m++)
@@ -151,9 +153,14 @@ describe('blobz v2 (16 px Ninja grid, one 3/4 view)', () => {
   it('eyes and mouths sit inside the body, mouth below the eyes with a gap, above the bottom edge', () => {
     for (let s = 0; s < SHAPES.length; s++) for (let f = 0; f < BLOB_FRAMES; f++) {
       const L = bodyLayout(s, f);
-      PART_TABLES.eyes.forEach((es) => PART_TABLES.mouths.forEach((ms) => {
+      PART_TABLES.eyes.forEach((es, ei) => PART_TABLES.mouths.forEach((ms) => {
         const ep = spritePts(es, L.eye[0], L.eye[1]), mp = spritePts(ms, L.mouth[0], L.mouth[1]);
-        for (const k of [...ep, ...mp]) expect(L.mask.has(k), `shape ${s} frame ${f}`).toBe(true);
+        // Exception (Stefan/Lead 2026-11-15, "exact as specified"): the two dot-eye styles keep their exact 6-dot pattern
+        // and may be clipped by the outline on narrow / low heads (Platt, Lång, Päron); the renderer drops those pixels.
+        // They must still keep most dots on the face. Every other eye style stays fully inside the body.
+        const dot = DOT_EYES.includes(EYES[ei]);
+        if (dot) expect(ep.filter((k) => L.mask.has(k)).length, `dot eyes ${EYES[ei]} shape ${s} frame ${f}`).toBeGreaterThanOrEqual(8);
+        for (const k of [...(dot ? [] : ep), ...mp]) expect(L.mask.has(k), `shape ${s} frame ${f}`).toBe(true);
         const eyeBottom = Math.max(...ep.map((k) => Math.floor(k / GRID_W)));
         const mouthTop = Math.min(...mp.map((k) => Math.floor(k / GRID_W)));
         const mouthBottom = Math.max(...mp.map((k) => Math.floor(k / GRID_W)));
