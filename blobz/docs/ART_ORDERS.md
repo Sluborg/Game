@@ -18,6 +18,11 @@ Owners: Art keeps the queue and statuses current; Lead reviews. Stefan only says
 6. If Stefan writes "redo", make the same order again with his fixes.
 7. Reference images: when an order lists a reference URL, open it and match it.
 
+## Background rule (EVERY order, overrides anything below)
+Always deliver on a SOLID FLAT MAGENTA #ff00ff background. Never a transparent or checkerboard background, never white
+or black. Hard pixel edges, no glow/halo/semi-transparent pixels touching the magenta. Art removes the magenta.
+Exception: full-scene images (start, loading, end screens) have their own painted background.
+
 ## Style block (applies to every order)
 ```
 You are the pixel artist for "Blobz", a cozy co-op party game for phones (kids 8+ and adults). Players are cute slime
@@ -28,7 +33,7 @@ wide; a tree is about 40-50 pixels tall, a house about 90-100 pixels wide. 1px d
 (top-left) and one shadow (bottom-right). Palette: grass #6cbf45, cream #fff7e6, plum #3f2631, orange #ff8a3d,
 blue #3fa9f5, yellow #ffc93c, pink #ff6b8b, purple #b18cff, red #e63946, wood #ba7640, stone #a39fa8.
 Top-down 3/4 view. No text, letters or numbers. No people or humans, only blobz.
-SHEET RULES: transparent background (or solid magenta #ff00ff), objects in a neat grid in EXACTLY the listed order,
+SHEET RULES: solid flat magenta #ff00ff background (NOT transparent), objects in a neat grid in EXACTLY the listed order,
 left-to-right then top-to-bottom, at least 32 px empty space between objects, nothing touching, no ground shadows.
 Make ONE image per reply and wait for "next".
 ```
@@ -36,7 +41,7 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (none are TO DO now; queue empty). New orders only for pieces the pack lacks.**
+ChatGPT works only on N-orders with status TO DO (none are TO DO now; queue empty, more orders coming). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
@@ -52,6 +57,11 @@ ChatGPT works only on N-orders with status TO DO (none are TO DO now; queue empt
 | N-10 | DONE | Small UI icons: check mark, star, empty star (one small sheet) | `art/icons/check.png`, `art/gather/star.png`, `art/gather/star-empty.png` |
 | N-5b | DONE (received 2026-11-14) | Rogue class card only: ONE plain dagger beside the blob (not a sai) | `dungeon/card-class-rogue.png` |
 | N-7b | DONE (received 2026-11-14) | App icon round 2: no background, no hands, no sparkles | app/PWA icon |
+| N-11 | DONE (round 2 received 2026-11-15) | Class weapons sheet, ROUND 2 (make it again even if you made it before, on magenta): dagger, wand, sword, crossbow, round shield (16x16 + 32x32) | `dungeon/weapons/*` |
+| N-12 | DONE (received 2026-11-15) | Class move + mode icons: dodge, jump back, shield charge, phase out, heal mode, damage mode (16x16 + 32x32) | `dungeon/icons/*` |
+| N-13 | DONE (round 2 received 2026-11-15) | Combat FX frames, ROUND 2 (round 1 had glow halos):  KO stars, shockwave ring, slam warning, level-up burst, hit spark (32x32, 4 frames each) | `dungeon/fx/*` |
+| N-14 | DONE (received 2026-11-15) | Boss intro banner + boss portrait (portrait 64x64, banner 256x64) | `dungeon/boss-*` |
+| N-15 | DONE (received 2026-11-15) | Meadow extras: build-site marker, signpost, magnet power-up, speed power-up, home flag (16x16 + 32x32) | `art/meadow/*` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
@@ -111,7 +121,7 @@ along the bottom, a few berry bushes, warm orange-pink sky with soft clouds. The
 
 ### N-10 Small UI icons (one sheet)
 ```
-One small sheet, transparent background, Ninja Adventure pixel style (1 px dark outline #141b1b, flat colours, one
+One small sheet, solid flat magenta #ff00ff background (NOT transparent), Ninja Adventure pixel style (1 px dark outline #141b1b, flat colours, one
 shade), each icon 16x16 art pixels, spaced apart on a grid, no text:
 1 Check mark: a bold green tick.
 2 Star (earned): a chunky gold 5-point star with a light glint.
@@ -129,6 +139,59 @@ Redo ONLY the Rogue card from the class-card sheet (reference: https://raw.githu
 Redo the app icon (reference: https://raw.githubusercontent.com/sluborg/Game/claude/blobz-art/blobz/docs/art-review/n7-app-icon.png) with these changes: NO background (transparent around the castle and blob), the blob has NO hands or arms (it just peeks over the castle wall), NO sparkles. Same blob, same castle, same style. Square 1:1.
 ```
 
+### Sizes (applies to N-11 and later)
+Draw every sprite on the exact pixel grid named in the order (e.g. 16x16 = sixteen by sixteen art pixels), then deliver
+it UPSCALED with hard nearest-neighbour pixels so one art pixel = 8x8 image pixels (16x16 -> 128x128, 32x32 -> 256x256).
+When an order says "16x16 + 32x32", draw the SAME object twice: once on a 16x16 grid and once redrawn on a 32x32 grid
+(more detail, not a blurry upscale). Lay the sprites out in a neat grid on one sheet, solid flat magenta #ff00ff background (NOT transparent) (or flat
+magenta #ff00ff), at least one empty sprite-cell between them, labels NOT drawn in the image.
+ALWAYS: a solid flat magenta #ff00ff background (never fake transparency), hard pixel edges only, NO soft glows,
+halos, blur or semi-transparent pixels around any sprite (glows break the background removal). If an effect needs a
+glow, draw it as 1-2 solid pixel rings in a lighter colour.
+
+### N-11 Class weapons sheet (round 2: make it now, solid magenta background)
+```
+Ninja Adventure style (style block). Weapons that FLOAT beside a jelly blob (no hands), each pointing RIGHT, no blood,
+steel blades grey/white, gold or brown grips. On a 16x16 grid AND again on a 32x32 grid:
+1 plain straight dagger (short blade, small crossguard, NOT a sai), 2 small magic wand (short wooden wand, glowing gem
+tip, neutral white glow), 3 short sword, 4 small crossbow (bolt nocked at the string), 5 round wooden shield with a
+steel rim, seen from the front.
+```
+
+### N-12 Class move + mode icons
+```
+Ninja Adventure style (style block). Simple bold icons for ROUND buttons, white/cream symbol with dark outline on a
+solid flat magenta #ff00ff background, readable at 32 px on a phone. On a 16x16 grid AND again on a 32x32 grid:
+1 dodge (a blob shape with two side-swoosh lines), 2 jump back (curved arrow leaping backwards), 3 shield charge
+(shield with forward speed lines), 4 phase out (a ghostly, half-transparent blob outline), 5 heal mode (green plus
+with a soft glow), 6 damage mode (red spark/bolt).
+```
+
+### N-13 Combat FX frames
+Round 2 (do this): round 1 was unusable because of soft glows. Same content, but solid magenta #ff00ff background, hard
+pixels only, no glow/halo, each effect on its own row, 4 frames per row, generous empty space between frames.
+```
+Ninja Adventure style (style block), 32x32 grid per frame, 4 frames in a row per effect (an animation strip), soft
+friendly colours, no blood, no gore:
+1 KO stars circling (yellow stars orbiting), 2 shockwave ring (expanding pale ring), 3 slam warning (red dashed circle
+pulsing on the ground, seen from above at 3/4), 4 level-up burst (golden sparkles bursting upward), 5 hit spark
+(small white-yellow star spark).
+```
+
+### N-14 Boss intro
+```
+Ninja Adventure style (style block). 1 a boss portrait on a 64x64 grid: a big grumpy slime king with a small crown,
+purple, menacing but kid-friendly. 2 a horizontal banner on a 256x64 grid: a dark wooden plank sign with iron corners
+and an empty middle area (the game writes the boss name on it), no text.
+```
+
+### N-15 Meadow extras
+```
+Ninja Adventure style (style block). On a 16x16 grid AND again on a 32x32 grid: 1 build-site marker (a small wooden
+stake with a ribbon and a hammer), 2 wooden signpost (blank board), 3 magnet power-up (a horseshoe magnet on a soft
+glow disc), 4 speed power-up (a winged boot on a soft glow disc), 5 home flag (a small orange flag on a pole, waving).
+```
+
 ## Ninja style block (for N-orders)
 ```
 Match the pixel art of the free "Ninja Adventure" asset pack exactly: 16x16 tile grid, crisp pixels scaled up with
@@ -144,7 +207,7 @@ Round 2 (do this): redraw ONLY the crossbow from your weapons sheet, same style,
 with ONE change: the bolt sits further back, nocked at the string/stock, its tip just past the front of the bow
 (not sticking far out). Reference: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n4-weapons.png
 ```
-One sprite sheet, 7 columns x 1 row, transparent background (or flat magenta #ff00ff), in the Ninja Adventure style
+One sprite sheet, 7 columns x 1 row, solid flat magenta #ff00ff background (NOT transparent), in the Ninja Adventure style
 (see the style block): crisp pixel art, dark near-black outline, warm colours, no blur, no text.
 These weapons FLOAT beside a small jelly blob (no hands), so draw each one on its own, clear silhouette, no hand grip
 wrapping, each pointing to the RIGHT (horizontal), about 20-28 game pixels long except where noted, same pixel size:
@@ -160,7 +223,7 @@ https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qth
 ```
 A game logo with the title "Blobz" and, smaller underneath, the subtitle "Fantasy Co-op".
 Chunky rounded pixel letters in the Ninja Adventure style, warm orange/cream letters with the dark outline and a
-small drop shadow, one small blob peeking over a letter. Transparent background (or flat magenta #ff00ff).
+small drop shadow, one small blob peeking over a letter. Solid flat magenta #ff00ff background (NOT transparent).
 Wide format 3:1. Make 3 variants side by side on one image so Stefan can pick.
 ```
 
@@ -204,7 +267,7 @@ no text. This is a style test, keep it simple and clean.
 Goal: one consistent icon family (nav buttons + skills) in the locked D-1 style. Compared on the board with the Kenney
 icon families (docs/art-review/icons-A/B/C.png).
 ```
-Make ONE small image, 768x384, transparent background (or solid magenta #ff00ff): 10 game icons in a neat row of 5
+Make ONE small image, 768x384, solid flat magenta #ff00ff background (NOT transparent): 10 game icons in a neat row of 5
 and a row of 5, same size each (about 40 game pixels), same pixel grid and style as the cozy storybook test (crisp
 pixel art, 1px dark plum outline #3f2631, flat colours with one highlight and one shadow, no blur, no gradients, no text).
 Row 1, interface icons, all drawn the SAME way (same line weight, same plum colour on a cream round tile):
@@ -216,7 +279,7 @@ Keep every icon simple and readable at small size for kids. Nothing touching, ev
 
 ### D-3 Direction test 3: one enemy (small)
 ```
-Make ONE small image, 768x384, transparent background (or solid magenta #ff00ff), in the same cozy storybook pixel
+Make ONE small image, 768x384, solid flat magenta #ff00ff background (NOT transparent), in the same cozy storybook pixel
 style and pixel grid as the style test: ONE enemy for a kids' game, a friendly-but-naughty purple goo slime, shown
 3 times side by side: idle, hopping (squashed and stretched), and hit (white flash, eyes squeezed). About the same
 size as a blob (36 game pixels wide). 1px dark plum outline #3f2631, no text, nothing scary.
@@ -224,7 +287,7 @@ size as a blob (36 game pixels wide). 1px dark plum outline #3f2631, no text, no
 
 ### D-4 Direction test 4: one base building (small)
 ```
-Make ONE small image, 768x768, transparent background (or solid magenta #ff00ff), same cozy storybook pixel style
+Make ONE small image, 768x768, solid flat magenta #ff00ff background (NOT transparent), same cozy storybook pixel style
 and pixel grid as the style test: ONE small wooden workshop building for the blobz' base, top-down 3/4 view, about
 90 game pixels wide: plank walls, a red tiled roof, a workbench with a hammer and saw under a little awning.
 1px dark plum outline #3f2631, flat colours, no text, no people.
@@ -236,7 +299,7 @@ role/class conventions: Healer red (heart = health), Rogue yellow, Tank blue, Ma
 Round 2 feedback: blobz off-centre, daggers awkward, colours mixed up (healer got the yellow ribbon), flat expressions.
 ```
 Redo the 4 class cards (round 3). Same parchment card frame and size as before, crisp pixel art, one consistent
-pixel size, 1px dark plum outline #3f2631, no text, transparent background (or solid magenta #ff00ff).
+pixel size, 1px dark plum outline #3f2631, no text, solid flat magenta #ff00ff background (NOT transparent).
 ALL FOUR BLOBZ ARE THE SAME NEUTRAL WHITE BLOB (same body shape, same size). The class shows through its gear and
 the card's THEME COLOUR: the ribbon, a soft tint of that colour inside the card, and colour accents on the gear.
 Every blob stands exactly in the CENTRE of its card, on the same baseline just above the ribbon, gear kept inside
@@ -388,7 +451,7 @@ STYLE BIBLE (apply to every image, no exceptions)
 - Top-down 3/4 view, cheerful, readable at small size. No text, letters, numbers or watermark.
 
 SHEET RULES (so the images can be cut automatically)
-- Transparent background (PNG with alpha). If you cannot do transparency, use solid magenta #ff00ff.
+- Solid flat magenta #ff00ff background, never transparent.
 - Lay objects out in a neat grid in EXACTLY the order listed, left-to-right, top-to-bottom.
 - Leave at least 32 px of empty space between objects. Objects must not touch or overlap.
 - Every object complete and fully inside the image, no shadows on the background.
