@@ -87,6 +87,17 @@ img.icon.coin1, #dg-row img.icon.coin1 { width: 20px; height: 20px; object-fit: 
   color: var(--dw-plum); background: var(--dw-gold); border: 2px solid #8a5a12; border-radius: 50%;
 }
 #dg-xp .xpbar { width: 126px; height: 14px; }
+/* the level-up button: a gold pill with an up arrow and the count of unspent level-ups, pulsing (tap to pick) */
+#hud-dg #dg-lvlup {
+  pointer-events: auto; display: inline-flex; align-items: center; gap: 4px; min-width: 48px; height: 32px; padding: 0 10px 0 8px;
+  font: 700 18px var(--font); color: var(--dw-plum); background: var(--dw-gold); border: 2px solid #8a5a12; border-radius: 16px;
+  box-shadow: 0 3px 0 0 var(--dw-shadow); cursor: pointer; touch-action: manipulation; animation: dglvl 0.9s ease-in-out infinite;
+}
+#hud-dg #dg-lvlup.hidden { display: none; }
+#dg-lvlup .up { width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 10px solid var(--dw-plum); }
+#dg-lvlup:active { transform: translateY(2px); box-shadow: 0 1px 0 0 var(--dw-shadow); }
+@keyframes dglvl { 0%, 100% { transform: scale(1); filter: none; } 50% { transform: scale(1.08); filter: brightness(1.12); } }
+@media (prefers-reduced-motion: reduce) { #hud-dg #dg-lvlup { animation: none; } }
 #dg-xpfill { height: 100%; width: 0; background: #ffad5d; box-shadow: inset 0 3px 0 #ffe08a; transition: width 0.3s steps(6); }
 /* my item next to the gold: a square wood cell (items = square cells, skills = round gold) */
 #dg-item { display: inline-flex; width: 30px; height: 30px; align-items: center; justify-content: center;

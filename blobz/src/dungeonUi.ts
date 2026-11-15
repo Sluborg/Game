@@ -136,6 +136,19 @@ function renderHud(d: DView, myId: string) {
   $('dg-time').classList.toggle('hidden', !DUNGEON_TIMER_ENABLED); // no time limit underground (flag off)
   if (DUNGEON_TIMER_ENABLED) { setText($('dg-time'), fmt(d.time)); $('dg-time').classList.toggle('low', d.time <= 30); }
   bump($('dg-level'), String(d.level));
+  // the level-up button (Stefan 2026-11-15): unspent level-ups wait in a pulsing badge; tap = pick now (the cards
+  // also open by themselves when the room is clear)
+  let lb = document.getElementById('dg-lvlup') as HTMLButtonElement | null;
+  if (!lb) {
+    lb = document.createElement('button'); lb.id = 'dg-lvlup'; lb.type = 'button';
+    lb.innerHTML = '<span class="up" aria-hidden="true"></span><b></b>';
+    lb.onclick = () => { sfx.pick(); sendPick('skill:open'); };
+    $('dg-xp').append(lb);
+  }
+  const unspent = h && h.ko <= 0 && !h.offer.length ? h.pending : 0;
+  lb.classList.toggle('hidden', unspent <= 0);
+  lb.setAttribute('aria-label', t('dg.lvlUp', { n: unspent }));
+  setText(lb.querySelector('b')!, String(unspent));
   const lo = d.level >= 2 ? LEVEL_XP[d.level - 2] : 0, hi = LEVEL_XP[d.level - 1] ?? lo + 1;
   $('dg-xpfill').style.width = Math.round(Math.max(0, Math.min(1, (d.xp - lo) / Math.max(1, hi - lo))) * 100) + '%';
   // knocked out: countdown

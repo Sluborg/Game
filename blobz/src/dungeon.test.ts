@@ -626,6 +626,10 @@ describe('dungeon', () => {
       expect(d.level).toBeGreaterThan(1);
       expect(d.heroes.a.pending).toBeGreaterThan(0);
       expect(d.heroes.a.offer.length).toBe(0); // not yet: the room is still fighting
+      const e = newRun(40, { a: 'sword' }, 1, true); Object.assign(e.heroes.a, { pending: 1 });
+      dungeonChoice(e, 'a', 'skill:open'); // the HUD level-up button: open them now, mid-room
+      expect(e.heroes.a.offer.length).toBe(3);
+      expect(dview(dsnap(d, 40)).heroes.a.pending).toBeGreaterThan(0); // the badge count travels to every phone
       d.enemies = []; d.pending = []; d.wave = 99;
       run1(d, a, undefined, 0.1);
       expect(d.heroes.a.offer.length).toBe(3); // the room is clear: the cards show

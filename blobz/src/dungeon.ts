@@ -727,7 +727,8 @@ function gainXp(d: DState, xp: number, fx: DFx[]) {
 export function dungeonChoice(d: DState, id: string, msg: string, fx: DFx[] = []) {
   const h = d.heroes[id];
   if (!h) return;
-  if (msg.startsWith('skill:')) takeSkill(h, msg.slice(6), id, fx);
+  if (msg === 'skill:open') { if (h.pending > 0 && !h.offer.length && h.ko <= 0) makeOffer(h); } // the HUD level-up button: open the cards now
+  else if (msg.startsWith('skill:')) takeSkill(h, msg.slice(6), id, fx);
   else if (d.loot && d.loot.rolls[id] === -1 && (msg === 'loot:roll' || msg === 'loot:pass')) {
     const solo = Object.keys(d.heroes).length === 1; // alone: no dice, "Använd" just takes it
     d.loot.rolls[id] = msg === 'loot:pass' ? 0 : solo ? 100 : 1 + Math.floor(Math.random() * 100);
@@ -1268,7 +1269,7 @@ function hurt(d: DState, b: Body, fromX: number, fromY: number, dmg: number, fx:
 
 // ---- network snapshot / view (sim.ts puts it in its Snapshot as `dg`) ----
 const r1 = (n: number) => Math.round(n * 10) / 10;
-type HeroTuple = [string, number, number, number, number, number, number, number?, number?, number?, number?, number?, string?, string?, string?, number?, number?, number?];
+type HeroTuple = [string, number, number, number, number, number, number, number?, number?, number?, number?, number?, string?, string?, string?, number?, number?, number?, number?]; // ..., charges, pending level-ups
 export interface DSnap {
   sd: number; f: number; du?: number; rm?: [number, number, number, number?, number?]; g: number; xp: number; lv: number; k: number; rd: number; dn: number; tm?: number; wy?: number; bm?: number; // rm: rooms mode [1, wave, waves]
   e: [number, number, number, number, number, number, number, number, number?, number?, number?, number?][]; // id, kind, x, y, hp, slam x, slam y, slam t (-1 none), max hp, act, angle*100, act time*100
@@ -1283,7 +1284,7 @@ export interface DSnap {
 }
 export interface DHeroView {
   cls: HeroClass; hp: number; maxHp: number; ko: number; weapon: Weapon; face: number; swing: number; spCd: number; spMax: number; spT: number; dodge: boolean; inv: boolean;
-  mode: number; guard: boolean; phase: boolean; mvCd: number; mvMax: number; charges: number; maxCharges: number; shield: number; wallT: number; item: string | null; skills: string[]; offer: string[]; offerT: number;
+  mode: number; guard: boolean; phase: boolean; mvCd: number; mvMax: number; charges: number; maxCharges: number; shield: number; wallT: number; item: string | null; skills: string[]; offer: string[]; offerT: number; pending: number;
 }
 export interface DView {
   seed: number; floor: number; dungeon: number; rooms: boolean; roomTiles: number; wave: number; waves: number; landing: number; gold: number; xp: number; level: number; kills: number; ready: number; done: number; time: number; why: EndWhy; bossMax: number;
@@ -1306,7 +1307,7 @@ export function dsnap(d: DState, seed: number): DSnap {
     op: d.opened.map((o) => (o ? '1' : '0')).join(''),
     h: Object.entries(d.heroes).map(([id, h]): HeroTuple => [id, Math.ceil(h.hp), h.maxHp, r1(h.ko), WEAPONS.indexOf(h.weapon), Math.round(Math.atan2(h.fy, h.fx) * 100),
       Math.round(h.swing * 100), Math.ceil(h.spCd * 10), Math.round(h.spT * 100), (h.dodge > 0 ? 1 : 0) | (h.inv > 0 ? 2 : 0) | (h.mode ? 4 : 0) | (h.guard ? 8 : 0) | (h.phase > 0 ? 16 : 0),
-      h.shield, Math.ceil(h.wallT * 10), h.item ?? '', h.skills.join(','), h.offer.join(','), Math.ceil(h.offerT), Math.ceil(h.mvCd * 10), h.charges]),
+      h.shield, Math.ceil(h.wallT * 10), h.item ?? '', h.skills.join(','), h.offer.join(','), Math.ceil(h.offerT), Math.ceil(h.mvCd * 10), h.charges, h.pending]),
     lt: d.loot ? [d.loot.item, Math.ceil(d.loot.t), Object.entries(d.loot.rolls)] : null,
     ll: d.lootLast ? [d.lootLast.item, d.lootLast.win ?? '', d.lootLast.roll] : null,
   };
@@ -1319,12 +1320,12 @@ export function dview(n: DSnap): DView {
     coins: n.c.map(([id, x, y, k]) => ({ id, x, y, k: k ?? 0 })),
     spit: (n.sp ?? []).map(([id, x, y]) => ({ id, x, y })),
     opened: [...n.op].map((c) => c === '1'),
-    heroes: Object.fromEntries(n.h.map(([id, hp, maxHp, ko, w, face, swing, cd, spT, fl, sh, wl, it, sk, of, ot, mv, ch]) => {
+    heroes: Object.fromEntries(n.h.map(([id, hp, maxHp, ko, w, face, swing, cd, spT, fl, sh, wl, it, sk, of, ot, mv, ch, pd]) => {
       const weapon = WEAPONS[w] ?? 'sword', cls = classOf(weapon);
       return [id, {
         cls, hp, maxHp, ko, weapon, face: face / 100, swing: swing / 100,
         spCd: (cd ?? 0) / 10, spMax: specialOf(cls, weapon).cd, spT: (spT ?? 0) / 100, dodge: !!((fl ?? 0) & 1), inv: !!((fl ?? 0) & 2), mode: (fl ?? 0) & 4 ? 1 : 0, guard: !!((fl ?? 0) & 8), phase: !!((fl ?? 0) & 16),
-        shield: sh ?? 0, wallT: (wl ?? 0) / 10, item: it || null, skills: list(sk), offer: list(of), offerT: ot ?? 0,
+        shield: sh ?? 0, wallT: (wl ?? 0) / 10, item: it || null, skills: list(sk), offer: list(of), offerT: ot ?? 0, pending: pd ?? 0,
         mvCd: (mv ?? 0) / 10, mvMax: CLASS_MOVE_COOLDOWN[cls] * (itemOf(it || null)?.mod.mvCd ?? 1), charges: ch ?? 1, maxCharges: cls === 'rogue' ? ROGUE_CHARGES : 1,
       }];
     })),
