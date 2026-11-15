@@ -11,13 +11,13 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
   image / CSS background or border image / canvas icon, or a WebGL texture bound at a Phaser draw call); CODE ONLY =
   referenced but never shown in the run (remove the reference and the file); UNUSED = no reference and never shown.
 
-**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 51 / IN GAME 27 / UNUSED 136.
+**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 51 / IN GAME 27 / UNUSED 134.
 
-**Claude-drawn still IN GAME** (2): `art/dungeon/weapons/ninja-crossbow.png`, `art/dungeon/weapons/ninja-shield.png`
+**Claude-drawn still IN GAME** (0): none
 
 **Kenney still IN GAME** (0): none
 
-**Counts by source:** ChatGPT 164 / Claude-drawn 31 / Kenney 5 / Ninja 2037 / Ninja crop 14 (Ninja: 130 referenced by code). **Own files:** 214, 0 delete candidates.
+**Counts by source:** ChatGPT 164 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 14 (Ninja: 130 referenced by code). **Own files:** 212, 0 delete candidates.
 
 ## Own files (art, Kenney, app icons)
 
@@ -96,14 +96,12 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/dungeon/ui/hazard-ring-2.png` | 48x32 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/ui/hazard-ring-3.png` | 48x32 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/ui/hazard-ring.png` | 192x32 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/dungeon/weapons/crossbow-16.png` | 16x16 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/dungeon/weapons/crossbow-16.png` | 16x16 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonScene.ts:41 | keep |
 | `art/dungeon/weapons/crossbow-32.png` | 32x32 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/weapons/dagger-16.png` | 16x16 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/weapons/dagger-32.png` | 32x32 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/weapons/hammer.png` | 20x13 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonText.ts:10, src/dungeon.ts:39, src/dungeon.ts:41 (+3) | keep |
-| `art/dungeon/weapons/ninja-crossbow.png` | 16x10 | Claude-drawn: scripts/ninja_weapons.py (Ninja palette) | Own art (CC0) | IN GAME | src/dungeonScene.ts:41 | keep (pending Stefan rating) |
-| `art/dungeon/weapons/ninja-shield.png` | 12x12 | Claude-drawn: scripts/ninja_weapons.py (Ninja palette) | Own art (CC0) | IN GAME | src/dungeonScene.ts:40 | keep (pending Stefan rating) |
-| `art/dungeon/weapons/shield-16.png` | 16x16 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/dungeon/weapons/shield-16.png` | 16x16 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonScene.ts:40 | keep |
 | `art/dungeon/weapons/shield-32.png` | 32x32 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/weapons/shield.png` | 19x19 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:39, src/dungeon.ts:41, src/dungeon.ts:45 (+6) | keep |
 | `art/dungeon/weapons/spear.png` | 38x8 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonText.ts:10, src/dungeon.ts:39, src/dungeon.ts:41 (+2) | keep |
@@ -315,8 +313,8 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `assets/ninja-adventure/Items/Weapons/Hammer/Sprite.png` | 9x16 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Items/Weapons/Lance/Sprite.png` | 6x23 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Items/Weapons/MagicWand/Sprite.png` | 5x18 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
-| `assets/ninja-adventure/Items/Weapons/Ninjaku/SpriteInHand.png` | 3x12 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
-| `assets/ninja-adventure/Items/Weapons/Sai/Sprite.png` | 7x13 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
+| `assets/ninja-adventure/Items/Weapons/Ninjaku/SpriteInHand.png` | 3x12 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
+| `assets/ninja-adventure/Items/Weapons/Sai/Sprite.png` | 7x13 | Ninja Adventure | CC0 1.0 | CODE ONLY (loaded, not shown) | referenced by code | keep |
 | `assets/ninja-adventure/Items/Weapons/Sword/Sprite.png` | 6x17 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Emote/emote29.png` | 14x13 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Emote/emote3.png` | 14x13 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
@@ -328,10 +326,10 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `assets/ninja-adventure/Ui/Receptacle/Receptacle Sphere/ProgressWhite.png` | 22x22 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Amulet.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Armor.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
-| `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Arrow.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY (loaded, not shown) | referenced by code | keep |
+| `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Arrow.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Boot.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
-| `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Guard.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
-| `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Helmet.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY (loaded, not shown) | referenced by code | keep |
+| `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Guard.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
+| `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Helmet.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Hook.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Kunai.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Ring.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
@@ -339,10 +337,10 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `assets/ninja-adventure/Ui/Skill Icon/Job & Action/Harvest.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Job & Action/Mine.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Job & Action/Plant.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
-| `assets/ninja-adventure/Ui/Skill Icon/Job & Action/Potion.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
+| `assets/ninja-adventure/Ui/Skill Icon/Job & Action/Potion.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Job & Action/Punch.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Job & Action/Repair.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
-| `assets/ninja-adventure/Ui/Skill Icon/Job & Action/Talk.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
+| `assets/ninja-adventure/Ui/Skill Icon/Job & Action/Talk.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Meteo/Sun.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Spell/AttackUpgrade.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Spell/BookIce.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
@@ -356,13 +354,13 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `assets/ninja-adventure/Ui/Skill Icon/Spell/Heal.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Spell/LuckUpgrade.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Spell/MagicWeapon.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
-| `assets/ninja-adventure/Ui/Skill Icon/Spell/Mist.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
+| `assets/ninja-adventure/Ui/Skill Icon/Spell/Mist.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Spell/OrbFire.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
-| `assets/ninja-adventure/Ui/Skill Icon/Spell/OrbLight.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
-| `assets/ninja-adventure/Ui/Skill Icon/Spell/OrbPlant.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
+| `assets/ninja-adventure/Ui/Skill Icon/Spell/OrbLight.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
+| `assets/ninja-adventure/Ui/Skill Icon/Spell/OrbPlant.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Spell/OrbWater.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Spell/RockSpike.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
-| `assets/ninja-adventure/Ui/Skill Icon/Spell/Upgrade.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
+| `assets/ninja-adventure/Ui/Skill Icon/Spell/Upgrade.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Spell/Vision.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Theme/Theme Wood/arrow_left.png` | 16x16 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Theme/Theme Wood/button_disabled.png` | 16x8 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
@@ -386,7 +384,7 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `assets/ninja-adventure/preview-part-1.png` | 641x417 | Ninja Adventure (pack preview / palette) | CC0 1.0 | UNUSED | keep (reference) |
 | `assets/ninja-adventure/preview-part-2.png` | 641x417 | Ninja Adventure (pack preview / palette) | CC0 1.0 | UNUSED | keep (reference) |
 
-## Archived (`blobz/archive/`, not shipped): 229 files
+## Archived (`blobz/archive/`, not shipped): 231 files
 
 See `archive/README.md`.
 
@@ -481,6 +479,8 @@ See `archive/README.md`.
 | `archive/art/dungeon/weapons/dagger-1.png` | 16x6 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
 | `archive/art/dungeon/weapons/dagger-2.png` | 16x7 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
 | `archive/art/dungeon/weapons/daggers.png` | 16x14 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/weapons/ninja-crossbow.png` | 16x10 | Claude-drawn: scripts/ninja_weapons.py (Ninja palette) | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/weapons/ninja-shield.png` | 12x12 | Claude-drawn: scripts/ninja_weapons.py (Ninja palette) | Own art (CC0) | archived (not shipped) |
 | `archive/art/dungeon/weapons/staff.png` | 29x9 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
 | `archive/art/dungeon/xp-fill.png` | 40x6 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
 | `archive/art/dungeon/xp-frame.png` | 42x8 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
