@@ -1299,3 +1299,8 @@ img[src$="star-empty.png"] { filter: sepia(0.6) saturate(0.6) brightness(1.75) c
 :root { --k-ring: url('/art/dungeon/ui/btn-round-normal-24.png'); }
 #dash { width: 72px; height: 72px; background: var(--k-ring) center / 72px 72px no-repeat; image-rendering: pixelated; }
 #dash .icon { width: 48px; height: 48px; }
+/* dash button contrast (QA): a dark plum disc inside the ring, behind the light N-24 icon / tool */
+#dash { position: absolute; }
+#dash::before { content: ''; position: absolute; left: 50%; top: 50%; width: 50px; height: 50px; margin: -25px 0 0 -25px; border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, #6a4a52 0%, #3f2631 70%); box-shadow: inset 0 2px 0 0 #8a6a72; pointer-events: none; }
+#dash .icon { position: relative; z-index: 1; }
