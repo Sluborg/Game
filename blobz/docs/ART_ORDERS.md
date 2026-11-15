@@ -41,7 +41,7 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (next: N-27, then N-28, N-29). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
+ChatGPT works only on N-orders with status TO DO (queue empty: add the next gap as an N-order). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
@@ -76,9 +76,9 @@ ChatGPT works only on N-orders with status TO DO (next: N-27, then N-28, N-29). 
 | N-25 | DONE (received 2026-11-15) | Designer mouth icons x5 (16x16) | `art/icons/mouth-*` |
 | N-23b | DONE (received 2026-11-15) | Redo ONE skill icon: freeze volley (marksman-trap) as one big snowflake (16x16 + 32x32) | `dungeon/skills/marksman-trap.png` |
 | N-26 | DONE (received 2026-11-15; older prompt: round, pine, apple + stumps + rubble) | Meadow trees x3 matching Ninja Nature 96,128 (round, pine, autumn; 32x48) + matching stumps (16x16) | `art/props/tree-*`, `stump-*` |
-| N-27 | TO DO | Wood resource icon: 2-3 stacked cut logs with end rings (16x16 + 32x32) | `art/icons/res-wood-*` |
-| N-28 | TO DO | Meadow portal to the dungeon: rune archway in a grassy mound, idle + glowing frame (64x48) | `art/props/portal-*` |
-| N-29 | TO DO | Bigger plain grey boulders x3 (32x32 x2, 48x32) + matching rubble (16x16), stone parked | `art/props/boulder-*`, `boulder-rubble-*` |
+| N-27 | DONE (received 2026-11-15) | Wood resource icon: 2-3 stacked cut logs with end rings (16x16 + 32x32) | `art/icons/res-wood-*` |
+| N-28 | DONE (received 2026-11-15) | Meadow portal to the dungeon: rune archway in a grassy mound, idle + glowing frame (64x48) | `art/props/portal-*` |
+| N-29 | DONE (received 2026-11-15) | Bigger plain grey boulders x3 (32x32 x2, 48x32) + matching rubble (16x16), stone parked | `art/props/boulder-*`, `boulder-rubble-*` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |

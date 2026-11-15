@@ -20,7 +20,7 @@ REV = os.path.join(ROOT, 'docs', 'art-review')
 ART = os.path.join(ROOT, 'public', 'art')
 
 
-DROP_SHADOW = {'n26-trees.png'}
+DROP_SHADOW = {'n26-trees.png', 'n29-boulders.png'}  # never the portal: its idle opening is purple
 
 
 def load(name):
@@ -212,13 +212,14 @@ def region_sheet(src, names, folder, n, xr=(0.0, 1.0), yr=(0.0, 1.0), anchor='ce
     return made
 
 
-def frame_row(src, yr, k, W, H, name, folder, single=False, names=None):
+def frame_row(src, yr, k, W, H, name, folder, single=False, names=None, xr=(0.0, 1.0)):
     """k animation frames (or one sprite) in equal columns of a horizontal band, each sampled on a W x H grid centred on
     its column (common centre), one pitch for the row; writes name-0..k-1.png + a strip name.png (or name.png if single)."""
     rgb, m = load(src)
     Hh, Ww = m.shape
     Y0, Y1 = int(yr[0] * Hh), int(yr[1] * Hh)
-    rgb, m = rgb[Y0:Y1], m[Y0:Y1]
+    XA, XB = int(xr[0] * Ww), int(xr[1] * Ww)
+    rgb, m = rgb[Y0:Y1, XA:XB], m[Y0:Y1, XA:XB]
     xs = np.where(opening(m, 3).any(0))[0]
     X0, X1 = xs.min() - 4, xs.max() + 5
     cw = (X1 - X0) / k
@@ -318,6 +319,23 @@ def n23b():
     import shutil
     shutil.copyfile(os.path.join(f, 'marksman-trap-16.png'), os.path.join(f, 'marksman-trap.png'))  # the file the game loads
     return made
+
+
+def n27():
+    f = os.path.join(ART, 'icons')
+    return region_sheet('n27-wood.png', ['res-wood'], f, 16, xr=(0.0, 0.45), fit=True) + region_sheet('n27-wood.png', ['res-wood'], f, 32, xr=(0.45, 1.0), fit=True)
+
+
+def n28():
+    return frame_row('n28-portal.png', (0.0, 1.0), 2, 64, 48, '', os.path.join(ART, 'props'), names=['portal-idle', 'portal-glow'])
+
+
+def n29():
+    f = os.path.join(ART, 'props')
+    return (frame_row('n29-boulders.png', (0.0, 0.6), 1, 32, 32, 'boulder-1', f, single=True, xr=(0.0, 0.36))
+            + frame_row('n29-boulders.png', (0.0, 0.6), 1, 32, 32, 'boulder-2', f, single=True, xr=(0.36, 0.62))
+            + frame_row('n29-boulders.png', (0.0, 0.6), 1, 48, 32, 'boulder-3', f, single=True, xr=(0.62, 1.0))
+            + frame_row('n29-boulders.png', (0.6, 1.0), 3, 16, 16, '', f, names=['boulder-rubble-1', 'boulder-rubble-2', 'boulder-rubble-3']))
 
 
 N23_SKILLS = [['rogue-rage', 'rogue-knockback', 'rogue-whirlwind', 'rogue-extraheart', 'rogue-lifesteal', 'rogue-power'],
@@ -539,7 +557,7 @@ def main():
         made += [r[0] for r in res]
     big = [p for p in made if 'dungeon-end' in p]
     preview([p for p in made if not os.path.basename(p)[:-4][-2:] in ('-0', '-1', '-2', '-3') and p not in big],
-            os.path.join(REV, 'n26-n23b-raw-preview.png' if ('n26' in which or 'n23b' in which) else 'n23-n25-sliced.png' if 'n23' in which else 'n16-n22-sliced.png' if any(x in which for x in ('n16', 'n17', 'n18', 'n19', 'n20', 'n21')) else 'n12-n15-sliced.png'))
+            os.path.join(REV, 'n27-n29-raw-preview.png' if 'n27' in which else 'n26-n23b-raw-preview.png' if ('n26' in which or 'n23b' in which) else 'n23-n25-sliced.png' if 'n23' in which else 'n16-n22-sliced.png' if any(x in which for x in ('n16', 'n17', 'n18', 'n19', 'n20', 'n21')) else 'n12-n15-sliced.png'))
 
 
 if __name__ == '__main__':
