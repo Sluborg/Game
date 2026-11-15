@@ -41,10 +41,11 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (next: none, queue empty). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
+ChatGPT works only on N-orders with status TO DO (next: N-42). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
+| N-42 | TO DO (FIRST) | Ranger class icon: bow with drawn string + nocked arrow, EXACT 16x16 + 32x32 | `art/dungeon/icons/bow-16.png`, `bow-32.png` |
 | N-37 | DONE (received 2026-11-15, not exact 8x: real art px ~10 src px, native ~214x29; sampled to 140x28 -> art/lobby/party-platform-140.png) | Lobby party platform, EXACT 140x28 art px (shown 2x) | `art/lobby/party-platform.png` |
 | N-38 | DONE (received 2026-11-15, 937x1678 = 3.9 src px per art px; 240x430 -> art/bg/start-240.png) | Start/loading background, village scene, EXACT 240x430 art px portrait (shown 2x) | `art/title.png` |
 | N-39 | DONE (received 2026-11-15, real art px ~23 src px = native 64x42; saved art/logo-150.png (ordered size, uneven 2.3x) + art/logo-64.png (native)) | Logo "Blobz" as true pixel art, EXACT 150x104 art px (shown 2x) | `art/logo.png` |
@@ -383,6 +384,23 @@ pixels at the base, NOT floating): 1 on EXACTLY a 32x32 grid, 2 another shape on
 EXACTLY a 48x32 grid.
 Row 2: under each boulder, its depleted rubble (a few small grey chips and pebbles) on EXACTLY a 16x16 grid, in the SAME
 grey palette as its boulder.
+```
+
+### N-42 Ranger class icon: bow (do this FIRST)
+```
+STYLE: exactly like your N-26 trees (same dark near-black outline, palette, 2-3 tone shading, pixel size): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n26-trees.png
+SAME FAMILY as these small class icons (outline thickness, palette, shading, how full the square is):
+https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/art/dungeon/weapons/dagger-16.png
+https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/art/dungeon/weapons/shield-16.png
+https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/art/dungeon/icons/heal-mode-16.png
+TRUE PIXEL ART: every art pixel is one flat colour, NO anti-aliasing, no gradients, no blur. Solid flat magenta #ff00ff
+background, hard pixel edges, no glow, halo or shadow touching the magenta. Deliver at EXACTLY 8x nearest-neighbour.
+No text, no labels.
+The RANGER class icon: a curved wooden bow seen straight from the front (the bow's curve is clearly visible, standing
+upright, slightly tilted is fine), the string drawn back with ONE arrow nocked and pointing up-right, metal arrowhead,
+small fletching. Must read instantly as "bow" at 16 px.
+Draw it twice, each natively at its size (NOT one scaled up): EXACTLY 16x16 art px (left) and EXACTLY 32x32 art px
+(right), 1 px dark outline at each scale, filling the square like the reference icons, generous magenta between them.
 ```
 
 ### N-37 Lobby party platform (DONE)
