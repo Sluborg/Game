@@ -12,6 +12,7 @@ import { sfx } from './sfx';
 import { t, tClass, tClassHint, tEffects, tItem, tSkill, tSpecial, tWeapon, tWeaponHint } from './dungeonText';
 import { applyI18n } from './i18n';
 import { PICK_TIMER_ENABLED, type View } from './sim';
+import { NI } from './ninjaArt';
 
 const $ = (id: string) => document.getElementById(id)!;
 const show = (id: string, on: boolean) => document.getElementById(id)?.classList.toggle('hidden', !on);
@@ -322,7 +323,8 @@ export function dungeonUi(v: View, myId: string | undefined, controls: Controls,
     controls.setDungeon(mode === 'dungeon');
     // the small button: sidestep icon underground, the dash arrow again on the meadow
     const dashImg = controls.dashBtn.querySelector('img');
-    if (dashImg && !controls.tool) dashImg.src = mode === 'dungeon' ? encodeURI(NAU + 'Ui/Skill Icon/Spell/Camouflage.png') : 'art/icons/dash-arrow.png';
+    // underground the class move icon is set per frame (MOVE_ICON); back on the meadow: Code's dash icon (N-24, NI.dash)
+    if (dashImg && !controls.tool) dashImg.src = mode === 'dungeon' ? MOVE_ICON.rogue : NI.dash;
     show('hud-dg', mode === 'dungeon');
     if (mode !== 'dungeon') { show('dg-boss', false); controls.dashBtn.querySelector('.dg-pips')?.remove(); controls.dashBtn.style.removeProperty('--cd'); controls.dashBtn.classList.remove('cd'); show('dg-ko', false); show('dg-end', false); show('dg-cards', false); show('dg-loot', false); offerKey = ''; lootKey = ''; }
     lastMode = mode;

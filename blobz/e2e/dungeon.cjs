@@ -166,6 +166,8 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     for (const p of pages) await p.waitForFunction(() => window.__blobzView.mode === 'meadow', null, { timeout: 10000 });
     for (const p of pages) await p.waitForSelector('#dg-end', { state: 'hidden', timeout: 3000 });
     ok(!(await ada.isVisible('#attack')) && await ada.isVisible('#hud-quest'), 'back on the meadow: meadow HUD back, special button hidden');
+    const dashSrc = await ada.evaluate(() => document.querySelector('#dash img')?.getAttribute('src') ?? '');
+    ok(!/dash-arrow|dungeon\/icons/.test(dashSrc) && dashSrc.length > 0, `back on the meadow: the small button shows the meadow dash icon again (${dashSrc})`);
     await ada.waitForTimeout(800);
     if (shots) await ada.screenshot({ path: `${shots}/dg-back-portrait.png` });
     d = await dg(ada);
