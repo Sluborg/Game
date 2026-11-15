@@ -41,7 +41,7 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (N-16 is TO DO now). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
+ChatGPT works only on N-orders with status TO DO (N-16..N-22 are TO DO now). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
@@ -63,6 +63,12 @@ ChatGPT works only on N-orders with status TO DO (N-16 is TO DO now). ChatGPT fi
 | N-14 | DONE (received 2026-11-15) | Boss intro banner + boss portrait (portrait 64x64, banner 256x64) | `dungeon/boss-*` |
 | N-15 | DONE (received 2026-11-15) | Meadow extras: build-site marker, signpost, magnet power-up, speed power-up, home flag (16x16 + 32x32) | `art/meadow/*` |
 | N-16 | TO DO | Berry bush, full + picked (16x16 + 32x32) | `art/props/berry-bush-*` |
+| N-17 | TO DO | UI icon set for buttons and tabs, 16 icons (16x16 + 32x32) | `art/icons/ui/*` |
+| N-18 | TO DO | State badges + markers: can-build, lock, done stamp, green tick, gold tick, "you" arrow (16x16 + 32x32) | `art/icons/state/*` |
+| N-19 | TO DO | Round combat button: wooden rim, normal + pressed + disabled (48x48 + 64x64) | `dungeon/ui/btn-round-*` |
+| N-20 | TO DO | Lobby: waiting-blob silhouette, searching blob (4 frames), party platform (sizes in order) | `art/lobby/*` |
+| N-21 | TO DO | Boss + danger UI: boss health strip frame, hazard ring pattern (sizes in order) | `dungeon/ui/*` |
+| N-22 | TO DO | Dungeon end screen illustration: treasure haul, portrait 9:16 + landscape 16:9 | `art/dungeon-end*.png` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
@@ -196,6 +202,56 @@ glow disc), 4 speed power-up (a winged boot on a soft glow disc), 5 home flag (a
 ### N-16 Berry bush
 ```
 Ninja Adventure style (style block). On a 16x16 grid AND again on a 32x32 grid: 1 a round green berry bush full of shiny red berries (berry node), 2 the same bush picked clean (no berries, a few leaves out of place). Same outline, size and footprint for both. No text.
+```
+
+### N-17 UI icon set
+```
+Ninja Adventure style (style block), simple bold pixel symbols, dark outline, warm colours, readable on a cream panel at
+small size. On a 16x16 grid AND again on a 32x32 grid, 16 icons:
+1 new game (small house with a plus), 2 join (two blobs side by side), 3 shape (blob silhouette), 4 colour (paint drop),
+5 eyes (pair of eyes), 6 mouth (smiling mouth), 7 hat (small top hat), 8 back (left chevron), 9 close (X),
+10 home (house), 11 settings (gear), 12 roll (six-sided die), 13 pass (curved arrow), 14 build (hammer),
+15 play (right-pointing triangle), 16 edit (feather quill).
+```
+
+### N-18 State badges and markers
+```
+Ninja Adventure style (style block). On a 16x16 grid AND again on a 32x32 grid: 1 "can build" badge (green circle with
+a white hammer), 2 lock (small grey padlock), 3 done stamp (green circle with a white tick), 4 green tick badge (white
+tick on a green rounded square), 5 gold tick badge (white tick on a gold rounded square), 6 "you" marker (a small
+bouncing yellow downward arrow).
+```
+
+### N-19 Round combat button
+```
+Ninja Adventure style (style block). A ROUND action button for a phone game: a circular wooden rim (warm brown wood,
+dark outline) around a plain flat cream centre, empty in the middle (icons go on top). Three states side by side:
+normal, pressed (darker, centre shifted 1 px down), disabled (desaturated grey wood). Draw all three on a 48x48 grid
+AND again on a 64x64 grid.
+```
+
+### N-20 Lobby pieces
+```
+Ninja Adventure style (style block). 1 waiting-blob silhouette: a pale grey blob outline with a dotted body, "empty
+seat" feel, on a 20x20 grid. 2 searching blob: a cute blue blob holding up a magnifying glass, looking left then right,
+4 animation frames on a 32x32 grid each. 3 party platform: a low round wooden stage seen from 3/4, wide enough for five
+small blobs side by side, on a 160x32 grid.
+```
+
+### N-21 Boss + danger UI
+```
+Ninja Adventure style (style block). 1 boss health strip frame: a long dark-wood bar frame with iron end caps and an
+empty inner track (the game fills it), on a 160x16 grid. 2 a small skull-free boss emblem (a grumpy slime crown icon)
+on a 16x16 grid. 3 hazard ring: a bold red-and-yellow striped ground ring seen from 3/4 (danger zone border, empty
+inside), 4 animation frames pulsing, on a 48x32 grid each.
+```
+
+### N-22 Dungeon end screen
+```
+Ninja Adventure style (style block), a full scene (own painted background, no magenta). The blobz party coming out of a
+cave entrance at golden hour with an open treasure chest, coins, a few gems and potions, all happy and cheering. No
+coins on the floor in front of the text area: keep the top 35% calm (sky/rock) for the results. No text. Make it twice:
+portrait 9:16 and landscape 16:9 (key content in the central 60%).
 ```
 
 ## Ninja style block (for N-orders)
