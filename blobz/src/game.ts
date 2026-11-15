@@ -37,6 +37,8 @@ const ITEM_ICON: Record<ItemKind, string> = { wood: 'ic-log', stone: 'g-item-sto
 // pixels to match the blobz, so they are drawn at HALF the old scale.
 // Ninja items are 16 px: 2x on the ground, 1x carried over the head
 const ITEM_SCALE: Record<ItemKind, number> = { wood: 2, stone: 2, berry: 2 };
+/** Empty transparent rows under each ground token's art (N-27 wood: 2 of 16; Ninja food / rock: none). */
+const ITEM_FOOT_GAP: Record<ItemKind, number> = { wood: 2, stone: 0, berry: 0 };
 const CARRY_SCALE: Record<ItemKind, number> = { wood: 1, stone: 1, berry: 1 };
 // Obstacles (sim kinds 0-4) and decor from ChatGPT order 30 (public/art/props)
 const OBSTACLE_ART: [string, number][] = [['pr-tree-green', 3], ['pr-tree-orange', 3], ['pr-tree-pine', 3], ['pr-rock', 3], ['pr-boulder', 3], ['g-bush-berries', 3]];
@@ -598,15 +600,19 @@ export class GameScene extends Phaser.Scene {
       seenI.add(it.id);
       let img = this.items.get(it.id);
       if (!img) {
-        img = this.add.image(it.x, it.y, ITEM_ICON[it.kind] ?? 'ic-log').setScale(0.1);
+        // stands on its foot (origin = bottom), so the pop-in grows up out of the ground
+        img = this.add.image(it.x, it.y, ITEM_ICON[it.kind] ?? 'ic-log').setScale(0.1).setOrigin(0.5, 1);
         this.tweens.add({ targets: img, scale: ITEM_SCALE[it.kind] ?? 1.8, duration: 250, ease: 'Back.Out' });
         this.items.set(it.id, img);
       }
-      img.x = it.x; img.y = it.y - 4;
+      // Stefan 2026-11-15 ("the wood still floats"): every token's VISIBLE foot sits on one line (it.y + 8) and the shadow
+      // is centred on that foot, so it covers the token's bottom ~2.5 art px; the art's empty bottom rows are skipped
+      const foot = it.y + 8;
+      img.x = it.x; img.y = foot + (ITEM_FOOT_GAP[it.kind] ?? 0) * (ITEM_SCALE[it.kind] ?? 2);
       img.setDepth(it.y - 10);
       const pr = 15;
-      this.pickG.fillStyle(0x000000, 0.18).fillEllipse(it.x, it.y + 9, 22, 7);
-      this.pickG.lineStyle(2, 0xffffff, 0.75).strokeEllipse(it.x, it.y + 6, pr * 2, pr);
+      this.pickG.fillStyle(0x000000, 0.22).fillEllipse(it.x, foot, 26, 10);
+      this.pickG.lineStyle(2, 0xffffff, 0.75).strokeEllipse(it.x, foot, pr * 2, pr);
     }
     for (const [id, img] of this.items) if (!seenI.has(id)) { img.destroy(); this.items.delete(id); }
 
@@ -697,9 +703,11 @@ export class GameScene extends Phaser.Scene {
       let c = this.powers.get(w.id);
       if (!c) {
         // speed: ChatGPT N-15b (winged boot inside its own glow circle), 16 px art at 3x; magnet: Ninja hook on a circle
+        // a shadow centred on the disc's foot, so the power-up rests on the ground (speed art: 1 empty row = foot at +30)
+        const sh = (fy: number) => this.add.ellipse(0, fy, 44, 12, 0x000000, 0.22);
         c = w.kind === 'speed'
-          ? this.add.container(w.x, w.y, [this.add.image(0, 0, 'pw-speed-32').setScale(2)]) // N-15b 32 px art, 64 world px
-          : this.add.container(w.x, w.y, [this.add.circle(0, 0, 32, 0xff6b8b, 0.4).setStrokeStyle(3, 0xffffff, 0.9), this.add.image(0, -1, 'ic-magnet').setScale(2)]);
+          ? this.add.container(w.x, w.y, [sh(30), this.add.image(0, 0, 'pw-speed-32').setScale(2)]) // N-15b 32 px art, 64 world px
+          : this.add.container(w.x, w.y, [sh(32), this.add.circle(0, 0, 32, 0xff6b8b, 0.4).setStrokeStyle(3, 0xffffff, 0.9), this.add.image(0, -1, 'ic-magnet').setScale(2)]);
         this.powers.set(w.id, c);
       }
       c.setPosition(w.x, w.y).setDepth(w.y); // power-ups rest on the ground too: no bob (Stefan 2026-11-15)
