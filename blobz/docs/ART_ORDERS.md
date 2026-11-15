@@ -41,7 +41,7 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (N-26 is FIRST, then N-27 and N-23b). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
+ChatGPT works only on N-orders with status TO DO (next: N-27, then N-28, N-29). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
@@ -74,9 +74,11 @@ ChatGPT works only on N-orders with status TO DO (N-26 is FIRST, then N-27 and N
 | N-23 | DONE (received 2026-11-15) | Dungeon skill icons (24) + item icons (5), matching their effects (16x16) | `dungeon/skills/*`, `dungeon/items/*` |
 | N-24 | DONE (received 2026-11-15) | Dash symbol for the action button (16x16, free-standing) | `art/icons/ui/dash-*` |
 | N-25 | DONE (received 2026-11-15) | Designer mouth icons x5 (16x16) | `art/icons/mouth-*` |
-| N-23b | TO DO | Redo ONE skill icon: freeze volley (marksman-trap) as one big snowflake (16x16 + 32x32) | `dungeon/skills/marksman-trap.png` |
-| N-26 | TO DO (FIRST) | Meadow trees x3 matching Ninja Nature 96,128 (round, pine, autumn; 32x48) + matching stumps (16x16) | `art/props/tree-*`, `stump-*` |
+| N-23b | DONE (received 2026-11-15) | Redo ONE skill icon: freeze volley (marksman-trap) as one big snowflake (16x16 + 32x32) | `dungeon/skills/marksman-trap.png` |
+| N-26 | DONE (received 2026-11-15; older prompt: round, pine, apple + stumps + rubble) | Meadow trees x3 matching Ninja Nature 96,128 (round, pine, autumn; 32x48) + matching stumps (16x16) | `art/props/tree-*`, `stump-*` |
 | N-27 | TO DO | Wood resource icon: 2-3 stacked cut logs with end rings (16x16 + 32x32) | `art/icons/res-wood-*` |
+| N-28 | TO DO | Meadow portal to the dungeon: rune archway in a grassy mound, idle + glowing frame (64x48) | `art/props/portal-*` |
+| N-29 | TO DO | Bigger plain grey boulders x3 (32x32 x2, 48x32) + matching rubble (16x16), stone parked | `art/props/boulder-*`, `boulder-rubble-*` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
@@ -342,6 +344,29 @@ Ninja Adventure style (style block). Solid flat magenta #ff00ff background, hard
 grid (32 art pixels across with a 1 px outline at that scale, NOT the 16x16 scaled up), side by side.
 The icon: 2-3 short cut logs stacked in a small pile, warm brown bark, the cut ends facing the viewer showing light
 end rings, dark near-black outline. Nothing else: no branch, no leaves, no frame, no text. Must read as "wood" at 32 px.
+```
+
+### N-28 Meadow portal to the dungeon
+```
+STYLE: exactly like your N-26 trees (same dark outline, palette, 2-3 tone shading, pixel size): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n26-trees.png
+Solid flat magenta #ff00ff background, hard pixel edges, no glow or halo touching the magenta. Deliver at 8x
+nearest-neighbour, generous magenta space between the two frames.
+A stone cave entrance / rune archway set into a small grassy mound, seen in the game's top-down 3/4 view. The opening
+is dark but NOT pure black: a deep purple-blue gradient inside with a faint glow, clearly readable as "go in here".
+No odd small hole on top of the mound. Two frames side by side, each on EXACTLY a 64x48 art-pixel grid:
+1 idle (calm, runes dim), 2 glowing (runes and opening lit up, soft light spilling out, still hard pixels).
+```
+
+### N-29 Bigger boulders + rubble (stone resource, parked)
+```
+STYLE: exactly like your N-26 trees (same dark outline, palette, 2-3 tone shading, pixel size): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n26-trees.png
+Solid flat magenta #ff00ff background, hard pixel edges, no glow or halo. Deliver at 8x nearest-neighbour, generous
+magenta space between sprites.
+Row 1: three plain grey boulders with NO ore spots or gems, sitting firmly on the ground (a few dark contact-shadow
+pixels at the base, NOT floating): 1 on EXACTLY a 32x32 grid, 2 another shape on EXACTLY a 32x32 grid, 3 a wide one on
+EXACTLY a 48x32 grid.
+Row 2: under each boulder, its depleted rubble (a few small grey chips and pebbles) on EXACTLY a 16x16 grid, in the SAME
+grey palette as its boulder.
 ```
 
 ## Ninja style block (for N-orders)
