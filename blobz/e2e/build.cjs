@@ -93,7 +93,7 @@ const openPanel = async (page) => { await page.waitForSelector('#btn-build:not(.
         localStorage.setItem('blobz.village', JSON.stringify({ v: 2, cottage: 2, builds: { storage: true, workshop: false, garden: false, well: false, watchtower: false, bridge: true }, bank: { wood: 3, stone: 0, berry: 0 } }));
       }
     });
-    await p.goto(base + '?lan=e2e-ny&debug');
+    await p.goto(base + '?lan=e2e-ny-' + Math.random().toString(36).slice(2) + '&debug');
     await p.click('#btn-host');
     await p.waitForSelector('#lobby:not(.hidden)');
     ok((await p.getAttribute('#lobby-village', 'aria-label')).includes('stuga nivå 2') && (await p.getAttribute('#lobby-village .vcot', 'src')).endsWith('cottage-2.png'),
