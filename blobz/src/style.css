@@ -1333,3 +1333,17 @@ body.nostone .qrow[data-k="stone"], body.nostone .edge[data-k="stone"], body.nos
 #lobby #lobby-list { padding-bottom: 40px; }
 #lobby #lobby-list .seat, #lobby #lobby-list li.seat { margin-bottom: 0; position: relative; }
 #lobby #lobby-list .seat .seatname { position: absolute; left: 50%; top: calc(100% + 4px); transform: translateX(-50%); max-width: 64px; box-sizing: border-box; z-index: 1; }
+
+/* menu fix (Stefan 2026-11-15, designer-tabs.jpg): real tabs, not cut-off buttons. The tabs sit right on the option
+   panel, whose top border is the one baseline under every tab; the active tab has the panel's fill and edge, covers
+   that line and joins the panel; inactive tabs are a darker parchment, 4 px lower, behind the line */
+#custom .tabs { margin-bottom: -10px; gap: 3px; align-items: end; } /* -10 = the .fields row gap: tabs touch the panel */
+#custom .tab, #custom .tab.on {
+  border: 2px solid var(--k-edge); border-bottom: 0; border-radius: 6px 6px 0 0; padding: 0; margin: 0;
+}
+#custom .tab { min-height: 44px; background: #efdcae; color: #6e4f57; font-weight: 600; position: relative; z-index: 0; }
+#custom .tab.on {
+  min-height: 50px; margin-bottom: -2px; /* 48 px + the 2 px it lays over the panel's top border */
+  background: var(--k-parch2); color: var(--k-plum); font-weight: 700; z-index: 2;
+}
+#custom .opts { position: relative; z-index: 1; }
