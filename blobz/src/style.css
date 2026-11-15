@@ -1420,3 +1420,16 @@ button.big:not(.alt):active, button.big:not(.alt).down {
 /* meadow (Stefan 2026-11-15): no dash; the action button only appears, with the tool icon, when a node is in reach.
    The dungeon keeps its dash button (#hud.dungeon). */
 #hud:not(.dungeon) #dash:not(.tool) { display: none; }
+
+/* "turn your phone" (landscape parked, viewport.ts): a calm full-screen card over everything; the game keeps running */
+#rotate { display: none; }
+body.rotate-block #rotate {
+  display: flex; position: fixed; inset: 0; z-index: 100000; flex-direction: column; align-items: center; justify-content: center;
+  gap: 16px; background: #45b2fc; color: var(--k-plum); font: 700 24px var(--font); text-align: center; touch-action: none;
+}
+body.rotate-block #rotate b { background: var(--k-parch2); border: 2px solid var(--k-edge-lo); border-radius: 4px; padding: 8px 16px; box-shadow: 0 4px 0 0 var(--k-shadow); }
+#rotate #rotate-blob .blob, #rotate #rotate-blob .blob img { width: 96px; height: 96px; image-rendering: pixelated; }
+#rotate #rotate-blob { animation: rotate-tilt 2.4s ease-in-out infinite; }
+@keyframes rotate-tilt { 0%, 30% { transform: rotate(0); } 50%, 80% { transform: rotate(-90deg); } 100% { transform: rotate(0); } }
+#rotate .rotate-hint { width: 34px; height: 56px; border: 4px solid var(--k-plum); border-radius: 8px; animation: rotate-phone 2.4s ease-in-out infinite; }
+@keyframes rotate-phone { 0%, 30% { transform: rotate(90deg); } 50%, 80% { transform: rotate(0); } 100% { transform: rotate(90deg); } }

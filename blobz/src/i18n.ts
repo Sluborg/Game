@@ -21,6 +21,7 @@ const sv = {
   'menu.creating': 'Skapar rum...',
   'menu.loadingGame': 'Laddar spelet...',
   'menu.loading': 'Laddar...',
+  'rotate.msg': 'Vänd telefonen',
   'menu.lang': 'Språk',
   // blob designer
   'design.title': 'Blob-designer',
@@ -253,6 +254,7 @@ const en: Record<Key, string> = {
   'menu.creating': 'Creating room...',
   'menu.loadingGame': 'Loading the game...',
   'menu.loading': 'Loading...',
+  'rotate.msg': 'Turn your phone',
   'menu.lang': 'Language',
   'design.title': 'Blob designer',
   'design.random': 'Random',
