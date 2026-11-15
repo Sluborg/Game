@@ -5,6 +5,7 @@ import Phaser from 'phaser';
 import { blobCanvas, BLOB_FRAMES, BODY_CY, clampLook, facingFromVelocity, type Facing } from './blob';
 import { drawGatherRing } from './gatherRing';
 import { onViewport } from './viewport';
+import { dpr, snapZoom } from './pixelScale';
 import { fw, fh, ft, inDoorway, makeRoom, roomCracks, roomGap, ROOM_TUNE, ROOMS, MINIBOSS_ROOM, SPAWN_WARN, AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
 /** Weapons without Art's strip yet: a Kenney Tiny Dungeon tile in hand (bow: drawn in code). */
 import type { Session } from './game';
@@ -14,6 +15,15 @@ import { entranceOf, DUNGEON_ENABLED, type View } from './sim';
 
 const BLOB_SCALE = 3; // blobz v2: 16x18 grid at the Ninja world scale, same as the meadow (game.ts)
 const FACE_DEAD = 40; // px/s, same as the meadow: slower = idle frame, facing kept
+/** nameplate: 16 px class icon + 3 px gap + the name, at most PLATE_MAX px wide (13 px text, then 12 px, then "…") */
+const PLATE_ICON = 16, PLATE_GAP = 3, PLATE_MAX = 75, PLATE_DEPTH = 6000; // plates draw above every world object (columns, bubbles, FX), below banners // 75 + rounding <= 76
+function fitPlate(t: Phaser.GameObjects.Text, name: string) {
+  const room = PLATE_MAX - PLATE_ICON - PLATE_GAP;
+  t.setFontSize(13).setText(name);
+  if (t.width > room) t.setFontSize(12);
+  let n = name;
+  while (t.width > room && n.length > 1) { n = n.slice(0, -1); t.setText(n.trimEnd() + '…'); }
+}
 /** the wand's glow / bolt colours: damage red, heal green */
 const MODE_COL = [0xff4a3a, 0x5fe36a];
 const NA = 'assets/ninja-adventure/';
@@ -48,7 +58,7 @@ interface HeroGfx {
   shadow: Phaser.GameObjects.Ellipse;
   body: Phaser.GameObjects.Image;
   label: Phaser.GameObjects.Text;
-  icon: Phaser.GameObjects.Image; barrier?: Phaser.GameObjects.Sprite;
+  icon: Phaser.GameObjects.Image; barrier?: Phaser.GameObjects.Sprite; plateName?: string; plateY?: number;
   weapon: Phaser.GameObjects.Sprite;
   stars: Phaser.GameObjects.Sprite;
   me: Phaser.GameObjects.Triangle;
@@ -238,9 +248,11 @@ export class DungeonScene extends Phaser.Scene {
     // rooms in portrait: exactly 3x (zoom 1: 1 art px = 3 CSS px); the room is as wide as the narrowest phone allows,
     // so on wider phones a dark margin shows left / right. Only a phone narrower than the room shrinks (never happens
     // when every phone reports its width). Landscape and the classic dungeon keep the fitted zoom.
-    const roomPx = this.rooms && this.map ? fw(this.map) * ft(this.map) : 0;
-    if (roomPx && h >= w) cam.setZoom(w >= roomPx ? 1 : w / roomPx);
-    else cam.setZoom(Math.max(0.55, Math.min(2.2, Math.min(Math.max(w, h) / 820, Math.min(w, h) / 430))));
+    // Device pixels (pixelScale.ts; the canvas is CSS size x dpr() once Code flips DPR_CANVAS): one art px (3 world px)
+    // = k WHOLE device px, k = floor(3 x dpr) unless the room would not fit, then the largest k that fits.
+    const d = dpr(), roomPx = this.rooms && this.map ? fw(this.map) * ft(this.map) : 0;
+    if (roomPx && h >= w) { const k = Math.max(1, Math.min(Math.floor(3 * d + 1e-6), Math.floor(w / (roomPx / 3)))); cam.setZoom(k / 3); } // k: 3 at dpr 1, 6 at 2, 7 at 2.625, 9 at 3
+    else cam.setZoom(snapZoom(Math.max(0.55, Math.min(2.2, Math.min(Math.max(w, h) / d / 820, Math.min(w, h) / d / 430)))));
     if (this.rooms) cam.setBackgroundColor('#181425'); // the margin = the room's own dark
     // jump straight to where the camera should be for the new size (the easing would start from the stale view)
     const me = this.s ? this.heroes.get(this.s.myId) : undefined;
@@ -548,9 +560,9 @@ export class DungeonScene extends Phaser.Scene {
       b.weapon.setAlpha(h?.phase ? 0.3 : 1); b.glow?.setAlpha(h?.phase ? 0.2 : 1);
       // nameplate: [class icon] name, centred together under the blob
       if (h && b.icon.texture.key !== 'cls-' + h.cls) b.icon.setTexture('cls-' + h.cls);
-      const lw = b.label.width, iw = 16, gap = 3;
-      b.label.setPosition(Math.round(b.x + (iw + gap) / 2), Math.round(b.y + 24)).setDepth(b.y + 2);
-      b.icon.setPosition(Math.round(b.x - lw / 2 - gap / 2), Math.round(b.y + 24)).setDepth(b.y + 2).setVisible(!!h);
+      if (b.plateName !== info.name) { b.plateName = info.name; fitPlate(b.label, info.name); }
+      b.plateY = b.y + (h && !ko && h.offer.length ? 34 : 24); // below the card-picking bubble too; placed after the loop (plates never overlap each other)
+      b.icon.setVisible(!!h);
       b.me.setPosition(b.x, b.y - 50).setDepth(b.y + 3);
       // friends' health: the Ninja mini life bar (green, red when low)
       if (!b.hb) b.hb = this.lifeBar();
@@ -575,6 +587,7 @@ export class DungeonScene extends Phaser.Scene {
         else b.fx.spr.setPosition(b.x - Math.cos(b.fx.a) * 12, cy - Math.sin(b.fx.a) * 12).setDepth(b.y - 1);
       }
     }
+    this.placePlates(seenP);
     for (const [id, b] of this.heroes) if (!seenP.has(id)) { for (const o of [b.shadow, b.body, b.label, b.icon, b.weapon, b.stars, b.me]) o.destroy(); b.barrier?.destroy(); b.fx?.spr.destroy(); b.dome?.destroy(); b.weapon2?.destroy(); b.glow?.destroy(); b.wshadow?.destroy(); b.hb?.u.destroy(); b.hb?.p.destroy(); this.heroes.delete(id); }
 
     // ---- stairs: progress ring + "2/3" bubble when someone stands on them ----
@@ -665,6 +678,21 @@ export class DungeonScene extends Phaser.Scene {
       b.barrier.setVisible(true).setPosition(b.body.x + Math.cos(a) * 30, b.body.y + Math.sin(a) * 22).setDepth(b.y + (Math.sin(a) < -0.3 ? -1 : 3));
     } else b.barrier?.setVisible(false);
     if (DEBUG) ((window as unknown as { __dgWeapon?: Record<string, unknown> }).__dgWeapon ??= {})[b.id] = { sprite: b.weapon.visible || !!b.weapon2?.visible, barrier: show };
+  }
+
+  /** Nameplates ([class icon] name) under each blob: lowest blob first, a plate that would overlap one already placed
+   *  moves down a row (they never overlap each other, and always stay below their own blob). */
+  private placePlates(ids: Set<string>) {
+    const ROW = 18, placed: { x0: number; x1: number; y: number }[] = [];
+    const list = [...this.heroes.values()].filter((b) => ids.has(b.id)).sort((a, c) => a.y - c.y || a.x - c.x);
+    for (const b of list) {
+      const w = PLATE_ICON + PLATE_GAP + b.label.width, x0 = b.x - w / 2;
+      let y = b.plateY ?? b.y + 24;
+      while (placed.some((q) => x0 < q.x1 + 2 && x0 + w > q.x0 - 2 && Math.abs(q.y - y) < ROW)) y += ROW;
+      placed.push({ x0, x1: x0 + w, y });
+      b.icon.setPosition(Math.round(x0 + PLATE_ICON / 2), Math.round(y)).setDepth(PLATE_DEPTH);
+      b.label.setPosition(Math.round(x0 + PLATE_ICON + PLATE_GAP + b.label.width / 2), Math.round(y)).setDepth(PLATE_DEPTH);
+    }
   }
 
   /** A special fx sprite that follows its blob until the animation ends. */
