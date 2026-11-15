@@ -208,6 +208,7 @@ const SEARCHING = (): string => t('join.searching');
 const NOTHING = (): string => t('join.nothing');
 function lanStatus(text: string, rescan = false) {
   $('lan-status').textContent = text;
+  show('lan-search', !rescan); // the N-20 searching blob while we look
   $('lan-status').classList.toggle('static', rescan);
   show('btn-rescan', rescan);
 }
@@ -241,6 +242,7 @@ function renderRooms(rooms: FoundRoom[]) {
   emptyRounds = rooms.length || connecting ? 0 : emptyRounds + 1;
   // ~10 s without a game: hint at the usual cause, still scanning
   lanStatus(connecting && !rooms.length ? t('join.connectingFound') : emptyRounds >= 3 ? NOTHING() : SEARCHING(), emptyRounds >= 3 && !connecting);
+  show('lan-search', rooms.length === 0 && !(emptyRounds >= 3 && !connecting));
   $('lan-list').replaceChildren(...rooms.map((r) => {
     const li = document.createElement('li');
     const b = document.createElement('button');
@@ -329,12 +331,24 @@ function sanitize(id: string, i: Partial<PlayerInfo>): PlayerInfo {
   return { id, name: String(i.name ?? 'Blob').slice(0, 10) || 'Blob', ...clampLook(i) };
 }
 
+/** Lobby (PLAN step 3): five seats on the N-20 party platform; joined blobz stand on it, free seats show the waiting
+ *  silhouette. Players stay <li> (tests count them), free seats are plain spans. */
 function renderLobby() {
-  $('lobby-list').replaceChildren(...[...infos.values()].map((p) => {
+  const players = [...infos.values()].map((p) => {
     const li = document.createElement('li');
-    li.append(blobEl(clampLook(p)), document.createTextNode(p.name));
+    li.className = 'seat';
+    const name = document.createElement('span'); name.className = 'seatname'; name.textContent = p.name;
+    li.append(blobEl(clampLook(p)), name);
     return li;
-  }));
+  });
+  const free = Array.from({ length: Math.max(0, MAX_PLAYERS - players.length) }, () => {
+    const s = document.createElement('span');
+    s.className = 'seat free';
+    const im = new Image(); im.src = 'art/lobby/waiting-silhouette.png'; im.alt = '';
+    s.append(im);
+    return s;
+  });
+  $('lobby-list').replaceChildren(...players, ...free);
 }
 
 function startScene(session: Session) {
@@ -586,6 +600,8 @@ function onView(v: View) {
       const img = new Image(); img.src = i < st ? NI.star : NI.starEmpty; img.alt = ''; img.className = 'star' + (i < st ? ' on' : '');
       return img;
     }));
+    // the team that did it: every blob, cheering (staggered hops)
+    $('end-team').replaceChildren(...[...infos.values()].map((p, i) => { const b = blobEl(clampLook(p)); b.style.animationDelay = `${i * 0.12}s`; return b; }));
     $('end-rows').innerHTML = QUEST_ROWS();
     renderQuestRows($('end-rows'), v);
     show('btn-again', isHost); show('end-wait', !isHost);
