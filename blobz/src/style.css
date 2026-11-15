@@ -892,3 +892,10 @@ input {
 .qrow .qicon, #hud-bank img, .edge img, .bcost .c img, .mbasket img, .mtitle img, .endmini img, #lobby-village .vres img { image-rendering: pixelated; }
 /* titles that sat on the old orange card header: dark text on the Ninja white panel */
 .mtitle { color: var(--plum); text-shadow: none; }
+
+/* day cycle archived (DAY_CYCLE_ENABLED=false): no sun bar; the bank moves up into its place */
+body.noday #hud-day { display: none !important; }
+@media (orientation: landscape) {
+  body.noday #hud-bank { top: max(14px, env(safe-area-inset-top)); }
+  body.noday #hud-double { top: calc(max(14px, env(safe-area-inset-top)) + 58px); }
+}

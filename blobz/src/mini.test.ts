@@ -4,7 +4,8 @@ import { createState, finishMini, snapshot, step, viewFromSnapshot, type Input, 
 
 const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 });
 const body = (id: string, x: number, y: number) => ({ id, x, y, vx: 0, vy: 0 });
-const sunset = (n: number) => { const s = createState(Array.from({ length: n }, (_, i) => P('p' + i)), 3); s.time = 0.01; step(s, new Map(), 1 / 60); return s; };
+/** End of the meadow round: sunset (archived day cycle) or, today, the quest complete. */
+const sunset = (n: number) => { const s = createState(Array.from({ length: n }, (_, i) => P('p' + i)), 3); s.time = 0.01; s.delivered = { ...s.quest }; step(s, new Map(), 1 / 60); return s; };
 const run = (s: State, secs: number, inp = new Map<string, Input>()) => { for (let i = 0; i < secs * 60; i++) step(s, inp, 1 / 60); };
 
 describe('Bärregn mini game', () => {
