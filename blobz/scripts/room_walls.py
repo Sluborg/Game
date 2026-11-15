@@ -123,6 +123,68 @@ def slice_all():
     return out
 
 
+def slice_v2():
+    """N-34d wall set v2 (docs/art-review/n34d-room-walls-v2.png), replaces the N-34b pieces (slice_all).
+    Every piece sampled on a fixed 16-col grid over its box (outline cut off on the sides that join another piece):
+      tl / t / tr: 16x16; b / bl / br: 16 x 13 (same pitch as the corners), top-aligned (bottom rows = outside)
+    Side walls (Stefan): NOT the delivered side pieces. Built from crops only:
+      outer edge = the light grey edge stones of the top corners (tl cols 0-3, tr cols 12-15): stone A = rows 6-10,
+                   stone B = rows 11-14 + one repeated row; stacked A, B, A (+1 repeated row) = 16 rows
+      mortar col = tl col 4 / tr col 11
+      inner bricks = horizontal courses from wall-t (course X = rows 5-7 + one repeated row, course Y = rows 8-11),
+                     stacked X, Y, X, Y = 16 rows, cols 0-9 of wall-t
+      inner edge = the corner's outline column (floor side)
+    The 1 px outline rows where a side meets a corner (tl/tr bottom row, bl/br top row) are filled with the stone
+    colours of the row next to them in the stone column, so the light border runs through without a line."""
+    rgb, m = load('n34d-room-walls-v2.png')
+    m2 = opening(m, 3)
+    rows = [[(int(a), int(b), y0 + int(c), y0 + int(d)) for a, b, c, d in objects(m2[y0:y1])] for y0, y1 in bands(m2)]
+    (tl, t, tr), _, (bl, b, br) = rows
+
+    def fx(box, nx, ny):
+        x0, x1, y0, y1 = box
+        g, _ = grid(rgb[y0:y1, x0:x1], m[y0:y1, x0:x1], (x1 - x0) / nx, (y1 - y0) / ny, 0, 0)
+        return g
+
+    w = {}
+    w['tl'] = fx((tl[0], tl[1] - OL, tl[2], tl[3]), 16, 16)
+    w['t'] = fx((t[0] + OL, t[1] - OL, t[2], t[3]), 16, 16)
+    w['tr'] = fx((tr[0] + OL, tr[1], tr[2], tr[3]), 16, 16)
+    nb = round((b[3] - b[2]) / ((tl[1] - tl[0] - OL) / 16))  # 13 rows at the corners' pitch
+    for k, box in (('b', (b[0] + OL, b[1] - OL, b[2], b[3])), ('bl', (bl[0], bl[1] - OL, bl[2], bl[3])),
+                   ('br', (br[0] + OL, br[1], br[2], br[3]))):
+        c = np.zeros((16, 16, 4), np.uint8)
+        c[:nb] = fx(box, 16, nb)
+        w[k] = c
+    t_ = w['t']
+    bricks = np.concatenate([t_[5:8], t_[7:8], t_[8:12], t_[5:8], t_[7:8], t_[8:12]])  # 16 rows, horizontal courses
+
+    def stones(src, c0, c1):
+        a, b_ = src[6:11, c0:c1], np.concatenate([src[11:15, c0:c1], src[13:14, c0:c1]])
+        return np.concatenate([a, a[2:3], b_, a])  # 6 + 5 + 5 = 16
+
+    tlg, trg = w['tl'], w['tr']
+    l = np.zeros((16, 16, 4), np.uint8)
+    l[:, 0:4] = stones(tlg, 0, 4)
+    l[:, 4] = tlg[6, 4]  # mortar column
+    l[:, 5:15] = bricks[:, 0:10]
+    l[:, 15] = tlg[8, 0]  # outline on the floor side
+    r = np.zeros((16, 16, 4), np.uint8)
+    r[:, 12:16] = stones(trg, 12, 16)
+    r[:, 11] = trg[6, 11]
+    r[:, 1:11] = bricks[:, 6:16]
+    r[:, 0] = trg[8, 15]
+    w['l'], w['r'] = l, r
+    w['tl'][15, 1:4] = w['tl'][14, 1:4]
+    w['tr'][15, 12:15] = w['tr'][14, 12:15]
+    w['bl'][0, 1:4] = w['bl'][1, 1:4]
+    w['br'][0, 12:15] = w['br'][1, 12:15]
+    for k, a in w.items():
+        Image.fromarray(a).save(os.path.join(DUN, f'wall-{k}.png'))
+    print('N-34d: corners/top 16x16, bottom 16x%d top-aligned, sides built from edge stones + wall-t courses' % nb)
+    return w
+
+
 def best_window(g, lo, hi):
     """16-col window starting in [lo, hi] whose first col matches the col after it (tiles left/right)."""
     d = {k: int(np.abs(g[:, k].astype(int) - g[:, k + 16]).sum()) for k in range(lo, hi + 1) if k + 16 < g.shape[1]}
@@ -134,7 +196,7 @@ def entrance():
     """N-34c (docs/art-review/n34c-room-entrance.png): bottom wall | pillar | low threshold | pillar | bottom wall.
     Sampled whole at pitch 248 / 16 = 15.5 (16 rows; bricks ~6 art px like the rest) -> a 16 x 69 strip: left wall
     cols 0-19, left pillar 20-24, threshold 25-43 (rows 12-15 only: the opening), right pillar 44-48, right wall 49-68.
-      wall-b              16 cols of the left wall, window where col k == col k+16 (tiles left/right)
+      (wall-b now comes from N-34d, slice_v2; N-34c's plain wall segments are no longer cut)
       wall-entrance-l     cols 9-24: wall bricks + the left pillar (its outline faces the opening)
       wall-entrance-mid   16 cols of the threshold, window where col k == col k+16 (repeat it for a wider opening)
       wall-entrance-r     cols 44-59: the right pillar + wall bricks"""
@@ -154,13 +216,12 @@ def entrance():
     g = g[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
     assert g.shape[:2] == (16, 69), g.shape
     out = {}
-    out['b'], kb = best_window(g, 1, 3)
     out['entrance-l'] = g[:, 9:25]
     out['entrance-mid'], km = best_window(g, 25, 27)
     out['entrance-r'] = g[:, 44:60]
     for k, arr in out.items():
         Image.fromarray(np.ascontiguousarray(arr)).save(os.path.join(DUN, f'wall-{k}.png'))
-    print('N-34c pitch', round(p, 2), 'wall-b from col', kb, 'threshold from col', km)
+    print('N-34c pitch', round(p, 2), 'threshold from col', km)
     return out
 
 
@@ -184,7 +245,7 @@ def room(w):
         im.alpha_composite(T['l'], (0, oy + y * 16))
         im.alpha_composite(T['r'], ((TW - 1) * 16, oy + y * 16))
     yb = oy + (TH - 1) * 16
-    bottom = ['b'] * TW
+    bottom = ['b'] * TW  # wall-b = the N-34d bottom edge (matches bl/br)
     bottom[3:7] = ['entrance-l', 'entrance-mid', 'entrance-mid', 'entrance-r']  # opening under the door
     for x in range(1, TW - 1):
         im.alpha_composite(T[bottom[x]], (x * 16, yb))
@@ -194,7 +255,7 @@ def room(w):
     im.alpha_composite(door, (dx * 16, oy + 16 - 32))  # door's floor line on the top wall's bottom row
     big = im.resize((im.width * S, im.height * S), Image.NEAREST)
     bar = Image.new('RGBA', (big.width, 50), (20, 27, 27, 255))
-    ImageDraw.Draw(bar).text((10, 6), 'N-34b walls + N-34 door + N-34c entrance (3x)', fill='white', font_size=18)
+    ImageDraw.Draw(bar).text((10, 6), 'v3: N-34d walls + N-34 door + N-34c entrance (3x)', fill='white', font_size=18)
     ImageDraw.Draw(bar).text((10, 28), '16 px tiles, Ninja floor', fill='#ffe18d', font_size=14)
     out = Image.new('RGBA', (big.width, big.height + 50))
     out.paste(bar, (0, 0))
@@ -204,6 +265,6 @@ def room(w):
 
 
 if __name__ == '__main__':
-    w = slice_all()
+    w = slice_v2()  # N-34d set (slice_all() = the replaced N-34b set)
     w.update(entrance())
     room(w)
