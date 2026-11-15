@@ -11,13 +11,13 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
   image / CSS background or border image / canvas icon, or a WebGL texture bound at a Phaser draw call); CODE ONLY =
   referenced but never shown in the run (remove the reference and the file); UNUSED = no reference and never shown.
 
-**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 187 / IN GAME 27 / UNUSED 42.
+**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 189 / IN GAME 27 / UNUSED 50.
 
 **Claude-drawn still IN GAME** (0): none
 
 **Kenney still IN GAME** (0): none
 
-**Counts by source:** ChatGPT 205 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 17 (Ninja: 112 referenced by code). **Own files:** 256, 0 delete candidates.
+**Counts by source:** ChatGPT 215 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 17 (Ninja: 112 referenced by code). **Own files:** 266, 0 delete candidates.
 
 ## Own files (art, Kenney, app icons)
 
@@ -99,6 +99,8 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/dungeon/skills/marksman-pierce.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:27, src/dungeon.ts:33, src/dungeon.ts:127 | keep |
 | `art/dungeon/skills/marksman-poison.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:28, src/dungeon.ts:33, src/dungeon.ts:130 | keep |
 | `art/dungeon/skills/marksman-speed.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:27, src/dungeon.ts:33, src/dungeon.ts:129 | keep |
+| `art/dungeon/skills/marksman-trap-16.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:33 | keep |
+| `art/dungeon/skills/marksman-trap-32.png` | 32x32 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:33 | keep |
 | `art/dungeon/skills/marksman-trap.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:28, src/dungeon.ts:33, src/dungeon.ts:131 | keep |
 | `art/dungeon/skills/rogue-extraheart.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:23, src/dungeon.ts:33, src/dungeon.ts:117 | keep |
 | `art/dungeon/skills/rogue-knockback.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:23, src/dungeon.ts:33, src/dungeon.ts:115 | keep |
@@ -276,6 +278,14 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/props/berry-bush-picked-32.png` | 32x32 | ChatGPT N-16 berry bush, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:267 | keep |
 | `art/props/bush.png` | 15x13 | ChatGPT order 30 (map props), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | index.html:92 | replace (see OLD_ART_CHECKLIST) |
 | `art/props/gate.png` | 18x14 | ChatGPT order 30 (map props), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/sim.ts:267, src/sim.ts:747, src/game.ts:1207 | replace (see OLD_ART_CHECKLIST) |
+| `art/props/rubble-1.png` | 16x16 | ChatGPT N-26 rubble (stone parked), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/rubble-2.png` | 16x16 | ChatGPT N-26 rubble (stone parked), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/stump-apple.png` | 16x16 | ChatGPT N-26 stumps, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/stump-pine.png` | 16x16 | ChatGPT N-26 stumps, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/stump-round.png` | 16x16 | ChatGPT N-26 stumps, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/tree-apple.png` | 32x48 | ChatGPT N-26 meadow trees, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/tree-pine.png` | 32x48 | ChatGPT N-26 meadow trees, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/tree-round.png` | 32x48 | ChatGPT N-26 meadow trees, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/start-portrait.png` | 941x1672 | ChatGPT N-2 start screen, portrait | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/style.css:704, src/style.css:847, src/style.css:1187 | keep |
 | `art/title.png` | 1672x941 | ChatGPT N-2 start screen, landscape | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/style.css:36, src/style.css:848, src/style.css:1188 (+1) | keep |
 | `art/victory.png` | 941x1672 | ChatGPT N-6 end screen | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/style.css:38, src/style.css:1218 | keep |
@@ -613,7 +623,7 @@ See `archive/README.md`.
 | `archive/art/props/stump.png` | 17x13 | ChatGPT order 30 (map props), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
 | `archive/art/props/tree-green.png` | 21x21 | ChatGPT order 30 (map props), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
 | `archive/art/props/tree-orange.png` | 21x21 | ChatGPT order 30 (map props), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
-| `archive/art/props/tree-pine.png` | 13x21 | ChatGPT order 30 (map props), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/props/tree-pine.png` | 13x21 | ChatGPT N-26 meadow trees, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
 | `archive/art/totems/totem-double-1.png` | 17x24 | ChatGPT order 40 (totems), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
 | `archive/art/totems/totem-double-2.png` | 20x31 | ChatGPT order 40 (totems), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
 | `archive/art/totems/totem-double-3.png` | 26x37 | ChatGPT order 40 (totems), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
