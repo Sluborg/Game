@@ -212,7 +212,7 @@ def region_sheet(src, names, folder, n, xr=(0.0, 1.0), yr=(0.0, 1.0), anchor='ce
     return made
 
 
-def frame_row(src, yr, k, W, H, name, folder, single=False, names=None, xr=(0.0, 1.0)):
+def frame_row(src, yr, k, W, H, name, folder, single=False, names=None, xr=(0.0, 1.0), pitch=None):
     """k animation frames (or one sprite) in equal columns of a horizontal band, each sampled on a W x H grid centred on
     its column (common centre), one pitch for the row; writes name-0..k-1.png + a strip name.png (or name.png if single)."""
     rgb, m = load(src)
@@ -240,7 +240,7 @@ def frame_row(src, yr, k, W, H, name, folder, single=False, names=None, xr=(0.0,
             reach_y = max(reach_y, np.abs(yy - cy).max())
     pmin = max(p0 * 0.85, (reach_x + 1) / (W / 2), (reach_y + 1) / (H / 2))
     best = None
-    for p in np.arange(pmin, max(pmin, p0 * 1.15) + p0 / 25, p0 / 50):
+    for p in ([pitch] if pitch else np.arange(pmin, max(pmin, p0 * 1.15) + p0 / 25, p0 / 50)):
         tot, gs = 0.0, []
         for cr, cm, cy, cx in cells:
             h, w = cm.shape
@@ -336,6 +336,34 @@ def n29():
             + frame_row('n29-boulders.png', (0.0, 0.6), 1, 32, 32, 'boulder-2', f, single=True, xr=(0.36, 0.62))
             + frame_row('n29-boulders.png', (0.0, 0.6), 1, 48, 32, 'boulder-3', f, single=True, xr=(0.62, 1.0))
             + frame_row('n29-boulders.png', (0.6, 1.0), 3, 16, 16, '', f, names=['boulder-rubble-1', 'boulder-rubble-2', 'boulder-rubble-3']))
+
+
+def n30():
+    f = os.path.join(ART, 'props')
+    made = frame_row('n30-puzzle.png', (0.0, 0.45), 2, 16, 16, '', f, names=['plate-up', 'plate-down'])
+    gate = frame_row('n30-puzzle.png', (0.45, 1.0), 1, 32, 32, 'gate-closed', f, single=True, xr=(0.08, 0.34))
+    made += gate
+    for name, xr in (('gate-post-l', (0.38, 0.53)), ('gate-open', (0.53, 0.70)), ('gate-post-r', (0.74, 0.90))):
+        # same art grid as the closed gate, so posts, open gate and (later) the fence line up
+        made += frame_row('n30-puzzle.png', (0.45, 1.0), 1, 32, 32, name, f, single=True, xr=xr, pitch=gate[0][1])
+    return made
+
+
+def n31():
+    f = os.path.join(ART, 'props')
+    return (frame_row('n31-buildsite.png', (0.0, 1.0), 1, 32, 32, 'site-32', f, single=True, xr=(0.0, 0.45))
+            + frame_row('n31-buildsite.png', (0.0, 1.0), 1, 48, 48, 'site-48', f, single=True, xr=(0.45, 1.0)))
+
+
+def n32():
+    f = os.path.join(ART, 'icons')
+    return region_sheet('n32-stone-icon.png', ['res-stone'], f, 16, xr=(0.0, 0.5), fit=True) + region_sheet('n32-stone-icon.png', ['res-stone'], f, 32, xr=(0.5, 1.0), fit=True)
+
+
+def n33():
+    f = os.path.join(ART, 'props')
+    return (frame_row('n33-chest.png', (0.0, 0.5), 2, 16, 16, '', f, names=['chest-closed-16', 'chest-open-16'])
+            + frame_row('n33-chest.png', (0.5, 1.0), 2, 32, 32, '', f, names=['chest-closed-32', 'chest-open-32']))
 
 
 N23_SKILLS = [['rogue-rage', 'rogue-knockback', 'rogue-whirlwind', 'rogue-extraheart', 'rogue-lifesteal', 'rogue-power'],
@@ -557,7 +585,7 @@ def main():
         made += [r[0] for r in res]
     big = [p for p in made if 'dungeon-end' in p]
     preview([p for p in made if not os.path.basename(p)[:-4][-2:] in ('-0', '-1', '-2', '-3') and p not in big],
-            os.path.join(REV, 'n27-n29-raw-preview.png' if 'n27' in which else 'n26-n23b-raw-preview.png' if ('n26' in which or 'n23b' in which) else 'n23-n25-sliced.png' if 'n23' in which else 'n16-n22-sliced.png' if any(x in which for x in ('n16', 'n17', 'n18', 'n19', 'n20', 'n21')) else 'n12-n15-sliced.png'))
+            os.path.join(REV, 'n30-n33-raw-preview.png' if 'n30' in which else 'n27-n29-raw-preview.png' if 'n27' in which else 'n26-n23b-raw-preview.png' if ('n26' in which or 'n23b' in which) else 'n23-n25-sliced.png' if 'n23' in which else 'n16-n22-sliced.png' if any(x in which for x in ('n16', 'n17', 'n18', 'n19', 'n20', 'n21')) else 'n12-n15-sliced.png'))
 
 
 if __name__ == '__main__':
