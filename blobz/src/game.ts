@@ -56,6 +56,8 @@ const SPENT_ART: [string, number][] = [['pr-stump', 3], ['pr-stump', 3], ['pr-st
  *  side. Sheets 'n-*' are Ninja tilesets, 'nx-*' single Ninja item files (or Art's Ninja-style berry bush). */
 type Crop = [string, number, number, number, number];
 /** The three tree kinds (sim kinds 0-2), one crop each: easy to swap after Stefan's pick. */
+/** At most this many blossom trees per map (they read as pink pillows in a crowd). */
+const BLOSSOM_MAX = 2;
 const TREE_ART: Crop[] = [['n-nature', 96, 0, 32, 32], ['n-nature', 224, 0, 32, 32], ['n-nature', 32, 0, 32, 32]];
 type Placed = [string, number, number, number, number, number, number]; // crop + where it goes (dx, dy)
 /** Pieces placed on one canvas: the garden = two rows of soil plots (camp) with vegetables planted on them
@@ -196,7 +198,7 @@ export class GameScene extends Phaser.Scene {
   private bgfx = new Map<BuildKind, { img: Phaser.GameObjects.Image; sh?: Phaser.GameObjects.Image; built: boolean }>();
   private cottageImg!: Phaser.GameObjects.Image;
   private water!: ReturnType<typeof makeWater>;
-  private nodes: { img: Phaser.GameObjects.Image; kind: number; left: number; x: number; y: number; sc: number; fade: number }[] = [];
+  private nodes: { img: Phaser.GameObjects.Image; kind: number; left: number; x: number; y: number; sc: number; fade: number; blossom: boolean }[] = [];
   private dusk!: Phaser.GameObjects.Rectangle;
   private pile!: Phaser.GameObjects.Container;
   private pileKey = '';
@@ -258,7 +260,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   /** Texture, scale and tint for a node (biome aware, with stand-ins for missing winter art). */
-  private nodeArt(kind: number, spent: boolean): [string, number, number] {
+  private nodeArt(kind: number, spent: boolean, blossom = true): [string, number, number] {
+    if (kind === 1 && !blossom) kind = 0; // the blossom tree is used sparingly (BLOSSOM_MAX), the rest are the green tree
     if (this.s.biome !== 'snow') { const [k, sc] = (spent ? SPENT_ART : OBSTACLE_ART)[kind] ?? OBSTACLE_ART[0]; return [k, sc, 0xffffff]; }
     const [k, sc] = (spent ? WINTER_SPENT : WINTER_ART)[kind] ?? WINTER_ART[0];
     if (this.textures.exists(k)) return [k, sc, 0xffffff];
@@ -267,6 +270,16 @@ export class GameScene extends Phaser.Scene {
   }
 
   /** Build every NINJA_CROPS key as a canvas texture (nearest filtering) from the loaded Ninja sheets. */
+  /** e2e: names of visible objects drawn above `o` that overlap it (a nameplate must never be covered). */
+  private coversOf(o: Phaser.GameObjects.Text): string[] {
+    const r = o.getBounds();
+    return this.children.list.filter((c) => {
+      const g = c as Phaser.GameObjects.Image;
+      if (c === o || !g.visible || !g.getBounds || (g.depth ?? 0) <= o.depth || g.alpha === 0) return false;
+      return Phaser.Geom.Rectangle.Overlaps(r, g.getBounds());
+    }).map((c) => (c as Phaser.GameObjects.Image).texture?.key ?? c.type);
+  }
+
   /** Soft Ninja drop shadow (Actor/Character/Shadow.png, 12x7) stretched under a blob, prop or building. */
   private shadow(x: number, y: number, w: number, h = Math.max(15, w * 0.3), alpha = 0.28) {
     return this.add.image(x, y, 'n-shadow').setDisplaySize(w, h).setAlpha(alpha).setDepth(-500);
@@ -363,11 +376,15 @@ export class GameScene extends Phaser.Scene {
     this.add.sprite(BASE.x + 58, BASE.y + 62, 'm-flag', 0).setOrigin(0.5, 1).setScale(NINJA_SCALE).setDepth(BASE.y + 62).play('m-flag');
 
     // resource nodes (same layout as the host sim, from the shared seed); textures swap when used up
+    // the pink blossom tree (sim kind 1) only for a couple of trees, away from the cave mouth
+    const ent = entranceOf(this.s.seed);
+    let blossoms = 0;
     this.nodes = makeTrees(this.s.seed).map((t) => {
+      const blossom = t.kind === 1 && blossoms < BLOSSOM_MAX && Math.hypot(t.x - ent.x, t.y - ent.y) > 260 && ++blossoms > 0;
       this.shadow(t.x, t.y + 8, t.kind < 3 ? 66 : 72, 21);
-      const [key, sc, tint] = this.nodeArt(t.kind, false);
+      const [key, sc, tint] = this.nodeArt(t.kind, false, blossom);
       const img = this.add.image(t.x, t.y + 10, key).setScale(sc).setTint(tint).setOrigin(0.5, t.kind < 3 ? 0.95 : 0.8).setDepth(isSolid(t.kind) ? t.y : t.y - 30);
-      return { img, kind: t.kind, left: t.left, x: t.x, y: t.y, sc, fade: 1 };
+      return { img, kind: t.kind, left: t.left, x: t.x, y: t.y, sc, fade: 1, blossom };
     });
 
     // flat decorations (no collision), from the same seed on every phone; never on the puzzle pens/plates
@@ -513,7 +530,7 @@ export class GameScene extends Phaser.Scene {
       if (!n) return;
       if ((left > 0) === (n.left > 0)) { n.left = left; return; }
       n.left = left;
-      const [key, sc, tint] = this.nodeArt(n.kind, left <= 0);
+      const [key, sc, tint] = this.nodeArt(n.kind, left <= 0, n.blossom);
       n.img.setTexture(key).setScale(sc).setTint(tint).setOrigin(0.5, left > 0 && n.kind < 3 ? 0.95 : 0.8);
       n.sc = sc;
       if (left > 0) { n.img.setScale(sc * 0.3); this.tweens.add({ targets: n.img, scale: sc, duration: 300, ease: 'Back.Out' }); }
@@ -667,7 +684,9 @@ export class GameScene extends Phaser.Scene {
     if (p.shield > 0) b.aura.fillStyle(0x5ec8ff, 0.16).fillCircle(b.x, b.y - 6 + hover, 30).lineStyle(2, 0x8fd3ff, 0.7).strokeCircle(b.x, b.y - 6 + hover, 30);
     if (isMe) b.aura.fillStyle(0xffffff, 0.9).fillTriangle(b.x - 6, b.y - 68 + hover, b.x + 6, b.y - 68 + hover, b.x, b.y - 60 + hover);
 
-    b.label.setPosition(b.x, b.y + 13).setDepth(this.dB + b.y + 2);
+    // nameplate: always on top of the world (tools, the base flag, props), just under the "you" arrow
+    b.label.setPosition(b.x, b.y + 14).setDepth(this.dB + 19990);
+    if (DEBUG) ((window as unknown as { __blobzCovers?: Record<string, () => string[]> }).__blobzCovers ??= {})[p.id] = () => this.coversOf(b.label); // e2e
     // "you": the N-18 arrow over my own blob (3x), bobbing gently
     if (isMe) {
       b.you ??= this.add.image(0, 0, 'st-you').setScale(3).setOrigin(0.5, 1);

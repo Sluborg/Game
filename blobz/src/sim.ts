@@ -299,7 +299,8 @@ export { rng } from './rng';
 import { rng } from './rng';
 import { ARENA, keepInArena, miniStars, newMini, stepMini, type Mini, type MiniFx } from './mini';
 /** "Bärregn" co-op mini game after sunset, before the end screen. */
-export const MINI_ENABLED = true;
+/** Bärregn mini game is ARCHIVED (Stefan 2026-11-15, docs/ARCHIVED.md): the round goes straight to the end screen. */
+export const MINI_ENABLED = false;
 /** Day cycle (sun bar + time limit) is ARCHIVED (Stefan 2026-11-15, docs/ARCHIVED.md): with it off the meadow has no
  *  time limit and the round ends when all three quest goals are filled, then Bärregn as before. Code kept. */
 export const DAY_CYCLE_ENABLED = false;
@@ -331,7 +332,8 @@ export function makeTrees(seed: number): Tree[] {
   }
   // [dungeon hook, Code 2] keep the cave entrance clear (filtered afterwards so the seeded layout stays the same)
   const ent = entranceOf(seed);
-  if (DUNGEON_ENABLED) for (let i = trees.length - 1; i >= 0; i--) if (Math.hypot(trees[i].x - ent.x, trees[i].y - ent.y) < 80) trees.splice(i, 1);
+  // (Lead 2026-11-15: every node at least 2 tiles (96 px) clear of the cave mouth, so the entrance reads)
+  if (DUNGEON_ENABLED) for (let i = trees.length - 1; i >= 0; i--) if (Math.hypot(trees[i].x - ent.x, trees[i].y - ent.y) < 140) trees.splice(i, 1);
   // every map gets ~8 berry bushes and enough stone: turn trees (from the end of the list) into them
   const count = (f: (k: number) => boolean) => trees.filter((t) => f(t.kind)).length;
   for (let i = trees.length - 1; i >= 0; i--) {
