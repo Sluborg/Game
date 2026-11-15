@@ -1330,7 +1330,16 @@ body.nostone .qrow[data-k="stone"], body.nostone .edge[data-k="stone"], body.nos
 #lobby #lobby-list .seat.free img { width: min(60px, 100%); height: auto; aspect-ratio: 1; }
 #lobby #lobby-list .seat.free img { margin-bottom: 0; }
 /* feet on the plank deck: the name tag hangs over the platform's front edge instead of lifting the blob */
-#lobby #lobby-list { padding-bottom: 40px; }
+/* lobby v2 (Stefan: "Layering above wooden platform"): every seat stands ON the deck, in front of the platform. The
+   platform art is 160x32 at 2x; its deck surface runs from 10 px (back edge) to 36 px (front edge) below the art's top,
+   so feet at 34 px under the top = 30 px above the list bottom stand near the front of the deck. */
+#lobby #lobby-list { padding-bottom: 30px; position: relative; }
+#lobby #lobby-list .seat, #lobby #lobby-list li.seat { z-index: 1; }
+/* the silhouette art has 3 empty rows under the feet (9 px at 3x): pull it down so its feet touch the deck too */
+#lobby #lobby-list .seat.free img { margin-bottom: -9px; }
+/* free seats are solid (no see-through), so the deck never shows through them and they read as standing in front;
+   still calm and light so a joined blob stands out */
+#lobby #lobby-list .seat.free img { opacity: 1; filter: sepia(0.55) brightness(0.93) contrast(0.8); }
 #lobby #lobby-list .seat, #lobby #lobby-list li.seat { margin-bottom: 0; position: relative; }
 #lobby #lobby-list .seat .seatname { position: absolute; left: 50%; top: calc(100% + 4px); transform: translateX(-50%); max-width: 64px; box-sizing: border-box; z-index: 1; }
 
