@@ -133,7 +133,7 @@ Reference for wiring art. **One art source:** CC0 "Ninja Adventure" pack, vendor
 | Wood | Items/Resource/Branch.png | 16x16 | A branch. For a chunkier log: camp log 0,0,32,16 or Nature 80,128,16,16. |
 | Stone | Items/Resource/Rock.png | 16x16 | Grey rock. |
 | Crystal | Items/Resource/GemRed.png / GemGreen.png / GemPurple.png / GemYellow.png | 15x15 / 16x16 / 16x16 / 14x14 | |
-| Berry | Items/Food/Nut2.png | 15x15 | MISSING a real berry: Nut2 is a dark-red round fruit, the closest. Or Art draws a 3-berry cluster in code. |
+| Berry / food | FORBIDDEN: Items/Food/Nut2.png (see Forbidden art) | | Food icon: Stefan picks from `docs/art-review/res-food.png`; berry bush = ChatGPT N-16. |
 | Extras | Items/Resource/Grass.png, Water.png, feather.png, Bar*.png | 16x16 | |
 
 ## 7. HUD / UI
@@ -158,7 +158,7 @@ Reference for wiring art. **One art source:** CC0 "Ninja Adventure" pack, vendor
 | HP bar (players, horizontal) | Ui/Receptacle/LifeBarMiniUnder.png (track) + LifeBarMiniProgress.png (red fill) | 18x4 each | Scale integer x2-x3 in the HUD; crop the fill's width to the HP fraction (do not stretch). |
 | XP / build-progress bar | Track: LifeBarMiniUnder.png; fill: LifeBarMiniProgress.png **recoloured** (yellow #ffe18d or green) | 18x4 | MISSING a dedicated XP bar; recolour is allowed. Long bars: 9-slice nine_path_bg (slice 1) as track and slider_progress.png (16x16, slice 2) as fill. |
 | Big HP / mana gauge (vertical) | Ui/Receptacle/Receptacle Rectangle/BackgroundWood.png 34x56 + ProgressHealth.png / ProgressWhite.png 22x40 | | Fill from the bottom by cropping. Other frames: BackgroundBag, Bamboo, Bottle, Scroll. Round gauge: Receptacle Sphere Background*.png 32x32 + Progress*.png 22x22 (+ Over.png glass). |
-| Resource counters (HUD) | Wood Items/Resource/Branch.png, Stone Rock.png, Berry Items/Food/Nut2.png, Gold Items/Treasure/Coin2.png (frame 0) or GoldCoin.png 7x7, Crystal Items/Resource/GemPurple.png | 16x16 (coin 10x10) | Same sprites as the carry items in section 6, drawn x2 next to the number. Skill-style 24x24 alt for gold: Ui/Skill Icon/Items & Weapon/Money.png. |
+| Resource counters (HUD) | Wood / food / stone: Stefan's pick from `docs/art-review/res-wood.png`, `res-food.png`, `res-stone.png` (not Branch, not Nut2, not Rock.png with its mini stone); Gold Items/Treasure/Coin2.png (frame 0) or GoldCoin.png 7x7, Crystal Items/Resource/GemPurple.png | 16x16 (coin 10x10) | Same sprites as the carry items in section 6, drawn x2 next to the number. Skill-style 24x24 alt for gold: Ui/Skill Icon/Items & Weapon/Money.png. |
 | Tabs | Ui/Theme/Theme Wood/tab.png / tab_selected / tab_hover / tab_unselected / tab_disabled | 16x12, slice L4 T4 R6, open bottom | |
 | Checkbox / radio / slider | unchecked / checked, radio_unchecked / radio_checked 16x16; h_slidder_grabber 13x11 | | |
 | Focus ring | Ui/Theme/Theme Wood/nine_path_focus.png | 8x8, slice 3 | Selected slot / button highlight. |
@@ -264,8 +264,15 @@ Reference for wiring art. **One art source:** CC0 "Ninja Adventure" pack, vendor
 | Pit / hole | Backgrounds/Tilesets/TilesetHole.png | 3x3 pit 0,0,48,48 | Dark hole with brown rim. |
 | Door | TilesetHouse.png | wooden doors 400,304,16,16 / 416,304,16,16 | MISSING a dungeon gate: use the stone arch, or Art draws in code. |
 
+## Forbidden art (Stefan, PLAN.md 2026-11-15)
+Never use these, not as a stand-in either:
+| Art | File / rect | Why / use instead |
+|---|---|---|
+| Nut2 as food | `Items/Food/Nut2.png` | Reads as a dark ball, not food. Pick a food from `docs/art-review/res-food.png` (board choice). |
+| The mega-trunk tree | `TilesetNature.png` 0,0,32,32 (Code's crop `public/art/ninja/tree.png`: the wide orange trunk slab) | Swap for the nicer Ninja trees (section 4: round 256,0 / 288,0, pine 32,0, big trees 48x48 at y288). |
+
 ## Gaps summary (MISSING)
-- Berry item: Items/Food/Nut2.png is the closest. Berry bush: none in the pack; Art's `public/art/props/berry-bush-ninja*.png` fill it.
+- Food item: Nut2 is forbidden; Stefan picks from `docs/art-review/res-food.png`. Berry bush: ChatGPT N-16 (`public/art/props/berry-bush-*.png`).
 - Shield item and crossbow: DONE, hand-drawn Ninja-style at `public/art/dungeon/weapons/ninja-shield.png` (12x12) and `ninja-crossbow.png` (16x10), see that folder's README.
 - Spin / sidestep skill icons: substitutes listed; draw in code if they read badly.
 - Check, home, settings, pause UI icons: draw in code.
