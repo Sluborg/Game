@@ -20,8 +20,9 @@ const tab = (p) => p.getAttribute('.tab.on', 'data-part');
     const p = await ctx.newPage();
     await p.goto(base);
     await p.waitForSelector('#custom:not(.hidden)');
-    const box = await p.locator('#preview2').boundingBox();
-    ok(box.width >= 118, `bigger live preview (${Math.round(box.width)}px wide)`);
+    // layout width (offsetWidth): the preview squash-bounces, so its on-screen box changes from frame to frame
+    const pw = await p.evaluate(() => document.getElementById('preview2').offsetWidth);
+    ok(pw >= 118, `bigger live preview (${pw}px wide)`);
     await p.click('.tab[data-part="eyes"]');
     await p.locator('#opts .opt').nth(3).click();
     ok(await p.locator('#preview2 .boing').count() === 1, 'choosing an option squash-bounces the preview');
