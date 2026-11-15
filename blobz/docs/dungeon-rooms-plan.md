@@ -86,3 +86,27 @@ fights **2-3 waves** in a room; when the last wave is gone the **door at the top
   don't push each other inside it.
 - Coins and potions lie still on the floor with a fixed foot shadow (no bob).
 - Screenshot: `docs/screenshots/dungeon-rooms/door-open-passage.png`.
+
+## No weapon sprites + pacing (Stefan's playtest 2026-11-15)
+- No weapon sprites anywhere (host + joiners). Attacks are FX from the blob: knight = Ninja `SlashCurved` in front,
+  rogue = Ninja `Cut`, marksman = arrow, healer = Ninja energy ball (red damage / green heal). Projectiles start at the
+  blob's edge (24 px body radius + 2 art px); monster shots start at the monster's edge (`ENEMY_R + 6`). The knight's
+  guard shows the Ninja blue shield barrier in front. `?noweapons` is gone (this is the default now).
+- Class marker: a 16 px icon before the name in each nameplate: crossbow (marksman; a bow icon is on order), heal plus
+  (healer), dagger (rogue), shield (knight). The class rings are gone.
+- Auto-aim: the nearest monster within reach, sticky (as before); no attack when none is in reach.
+- Level-ups gained in a room wait until the room is clear, then the cards show; the door only counts once everyone
+  picked.
+- Pacing table `ROOM_TUNE` (src/dungeon.ts), our own numbers:
+
+| Setting | Value | Meaning |
+|---|---|---|
+| specialFrac | 1/3 | at most this share of a wave shoots (eye) or dashes (bat / slime); the rest only chase and bump |
+| earlySpecials | 1 | rooms 1-3: at most one shooter or dasher per wave |
+| shootEvery | 2.5-3.5 s | between a shooter's bursts (random each time) |
+| aimWarn | 0.8 s | the shooter's aim line before it fires (every room) |
+| dashEvery | 4 s (+0-25 %) | a dasher's pause between dashes (its 0.6 s wind-up stays) |
+| ramp | 0.15 | room 10 attacks 15 % more often than room 1 (frequency, never projectile speed) |
+| dungeonStep | 0.1 | each later dungeon: intervals 10 % shorter (down to x0.75) |
+| spitSpeed | 0.7 | monster shots fly at 70 % speed in every room (same range) |
+- Screenshots: `docs/screenshots/dungeon-rooms/no-weapons.png`, `levelup-after-clear.png`.

@@ -3,7 +3,7 @@ import { KEYS } from './i18n';
 import {
   AIM_WARN, BITE_TIME, CLASS_MOVE_COOLDOWN, DUNGEON_TIMER_ENABLED, CLASS_WEAPONS, BITE_WARN, bossHp, BURST, BURST_DMG, BURST_GAP, BURST_SPREAD, CLASS_HP, CLASSES, DASH_TIME, DASH_WARN, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, floorDmg, actMul, GH, GW,
   HEAL_BOLT, heroMods, refresh, inSwing, isWall, ITEMS, itemOf, KO_SECONDS, LEVEL_XP, LOOT_SECONDS, makeFloor, makeGoo, newRun as newRunAny, POTION_HP, roomCracks, REGEN_EVERY,
-  ITEM_ICON, skillIcon, skillOf, unstick, inDoorway, roomTiles, roomGap, EARLY_ROOMS, ROOM_T, ROOMS_ENABLED, ROOMS, ROOM_W, MINIBOSS_ROOM, SPAWN_WARN, READY_SECONDS, makeRoom, roomType, roomClear, diffFloor, enterFloor, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
+  ITEM_ICON, skillIcon, skillOf, unstick, inDoorway, roomTiles, roomGap, ROOM_TUNE, roomSpecials, EARLY_ROOMS, ROOM_T, ROOMS_ENABLED, ROOMS, ROOM_W, MINIBOSS_ROOM, SPAWN_WARN, READY_SECONDS, makeRoom, roomType, roomClear, diffFloor, enterFloor, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
 } from './dungeon';
 import { cleanVillage, createState, DUNGEON_ENABLED, newVillage, villageOf, PICK_TIMER_ENABLED, ENTRANCE_R, entranceOf, makePuzzles, makeTrees, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
 
@@ -12,7 +12,7 @@ import { cleanVillage, createState, DUNGEON_ENABLED, newVillage, villageOf, PICK
 const N23 = Object.keys(import.meta.glob(['../public/art/dungeon/skills/*.png', '../public/art/dungeon/items/*.png'])).map((k) => k.replace('../public/', ''));
 /** The classic 5-floor dungeon unless a test passes rooms = true (rooms are the default since 2026-11-15, ?classic keeps
  *  the old one reachable; its tests stay). */
-const newRun = (seed: number, picks: Record<string, (typeof WEAPONS)[number]>, dungeon = 1, rooms = false) => newRunAny(seed, picks, dungeon, rooms, false);
+const newRun = (seed: number, picks: Record<string, (typeof WEAPONS)[number]>, dungeon = 1, rooms = false) => newRunAny(seed, picks, dungeon, rooms);
 const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 });
 type B = { id: string; x: number; y: number; vx: number; vy: number; dashT: number; lastDash: number };
 const body = (id: string, x: number, y: number): B => ({ id, x, y, vx: 0, vy: 0, dashT: 0, lastDash: 0 });
@@ -443,8 +443,6 @@ describe('dungeon', () => {
       const d = newRunAny(3, { a: 'sword' }, 1, false);
       expect(d.rooms).toBe(false);
       expect(d.map.gw).toBeUndefined();
-      expect(newRunAny(3, { a: 'sword' }).nw).toBeUndefined(); // ?noweapons is off by default
-      expect(dview(dsnap(newRunAny(3, { a: 'sword' }, 1, true, true), 3)).noWeapons).toBe(true); // synced to joiners
     });
     it('cracks: 1-2 per 3x3 block (~11-20 % of the floor), never two touching; the entrance gap and every spawn reachable for 1-5 blobz', () => {
       for (const tiles of [7, 8, 9]) for (const players of [1, 2, 3, 4, 5]) for (let room = 1; room <= ROOMS; room++) {
@@ -584,24 +582,53 @@ describe('dungeon', () => {
         run1(r, [a], undefined, 0.05);
         return s.actT ?? 0;
       };
-      expect(wind(2)).toBeGreaterThan(wind(4) * 1.25);
+      expect(wind(2)).toBeCloseTo(ROOM_TUNE.aimWarn - 0.05, 2); // the same clear 0.8 s aim line in every room
+      expect(wind(4)).toBeCloseTo(ROOM_TUNE.aimWarn - 0.05, 2);
     });
     it('integer scale: the room is as wide as the narrowest phone allows at exactly 3x (7-9 tiles of 48 px)', () => {
       expect([roomTiles(360), roomTiles(390), roomTiles(412), roomTiles(432), roomTiles(1000), roomTiles(320), roomTiles()]).toEqual([7, 8, 8, 9, 9, 7, 9]);
       expect(roomGap(7)).toEqual([2, 3, 4]);
       expect(roomGap(8)).toEqual([3, 4]);
       // the width holds for the whole room and travels in the snapshot (the narrowest phone: e2e dungeon-rooms)
-      const d = newRunAny(9, { a: 'sword', b: 'bow' }, 1, true, false, 360);
+      const d = newRunAny(9, { a: 'sword', b: 'bow' }, 1, true, 360);
       expect(d.rw).toBe(7);
       expect(d.map.gw! * d.map.dt!).toBe(336);
       expect(dview(dsnap(d, 9)).roomTiles).toBe(7);
       // the open door's tiles sit under the 2-tile leaf in an even room too
-      const e = newRunAny(9, { a: 'sword' }, 1, true, false, 400);
+      const e = newRunAny(9, { a: 'sword' }, 1, true, 400);
       expect(e.rw).toBe(8);
       e.wave = 99; e.pending = []; e.enemies = [];
       run1(e, [body('a', e.map.start.x, e.map.start.y)], undefined, 0.1);
       const T = e.map.dt!;
       expect([2, 3, 4, 5].map((x) => isWall(e.map, (x + 0.5) * T, 2.5 * T))).toEqual([true, false, false, true]);
+    });
+    it('pacing (Stefan): at most 1/3 of a wave shoots or dashes (rooms 1-3: one), others only chase; level-ups wait for a clear room', () => {
+      expect([1, 2, 3].map((r) => roomSpecials(r, 9))).toEqual([1, 1, 1]);
+      expect([roomSpecials(4, 3), roomSpecials(4, 7), roomSpecials(10, 9)]).toEqual([1, 2, 3]);
+      for (const room of [1, 3, 4, 7, 10]) {
+        const d = newRun(30 + room, { a: 'sword', b: 'bow', c: 'staff' }, 2, true);
+        if (room > 1) { enterFloor(d, 30 + room, room, 3); }
+        const T = d.map.dt!, bs = [body('a', 2 * T, d.map.start.y), body('b', 3 * T, d.map.start.y), body('c', 4 * T, d.map.start.y)];
+        for (const h of Object.values(d.heroes)) h.inv = 999;
+        run1(d, bs, undefined, 1.2 + SPAWN_WARN + 0.1);
+        const alive = d.enemies.filter((e) => e.kind !== 2);
+        const specials = alive.filter((e) => e.kind === 3 || !e.calm).length;
+        expect(specials).toBeLessThanOrEqual(roomSpecials(room, alive.length));
+        expect(alive.every((e) => e.kind === 3 || e.kind <= 1)).toBe(true);
+      }
+      // level-ups gained mid-room wait for the clear room, then show before the door counts
+      const d = newRun(40, { a: 'sword' }, 1, true);
+      const a = [body('a', d.map.start.x, d.map.start.y)];
+      run1(d, a, undefined, 1.3 + SPAWN_WARN);
+      expect(roomClear(d)).toBe(false);
+      d.xp = 10_000; d.enemies[0].hp = 0; // a kill hands out the XP
+      run1(d, a, undefined, 0.1);
+      expect(d.level).toBeGreaterThan(1);
+      expect(d.heroes.a.pending).toBeGreaterThan(0);
+      expect(d.heroes.a.offer.length).toBe(0); // not yet: the room is still fighting
+      d.enemies = []; d.pending = []; d.wave = 99;
+      run1(d, a, undefined, 0.1);
+      expect(d.heroes.a.offer.length).toBe(3); // the room is clear: the cards show
     });
     it('the open door: the doorway is walkable, the whole doorway + 1 tile below counts, no bumping inside it', () => {
       const d = newRun(26, { a: 'sword', b: 'bow', c: 'staff' }, 1, true);
