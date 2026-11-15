@@ -1,0 +1,6 @@
+16x16 Fence and Well [Tiny 16] (opengameart.org/node/114382)
+Notice on the page: "No attribution required"
+Sources: https://opengameart.org/content/fantastic-fence-16x16
+         https://opengameart.org/content/well-16x32-sprite
+         https://opengameart.org/content/tiny-16-basic (CC-BY / OGA-BY: credit it in LICENSES.md if used)
+Status: fence ON HOLD (puzzles on hold 2026-11-15); well = candidate for the Well building.
