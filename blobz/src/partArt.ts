@@ -45,6 +45,8 @@ function toPng(g: (string | null)[][], SCALE: number): string | null {
  *  colour, cropped to the face (every pixel any eye or mouth option touches, plus 1 px), the option applied and the
  *  other part neutral, no hat, at 4x. Only the face changes between the tiles. */
 const FACE_SCALE = 4;
+/** N-25 mouth icon per mouth option (blob.ts MOUTHS order). */
+export const MOUTH_ICON = (i: number) => `art/icons/mouth-${i + 1}.png`;
 const faceBox = new Map<number, [number, number, number, number]>();
 function faceRegion(shape: number): [number, number, number, number] {
   const hit = faceBox.get(shape);
@@ -77,6 +79,13 @@ function faceCrop(look: BlobLook, part: 'eyes' | 'mouth', i: number): string {
 /** The picture for one designer tile. A hat option without pixels ("none") gets an empty tile. */
 export function partTile(look: BlobLook, part: TilePart, i: number): HTMLElement {
   if (part === 'shape') return blobEl({ ...look, shape: i, ...NEUTRAL });
+  if (part === 'mouth') { // ChatGPT N-25 mouth icons (smile, open, calm, grin, cat = MOUTHS order), 16 px at 3x
+    const s = document.createElement('span');
+    s.className = 'part part-mouth';
+    const img = new Image(); img.src = MOUTH_ICON(i); img.alt = ''; img.draggable = false; img.width = 48; img.height = 48;
+    s.append(img);
+    return s;
+  }
   const key = part === 'hat' ? `${part}|${i}|${look.shape}` : `${part}|${i}|${look.shape}|${look.color}|${look.eyes}|${look.mouth}`;
   let url = cache.get(key);
   if (url === undefined) {

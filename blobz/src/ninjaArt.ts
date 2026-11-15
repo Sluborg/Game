@@ -9,7 +9,7 @@ export const NI = {
   wood: resIcon('wood'), stone: resIcon('stone'), berry: resIcon('berry'), // one line each in resArt.ts
   sun: N('Ui/Skill Icon/Meteo/Sun.png'), build: 'art/icons/ui/hammer-16.png', // ChatGPT N-17 hammer
   dice: 'art/icons/ui/dice-16.png', back: 'art/icons/ui/back-16.png', // ChatGPT N-17
-  dash: 'art/icons/ui/play-16.png', // N-17 stand-in until a free-standing speed symbol exists (no square backing)
+  dash: 'art/icons/ui/dash-16.png', // ChatGPT N-24: free-standing dash symbol (speed lines), 16 px at 3x
   // the meadow action button: free-standing Ninja tool sprites inside the N-19 ring (no square skill backing)
   axe: N('Items/Tool/Axe.png'), pickaxe: N('Items/Tool/Pickaxe.png'), rake: N('Items/Tool/Hoe.png'),
   quill: 'art/icons/ui/quill-16.png', hammer: 'art/icons/ui/hammer-16.png', close: 'art/icons/ui/close-16.png', home: 'art/icons/ui/home-16.png',
