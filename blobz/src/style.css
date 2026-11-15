@@ -1288,3 +1288,9 @@ img[src$="star-empty.png"] { filter: sepia(0.6) saturate(0.6) brightness(1.75) c
   #menu #home .actions { width: 280px; gap: 8px; }
   #menu #home .actions button.big { min-height: 52px; }
 }
+/* home portrait (fix): the player card is one low row (blob, name, quill) right above the buttons, below the cottage */
+@media (orientation: portrait) {
+  #menu #home .me { flex-direction: row; justify-self: stretch; width: 100%; max-width: 460px; gap: 12px; padding: 2px 10px; align-self: end; }
+  #menu #home .me .blob, #menu #home .me .blob img { width: 60px; height: 60px; }
+  #menu #home .me-text { flex: 1; justify-content: space-between; }
+}
