@@ -36,7 +36,7 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (N-11..N-15 are TO DO now). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
+ChatGPT works only on N-orders with status TO DO (N-11 and N-13 round 2 are TO DO now). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
@@ -53,10 +53,10 @@ ChatGPT works only on N-orders with status TO DO (N-11..N-15 are TO DO now). Cha
 | N-5b | DONE (received 2026-11-14) | Rogue class card only: ONE plain dagger beside the blob (not a sai) | `dungeon/card-class-rogue.png` |
 | N-7b | DONE (received 2026-11-14) | App icon round 2: no background, no hands, no sparkles | app/PWA icon |
 | N-11 | TO DO | Class weapons sheet: dagger, wand, sword, crossbow, round shield (16x16 + 32x32) | `dungeon/weapons/*` |
-| N-12 | TO DO | Class move + mode icons: dodge, jump back, shield charge, phase out, heal mode, damage mode (16x16 + 32x32) | `dungeon/icons/*` |
-| N-13 | TO DO | Combat FX frames: KO stars, shockwave ring, slam warning, level-up burst, hit spark (32x32, 4 frames each) | `dungeon/fx/*` |
-| N-14 | TO DO | Boss intro banner + boss portrait (portrait 64x64, banner 256x64) | `dungeon/boss-*` |
-| N-15 | TO DO | Meadow extras: build-site marker, signpost, magnet power-up, speed power-up, home flag (16x16 + 32x32) | `art/meadow/*` |
+| N-12 | DONE (received 2026-11-15) | Class move + mode icons: dodge, jump back, shield charge, phase out, heal mode, damage mode (16x16 + 32x32) | `dungeon/icons/*` |
+| N-13 | TO DO (round 2) | Combat FX frames, ROUND 2 (round 1 had glow halos):  KO stars, shockwave ring, slam warning, level-up burst, hit spark (32x32, 4 frames each) | `dungeon/fx/*` |
+| N-14 | DONE (received 2026-11-15) | Boss intro banner + boss portrait (portrait 64x64, banner 256x64) | `dungeon/boss-*` |
+| N-15 | DONE (received 2026-11-15) | Meadow extras: build-site marker, signpost, magnet power-up, speed power-up, home flag (16x16 + 32x32) | `art/meadow/*` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
@@ -140,6 +140,9 @@ it UPSCALED with hard nearest-neighbour pixels so one art pixel = 8x8 image pixe
 When an order says "16x16 + 32x32", draw the SAME object twice: once on a 16x16 grid and once redrawn on a 32x32 grid
 (more detail, not a blurry upscale). Lay the sprites out in a neat grid on one sheet, transparent background (or flat
 magenta #ff00ff), at least one empty sprite-cell between them, labels NOT drawn in the image.
+ALWAYS: a solid flat magenta #ff00ff background (never fake transparency), hard pixel edges only, NO soft glows,
+halos, blur or semi-transparent pixels around any sprite (glows break the background removal). If an effect needs a
+glow, draw it as 1-2 solid pixel rings in a lighter colour.
 
 ### N-11 Class weapons sheet
 ```
@@ -160,6 +163,8 @@ with a soft glow), 6 damage mode (red spark/bolt).
 ```
 
 ### N-13 Combat FX frames
+Round 2 (do this): round 1 was unusable because of soft glows. Same content, but solid magenta #ff00ff background, hard
+pixels only, no glow/halo, each effect on its own row, 4 frames per row, generous empty space between frames.
 ```
 Ninja Adventure style (style block), 32x32 grid per frame, 4 frames in a row per effect (an animation strip), soft
 friendly colours, no blood, no gore:
