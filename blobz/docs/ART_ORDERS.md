@@ -41,7 +41,7 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (N-11 is TO DO now). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
+ChatGPT works only on N-orders with status TO DO (N-11 round 2 is TO DO now). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
@@ -57,7 +57,7 @@ ChatGPT works only on N-orders with status TO DO (N-11 is TO DO now). ChatGPT fi
 | N-10 | DONE | Small UI icons: check mark, star, empty star (one small sheet) | `art/icons/check.png`, `art/gather/star.png`, `art/gather/star-empty.png` |
 | N-5b | DONE (received 2026-11-14) | Rogue class card only: ONE plain dagger beside the blob (not a sai) | `dungeon/card-class-rogue.png` |
 | N-7b | DONE (received 2026-11-14) | App icon round 2: no background, no hands, no sparkles | app/PWA icon |
-| N-11 | TO DO | Class weapons sheet: dagger, wand, sword, crossbow, round shield (16x16 + 32x32) | `dungeon/weapons/*` |
+| N-11 | TO DO | Class weapons sheet, ROUND 2 (make it again even if you made it before, on magenta): dagger, wand, sword, crossbow, round shield (16x16 + 32x32) | `dungeon/weapons/*` |
 | N-12 | DONE (received 2026-11-15) | Class move + mode icons: dodge, jump back, shield charge, phase out, heal mode, damage mode (16x16 + 32x32) | `dungeon/icons/*` |
 | N-13 | DONE (round 2 received 2026-11-15) | Combat FX frames, ROUND 2 (round 1 had glow halos):  KO stars, shockwave ring, slam warning, level-up burst, hit spark (32x32, 4 frames each) | `dungeon/fx/*` |
 | N-14 | DONE (received 2026-11-15) | Boss intro banner + boss portrait (portrait 64x64, banner 256x64) | `dungeon/boss-*` |
@@ -149,7 +149,7 @@ ALWAYS: a solid flat magenta #ff00ff background (never fake transparency), hard 
 halos, blur or semi-transparent pixels around any sprite (glows break the background removal). If an effect needs a
 glow, draw it as 1-2 solid pixel rings in a lighter colour.
 
-### N-11 Class weapons sheet
+### N-11 Class weapons sheet (round 2: make it now, solid magenta background)
 ```
 Ninja Adventure style (style block). Weapons that FLOAT beside a jelly blob (no hands), each pointing RIGHT, no blood,
 steel blades grey/white, gold or brown grips. On a 16x16 grid AND again on a 32x32 grid:
