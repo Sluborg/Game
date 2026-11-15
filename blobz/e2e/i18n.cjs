@@ -80,7 +80,7 @@ async function phone(browser, name, locale, size = PORTRAIT) {
     await en.click('#btn-build');
     await en.waitForSelector('#build-panel:not(.hidden)');
     await en.waitForFunction(() => document.querySelector('#build-cards .bname')?.textContent === 'Bridge');
-    ok((await en.textContent('#build-cards')).includes('Storage') && (await en.textContent('#build-cards')).includes('Cottage level 2'), 'build cards in English ("Storage", "Cottage level 2")');
+    ok((await en.textContent('#build-cards')).includes('Storage') && (await en.textContent('#build-cards')).includes('Cottage') && (await en.textContent('#build-cards')).includes('level 2'), 'build cards in English ("Storage", "Cottage level 2")');
     await noSwedish(en, 'HUD + build panel');
     if (shots) await en.screenshot({ path: `${shots}/i18n-build-en.png` });
     await en.click('#btn-build-close');

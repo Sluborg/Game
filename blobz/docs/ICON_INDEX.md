@@ -3,13 +3,13 @@
 Every icon on screen, side by side, so they can be judged together before deciding on one icon standard (Stefan
 2026-11-15). Docs only, no visual change.
 
-- **Pictures:** [`screenshots/icons/all-icons-1.png`](screenshots/icons/all-icons-1.png) and
-  [`screenshots/icons/all-icons-2.png`](screenshots/icons/all-icons-2.png) (portrait, split in two). Each icon has:
+- **Picture:** [`screenshots/icons/all-icons.png`](screenshots/icons/all-icons.png) (one portrait image, two
+  columns, 780x3082: at real size it cannot get shorter, the thumbstick alone is 240 px tall). Each icon has:
   - a number;
   - its UI_INDEX name and where it shows;
   - its source;
   - its art size and its on-screen size;
-  - a real-size render (1 css px = 2 image px, like the 2x screenshots) and an enlarged render.
+  - a real-size render only (1 css px = 2 image px, like the 2x screenshots; Stefan: no enlarged copies).
 - **Grouping:** by style, meaning the scale the pixel art is drawn at.
 - **Built from:** a DOM scan of every menu screen, the HUD, build menu and end screen at 390x844 (shown sizes from the
   browser); the meadow world icons from `src/game.ts`; the dungeon icons from Code 2's code (`dungeonUi.ts`,
