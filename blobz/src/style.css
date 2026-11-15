@@ -918,3 +918,147 @@ body.noday #hud-day { display: none !important; }
 @media (orientation: landscape) {
   #menu #home .me .blob, #menu #home .me .blob img { width: 60px; height: 60px; }
 }
+
+/* =====================================================================================================================
+   UI kit A (docs/reviews/PLAN.md step 1, Stefan's pick on ?uikit=2). Last layer: wins over everything above.
+   Parchment interiors, ONE thin Theme Wood frame (6 px), quiet option tiles, selection = dark outline + green tick
+   badge (N-18), words only, Fredoka 18 / 24 (never < 14), 8 px rhythm, targets >= 48 px.
+   Buttons: primary orange (button_normal), secondary cream + plum + quiet wood edge. Press = same image, 2 px down,
+   shadow 4 -> 2 px, slightly darker; never an image swap. Dungeon screens are Code 2's (dark-wood variant).
+   ===================================================================================================================== */
+:root {
+  --k-parch: #f6e8c4; --k-parch2: #fbf2da; --k-edge: #c9a46a; --k-edge-lo: #a87e46; --k-plum: #3f2631;
+  --k-shadow: #3f263166; --k-frame: url('/assets/ninja-adventure/Ui/Theme/Theme%20Wood/nine_path_panel_3.png');
+  --k-primary: url('/assets/ninja-adventure/Ui/Theme/Theme%20Wood/button_normal.png');
+}
+body { font-size: 18px; }
+/* panels: thin frame, parchment inside */
+#menu #custom.card, #menu #join.card, #lobby .card, #end .card, #build-panel, #hud-quest, #hud-bank, #mini-hud, #menu #home .me {
+  border-style: solid; border-width: 6px; border-image: var(--k-frame) 6 5 5 6 / 6px stretch; background: var(--k-parch);
+  box-shadow: none; filter: drop-shadow(0 4px 0 var(--k-shadow)); color: var(--k-plum);
+}
+#menu #custom.card, #menu #join.card, #lobby .card, #end .card { position: relative; padding: 16px 12px; gap: 8px; }
+#menu .card h2, #lobby .card h2, #end .card h2, #build-panel .bphead b { font-size: 24px; color: var(--k-plum); text-shadow: none; -webkit-text-stroke: 0; }
+.msg, .help, .tag { font-size: 16px; }
+.lbl { font-size: 15px; color: #6f5546; }
+
+/* primary button: the orange Ninja button at 6 px (3x of its 2 px edge) */
+button.big {
+  min-height: 56px; padding: 0 16px; border-style: solid; border-width: 6px; border-image: var(--k-primary) 2 fill / 6px stretch;
+  background: none; color: #fff8e8; font: 700 20px var(--font); text-shadow: 0 2px 0 #8a3d12; -webkit-text-stroke: 0;
+  box-shadow: 0 4px 0 0 var(--k-shadow); filter: none; transform: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+/* secondary: cream + plum + quiet wood edge (big.alt, chips, the Build button, Home) */
+button.big.alt, .chip, #btn-build {
+  border: 2px solid var(--k-edge-lo); border-image: none; border-radius: 4px; background: var(--k-parch2);
+  color: var(--k-plum); text-shadow: none; -webkit-text-stroke: 0; box-shadow: inset 0 -3px 0 0 #e4cf9f, 0 4px 0 0 var(--k-shadow); filter: none;
+}
+.chip, #btn-build { min-height: 48px; padding: 0 16px; font: 700 18px var(--font); display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+/* calm press for every button: same picture, sinks 2 px, shadow 4 -> 2 px, a bit darker */
+button.big:active, button.big.down {
+  transform: translateY(2px); box-shadow: 0 2px 0 0 var(--k-shadow); filter: brightness(0.9);
+  border-image-source: var(--k-primary); padding: 0 16px;
+}
+button.big.alt:active, .chip:active, #btn-build:active, .backbtn:active, .kclose:active, #menu #home .me-text .edit:active {
+  transform: translateY(2px); box-shadow: inset 0 -3px 0 0 #e4cf9f, 0 2px 0 0 var(--k-shadow); filter: brightness(0.9);
+  border-image: none; padding-top: 0; padding-bottom: 0;
+}
+/* words only: no icons inside primary buttons and chips (Home, Build keep their N-17 icon) */
+button.big .icon, .chip .icon { display: none; }
+.kicon { width: 48px; height: 48px; image-rendering: pixelated; flex: none; margin: -4px 0; }
+#btn-menu .kicon { width: 48px; height: 48px; }
+
+/* one back button: chevron chip top-left (N-17 back at 3x) */
+.backbtn, #btn-join-back {
+  position: absolute; left: 8px; top: 8px; width: 56px; height: 56px; padding: 0; margin: 0; z-index: 2;
+  display: grid; place-items: center; border: 2px solid var(--k-edge-lo); border-image: none; border-radius: 4px;
+  background: var(--k-parch2); box-shadow: inset 0 -3px 0 0 #e4cf9f, 0 4px 0 0 var(--k-shadow); filter: none;
+}
+.backbtn .icon, #btn-join-back .icon { width: 48px; height: 48px; margin: 0; filter: none; }
+#menu #join.card h2, #lobby .card h2 { padding: 0 60px; min-height: 48px; display: flex; align-items: center; justify-content: center; }
+/* square close button (equal sides), N-17 close */
+.kclose {
+  width: 48px; height: 48px; padding: 0; display: grid; place-items: center; border: 2px solid var(--k-edge-lo); border-radius: 4px;
+  background: var(--k-parch2); box-shadow: inset 0 -3px 0 0 #e4cf9f, 0 4px 0 0 var(--k-shadow); cursor: pointer;
+}
+.kclose img { width: 48px; height: 48px; image-rendering: pixelated; }
+
+/* inputs */
+input, #name {
+  border: 2px solid var(--k-edge); border-image: none; border-radius: 4px; background: var(--k-parch2); color: var(--k-plum);
+  min-height: 48px; font: 600 18px var(--font); padding: 0 12px; box-shadow: none;
+}
+
+/* tabs: same family, words, the selected one has the dark outline and joins the panel below */
+.tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin: 0; background: none; box-shadow: none; align-items: end; }
+.tab {
+  min-height: 48px; padding: 0; border: 2px solid var(--k-edge); border-bottom: 0; border-image: none; border-radius: 4px 4px 0 0;
+  background: var(--k-parch2); color: var(--k-plum); font: 600 16px var(--font); text-shadow: none; -webkit-text-stroke: 0;
+  display: flex; align-items: center; justify-content: center; text-align: center; box-shadow: none; filter: none;
+}
+.tab.on { border: 3px solid var(--k-plum); border-bottom: 0; background: var(--k-parch2); position: relative; z-index: 1; margin-bottom: -2px; padding-bottom: 2px; }
+.tab:active { transform: none; }
+.opts { background: var(--k-parch2); border: 2px solid var(--k-edge); border-radius: 0 0 4px 4px; padding: 8px; gap: 8px; }
+
+/* option tiles: one calm frame for selected and unselected; selected = dark outline + green tick badge */
+.opt {
+  position: relative; border: 2px solid var(--k-edge); border-image: none; border-radius: 4px; background: #fffaf0;
+  box-shadow: none; filter: none; padding: 2px; overflow: visible; min-height: 56px;
+}
+.opt.on { border: 3px solid var(--k-plum); border-image: none; background: #fffaf0; box-shadow: none; padding: 1px; }
+.opt.on::after {
+  content: ''; position: absolute; right: -6px; top: -6px; width: 32px; height: 32px; z-index: 2; pointer-events: none;
+  background: url('/art/icons/state/tick-green-16.png') center / 32px 32px no-repeat; image-rendering: pixelated;
+}
+.opt.swatch-opt { padding: 3px; }
+.opt.swatch-opt i { box-shadow: none; border-radius: 2px; }
+
+/* lists: lobby players + LAN games as parchment rows */
+#lobby-list li, .lanrow {
+  border: 2px solid var(--k-edge); border-image: none; border-radius: 4px; background: var(--k-parch2); color: var(--k-plum);
+  box-shadow: none; filter: none; min-height: 56px; font-size: 18px;
+}
+.lanrow { box-shadow: 0 4px 0 0 var(--k-shadow); }
+.lanrow:active { transform: translateY(2px); box-shadow: 0 2px 0 0 var(--k-shadow); filter: brightness(0.92); }
+
+/* home: name plate panel + quill edit */
+#menu #home .me { border-width: 6px; padding: 8px 12px; }
+#menu #home .me-text b { font-size: 20px; color: var(--k-plum); }
+#menu #home .me-text .edit {
+  width: 48px; height: 48px; border: 2px solid var(--k-edge-lo); border-image: none; border-radius: 4px; background: var(--k-parch2);
+  box-shadow: inset 0 -3px 0 0 #e4cf9f, 0 4px 0 0 var(--k-shadow); padding: 0;
+}
+#menu #home .me-text .edit::before { width: 48px; height: 48px; background: url('/art/icons/ui/quill-16.png') center / 48px 48px no-repeat; }
+
+/* build panel */
+#build-panel .bphead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#build-panel .bcard { border: 2px solid var(--k-edge); border-image: none; border-radius: 4px; background: var(--k-parch2); box-shadow: none; filter: none; color: var(--k-plum); }
+#build-panel .bcard .bname { font-size: 16px; }
+#btn-build { font-size: 18px; }
+#btn-build .kicon { width: 48px; height: 48px; vertical-align: middle; }
+
+/* meadow HUD: quest + bank on parchment */
+#hud-quest .qnum, #hud-bank span { color: var(--k-plum); }
+#hud-quest .qbar { border-image: none; border: 2px solid var(--k-edge); border-radius: 3px; background: #efe0bb; }
+
+/* meadow action button: the N-19 wooden ring at 2x (ring ~62 px), plain centre, free-standing tool symbol */
+#dash {
+  width: 96px; height: 96px; border: 0; border-image: none; padding: 0; background: url('/art/dungeon/ui/btn-round-normal-48.png') center / 96px 96px no-repeat;
+  image-rendering: pixelated; box-shadow: none; filter: drop-shadow(0 4px 0 var(--k-shadow));
+}
+#dash .icon { width: 48px; height: 48px; margin: 0; filter: none; }
+#dash:active, #dash.down { transform: translateY(2px); filter: brightness(0.9) drop-shadow(0 2px 0 var(--k-shadow)); box-shadow: none; border-image: none; }
+#dash.cd { filter: saturate(0.2) brightness(0.9) drop-shadow(0 4px 0 var(--k-shadow)); }
+
+/* end screen: Play again primary + Home secondary with icon */
+#end .card button.big { width: 100%; }
+/* kit A fixes after the first walk */
+#lobby #lobby-list li {
+  border: 2px solid var(--k-edge) !important; border-radius: 4px; background: var(--k-parch2) !important; padding: 4px 12px !important;
+  min-height: 56px; font-size: 18px; color: var(--k-plum); gap: 12px;
+}
+#lobby #lobby-list li .blob, #lobby #lobby-list li .blob img { width: 48px; height: 48px; }
+.kclose { width: 56px; height: 56px; }
+#build-panel .bcard .beff { font-size: 14px; } #build-panel .bcard .bcost { font-size: 16px; }
+.lanrow b { font-size: 18px; }
+.lanrow small, .lanrow span { font-size: 15px; }

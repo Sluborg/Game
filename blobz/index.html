@@ -77,7 +77,7 @@
         <ul id="lan-list" class="lanlist"></ul>
         <button id="btn-rescan" class="big alt hidden" type="button" data-i18n="join.rescan">Leta igen</button>
         <p id="join-msg" class="msg"></p>
-        <button id="btn-join-back" class="link"><i data-icon="back"></i><span data-i18n="join.back">Tillbaka</span></button>
+        <button id="btn-join-back" class="backbtn" aria-label="Tillbaka" data-i18n-aria="join.back"><i data-icon="back"></i></button>
       </div>
     </section>
 
@@ -131,9 +131,9 @@
         <div class="mi-row bad"><span class="mi-drop bomb"><img src="assets/ninja-adventure/Items/Resource/Rock.png" alt="" /></span><span class="mi-blob"><i class="mi-ko"></i></span><b class="mi-mark x">✕</b></div>
       </div>
       <button id="btn-skip-mini" class="chip hidden" type="button" data-i18n="mini.skip">Hoppa över</button>
-      <button id="btn-build" class="chip hidden" type="button" aria-label="Bygg" data-i18n-aria="build.button"><img src="assets/ninja-adventure/Ui/Skill%20Icon/Job%20&amp;%20Action/Repair.png" alt="" /> <span data-i18n="build.button">Bygg</span></button>
+      <button id="btn-build" class="chip hidden" type="button" aria-label="Bygg" data-i18n-aria="build.button"><img src="art/icons/ui/hammer-16.png" alt="" class="kicon" /> <span data-i18n="build.button">Bygg</span></button>
       <div id="build-panel" class="hidden" role="dialog" aria-label="Bygg" data-i18n-aria="build.button">
-        <div class="bphead"><b data-i18n="build.button">Bygg</b><button id="btn-build-close" class="chip" type="button" aria-label="Stäng" data-i18n-aria="build.close">✕</button></div>
+        <div class="bphead"><b data-i18n="build.button">Bygg</b><button id="btn-build-close" class="kclose" type="button" aria-label="Stäng" data-i18n-aria="build.close"><img src="art/icons/ui/close-16.png" alt="" /></button></div>
         <div id="build-cards" class="bcards"></div>
       </div>
       <div id="stick"><div id="knob"></div></div>
@@ -178,7 +178,7 @@
         <p class="tag sr-only" data-i18n="end.good">Bra jobbat!</p>
         <button id="btn-again" class="big" data-i18n="end.again">Spela igen</button>
         <p id="end-wait" class="msg" data-i18n="end.waitHost">Väntar på värden...</p>
-        <button id="btn-menu" class="link" data-i18n="end.menu">Till menyn</button>
+        <button id="btn-menu" class="big alt"><img src="art/icons/ui/home-16.png" alt="" class="kicon" /><span data-i18n="end.menu">Till menyn</span></button>
       </div>
     </section>
 

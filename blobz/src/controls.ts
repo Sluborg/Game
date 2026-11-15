@@ -51,6 +51,7 @@ export class Controls {
   private press() {
     this.dash();
     this.stopHold();
+    this.dashBtn.classList.add('down'); // calm press (style.css): touch :active is unreliable after preventDefault
     this.holdTimer = window.setInterval(() => { if (this.tool) this.dash(); }, Controls.REPEAT_MS);
   }
 
@@ -70,7 +71,7 @@ export class Controls {
     if (!on) this.attackStop();
   }
 
-  private stopHold() { clearInterval(this.holdTimer); this.holdTimer = 0; }
+  private stopHold() { clearInterval(this.holdTimer); this.holdTimer = 0; this.dashBtn.classList.remove('down'); }
 
   private dash() {
     if (!this.active()) return;
@@ -136,7 +137,7 @@ export class Controls {
     if (tool === this.tool) return;
     this.tool = tool;
     const img = this.dashBtn.querySelector('img');
-    if (img) img.src = tool ? NI[tool] : NI.dash; // Ninja skill icons: harvest / mine / plant, boot = dash
+    if (img) img.src = tool ? NI[tool] : NI.dash; // free-standing Ninja tool sprites; N-17 play = dash
     this.dashBtn.setAttribute('aria-label', t(tool === 'axe' ? 'tool.axe' : tool === 'pickaxe' ? 'tool.pickaxe' : tool === 'rake' ? 'tool.rake' : 'hud.dash'));
     this.dashBtn.classList.toggle('tool', !!tool);
   }

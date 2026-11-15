@@ -37,7 +37,7 @@ const tap = async (page) => { await page.locator('#dash').dispatchEvent('pointer
     const tree = await pick(host, [0, 1, 2]);
     await beside(host, 1, tree);
     await place(host, 0, 640, 420); await place(host, 2, 700, 420);
-    await ada.waitForFunction(() => document.querySelector('#dash img').src.includes('Harvest.png'), null, { timeout: 5000 });
+    await ada.waitForFunction(() => document.querySelector('#dash img').src.includes('Tool/Axe.png'), null, { timeout: 5000 });
     ok(true, 'Ada next to a tree: action button shows the axe');
     for (let h = 0; h < 3; h++) {
       await tap(ada);
@@ -50,7 +50,7 @@ const tap = async (page) => { await page.locator('#dash').dispatchEvent('pointer
     // Bo mines a rock by holding the button (repeats every 0.35 s)
     const rock = await pick(host, [3, 4]);
     await beside(host, 2, rock);
-    await bo.waitForFunction(() => document.querySelector('#dash img').src.includes('Mine.png'), null, { timeout: 5000 });
+    await bo.waitForFunction(() => document.querySelector('#dash img').src.includes('Tool/Pickaxe.png'), null, { timeout: 5000 });
     await bo.locator('#dash').dispatchEvent('pointerdown');
     await bo.waitForFunction(() => window.__blobzView.players[2].carry.includes('stone'), null, { timeout: 6000 });
     await bo.locator('#dash').dispatchEvent('pointerup');
@@ -61,7 +61,7 @@ const tap = async (page) => { await page.locator('#dash').dispatchEvent('pointer
     // Stefan (host) rakes a berry bush with the keyboard
     const bush = await pick(host, [5]);
     await beside(host, 0, bush);
-    await host.waitForFunction(() => document.querySelector('#dash img').src.includes('Plant.png'), null, { timeout: 5000 });
+    await host.waitForFunction(() => document.querySelector('#dash img').src.includes('Tool/Hoe.png'), null, { timeout: 5000 });
     for (let h = 0; h < 2; h++) { await host.keyboard.press('Space'); await host.waitForTimeout(380); await beside(host, 0, bush); }
     await host.waitForFunction(() => window.__blobzView.players[0].carry.includes('berry'), null, { timeout: 5000 });
     ok(true, '2 rake hits -> Stefan carries berries');
