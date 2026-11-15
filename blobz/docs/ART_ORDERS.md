@@ -41,7 +41,7 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (N-15b, N-19b, N-23 and N-24 are TO DO now). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
+ChatGPT works only on N-orders with status TO DO (N-15b, N-19b, N-23, N-24 and N-25 are TO DO now). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
@@ -73,6 +73,7 @@ ChatGPT works only on N-orders with status TO DO (N-15b, N-19b, N-23 and N-24 ar
 | N-19b | TO DO | Round combat button rings in exact small sizes: 24x24 and 18x18 art px, normal + pressed + disabled | `dungeon/ui/btn-round-*` |
 | N-23 | TO DO | Dungeon skill icons (24) + item icons (5), matching their effects (16x16) | `dungeon/skills/*`, `dungeon/items/*` |
 | N-24 | TO DO | Dash symbol for the action button (16x16, free-standing) | `art/icons/ui/dash-*` |
+| N-25 | TO DO | Designer mouth icons x5 (16x16) | `art/icons/mouth-*` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
@@ -296,6 +297,13 @@ glowing gem drawn with hard pixels, no soft glow).
 Ninja Adventure style (style block). ONE free-standing symbol for a "dash / quick glide" button: a small blob shape
 leaning forward with three bold speed lines behind it, white/cream with a dark 1 px outline, no backing disc or frame.
 On EXACTLY a 16x16 art-pixel grid. Solid magenta background.
+```
+
+### N-25 Designer mouth icons
+```
+Ninja Adventure style (style block). Five cute blob MOUTHS shown on a small round patch of neutral light-grey blob skin
+so each reads clearly as a mouth, side by side, each on EXACTLY a 16x16 art-pixel grid, dark 1 px outline, solid magenta
+background: 1 small smile, 2 open happy mouth (pink tongue), 3 calm flat line, 4 big grin with teeth, 5 cat mouth (:3).
 ```
 
 ## Ninja style block (for N-orders)
