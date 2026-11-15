@@ -61,7 +61,9 @@ type Crop = [string, number, number, number, number];
 const RUBBLE_ART: Crop = ['n-nature', 272, 272, 32, 16];
 /** At most this many blossom trees per map (they read as pink pillows in a crowd). */
 const BLOSSOM_MAX = 2;
-const TREE_ART: Crop[] = [['n-nature', 96, 0, 32, 32], ['n-nature', 224, 0, 32, 32], ['n-nature', 32, 0, 32, 32]];
+const TREE_ART: Crop[] = [['n-nature', 96, 128, 32, 32], ['n-nature', 96, 128, 32, 32], ['n-nature', 96, 128, 32, 32]]; // round tree on a trunk (Stefan 2026-11-15)
+/** Big groves (decor, no collision) near the map edges and around the cave: pine, green, lime (Stefan 2026-11-15). */
+const GROVE_ART: Crop[] = [['n-nature', 0, 32, 64, 48], ['n-nature', 64, 32, 64, 48], ['n-nature', 256, 32, 64, 48]];
 type Placed = [string, number, number, number, number, number, number]; // crop + where it goes (dx, dy)
 /** Pieces placed on one canvas: the garden = two rows of soil plots (camp) with vegetables planted on them
  *  (scripts/ninja_crops.py GARDEN draws the same picture for the build card). */
@@ -80,7 +82,8 @@ const NINJA_CROPS: Record<string, Crop | Crop[]> = {
   // trees (PLAN step 2): no mega-trunk round tree (Nature 0,0); the tree with roots, the blossom tree, the pine
   'pr-tree-green': TREE_ART[0], 'pr-tree-orange': TREE_ART[1], 'pr-tree-pine': TREE_ART[2],
   'pr-rock': ['n-nature', 112, 224, 32, 32], 'pr-boulder': ['n-nature', 144, 224, 32, 32],
-  'pr-stump': ['n-nature', 0, 128, 32, 32], 'g-rubble': RUBBLE_ART,
+  'pr-stump': ['n-nature', 64, 128, 16, 16], // a small stump (no enormous stump)
+  'pr-grove-0': GROVE_ART[0], 'pr-grove-1': GROVE_ART[1], 'pr-grove-2': GROVE_ART[2], 'g-rubble': RUBBLE_ART,
   'pr-flowers': ['n-nature', 96, 176, 16, 16],
   // wild veg + wheat tufts near the yard (decor only, no farming)
   'pr-wheat': ['n-nature', 112, 176, 16, 16], 'pr-veg': ['n-nature', 64, 176, 16, 16], 'pr-veg2': ['n-nature', 80, 176, 16, 16],
@@ -201,7 +204,9 @@ export class GameScene extends Phaser.Scene {
   private bgfx = new Map<BuildKind, { img: Phaser.GameObjects.Image; sh?: Phaser.GameObjects.Image; built: boolean }>();
   private cottageImg!: Phaser.GameObjects.Image;
   private water!: ReturnType<typeof makeWater>;
-  private nodes: { img: Phaser.GameObjects.Image; kind: number; left: number; x: number; y: number; sc: number; fade: number; blossom: boolean }[] = [];
+  private nodes: { img: Phaser.GameObjects.Image; sh: Phaser.GameObjects.Image; kind: number; left: number; x: number; y: number; sc: number; fade: number; blossom: boolean }[] = [];
+  /** Decor groves (no collision), faded like trees when a blob is behind them. */
+  private groves: { img: Phaser.GameObjects.Image; x: number; y: number; fade: number }[] = [];
   private dusk!: Phaser.GameObjects.Rectangle;
   private pile!: Phaser.GameObjects.Container;
   private pileKey = '';
@@ -254,7 +259,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image('mini-bg', 'art/mini/bg.png');
     // berry bush ChatGPT N-16 (full / picked), 32 px art at 3x
     this.load.image('st-you', 'art/icons/state/you-arrow-16.png'); // ChatGPT N-18
-    this.load.image('pw-speed', 'art/meadow/speed-16.png'); // ChatGPT N-15b speed power-up
+    this.load.image('pw-speed-32', 'art/meadow/speed-32.png'); // ChatGPT N-15b speed power-up (32 px art)
     this.load.image('g-bush-berries', 'art/props/berry-bush-32.png');
     this.load.image('g-bush-empty', 'art/props/berry-bush-picked-32.png'); // Bärregn backdrop (ChatGPT N-9): sunset sky over the berry field
     if (this.s.biome === 'snow') { // archived snow map (SNOW_MAP_ENABLED): its own leftovers
@@ -282,6 +287,12 @@ export class GameScene extends Phaser.Scene {
       if (c === o || !g.visible || !g.getBounds || (g.depth ?? 0) <= o.depth || g.alpha === 0) return false;
       return Phaser.Geom.Rectangle.Overlaps(r, g.getBounds());
     }).map((c) => (c as Phaser.GameObjects.Image).texture?.key ?? c.type);
+  }
+
+  /** Put a node's shadow under the foot of its picture (the bottom edge), 70% of its width, just below its depth. */
+  private footShadow(n: { img: Phaser.GameObjects.Image; sh: Phaser.GameObjects.Image }) {
+    const im = n.img, foot = im.y + (1 - im.originY) * im.displayHeight;
+    n.sh.setPosition(im.x, foot - 3).setDisplaySize(Math.max(42, im.displayWidth * 0.8), 24).setAlpha(0.34).setDepth(im.depth - 1);
   }
 
   /** Soft Ninja drop shadow (Actor/Character/Shadow.png, 12x7) stretched under a blob, prop or building. */
@@ -385,10 +396,12 @@ export class GameScene extends Phaser.Scene {
     let blossoms = 0;
     this.nodes = makeTrees(this.s.seed).map((t) => {
       const blossom = t.kind === 1 && blossoms < BLOSSOM_MAX && Math.hypot(t.x - ent.x, t.y - ent.y) > 260 && ++blossoms > 0;
-      this.shadow(t.x, t.y + 8, t.kind < 3 ? 66 : 72, 21);
+      const sh = this.shadow(t.x, t.y, 60, 21);
       const [key, sc, tint] = this.nodeArt(t.kind, false, blossom);
       const img = this.add.image(t.x, t.y + 10, key).setScale(sc).setTint(tint).setOrigin(0.5, t.kind < 3 ? 0.95 : 0.8).setDepth(isSolid(t.kind) ? t.y : t.y - 30);
-      return { img, kind: t.kind, left: t.left, x: t.x, y: t.y, sc, fade: 1, blossom };
+      const n = { img, sh, kind: t.kind, left: t.left, x: t.x, y: t.y, sc, fade: 1, blossom };
+      this.footShadow(n);
+      return n;
     });
 
     // flat decorations (no collision), from the same seed on every phone; never on the puzzle pens/plates
@@ -416,6 +429,25 @@ export class GameScene extends Phaser.Scene {
       const kinds = placed === 0 ? ['pr-wheat', 'pr-wheat', 'pr-wheat', 'pr-veg'] : ['pr-veg', 'pr-veg2', 'pr-veg', 'pr-wheat'];
       kinds.forEach((k, j) => this.add.image(x + (j % 2) * 44 - 22 + (j > 1 ? 14 : 0), y + Math.floor(j / 2) * 34, k).setScale(PROP_SCALE).setOrigin(0.5, 0.9).setDepth(y + Math.floor(j / 2) * 34));
       placed++;
+    }
+    // big groves (decor) along the map edges and a couple around the cave, never on the path, nodes, pens or water
+    if (this.s.biome !== 'snow') {
+      const spots: [number, number][] = [];
+      for (let i = 0; i < 400 && spots.length < 9; i++) {
+        const nearCave = spots.length < 2;
+        let x: number, y: number;
+        if (nearCave) { const a = r() * Math.PI * 2, d = 200 + r() * 90; x = ent.x + Math.cos(a) * d; y = ent.y + Math.sin(a) * d * 0.8; }
+        else { const side = Math.floor(r() * 4), u = r(); x = side < 2 ? 80 + u * (WORLD_W - 160) : side === 2 ? 70 + r() * 60 : WORLD_W - 70 - r() * 60; y = side === 0 ? 90 + r() * 50 : side === 1 ? WORLD_H - 30 - r() * 50 : 120 + u * (WORLD_H - 200); }
+        if (x < 60 || x > WORLD_W - 60 || y < 80 || y > WORLD_H - 10) continue;
+        if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 220 || Math.hypot(x - ent.x, y - ent.y) < 180) continue;
+        if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < 120) || inZone(x, y, 90) || spots.some(([sx, sy]) => Math.hypot(sx - x, sy - y) < 200)) continue;
+        if (DUNGEON_ENABLED && [-2, -1, 0, 1, 2].some((dx) => [-2, -1, 0].some((dy) => cavePath(this.s.seed).has(Math.floor(x / WATER_TILE + dx) + ',' + Math.floor(y / WATER_TILE + dy))))) continue;
+        spots.push([x, y]);
+      }
+      this.groves = spots.map(([x, y], i) => {
+        this.shadow(x, y - 6, 150, 27, 0.26).setDepth(y - 1);
+        return { img: this.add.image(x, y, 'pr-grove-' + (Math.floor(r() * 3) + i) % 3).setScale(3).setOrigin(0.5, 1).setDepth(y), x, y, fade: 1 };
+      });
     }
     if (this.s.biome === 'snow') {
       // frozen ponds (slippery in the sim) + an igloo or two
@@ -536,6 +568,7 @@ export class GameScene extends Phaser.Scene {
       n.left = left;
       const [key, sc, tint] = this.nodeArt(n.kind, left <= 0, n.blossom);
       n.img.setTexture(key).setScale(sc).setTint(tint).setOrigin(0.5, left > 0 && n.kind < 3 ? 0.95 : 0.8);
+      this.footShadow(n);
       n.sc = sc;
       if (left > 0) { n.img.setScale(sc * 0.3); this.tweens.add({ targets: n.img, scale: sc, duration: 300, ease: 'Back.Out' }); }
     });
@@ -547,6 +580,12 @@ export class GameScene extends Phaser.Scene {
       for (const b of this.blobs.values()) if (b.y < n.y + 4 && b.y > n.y - top && Math.abs(b.x - n.x) < 44) { hidden = true; break; }
       const want = hidden ? 0.45 : 1;
       if (n.fade !== want) { n.fade += Math.sign(want - n.fade) * Math.min(Math.abs(want - n.fade), dt * 4); n.img.setAlpha(n.fade); }
+    }
+    for (const g of this.groves) {
+      let hidden = false;
+      for (const b of this.blobs.values()) if (b.y < g.y - 6 && b.y > g.y - 140 && Math.abs(b.x - g.x) < 96) { hidden = true; break; }
+      const want = hidden ? 0.45 : 1;
+      if (g.fade !== want) { g.fade += Math.sign(want - g.fade) * Math.min(Math.abs(want - g.fade), dt * 4); g.img.setAlpha(g.fade); }
     }
     // ---- dusk ----
     this.dusk.setFillStyle(v.phase === 'end' ? 0x4a2a6a : 0xff7a2f, v.phase === 'end' ? 0.38 : v.time >= 20 ? 0 : 0.1 + Math.min(1, (20 - v.time) / 20) * 0.25);
@@ -571,8 +610,8 @@ export class GameScene extends Phaser.Scene {
       if (!c) {
         // speed: ChatGPT N-15b (winged boot inside its own glow circle), 16 px art at 3x; magnet: Ninja hook on a circle
         c = w.kind === 'speed'
-          ? this.add.container(w.x, w.y, [this.add.image(0, 0, 'pw-speed').setScale(3)])
-          : this.add.container(w.x, w.y, [this.add.circle(0, 0, 18, 0xff6b8b, 0.35).setStrokeStyle(2, 0xffffff, 0.8), this.add.image(0, -1, 'ic-magnet').setScale(1)]);
+          ? this.add.container(w.x, w.y, [this.add.image(0, 0, 'pw-speed-32').setScale(2)]) // N-15b 32 px art, 64 world px
+          : this.add.container(w.x, w.y, [this.add.circle(0, 0, 32, 0xff6b8b, 0.4).setStrokeStyle(3, 0xffffff, 0.9), this.add.image(0, -1, 'ic-magnet').setScale(2)]);
         this.powers.set(w.id, c);
       }
       c.setPosition(w.x, w.y + Math.sin(now / 250 + w.id) * 4).setDepth(w.y);
