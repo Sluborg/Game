@@ -4,6 +4,7 @@
 import Phaser from 'phaser';
 import { blobCanvas, BLOB_FRAMES, BODY_CY, clampLook, facingFromVelocity, type Facing } from './blob';
 import { drawGatherRing } from './gatherRing';
+import { onViewport } from './viewport';
 import { fw, fh, ft, inDoorway, makeRoom, roomCracks, roomGap, ROOM_TUNE, ROOMS, MINIBOSS_ROOM, SPAWN_WARN, AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
 /** Weapons without Art's strip yet: a Kenney Tiny Dungeon tile in hand (bow: drawn in code). */
 import type { Session } from './game';
@@ -224,14 +225,10 @@ export class DungeonScene extends Phaser.Scene {
     cam.setRoundPixels(true);
     cam.setBackgroundColor('#141b1b');
     this.fitCamera();
-    this.scale.on('resize', this.fitCamera, this);
-    // rotating or coming back from another app: the browser may report the new size late (or not fire resize while
-    // hidden), so re-measure now and once more after the rotation settles (no stale canvas / camera / HUD sizes)
-    const remeasure = () => { this.scale.refresh(); this.fitCamera(); this.time.delayedCall(350, () => { this.scale.refresh(); this.fitCamera(); }); };
-    const onVis = () => { if (document.visibilityState === 'visible') remeasure(); };
-    window.addEventListener('orientationchange', remeasure);
-    document.addEventListener('visibilitychange', onVis);
-    this.events.once('shutdown', () => { this.scale.off('resize', this.fitCamera, this); window.removeEventListener('orientationchange', remeasure); document.removeEventListener('visibilitychange', onVis); });
+    this.scale.on('resize', this.fitCamera, this); // Phaser resized the canvas
+    // Code's shared viewport watcher (rotation, app switch, visual viewport; debounced): re-measure the camera and view
+    const off = onViewport(() => this.fitCamera());
+    this.events.once('shutdown', () => { this.scale.off('resize', this.fitCamera, this); off(); });
   }
 
   private fitCamera() {
