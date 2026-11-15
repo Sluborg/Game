@@ -263,6 +263,8 @@ export const roomClear = (d: DState) => !!d.rooms && (d.wave ?? 0) >= (d.map.wav
  *  2 = wall face (the door sits in it), 3.. = floor, last = the bottom wall with the entrance gap. Floor 27 (arena) /
  *  36 (corridor) / 31 (boss) tiles tall, +1 per player above 2. Start at the bottom, the door at the top. */
 export const ROOM_T = 48;
+/** rows of entrance hallway below the bottom wall (Stefan: arrive from a hallway, no bare black squares) */
+export const ROOM_STUB = 2;
 /** rooms 1-3: max 1 shooter per wave, ~30 % slower shots, a longer wind-up (the ramp starts in room 4) */
 export const EARLY_ROOMS = 3;
 /** Rooms: how many monsters attack and how often (Stefan's playtest 2026-11-15; our own numbers, tune here; also in
@@ -290,9 +292,10 @@ export function makeRoom(seed: number, room: number, players = 1, dungeon = 1, t
   const T = ROOM_T;
   const type = roomType(room);
   const h = (type === 'arena' ? 27 : type === 'corridor' ? 36 : 31) + Math.max(0, Math.min(5, players) - 2);
-  const gw = rw + 2, gh = 3 + h + 1, y0 = 3, y1 = 3 + h - 1; // floor rows y0..y1
+  const gw = rw + 2, gh = 3 + h + 1 + ROOM_STUB, y0 = 3, y1 = 3 + h - 1; // floor rows y0..y1, then the bottom wall, then the hallway stub
   const solid = new Uint8Array(gw * gh).fill(1);
   for (let y = y0; y <= y1; y++) for (let x = 1; x <= rw; x++) solid[y * gw + x] = 0;
+  for (let y = y1 + 1; y < gh; y++) for (const x of roomGap(gw)) solid[y * gw + x] = 0; // the entrance gap + the hallway below it
   const o: Room = { x: 1, y: y0, w: rw, h };
   const mx = (gw / 2) * T;
   const start = { x: mx, y: (y1 + 0.3) * T }; // in the entrance gap at the bottom (the camera starts there too)
@@ -359,7 +362,7 @@ export function roomCracks(f: Floor, seed: number): Set<number> {
   const W = fw(f), H = fh(f), gap = roomGap(W);
   let n = seed | 0 || 1;
   const rnd = () => { n = (n * 1103515245 + 12345) & 0x7fffffff; return n / 0x7fffffff; };
-  const floorT = (x: number, y: number) => x >= 1 && x <= W - 2 && y >= 3 && (y < H - 1 || gap.includes(x));
+  const floorT = (x: number, y: number) => x >= 1 && x <= W - 2 && y >= 3 && (y < H - 1 - ROOM_STUB || gap.includes(x));
   const out = new Set<number>();
   const touches = (x: number, y: number) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (out.has((y + dy) * W + x + dx)) return true; return false; };
   for (let by = 3; by < H; by += 3) for (let bx = 1; bx < W - 1; bx += 3) {

@@ -3,7 +3,7 @@ import { KEYS } from './i18n';
 import {
   AIM_WARN, BITE_TIME, CLASS_MOVE_COOLDOWN, DUNGEON_TIMER_ENABLED, CLASS_WEAPONS, BITE_WARN, bossHp, BURST, BURST_DMG, BURST_GAP, BURST_SPREAD, CLASS_HP, CLASSES, DASH_TIME, DASH_WARN, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, floorDmg, actMul, GH, GW,
   HEAL_BOLT, heroMods, refresh, inSwing, isWall, ITEMS, itemOf, KO_SECONDS, LEVEL_XP, LOOT_SECONDS, makeFloor, makeGoo, newRun as newRunAny, POTION_HP, roomCracks, REGEN_EVERY,
-  ITEM_ICON, skillIcon, skillOf, unstick, inDoorway, roomTiles, roomGap, ROOM_TUNE, roomSpecials, EARLY_ROOMS, ROOM_T, ROOMS_ENABLED, ROOMS, ROOM_W, MINIBOSS_ROOM, SPAWN_WARN, READY_SECONDS, makeRoom, roomType, roomClear, diffFloor, enterFloor, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
+  ITEM_ICON, skillIcon, skillOf, unstick, inDoorway, roomTiles, roomGap, ROOM_TUNE, ROOM_STUB, roomSpecials, EARLY_ROOMS, ROOM_T, ROOMS_ENABLED, ROOMS, ROOM_W, MINIBOSS_ROOM, SPAWN_WARN, READY_SECONDS, makeRoom, roomType, roomClear, diffFloor, enterFloor, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
 } from './dungeon';
 import { cleanVillage, createState, DUNGEON_ENABLED, newVillage, villageOf, PICK_TIMER_ENABLED, ENTRANCE_R, entranceOf, makePuzzles, makeTrees, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
 
@@ -458,7 +458,7 @@ describe('dungeon', () => {
           for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (dx || dy) expect(c.has((y + dy) * W + x + dx)).toBe(false);
         }
         // start in the last floor row, above the bottom wall's gap (the 3 middle tiles); every spawn reachable from it
-        expect(Math.floor(f.start.y / T)).toBe(H - 2);
+        expect(Math.floor(f.start.y / T)).toBe(H - 2 - ROOM_STUB); // the last floor row, above the bottom wall and its hallway
         expect(roomGap(W)).toContain(Math.floor(f.start.x / T)); // right above the entrance gap
         for (const c of f.columns ?? []) expect(Math.abs((c.x + 0.5) * T - f.start.x)).toBeGreaterThan(T); // never in the middle lane
         const seen = new Uint8Array(W * H), q = [[Math.floor(f.start.x / T), Math.floor(f.start.y / T)]];
@@ -520,7 +520,7 @@ describe('dungeon', () => {
     it('playtest fixes: start in the entrance gap, max 1 shooter per wave in rooms 1-3, 2-3 columns as cover in arenas', () => {
       for (const seed of [5, 9, 13]) for (let room = 1; room <= ROOMS; room++) {
         const f = makeRoom(seed, room, 2);
-        expect(Math.floor(f.start.y / f.dt!)).toBe(f.gh! - 2); // the last floor row, right above the bottom wall's gap
+        expect(Math.floor(f.start.y / f.dt!)).toBe(f.gh! - 2 - ROOM_STUB); // the last floor row, right above the bottom wall's gap
         if (room <= EARLY_ROOMS) for (const w of f.waves!) expect(w.filter((sp) => sp.kind === 3).length).toBeLessThanOrEqual(1);
         const cols = f.columns ?? [];
         if (roomType(room) === 'arena') {

@@ -6,7 +6,7 @@ import { blobCanvas, BLOB_FRAMES, BODY_CY, clampLook, facingFromVelocity, type F
 import { drawGatherRing } from './gatherRing';
 import { onViewport } from './viewport';
 import { dpr, snapZoom } from './pixelScale';
-import { fw, fh, ft, inDoorway, makeRoom, roomCracks, roomGap, ROOM_TUNE, ROOMS, MINIBOSS_ROOM, SPAWN_WARN, AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
+import { fw, fh, ft, inDoorway, makeRoom, roomCracks, roomGap, ROOM_TUNE, ROOM_STUB, ROOMS, MINIBOSS_ROOM, SPAWN_WARN, AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
 /** Weapons without Art's strip yet: a Kenney Tiny Dungeon tile in hand (bow: drawn in code). */
 import type { Session } from './game';
 import { sfx } from './sfx';
@@ -281,8 +281,9 @@ export class DungeonScene extends Phaser.Scene {
     g.fillRect(0, 0, c.width, c.height);
     const gap = roomGap(W);
     const cracks = roomCracks(f, seed); // 1-2 per 3x3 block, never touching (Stefan: far fewer)
+    const WR = H - 1 - ROOM_STUB; // the bottom wall row; below it the entrance hallway
     for (let ty = 3; ty < H; ty++) for (let tx = 0; tx < W; tx++) {
-      if (ty === H - 1 && !gap.includes(tx)) continue;
+      if (ty >= WR && !gap.includes(tx)) continue;
       const [sx, sy] = cracks.has(ty * W + tx) ? CRACKS[Math.floor(rnd() * CRACKS.length)] : [16, 64];
       put(sx, sy, tx, ty); // floor_1 / floor_2..8, also under the thin side walls and in the entrance gap
     }
@@ -291,9 +292,17 @@ export class DungeonScene extends Phaser.Scene {
       put(tx === 0 ? 31 : tx === W - 1 ? 48 : 32, edge ? 120 : 0, tx, 1); // cap: wall_edge_top_* / wall_top_mid
       put(tx === 0 ? 32 : tx === W - 1 ? 48 : 32, edge ? 136 : 16, tx, 2); // face: wall_edge_* / wall_mid
       if (edge) {
-        for (let ty = 3; ty < H - 1; ty++) put(tx === 0 ? 32 : 48, 152, tx, ty); // wall_edge_mid_left / right
-        put(tx === 0 ? 32 : 48, 168, tx, H - 1); // wall_edge_bottom_left / right
-      } else if (!gap.includes(tx)) put(32, 0, tx, H - 1); // bottom wall: wall_top_mid
+        for (let ty = 3; ty < WR; ty++) put(tx === 0 ? 32 : 48, 152, tx, ty); // wall_edge_mid_left / right
+        put(32, 16, tx, WR); put(tx === 0 ? 32 : 48, 168, tx, WR); // bricks under wall_edge_bottom_left / right (no black corner)
+      } else if (!gap.includes(tx)) { put(32, 16, tx, WR); put(32, 0, tx, WR); } // bottom wall: bricks under its wall_top_mid cap
+    }
+    // the entrance hallway: thin side walls down both sides of the gap; the wall mass beside them is brick (never bare
+    // black squares next to the opening)
+    const g0 = gap[0], g1 = gap[gap.length - 1];
+    for (let ty = WR + 1; ty < H; ty++) for (let tx = 0; tx < W; tx++) {
+      if (tx < g0 || tx > g1) put(32, 16, tx, ty); // wall_mid bricks (also under the thin side walls)
+      if (tx === g0 - 1) put(48, 152, tx, ty); // wall_edge_mid_right: the hallway's left wall
+      else if (tx === g1 + 1) put(32, 152, tx, ty); // wall_edge_mid_left: the hallway's right wall
     }
     put(16, 32, 1, 2); put(32, 32, W - 2, 2); // wall_banner_red, wall_banner_blue
     this.textures.addCanvas(key, c)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
