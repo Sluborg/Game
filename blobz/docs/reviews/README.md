@@ -21,3 +21,9 @@ Lead have discussed and planned them together.
   **one back button style** (chevron chip top-left), **'Ny by' moved away** in secondary wood style.
 - Meadow HUD: **merge + bigger**: one row per resource (icon, bar toward goal, star), bigger icons and numbers.
 - Bärregn: **archived** (behind a flag, like the snow map). After the meadow round: straight to the end screen.
+- Designer: **drop the title**, **paging, no clipping** (fixed panel height, page arrows). Bigger option tiles: not chosen.
+- Cards (build menu, class, skill, loot): **text min 14 px**, parchment cards, green "can build" badge, lock icon when
+  missing, build menu in 3 columns.
+- End screen: **simplify**: side-by-side in landscape, three big stars + one row per resource, gold stars, cream tracks.
+- After the quest (Bärregn archived): not a focus now; minimal default = straight to the end screen.
+- Open: portrait scale (Stefan doubts 6x looks good with so few pixels).
