@@ -3,7 +3,7 @@
 // Also draws the dungeon entrance on the meadow (dungeonFrame is the one hook GameScene calls).
 import Phaser from 'phaser';
 import { blobCanvas, BLOB_FRAMES, BODY_CY, clampLook, facingFromVelocity, type Facing } from './blob';
-import { fw, fh, ft, makeRoom, ROOMS, MINIBOSS_ROOM, SPAWN_WARN, AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
+import { fw, fh, ft, makeRoom, roomCracks, ROOMS, MINIBOSS_ROOM, SPAWN_WARN, AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
 /** Weapons without Art's strip yet: a Kenney Tiny Dungeon tile in hand (bow: drawn in code). */
 import type { Session } from './game';
 import { sfx } from './sfx';
@@ -16,6 +16,8 @@ const FACE_DEAD = 40; // px/s, same as the meadow: slower = idle frame, facing k
 const EDGE_X = 22, EDGE_Y = 13, DROP = 3;
 // hovering weapons (no hands): they float this far beyond the body edge, bob gently and lunge out on each attack
 const HOVER = 7, BOB_PX = 1.5, BOB_S = 1.5;
+/** class colours (the N-23 skill badges): ?noweapons rings */
+const CLS_RING: Record<HeroClass, number> = { rogue: 0x7a4fb0, healer: 0x3f9a4a, marksman: 0x2f7fb8, tank: 0xb0503a };
 const LUNGE: Record<Weapon, number> = { sword: 4, hammer: 4, spear: 20, staff: 3, bow: -3, shield: 10, dagger: 4 }; // spear thrusts, the crossbow kicks back a little
 // slashing weapons sweep in an arc around the blob across the aim line (deg); the hammer's arc speeds up into a slam
 // (the Riddare's id stays 'shield', but it slashes with a sword: the shield hovers on the other side as its guard)
@@ -119,6 +121,7 @@ export class DungeonScene extends Phaser.Scene {
   private coins = new Map<number, Phaser.GameObjects.Sprite>();
   private spits = new Map<number, { s: Phaser.GameObjects.Sprite; o: Phaser.GameObjects.Sprite; px: number; py: number }>();
   private ringG!: Phaser.GameObjects.Graphics;
+  private clsG!: Phaser.GameObjects.Graphics;
   private auraG!: Phaser.GameObjects.Graphics;
   private hitG!: Phaser.GameObjects.Graphics;
   private bubble!: Phaser.GameObjects.Text;
@@ -214,6 +217,7 @@ export class DungeonScene extends Phaser.Scene {
     this.auraG = this.add.graphics().setDepth(-300);
     this.hitG = this.add.graphics().setDepth(9000);
     this.ringG = this.add.graphics().setDepth(4000);
+    this.clsG = this.add.graphics().setDepth(-800); // ?noweapons: class-colour rings on the ground under the blobz
     this.bubble = this.add.text(0, 0, '', { fontFamily: FONT, fontSize: '22px', color: '#3f2631', fontStyle: 'bold', backgroundColor: '#fff7e6', padding: { x: 8, y: 2 } })
       .setOrigin(0.5, 1).setDepth(6000).setVisible(false);
     if (DEBUG) (window as unknown as { __dgScene?: Phaser.Scene }).__dgScene = this; // e2e: map + camera checks
@@ -249,9 +253,10 @@ export class DungeonScene extends Phaser.Scene {
     g.fillStyle = '#181425';
     g.fillRect(0, 0, c.width, c.height);
     const mid = Math.floor(W / 2), gap = [mid - 1, mid, mid + 1];
+    const cracks = roomCracks(f, seed); // 1-2 per 3x3 block, never touching (Stefan: far fewer)
     for (let ty = 3; ty < H; ty++) for (let tx = 0; tx < W; tx++) {
       if (ty === H - 1 && !gap.includes(tx)) continue;
-      const [sx, sy] = rnd() < 0.25 ? CRACKS[Math.floor(rnd() * CRACKS.length)] : [16, 64];
+      const [sx, sy] = cracks.has(ty * W + tx) ? CRACKS[Math.floor(rnd() * CRACKS.length)] : [16, 64];
       put(sx, sy, tx, ty); // floor_1 / floor_2..8, also under the thin side walls and in the entrance gap
     }
     for (let tx = 0; tx < W; tx++) {
@@ -462,7 +467,7 @@ export class DungeonScene extends Phaser.Scene {
     for (const [id, g] of this.goo) if (!seenE.has(id)) { g.img.destroy(); g.shadow.destroy(); g.bar?.destroy(); g.hb?.u.destroy(); g.hb?.p.destroy(); g.tele.forEach((t) => t.destroy()); this.goo.delete(id); }
 
     // ---- blobz ----
-    this.ringG.clear(); this.auraG.clear();
+    this.ringG.clear(); this.auraG.clear(); this.clsG.clear();
     const infos = this.s.infos();
     const seenP = new Set<string>();
     for (const p of v.players) {
@@ -534,6 +539,12 @@ export class DungeonScene extends Phaser.Scene {
       b.stars.setVisible(ko).setPosition(b.x, b.y - 34).setDepth(b.y + 4);
       b.mode = h?.mode ?? 0;
       this.drawWeapon(b, w, h?.face ?? 0, ko, dt, !!h && (h.guard || !!h.dodge || h.wallT > 0));
+      if (d.noWeapons && h && !ko) {
+        // ?noweapons test: the weapon only shows while attacking (+0.5 s) or guarding; a class-colour ring keeps classes readable
+        const show = b.swingT > 0 || (b.lastSwing !== undefined && now - b.lastSwing < b.swingDur * 1000 + 500) || h.guard || h.wallT > 0;
+        if (!show) { b.weapon.setVisible(false); b.weapon2?.setVisible(false); b.glow?.setVisible(false); b.wshadow?.setVisible(false); }
+        this.clsG.fillStyle(CLS_RING[h.cls], 0.3).fillEllipse(b.x, b.y + 14, 74, 30).lineStyle(5, CLS_RING[h.cls], 1).strokeEllipse(b.x, b.y + 14, 74, 30);
+      }
       // picking level-up cards: frozen and safe (a soft bubble so friends see why it stands still)
       if (h && !ko && h.offer.length) this.ringG.fillStyle(0xfff7e6, 0.25).fillCircle(b.x, b.y - 6, 30).lineStyle(3, 0xffe08a, 0.9).strokeCircle(b.x, b.y - 6, 30);
       if (b.fx) {
