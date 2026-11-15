@@ -348,8 +348,11 @@ function renderLobby() {
   const free = Array.from({ length: Math.max(0, MAX_PLAYERS - players.length) }, () => {
     const s = document.createElement('span');
     s.className = 'seat free';
-    const im = new Image(); im.src = 'art/lobby/waiting-silhouette.png'; im.alt = '';
-    s.append(im);
+    // lobby v4 (Stefan 2026-11-15): "a friend can stand here", not a boulder: a dashed blob outline, empty inside, with
+    // three waiting dots (CSS .freeblob)
+    const blob = document.createElement('span'); blob.className = 'freeblob';
+    blob.append(...[0, 1, 2].map(() => document.createElement('i')));
+    s.append(blob);
     return s;
   });
   $('lobby-list').replaceChildren(...players, ...free);
