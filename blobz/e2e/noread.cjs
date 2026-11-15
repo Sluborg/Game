@@ -40,7 +40,7 @@ const shots = process.argv[3] || '';
     if (shots) await host.screenshot({ path: `${shots}/noread-hud-portrait.png` });
 
     // sunset: picture intro with my own blob, no drops yet; then the rain starts
-    await sim(host, (s) => { s.delivered = { ...s.quest }; // quest complete ends the round (day cycle archived) });
+    await sim(host, (s) => { s.delivered = { ...s.quest }; });
     await ada.waitForSelector('#mini-intro:not(.hidden)', { timeout: 6000 });
     await host.waitForSelector('#mini-intro:not(.hidden)', { timeout: 6000 });
     ok(await ada.locator('#mini-intro .mi-blob .blob').count() === 2, 'Bärregn intro: berry -> my blob (check), bomb -> dizzy blob (cross)');

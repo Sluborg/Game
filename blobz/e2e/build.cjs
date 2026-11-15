@@ -68,7 +68,7 @@ const openPanel = async (page) => { await page.waitForSelector('#btn-build:not(.
     if (shots) await bo.screenshot({ path: `${shots}/base-built-landscape.png` });
 
     // sunset, Bärregn skipped, then "Spela igen": the village + bank continue, the quest restarts
-    await sim(host, (s) => { s.villageDirty = true; s.delivered = { ...s.quest }; // quest complete ends the round (day cycle archived) });
+    await sim(host, (s) => { s.villageDirty = true; s.delivered = { ...s.quest }; });
     await host.waitForSelector('#btn-skip-mini:not(.hidden)', { timeout: 5000 });
     await host.click('#btn-skip-mini');
     await host.waitForSelector('#end:not(.hidden)', { timeout: 5000 });

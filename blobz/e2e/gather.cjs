@@ -88,7 +88,8 @@ const tap = async (page) => { await page.locator('#dash').dispatchEvent('pointer
     await host.click('#btn-skip-mini');
     await ada.waitForSelector('#end:not(.hidden)', { timeout: 5000 });
     ok((await ada.textContent('#end-title')) === 'Solen gick ner!', 'end screen: "Solen gick ner!"');
-    ok((await ada.locator('#end-rows .qrow').count()) === 3 && (await ada.locator('#end-stars .star.on').count()) === 3, 'end screen shows 3 rows and 3 stars (quest complete)');
+    const endStars = await ada.locator('#end-stars .star.on').count();
+    ok((await ada.locator('#end-rows .qrow').count()) === 3 && endStars === 3, `end screen shows 3 rows and 3 stars (quest complete; got ${endStars})`);
     if (shots) { await ada.waitForTimeout(800); await ada.screenshot({ path: `${shots}/a-end-portrait.png` }); }
     console.log('ALL PASSED');
   } finally {

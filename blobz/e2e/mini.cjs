@@ -9,7 +9,7 @@ const shots = process.argv[3] || '';
   const { browser, pages } = await startGame(base, ['Stefan', 'Ada', 'Bo'], [undefined, undefined, LANDSCAPE]);
   const [host, ada, bo] = pages;
   try {
-    await sim(host, (s) => { s.delivered = { ...s.quest }; // quest complete ends the round (day cycle archived) });
+    await sim(host, (s) => { s.delivered = { ...s.quest }; });
     for (const p of pages) await p.waitForSelector('#mini-hud:not(.hidden)', { timeout: 6000 });
     ok(true, 'sunset: Bärregn starts on all three phones');
     ok(await host.isVisible('#btn-skip-mini') && !(await ada.isVisible('#btn-skip-mini')), 'only the host has "Hoppa över"');
@@ -52,7 +52,7 @@ const shots = process.argv[3] || '';
     // next round, sunset again: the host skips
     await host.click('#btn-again');
     await ada.waitForFunction(() => window.__blobzView.phase === 'play' && window.__blobzView.time > 170, null, { timeout: 8000 });
-    await sim(host, (s) => { s.delivered = { ...s.quest }; // quest complete ends the round (day cycle archived) });
+    await sim(host, (s) => { s.delivered = { ...s.quest }; });
     await host.waitForSelector('#btn-skip-mini:not(.hidden)', { timeout: 5000 });
     await host.click('#btn-skip-mini');
     await bo.waitForSelector('#end:not(.hidden)', { timeout: 5000 });
