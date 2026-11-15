@@ -19,7 +19,7 @@ module.exports = function dungeonMap(opts) {
         await ctx.addInitScript(() => localStorage.setItem('blobz.name', 'Stefan'));
         const p = await ctx.newPage();
         p.on('pageerror', (e) => console.log('pageerror', e.message));
-        await p.goto(`${base}?lan=e2e-dgmap-${Math.random().toString(36).slice(2)}&debug`);
+        await p.goto(`${base}?lan=e2e-dgmap-${Math.random().toString(36).slice(2)}&debug&classic`);
         await p.click('#btn-host'); await p.waitForSelector('#lobby:not(.hidden)', { timeout: 20000 });
         await p.click('#btn-start'); await p.waitForSelector('#hud:not(.hidden)', { timeout: 15000 });
         await p.waitForFunction(() => !!window.__blobz?.state);

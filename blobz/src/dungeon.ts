@@ -232,8 +232,12 @@ const cy = (r: Room) => (r.y + r.h / 2) * DT;
 
 // ---- Archero-style rooms (behind ROOMS_ENABLED; docs/dungeon-rooms-plan.md) ----
 /** Off until Stefan rates it; `?rooms` in the host's URL turns it on for testing. */
-export const ROOMS_ENABLED = false;
-export const roomsOn = () => ROOMS_ENABLED || (typeof location !== 'undefined' && new URLSearchParams(location.search).has('rooms'));
+export const ROOMS_ENABLED = true;
+const urlHas = (k: string) => typeof location !== 'undefined' && new URLSearchParams(location.search).has(k);
+/** rooms on: the default (Stefan 2026-11-15); ?classic on the host's URL = the old 5-floor dungeon, ?rooms forces rooms */
+export const roomsOn = () => urlHas('rooms') || (ROOMS_ENABLED && !urlHas('classic'));
+/** ?noweapons on the host's URL (test, Stefan): weapons only show while attacking (+0.5 s), a class-colour ring instead */
+export const noWeaponsOn = () => urlHas('noweapons');
 export const ROOMS = 10; // rooms per dungeon (boss room last)
 export const MINIBOSS_ROOM = 5;
 export const ROOM_W = 7; // floor tiles between the side walls (0x72 tiles at 3x: 9 x 48 = 432 px = the screen width)
@@ -306,8 +310,43 @@ export function makeRoom(seed: number, room: number, players = 1, dungeon = 1): 
     // spawn spots next to a column move into the middle lane (a monster never lands in or on a column)
     for (const sp of waves.flat()) if (columns.some((c) => Math.abs(sp.x / T - (c.x + 0.5)) < 1.2 && sp.y / T > c.y - 2.2 && sp.y / T < c.y + 1.8)) sp.x = mx;
   }
+  // every spawn on floor the blobz can reach from the entrance (flood fill; anything else moves to the nearest reached tile)
+  const seen = new Uint8Array(gw * gh), q = [[Math.floor(start.x / T), Math.floor(start.y / T)]];
+  while (q.length) {
+    const [x, y] = q.pop()!;
+    if (x < 0 || y < 0 || x >= gw || y >= gh || seen[y * gw + x] || solid[y * gw + x]) continue;
+    seen[y * gw + x] = 1;
+    q.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+  }
+  for (const sp of waves.flat()) {
+    const tx = Math.floor(sp.x / T), ty = Math.floor(sp.y / T);
+    if (seen[ty * gw + tx]) continue;
+    let best = [Math.floor(mx / T), ty], bd = Infinity;
+    for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) if (seen[y * gw + x] && Math.hypot(x - tx, y - ty) < bd) { bd = Math.hypot(x - tx, y - ty); best = [x, y]; }
+    sp.x = (best[0] + 0.5) * T; sp.y = (best[1] + 0.5) * T;
+  }
   const spawns: Floor['spawns'] = [];
   return { floor: room, solid, rooms: [o], start, exit, stairs, chests, spawns, gw, gh, dt: T, waves, lines, columns };
+}
+
+/** rooms: which floor tiles show a crack (floor_2..8): 1-2 per 3x3 block (~11-20 % of the floor), random spots, never two
+ *  cracked tiles touching (also not diagonally). Only floor between the side walls and in the entrance gap. */
+export function roomCracks(f: Floor, seed: number): Set<number> {
+  const W = fw(f), H = fh(f), mid = Math.floor(W / 2);
+  let n = seed | 0 || 1;
+  const rnd = () => { n = (n * 1103515245 + 12345) & 0x7fffffff; return n / 0x7fffffff; };
+  const floorT = (x: number, y: number) => x >= 1 && x <= W - 2 && y >= 3 && (y < H - 1 || Math.abs(x - mid) <= 1);
+  const out = new Set<number>();
+  const touches = (x: number, y: number) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (out.has((y + dy) * W + x + dx)) return true; return false; };
+  for (let by = 3; by < H; by += 3) for (let bx = 1; bx < W - 1; bx += 3) {
+    const want = rnd() < 0.4 ? 2 : 1;
+    for (let k = 0, got = 0; k < 14 && got < want; k++) {
+      const x = bx + Math.floor(rnd() * 3), y = by + Math.floor(rnd() * 3);
+      if (!floorT(x, y) || touches(x, y)) continue;
+      out.add(y * W + x); got++;
+    }
+  }
+  return out;
 }
 
 /** rooms: start the next wave when the last one is gone (or a blob climbed past the corridor line); spawns land after
@@ -335,6 +374,7 @@ function stepWaves(d: DState, alive: Body[], dt: number, fx: DFx[]) {
     // never land on a blob: slide the spot away from anyone within 80 px
     let { x, y } = sp;
     for (const b of alive) if (Math.hypot(b.x - x, b.y - y) < 80) y = Math.max(4 * ft(d.map), b.y - 120);
+    { const o = { x, y, vx: 0, vy: 0 }; unstick(d.map, o); x = o.x; y = o.y; } // never in a wall / column
     d.pending.push({ kind: sp.kind, x, y, t: SPAWN_WARN });
     fx.push({ t: 'spawn', x, y });
   }
@@ -481,6 +521,7 @@ export interface DState {
   gold: number; xp: number; level: number; kills: number;
   bossMax: number; players: number;
   dungeon: number; // which dungeon (1, 2, ...): its difficulty step
+  nw?: boolean; // ?noweapons test: weapons only while attacking, class rings (synced to joiners)
   rooms?: boolean; // Archero-style rooms mode (ROOMS_ENABLED / ?rooms): floor = room number
   wave?: number; waveT?: number; // rooms: waves started so far, delay before the next one
   pending?: { kind: EnemyKind; x: number; y: number; t: number }[]; // rooms: spawns showing their landing ring
@@ -575,11 +616,11 @@ export function enterFloor(d: Omit<DState, 'map'> & { map?: Floor }, seed: numbe
   return out;
 }
 
-export function newRun(seed: number, picks: Record<string, Weapon>, dungeon = 1, rooms = roomsOn()): DState {
+export function newRun(seed: number, picks: Record<string, Weapon>, dungeon = 1, rooms = roomsOn(), noWeapons = noWeaponsOn()): DState {
   const heroes: Record<string, Hero> = {};
   for (const [id, w] of Object.entries(picks)) heroes[id] = newHero(w);
   return enterFloor({
-    floor: 1, dungeon: Math.max(1, Math.floor(dungeon)), rooms, enemies: [], coins: [], spit: [], opened: [], gold: 0, xp: 0, level: 1, kills: 0, bossMax: ENEMY_HP[2], players: 1,
+    floor: 1, dungeon: Math.max(1, Math.floor(dungeon)), rooms, nw: noWeapons || undefined, enemies: [], coins: [], spit: [], opened: [], gold: 0, xp: 0, level: 1, kills: 0, bossMax: ENEMY_HP[2], players: 1,
     time: RUN_SECONDS, ready: 0, done: 0, why: 'exit', heroes, loot: null, lootQ: [], lootLast: null, nextId: 1,
   }, seed, 1, Object.keys(picks).length);
 }
@@ -1182,7 +1223,7 @@ function hurt(d: DState, b: Body, fromX: number, fromY: number, dmg: number, fx:
 const r1 = (n: number) => Math.round(n * 10) / 10;
 type HeroTuple = [string, number, number, number, number, number, number, number?, number?, number?, number?, number?, string?, string?, string?, number?, number?, number?];
 export interface DSnap {
-  sd: number; f: number; du?: number; rm?: [number, number, number, number?]; g: number; xp: number; lv: number; k: number; rd: number; dn: number; tm?: number; wy?: number; bm?: number; // rm: rooms mode [1, wave, waves]
+  sd: number; f: number; du?: number; rm?: [number, number, number, number?]; nw?: 1; g: number; xp: number; lv: number; k: number; rd: number; dn: number; tm?: number; wy?: number; bm?: number; // rm: rooms mode [1, wave, waves]
   e: [number, number, number, number, number, number, number, number, number?, number?, number?, number?][]; // id, kind, x, y, hp, slam x, slam y, slam t (-1 none), max hp, act, angle*100, act time*100
   c: [number, number, number, number?][]; // pickup id, x, y, kind
   sp?: [number, number, number][]; // spit id, x, y
@@ -1198,7 +1239,7 @@ export interface DHeroView {
   mode: number; guard: boolean; phase: boolean; mvCd: number; mvMax: number; charges: number; maxCharges: number; shield: number; wallT: number; item: string | null; skills: string[]; offer: string[]; offerT: number;
 }
 export interface DView {
-  seed: number; floor: number; dungeon: number; rooms: boolean; wave: number; waves: number; landing: number; gold: number; xp: number; level: number; kills: number; ready: number; done: number; time: number; why: EndWhy; bossMax: number;
+  seed: number; floor: number; dungeon: number; rooms: boolean; noWeapons: boolean; wave: number; waves: number; landing: number; gold: number; xp: number; level: number; kills: number; ready: number; done: number; time: number; why: EndWhy; bossMax: number;
   enemies: { id: number; kind: EnemyKind; x: number; y: number; hp: number; mx: number; slam: { x: number; y: number; t: number } | null; act: Act; ang: number; at: number }[];
   coins: { id: number; x: number; y: number; k: number }[];
   spit: { id: number; x: number; y: number }[];
@@ -1210,7 +1251,7 @@ export interface DView {
 const WHY: EndWhy[] = ['boss', 'exit', 'time'];
 export function dsnap(d: DState, seed: number): DSnap {
   return {
-    sd: seed, f: d.floor, du: d.dungeon ?? 1, rm: d.rooms ? [1, d.wave ?? 0, d.map.waves?.length ?? 0, d.pending?.length ?? 0] : undefined, g: d.gold, xp: d.xp, lv: d.level, k: d.kills, rd: Math.round((d.ready / READY_SECONDS) * 100), dn: r1(d.done),
+    sd: seed, f: d.floor, du: d.dungeon ?? 1, rm: d.rooms ? [1, d.wave ?? 0, d.map.waves?.length ?? 0, d.pending?.length ?? 0] : undefined, nw: d.nw ? 1 : undefined, g: d.gold, xp: d.xp, lv: d.level, k: d.kills, rd: Math.round((d.ready / READY_SECONDS) * 100), dn: r1(d.done),
     tm: Math.ceil(d.time), wy: WHY.indexOf(d.why), bm: d.bossMax,
     e: d.enemies.map((e) => [e.id, e.kind, r1(e.x), r1(e.y), Math.ceil(e.hp), e.slam ? r1(e.slam.x) : 0, e.slam ? r1(e.slam.y) : 0, e.slam ? r1(e.slam.t) : -1, e.mx, e.act ?? 0, Math.round((e.ang ?? 0) * 100), Math.round((e.actT ?? 0) * 100)]),
     c: d.coins.map((c) => [c.id, r1(c.x), r1(c.y), c.k ?? 0]),
@@ -1226,7 +1267,7 @@ export function dsnap(d: DState, seed: number): DSnap {
 const list = (s: string | undefined) => (s ? s.split(',').filter(Boolean) : []);
 export function dview(n: DSnap): DView {
   return {
-    seed: n.sd, floor: n.f, dungeon: n.du ?? 1, rooms: !!n.rm, wave: n.rm?.[1] ?? 0, waves: n.rm?.[2] ?? 0, landing: n.rm?.[3] ?? 0, gold: n.g, xp: n.xp, level: n.lv, kills: n.k, ready: n.rd / 100, done: n.dn, time: n.tm ?? 0, why: WHY[n.wy ?? 1] ?? 'exit', bossMax: n.bm ?? ENEMY_HP[2],
+    seed: n.sd, floor: n.f, dungeon: n.du ?? 1, rooms: !!n.rm, noWeapons: !!n.nw, wave: n.rm?.[1] ?? 0, waves: n.rm?.[2] ?? 0, landing: n.rm?.[3] ?? 0, gold: n.g, xp: n.xp, level: n.lv, kills: n.k, ready: n.rd / 100, done: n.dn, time: n.tm ?? 0, why: WHY[n.wy ?? 1] ?? 'exit', bossMax: n.bm ?? ENEMY_HP[2],
     enemies: n.e.map(([id, kind, x, y, hp, sx, sy, st, mx, act, ang, at]) => ({ id, kind: kind as EnemyKind, x, y, hp, mx: mx ?? hp, slam: st >= 0 ? { x: sx, y: sy, t: st } : null, act: (act ?? 0) as Act, ang: (ang ?? 0) / 100, at: (at ?? 0) / 100 })),
     coins: n.c.map(([id, x, y, k]) => ({ id, x, y, k: k ?? 0 })),
     spit: (n.sp ?? []).map(([id, x, y]) => ({ id, x, y })),

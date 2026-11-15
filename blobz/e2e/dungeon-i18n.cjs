@@ -24,7 +24,7 @@ async function phone(browser, name, locale, size = PORTRAIT) {
 
 (async () => {
   const browser = await chromium.launch();
-  const url = `${base}?lan=e2e-dgi18n-${Math.random().toString(36).slice(2)}&debug`;
+  const url = `${base}?lan=e2e-dgi18n-${Math.random().toString(36).slice(2)}&debug&classic`;
   try {
     const en = await phone(browser, 'Stefan', 'en-US');
     const sv = await phone(browser, 'Ada', 'sv-SE', LANDSCAPE);

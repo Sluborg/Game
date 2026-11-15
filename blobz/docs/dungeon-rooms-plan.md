@@ -68,3 +68,13 @@ fights **2-3 waves** in a room; when the last wave is gone the **door at the top
 - Marksman jump back: away from the current target (else the nearest monster).
 - Arena rooms: 2-3 0x72 columns as cover (block walking and shots), never in the middle lane or on a spawn.
 - Screenshot: `docs/screenshots/dungeon-rooms/playtest-fix.png`.
+
+## Rooms are the default (Stefan 2026-11-15) + playtest fixes 2
+- `ROOMS_ENABLED = true`; `?classic` on the host's URL = the old 5-floor dungeon (its e2e use it).
+- Floor cracks: 1-2 per 3x3 block (11-20 % of the floor), never two touching (`roomCracks`).
+- Every room size (1-5 blobz): start in the last floor row above the bottom wall's 3-tile gap; every spawn on floor
+  reachable from the entrance (flood fill; others move to the nearest reached tile); a spawn moved off a blob never
+  lands in a wall or column.
+- `?noweapons` (host URL, synced to joiners): weapons only show while attacking (+0.5 s) or guarding; a class-colour
+  ring under each blob instead (rogue purple, healer green, marksman blue, knight red).
+- Screenshot: `docs/screenshots/dungeon-rooms/playtest-fix2.png` (?noweapons, mid-wave).
