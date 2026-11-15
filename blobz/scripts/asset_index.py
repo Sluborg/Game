@@ -26,6 +26,7 @@ OWN = 'Own art (CC0)'
 CC0K = 'CC0 1.0 (Kenney)'
 # (glob on the path under public/, source, license, approved?) first match wins
 SOURCES = [
+    ('art/dungeon/wall-*.png', 'ChatGPT N-34b room walls / N-34c entrance (wall-b, wall-entrance-*), sliced by scripts/room_walls.py', GPT, False),
     ('art/dungeon/door-*.png', 'ChatGPT N-34 dungeon room door, sliced by scripts/slice_grid_orders.py n34', GPT, False),
     ('art/props/plate-*.png', 'ChatGPT N-30 pressure plate, sliced by scripts/slice_grid_orders.py', GPT, True),
     ('art/props/fence-*.png', 'ChatGPT N-30b fence 3-piece set, sliced by scripts/fence_pieces.py (pen v4 rating pending; N-S: post every tile, rail-v centre strip on top)', GPT, False),
