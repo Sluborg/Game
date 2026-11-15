@@ -10,6 +10,9 @@ import { ClientNet, HostNet, friendlyError, type ToClient } from './net';
 import { MINI_SECONDS } from './mini';
 import { building, DATA_ICON, NI } from './ninjaArt';
 import { partTile } from './partArt';
+import { alive, blobWipe } from './alive';
+/** Blob-wipe between screens in my own colour, carrying my blob (alive.ts). */
+const wipe = () => blobWipe(profile.look.color, profile.look);
 import { applyI18n, lang, lookName, setLang, t, type Key } from './i18n';
 import { lanNamespace, Scanner, type FoundRoom } from './discovery';
 import { sfx, unlockAudio } from './sfx';
@@ -69,7 +72,7 @@ let slide: '' | 'from-left' | 'from-right' = '';
 const PART_OPTS: Record<Exclude<Part, 'color'>, string[]> = { shape: SHAPES, eyes: EYES, mouth: MOUTHS, hat: HATS };
 
 function renderPicker() {
-  $('preview').replaceChildren(blobEl(profile.look));
+  $('preview').replaceChildren(alive(blobEl(profile.look), profile.look));
   const big = blobEl(profile.look);
   if (boing) { big.classList.add('boing'); boing = false; }
   $('preview2').replaceChildren(big);
@@ -194,6 +197,7 @@ function renderIcons() {
 
 // ---------- menu panels: home -> (customize | join) ----------
 function panel(id: 'home' | 'custom' | 'join') {
+  if ($(id).classList.contains('hidden')) wipe();
   for (const p of ['home', 'custom', 'join']) show(p, p === id);
   $('menu-msg').textContent = ''; $('join-msg').textContent = '';
   if (id === 'join') startScan(); else stopScan();
@@ -208,7 +212,7 @@ const SEARCHING = (): string => t('join.searching');
 const NOTHING = (): string => t('join.nothing');
 function lanStatus(text: string, rescan = false) {
   $('lan-status').textContent = text;
-  show('lan-search', !rescan); // the N-20 searching blob while we look
+  show('lan-search', true); // the N-20 searching blob keeps looking (friendly empty state), also after 'nothing yet'
   $('lan-status').classList.toggle('static', rescan);
   show('btn-rescan', rescan);
 }
@@ -242,7 +246,7 @@ function renderRooms(rooms: FoundRoom[]) {
   emptyRounds = rooms.length || connecting ? 0 : emptyRounds + 1;
   // ~10 s without a game: hint at the usual cause, still scanning
   lanStatus(connecting && !rooms.length ? t('join.connectingFound') : emptyRounds >= 3 ? NOTHING() : SEARCHING(), emptyRounds >= 3 && !connecting);
-  show('lan-search', rooms.length === 0 && !(emptyRounds >= 3 && !connecting));
+  show('lan-search', rooms.length === 0);
   $('lan-list').replaceChildren(...rooms.map((r) => {
     const li = document.createElement('li');
     const b = document.createElement('button');
@@ -338,7 +342,7 @@ function renderLobby() {
     const li = document.createElement('li');
     li.className = 'seat';
     const name = document.createElement('span'); name.className = 'seatname'; name.textContent = p.name;
-    li.append(blobEl(clampLook(p)), name);
+    li.append(alive(blobEl(clampLook(p)), clampLook(p)), name);
     return li;
   });
   const free = Array.from({ length: Math.max(0, MAX_PLAYERS - players.length) }, () => {
@@ -352,6 +356,7 @@ function renderLobby() {
 }
 
 function startScene(session: Session) {
+  wipe();
   if (DEBUG) (window as unknown as { __blobzBiome?: string }).__blobzBiome = session.biome ?? 'meadow';
   endShown = false; lastStars = 0;
   show('menu', false); show('lobby', false); show('end', false); show('hud');
@@ -601,11 +606,11 @@ function onView(v: View) {
       return img;
     }));
     // the team that did it: every blob, cheering (staggered hops)
-    $('end-team').replaceChildren(...[...infos.values()].map((p, i) => { const b = blobEl(clampLook(p)); b.style.animationDelay = `${i * 0.12}s`; return b; }));
+    $('end-team').replaceChildren(...[...infos.values()].map((p, i) => { const b = alive(blobEl(clampLook(p)), clampLook(p)); b.style.animationDelay = `${i * 0.12}s`; return b; }));
     $('end-rows').innerHTML = QUEST_ROWS();
     renderQuestRows($('end-rows'), v);
     show('btn-again', isHost); show('end-wait', !isHost);
-    show('end');
+    wipe(); show('end');
     if (st) sfx.star();
   }
 }
@@ -728,7 +733,7 @@ async function hostGame() {
 
   renderLobby();
   show('btn-start'); show('lobby-wait', false);
-  show('menu', false); show('lobby');
+  wipe(); show('menu', false); show('lobby');
   $('btn-start').onclick = () => { unlockAudio(); newRound(); };
   $('btn-skip-mini').onclick = () => { if (state) finishMini(state); };
   if (BUILDING_ENABLED) renderVillage($('lobby-village')); else $('lobby-village').replaceChildren();
@@ -814,7 +819,7 @@ async function joinGame(target: string, row?: HTMLButtonElement) {
     return;
   }
   show('btn-start', false); show('lobby-wait');
-  show('menu', false); show('lobby');
+  wipe(); show('menu', false); show('lobby');
 }
 
 $('btn-host').onclick = () => void hostGame();
