@@ -233,3 +233,15 @@
 .lootrep { display: flex; align-items: center; gap: 6px; color: #8a7466; font-weight: 700; }
 .lootrep .dgicon { width: 24px; height: 24px; }
 @media (orientation: landscape) and (max-height: 500px) { .lootnew .dgicon { width: 44px; height: 44px; } }
+
+/* the small button = class move: radial recharge sweep (like the big button) + the rogue's charge pips */
+#hud.dungeon #dash { position: absolute; --cd: 0; }
+#hud.dungeon #dash::after {
+  content: ''; position: absolute; inset: 5px; border-radius: 50%; pointer-events: none; z-index: 2;
+  background: conic-gradient(transparent calc((1 - var(--cd)) * 360deg), #3f26318c 0);
+}
+#hud.dungeon #dash.cd img { filter: saturate(0.2) brightness(0.85); }
+#hud.dungeon #dash[data-cls='marksman'] img { transform: rotate(180deg); } /* the arrow points back: jump back */
+.dg-pips { position: absolute; left: 50%; bottom: -10px; transform: translateX(-50%); display: flex; gap: 4px; z-index: 3; pointer-events: none; }
+.dg-pips i { width: 10px; height: 10px; border-radius: 50%; background: #3f2631; box-shadow: 0 0 0 2px #fff7e6; }
+.dg-pips i.on { background: #ffe08a; }

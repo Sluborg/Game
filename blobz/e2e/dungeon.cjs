@@ -72,10 +72,18 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     ok(true, 'Bågskytt: auto-arrow kills a goo at range');
 
     // Helare: the big button switches the wand to heal mode; green bolts heal a hurt friend
-    await sim(host, (s) => { const h = s.dg.heroes[s.players[0].id]; h.hp = 30; s.players[0].x = s.players[1].x + 40; s.players[0].y = s.players[1].y; });
+    // deterministic: no monsters, everyone else at full health (the wand heals the MOST hurt friend), Stefan next to Ada
+    await sim(host, (s) => {
+      s.dg.enemies = []; s.dg.spit = [];
+      s.players.forEach((p) => { const h = s.dg.heroes[p.id]; h.hp = h.maxHp; p.vx = 0; p.vy = 0; });
+      const h = s.dg.heroes[s.players[0].id]; h.hp = 30; s.players[0].x = s.players[1].x + 40; s.players[0].y = s.players[1].y;
+      const a = s.dg.heroes[s.players[1].id]; a.mode = 0; a.held = 0; a.atkCd = 0; a.phase = 0;
+    });
     await ada.click('#attack');
-    await bo.waitForFunction((id) => window.__blobzView.dungeon.heroes[id].hp > 30, ids[0], { timeout: 4000 });
-    ok(await ada.evaluate(() => document.getElementById('attack').dataset.mode) === 'heal', 'Helare: button switches the wand to heal mode (green), the bolt heals Stefan on every phone');
+    await host.waitForFunction((id) => window.__blobz.state.dg.heroes[id].mode === 1, ids[1], { timeout: 15000 });
+    await ada.waitForFunction(() => document.getElementById('attack').dataset.mode === 'heal', null, { timeout: 15000 });
+    await bo.waitForFunction((id) => window.__blobzView.dungeon.heroes[id].hp > 30, ids[0], { timeout: 15000 });
+    ok(true, 'Helare: button switches the wand to heal mode (green), the bolt heals Stefan on every phone');
     await ada.waitForTimeout(120);
     if (shots) await ada.screenshot({ path: `${shots}/dg-heal-portrait.png` });
     // Bågskytt volley + Krigare spin
@@ -88,11 +96,20 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     const sp = await bo.evaluate((ids) => [ids[0], ids[2]].map((id) => window.__blobzView.dungeon.heroes[id].spCd > 0), ids);
     ok(sp.every(Boolean), 'rogue + marksman specials on cooldown (the healer toggles instead)');
     await sim(host, (s) => { s.dg.enemies = []; });
+    // the rogue's dodge (class move) slides it away: let it land, then stand still
+    await host.waitForTimeout(500);
+    await sim(host, (s) => { s.players.forEach((p) => { p.vx = 0; p.vy = 0; }); });
 
     // level-up: 1 of 3 skill cards on every phone, from each one's own class
-    await sim(host, (s) => { s.dg.xp = 4; s.dg.level = 1; });
-    await gooAt(host, 0, 0, 34, 0);
-    for (const p of pages) await p.waitForSelector('#dg-cards:not(.hidden) .skcard', { timeout: 6000 });
+    // deterministic: a 1-hp goo right in front of Stefan (re-placed until the kill lands), then wait for the game state
+    await sim(host, (s) => { s.dg.xp = 4; s.dg.level = 1; s.players.forEach((p) => { s.dg.heroes[p.id].atkCd = 0; }); });
+    const lv0 = (await dg(bo)).level;
+    for (let i = 0; i < 6 && (await dg(bo)).level === lv0; i++) {
+      await sim(host, (s) => { s.dg.enemies = []; const p = s.players[0], h = s.dg.heroes[p.id]; s.dg.enemies.push({ id: s.dg.nextId++, kind: 0, x: p.x + h.fx * 30, y: p.y + h.fy * 30, vx: 0, vy: 0, hp: 1, mx: 1, awake: true, stun: 9, slamT: 99, slam: null }); });
+      await host.waitForFunction((lv) => window.__blobz.state.dg.level > lv, lv0, { timeout: 2500 }).catch(() => {});
+    }
+    await host.waitForFunction((ids) => ids.every((id) => window.__blobz.state.dg.heroes[id].offer.length === 3), ids, { timeout: 15000 });
+    for (const p of pages) await p.waitForSelector('#dg-cards:not(.hidden) .skcard', { timeout: 15000 });
     const offers = (await dg(bo)).heroes;
     ok(offers[ids[0]].offer.every((x) => x.startsWith('rogue-')) && offers[ids[1]].offer.every((x) => x.startsWith('healer-')) && offers[ids[2]].offer.every((x) => x.startsWith('marksman-')),
       'level 2: 3 cards per phone from the own class pool');
