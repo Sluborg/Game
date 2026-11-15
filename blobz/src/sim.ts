@@ -155,7 +155,16 @@ export const BUILD_RING = 180;
 const RING_ORDER: BuildKind[] = ['workshop', 'storage', 'garden', 'well', 'watchtower', 'bridge']; // 0, 60, ... 300 degrees
 /** Spots moved off the ring: the level-3 hall is 192 px wide at 3x (x 544-736) and hid the watchtower at 240 deg,
  *  so the tower stands further out to the upper left (Lead 2026-11-15). */
-const SPOT_OVERRIDE: Partial<Record<BuildKind, { x: number; y: number }>> = { watchtower: { x: 470, y: 318 } };
+/** Stefan 2026-11-15: no building may block the main paths or the space between the house, the portal and the spawn
+ *  row (storage and garden stood right beside it). Every spot keeps >= 1.5 blob widths (51 px) of free ground round its
+ *  base, clear of the house, the spawn row, the path down to the portal and the three cave entrances in use (west, east,
+ *  south), never stands in any of the four seeded water corners, never hides behind the house or a portal picture, and
+ *  stays >= 120 px from the cave candidates (entranceOf), so the cave is placed exactly as before. Found by a grid search
+ *  over every water corner / cave combination; sim.test.ts checks the result on 60 seeds. */
+const SPOT_OVERRIDE: Partial<Record<BuildKind, { x: number; y: number }>> = {
+  garden: { x: 640, y: 200 }, workshop: { x: 470, y: 350 }, storage: { x: 790, y: 350 },
+  watchtower: { x: 440, y: 680 }, well: { x: 830, y: 610 },
+};
 export const BUILD_SPOTS = Object.fromEntries(RING_ORDER.map((k, i) => {
   const a = (i * 60 * Math.PI) / 180;
   return [k, SPOT_OVERRIDE[k] ?? { x: Math.round(BASE.x + Math.cos(a) * BUILD_RING), y: Math.round(BASE.y + Math.sin(a) * BUILD_RING) }];
@@ -236,7 +245,7 @@ export const DUNGEON_ENABLED = true;
 export const ENTRANCE_R = 60; // Stefan 2026-11-15: ~30% bigger (was 46) so 5 blobz fit without crowding
 /** The portal's gather ring: an ellipse (top-down 3/4 view) in front of the portal, below its two pillars, so all 5
  *  fit on open ground. The sim test and the drawn ring (gatherRing.ts, game.ts) use these same numbers. */
-export const ENTRANCE_RING = { dy: 20, rx: ENTRANCE_R, ry: Math.round(ENTRANCE_R * 0.6) };
+export const ENTRANCE_RING = { dy: 32, rx: ENTRANCE_R, ry: Math.round(ENTRANCE_R * 0.6) }; // in front of the solid base
 export const onEntrance = (e: { x: number; y: number }, x: number, y: number) =>
   ((x - e.x) / ENTRANCE_RING.rx) ** 2 + ((y - e.y - ENTRANCE_RING.dy) / ENTRANCE_RING.ry) ** 2 < 1;
 /** Where the cave entrance goes on this map: the first of four spots around the base (west, east, south,
@@ -882,22 +891,20 @@ export function villageOf(s: State): Village {
   };
 }
 
-/** Building footprints (Stefan 2026-11-15): the bottom third of each picture (Ninja art at 3x, 80% of its width) is
- *  solid, so blobz walk round the walls at ground level and still pass behind roofs (the world is y-sorted). Art sizes
- *  in art px, matching the crops in game.ts. The garden is flat soil plots (no walls) and the bridge is the river
- *  crossing, so neither is solid. */
+/** Building footprints (Stefan 2026-11-15, v2): the FULL width of each picture across its whole lower body (from the
+ *  ground line up to where the roof starts) is solid, so blobz cannot slip into a building from the sides; they only
+ *  pass behind it (north of the body), where the roof hides them and fades. [art width, body rows from the bottom] in
+ *  art px at 3x, matching the crops in game.ts (rows read off the pictures). The garden is flat soil plots (no walls)
+ *  and the bridge is the river crossing, so neither is solid. */
 const FOOT_ART: Record<string, [number, number]> = {
-  'cottage-1': [42, 39], 'cottage-2': [64, 48], 'cottage-3': [64, 112],
-  storage: [32, 32], workshop: [48, 48], well: [16, 21], watchtower: [24, 32],
+  'cottage-1': [42, 19], 'cottage-2': [64, 17], 'cottage-3': [64, 42],
+  storage: [32, 32], workshop: [48, 20], well: [16, 13], watchtower: [24, 18],
 };
-const footBox = (cx: number, footY: number, [w, h]: [number, number]): Rect =>
-  ({ x0: cx - w * 1.2, x1: cx + w * 1.2, y0: footY - h, y1: footY }); // 3x art: half of 80% width = 1.2 w, a third of 3h = h
-/** Portal (N-28, 64x48 at 3x, bottom at entrance.y + 30): the two stone pillars beside the doorway, art columns 0-22 and
- *  42-64, rows 30-41 (ground level). The doorway between them (and the steps in front) stays open. */
-const portalBoxes = (e: { x: number; y: number }): Rect[] => [
-  { x0: e.x - 90, x1: e.x - 33, y0: e.y - 24, y1: e.y + 9 },
-  { x0: e.x + 33, x1: e.x + 90, y0: e.y - 24, y1: e.y + 9 },
-];
+const footBox = (cx: number, footY: number, [w, rows]: [number, number]): Rect =>
+  ({ x0: cx - w * 1.5, x1: cx + w * 1.5, y0: footY - rows * 3, y1: footY });
+/** Portal (N-28, 64x48 at 3x, bottom at entrance.y + 30): its whole base is solid across the full width (art rows
+ *  13-41 = the mound and both pillars up to the arch), Stefan 2026-11-15; the gather ring lies in front of it. */
+const portalBoxes = (e: { x: number; y: number }): Rect[] => [{ x0: e.x - 96, x1: e.x + 96, y0: e.y - 48, y1: e.y + 6 }];
 export function solidBoxes(s: Pick<State, 'cottage' | 'builds' | 'entrance' | 'mode'>): Rect[] {
   const out: Rect[] = [footBox(BASE.x, BASE.y + 30, FOOT_ART['cottage-' + Math.max(1, Math.min(3, s.cottage.level))])];
   if (BUILDING_ENABLED) for (const k of BUILD_KINDS) {
