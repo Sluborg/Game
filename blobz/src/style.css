@@ -1192,3 +1192,23 @@ input, #name {
   filter: drop-shadow(0 4px 0 #3f263155);
 }
 .loadbar i { height: 100%; border: 0; border-image: none; background: #f08a3c; box-shadow: inset 0 -4px 0 0 #c4561f, inset 0 3px 0 0 #ffbf7a; }
+
+/* ---------- polish (PLAN step 5) ---------- */
+/* living blobz: a soft breath (squash), a hop when tapped; the blink is a picture swap (alive.ts) */
+.blob.alive { animation: breathe 2.6s ease-in-out infinite; animation-delay: var(--breath-delay, 0s); transform-origin: 50% 100%; }
+@keyframes breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.04, 0.96); } }
+.blob.alive.hop { animation: hop 0.5s cubic-bezier(.3, 1.4, .5, 1); }
+@keyframes hop { 0% { transform: scale(1.12, 0.86); } 35% { transform: translateY(-14px) scale(0.92, 1.1); } 70% { transform: translateY(0) scale(1.08, 0.94); } 100% { transform: none; } }
+#end .endteam .blob.alive { animation: cheer 0.9s ease-in-out infinite; }
+/* blob-wipe between screens: a circle in my colour with my blob grows over the screen and opens again */
+#wipe { position: fixed; inset: 0; z-index: 9999; pointer-events: none; display: grid; place-items: center; visibility: hidden;
+  background: var(--wipe, #ff8a3d); clip-path: circle(0% at 50% 50%); }
+#wipe .blob, #wipe .blob img { width: 120px; height: 120px; image-rendering: pixelated; }
+#wipe.go { visibility: visible; animation: wipe 0.5s ease-in-out both; }
+#wipe.go .blob { animation: wipeblob 0.5s ease-in-out both; }
+@keyframes wipe { 0% { clip-path: circle(0% at 50% 50%); } 45%, 55% { clip-path: circle(75% at 50% 50%); } 100% { clip-path: circle(0% at 50% 50%); } }
+@keyframes wipeblob { 0% { transform: scale(0.4); } 50% { transform: scale(1.1, 0.9); } 100% { transform: scale(0.4); } }
+/* stars pop in when a quest row is finished */
+.qrow.done .qstar { animation: pop 0.5s ease-out both; }
+/* friendly empty state on Join: the searching blob keeps looking, with a calm message under it */
+#join .help { color: #6f5546; }
