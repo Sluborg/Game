@@ -128,8 +128,9 @@ def slice_v2():
     Every piece sampled on a fixed 16-col grid over its box (outline cut off on the sides that join another piece):
       tl / t / tr: 16x16; b / bl / br: 16 x 13 (same pitch as the corners), top-aligned (bottom rows = outside)
     Side walls (Stefan): NOT the delivered side pieces. Built from crops only:
-      outer edge = the light grey edge stones of the top corners (tl cols 0-3, tr cols 12-15): stone A = rows 6-10,
-                   stone B = rows 11-14 + one repeated row; stacked A, B, A (+1 repeated row) = 16 rows
+      outer edge = a continuous column of evenly spaced light grey edge stones (Stefan: one wall, not stacked corner
+                   chunks): 3 stones per 16 px (5, 5, 6 rows), each = joint row (outline colour) + the corner edge
+                   stone's highlight row + its body row repeated (tl cols 0-3, tr cols 12-15); no chamfers
       mortar col = tl col 4 / tr col 11
       inner bricks = horizontal courses from wall-t (course X = rows 5-7 + one repeated row, course Y = rows 8-11),
                      stacked X, Y, X, Y = 16 rows, cols 0-9 of wall-t
@@ -159,18 +160,27 @@ def slice_v2():
     t_ = w['t']
     bricks = np.concatenate([t_[5:8], t_[7:8], t_[8:12], t_[5:8], t_[7:8], t_[8:12]])  # 16 rows, horizontal courses
 
-    def stones(src, c0, c1):
-        a, b_ = src[6:11, c0:c1], np.concatenate([src[11:15, c0:c1], src[13:14, c0:c1]])
-        return np.concatenate([a, a[2:3], b_, a])  # 6 + 5 + 5 = 16
+    def stones(src, c0, c1, joint):
+        """A continuous column of evenly spaced edge stones, 3 per 16 px (5, 5, 6 rows): each stone = one joint row
+        (outline colour), the corner stone's highlight row (row 11), then its body row (row 12) repeated.
+        No corner shapes; tiles every 16 px."""
+        out = []
+        for h in (5, 5, 6):
+            j = src[11, c0:c1].copy()
+            j[:] = joint
+            out += [j[None], src[11:12, c0:c1]] + [src[12:13, c0:c1]] * (h - 2)
+        return np.concatenate(out)
 
     tlg, trg = w['tl'], w['tr']
     l = np.zeros((16, 16, 4), np.uint8)
-    l[:, 0:4] = stones(tlg, 0, 4)
+    l[:, 0:4] = stones(tlg, 0, 4, tlg[8, 0])
+    l[:, 0] = tlg[8, 0]  # outer outline stays one line
     l[:, 4] = tlg[6, 4]  # mortar column
     l[:, 5:15] = bricks[:, 0:10]
     l[:, 15] = tlg[8, 0]  # outline on the floor side
     r = np.zeros((16, 16, 4), np.uint8)
-    r[:, 12:16] = stones(trg, 12, 16)
+    r[:, 12:16] = stones(trg, 12, 16, trg[8, 15])
+    r[:, 15] = trg[8, 15]
     r[:, 11] = trg[6, 11]
     r[:, 1:11] = bricks[:, 6:16]
     r[:, 0] = trg[8, 15]
