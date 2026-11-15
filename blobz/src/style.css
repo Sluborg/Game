@@ -1393,3 +1393,14 @@ button.big:not(.alt):active, button.big:not(.alt).down {
 #lobby #lobby-list .seat.free .freeblob i:nth-child(2) { animation-delay: 0.2s; }
 #lobby #lobby-list .seat.free .freeblob i:nth-child(3) { animation-delay: 0.4s; }
 @keyframes freedot { 0%, 60%, 100% { opacity: 0.4; transform: none; } 30% { opacity: 1; transform: translateY(-2px); } }
+
+/* lobby v5 (Stefan 2026-11-15): (1) the whole oval platform is visible: it is scaled to the panel's inner width
+   instead of a fixed 320 px that the panel clipped at both ends; (2) every seat's feet sit at 1/3 of the deck height
+   above the deck's front edge. Measured in party-platform.png (160x32): at the centre column the light-brown deck is
+   rows 6-18 (row 5 = top outline, row 19 = the dark front edge), so the deck is 13 rows high and its front edge is
+   y = 19; feet at y = 19 - 13/3 = 14.67, i.e. 17.33 art rows above the picture's bottom. The list is exactly as wide as
+   its containing block, so a percentage padding (17.33 / 160 of the width) puts the feet there at any phone width. */
+#lobby #lobby-list {
+  width: 100%; max-width: none; box-sizing: border-box; padding-bottom: 10.833%;
+  background-size: 100% auto; background-origin: border-box; background-clip: border-box; background-position: center bottom;
+}
