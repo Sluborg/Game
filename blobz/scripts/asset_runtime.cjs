@@ -2,6 +2,7 @@
 /* Which images are actually IN GAME? Runs the whole e2e suite (home, designer tabs, lobby, join, meadow gather/build/
  * puzzles, Bärregn, end screen, dungeon class pick / floors / boss / loot) with a hook in every page that logs:
  *   - requested: every image URL fetched over the network
+ *   - missing:   image URLs answered with an error or a non-image (a file archived/deleted but still loaded)
  *   - shown:     every image actually on screen: visible DOM <img> / CSS background-image / border-image, and every
  *                WebGL texture (uploaded from an image) that is bound while Phaser issues a draw call
  * Writes docs/asset-runtime.json; scripts/asset_index.py reads it for the RUNTIME column.
@@ -81,6 +82,10 @@ if (process.env.ASSET_RT_LOG) {
       if (ctx.__rt) return; ctx.__rt = true;
       await ctx.exposeBinding('__rtShown', (_s, u) => put('shown', u));
       await ctx.addInitScript(PAGE_HOOK);
+      // missing files: vite preview / Pages answer 200 text/html for a missing path, so check the content type too
+      ctx.on('response', (r) => { const u = r.url(), ct = r.headers()['content-type'] || '';
+        if (/\.(png|gif|jpe?g|webp|svg)(\?|$)/i.test(u) && (r.status() >= 400 || !ct.startsWith('image/'))) {
+          try { put('missing', decodeURIComponent(new URL(u).pathname)); } catch (e) { /* ignore */ } } });
       ctx.on('request', (r) => { if (r.resourceType() === 'image' || /\.(png|gif|jpe?g|webp|svg)(\?|$)/i.test(r.url())) {
         try { put('requested', decodeURIComponent(new URL(r.url()).pathname)); } catch (e) { /* ignore */ } } });
     };
@@ -103,15 +108,16 @@ if (process.env.ASSET_RT_LOG) {
   process.stdout.write(text);
   const sections = text.split('\n=== ').slice(1);
   const failed = sections.filter((sec) => /^FAIL|\nFAIL/.test(sec)).map((sec) => sec.split('\n')[0].trim());
-  const res = { requested: new Set(), shown: new Set() };
+  const res = { requested: new Set(), shown: new Set(), missing: new Set() };
   for (const line of fs.readFileSync(log, 'utf8').split('\n')) {
     const [k, u] = line.split('\t');
     if (u && res[k]) res[k].add(u.replace(/^\/(Game\/(dev\/)?)?(blobz\/)?/, ''));
   }
   fs.unlinkSync(log);
   const out = { e2e: failed.length ? `${sections.length - failed.length}/${sections.length} scripts passed (failed: ${failed.join(', ')})` : `all ${sections.length} scripts passed`, date: new Date().toISOString().slice(0, 10),
-    requested: [...res.requested].sort(), shown: [...res.shown].sort() };
+    requested: [...res.requested].sort(), shown: [...res.shown].sort(), missing: [...res.missing].sort() };
   fs.writeFileSync(path.join(ROOT, 'docs', 'asset-runtime.json'), JSON.stringify(out, null, 1) + '\n');
-  console.log(`asset runtime: e2e ${out.e2e}, ${out.requested.length} requested, ${out.shown.length} shown`);
+  console.log(`asset runtime: e2e ${out.e2e}, ${out.requested.length} requested, ${out.shown.length} shown, ${out.missing.length} MISSING`);
+  if (out.missing.length) console.log('MISSING (archived or deleted but still loaded):\n' + out.missing.join('\n'));
   process.exit(0); // a failed e2e check is reported in the json, the asset data is still valid
 }
