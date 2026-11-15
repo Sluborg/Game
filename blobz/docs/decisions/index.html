@@ -311,6 +311,16 @@ function renderQuestion(q) {
     finally { send.disabled = false; }
   });
   card.append(el('div', { class: 'row' }, send, status));
+  if (!q.decision) {
+    const cb = el('input', { type: 'checkbox', 'aria-label': 'Stäng frågan', style: 'width:22px;height:22px;margin:0;accent-color:var(--plum)' });
+    cb.addEventListener('change', async () => {
+      if (!cb.checked || !db) return;
+      cb.disabled = true;
+      try { await db.doc('questions/' + q.id).update({ decision: 'Stängd av Stefan ' + new Date().toISOString().slice(0, 10) }); }
+      catch { cb.checked = false; cb.disabled = false; }
+    });
+    card.querySelector('.meta').append(el('label', { class: 'tag', style: 'display:inline-flex;align-items:center;gap:6px;min-height:32px;cursor:pointer;margin-left:auto' }, cb, el('span', { text: 'Stäng' })));
+  }
   if (q.followup && !q.decision) card.append(el('div', { class: 'followup', text: 'Claude undrar: ' + q.followup }));
   if (q.decision) card.append(el('div', { class: 'decision', text: 'Beslut: ' + q.decision }));
   return card;
