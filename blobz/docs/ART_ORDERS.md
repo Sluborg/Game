@@ -41,7 +41,7 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (N-15b is TO DO now). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
+ChatGPT works only on N-orders with status TO DO (N-15b and N-19b are TO DO now). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
@@ -70,6 +70,7 @@ ChatGPT works only on N-orders with status TO DO (N-15b is TO DO now). ChatGPT f
 | N-21 | DONE (received 2026-11-15) | Boss + danger UI: boss health strip frame, hazard ring pattern (sizes in order) | `dungeon/ui/*` |
 | N-22 | DONE (received 2026-11-15) | Dungeon end screen illustration: treasure haul, portrait 9:16 + landscape 16:9 | `art/dungeon-end*.png` |
 | N-15b | TO DO | Speed power-up redo: winged boot fully INSIDE its glow circle (16x16 + 32x32) | `art/meadow/speed-*` |
+| N-19b | TO DO | Round combat button rings in exact small sizes: 24x24 and 18x18 art px, normal + pressed + disabled | `dungeon/ui/btn-round-*` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
@@ -259,6 +260,11 @@ portrait 9:16 and landscape 16:9 (key content in the central 60%).
 ### N-15b Speed power-up, round 2
 ```
 Ninja Adventure style (style block). Redo ONLY the speed power-up from N-15 (reference: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n15-meadow-extras.png, the winged boot on a soft yellow disc): the whole boot and its wing must sit fully INSIDE the disc with a 1-pixel margin, nothing sticking out. Disc = solid pale yellow with a 1 px darker rim (no soft glow). On a 16x16 grid AND again EXACTLY 32 art pixels across on a 32x32 grid.
+```
+
+### N-19b Round button rings, exact sizes
+```
+Same round wooden button as N-19 (reference: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n19-round-button.png): circular warm-brown wooden rim, dark 1 px outline, plain flat cream centre, empty middle. Three states: normal, pressed (centre darker, shifted 1 px down), disabled (grey wood). Draw them on EXACTLY a 24x24 art-pixel grid (rim about 3 px thick) AND again on EXACTLY an 18x18 art-pixel grid (rim about 2 px thick). Count the pixels: 24 and 18 art pixels across, no bigger.
 ```
 
 ## Ninja style block (for N-orders)
