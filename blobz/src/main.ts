@@ -352,7 +352,9 @@ function renderQuestRows(root: ParentNode, v: View) {
     }
   });
 }
-const QUEST_ROWS = () => $('hud-quest').innerHTML.split('<div class="qrow"').slice(1).map((r) => '<div class="qrow"' + r).join('');
+/** The HUD quest rows (wood/stone/berry) as HTML for the end screen; finished rows carry "qrow done", so copy the
+ *  elements instead of splitting the markup on the class string. */
+const QUEST_ROWS = () => [...$('hud-quest').querySelectorAll<HTMLElement>('.qrow')].map((r) => r.outerHTML).join('');
 let savedAt = 0;
 let treesFor = { seed: -1, trees: [] as ReturnType<typeof makeTrees> };
 
