@@ -17,7 +17,7 @@ import { applyI18n, lang, lookName, setLang, t, type Key } from './i18n';
 import { lanNamespace, Scanner, type FoundRoom } from './discovery';
 import { sfx, unlockAudio } from './sfx';
 import {
-  addPlayer, affordable, atHome, BUILD_KINDS, COTTAGE_COST, COTTAGE_MAX, requestBuild, type BuildKind, BUILDING_ENABLED, DAY_CYCLE_ENABLED, finishMini, cleanBiome, type Biome, SNOW_MAP_ENABLED, BUILD_COST, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, pickWeapon, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
+  addPlayer, affordable, atHome, BUILD_KINDS, COTTAGE_COST, COTTAGE_MAX, requestBuild, type BuildKind, BUILDING_ENABLED, DAY_CYCLE_ENABLED, STONE_ENABLED, finishMini, cleanBiome, type Biome, SNOW_MAP_ENABLED, BUILD_COST, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, pickWeapon, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
   toolNode, viewFromSnapshot, viewFromState,
 } from './sim';
 import type { FxEvent, Input, PlayerInfo, Snapshot, State, View } from './sim';
@@ -578,6 +578,7 @@ function onView(v: View) {
   if (st > lastStars) { sfx.star(); lastStars = st; }
   // day bar (archived, DAY_CYCLE_ENABLED): the sun rides left -> right; dusk in the last 20 s
   document.body.classList.toggle('noday', !DAY_CYCLE_ENABLED);
+  document.body.classList.toggle('nostone', !STONE_ENABLED); // stone archived: no stone rows / counters
   const day = Math.max(0, Math.min(1, 1 - v.time / ROUND_SECONDS));
   document.querySelector<HTMLElement>('#hud-day .dfill')!.style.clipPath = `inset(0 ${100 - day * 100}% 0 0)`;
   document.querySelector<HTMLElement>('#hud-day .sun')!.style.left = `calc(9px + (100% - 18px) * ${day.toFixed(4)})`;
@@ -694,7 +695,7 @@ async function hostGame() {
   };
 
   const newRound = () => {
-    seed = Math.floor(Math.random() * 1e9);
+    seed = DEBUG && new URLSearchParams(location.search).has('seed') ? Number(new URLSearchParams(location.search).get('seed')) : Math.floor(Math.random() * 1e9); // ?debug&seed= pins the map (screenshots)
     state = createState([...infos.values()], seed, loadVillage(), biome);
     // Test hook (?debug): lets Playwright place blobz on plates etc. Never set in normal play.
     if (DEBUG) (window as unknown as { __blobz: unknown }).__blobz = { state };

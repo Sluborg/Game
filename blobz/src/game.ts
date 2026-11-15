@@ -61,6 +61,8 @@ type Crop = [string, number, number, number, number];
 const RUBBLE_ART: Crop = ['n-nature', 272, 272, 32, 16];
 /** At most this many blossom trees per map (they read as pink pillows in a crowd). */
 const BLOSSOM_MAX = 2;
+/** Meadow declutter: at most this many groves, at least ~3 grove widths (3 x 192 px) apart; no wild wheat tufts. */
+const GROVE_MAX = 5, GROVE_GAP = 520, WILD_PATCHES = false;
 const TREE_ART: Crop[] = [['n-nature', 96, 128, 32, 32], ['n-nature', 96, 128, 32, 32], ['n-nature', 96, 128, 32, 32]]; // round tree on a trunk (Stefan 2026-11-15)
 /** Big groves (decor, no collision) near the map edges and around the cave: pine, green, lime (Stefan 2026-11-15). */
 const GROVE_ART: Crop[] = [['n-nature', 0, 32, 64, 48], ['n-nature', 64, 32, 64, 48], ['n-nature', 256, 32, 64, 48]];
@@ -142,6 +144,7 @@ function autoFrame(sh: Shore, bx: number, by: number, inner: Record<'inw' | 'ine
 /** The organic dirt yard around the cottage and under buildings. false = plain grass everywhere ("no ground" test). */
 export const YARD_ENABLED = true;
 const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.search).has('debug');
+const MAP_VIEW = DEBUG && new URLSearchParams(location.search).has('mapview');
 /** Below this speed (px/s) the face looks straight ahead. */
 const FACE_DEAD = 40;
 const BLOB_SCALE = 3; // blobz v2: 16x18 grid on the Ninja 16 px grid, drawn at the Ninja world scale
@@ -412,7 +415,8 @@ export class GameScene extends Phaser.Scene {
     const inZone = (x: number, y: number, pad: number) => zones.some((z) => x > z.x0 - pad && x < z.x1 + pad && y > z.y0 - pad && y < z.y1 + pad)
       || (BUILDING_ENABLED && [...Object.values(BUILD_SPOTS), COTTAGE_PAD].some((p) => Math.hypot(p.x - x, p.y - y) < 60 + pad))
       || (BUILDING_ENABLED && [water.area, ...water.water].some((z) => x > z.x0 - pad && x < z.x1 + pad && y > z.y0 - pad && y < z.y1 + pad));
-    for (let i = 0; i < 22; i++) {
+    // meadow declutter (Stefan 2026-11-15): no scattered flowers or tufts any more; the archived snow map keeps its decor
+    for (let i = 0; this.s.biome === 'snow' && i < 22; i++) {
       const x = 30 + r() * (WORLD_W - 60), y = 30 + r() * (WORLD_H - 60);
       const [key, sc] = this.s.biome === 'snow' ? (r() < 0.7 ? ['w-snowman', 2] as [string, number] : ['w-tree-bare', 2] as [string, number]) : DECOR[Math.floor(r() * DECOR.length)];
       if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 30 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 46) || inZone(x, y, 20)) continue;
@@ -420,7 +424,7 @@ export class GameScene extends Phaser.Scene {
       this.add.image(x, y, key).setScale(sc).setOrigin(0.5, 0.9).setDepth(key === 'pr-flowers' ? -600 : y);
     }
     // 1-2 small wild patches of wheat / greens a little outside the yard (decor, no farming)
-    if (this.s.biome !== 'snow') for (let i = 0, placed = 0; i < 60 && placed < 2; i++) {
+    if (WILD_PATCHES && this.s.biome !== 'snow') for (let i = 0, placed = 0; i < 60 && placed < 2; i++) {
       const a = r() * Math.PI * 2, d = BASE.r + 240 + r() * 120;
       const x = BASE.x + Math.cos(a) * d, y = BASE.y + Math.sin(a) * d * 0.8;
       if (x < 80 || y < 80 || x > WORLD_W - 80 || y > WORLD_H - 80 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 90) || inZone(x, y, 50)) continue;
@@ -433,14 +437,14 @@ export class GameScene extends Phaser.Scene {
     // big groves (decor) along the map edges and a couple around the cave, never on the path, nodes, pens or water
     if (this.s.biome !== 'snow') {
       const spots: [number, number][] = [];
-      for (let i = 0; i < 400 && spots.length < 9; i++) {
-        const nearCave = spots.length < 2;
+      for (let i = 0; i < 600 && spots.length < GROVE_MAX; i++) {
+        const nearCave = spots.length < 1;
         let x: number, y: number;
         if (nearCave) { const a = r() * Math.PI * 2, d = 200 + r() * 90; x = ent.x + Math.cos(a) * d; y = ent.y + Math.sin(a) * d * 0.8; }
         else { const side = Math.floor(r() * 4), u = r(); x = side < 2 ? 80 + u * (WORLD_W - 160) : side === 2 ? 70 + r() * 60 : WORLD_W - 70 - r() * 60; y = side === 0 ? 90 + r() * 50 : side === 1 ? WORLD_H - 30 - r() * 50 : 120 + u * (WORLD_H - 200); }
         if (x < 60 || x > WORLD_W - 60 || y < 80 || y > WORLD_H - 10) continue;
         if (Math.hypot(x - BASE.x, y - BASE.y) < BASE.r + 220 || Math.hypot(x - ent.x, y - ent.y) < 180) continue;
-        if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < 120) || inZone(x, y, 90) || spots.some(([sx, sy]) => Math.hypot(sx - x, sy - y) < 200)) continue;
+        if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < 175) || inZone(x, y, 90) || spots.some(([sx, sy]) => Math.hypot(sx - x, sy - y) < GROVE_GAP)) continue;
         if (DUNGEON_ENABLED && [-2, -1, 0, 1, 2].some((dx) => [-2, -1, 0].some((dy) => cavePath(this.s.seed).has(Math.floor(x / WATER_TILE + dx) + ',' + Math.floor(y / WATER_TILE + dy))))) continue;
         spots.push([x, y]);
       }
@@ -478,6 +482,11 @@ export class GameScene extends Phaser.Scene {
 
   private fitCamera() {
     const w = this.scale.width, h = this.scale.height;
+    if (MAP_VIEW) { // debug screenshots (?debug&mapview): the whole meadow on screen, camera centred, no follow
+      const z = Math.min(w / WORLD_W, h / WORLD_H);
+      this.cameras.main.removeBounds(); this.cameras.main.setZoom(z); this.cameras.main.centerOn(WORLD_W / 2, WORLD_H / 2);
+      return;
+    }
     if (this.miniG) {
       // Bärregn: the whole field on screen, below the mini HUD (~top 120 px) and above the buttons
       const top = 124, bottom = 24;
@@ -671,7 +680,8 @@ export class GameScene extends Phaser.Scene {
 
     // camera follows my blob (Bärregn: fixed on the field)
     const me = this.blobs.get(this.s.myId);
-    if (this.miniG) { this.camTarget.x = (ARENA.x0 + ARENA.x1) / 2; this.camTarget.y = this.miniCenterY; }
+    if (MAP_VIEW) { this.camTarget.x = WORLD_W / 2; this.camTarget.y = WORLD_H / 2; }
+    else if (this.miniG) { this.camTarget.x = (ARENA.x0 + ARENA.x1) / 2; this.camTarget.y = this.miniCenterY; }
     else if (me) { this.camTarget.x = me.x; this.camTarget.y = me.y; }
     const cam = this.cameras.main;
     cam.centerOn(cam.midPoint.x + (this.camTarget.x - cam.midPoint.x) * Math.min(1, dt * 6), cam.midPoint.y + (this.camTarget.y - cam.midPoint.y) * Math.min(1, dt * 6));
@@ -812,7 +822,7 @@ export class GameScene extends Phaser.Scene {
       const [sx, sy] = v < 1 / 6 ? VARIANTS[Math.floor(r() * VARIANTS.length)] : FILL;
       tile(floor, sx, sy, tx, ty);
       const k = tx + ',' + ty;
-      if (!isWet.has(k) && !isIce.has(k) && r() < 0.03) tile(detail, [0, 16, 32, 48, 80, 96, 112][Math.floor(r() * 7)], DETAIL_Y, tx, ty);
+      if (!isWet.has(k) && !isIce.has(k) && r() < (snow ? 0.03 : 0.0075)) tile(detail, [0, 16, 32, 48, 80, 96, 112][Math.floor(r() * 7)], DETAIL_Y, tx, ty); // meadow declutter: ~75% fewer tufts
     }
     // water: grass-shore block (0,96) on the meadow, the white/ice-shore block (208,0) on the snow map
     const wb = snow ? [208, 0] : [0, 96];
@@ -1079,8 +1089,8 @@ export class GameScene extends Phaser.Scene {
     });
     if (z.open !== g.open) {
       g.open = z.open;
-      // hinged open: the swung gate sits at the left post of the gap
-      if (z.open) g.gate.setTexture('pr-gate-open').setOrigin(0, 1).setX(g.l.gate.x0 - 2).setDisplaySize(16 * 3, 16 * 3);
+      // once opened the gate simply disappears (no gate swung to vertical; Stefan 2026-11-15)
+      g.gate.setVisible(!z.open);
     }
     if (z.taken !== g.taken) {
       g.taken = z.taken;

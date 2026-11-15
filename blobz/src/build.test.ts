@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
+import { STONE_ENABLED,
   atHome, BASE, BUILD_COST, BUILD_KINDS, BUILD_LOCK, BUILD_SPOTS, BUILDING_ENABLED, cleanVillage, COTTAGE_COST, createState,
   entranceOf, makePuzzles, makeTrees, makeWater, newVillage, NODE_HITS, puzzleCorners, questTargets, requestBuild, res,
   snapshot, step, viewFromSnapshot, villageOf,
@@ -16,10 +16,12 @@ const home = (s: State, i = 0) => at(s, i, BASE.x, BASE.y + 40);
 
 describe.skipIf(!BUILDING_ENABLED)('base building (build panel at the cottage)', () => {
   it('costs from the spec', () => {
+    // stone archived (STONE_ENABLED=false): every stone price is paid in wood instead
+    const p = (w: number, st: number, b: number) => (STONE_ENABLED ? res(w, st, b) : res(w + st, 0, b));
     expect(BUILD_COST).toEqual({
-      storage: res(6, 0, 0), workshop: res(8, 4, 0), garden: res(6, 0, 4), well: res(0, 6, 0), watchtower: res(10, 6, 0), bridge: res(12, 8, 0),
+      storage: p(6, 0, 0), workshop: p(8, 4, 0), garden: p(6, 0, 4), well: p(0, 6, 0), watchtower: p(10, 6, 0), bridge: p(12, 8, 0),
     });
-    expect(COTTAGE_COST).toEqual([res(20, 15, 10), res(40, 30, 20)]);
+    expect(COTTAGE_COST).toEqual([p(20, 15, 10), p(40, 30, 20)]);
   });
 
   it('build from the panel: needs the price, the player at home; pays, builds, pops an fx at the fixed spot', () => {
@@ -117,7 +119,7 @@ describe.skipIf(!BUILDING_ENABLED)('base building (build panel at the cottage)',
       const w = makeWater(seed);
       expect(puzzleCorners(seed)).not.toContain(w.corner);
       const inside = makeTrees(seed).filter((t) => t.x > w.area.x0 && t.x < w.area.x1 && t.y > w.area.y0 && t.y < w.area.y1);
-      expect(inside.length).toBeGreaterThanOrEqual(5);
+      expect(inside.length).toBeGreaterThanOrEqual(STONE_ENABLED ? 5 : 2); // declutter: a few nodes behind the water
     }
     const s = createState([P('a')], 6);
     const w = s.water;
@@ -136,7 +138,7 @@ describe.skipIf(!BUILDING_ENABLED)('base building (build panel at the cottage)',
 
   it('cottage upgrade from the panel: level 2 then 3, +20% quest, +1 carry at 2', () => {
     const s = createState([P('a'), P('b')], 7);
-    s.bank = res(99, 99, 99);
+    s.bank = res(199, 99, 99);
     home(s);
     expect(requestBuild(s, 'a', 'cottage')).toBe(true);
     expect(s.cottage.level).toBe(2);
@@ -148,7 +150,7 @@ describe.skipIf(!BUILDING_ENABLED)('base building (build panel at the cottage)',
     run(s, BUILD_LOCK + 0.05);
     home(s);
     expect(requestBuild(s, 'a', 'cottage')).toBe(false); // max
-    expect(s.bank).toEqual(res(99 - 60, 99 - 45, 99 - 30));
+    expect(s.bank).toEqual(STONE_ENABLED ? res(199 - 60, 99 - 45, 99 - 30) : res(199 - 105, 99, 99 - 30));
   });
 
   it('village (buildings, cottage, bank) survives save/load; quest resets; junk starts fresh', () => {

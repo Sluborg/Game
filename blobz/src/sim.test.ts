@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BASE, createState, DAY_CYCLE_ENABLED, finishMini, MINI_ENABLED, questTargets, step, type Input } from './sim';
+import { BASE, createState, DAY_CYCLE_ENABLED, STONE_ENABLED, finishMini, MINI_ENABLED, questTargets, step, type Input } from './sim';
 
 const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 });
 
@@ -66,7 +66,7 @@ describe('sim', () => {
   });
 
   it('quest targets grow with team size', () => {
-    expect(questTargets(2)).toEqual({ wood: 10, stone: 6, berry: 5 });
+    expect(questTargets(2)).toEqual({ wood: 10, stone: STONE_ENABLED ? 6 : 0, berry: 5 });
     expect(questTargets(1)).toEqual(questTargets(2));
     expect(questTargets(5).wood).toBeGreaterThan(questTargets(1).wood);
   });
