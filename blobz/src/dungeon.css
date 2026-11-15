@@ -284,3 +284,11 @@ body.dgflow #hud > :not(#hud-dg):not(#attack):not(#dash):not(#stick):not(#dg-ko)
   #dg-item { width: 24px; height: 24px; }
   #dg-item .dgicon { width: 18px; height: 18px; }
 }
+
+/* cards never cover a control (Lead): the loot card docks ABOVE both round buttons in portrait (big ring 96 px + the
+   small one 80 px above it + 64 px + a gap); in landscape the level-up cards stay left of the buttons' column */
+#dg-loot { bottom: calc(max(28px, calc(env(safe-area-inset-bottom) + 12px)) + 80px + 64px + 16px); }
+@media (orientation: landscape) and (max-height: 500px) {
+  #dg-loot { bottom: 8px; }
+  #dg-cards { right: calc(max(28px, calc(env(safe-area-inset-right) + 12px)) + 96px + 64px + 12px); width: min(calc(100vw - 524px), 420px); min-width: 300px; } /* clear of the loot card (left) too */
+}

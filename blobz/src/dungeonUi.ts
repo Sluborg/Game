@@ -291,9 +291,11 @@ function buildOverlays() {
 }
 
 // ---------- boss strip at the top (N-21 bar frame + emblem + name) while the boss is on the floor ----------
-function renderBoss(d: DView) {
+function renderBoss(d: DView, myId?: string) {
   const boss = d.enemies.find((e) => e.kind === 2);
-  show('dg-boss', !!boss);
+  // hidden while I pick a level-up card (frozen and safe), so the cards never sit on top of it
+  const picking = !!myId && (d.heroes[myId]?.offer.length ?? 0) > 0;
+  show('dg-boss', !!boss && !picking);
   if (!boss) return;
   setText($('dg-boss-name'), t('dg.bossName'));
   $('dg-boss-fill').style.width = (Math.max(0, Math.min(1, boss.hp / Math.max(1, boss.mx))) * 95).toFixed(1) + '%'; // 95% = the frame's inner slot
@@ -340,7 +342,7 @@ export function dungeonUi(v: View, myId: string | undefined, controls: Controls,
   if (mode !== 'dungeon' || !v.dungeon) return false;
   const d = v.dungeon;
   if (myId) { renderHud(d, myId); renderOffer(d, myId); renderLoot(d, myId, nameOf); }
-  renderBoss(d);
+  renderBoss(d, myId);
   if (d.done > 0 && !endShown) {
     endShown = true;
     setText($('dg-end-gold'), String(d.gold));
