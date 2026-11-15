@@ -45,27 +45,27 @@ const openPanel = async (page) => { await page.waitForSelector('#btn-build:not(.
       'quest card shows the storage picture + a check (aria "Byggt: Förråd")');
 
     // Bo (landscape) builds the bridge from his own panel; then walks over the water
-    await sim(host, (s) => { s.bank = { wood: 12, stone: 8, berry: 0 }; });
+    await sim(host, (s) => { s.bank = { wood: 20, stone: 8, berry: 0 }; }); // stone on: 12 wood + 8 stone; stone archived: 20 wood
     await goHome(host, 2);
     await openPanel(bo);
     if (shots) await bo.screenshot({ path: `${shots}/base-panel-landscape.png` });
     await card(bo, 'bridge').click();
     await bo.waitForFunction(() => window.__blobzView.builds.find((b) => b.kind === 'bridge').state === 2, null, { timeout: 5000 });
-    ok(true, 'Bro built from the panel (12 wood + 8 stone)');
+    ok(true, 'Bro built from the panel');
     await bo.click('#btn-build-close');
     const w = await sim(host, (s) => s.water);
     await place(host, 2, w.bridge.x + (w.area.x0 === 0 ? 70 : -70), w.bridge.y);
     await bo.waitForTimeout(900);
     if (shots) await bo.screenshot({ path: `${shots}/base-bridge-landscape.png` });
 
-    await sim(host, (s) => { s.bank = { wood: 20, stone: 15, berry: 10 }; });
+    await sim(host, (s) => { s.bank = { wood: 35, stone: 15, berry: 10 }; }); // covers 20/15/10, or 35 wood + 10 when stone is archived
 
     // cottage level 2 from the host's own panel
     await goHome(host, 0);
     await openPanel(host);
     await card(host, 'cottage').click();
     await ada.waitForFunction(() => window.__blobzView.cottage.level === 2, null, { timeout: 5000 });
-    ok(true, 'cottage level 2 from the panel (20/15/10)');
+    ok(true, 'cottage level 2 from the panel');
     await host.click('#btn-build-close');
     await sim(host, (s) => { s.bank = { wood: 4, stone: 3, berry: 2 }; s.items = []; s.players.forEach((p, i) => Object.assign(p, { x: 600 + i * 40, y: 330, vx: 0, vy: 0, carry: [] })); });
     await ada.waitForFunction(() => window.__blobzView.bank.wood === 4 && window.__blobzView.players.every((p) => p.y < 400), null, { timeout: 5000 });

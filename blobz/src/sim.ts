@@ -40,6 +40,15 @@ const MAGNET_R = 150;
 
 export type ItemKind = 'wood' | 'stone' | 'berry';
 export const RES: ItemKind[] = ['wood', 'stone', 'berry'];
+/** Stone is ARCHIVED for now (Stefan 2026-11-15 meadow declutter, docs/ARCHIVED.md): no rock nodes on the meadow, no
+ *  stone goal, and every stone price is paid in wood instead. Code kept: flip the flag to bring stone back. */
+export const STONE_ENABLED = false;
+/** Resources the round asks for (the quest goal, its stars and the HUD rows). */
+export const ACTIVE_RES: ItemKind[] = RES.filter((k) => STONE_ENABLED || k !== 'stone');
+/** With stone off a stone price moves into wood, so nothing becomes free or impossible. */
+const priced = (c: Res): Res => (STONE_ENABLED ? c : { wood: c.wood + c.stone, stone: 0, berry: c.berry });
+/** Meadow declutter: how many nodes the map gets (was 34 + 8 bushes + 7 in the water corner). */
+const NODE_COUNT = 10, BUSH_MIN = 3, CORNER_NODES = 3;
 export type Res = Record<ItemKind, number>;
 export const res = (w = 0, st = 0, b = 0): Res => ({ wood: w, stone: st, berry: b });
 export type PowerKind = 'speed' | 'magnet';
@@ -51,9 +60,14 @@ export const QUEST_BASE: Res = res(10, 6, 5); // for 1-2 players
 export function questTargets(players: number, cottage = 1): Res {
   // bigger cottage, bigger goals: +20% per level
   const f = (1 + 0.35 * Math.max(0, Math.min(MAX_PLAYERS, players) - 2)) * (1 + 0.2 * (Math.max(1, Math.min(3, cottage)) - 1));
-  return res(Math.ceil(QUEST_BASE.wood * f - 1e-9), Math.ceil(QUEST_BASE.stone * f - 1e-9), Math.ceil(QUEST_BASE.berry * f - 1e-9));
+  return res(Math.ceil(QUEST_BASE.wood * f - 1e-9), STONE_ENABLED ? Math.ceil(QUEST_BASE.stone * f - 1e-9) : 0, Math.ceil(QUEST_BASE.berry * f - 1e-9));
 }
-export const starsFor = (delivered: Res, quest: Res) => RES.filter((k) => delivered[k] >= quest[k]).length;
+/** Finished goal bars among the active resources. */
+export const barsDone = (delivered: Res, quest: Res) => ACTIVE_RES.filter((k) => delivered[k] >= quest[k]).length;
+/** The round's 0-3 stars: finished bars scaled to three stars (with two resources: 0, 2, 3). */
+export const starsFor = (delivered: Res, quest: Res) => Math.round((3 * barsDone(delivered, quest)) / ACTIVE_RES.length);
+/** Every active goal bar is full: the round is won. */
+export const questDone = (delivered: Res, quest: Res) => barsDone(delivered, quest) === ACTIVE_RES.length;
 
 // ---- co-op puzzles: pressure plates open a fenced pen with a bonus chest ----
 export const PEN_W = 168; // outer size of the fenced pen
@@ -125,10 +139,10 @@ export const BUILD_LOCK = 1; // seconds between two builds (one build at a time)
 export type BuildKind = 'bridge' | 'watchtower' | 'garden' | 'workshop' | 'storage' | 'well';
 export const BUILD_KINDS: BuildKind[] = ['bridge', 'watchtower', 'garden', 'workshop', 'storage', 'well'];
 // Building names and effect lines are UI text: see i18n.ts ('build.name.*', 'build.eff.*').
-export const BUILD_COST: Record<BuildKind, Res> = {
+export const BUILD_COST: Record<BuildKind, Res> = Object.fromEntries(Object.entries({
   storage: res(6, 0, 0), workshop: res(8, 4, 0), garden: res(6, 0, 4),
   well: res(0, 6, 0), watchtower: res(10, 6, 0), bridge: res(12, 8, 0),
-};
+}).map(([k, c]) => [k, priced(c)])) as Record<BuildKind, Res>;
 /** Six fixed spots in a ring ~180 px around the cottage, one building each. */
 export const BUILD_RING = 180;
 const RING_ORDER: BuildKind[] = ['workshop', 'storage', 'garden', 'well', 'watchtower', 'bridge']; // 0, 60, ... 300 degrees
@@ -140,7 +154,7 @@ export const BUILD_SPOTS = Object.fromEntries(RING_ORDER.map((k, i) => {
   return [k, SPOT_OVERRIDE[k] ?? { x: Math.round(BASE.x + Math.cos(a) * BUILD_RING), y: Math.round(BASE.y + Math.sin(a) * BUILD_RING) }];
 })) as Record<BuildKind, { x: number; y: number }>;
 export const COTTAGE_PAD = { x: BASE.x, y: BASE.y + 124 };
-export const COTTAGE_COST: Res[] = [res(20, 15, 10), res(40, 30, 20)]; // to level 2, to level 3
+export const COTTAGE_COST: Res[] = [res(20, 15, 10), res(40, 30, 20)].map(priced); // to level 2, to level 3
 export const COTTAGE_MAX = 3;
 /** First thing the bank pays for right now: a missing building (BUILD_KINDS order), else the next cottage level. */
 export function affordable(bank: Res, builds: { kind: BuildKind; state: number }[], cottageLevel: number): BuildKind | 'cottage' | null {
@@ -319,15 +333,16 @@ export function makeTrees(seed: number): Tree[] {
   const spots = BUILDING_ENABLED ? [...Object.values(BUILD_SPOTS), COTTAGE_PAD] : [];
   const trees: Tree[] = [];
   let tries = 0;
-  while (trees.length < 34 && tries++ < 2000) {
+  while (trees.length < NODE_COUNT && tries++ < 2000) {
     const x = 60 + r() * (MAIN_W - 120);
     const y = 70 + r() * (WORLD_H - 130);
     if (nearBase(x, y, 90)) continue;
     if (spots.some((p) => Math.hypot(p.x - x, p.y - y) < 80)) continue;
     if (zones.some((z) => inRect(z, x, y, 40))) continue;
-    if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < 70)) continue;
+    if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < 150)) continue; // spread out (declutter)
     const roll = r();
-    const kind = roll < 0.58 ? Math.floor(r() * 3) : roll < 0.7 ? 3 : roll < 0.8 ? 4 : 5;
+    let kind = roll < 0.58 ? Math.floor(r() * 3) : roll < 0.7 ? 3 : roll < 0.8 ? 4 : 5;
+    if (!STONE_ENABLED && (kind === 3 || kind === 4)) kind = Math.floor(r() * 3); // no rocks: a tree instead
     trees.push({ x, y, kind, cd: 0, left: 0, hits: 0, regrow: 0 });
   }
   // [dungeon hook, Code 2] keep the cave entrance clear (filtered afterwards so the seeded layout stays the same)
@@ -338,20 +353,21 @@ export function makeTrees(seed: number): Tree[] {
   const count = (f: (k: number) => boolean) => trees.filter((t) => f(t.kind)).length;
   for (let i = trees.length - 1; i >= 0; i--) {
     if (trees[i].kind >= 3) continue;
-    if (count((k) => k === 5) < 8) trees[i].kind = 5;
-    else if (count((k) => k === 3 || k === 4) < 5) trees[i].kind = 3;
+    if (count((k) => k === 5) < BUSH_MIN) trees[i].kind = 5;
+    else if (STONE_ENABLED && count((k) => k === 3 || k === 4) < 5) trees[i].kind = 3;
     else break;
   }
   // the water corner: a rich patch (more stone and berries), reachable over the bridge
   const e = rng(seed * 31 + 7);
   const a = wl.area;
   let n = 0;
-  for (let tries2 = 0; BUILDING_ENABLED && n < 7 && tries2 < 600; tries2++) {
+  for (let tries2 = 0; BUILDING_ENABLED && n < CORNER_NODES && tries2 < 600; tries2++) {
     const x = a.x0 + 40 + e() * (a.x1 - a.x0 - 80), y = a.y0 + 40 + e() * (a.y1 - a.y0 - 80);
     if (Math.hypot(x - wl.bridge.x, y - wl.bridge.y) < 110) continue; // keep the bridge landing clear
-    if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < 64)) continue;
+    if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < 110)) continue;
     const roll = e();
-    const kind = roll < 0.3 ? Math.floor(e() * 3) : roll < 0.5 ? 3 : roll < 0.7 ? 4 : 5;
+    let kind = roll < 0.3 ? Math.floor(e() * 3) : roll < 0.5 ? 3 : roll < 0.7 ? 4 : 5;
+    if (!STONE_ENABLED && (kind === 3 || kind === 4)) kind = roll < 0.6 ? 5 : 0;
     trees.push({ x, y, kind, cd: 0, left: 0, hits: 0, regrow: 0 });
     n++;
   }
@@ -777,7 +793,7 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     }
   }
 
-  const over = DAY_CYCLE_ENABLED ? s.time <= 0 : starsFor(s.delivered, s.quest) === RES.length; // sunset, or the quest is complete
+  const over = DAY_CYCLE_ENABLED ? s.time <= 0 : questDone(s.delivered, s.quest); // sunset, or the quest is complete
   if (over) { if (MINI_ENABLED && s.players.length) startMini(s); else s.phase = 'end'; }
 }
 

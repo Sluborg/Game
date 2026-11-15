@@ -1309,3 +1309,6 @@ img[src$="star-empty.png"] { filter: sepia(0.6) saturate(0.6) brightness(1.75) c
    sky where the logo was; the illustration stays */
 @media (orientation: portrait) { #loading { padding-top: max(20vh, calc(env(safe-area-inset-top) + 80px)); } }
 @media (orientation: landscape) { #loading { padding-top: max(14vh, calc(env(safe-area-inset-top) + 40px)); } #loading .load-ui { width: min(46vw, 340px); gap: 8px; } }
+
+/* stone archived (STONE_ENABLED=false): no stone row in the quest card / end screen, no stone counter or arrow */
+body.nostone .qrow[data-k="stone"], body.nostone .edge[data-k="stone"], body.nostone #hud-bank img[src*="res-stone"], body.nostone #bank-stone { display: none !important; }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  BASE, createState, makeTrees, NODE_HITS, NODE_REGROW, NODE_YIELD, nodeTool, OBSTACLE_R, snapshot, starsFor, step,
+  BASE, createState, STONE_ENABLED, makeTrees, NODE_HITS, NODE_REGROW, NODE_YIELD, nodeTool, OBSTACLE_R, snapshot, starsFor, step,
   toolNode, viewFromSnapshot, questTargets, makeWater, type Input, type State,
 } from './sim';
 
@@ -33,9 +33,16 @@ describe('gathering with tools', () => {
     for (const seed of [1, 2, 3, 99, 12345]) {
       const w = makeWater(seed).area; // the water corner has its own extra nodes
       const kinds = makeTrees(seed).filter((t) => !(t.x > w.x0 && t.x < w.x1 && t.y > w.y0 && t.y < w.y1)).map((t) => nodeTool(t.kind));
-      expect(kinds.filter((k) => k === 'axe').length).toBeGreaterThan(8);
-      expect(kinds.filter((k) => k === 'pickaxe').length).toBeGreaterThan(2);
-      expect(kinds.filter((k) => k === 'rake').length).toBe(8);
+      if (STONE_ENABLED) {
+        expect(kinds.filter((k) => k === 'axe').length).toBeGreaterThan(8);
+        expect(kinds.filter((k) => k === 'pickaxe').length).toBeGreaterThan(2);
+        expect(kinds.filter((k) => k === 'rake').length).toBe(8);
+      } else { // meadow declutter: few nodes, no rocks, still enough for the wood + food goals
+        expect(kinds.filter((k) => k === 'axe').length).toBeGreaterThanOrEqual(4);
+        expect(kinds.filter((k) => k === 'pickaxe').length).toBe(0);
+        expect(kinds.filter((k) => k === 'rake').length).toBeGreaterThanOrEqual(3);
+        expect(kinds.length).toBeLessThanOrEqual(12);
+      }
     }
   });
 
@@ -60,7 +67,7 @@ describe('gathering with tools', () => {
     expect(s.trees[i].left).toBe(3);
   });
 
-  it('yields and hits per node: rock 3 hits x 2 stone, boulder 4 hits x 4, bush 2 hits x 3 berries', () => {
+  it.skipIf(!STONE_ENABLED)('yields and hits per node: rock 3 hits x 2 stone, boulder 4 hits x 4, bush 2 hits x 3 berries', () => {
     expect([NODE_HITS[3], NODE_YIELD[3], NODE_REGROW[3]]).toEqual([3, 2, 30]);
     expect([NODE_HITS[4], NODE_YIELD[4], NODE_REGROW[4]]).toEqual([4, 4, 40]);
     expect([NODE_HITS[5], NODE_YIELD[5], NODE_REGROW[5]]).toEqual([2, 3, 20]);
@@ -101,15 +108,16 @@ describe('gathering with tools', () => {
   });
 
   it('quest targets: 10/6/5 for 1-2 players, x(1 + 0.35*(n-2)) rounded up for 3-5', () => {
-    expect(questTargets(1)).toEqual({ wood: 10, stone: 6, berry: 5 });
-    expect(questTargets(3)).toEqual({ wood: 14, stone: 9, berry: 7 });
-    expect(questTargets(5)).toEqual({ wood: 21, stone: 13, berry: 11 });
+    const st = (n: number) => (STONE_ENABLED ? n : 0); // stone archived: no stone goal
+    expect(questTargets(1)).toEqual({ wood: 10, stone: st(6), berry: 5 });
+    expect(questTargets(3)).toEqual({ wood: 14, stone: st(9), berry: 7 });
+    expect(questTargets(5)).toEqual({ wood: 21, stone: st(13), berry: 11 });
   });
 
   it('quest stars count finished bars; nodes survive the snapshot', () => {
     const s = createState([P('a'), P('b')], 6);
     s.delivered = { wood: 10, stone: 6, berry: 1 };
-    expect(starsFor(s.delivered, s.quest)).toBe(2);
+    expect(starsFor(s.delivered, s.quest)).toBe(2); // 2 of 3 bars (stone on) or 1 of 2 bars -> 2 of 3 stars (stone off)
     s.trees[2].left = 0;
     const v = viewFromSnapshot(JSON.parse(JSON.stringify(snapshot(s))));
     expect(v.nodes[2]).toBe(0);

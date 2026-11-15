@@ -35,3 +35,13 @@
   the round by filling the quest and expect the end screen right away.
 - To bring it back: set the flag to `true`, run `npx vitest run src/mini.test.ts` and `BLOBZ_MINI=1 node e2e/mini.cjs`,
   and restore the Bärregn checks in `e2e/noread.cjs` / `e2e/i18n.cjs` / `e2e/build.cjs` / `e2e/gather.cjs` from git history.
+
+## archived: stone (2026-11-15, Stefan "meadow declutter": remove all mineral rocks)
+- No rock / boulder nodes on the meadow (`makeTrees` turns them into trees), no stone goal (`questTargets` stone = 0),
+  no stone row, counter or arrow in the HUD / end screen (`body.nostone`), and every stone price in `BUILD_COST` /
+  `COTTAGE_COST` is paid in wood instead, so nothing becomes free or impossible.
+- Stars: the round's 0-3 stars are the finished goal bars scaled to three (`starsFor`); with wood + food: 0, 2, 3.
+  The round ends when every active bar is full (`questDone`).
+- Code stays behind one flag: `STONE_ENABLED = false` in `src/sim.ts` (rock art, pickaxe, rubble kept).
+- Tests: unit tests branch on `STONE_ENABLED`; `e2e/gather.cjs` chops a second tree instead of mining while stone is off.
+- To bring it back: set the flag to `true` and run the unit tests + `e2e/gather.cjs`, `e2e/build.cjs`.

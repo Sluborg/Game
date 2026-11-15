@@ -30,7 +30,13 @@ const tap = async (page) => { await page.locator('#dash').dispatchEvent('pointer
   try {
     const v0 = await view(ada);
     ok(v0.items.length === 0, 'no random items on the map');
-    ok(JSON.stringify(v0.quest) === '{"wood":14,"stone":9,"berry":7}', 'quest for 3 players: 14 wood, 9 stone, 7 berries');
+    const stoneOn = v0.quest.stone > 0; // stone archived (STONE_ENABLED=false): no stone goal, no rocks
+    ok(stoneOn ? JSON.stringify(v0.quest) === '{"wood":14,"stone":9,"berry":7}' : JSON.stringify(v0.quest) === '{"wood":14,"stone":0,"berry":7}',
+      `quest for 3 players: 14 wood, ${stoneOn ? '9 stone, ' : ''}7 berries`);
+    if (!stoneOn) {
+      ok(!(await ada.isVisible('#hud-quest .qrow[data-k="stone"]')) && !(await ada.isVisible('#bank-stone')), 'stone archived: no stone row or counter in the HUD');
+      ok(!(await sim(host, (s) => s.trees.some((t) => t.kind === 3 || t.kind === 4))), 'stone archived: no rock nodes on the meadow');
+    }
     ok(await ada.isHidden('#time') && await ada.isHidden('#hud-day'), 'no countdown text, no day bar (day cycle archived)');
 
     // Ada chops a tree with three taps on the real button
@@ -52,14 +58,14 @@ const tap = async (page) => { await page.locator('#dash').dispatchEvent('pointer
     await ada.waitForFunction(() => window.__blobzView.players[1].carry.includes('wood'), null, { timeout: 5000 });
     ok(true, '3 axe hits -> Ada carries 1 wood');
 
-    // Bo mines a rock by holding the button (repeats every 0.35 s)
-    const rock = await pick(host, [3, 4]);
-    await beside(host, 2, rock);
-    await bo.waitForFunction(() => document.querySelector('#dash img').src.includes('Tool/Pickaxe.png'), null, { timeout: 5000 });
+    // Bo holds the button (repeats every 0.35 s): mines a rock, or (stone archived) chops another tree
+    const node2 = stoneOn ? await pick(host, [3, 4]) : (await sim(host, (s, t) => s.trees.findIndex((n, i) => i !== t && n.kind < 3 && n.left > 0), tree));
+    await beside(host, 2, node2);
+    await bo.waitForFunction((src) => document.querySelector('#dash img').src.includes(src), stoneOn ? 'Tool/Pickaxe.png' : 'Tool/Axe.png', { timeout: 5000 });
     await bo.locator('#dash').dispatchEvent('pointerdown');
-    await bo.waitForFunction(() => window.__blobzView.players[2].carry.includes('stone'), null, { timeout: 6000 });
+    await bo.waitForFunction((k) => window.__blobzView.players[2].carry.includes(k), stoneOn ? 'stone' : 'wood', { timeout: 6000 });
     await bo.locator('#dash').dispatchEvent('pointerup');
-    ok(true, 'holding the button with the pickaxe -> Bo carries stone');
+    ok(true, `holding the button -> Bo carries ${stoneOn ? 'stone (pickaxe)' : 'wood (axe)'}`);
     await bo.waitForTimeout(200);
     if (shots) await bo.screenshot({ path: `${shots}/a-mine-landscape.png` });
 
@@ -73,7 +79,7 @@ const tap = async (page) => { await page.locator('#dash').dispatchEvent('pointer
 
     // everyone home: the team bank fills on every phone
     await sim(host, (s) => s.players.forEach((p, i) => { p.x = 620 + i * 20; p.y = 480; p.vx = 0; p.vy = 0; }));
-    await bo.waitForFunction(() => { const v = window.__blobzView; return v.bank.wood >= 1 && v.bank.stone >= 1 && v.bank.berry >= 1; }, null, { timeout: 5000 });
+    await bo.waitForFunction((st) => { const v = window.__blobzView; return v.bank.wood >= 1 && (!st || v.bank.stone >= 1) && v.bank.berry >= 1; }, stoneOn, { timeout: 5000 });
     await ada.waitForFunction(() => document.getElementById('bank-wood').textContent !== '0', null, { timeout: 5000 });
     ok(true, 'bank counters show the delivery on a joiner');
     const coversHome = await ada.evaluate(() => Object.values(window.__blobzCovers || {}).flatMap((f) => f()));
