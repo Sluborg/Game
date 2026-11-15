@@ -215,6 +215,7 @@ export interface Floor {
   floor: number;
   solid: Uint8Array; // gw*gh (default GW*GH), 1 = wall
   gw?: number; gh?: number; // grid size when not GW x GH (the tall Archero rooms)
+  dt?: number; // tile size in world px when not DT (rooms: 48 = the 0x72 16 px tiles at 3x)
   waves?: { kind: EnemyKind; x: number; y: number }[][]; // rooms mode: the waves of this room (spawned one after another)
   lines?: number[]; // rooms mode (corridor): wave k+1 also starts when a blob climbs above lines[k] (world y)
   rooms: Room[];
@@ -234,7 +235,7 @@ export const ROOMS_ENABLED = false;
 export const roomsOn = () => ROOMS_ENABLED || (typeof location !== 'undefined' && new URLSearchParams(location.search).has('rooms'));
 export const ROOMS = 10; // rooms per dungeon (boss room last)
 export const MINIBOSS_ROOM = 5;
-export const ROOM_W = 12; // tiles inside the walls (= the screen width in portrait)
+export const ROOM_W = 7; // floor tiles between the side walls (0x72 tiles at 3x: 9 x 48 = 432 px = the screen width)
 const ROOM_FIRST_WAVE = 1.2; // seconds before the first wave lands (a calm arrival)
 const WAVE_GAP = 0.8; // seconds between a cleared wave and the next
 export const SPAWN_WARN = 0.8; // a landing ring shows this long before the monster appears
@@ -247,44 +248,48 @@ export const diffFloor = (d: { rooms?: boolean; floor: number }) => (d.rooms ? 1
 /** rooms: every wave started and nothing left alive or landing = the door opens */
 export const roomClear = (d: DState) => !!d.rooms && (d.wave ?? 0) >= (d.map.waves?.length ?? 0) && !d.pending?.length && d.enemies.length === 0;
 
-/** One tall room: 12 tiles wide (the screen), 40 (arena) / 54 (corridor) / 46 (boss) tiles tall, +2 per player above 2.
- *  Start at the bottom, the door (stairs) at the top, the exit (leave the dungeon) in the first room's bottom corner. */
+/** One tall room on the 0x72 DungeonTileset II grid: 48 px tiles (16 px art at 3x). 7 floor tiles wide between the
+ *  thin side walls (9 tiles = 432 px = the screen width in portrait); rows: 0 = room for the door frame, 1 = wall cap,
+ *  2 = wall face (the door sits in it), 3.. = floor, last = the bottom wall with the entrance gap. Floor 27 (arena) /
+ *  36 (corridor) / 31 (boss) tiles tall, +1 per player above 2. Start at the bottom, the door at the top. */
+export const ROOM_T = 48;
 export function makeRoom(seed: number, room: number, players = 1, dungeon = 1): Floor {
   const r = rng(seed * 89 + room * 157 + 7);
+  const T = ROOM_T;
   const type = roomType(room);
-  const h = (type === 'arena' ? 40 : type === 'corridor' ? 54 : 46) + 2 * Math.max(0, Math.min(5, players) - 2);
-  const gw = ROOM_W + 2, gh = h + 2;
+  const h = (type === 'arena' ? 27 : type === 'corridor' ? 36 : 31) + Math.max(0, Math.min(5, players) - 2);
+  const gw = ROOM_W + 2, gh = 3 + h + 1, y0 = 3, y1 = 3 + h - 1; // floor rows y0..y1
   const solid = new Uint8Array(gw * gh).fill(1);
-  for (let y = 1; y <= h; y++) for (let x = 1; x <= ROOM_W; x++) solid[y * gw + x] = 0;
-  const o: Room = { x: 1, y: 1, w: ROOM_W, h };
-  const px = (tx: number) => (tx + 0.5) * DT;
-  const start = { x: (gw / 2) * DT, y: (h - 1.5) * DT };
-  const stairs = { x: (gw / 2) * DT, y: 2 * DT }; // the door
-  const exit = { x: px(1.5), y: (h - 0.5) * DT };
-  const chests = type === 'arena' ? [{ x: (gw / 2) * DT, y: (h / 2) * DT }] : [];
-  // waves: more and tougher with the difficulty step; +1 monster per extra player (crowding stays in check)
+  for (let y = y0; y <= y1; y++) for (let x = 1; x <= ROOM_W; x++) solid[y * gw + x] = 0;
+  const o: Room = { x: 1, y: y0, w: ROOM_W, h };
+  const mx = (gw / 2) * T;
+  const start = { x: mx, y: (y1 - 0.5) * T };
+  const stairs = { x: mx, y: (y0 + 0.5) * T }; // in front of the door
+  const exit = { x: 1.5 * T, y: (y1 + 0.5) * T - 8 };
+  const chests = type === 'arena' ? [{ x: mx, y: (y0 + h / 2) * T }] : [];
   const crowd = crowdOf(dungeon, 1 + ((room - 1) * (FLOORS - 1)) / (ROOMS - 1));
   const extra = Math.max(0, Math.min(5, players) - 1);
-  const band = (y0: number, y1: number) => ({ x: (1.5 + r() * (ROOM_W - 2)) * DT, y: (y0 + r() * (y1 - y0)) * DT });
-  const top = 3, safe = h - 7; // never spawn in the arrival area at the bottom
-  const wave = (y0: number, y1: number, n: number, mediums: number, spitters: number) => {
+  const band = (a: number, b: number) => ({ x: (1.4 + r() * (ROOM_W - 1.8)) * T, y: (a + r() * (b - a)) * T });
+  const top = y0 + 1, safe = y1 - 4; // never spawn in the arrival area at the bottom
+  const wave = (a: number, b: number, n: number, mediums: number, spitters: number) => {
     const out: { kind: EnemyKind; x: number; y: number }[] = [];
-    for (let k = 0; k < n; k++) out.push({ kind: 0, ...band(y0, y1) });
-    for (let k = 0; k < mediums; k++) out.push({ kind: 1, ...band(y0, y1) });
-    for (let k = 0; k < spitters; k++) out.push({ kind: 3, ...band(y0, Math.min(y1, y0 + (y1 - y0) / 2)) });
+    for (let k = 0; k < n; k++) out.push({ kind: 0, ...band(a, b) });
+    for (let k = 0; k < mediums; k++) out.push({ kind: 1, ...band(a, b) });
+    for (let k = 0; k < spitters; k++) out.push({ kind: 3, ...band(a, Math.min(b, a + (b - a) / 2)) });
     return out;
   };
   const n = 2 + crowd + Math.min(3, extra);
   let waves: Floor['waves'] = [];
   let lines: number[] | undefined;
-  if (type === 'arena') waves = [wave(top, safe, n, 1, 0), wave(top, safe / 2, n - 1, crowd >= 2 ? 1 : 0, 2)];
+  const midY = (top + safe) / 2;
+  if (type === 'arena') waves = [wave(top, safe, n, 1, 0), wave(top, midY, n - 1, crowd >= 2 ? 1 : 0, 2)];
   else if (type === 'corridor') {
     const third = (safe - top) / 3;
     waves = [wave(top + 2 * third, safe, n, 1, 0), wave(top + third, top + 2 * third, n, 1, 1), wave(top, top + third, n, crowd >= 2 ? 2 : 1, 1)];
-    lines = [(top + 2 * third) * DT, (top + third) * DT]; // climbing above a line starts the next wave early
-  } else waves = [[{ kind: 2, x: (gw / 2) * DT, y: (h * 0.3) * DT }, ...wave(h * 0.4, safe, 2 + Math.min(3, extra), 0, 0)], wave(top, safe, n - 1, 1, 1)];
+    lines = [(top + 2 * third) * T, (top + third) * T]; // climbing above a line starts the next wave early
+  } else waves = [[{ kind: 2, x: mx, y: (y0 + h * 0.3) * T }, ...wave(y0 + h * 0.4, safe, 2 + Math.min(3, extra), 0, 0)], wave(top, safe, n - 1, 1, 1)];
   const spawns: Floor['spawns'] = [];
-  return { floor: room, solid, rooms: [o], start, exit, stairs, chests, spawns, gw, gh, waves, lines };
+  return { floor: room, solid, rooms: [o], start, exit, stairs, chests, spawns, gw, gh, dt: T, waves, lines };
 }
 
 /** rooms: start the next wave when the last one is gone (or a blob climbed past the corridor line); spawns land after
@@ -311,7 +316,7 @@ function stepWaves(d: DState, alive: Body[], dt: number, fx: DFx[]) {
   for (const sp of waves[w]) {
     // never land on a blob: slide the spot away from anyone within 80 px
     let { x, y } = sp;
-    for (const b of alive) if (Math.hypot(b.x - x, b.y - y) < 80) y = Math.max(3 * DT, b.y - 120);
+    for (const b of alive) if (Math.hypot(b.x - x, b.y - y) < 80) y = Math.max(4 * ft(d.map), b.y - 120);
     d.pending.push({ kind: sp.kind, x, y, t: SPAWN_WARN });
     fx.push({ t: 'spawn', x, y });
   }
@@ -379,19 +384,21 @@ export function makeFloor(seed: number, floor: number, players = 1, dungeon = 1)
 }
 
 export const fw = (f: Floor) => f.gw ?? GW;
+export const ft = (f: Floor) => f.dt ?? DT;
 export const fh = (f: Floor) => f.gh ?? GH;
 export const isWall = (f: Floor, x: number, y: number) => {
-  const tx = Math.floor(x / DT), ty = Math.floor(y / DT), w = fw(f);
+  const T = ft(f), tx = Math.floor(x / T), ty = Math.floor(y / T), w = fw(f);
   return tx < 0 || ty < 0 || tx >= w || ty >= fh(f) || f.solid[ty * w + tx] === 1;
 };
 
 /** Push a circle out of wall tiles (and stop its velocity into them). */
 export function collideWalls(f: Floor, o: { x: number; y: number; vx: number; vy: number }, rad: number) {
-  const tx0 = Math.floor((o.x - rad) / DT), tx1 = Math.floor((o.x + rad) / DT);
-  const ty0 = Math.floor((o.y - rad) / DT), ty1 = Math.floor((o.y + rad) / DT);
+  const T = ft(f);
+  const tx0 = Math.floor((o.x - rad) / T), tx1 = Math.floor((o.x + rad) / T);
+  const ty0 = Math.floor((o.y - rad) / T), ty1 = Math.floor((o.y + rad) / T);
   for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) {
     if (!(tx < 0 || ty < 0 || tx >= fw(f) || ty >= fh(f) || f.solid[ty * fw(f) + tx])) continue;
-    const qx = Math.max(tx * DT, Math.min(o.x, (tx + 1) * DT)), qy = Math.max(ty * DT, Math.min(o.y, (ty + 1) * DT));
+    const qx = Math.max(tx * T, Math.min(o.x, (tx + 1) * T)), qy = Math.max(ty * T, Math.min(o.y, (ty + 1) * T));
     let dx = o.x - qx, dy = o.y - qy;
     const d = Math.hypot(dx, dy);
     if (d >= rad) continue;

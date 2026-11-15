@@ -56,3 +56,4 @@ fights **2-3 waves** in a room; when the last wave is gone the **door at the top
 - Not yet (steps 2-3): room transition wipe, boss helper waves at 66/33 %, plates + bonus room, the ChatGPT door,
   tuning, a 10-room e2e.
 - Screenshot: `docs/screenshots/dungeon-rooms/room-midwave.png` (390x844 at 2x, room 1 wave 2).
+- **0x72 look** (Stefan picked 0x72 DungeonTileset II, CC0): floor_1 + cracks (~1 in 4), wall_top/wall rows on top with a red + blue banner, wall_edge sides, wall_top_mid bottom with a 3-tile entrance gap, door = frame + leaf closed/open, 0x72 floor_stairs as the room-1 exit; 16 px art at 3x (48 px tiles, 9 tiles = 432 px wide). Screenshot: `docs/screenshots/dungeon-rooms/room-0x72.png`.

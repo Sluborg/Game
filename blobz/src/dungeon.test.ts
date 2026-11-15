@@ -444,14 +444,15 @@ describe('dungeon', () => {
       for (let room = 1; room <= ROOMS; room++) {
         const f = makeRoom(5, room, 1);
         expect(f.gw).toBe(ROOM_W + 2);
-        expect(f.gh!).toBeGreaterThanOrEqual(42);
-        expect(f.start.y).toBeGreaterThan(f.stairs.y + 30 * DT);
+        expect(f.gw! * f.dt!).toBe(432); // 0x72 tiles at 3x: the screen width
+        expect((f.gh! - 4) * f.dt!).toBeGreaterThanOrEqual(1.35 * 930); // ~1.4+ screens of floor
+        expect(f.start.y).toBeGreaterThan(f.stairs.y + 20 * f.dt!);
         expect(isWall(f, f.start.x, f.start.y)).toBe(false);
         expect(isWall(f, f.stairs.x, f.stairs.y)).toBe(false);
         expect(f.waves!.length).toBeGreaterThanOrEqual(2);
         for (const w of f.waves!) for (const sp of w) expect(isWall(f, sp.x, sp.y)).toBe(false);
       }
-      expect(makeRoom(5, 1, 5).gh!).toBe(makeRoom(5, 1, 1).gh! + 6);
+      expect(makeRoom(5, 1, 5).gh!).toBe(makeRoom(5, 1, 1).gh! + 3);
       expect(roomType(MINIBOSS_ROOM)).toBe('boss');
       expect(roomType(ROOMS)).toBe('boss');
       expect(makeRoom(5, 3, 5).waves![0].length).toBeGreaterThan(makeRoom(5, 3, 1).waves![0].length); // +1 per extra blob
