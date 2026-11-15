@@ -39,12 +39,23 @@ const tap = async (page) => { await page.locator('#dash').dispatchEvent('pointer
     }
     ok(await ada.isHidden('#time') && await ada.isHidden('#hud-day'), 'no countdown text, no day bar (day cycle archived)');
 
+    // the meadow action button (Stefan 2026-11-15): hidden away from resources (no dash on the meadow), shown with the
+    // right tool icon next to a node
+    const far = await sim(host, (st) => { // an open spot with no node within 120 px
+      for (let y = 560; y < 900; y += 20) for (let x = 120; x < 1160; x += 20)
+        if (st.trees.every((t) => Math.hypot(t.x - x, t.y - y) > 120)) return { x, y };
+      return { x: 640, y: 700 };
+    });
+    await place(host, 1, far.x, far.y);
+    await ada.waitForFunction(() => !document.querySelector('#dash').getClientRects().length, null, { timeout: 5000 });
+    ok(await ada.isHidden('#dash'), 'Ada away from resources: no action button (no dash on the meadow)');
+
     // Ada chops a tree with three taps on the real button
     const tree = await pick(host, [0, 1, 2]);
     await beside(host, 1, tree);
     await place(host, 0, 640, 420); await place(host, 2, 700, 420);
     await ada.waitForFunction(() => document.querySelector('#dash img').src.includes('Tool/Axe.png'), null, { timeout: 5000 });
-    ok(true, 'Ada next to a tree: action button shows the axe');
+    ok(await ada.isVisible('#dash'), 'Ada next to a tree: action button visible and shows the axe');
     for (let h = 0; h < 3; h++) {
       await tap(ada);
       if (h === 1 && shots) { await ada.waitForTimeout(230); await ada.screenshot({ path: `${shots}/a-chop-portrait.png` }); }
@@ -73,6 +84,7 @@ const tap = async (page) => { await page.locator('#dash').dispatchEvent('pointer
     const bush = await pick(host, [5]);
     await beside(host, 0, bush);
     await host.waitForFunction(() => document.querySelector('#dash img').src.includes('Tool/Hoe.png'), null, { timeout: 5000 });
+    ok(await host.isVisible('#dash'), 'next to a berry bush: action button visible with the rake');
     for (let h = 0; h < 2; h++) { await host.keyboard.press('Space'); await host.waitForTimeout(380); await beside(host, 0, bush); }
     await host.waitForFunction(() => window.__blobzView.players[0].carry.includes('berry'), null, { timeout: 5000 });
     ok(true, '2 rake hits -> Stefan carries berries');
