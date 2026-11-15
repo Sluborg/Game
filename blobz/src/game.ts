@@ -271,8 +271,6 @@ export class GameScene extends Phaser.Scene {
     this.load.image('n-floordetail', tiles + 'TilesetFloorDetail.png');
     this.load.image('n-water', tiles + 'TilesetWater.png');
     // FX (ART_MAP 10): hit chips, glide dust, level-up spark, plate aura, pick-up sparkle, Berry Rain blast + ring
-    sheet('chips-wood', 'FX/Particle/Wood.png', 16, 16);
-    sheet('chips-stone', 'FX/Particle/RockGray.png', 16, 16);
     sheet('fx-dust', 'FX/Smoke/SmokeCircular/SpriteSheet.png', 30, 14);
     sheet('fx-levelup', 'FX/Magic/Spark/SpriteSheet.png', 45, 35);
     sheet('fx-plate-glow', 'FX/Magic/Aura/SpriteSheet.png', 25, 24);
@@ -645,6 +643,8 @@ export class GameScene extends Phaser.Scene {
       n.img.setTexture(key).setScale(sc).setTint(tint).setOrigin(0.5, left > 0 && n.kind < 3 ? 0.95 : 0.8);
       if (n.tree) this.treeLook(n, left <= 0);
       this.footShadow(n);
+      // a tree just chopped down: a small dust puff at the stump's foot (Stefan 2026-11-15)
+      if (left <= 0 && n.kind < 3) for (let i = 0; i < 3; i++) this.time.delayedCall(i * 50, () => this.puff(n.x + (i - 1) * 16, n.y + 4, (i - 1) * 60, -20, 4));
       n.sc = sc;
       if (left > 0) { n.img.setScale(sc * 0.3); this.tweens.add({ targets: n.img, scale: sc, duration: 300, ease: 'Back.Out' }); }
     });
@@ -1219,15 +1219,11 @@ export class GameScene extends Phaser.Scene {
       this.swing(f.id, f.tool, f.x);
       const n = this.nodes[f.node];
       if (n) {
-        // shake the node, chips fly off
-        this.tweens.add({ targets: n.img, x: { from: n.x - 4, to: n.x }, duration: 140, ease: 'Bounce.Out' });
-        const chips = f.tool === 'pickaxe' ? 'chips-stone' : 'chips-wood';
-        if (f.tool !== 'rake') {
-          const c = this.add.sprite(n.x, n.y - 6, chips, 0).setScale(2).setOrigin(0.5, 1).setDepth(n.y + 50);
-          this.time.delayedCall(70, () => c.active && c.setFrame(1));
-          this.time.delayedCall(140, () => c.active && c.setFrame(2));
-          this.tweens.add({ targets: c, alpha: 0, y: n.y - 16, duration: 260, delay: 120, onComplete: () => c.destroy() });
-        } else this.burst(n.x, n.y - 10, 0x6cc644, 6);
+        // Stefan 2026-11-15 ("yes but no chips"): a soft sway round the foot (the picture's origin is the trunk foot, so
+        // the foot and the shadow stay still), ~4 degrees and back in 120 ms; no splinter / flicker fx any more
+        this.tweens.killTweensOf(n.img); n.img.setAngle(0);
+        const bx = this.blobs.get(f.id)?.x ?? n.x - 1; // lean away from the blob that hit it
+        this.tweens.add({ targets: n.img, angle: (bx < n.x ? 4 : -4), duration: 60, ease: 'Sine.Out', yoyo: true, onComplete: () => n.img.setAngle(0) });
       }
       sfx.tool(f.tool, f.drop);
     } else if (f.t === 'pick') {
