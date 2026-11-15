@@ -3,7 +3,10 @@
 Replaces v1 (crops of the gate post + n30b-fence-chatgpt.png, commit 0ad91a1). Only crop, resample and align.
 
 usage (from blobz/): python3 scripts/fence_pieces.py
-  -> public/art/props/fence-post.png, fence-rail-h.png, fence-rail-v.png + docs/art-review/n30b-fence-pen-v2.png
+  -> public/art/props/fence-post.png, fence-rail-h.png, fence-rail-v.png + docs/art-review/n30b-fence-pen-v3.png
+North-south runs (Stefan): fence-rail-v is drawn ON TOP of the posts (higher depth than every post), one tile per
+16 px from the upper post's top (tile y*16 - 11, the post's top row) down to the next post's top, so the run reads as
+one connected fence.
 
 Grid: ChatGPT drew one rivet + plank repeat every 120.2 px. The pitch 120.2 * 3 / 16 = 22.54 puts exactly 3 repeats in a
 16 px tile, and makes the post 27 art px tall, the same as the N-30 gate post (26), so fence and gate share a scale.
@@ -117,7 +120,7 @@ def pen(p, rh, rv):
     for x in (x0, x1, tx):
         yb = y1 if x != tx else y0 + 4  # the T divider runs 4 tiles down from the top side
         for y in range(y0, yb):
-            items.append((y, -1, RV, x * 16, y * 16 - 4))  # strip at rail height between post feet
+            items.append((99, y, RV, x * 16, y * 16 - 11))  # on top of the posts: post top-centre to the next post's top
         for y in range(y0 + 1, yb + 1):
             if (y - y0) % 2 == 0 or y == yb:
                 items.append((y, 2, P, x * 16, y * 16 - 16))
@@ -127,12 +130,12 @@ def pen(p, rh, rv):
         im.alpha_composite(spr, (x, y))
     big = im.resize((im.width * S, im.height * S), Image.NEAREST)
     bar = Image.new('RGBA', (big.width, 60), (20, 27, 27, 255))
-    ImageDraw.Draw(bar).text((10, 8), 'N-30b fence pen v2 (3x), from ChatGPT 3-piece set', fill='white', font_size=18)
-    ImageDraw.Draw(bar).text((10, 34), '4 corners, a T, N-30 gate, blob', fill='#ffe18d', font_size=16)
+    ImageDraw.Draw(bar).text((10, 8), 'N-30b fence pen v3 (3x), from ChatGPT 3-piece set', fill='white', font_size=18)
+    ImageDraw.Draw(bar).text((10, 34), '4 corners, a T, N-30 gate, blob; N-S rail on top of posts', fill='#ffe18d', font_size=16)
     out = Image.new('RGBA', (big.width, big.height + 60))
     out.paste(bar, (0, 0))
     out.paste(big, (0, 60))
-    out.save(os.path.join(REV, 'n30b-fence-pen-v2.png'))
+    out.save(os.path.join(REV, 'n30b-fence-pen-v3.png'))
 
 
 def main():
@@ -142,7 +145,7 @@ def main():
         Image.fromarray(a).save(os.path.join(PROPS, name + '.png'))
         print(name, a.shape[1], 'x', a.shape[0])
     pen(p, rh, rv)
-    print('docs/art-review/n30b-fence-pen-v2.png')
+    print('docs/art-review/n30b-fence-pen-v3.png')
 
 
 if __name__ == '__main__':

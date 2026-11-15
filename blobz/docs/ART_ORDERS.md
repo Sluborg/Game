@@ -80,7 +80,7 @@ ChatGPT works only on N-orders with status TO DO (next: none, queue empty). Chat
 | N-28 | DONE (received 2026-11-15) | Meadow portal to the dungeon: rune archway in a grassy mound, idle + glowing frame (64x48) | `art/props/portal-*` |
 | N-29 | DONE (received 2026-11-15) | Bigger plain grey boulders x3 (32x32 x2, 48x32) + matching rubble (16x16), stone parked | `art/props/boulder-*`, `boulder-rubble-*` |
 | N-30 | DONE (received 2026-11-15; ran before the fence row, fence = N-30b) | Puzzle set: pressure plate up/down (16x16), gate closed/open + posts (32x32) | `art/props/plate-*`, `gate-*` |
-| N-30b | DONE (v2 2026-11-15 from ChatGPT's 3-piece set n30b-fence-3pieces.png, by scripts/fence_pieces.py; pen preview docs/art-review/n30b-fence-pen-v2.png, waits for Stefan's rating; v1 crop version replaced) | Fence tileset matching the N-30 gate and posts (15 pieces, 16x16) | `art/props/fence-*` |
+| N-30b | DONE (v2 2026-11-15 from ChatGPT's 3-piece set n30b-fence-3pieces.png, by scripts/fence_pieces.py; pen preview docs/art-review/n30b-fence-pen-v3.png (v3: N-S rail drawn on top of the posts), waits for Stefan's rating; v1 crop version replaced) | Fence tileset matching the N-30 gate and posts (15 pieces, 16x16) | `art/props/fence-*` |
 | N-33 | DONE (received 2026-11-15) | Treasure chest for puzzle rewards, closed + open (16x16 + 32x32) | `art/props/chest-*` |
 | N-31 | DONE (received 2026-11-15) | Build site: scaffold with timber for buildings under construction (32x32 + 48x48) | `art/props/site-*` |
 | N-32 | DONE (received 2026-11-15) | Stone resource icon, grey like the N-29 boulders (16x16 + 32x32) | `art/icons/res-stone-*` |
