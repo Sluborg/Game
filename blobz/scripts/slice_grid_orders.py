@@ -20,7 +20,7 @@ REV = os.path.join(ROOT, 'docs', 'art-review')
 ART = os.path.join(ROOT, 'public', 'art')
 
 
-DROP_SHADOW = {'n26-trees.png'}
+DROP_SHADOW = {'n26-trees.png', 'n29-boulders.png'}  # never the portal: its idle opening is purple
 
 
 def load(name):
@@ -212,13 +212,14 @@ def region_sheet(src, names, folder, n, xr=(0.0, 1.0), yr=(0.0, 1.0), anchor='ce
     return made
 
 
-def frame_row(src, yr, k, W, H, name, folder, single=False, names=None):
+def frame_row(src, yr, k, W, H, name, folder, single=False, names=None, xr=(0.0, 1.0), pitch=None):
     """k animation frames (or one sprite) in equal columns of a horizontal band, each sampled on a W x H grid centred on
     its column (common centre), one pitch for the row; writes name-0..k-1.png + a strip name.png (or name.png if single)."""
     rgb, m = load(src)
     Hh, Ww = m.shape
     Y0, Y1 = int(yr[0] * Hh), int(yr[1] * Hh)
-    rgb, m = rgb[Y0:Y1], m[Y0:Y1]
+    XA, XB = int(xr[0] * Ww), int(xr[1] * Ww)
+    rgb, m = rgb[Y0:Y1, XA:XB], m[Y0:Y1, XA:XB]
     xs = np.where(opening(m, 3).any(0))[0]
     X0, X1 = xs.min() - 4, xs.max() + 5
     cw = (X1 - X0) / k
@@ -239,7 +240,7 @@ def frame_row(src, yr, k, W, H, name, folder, single=False, names=None):
             reach_y = max(reach_y, np.abs(yy - cy).max())
     pmin = max(p0 * 0.85, (reach_x + 1) / (W / 2), (reach_y + 1) / (H / 2))
     best = None
-    for p in np.arange(pmin, max(pmin, p0 * 1.15) + p0 / 25, p0 / 50):
+    for p in ([pitch] if pitch else np.arange(pmin, max(pmin, p0 * 1.15) + p0 / 25, p0 / 50)):
         tot, gs = 0.0, []
         for cr, cm, cy, cx in cells:
             h, w = cm.shape
@@ -317,6 +318,71 @@ def n23b():
     made = region_sheet('n23b-snowflake.png', ['marksman-trap'], f, 16, xr=(0.0, 0.5), fit=True) + region_sheet('n23b-snowflake.png', ['marksman-trap'], f, 32, xr=(0.5, 1.0), fit=True)
     import shutil
     shutil.copyfile(os.path.join(f, 'marksman-trap-16.png'), os.path.join(f, 'marksman-trap.png'))  # the file the game loads
+    return made
+
+
+def n27():
+    f = os.path.join(ART, 'icons')
+    return region_sheet('n27-wood.png', ['res-wood'], f, 16, xr=(0.0, 0.45), fit=True) + region_sheet('n27-wood.png', ['res-wood'], f, 32, xr=(0.45, 1.0), fit=True)
+
+
+def n28():
+    return frame_row('n28-portal.png', (0.0, 1.0), 2, 64, 48, '', os.path.join(ART, 'props'), names=['portal-idle', 'portal-glow'])
+
+
+def n29():
+    f = os.path.join(ART, 'props')
+    return (frame_row('n29-boulders.png', (0.0, 0.6), 1, 32, 32, 'boulder-1', f, single=True, xr=(0.0, 0.36))
+            + frame_row('n29-boulders.png', (0.0, 0.6), 1, 32, 32, 'boulder-2', f, single=True, xr=(0.36, 0.62))
+            + frame_row('n29-boulders.png', (0.0, 0.6), 1, 48, 32, 'boulder-3', f, single=True, xr=(0.62, 1.0))
+            + frame_row('n29-boulders.png', (0.6, 1.0), 3, 16, 16, '', f, names=['boulder-rubble-1', 'boulder-rubble-2', 'boulder-rubble-3']))
+
+
+def n30():
+    f = os.path.join(ART, 'props')
+    made = frame_row('n30-puzzle.png', (0.0, 0.45), 2, 16, 16, '', f, names=['plate-up', 'plate-down'])
+    gate = frame_row('n30-puzzle.png', (0.45, 1.0), 1, 32, 32, 'gate-closed', f, single=True, xr=(0.08, 0.34))
+    made += gate
+    for name, xr in (('gate-post-l', (0.38, 0.53)), ('gate-open', (0.53, 0.70)), ('gate-post-r', (0.74, 0.90))):
+        # same art grid as the closed gate, so posts, open gate and (later) the fence line up
+        made += frame_row('n30-puzzle.png', (0.45, 1.0), 1, 32, 32, name, f, single=True, xr=xr, pitch=gate[0][1])
+    return made
+
+
+def n31():
+    f = os.path.join(ART, 'props')
+    return (frame_row('n31-buildsite.png', (0.0, 1.0), 1, 32, 32, 'site-32', f, single=True, xr=(0.0, 0.45))
+            + frame_row('n31-buildsite.png', (0.0, 1.0), 1, 48, 48, 'site-48', f, single=True, xr=(0.45, 1.0)))
+
+
+def n32():
+    f = os.path.join(ART, 'icons')
+    return region_sheet('n32-stone-icon.png', ['res-stone'], f, 16, xr=(0.0, 0.5), fit=True) + region_sheet('n32-stone-icon.png', ['res-stone'], f, 32, xr=(0.5, 1.0), fit=True)
+
+
+def n33():
+    f = os.path.join(ART, 'props')
+    return (frame_row('n33-chest.png', (0.0, 0.5), 2, 16, 16, '', f, names=['chest-closed-16', 'chest-open-16'])
+            + frame_row('n33-chest.png', (0.5, 1.0), 2, 32, 32, '', f, names=['chest-closed-32', 'chest-open-32']))
+
+
+def n34():
+    """Dungeon room door: closed + open at 32x32 (row 1) and 48x32 (row 2); floor line moved to the bottom row, purple
+    (magenta-blended) outline cells recoloured to the outline colour."""
+    f = os.path.join(ART, 'dungeon')
+    made = (frame_row('n34-door.png', (0.0, 0.5), 2, 32, 32, '', f, names=['door-closed-32', 'door-open-32'])
+            + frame_row('n34-door.png', (0.5, 1.0), 2, 48, 32, '', f, names=['door-closed-48', 'door-open-48']))
+    for path, *_ in made:  # frame_row centres vertically: drop the sprite onto the bottom row (the floor line)
+        a = np.array(Image.open(path).convert('RGBA'))
+        ys = np.where(a[:, :, 3].any(1))[0]
+        out = np.zeros_like(a)
+        out[a.shape[0] - (ys.max() + 1 - ys.min()):] = a[ys.min():ys.max() + 1]
+        c = out[:, :, :3].astype(int)  # outline cells blended with the magenta read purple: give them the outline colour
+        pur = (out[:, :, 3] > 0) & (c[:, :, 0] - c[:, :, 1] > 30) & (c[:, :, 2] - c[:, :, 1] > 30)
+        dark = (out[:, :, 3] > 0) & (c.sum(2) < 120) & ~pur
+        if pur.any() and dark.any():
+            out[pur, :3] = np.median(c[dark], axis=0).astype(np.uint8)
+        Image.fromarray(out).save(path)
     return made
 
 
@@ -539,7 +605,7 @@ def main():
         made += [r[0] for r in res]
     big = [p for p in made if 'dungeon-end' in p]
     preview([p for p in made if not os.path.basename(p)[:-4][-2:] in ('-0', '-1', '-2', '-3') and p not in big],
-            os.path.join(REV, 'n26-n23b-raw-preview.png' if ('n26' in which or 'n23b' in which) else 'n23-n25-sliced.png' if 'n23' in which else 'n16-n22-sliced.png' if any(x in which for x in ('n16', 'n17', 'n18', 'n19', 'n20', 'n21')) else 'n12-n15-sliced.png'))
+            os.path.join(REV, 'n34-sliced.png' if 'n34' in which else 'n30-n33-raw-preview.png' if 'n30' in which else 'n27-n29-raw-preview.png' if 'n27' in which else 'n26-n23b-raw-preview.png' if ('n26' in which or 'n23b' in which) else 'n23-n25-sliced.png' if 'n23' in which else 'n16-n22-sliced.png' if any(x in which for x in ('n16', 'n17', 'n18', 'n19', 'n20', 'n21')) else 'n12-n15-sliced.png'))
 
 
 if __name__ == '__main__':

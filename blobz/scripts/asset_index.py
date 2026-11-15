@@ -26,6 +26,16 @@ OWN = 'Own art (CC0)'
 CC0K = 'CC0 1.0 (Kenney)'
 # (glob on the path under public/, source, license, approved?) first match wins
 SOURCES = [
+    ('art/dungeon/door-*.png', 'ChatGPT N-34 dungeon room door, sliced by scripts/slice_grid_orders.py n34', GPT, False),
+    ('art/props/plate-*.png', 'ChatGPT N-30 pressure plate, sliced by scripts/slice_grid_orders.py', GPT, True),
+    ('art/props/fence-*.png', 'ChatGPT N-30b fence 3-piece set, sliced by scripts/fence_pieces.py (pen v4 rating pending; N-S: post every tile, rail-v centre strip on top)', GPT, False),
+    ('art/props/gate-*.png', 'ChatGPT N-30 gate + posts, sliced by scripts/slice_grid_orders.py', GPT, True),
+    ('art/props/site-*.png', 'ChatGPT N-31 build site, sliced by scripts/slice_grid_orders.py', GPT, True),
+    ('art/icons/res-stone-*.png', 'ChatGPT N-32 stone icon, sliced by scripts/slice_grid_orders.py', GPT, True),
+    ('art/props/chest-*.png', 'ChatGPT N-33 treasure chest, sliced by scripts/slice_grid_orders.py', GPT, True),
+    ('art/icons/res-wood-*.png', 'ChatGPT N-27 wood icon, sliced by scripts/slice_grid_orders.py', GPT, True),
+    ('art/props/portal-*.png', 'ChatGPT N-28 meadow portal, sliced by scripts/slice_grid_orders.py', GPT, True),
+    ('art/props/boulder-*.png', 'ChatGPT N-29 boulders + rubble (stone parked), sliced by scripts/slice_grid_orders.py', GPT, True),
     ('art/props/tree-[rpa]*.png', 'ChatGPT N-26 meadow trees, sliced by scripts/slice_grid_orders.py', GPT, True),
     ('art/props/stump-*.png', 'ChatGPT N-26 stumps, sliced by scripts/slice_grid_orders.py', GPT, True),
     ('art/props/rubble-*.png', 'ChatGPT N-26 rubble (stone parked), sliced by scripts/slice_grid_orders.py', GPT, True),

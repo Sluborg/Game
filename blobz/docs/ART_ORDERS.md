@@ -41,11 +41,11 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (next: N-34). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
+ChatGPT works only on N-orders with status TO DO (next: none, queue empty). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
-| N-34 | TO DO (FIRST) | Dungeon room door for the Archero rooms, closed + open, 32x32 + 48x32 | `art/dungeon/door-*` |
+| N-34 | DONE (received 2026-11-15; sliced to art/dungeon/door-{closed,open}-{32,48}.png by scripts/slice_grid_orders.py n34) | Dungeon room door for the Archero rooms, closed + open, 32x32 + 48x32 | `art/dungeon/door-*` |
 | N-1 | DONE (C chosen) | Title header / logo in Ninja Adventure style | `art/logo.png` |
 | N-2 | DONE (portrait + landscape) | Start screen background | `art/title.png` |
 | N-3 | DONE | Loading screen (portrait + landscape approved) | `art/loading.png`, `art/loading-landscape.png` |
@@ -81,7 +81,7 @@ ChatGPT works only on N-orders with status TO DO (next: N-34). ChatGPT fills eve
 | N-28 | DONE (received 2026-11-15) | Meadow portal to the dungeon: rune archway in a grassy mound, idle + glowing frame (64x48) | `art/props/portal-*` |
 | N-29 | DONE (received 2026-11-15) | Bigger plain grey boulders x3 (32x32 x2, 48x32) + matching rubble (16x16), stone parked | `art/props/boulder-*`, `boulder-rubble-*` |
 | N-30 | ON HOLD (puzzles on hold 2026-11-15; art kept in public/). Was: DONE (received 2026-11-15; ran before the fence row, fence = N-30b) | Puzzle set: pressure plate up/down (16x16), gate closed/open + posts (32x32) | `art/props/plate-*`, `gate-*` |
-| N-30b | ON HOLD (puzzles on hold 2026-11-15; art kept in public/). Was: DONE (v2 2026-11-15 from ChatGPT's 3-piece set n30b-fence-3pieces.png, by scripts/fence_pieces.py; pen preview docs/art-review/n30b-fence-pen-v4.png (v4: N-S post on every tile, thin centre rail on top, like the Tiny 16 reference), waits for Stefan's rating; v1 crop version replaced) | Fence tileset matching the N-30 gate and posts (15 pieces, 16x16) | `art/props/fence-*` |
+| N-30b | ON HOLD (puzzles on hold 2026-11-15; art kept in public/; ChatGPT re-ran the 15-piece set 2026-11-15 as docs/art-review/n30b-fence-chatgpt-15-v2.png, more consistent, not sliced). Was: DONE (v2 2026-11-15 from ChatGPT's 3-piece set n30b-fence-3pieces.png, by scripts/fence_pieces.py; pen preview docs/art-review/n30b-fence-pen-v4.png (v4: N-S post on every tile, thin centre rail on top, like the Tiny 16 reference), waits for Stefan's rating; v1 crop version replaced) | Fence tileset matching the N-30 gate and posts (15 pieces, 16x16) | `art/props/fence-*` |
 | N-33 | ON HOLD (puzzles on hold 2026-11-15; art kept in public/). Was: DONE (received 2026-11-15) | Treasure chest for puzzle rewards, closed + open (16x16 + 32x32) | `art/props/chest-*` |
 | N-31 | DONE (received 2026-11-15) | Build site: scaffold with timber for buildings under construction (32x32 + 48x48) | `art/props/site-*` |
 | N-32 | DONE (received 2026-11-15) | Stone resource icon, grey like the N-29 boulders (16x16 + 32x32) | `art/icons/res-stone-*` |
@@ -375,7 +375,7 @@ Row 2: under each boulder, its depleted rubble (a few small grey chips and pebbl
 grey palette as its boulder.
 ```
 
-### N-34 Dungeon room door (do this FIRST)
+### N-34 Dungeon room door (DONE)
 ```
 STYLE: exactly like your N-26 trees (same dark near-black outline, 2-3 tone shading, pixel size): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n26-trees.png
 PALETTE: the stone colours of this dungeon tileset (dark blue-grey stone, warm brown wood): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/assets/ninja-adventure/Backgrounds/Tilesets/TilesetDungeon.png

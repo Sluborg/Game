@@ -11,13 +11,13 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
   image / CSS background or border image / canvas icon, or a WebGL texture bound at a Phaser draw call); CODE ONLY =
   referenced but never shown in the run (remove the reference and the file); UNUSED = no reference and never shown.
 
-**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 195 / IN GAME 27 / UNUSED 44.
+**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 195 / IN GAME 27 / UNUSED 75.
 
 **Claude-drawn still IN GAME** (0): none
 
 **Kenney still IN GAME** (0): none
 
-**Counts by source:** ChatGPT 215 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 17 (Ninja: 112 referenced by code). **Own files:** 266, 0 delete candidates.
+**Counts by source:** ChatGPT 246 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 17 (Ninja: 112 referenced by code). **Own files:** 297, 7 delete candidates.
 
 ## Own files (art, Kenney, app icons)
 
@@ -44,6 +44,10 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/dungeon/card-class-marksman.png` | 54x60 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:69 | keep |
 | `art/dungeon/card-class-rogue.png` | 55x57 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:69 | keep |
 | `art/dungeon/card-class-tank.png` | 53x59 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:69 | keep |
+| `art/dungeon/door-closed-32.png` | 32x32 | ChatGPT N-34 dungeon room door, sliced by scripts/slice_grid_orders.py n34 | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/door-closed-48.png` | 48x32 | ChatGPT N-34 dungeon room door, sliced by scripts/slice_grid_orders.py n34 | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/door-open-32.png` | 32x32 | ChatGPT N-34 dungeon room door, sliced by scripts/slice_grid_orders.py n34 | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/door-open-48.png` | 48x32 | ChatGPT N-34 dungeon room door, sliced by scripts/slice_grid_orders.py n34 | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
 | `art/dungeon/fx/hit-spark-0.png` | 32x32 | ChatGPT N-13 combat FX (round 2), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:142 | keep |
 | `art/dungeon/fx/hit-spark-1.png` | 32x32 | ChatGPT N-13 combat FX (round 2), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:142 | keep |
 | `art/dungeon/fx/hit-spark-2.png` | 32x32 | ChatGPT N-13 combat FX (round 2), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:142 | keep |
@@ -168,6 +172,10 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/icons/mouth-3.png` | 16x16 | ChatGPT N-25 mouths, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/partArt.ts:49 | keep |
 | `art/icons/mouth-4.png` | 16x16 | ChatGPT N-25 mouths, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/partArt.ts:49 | keep |
 | `art/icons/mouth-5.png` | 16x16 | ChatGPT N-25 mouths, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/partArt.ts:49 | keep |
+| `art/icons/res-stone-16.png` | 16x16 | ChatGPT N-32 stone icon, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/res-stone-32.png` | 32x32 | ChatGPT N-32 stone icon, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/res-wood-16.png` | 16x16 | ChatGPT N-27 wood icon, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/res-wood-32.png` | 32x32 | ChatGPT N-27 wood icon, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/icons/state/can-build-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/ninjaArt.ts:16, src/uikit2.ts:16, src/main.ts:415 | keep |
 | `art/icons/state/can-build-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16 | keep |
 | `art/icons/state/done-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16, src/main.ts:415 | keep |
@@ -276,10 +284,33 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/props/berry-bush-ninja.png` | 32x32 | Claude-drawn: scripts/berry_bush.py (berries on a Ninja bush) | Own art (CC0) | UNUSED | UNUSED | replace (Stefan dislikes; Code uses a Ninja bush + Ninja berry) |
 | `art/props/berry-bush-picked-16.png` | 16x16 | ChatGPT N-16 berry bush, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/berry-bush-picked-32.png` | 32x32 | ChatGPT N-16 berry bush, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:276 | keep |
+| `art/props/boulder-1.png` | 32x32 | ChatGPT N-29 boulders + rubble (stone parked), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/boulder-2.png` | 32x32 | ChatGPT N-29 boulders + rubble (stone parked), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/boulder-3.png` | 48x32 | ChatGPT N-29 boulders + rubble (stone parked), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/boulder-rubble-1.png` | 16x16 | ChatGPT N-29 boulders + rubble (stone parked), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/boulder-rubble-2.png` | 16x16 | ChatGPT N-29 boulders + rubble (stone parked), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/boulder-rubble-3.png` | 16x16 | ChatGPT N-29 boulders + rubble (stone parked), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/bush.png` | 15x13 | ChatGPT order 30 (map props), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | index.html:92 | replace (see OLD_ART_CHECKLIST) |
+| `art/props/chest-closed-16.png` | 16x16 | ChatGPT N-33 treasure chest, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/chest-closed-32.png` | 32x32 | ChatGPT N-33 treasure chest, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/chest-open-16.png` | 16x16 | ChatGPT N-33 treasure chest, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/chest-open-32.png` | 32x32 | ChatGPT N-33 treasure chest, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/fence-post.png` | 16x32 | ChatGPT N-30b fence 3-piece set, sliced by scripts/fence_pieces.py (pen v4 rating pending; N-S: post every tile, rail-v centre strip on top) | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/props/fence-rail-h.png` | 16x32 | ChatGPT N-30b fence 3-piece set, sliced by scripts/fence_pieces.py (pen v4 rating pending; N-S: post every tile, rail-v centre strip on top) | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/props/fence-rail-v.png` | 16x16 | ChatGPT N-30b fence 3-piece set, sliced by scripts/fence_pieces.py (pen v4 rating pending; N-S: post every tile, rail-v centre strip on top) | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/props/gate-closed.png` | 32x32 | ChatGPT N-30 gate + posts, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/gate-open.png` | 32x32 | ChatGPT N-30 gate + posts, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/gate-post-l.png` | 32x32 | ChatGPT N-30 gate + posts, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/gate-post-r.png` | 32x32 | ChatGPT N-30 gate + posts, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/gate.png` | 18x14 | ChatGPT order 30 (map props), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/sim.ts:274, src/sim.ts:754, src/game.ts:1229 | replace (see OLD_ART_CHECKLIST) |
+| `art/props/plate-down.png` | 16x16 | ChatGPT N-30 pressure plate, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/plate-up.png` | 16x16 | ChatGPT N-30 pressure plate, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/portal-glow.png` | 64x48 | ChatGPT N-28 meadow portal, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/portal-idle.png` | 64x48 | ChatGPT N-28 meadow portal, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/rubble-1.png` | 16x16 | ChatGPT N-26 rubble (stone parked), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/rubble-2.png` | 16x16 | ChatGPT N-26 rubble (stone parked), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/site-32.png` | 32x32 | ChatGPT N-31 build site, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/site-48.png` | 48x48 | ChatGPT N-31 build site, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/stump-apple.png` | 16x16 | ChatGPT N-26 stumps, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:273 | keep |
 | `art/props/stump-pine.png` | 16x16 | ChatGPT N-26 stumps, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:273 | keep |
 | `art/props/stump-round.png` | 16x16 | ChatGPT N-26 stumps, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:273 | keep |
@@ -613,9 +644,9 @@ See `archive/README.md`.
 | `archive/art/props/boulder.png` | 21x21 | ChatGPT order 30 (map props), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
 | `archive/art/props/fence.png` | 16x12 | ChatGPT order 30 (map props), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
 | `archive/art/props/flowers.png` | 16x14 | ChatGPT order 30 (map props), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
-| `archive/art/props/gate-open.png` | 11x14 | ChatGPT order 30 (map props), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
-| `archive/art/props/gate-post.png` | 5x14 | ChatGPT order 30 (map props), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
-| `archive/art/props/plate-down.png` | 13x12 | ChatGPT order 30 (map props), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/props/gate-open.png` | 11x14 | ChatGPT N-30 gate + posts, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/props/gate-post.png` | 5x14 | ChatGPT N-30 gate + posts, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/props/plate-down.png` | 13x12 | ChatGPT N-30 pressure plate, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
 | `archive/art/props/plate.png` | 13x12 | ChatGPT order 30 (map props), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
 | `archive/art/props/pond.png` | 23x17 | ChatGPT order 30 (map props), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
 | `archive/art/props/rock.png` | 11x8 | ChatGPT order 30 (map props), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
@@ -660,3 +691,10 @@ See `archive/README.md`.
 
 ## Delete candidates (UNUSED, Lead decides)
 
+- `art/dungeon/door-closed-32.png`
+- `art/dungeon/door-closed-48.png`
+- `art/dungeon/door-open-32.png`
+- `art/dungeon/door-open-48.png`
+- `art/props/fence-post.png`
+- `art/props/fence-rail-h.png`
+- `art/props/fence-rail-v.png`
