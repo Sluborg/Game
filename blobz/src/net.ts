@@ -14,7 +14,7 @@ export type ToHost =
   | { t: 'info?' }
   | { t: 'pick'; w: string }
   | { t: 'build'; k: string }
-  | { t: 'in'; x: number; y: number; dash: number; atk?: number };
+  | { t: 'in'; x: number; y: number; dash: number; atk?: number; sw?: number };
 export type ToClient =
   | { t: 'welcome'; id: string }
   | { t: 'full' }
@@ -109,7 +109,7 @@ export class HostNet {
         this.conns.set(c.peer, c);
         c.send({ t: 'welcome', id: c.peer } satisfies ToClient);
       } else if (m.t === 'in') {
-        this.onInput(c.peer, { x: +m.x || 0, y: +m.y || 0, dash: +m.dash || 0, atk: +(m.atk ?? 0) || 0 });
+        this.onInput(c.peer, { x: +m.x || 0, y: +m.y || 0, dash: +m.dash || 0, atk: +(m.atk ?? 0) || 0, sw: Math.max(0, Math.min(4000, +(m.sw ?? 0) || 0)) });
       } else if (m.t === 'build') {
         this.onBuild(c.peer, String(m.k));
       } else if (m.t === 'pick') {

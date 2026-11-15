@@ -707,7 +707,7 @@ async function hostGame() {
     session = {
       role: 'host', myId, seed, biome,
       infos: () => infos,
-      readInput: () => controls.read(),
+      readInput: () => ({ ...controls.read(), sw: Math.min(innerWidth, innerHeight) }), // [dungeon hook (Code 2)] portrait width -> room width
       tick(dt, input) {
         if (!state) return;
         inputs.set(myId, input);
@@ -789,7 +789,7 @@ async function joinGame(target: string, row?: HTMLButtonElement) {
       session = {
         role: 'client', myId: net.id, seed: m.seed, biome: cleanBiome(m.map),
         infos: () => infos,
-        readInput: () => controls.read(),
+        readInput: () => ({ ...controls.read(), sw: Math.min(innerWidth, innerHeight) }), // [dungeon hook (Code 2)] portrait width -> room width
         tick(dt, input) {
           sendAcc += dt;
           const key = `${input.x},${input.y},${input.dash},${input.atk ?? 0}`;

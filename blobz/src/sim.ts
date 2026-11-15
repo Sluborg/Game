@@ -269,7 +269,7 @@ export interface Gem { id: number; x: number; y: number; vx: number; vy: number;
 export interface Power { id: number; kind: PowerKind; x: number; y: number }
 /** A resource node. `left` items remain; 0 = stump / rubble / empty bush until `regrow` runs out. */
 export interface Tree { x: number; y: number; kind: number; cd: number; left: number; hits: number; regrow: number }
-export interface Input { x: number; y: number; dash: number; atk?: number }
+export interface Input { x: number; y: number; dash: number; atk?: number; sw?: number } // sw: the phone's portrait width (CSS px) [dungeon hook (Code 2): room width]
 export type FxEvent =
   | { t: 'gain'; x: number; y: number; r: Res } // resources added to the bank
   | { t: 'hit'; id: string; x: number; y: number; node: number; tool: Tool; drop: boolean }
@@ -530,7 +530,7 @@ export function pickWeapon(s: State, id: string, w: string) {
 function enterDungeon(s: State) {
   for (const p of s.players) s.picks[p.id] ??= 'dagger'; // [dungeon hook] unpicked = Rogue with two daggers
   s.runs++;
-  s.dg = newRun(s.seed * 7919 + s.runs * 104729, s.picks, s.dungeon);
+  s.dg = newRun(s.seed * 7919 + s.runs * 104729, s.picks, s.dungeon, undefined, undefined, narrowest(s)); // [dungeon hook] rooms as wide as the narrowest phone
   s.mode = 'dungeon';
   for (const p of s.players) { p.x = s.dg.map.start.x + (Math.random() - 0.5) * 30; p.y = s.dg.map.start.y + (Math.random() - 0.5) * 30; p.vx = 0; p.vy = 0; p.carry = []; }
   s.fx.push({ t: 'floor', floor: 1 });
@@ -595,7 +595,12 @@ function stepMiniPhase(s: State, inputs: Map<string, Input>, dt: number) {
   if (stepMini(m, s.players, dt, s.fx as MiniFx[])) finishMini(s);
 }
 
+/** [dungeon hook (Code 2)] the narrowest portrait screen width among the players (0 = unknown) */
+const screenW = new WeakMap<State, Map<string, number>>();
+function narrowest(s: State) { const m = screenW.get(s); let w = 0; for (const p of s.players) { const v = m?.get(p.id) ?? 0; if (v > 0 && (!w || v < w)) w = v; } return w; }
+
 export function step(s: State, inputs: Map<string, Input>, dt: number) {
+  { let m = screenW.get(s); if (!m) screenW.set(s, (m = new Map())); for (const [id, inp] of inputs) if (inp.sw) m.set(id, inp.sw); if (s.dg) s.dg.sw = narrowest(s) || undefined; } // [dungeon hook]
   if (s.phase === 'mini') { stepMiniPhase(s, inputs, dt); return; }
   if (s.phase !== 'play') return;
   if (s.mode === 'pick') {
