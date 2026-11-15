@@ -74,6 +74,7 @@ ChatGPT works only on N-orders with status TO DO (N-26 is TO DO now). ChatGPT fi
 | N-23 | DONE (received 2026-11-15) | Dungeon skill icons (24) + item icons (5), matching their effects (16x16) | `dungeon/skills/*`, `dungeon/items/*` |
 | N-24 | DONE (received 2026-11-15) | Dash symbol for the action button (16x16, free-standing) | `art/icons/ui/dash-*` |
 | N-25 | DONE (received 2026-11-15) | Designer mouth icons x5 (16x16) | `art/icons/mouth-*` |
+| N-23b | TO DO | Redo ONE skill icon: freeze volley (marksman-trap) as one big snowflake (16x16 + 32x32) | `dungeon/skills/marksman-trap.png` |
 | N-26 | TO DO | Meadow trees (3 kinds) + their chopped stumps + mined-out stone rubble | `art/props/tree-*`, `stump-*`, `rubble-*` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
@@ -292,6 +293,17 @@ SHEET 2, 5 ITEMS (drawn objects, no frame), one row: 1 ruby ring (gold ring with
 3 quick gloves (leather gloves with a small wind swirl), 4 star amulet (gold amulet with a star), 5 healing stone (green
 glowing gem drawn with hard pixels, no soft glow).
 ```
+
+### N-23b Freeze volley icon (redo of one N-23 skill)
+```
+Ninja Adventure style (style block). Solid flat magenta #ff00ff background (no transparency, no glow or halo touching the
+magenta). ONE symbol, drawn twice: once on EXACTLY a 16x16 art-pixel grid and once on EXACTLY a 32x32 art-pixel grid
+(32 art pixels across, 1-pixel outline at that scale, NOT the 16x16 drawing scaled up). Deliver both at 8x nearest-neighbour,
+side by side with generous magenta space between them.
+The symbol: one big, bright white and ice-blue snowflake (six arms, simple and chunky), with a dark outline. Nothing
+else: no arrows, no frame, no disc, no sparkles, no text. It must read clearly on a blue round badge at 48 px on a phone.
+```
+Replaces `public/art/dungeon/skills/marksman-trap.png` (the N-23 snowflake + arrows was too busy at 16 px).
 
 ### N-24 Dash symbol
 ```
