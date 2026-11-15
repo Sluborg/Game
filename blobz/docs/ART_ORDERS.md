@@ -41,7 +41,7 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (none are TO DO now; queue empty, more orders coming). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
+ChatGPT works only on N-orders with status TO DO (N-16 is TO DO now). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
@@ -62,6 +62,7 @@ ChatGPT works only on N-orders with status TO DO (none are TO DO now; queue empt
 | N-13 | DONE (round 2 received 2026-11-15) | Combat FX frames, ROUND 2 (round 1 had glow halos):  KO stars, shockwave ring, slam warning, level-up burst, hit spark (32x32, 4 frames each) | `dungeon/fx/*` |
 | N-14 | DONE (received 2026-11-15) | Boss intro banner + boss portrait (portrait 64x64, banner 256x64) | `dungeon/boss-*` |
 | N-15 | DONE (received 2026-11-15) | Meadow extras: build-site marker, signpost, magnet power-up, speed power-up, home flag (16x16 + 32x32) | `art/meadow/*` |
+| N-16 | TO DO | Berry bush, full + picked (16x16 + 32x32) | `art/props/berry-bush-*` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
@@ -190,6 +191,11 @@ and an empty middle area (the game writes the boss name on it), no text.
 Ninja Adventure style (style block). On a 16x16 grid AND again on a 32x32 grid: 1 build-site marker (a small wooden
 stake with a ribbon and a hammer), 2 wooden signpost (blank board), 3 magnet power-up (a horseshoe magnet on a soft
 glow disc), 4 speed power-up (a winged boot on a soft glow disc), 5 home flag (a small orange flag on a pole, waving).
+```
+
+### N-16 Berry bush
+```
+Ninja Adventure style (style block). On a 16x16 grid AND again on a 32x32 grid: 1 a round green berry bush full of shiny red berries (berry node), 2 the same bush picked clean (no berries, a few leaves out of place). Same outline, size and footprint for both. No text.
 ```
 
 ## Ninja style block (for N-orders)
