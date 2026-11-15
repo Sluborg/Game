@@ -233,12 +233,28 @@ export class DungeonScene extends Phaser.Scene {
     cam.setBackgroundColor('#141b1b');
     this.fitCamera();
     this.scale.on('resize', this.fitCamera, this);
-    this.events.once('shutdown', () => this.scale.off('resize', this.fitCamera, this));
+    // rotating or coming back from another app: the browser may report the new size late (or not fire resize while
+    // hidden), so re-measure now and once more after the rotation settles (no stale canvas / camera / HUD sizes)
+    const remeasure = () => { this.scale.refresh(); this.fitCamera(); this.time.delayedCall(350, () => { this.scale.refresh(); this.fitCamera(); }); };
+    const onVis = () => { if (document.visibilityState === 'visible') remeasure(); };
+    window.addEventListener('orientationchange', remeasure);
+    document.addEventListener('visibilitychange', onVis);
+    this.events.once('shutdown', () => { this.scale.off('resize', this.fitCamera, this); window.removeEventListener('orientationchange', remeasure); document.removeEventListener('visibilitychange', onVis); });
   }
 
   private fitCamera() {
     const w = this.scale.width, h = this.scale.height;
-    this.cameras.main.setZoom(Math.max(0.55, Math.min(2.2, Math.min(Math.max(w, h) / 820, Math.min(w, h) / 430))));
+    const cam = this.cameras.main;
+    if (cam.width !== w || cam.height !== h) cam.setSize(w, h);
+    cam.setZoom(Math.max(0.55, Math.min(2.2, Math.min(Math.max(w, h) / 820, Math.min(w, h) / 430))));
+    // jump straight to where the camera should be for the new size (the easing would start from the stale view)
+    const me = this.s ? this.heroes.get(this.s.myId) : undefined;
+    if (me && this.map) {
+      const landscape = w > h;
+      const x = this.rooms ? (fw(this.map) * ft(this.map)) / 2 : me.x - (landscape ? 70 / cam.zoom : 0);
+      this.camTarget = { x, y: this.roomCamY(me.y) };
+      cam.centerOn(x, this.camTarget.y);
+    }
   }
 
   /** Rooms (Archero): bake one room from 0x72 DungeonTileset II only, at its native 16 px (drawn at 3x): floor_1 with a
