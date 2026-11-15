@@ -451,7 +451,7 @@ STYLE BIBLE (apply to every image, no exceptions)
 - Top-down 3/4 view, cheerful, readable at small size. No text, letters, numbers or watermark.
 
 SHEET RULES (so the images can be cut automatically)
-- Transparent background (PNG with alpha). If you cannot do transparency, use solid magenta #ff00ff.
+- Solid flat magenta #ff00ff background, never transparent.
 - Lay objects out in a neat grid in EXACTLY the order listed, left-to-right, top-to-bottom.
 - Leave at least 32 px of empty space between objects. Objects must not touch or overlap.
 - Every object complete and fully inside the image, no shadows on the background.
