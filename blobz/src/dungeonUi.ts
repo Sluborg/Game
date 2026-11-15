@@ -36,9 +36,11 @@ const SPECIAL_ICON: Record<Weapon, string> = {
   bow: 'Ui/Skill Icon/Items & Weapon/Kunai.png', shield: 'Ui/Skill Icon/Spell/DefenseUpgrade.png', dagger: 'Ui/Skill Icon/Items & Weapon/Shuriken.png',
 };
 /** the small button's class move icon (Ninja skill icons) */
-const MOVE_ICON: Record<string, string> = { rogue: 'Ui/Skill Icon/Spell/Camouflage.png', marksman: 'Ui/Skill Icon/Spell/Upgrade.png', tank: 'Ui/Skill Icon/Spell/Counter.png', healer: 'Ui/Skill Icon/Spell/Mist.png' };
+const MOVE_ICON: Record<string, string> = { rogue: 'art/dungeon/icons/dodge-16.png', marksman: 'art/dungeon/icons/jump-back-16.png', tank: 'art/dungeon/icons/shield-charge-16.png', healer: 'art/dungeon/icons/phase-out-16.png' }; // ChatGPT N-12
 /** the healer's button shows the wand's current mode: damage (red orb) / heal (green) */
-const HEALER_ICON = ['Ui/Skill Icon/Spell/OrbFire.png', 'Ui/Skill Icon/Spell/Heal.png'];
+const HEALER_ICON = ['art/dungeon/icons/damage-mode-16.png', 'art/dungeon/icons/heal-mode-16.png']; // ChatGPT N-12
+/** the big round button's free symbol for the other classes: their own weapon (ChatGPT N-11, 16 px art at 3x) */
+const BIG_ICON: Record<string, string> = { rogue: 'art/dungeon/weapons/dagger-16.png', marksman: 'art/dungeon/weapons/crossbow-16.png', tank: 'art/dungeon/weapons/shield-16.png' };
 /** Ninja weapon sprites on the rogue's weapon cards. */
 const WEAPON_CARD: Partial<Record<Weapon, string>> = { sword: 'Items/Weapons/Sword/Sprite.png', hammer: 'Items/Weapons/Hammer/Sprite.png', dagger: 'Items/Weapons/Ninjaku/SpriteInHand.png', spear: 'Items/Weapons/Lance/Sprite.png' };
 
@@ -144,7 +146,7 @@ function renderHud(d: DView, myId: string) {
   // Art's icon per weapon special (spin / slam / charge)
   const spIcon = document.getElementById('attack-icon') as HTMLImageElement | null;
   // Art's special icon per weapon (spin / slam / charge / heal / volley / wall)
-  const src = encodeURI(NAU + (h?.cls === 'healer' ? HEALER_ICON[h.mode ? 1 : 0] : SPECIAL_ICON[h?.weapon ?? 'sword']));
+  const src = h?.cls === 'healer' ? HEALER_ICON[h.mode ? 1 : 0] : h && BIG_ICON[h.cls] ? BIG_ICON[h.cls] : encodeURI(NAU + SPECIAL_ICON[h?.weapon ?? 'sword']);
   if (spIcon && !spIcon.src.endsWith(src)) spIcon.src = src;
   // the small button = my class move: its icon, a radial sweep while recharging, the rogue's charge pips
   const dash = document.getElementById('dash');
@@ -154,7 +156,7 @@ function renderHud(d: DView, myId: string) {
     dash.classList.toggle('cd', h.charges <= 0);
     dash.dataset.cls = h.cls;
     const di = dash.querySelector('img');
-    const dsrc = encodeURI(NAU + MOVE_ICON[h.cls]);
+    const dsrc = MOVE_ICON[h.cls];
     if (di && !di.src.endsWith(dsrc)) di.src = dsrc;
     let pips = dash.querySelector('.dg-pips') as HTMLElement | null;
     if (h.maxCharges > 1) {
