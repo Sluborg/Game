@@ -77,6 +77,8 @@
 .hpnum { font-size: 16px; min-width: 64px; }
 #dg-row { display: flex; align-items: center; gap: 8px; font-size: 18px; }
 #dg-row img.icon { height: 24px; width: 24px; image-rendering: pixelated; object-fit: cover; object-position: 0 50%; aspect-ratio: 1; }
+/* the gold coin = the first 10x10 frame of Ninja Coin2.png (a 4-frame strip), at exactly 2x (HUD row + end screen) */
+img.icon.coin1, #dg-row img.icon.coin1 { width: 20px; height: 20px; object-fit: cover; object-position: 0 50%; image-rendering: pixelated; vertical-align: -4px; }
 #dg-floor, #dg-time { padding: 0 6px; font-size: 16px; color: #fff3d6; }
 #dg-time.low { color: #ff8a8a; }
 #dg-xp { display: flex; align-items: center; gap: 8px; }

@@ -41,10 +41,14 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (next: none, queue empty). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
+ChatGPT works only on N-orders with status TO DO (next: N-37). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
+| N-37 | TO DO (FIRST) | Lobby party platform, EXACT 140x28 art px (shown 2x) | `art/lobby/party-platform.png` |
+| N-38 | TO DO | Start/loading background, village scene, EXACT 240x430 art px portrait (shown 2x) | `art/title.png` |
+| N-39 | TO DO | Logo "Blobz" as true pixel art, EXACT 150x104 art px (shown 2x) | `art/logo.png` |
+| N-40 | TO DO | Village tent (cottage level 1) icon, EXACT 16x16 art px | `art/icons/cottage-1.png` (new) |
 | N-34 | SUPERSEDED by 0x72 DungeonTileset II (2026-11-15, files kept). Was: DONE (received 2026-11-15; sliced to art/dungeon/door-{closed,open}-{32,48}.png by scripts/slice_grid_orders.py n34) | Dungeon room door for the Archero rooms, closed + open, 32x32 + 48x32 | `art/dungeon/door-*` |
 | N-34b | SUPERSEDED by 0x72 DungeonTileset II (2026-11-15, files kept). Was: DONE, REPLACED by N-34d (received 2026-11-15, unordered extra; sliced to art/dungeon/wall-{tl,t,tr,l,r,bl,br}.png 16x16 by scripts/room_walls.py; room test docs/art-review/n34-room-test.png; MISSING: inner corners; the plain bottom edge came with N-34c) | Dungeon room walls matching the N-34 door: top corners + top edge, left/right side, bottom corners | `art/dungeon/wall-*` |
 | N-34c | SUPERSEDED by 0x72 DungeonTileset II (2026-11-15, files kept). Was: DONE (received 2026-11-15, asked by Stefan; sliced by scripts/room_walls.py to art/dungeon/wall-b.png (plain bottom edge) + wall-entrance-{l,mid,r}.png, 16x16; in docs/art-review/n34-room-test.png) | Room entrance: bottom wall with an opening (wall, pillar, low threshold, pillar, wall), same set as N-34/N-34b | `art/dungeon/wall-b`, `wall-entrance-*` |
@@ -378,6 +382,55 @@ pixels at the base, NOT floating): 1 on EXACTLY a 32x32 grid, 2 another shape on
 EXACTLY a 48x32 grid.
 Row 2: under each boulder, its depleted rubble (a few small grey chips and pebbles) on EXACTLY a 16x16 grid, in the SAME
 grey palette as its boulder.
+```
+
+### N-37 Lobby party platform (do this FIRST)
+```
+STYLE: exactly like your N-26 trees (same dark near-black outline, palette, 2-3 tone shading, pixel size): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n26-trees.png
+TRUE PIXEL ART: every art pixel is one flat colour, NO anti-aliasing, no gradients, no blur, no soft edges, no dithering
+noise. Solid flat magenta #ff00ff background, hard pixel edges, no glow, halo or shadow touching the magenta. Deliver at
+EXACTLY 8x nearest-neighbour (every art pixel = an 8x8 block). No text unless asked, no labels.
+The lobby party platform the blobz stand on: an oval wooden deck seen from the top-down 3/4 view, planks with a darker
+rim and a thin shadowed front edge. Same look as the current one: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/art/lobby/party-platform.png
+EXACT canvas: 140 x 28 art pixels (delivered 1120 x 224), the deck filling the width, centred. It is shown at exactly
+2x in the game, so the art grid must be exact.
+```
+
+### N-38 Start / loading background
+```
+STYLE: exactly like your N-26 trees (same dark near-black outline, palette, 2-3 tone shading, pixel size): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n26-trees.png
+TRUE PIXEL ART: every art pixel is one flat colour, NO anti-aliasing, no gradients, no blur, no soft edges, no dithering
+noise. Solid flat magenta #ff00ff background, hard pixel edges, no glow, halo or shadow touching the magenta. Deliver at
+EXACTLY 8x nearest-neighbour (every art pixel = an 8x8 block). No text unless asked, no labels.
+EXCEPTION: no magenta, this one is a full background, edge to edge.
+A sunny village scene as true pixel art, portrait: blue sky with 2-3 simple clouds, a small cottage with an orange roof,
+2-3 round trees like N-26, a sand path winding toward the viewer, grass. Simple and calm, few details.
+Keep the UPPER THIRD mostly sky (the logo goes there) and the LOWER THIRD plain grass/path (buttons go there); the house
+and trees sit in the middle third.
+EXACT canvas: 240 x 430 art pixels (delivered 1920 x 3440). Shown at exactly 2x.
+```
+
+### N-39 Logo "Blobz" (true pixel art)
+```
+STYLE: exactly like your N-26 trees (same dark near-black outline, palette, 2-3 tone shading, pixel size): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n26-trees.png
+TRUE PIXEL ART: every art pixel is one flat colour, NO anti-aliasing, no gradients, no blur, no soft edges, no dithering
+noise. Solid flat magenta #ff00ff background, hard pixel edges, no glow, halo or shadow touching the magenta. Deliver at
+EXACTLY 8x nearest-neighbour (every art pixel = an 8x8 block). No text unless asked, no labels.
+The game logo "Blobz" redrawn as true pixel art, keeping the current logo's design (letters, colours, the blob shapes,
+the outline): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/art/logo.png
+EXACT canvas: 150 x 104 art pixels (delivered 1200 x 832), logo centred, 1 px dark outline at that scale. Shown at
+exactly 2x. The word must read "Blobz" exactly.
+```
+
+### N-40 Village tent icon (cottage level 1)
+```
+STYLE: exactly like your N-26 trees (same dark near-black outline, palette, 2-3 tone shading, pixel size): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n26-trees.png
+TRUE PIXEL ART: every art pixel is one flat colour, NO anti-aliasing, no gradients, no blur, no soft edges, no dithering
+noise. Solid flat magenta #ff00ff background, hard pixel edges, no glow, halo or shadow touching the magenta. Deliver at
+EXACTLY 8x nearest-neighbour (every art pixel = an 8x8 block). No text unless asked, no labels.
+A small icon of the village tent (the cottage at level 1) for the HUD and the lobby, same tent as in this Ninja Adventure
+tileset (the canvas tent at the left, rows 120-160 of the sheet): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/assets/ninja-adventure/Backgrounds/Tilesets/TilesetHouse.png
+EXACT canvas: 16 x 16 art pixels (delivered 128 x 128), the tent filling the square, 1 px dark outline.
 ```
 
 ### N-34 Dungeon room door (DONE)

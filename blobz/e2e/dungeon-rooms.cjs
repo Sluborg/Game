@@ -42,6 +42,21 @@ const base = process.argv[2] || 'http://localhost:4173/';
     await ada.waitForSelector('#dg-loading', { state: 'hidden', timeout: 8000 });
     await ada.waitForFunction(() => /Rum 1\/10/.test(document.getElementById('dg-floor').textContent), null, { timeout: 8000 });
     ok(true, `joiner HUD reads "${(await ada.textContent('#dg-floor')).trim()}"`);
+    // rotate the joiner's phone (and back): canvas, camera and HUD follow the new size, my blob stays on screen
+    const fit = (p) => p.evaluate(() => {
+      const sc = window.__dgScene, cam = sc.cameras.main, c = document.querySelector('#game canvas');
+      const me = window.__blobzView.players.find((q) => q.id === window.__blobzView.myId) ?? window.__blobzView.players[1];
+      const sx = (me.x - cam.worldView.x) * cam.zoom, sy = (me.y - cam.worldView.y) * cam.zoom;
+      const hud = document.getElementById('hud-dg').getBoundingClientRect();
+      return { vw: innerWidth, vh: innerHeight, cw: c.clientWidth, ch: c.clientHeight, camW: cam.width, camH: cam.height, sx, sy, hudW: hud.width };
+    });
+    for (const [w, h] of [[844, 390], [390, 844]]) {
+      await ada.setViewportSize({ width: w, height: h });
+      await ada.waitForTimeout(900);
+      const r = await fit(ada);
+      ok(r.cw === w && r.ch === h && r.camW === w && r.camH === h && r.sx > 0 && r.sx < w && r.sy > 0 && r.sy < h && r.hudW > 0,
+        `rotated to ${w}x${h}: canvas ${r.cw}x${r.ch}, camera ${r.camW}x${r.camH}, my blob on screen at ${Math.round(r.sx)},${Math.round(r.sy)}`);
+    }
     ok(errors.length === 0, `no page errors (${errors.join(' | ') || 'none'})`);
     console.log('\nall dungeon-rooms checks passed');
   } catch (e) {
