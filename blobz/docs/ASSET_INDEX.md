@@ -11,13 +11,13 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
   image / CSS background or border image / canvas icon, or a WebGL texture bound at a Phaser draw call); CODE ONLY =
   referenced but never shown in the run (remove the reference and the file); UNUSED = no reference and never shown.
 
-**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 145 / IN GAME 27 / UNUSED 43.
+**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 181 / IN GAME 27 / UNUSED 48.
 
 **Claude-drawn still IN GAME** (0): none
 
 **Kenney still IN GAME** (0): none
 
-**Counts by source:** ChatGPT 164 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 17 (Ninja: 118 referenced by code). **Own files:** 215, 0 delete candidates.
+**Counts by source:** ChatGPT 205 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 17 (Ninja: 118 referenced by code). **Own files:** 256, 0 delete candidates.
 
 ## Own files (art, Kenney, app icons)
 
@@ -81,14 +81,49 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/dungeon/icons/phase-out-32.png` | 32x32 | ChatGPT N-12 move/mode icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/icons/shield-charge-16.png` | 16x16 | ChatGPT N-12 move/mode icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonUi.ts:39 | keep |
 | `art/dungeon/icons/shield-charge-32.png` | 32x32 | ChatGPT N-12 move/mode icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/dungeon/items/amulet.png` | 16x16 | ChatGPT N-23 loot items, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:148 | keep |
+| `art/dungeon/items/gloves.png` | 16x16 | ChatGPT N-23 loot items, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:147 | keep |
+| `art/dungeon/items/helm.png` | 16x16 | ChatGPT N-23 loot items, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:146 | keep |
+| `art/dungeon/items/ring.png` | 16x16 | ChatGPT N-23 loot items, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:145 | keep |
+| `art/dungeon/items/stone.png` | 16x16 | ChatGPT N-23 loot items, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/ninjaArt.ts:9, src/dungeon.ts:149, src/resArt.ts:8 (+6) | keep |
 | `art/dungeon/potion.png` | 16x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | CODE ONLY | src/dungeon.ts:375, src/dungeon.ts:928, src/dungeonScene.ts:902 | replace (see OLD_ART_CHECKLIST) |
 | `art/dungeon/revive.png` | 48x20 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | CODE ONLY | src/dungeon.ts:373, src/dungeon.ts:585, src/dungeon.ts:627 (+2) | replace (see OLD_ART_CHECKLIST) |
+| `art/dungeon/skills/healer-bubble.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:25, src/dungeon.ts:124 | keep |
+| `art/dungeon/skills/healer-cleanse.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:26, src/dungeon.ts:127 | keep |
+| `art/dungeon/skills/healer-heal.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:25, src/dungeon.ts:122 | keep |
+| `art/dungeon/skills/healer-holy.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:26, src/dungeon.ts:126 | keep |
+| `art/dungeon/skills/healer-regen.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:25, src/dungeon.ts:123 | keep |
+| `art/dungeon/skills/healer-revive.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:25, src/dungeon.ts:125 | keep |
+| `art/dungeon/skills/marksman-crit.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:27, src/dungeon.ts:130 | keep |
+| `art/dungeon/skills/marksman-multishot.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:27, src/dungeon.ts:128 | keep |
+| `art/dungeon/skills/marksman-pierce.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:27, src/dungeon.ts:129 | keep |
+| `art/dungeon/skills/marksman-poison.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:28, src/dungeon.ts:132 | keep |
+| `art/dungeon/skills/marksman-speed.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:27, src/dungeon.ts:131 | keep |
+| `art/dungeon/skills/marksman-trap.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:28, src/dungeon.ts:133 | keep |
+| `art/dungeon/skills/rogue-extraheart.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:23, src/dungeon.ts:119 | keep |
+| `art/dungeon/skills/rogue-knockback.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:23, src/dungeon.ts:117 | keep |
+| `art/dungeon/skills/rogue-lifesteal.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:24, src/dungeon.ts:120 | keep |
+| `art/dungeon/skills/rogue-power.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:24, src/dungeon.ts:121 | keep |
+| `art/dungeon/skills/rogue-rage.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonText.ts:13, src/dungeon.ts:23, src/dungeon.ts:116 | keep |
+| `art/dungeon/skills/rogue-whirlwind.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:23, src/dungeon.ts:118 | keep |
+| `art/dungeon/skills/tank-armor.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:29, src/dungeon.ts:136 | keep |
+| `art/dungeon/skills/tank-block.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:29, src/dungeon.ts:134 | keep |
+| `art/dungeon/skills/tank-charge.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:29, src/dungeon.ts:137 | keep |
+| `art/dungeon/skills/tank-guard.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:30, src/dungeon.ts:139 | keep |
+| `art/dungeon/skills/tank-stun.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:30, src/dungeon.ts:138 | keep |
+| `art/dungeon/skills/tank-taunt.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:29, src/dungeon.ts:135 | keep |
 | `art/dungeon/ui/boss-bar-frame.png` | 160x16 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:212 | keep |
 | `art/dungeon/ui/boss-emblem.png` | 16x16 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonUi.ts:280 | keep |
+| `art/dungeon/ui/btn-round-disabled-18.png` | 18x18 | ChatGPT N-19b round button rings, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:23 | keep |
+| `art/dungeon/ui/btn-round-disabled-24.png` | 24x24 | ChatGPT N-19b round button rings, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:23 | keep |
 | `art/dungeon/ui/btn-round-disabled-48.png` | 48x48 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:121, src/uikit2.ts:23 | keep |
 | `art/dungeon/ui/btn-round-disabled-64.png` | 64x64 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:23 | keep |
+| `art/dungeon/ui/btn-round-normal-18.png` | 18x18 | ChatGPT N-19b round button rings, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:23 | keep |
+| `art/dungeon/ui/btn-round-normal-24.png` | 24x24 | ChatGPT N-19b round button rings, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:23 | keep |
 | `art/dungeon/ui/btn-round-normal-48.png` | 48x48 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:115, src/style.css:1046, src/uikit2.ts:23 | keep |
 | `art/dungeon/ui/btn-round-normal-64.png` | 64x64 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:101, src/uikit2.ts:23 | keep |
+| `art/dungeon/ui/btn-round-pressed-18.png` | 18x18 | ChatGPT N-19b round button rings, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:23 | keep |
+| `art/dungeon/ui/btn-round-pressed-24.png` | 24x24 | ChatGPT N-19b round button rings, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:23 | keep |
 | `art/dungeon/ui/btn-round-pressed-48.png` | 48x48 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:119, src/uikit2.ts:23 | keep |
 | `art/dungeon/ui/btn-round-pressed-64.png` | 64x64 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:104, src/uikit2.ts:23 | keep |
 | `art/dungeon/ui/hazard-ring-0.png` | 48x32 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
@@ -126,6 +161,11 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/icons/dash-arrow.png` | 14x10 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/ninjaArt.ts:39, src/dungeonUi.ts:325, index.html:149 | replace (see OLD_ART_CHECKLIST) |
 | `art/icons/dash.png` | 19x14 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonUi.ts:160, src/controls.ts:20, src/dungeonDemo.ts:43 (+7) | replace (see OLD_ART_CHECKLIST) |
 | `art/icons/dice.png` | 12x12 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:20, index.html:56 | replace (see OLD_ART_CHECKLIST) |
+| `art/icons/mouth-1.png` | 16x16 | ChatGPT N-25 mouths, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/mouth-2.png` | 16x16 | ChatGPT N-25 mouths, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/mouth-3.png` | 16x16 | ChatGPT N-25 mouths, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/mouth-4.png` | 16x16 | ChatGPT N-25 mouths, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/mouth-5.png` | 16x16 | ChatGPT N-25 mouths, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/icons/state/can-build-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/ninjaArt.ts:16, src/uikit2.ts:16, src/main.ts:415 | keep |
 | `art/icons/state/can-build-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16 | keep |
 | `art/icons/state/done-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16, src/main.ts:415 | keep |
@@ -144,6 +184,7 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/icons/ui/close-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
 | `art/icons/ui/colour-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
 | `art/icons/ui/colour-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/dash-16.png` | 16x16 | ChatGPT N-24 dash symbol, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
 | `art/icons/ui/dice-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/ninjaArt.ts:11, src/uikit2.ts:15 | keep |
 | `art/icons/ui/dice-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
 | `art/icons/ui/eyes-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
@@ -193,8 +234,8 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/meadow/magnet-32.png` | 32x32 | ChatGPT N-15 meadow extras, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/meadow/sign-16.png` | 16x16 | ChatGPT N-15 meadow extras, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/meadow/sign-32.png` | 32x32 | ChatGPT N-15 meadow extras, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/meadow/speed-16.png` | 16x16 | ChatGPT N-15 meadow extras, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/meadow/speed-32.png` | 32x32 | ChatGPT N-15 meadow extras, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/meadow/speed-16.png` | 16x16 | ChatGPT N-15b speed power-up, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/meadow/speed-32.png` | 32x32 | ChatGPT N-15b speed power-up, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/mini/bg.png` | 941x1672 | ChatGPT N-9 Bärregn background | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/game.ts:251 | keep |
 | `art/ninja/bridge.png` | 64x46 | Ninja crop: Ninja Adventure rect cut by scripts/ninja_crops.py (Code) | CC0 1.0 (Ninja Adventure) | IN GAME | src/ninjaArt.ts:24, src/sim.ts:125, src/sim.ts:126 (+6) | keep |
 | `art/ninja/bush.png` | 32x32 | Ninja crop: Ninja Adventure rect cut by scripts/ninja_crops.py (Code) | CC0 1.0 (Ninja Adventure) | CODE ONLY (loaded, not shown) | src/ninjaArt.ts:24, index.html:93 | keep |
@@ -437,30 +478,30 @@ See `archive/README.md`.
 | `archive/art/dungeon/ko-stars.png` | 40x9 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
 | `archive/art/dungeon/level-badge.png` | 15x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
 | `archive/art/dungeon/shockwave.png` | 144x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/healer-bubble.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/healer-cleanse.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/healer-heal.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/healer-holy.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/healer-regen.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/healer-revive.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/marksman-crit.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/marksman-multishot.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/marksman-pierce.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/marksman-poison.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/marksman-speed.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/marksman-trap.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/rogue-extraheart.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/rogue-knockback.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/rogue-lifesteal.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/rogue-power.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/rogue-rage.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/rogue-whirlwind.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/tank-armor.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/tank-block.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/tank-charge.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/tank-guard.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/tank-stun.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
-| `archive/art/dungeon/skills/tank-taunt.png` | 24x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/skills/healer-bubble.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/skills/healer-cleanse.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/skills/healer-heal.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/skills/healer-holy.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/skills/healer-regen.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/skills/healer-revive.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/skills/marksman-crit.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/skills/marksman-multishot.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/skills/marksman-pierce.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/skills/marksman-poison.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/skills/marksman-speed.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/skills/marksman-trap.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/skills/rogue-extraheart.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/skills/rogue-knockback.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/skills/rogue-lifesteal.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/skills/rogue-power.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/skills/rogue-rage.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/skills/rogue-whirlwind.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/skills/tank-armor.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/skills/tank-block.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/skills/tank-charge.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/skills/tank-guard.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/skills/tank-stun.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/skills/tank-taunt.png` | 24x24 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
 | `archive/art/dungeon/slam-warning.png` | 48x24 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
 | `archive/art/dungeon/stairs-down.png` | 32x32 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
 | `archive/art/dungeon/stairs-up.png` | 32x32 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
