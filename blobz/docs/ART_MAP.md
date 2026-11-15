@@ -121,7 +121,7 @@ Reference for wiring art. **One art source:** CC0 "Ninja Adventure" pack, vendor
 | Big thatched hall | TilesetHouse.png | roof 400,112,64,80 + door front 400,192,64,32 (stack -> 64x112) | Modular; check the join in game. |
 | Tent | tileset_camp.png | 64,0,48,48 | 2 more at 112,0 and 160,0. |
 | Campfire | tileset_camp.png | 192,48,32,32 | Static; flames from FX/Particle/Fire.png. |
-| Fences | TilesetHouse.png | wood fence tiles 128,64..256,128; sand wall 128,128..256,160; iron fence 144,160,80,32 | |
+| Fences | TilesetHouse.png | wood fence tiles 128,64..256,128; sand wall 128,128..256,160; iron fence 144,160,80,32 | ON HOLD (puzzles on hold 2026-11-15) |
 | Flag (animated) | Backgrounds/Animated/Flag/Flag{Color}16x16.png | 4 frames 16x16 | Team / base marker. |
 | Cart | TilesetElement.png | empty 0,48,32,32; loaded 32,48,32,32 | Delivery / carry flavour. |
 | Signpost | TilesetElement.png | 96,48,16,32 | |
@@ -255,7 +255,7 @@ Reference for wiring art. **One art source:** CC0 "Ninja Adventure" pack, vendor
 | Floor hatch (entrance / exit) | TilesetWallSimple.png | 32,112,32,32 (brown), 112,112,32,32 (green) | Round hatch with a hole. Vent: 16,112,16,16. |
 | Stairs down / up | Backgrounds/Tilesets/TilesetElement.png | down: 96,176 / 112,176 / 128,176 / 144,176; up: same x at y192 (16x16) | Sand, snow, orange, green-stone styles. Trapdoor tiles at y208. |
 | Dungeon entrance (overworld) | TilesetHouse.png | stone arch 464,322,48,42 | Put a dark tile or stairs-down under it. Alt: green stone hut 464,208,32,32. |
-| Pressure plate | Backgrounds/Tilesets/TilesetDungeon.png | 0,16,16,16 (red); 16,16,16,16 (pressed) | Fits the "N blobz on a plate" co-op moment. |
+| Pressure plate | Backgrounds/Tilesets/TilesetDungeon.png | 0,16,16,16 (red); 16,16,16,16 (pressed) | ON HOLD (puzzles on hold 2026-11-15). Fits the "N blobz on a plate" co-op moment. |
 | Push block | TilesetDungeon.png | 32,16,16,16 / 48,16,16,16 | |
 | Spike trap / grate | TilesetDungeon.png | 64,16,16,16 / 80,16,16,16 | |
 | Lock block | TilesetDungeon.png | 0,0,16,16 | Keyhole. Second at 16,0. |
@@ -263,6 +263,41 @@ Reference for wiring art. **One art source:** CC0 "Ninja Adventure" pack, vendor
 | Orbs on pedestals | TilesetDungeon.png | 48,32,80,16 (5 colours) | |
 | Pit / hole | Backgrounds/Tilesets/TilesetHole.png | 3x3 pit 0,0,48,48 | Dark hole with brown rim. |
 | Door | TilesetHouse.png | wooden doors 400,304,16,16 / 416,304,16,16 | MISSING a dungeon gate: use the stone arch, or Art draws in code. |
+
+## Dungeon rooms: 0x72 DungeonTileset II (chosen 2026-11-15)
+
+Stefan picked "Tileset 2" (docs/art-review/room-0x72-ii.png) for the Archero rooms. Vendored as
+`public/assets/0x72-dungeon-ii/0x72_DungeonTilesetII_v1.7.png` (512x512, CC0, https://0x72.itch.io/dungeontileset-ii);
+frame rects (name x y w h) in `tile_list_v1.7.txt`. Reference build: scripts/pack_rooms.py dt2().
+
+| Part | Frames (x,y,w,h on the sheet) |
+|---|---|
+| Floor | floor_1 16,64 (main) + floor_2..8: 32,64 / 48,64 / 16,80 / 32,80 / 48,80 / 16,96 / 32,96 (cracks, use sparingly) |
+| Top wall | cap row: wall_top_left 16,0 / wall_top_mid 32,0 / wall_top_right 48,0; face row: wall_left 16,16 / wall_mid 32,16 / wall_right 48,16 |
+| Room corners + sides | wall_edge_top_left 31,120 / wall_edge_top_right 48,120 (cap row), wall_edge_left 32,136 / wall_edge_right 48,136 (face row), wall_edge_mid_left 32,152 / wall_edge_mid_right 48,152 (sides), wall_edge_bottom_left 32,168 / wall_edge_bottom_right 48,168 (bottom corners); bottom wall = wall_top_mid 32,0 |
+| Inner corners / T | wall_edge_tshape_bottom_right 64,152 / _bottom_left 80,152 / tshape_right 64,168 / tshape_left 80,168; outer walls wall_outer_* 0..16,136..168 |
+| Door | doors_frame_top 32,224,32,16; doors_frame_left 16,240,16,32; doors_frame_right 64,240,16,32; doors_leaf_closed 32,240,32,32; doors_leaf_open 80,240,32,32 |
+| Exit / holes | floor_stairs 80,192; floor_ladder 48,96; hole 96,144; edge_down 96,128 |
+| Decor | wall_banner_red 16,32 / blue 32,32 / green 16,48 / yellow 32,48; column 80,80,16,48; column_wall 96,80,16,48; wall fountains 64..96,0..64; wall_goo 64,80 |
+| Traps / props | floor_spikes_anim_f0..f3 16..64,192; lever_left 80,208 / lever_right 96,208; crate 288,408,16,24; skull 288,432; chests 304..336,400..432 |
+| Monsters (scale) | goblin_idle 368,40 (16x16), imp 368,64, tiny_zombie 368,16, big_demon 16,428,32,36, ... see tile_list |
+
+The ChatGPT wall sets N-34/N-34b/N-34c/N-34d (`art/dungeon/door-*`, `wall-*`), N-35 (`sand-*`) and N-36 (marble,
+not cut) are SUPERSEDED by this pack (files kept).
+
+## Puzzle art ON HOLD (puzzles on hold 2026-11-15)
+
+Stefan put puzzles on hold: no fence, pressure plates or chests on the meadow for now. The ChatGPT art stays in
+public/ (not archived): N-30 `art/props/plate-*`, `gate-*`; N-30b `art/props/fence-*` (pen v4 last, fence work
+stopped); N-33 `art/props/chest-*`. The Ninja pressure plate and fence rows below are on hold too.
+
+## Fallback options (not in use)
+
+- **Fence:** "16x16 Fence and Well [Tiny 16]", https://opengameart.org/node/114382 (reference: docs/art-review/fence-reference-tiny16.jpg).
+  Its page says no attribution required, and its fence source ("Fantastic Fence") is CC0. The licence field could not be
+  read (opengameart blocks automated fetches), and the well is a recolour of Tiny 16: Basic, which is CC-BY 4.0/3.0 /
+  OGA-BY 3.0. Before use, open the page and confirm the licence field (CC0 expected for the fence) and the author.
+  Current fence = ChatGPT N-30b (scripts/fence_pieces.py).
 
 ## Forbidden art (Stefan, PLAN.md 2026-11-15)
 Never use these, not as a stand-in either:

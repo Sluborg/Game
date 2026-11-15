@@ -5,6 +5,7 @@
 
 | Pack | Author | License | Source | Files |
 |---|---|---|---|---|
+| 16x16 DungeonTileset II v1.7 | 0x72 (Robert) | CC0 1.0 | https://0x72.itch.io/dungeontileset-ii | `0x72-dungeon-ii/0x72_DungeonTilesetII_v1.7.png`, `0x72-dungeon-ii/tile_list_v1.7.txt`, `0x72-dungeon-ii/LICENSE.txt` (chosen for the Archero dungeon rooms 2026-11-15) |
 | Tiny Town 1.1 | Kenney (www.kenney.nl) | CC0 1.0 | https://opengameart.org/content/tiny-town | `kenney-tiny-town/tilemap_packed.png`, `kenney-tiny-town/License.txt` |
 | Tiny Dungeon 1.0 | Kenney (www.kenney.nl) | CC0 1.0 | https://opengameart.org/content/tiny-dungeon | `kenney-tiny-dungeon/tilemap_packed.png`, `kenney-tiny-dungeon/License.txt` |
 | Tiny Farm 1.0 | Kenney (www.kenney.nl) | CC0 1.0 | https://opengameart.org/content/tiny-farm | `kenney-tiny-farm/tilemap_packed.png`, `kenney-tiny-farm/License.txt` |
