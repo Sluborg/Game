@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { KEYS } from './i18n';
 import {
-  AIM_WARN, BITE_TIME, CLASS_MOVE_COOLDOWN, CLASS_WEAPONS, BITE_WARN, bossHp, BURST, BURST_DMG, BURST_GAP, BURST_SPREAD, CLASS_HP, CLASSES, DASH_TIME, DASH_WARN, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, GH, GW,
+  AIM_WARN, BITE_TIME, CLASS_MOVE_COOLDOWN, DUNGEON_TIMER_ENABLED, CLASS_WEAPONS, BITE_WARN, bossHp, BURST, BURST_DMG, BURST_GAP, BURST_SPREAD, CLASS_HP, CLASSES, DASH_TIME, DASH_WARN, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, GH, GW,
   HEAL_BOLT, heroMods, refresh, inSwing, isWall, ITEMS, itemOf, KO_SECONDS, LEVEL_XP, LOOT_SECONDS, makeFloor, makeGoo, newRun, POTION_HP, REGEN_EVERY,
   skillIcon, skillOf, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
 } from './dungeon';
-import { createState, DUNGEON_ENABLED, ENTRANCE_R, entranceOf, makePuzzles, makeTrees, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
+import { createState, DUNGEON_ENABLED, PICK_TIMER_ENABLED, ENTRANCE_R, entranceOf, makePuzzles, makeTrees, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
 
 /** Art's skill icons in the repo (vite glob, no node fs types needed). */
 const NA_ICONS = Object.keys(import.meta.glob('../public/assets/ninja-adventure/Ui/Skill Icon/**/*.png')).map((k) => k.replace('../public/', ''));
@@ -682,12 +682,14 @@ describe('dungeon', () => {
     expect(run1(d, [body('a', d.map.exit.x, d.map.exit.y)], undefined, DONE_SECONDS + 0.2).r).toBe('out');
   });
 
-  it('the run ends when its time is up; snapshot round-trips', () => {
+  it('no time limit underground (DUNGEON_TIMER_ENABLED off); snapshot round-trips', () => {
     const d = quiet(newRun(13, { a: 'spear' }));
+    expect(DUNGEON_TIMER_ENABLED).toBe(false);
     d.time = 0.05;
-    run1(d, [body('a', d.map.start.x, d.map.start.y)], undefined, 0.2);
-    expect(d.done).toBeGreaterThan(0);
-    expect(d.why).toBe('time');
+    run1(d, [body('a', d.map.start.x, d.map.start.y)], undefined, 2);
+    expect(d.done).toBe(0); // the clock no longer ends a run
+    expect(d.time).toBe(0.05);
+    d.why = 'time'; // (the snapshot still carries every end reason)
     d.heroes.a.hp = 37;
     goo(d, 3, 100, 100, { hp: 12 });
     d.spit.push({ id: 77, x: 5, y: 6, vx: 1, vy: 0, t: 1 });
@@ -744,6 +746,10 @@ describe('dungeon', () => {
     expect(s.mode).toBe('pick');
     pickWeapon(s, 'a', 'hammer');
     step(s, idle, 1 / 60);
+    expect(s.mode).toBe('pick');
+    // no pick timer (PICK_TIMER_ENABLED off): b may take its time, nobody is pushed down unpicked
+    expect(PICK_TIMER_ENABLED).toBe(false);
+    for (let i = 0; i < 60 * 40; i++) step(s, idle, 1 / 60);
     expect(s.mode).toBe('pick');
     pickWeapon(s, 'b', 'spear');
     pickWeapon(s, 'b', 'laser'); // ignored

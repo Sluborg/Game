@@ -5,13 +5,13 @@
 import './dungeon.css';
 import type { Controls } from './controls';
 import {
-  skillIcon, ITEM_ICON, CLASS_WEAPONS, CLASSES, FLOORS, heroMods, itemOf, LEVEL_XP, LOOT_SECONDS, skillOf, specialOf,
+  DUNGEON_TIMER_ENABLED, skillIcon, ITEM_ICON, CLASS_WEAPONS, CLASSES, FLOORS, heroMods, itemOf, LEVEL_XP, LOOT_SECONDS, skillOf, specialOf,
   type DView, type HeroClass, type Weapon,
 } from './dungeon';
 import { sfx } from './sfx';
 import { t, tClass, tClassHint, tEffects, tItem, tSkill, tSpecial, tWeapon, tWeaponHint } from './dungeonText';
 import { applyI18n } from './i18n';
-import type { View } from './sim';
+import { PICK_TIMER_ENABLED, type View } from './sim';
 
 const $ = (id: string) => document.getElementById(id)!;
 const show = (id: string, on: boolean) => document.getElementById(id)?.classList.toggle('hidden', !on);
@@ -122,8 +122,8 @@ function renderHud(d: DView, myId: string) {
   if (h) renderHearts(h.hp, h.maxHp);
   setText($('dg-gold'), String(d.gold));
   setText($('dg-floor'), t('dg.floor', { n: d.floor, max: FLOORS }));
-  setText($('dg-time'), fmt(d.time));
-  $('dg-time').classList.toggle('low', d.time <= 30);
+  $('dg-time').classList.toggle('hidden', !DUNGEON_TIMER_ENABLED); // no time limit underground (flag off)
+  if (DUNGEON_TIMER_ENABLED) { setText($('dg-time'), fmt(d.time)); $('dg-time').classList.toggle('low', d.time <= 30); }
   setText($('dg-level'), String(d.level));
   const lo = d.level >= 2 ? LEVEL_XP[d.level - 2] : 0, hi = LEVEL_XP[d.level - 1] ?? lo + 1;
   $('dg-xpfill').style.width = Math.round(Math.max(0, Math.min(1, (d.xp - lo) / Math.max(1, hi - lo))) * 100) + '%';
@@ -290,7 +290,9 @@ export function dungeonUi(v: View, myId: string | undefined, controls: Controls,
   if (mode === 'pick') {
     const picked = v.picked?.length ?? 0;
     const secs = Math.max(0, Math.ceil(v.pickT));
-    setText($('pick-wait'), myPick ? t('dg.waitFriends', { n: picked, max: v.players.length, s: secs }) : t(pickClass ? 'dg.tapWeapon' : 'dg.tapClass', { s: secs }));
+    // no pick timer (PICK_TIMER_ENABLED off): pick in your own time, no seconds shown
+    const tail = PICK_TIMER_ENABLED ? ` · ${secs} s` : '';
+    setText($('pick-wait'), (myPick ? t('dg.waitFriends', { n: picked, max: v.players.length }) : t(pickClass ? 'dg.tapWeapon' : 'dg.tapClass')) + tail);
     return true;
   }
   if (mode !== 'dungeon' || !v.dungeon) return false;

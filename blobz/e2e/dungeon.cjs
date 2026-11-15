@@ -28,6 +28,8 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     await place(host, 2, ent.x, ent.y + 16);
     for (const p of pages) await p.waitForSelector('#weapon-pick:not(.hidden)', { timeout: 6000 });
     ok(true, 'everyone on the entrance 1.5 s -> class cards on all 3 phones');
+    // no pick timer: no seconds on the cards (the unit test checks that nobody is pushed down while choosing)
+    ok(!/\d+ s\b/.test(await ada.textContent('#pick-wait')), `class pick shows no countdown ("${await ada.textContent('#pick-wait')}")`);
     // Stefan: Rogue (dagger); Ada: Helare; Bo: Skytt (one weapon per class, picked at once)
     if (shots) { await ada.screenshot({ path: `${shots}/dg-class-portrait.png` }); await bo.screenshot({ path: `${shots}/dg-class-landscape.png` }); }
     await host.click('.wcard[data-w="rogue"]');
@@ -43,6 +45,7 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     ok(hs[2].maxHp === 80 && hs[0].maxHp === 100, 'health follows the class (Skytt 80, Rogue 100)');
     ok(d.bossMax === 660, `boss health scales with 3 players (${d.bossMax})`);
     ok(await bo.isVisible('#attack') && await host.isVisible('#attack'), 'special button shows underground');
+    ok(!(await host.isVisible('#dg-time')) && !(await bo.isVisible('#dg-time')), 'no dungeon clock in the HUD (no time limit)');
 
     // quiet floor around the start: remove goo, keep everyone at the start
     // no level-up before the card step below (an open card freezes that blob until it picks)
@@ -154,8 +157,8 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     await ada.waitForTimeout(2600);
     if (shots) { await ada.screenshot({ path: `${shots}/dg-floor2-portrait.png` }); await bo.screenshot({ path: `${shots}/dg-floor2-landscape.png` }); }
 
-    // run ends (time) -> summary on all phones -> back on the meadow
-    await sim(host, (s) => { s.dg.time = 0.05; });
+    // run ends (no clock any more: the team leaves the run) -> summary on all phones -> back on the meadow
+    await sim(host, (s) => { s.dg.done = 6; s.dg.why = 'exit'; });
     for (const p of pages) await p.waitForSelector('#dg-end:not(.hidden)', { timeout: 5000 });
     const endGold = await ada.textContent('#dg-end-gold');
     ok(Number(endGold) >= 1, `"Dungeon klar!" on every phone (gold ${endGold}, splatted ${await ada.textContent('#dg-end-kills')})`);

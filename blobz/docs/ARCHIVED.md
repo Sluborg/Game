@@ -17,3 +17,12 @@
 - Tests: the sunset test in `src/sim.test.ts` is skipped while off; a quest-complete test replaces it. e2e ends rounds
   by filling the quest (`s.delivered = { ...s.quest }`).
 - To bring it back: set the flag to `true`; restore the e2e sunset steps from git history (gather.cjs dusk check).
+
+## archived: dungeon clock + class-pick timer (2026-11-15, Stefan via Lead: no time limit underground, pick in your own time)
+- No run timer underground: the clock is hidden from the HUD (`#dg-time`) and never ends a run. Flag:
+  `DUNGEON_TIMER_ENABLED = false` in `src/dungeon.ts` (`RUN_SECONDS` and the 'time' end reason stay in the code).
+- No class-pick countdown: the run starts when everyone has picked. Flag: `PICK_TIMER_ENABLED = false` in `src/sim.ts`
+  (`PICK_SECONDS` kept); the pick text shows no seconds (`src/dungeonUi.ts`).
+- Tests: `src/dungeon.test.ts` checks the clock no longer ends a run and that picking waits; `e2e/dungeon.cjs` checks no
+  clock in the HUD and no countdown on the class cards.
+- To bring them back: set the flags to `true` (the i18n texts then get " · N s" appended in code).

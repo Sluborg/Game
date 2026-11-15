@@ -185,7 +185,9 @@ export const SLAM_WARN = 1.1; // red ring on the ground before it lands
 export const SLAM_R = 72;
 export const SLAM_DMG = 25;
 export const KO_SECONDS = 5;
-export const RUN_SECONDS = 300; // a run ends (back to the meadow) after 5 minutes at the latest
+export const RUN_SECONDS = 300; // a run ends (back to the meadow) after 5 minutes at the latest (only with the timer on)
+/** Stefan 2026-11-15: no time limit underground (docs/ARCHIVED.md). The clock is hidden and never ends a run. */
+export const DUNGEON_TIMER_ENABLED = false;
 export const DONE_SECONDS = 6; // "Dungeon klar!" stays this long
 const HURT_INV = 0.8; // invulnerable after a hit
 /** Team XP needed to reach level n+1 (index = current level - 1). */
@@ -683,8 +685,8 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
     for (const b of bodies) { b.vx = 0; b.vy = 0; collideWalls(f, b, BLOB_R); }
     return d.done <= 0 ? 'out' : 'stay';
   }
-  d.time = Math.max(0, d.time - dt);
-  if (d.time <= 0) { d.done = DONE_SECONDS; d.why = 'time'; return 'stay'; }
+  if (DUNGEON_TIMER_ENABLED) d.time = Math.max(0, d.time - dt);
+  if (DUNGEON_TIMER_ENABLED && d.time <= 0) { d.done = DONE_SECONDS; d.why = 'time'; return 'stay'; }
   const mods = new Map<string, Mods>();
   // heroes: facing, timers, auto-attack, special, sidestep, KO/revive, cards
   for (const b of bodies) {
