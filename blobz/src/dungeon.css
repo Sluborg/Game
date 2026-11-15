@@ -95,7 +95,7 @@
 
 /* ---------- round combat buttons: N-19 ring (30 px art in its 64 / 48 px file) + a free N-12 symbol ---------- */
 #attack {
-  position: absolute; right: max(16px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom));
+  position: absolute; right: max(28px, calc(env(safe-area-inset-right) + 12px)); bottom: max(28px, calc(env(safe-area-inset-bottom) + 12px));
   width: 96px; height: 96px; padding: 0; pointer-events: auto; touch-action: none; border: 0; border-image: none; border-radius: 50%;
   display: flex; align-items: center; justify-content: center; image-rendering: pixelated; filter: none; box-shadow: none;
   background: url('/art/dungeon/ui/btn-round-normal-64.png') center / 192px 192px no-repeat; --cd: 0; /* 3x: ring 90 px */
@@ -110,7 +110,7 @@
 #attack.cd .icon { filter: saturate(0.2) brightness(0.85); }
 #hud.dungeon #dash {
   position: absolute; width: 64px; height: 64px; padding: 0; border: 0; border-image: none; border-radius: 50%; box-shadow: none; filter: none;
-  right: calc(max(16px, env(safe-area-inset-right)) + 96px); bottom: calc(max(20px, env(safe-area-inset-bottom)) + 80px);
+  right: calc(max(28px, calc(env(safe-area-inset-right) + 12px)) + 96px); bottom: calc(max(28px, calc(env(safe-area-inset-bottom) + 12px)) + 80px);
   display: flex; align-items: center; justify-content: center; image-rendering: pixelated;
   background: url('/art/dungeon/ui/btn-round-normal-48.png') center / 96px 96px no-repeat; --cd: 0; /* 2x: ring 60 px */
 }
@@ -246,3 +246,41 @@
 #dg-gold { display: inline-block; } /* (scale needs a box) */
 .dg-bump { animation: dgbump 0.35s ease-out; }
 @media (prefers-reduced-motion: reduce) { #dg-cards, #dg-loot, #dg-ko, #dg-end .card, #dg-boss, .skcard.on, .dg-bump { animation: none !important; } }
+
+/* ---------- the dungeon flow hides the meadow HUD completely (class pick + underground) ---------- */
+body.dgpick #hud { visibility: hidden; }
+body.dgflow #hud > :not(#hud-dg):not(#attack):not(#dash):not(#stick):not(#dg-ko):not(#dg-cards):not(#dg-loot):not(#dg-boss) { display: none !important; }
+#weapon-pick { background: #120a07ee; }
+/* one kit with the dark-wood HUD: every dungeon panel gets the same dark-wood frame and a dark title band
+   (parchment stays inside) */
+#weapon-pick .card, #dg-end .card, #dg-cards, #dg-loot, #dg-ko {
+  border: 6px solid #2a1810; border-radius: 6px; padding-top: 0;
+  box-shadow: inset 0 0 0 2px var(--dw-wood-hi), 0 4px 0 0 var(--dw-shadow); filter: none;
+}
+#weapon-pick .card h2, #dg-end .card h2, #dg-cards-title, #dg-loot-title {
+  margin: 0 -12px 8px; padding: 8px 12px; background: #2a1810; color: #fff3d6; font-size: 22px; border-bottom: 2px solid var(--dw-wood-hi);
+}
+#weapon-pick .card { padding-top: 0; }
+#dg-cards-row { margin-top: 4px; }
+#dg-ko { padding: 8px 16px; }
+#dg-end .card { padding: 0 16px 16px; }
+#dg-end .card h2 { margin: 0 -16px 8px; }
+#dg-cards, #dg-loot { padding-top: 0; }
+@media (orientation: landscape) and (max-height: 500px) {
+  #dg-cards-title, #dg-loot-title { margin: 0 -8px 4px; padding: 4px 8px; font-size: 18px; }
+}
+
+/* landscape: a compact HUD so it never hides monsters at the left edge (the camera also keeps the blob right of it) */
+@media (orientation: landscape) and (max-height: 500px) {
+  #hud-dg { padding: 4px 8px; gap: 4px; border-width: 3px; }
+  #dg-hearts { gap: 6px; }
+  #dg-hearts::before { width: 18px; height: 18px; }
+  .hpbar { width: 100px; height: 14px; }
+  .hpnum, #dg-floor, #dg-time { font-size: 14px; }
+  #dg-row { font-size: 14px; gap: 6px; }
+  #dg-row img.icon { width: 18px; height: 18px; }
+  #dg-level { width: 22px; height: 22px; font-size: 14px; }
+  #dg-xp .xpbar { width: 90px; height: 10px; }
+  #dg-item { width: 24px; height: 24px; }
+  #dg-item .dgicon { width: 18px; height: 18px; }
+}

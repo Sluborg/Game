@@ -56,3 +56,21 @@ For ChatGPT: skills = level-up cards (one class each); items = rare loot (any cl
   still exist for rogue and marksman); the amulet "Special 30% more often" does nothing for the healer and knight
   (their big buttons have no cooldown now); tank-block "Block" now means the shield charge's untouchable start;
   healer-holy says "staff" while the weapon is now called "wand" (Trollstav).
+
+## Update 2026-11-15 (Lead's go): texts + interim Ninja icons
+
+| Id | New name SV / EN | New effect SV / EN | Icon now (interim, until ChatGPT N-23) |
+|---|---|---|---|
+| amulet (item) | Stjärnamulett / Star amulet | Klassrörelsen laddas 30% snabbare / Class move recharges 30% faster (mod mvCd 0.7, every class) | Items & Weapon/Amulet |
+| tank-block | Skyddad rusning / Safe charge | Osårbar +0,4 s i rusningen / Untouchable +0.4 s in the charge | Spell/DefenseUpgrade |
+| healer-holy | Starkare trollstav / Stronger wand | (unchanged) | Spell/BookLight |
+| marksman-poison | Frostpilar / Frost arrows | (unchanged) | Spell/BookIce |
+| rogue-rage | (unchanged) | (unchanged) | Items & Weapon/Boot (was OrbFire) |
+| rogue-extraheart | (unchanged) | (unchanged) | Job & Action/Dish (was Heal, a duplicate) |
+| healer-bubble | (unchanged) | (unchanged) | Spell/OrbWater (was DefenseUpgrade) |
+| healer-cleanse | (unchanged) | (unchanged) | Spell/MagicWeapon (was OrbWater) |
+| marksman-trap | (unchanged) | (unchanged) | Meteo/Snow (was Hook) |
+| tank-taunt | (unchanged) | (unchanged) | Job & Action/Sing (was Talk) |
+| tank-charge | (unchanged) | (unchanged) | Spell/Cut (was RockSpike) |
+
+No icon is used twice any more.

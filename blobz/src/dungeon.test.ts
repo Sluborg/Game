@@ -544,6 +544,12 @@ describe('dungeon', () => {
           expect(healBolt(null).f.hp - 10).toBe(HEAL_BOLT);
           continue;
         }
+        if (key === 'mvCd') {
+          // the class move recharges faster: after one move the wait before the next is shorter
+          const wait = (x: typeof base) => { run1(x.d, [x.a]); x.a.lastDash++; run1(x.d, [x.a]); return x.d.heroes.a.mvCd; };
+          expect(wait(mod) / wait(base)).toBeCloseTo(val, 1);
+          continue;
+        }
         if (key === 'regen') {
           const x = mod; x.d.heroes.a.hp = 10;
           run1(x.d, [x.a], undefined, REGEN_EVERY + 0.1);
