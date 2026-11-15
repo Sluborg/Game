@@ -18,6 +18,8 @@ const ICON: Partial<Record<string, string>> = {
   Mun: u('Ui/Emote/emote1.png'), // open-mouth face, 14x13
   Joina: u('Items/Action/Interact.png'), // waving glove, 16x16
 };
+/** N-19 round button ring (set once Art has sliced dungeon/ui/btn-round-*). */
+const ROUND_RING = '';
 const GAPS = [
   'Tab icon "Form" (blob shape), 16x16 px art (48 px at 3x)',
   'Tab icon "Färg" (paint / colour drop), 16x16 px',
@@ -56,7 +58,17 @@ body.uikit > *:not(.k2) { display: none !important; }
   border-radius: 4px 4px 0 0; padding: 4px 0; }
 .k2 .ktabpanel { height: 16px; background: var(--parch-2); border: 2px solid var(--edge); border-top: 0; margin-top: -2px; border-radius: 0 0 4px 4px; }
 .k2 .ktab.on { background: var(--parch-2); position: relative; z-index: 1; padding-bottom: 6px; margin-bottom: -2px; }
-.k2 .kbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.k2 .kbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; }
+.k2 .kchipwrap { display: flex; justify-content: center; }
+.k2 .kchip { height: 48px; padding: 0 16px; display: inline-flex; align-items: center; gap: 6px; font: 700 16px var(--font); color: var(--plum);
+  background: var(--parch-2); border: 2px solid var(--edge-lo); border-radius: 4px; }
+/* calm press: nothing swaps, nothing changes size; the face moves 2 px down onto its shadow and darkens a little */
+.k2 .kbtn, .k2 .kchip { box-shadow: 0 4px 0 0 #3f263166; }
+.k2 .ksec { box-shadow: inset 0 -3px 0 0 #e4cf9f, 0 4px 0 0 #3f263166; }
+.k2 .press, .k2 .kbtn:active, .k2 .kchip:active, .k2 .kround:active { transform: translateY(2px); filter: brightness(0.9); }
+.k2 .kbtn.press, .k2 .kchip.press { box-shadow: 0 2px 0 0 #3f263166; }
+.k2 .ksec.press { box-shadow: inset 0 -3px 0 0 #e4cf9f, 0 2px 0 0 #3f263166; }
+.k2 .kround.press { box-shadow: inset 0 0 0 2px #c9965a, 0 2px 0 0 #3f263155; }
 .k2 .kbtn { height: 56px; display: flex; align-items: center; justify-content: center; gap: 8px; font: 700 20px var(--font); }
 .k2 .kpri { color: #fff8e8; text-shadow: 0 2px 0 #8a3d12; border: 6px solid; border-image: url('${TW}button_normal.png') 2 fill / 6px stretch; }
 .k2 .ksec { color: var(--plum); background: var(--parch-2); border: 2px solid var(--edge-lo); border-radius: 4px; box-shadow: inset 0 -3px 0 0 #e4cf9f; }
@@ -129,6 +141,16 @@ function label(target: HTMLElement, word: string, icons: boolean) {
   return target;
 }
 
+/** Round combat button: one circular wooden rim (N-19 ring when sliced), plain backing, free-standing symbol. */
+function roundBtn(small: boolean, pressed: boolean) {
+  const r = el('div', 'kround' + (small ? ' s' : '') + (pressed ? ' press' : ''));
+  if (ROUND_RING) r.classList.add('art');
+  const sym = small ? img(u('Items/Action/Interact.png'), 48, 48) : img(u('Items/Weapons/Sword/Sprite.png'), 18, 51);
+  if (small) sym.style.cssText = 'width:48px;height:48px;transform:none';
+  r.append(sym);
+  return r;
+}
+
 function variant(v: (typeof VARIANTS)[number]) {
   const s = el('section', `kvar ${v.cls}`);
   const head = el('div', 'kvhead');
@@ -151,9 +173,12 @@ function variant(v: (typeof VARIANTS)[number]) {
   TABS.forEach((n, i) => tabs.append(label(el('div', 'ktab' + (i === 1 ? ' on' : '')), n, v.icons)));
   s.append(tabs, el('div', 'ktabpanel'));
 
-  s.append(el('div', 'klab', 'Knappar'));
+  // every button type: normal | pressed (calm press: same size and frame, face 2 px down, shadow shrinks, a bit darker)
+  s.append(el('div', 'klab', 'Knappar: vanlig | nedtryckt'));
   const btns = el('div', 'kbtns');
-  btns.append(label(el('div', 'kbtn kpri'), 'Nytt spel', v.icons), label(el('div', 'kbtn ksec'), 'Joina', v.icons));
+  for (const pressed of [false, true]) btns.append(label(el('div', 'kbtn kpri' + (pressed ? ' press' : '')), 'Nytt spel', v.icons));
+  for (const pressed of [false, true]) btns.append(label(el('div', 'kbtn ksec' + (pressed ? ' press' : '')), 'Joina', v.icons));
+  for (const pressed of [false, true]) { const c = el('div', 'kchipwrap'); c.append(label(el('div', 'kchip' + (pressed ? ' press' : '')), 'Slumpa', v.icons)); btns.append(c); }
   s.append(btns);
 
   s.append(el('div', 'klab', 'Namnskylt'));
@@ -179,12 +204,9 @@ function variant(v: (typeof VARIANTS)[number]) {
   );
   s.append(cards);
 
-  s.append(el('div', 'klab', 'Stridsknappar (72 / 56 px)'));
+  s.append(el('div', 'klab', 'Stridsknappar 72 / 56 px: vanlig | nedtryckt'));
   const cb = el('div', 'kcombat');
-  const r1 = el('div', 'kround'); r1.append(img(u('Items/Weapons/Sword/Sprite.png'), 18, 51));
-  const r2 = el('div', 'kround s'); r2.append(img(u('Items/Action/Interact.png'), 48, 48));
-  r2.querySelector('img')!.style.cssText = 'width:48px;height:48px;transform:none';
-  cb.append(r1, r2);
+  for (const [small, pressed] of [[false, false], [false, true], [true, false], [true, true]]) cb.append(roundBtn(small, pressed));
   s.append(cb);
   return s;
 }
