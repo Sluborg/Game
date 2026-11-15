@@ -11,13 +11,13 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
   image / CSS background or border image / canvas icon, or a WebGL texture bound at a Phaser draw call); CODE ONLY =
   referenced but never shown in the run (remove the reference and the file); UNUSED = no reference and never shown.
 
-**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 51 / IN GAME 27 / UNUSED 66.
+**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 51 / IN GAME 27 / UNUSED 134.
 
-**Claude-drawn still IN GAME** (2): `art/dungeon/weapons/ninja-crossbow.png`, `art/dungeon/weapons/ninja-shield.png`
+**Claude-drawn still IN GAME** (0): none
 
 **Kenney still IN GAME** (0): none
 
-**Counts by source:** ChatGPT 94 / Claude-drawn 31 / Kenney 5 / Ninja 2037 / Ninja crop 14 (Ninja: 128 referenced by code). **Own files:** 144, 0 delete candidates.
+**Counts by source:** ChatGPT 164 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 14 (Ninja: 130 referenced by code). **Own files:** 212, 0 delete candidates.
 
 ## Own files (art, Kenney, app icons)
 
@@ -36,12 +36,14 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/base/watchtower.png` | 30x52 | Claude-drawn: scripts/base_art.py | Own art (CC0) | CODE ONLY | src/sim.ts:125, src/sim.ts:126, src/sim.ts:134 (+1) | replace (see OLD_ART_CHECKLIST) |
 | `art/base/well.png` | 28x36 | Claude-drawn: scripts/base_art.py | Own art (CC0) | CODE ONLY | src/sim.ts:125, src/sim.ts:126, src/sim.ts:134 (+1) | replace (see OLD_ART_CHECKLIST) |
 | `art/base/workshop.png` | 44x38 | Claude-drawn: scripts/base_art.py | Own art (CC0) | CODE ONLY | src/sim.ts:125, src/sim.ts:126, src/sim.ts:134 (+2) | replace (see OLD_ART_CHECKLIST) |
+| `art/dungeon-end-landscape.png` | 1672x941 | ChatGPT N-22 dungeon end screen | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/dungeon-end.png` | 941x1672 | ChatGPT N-22 dungeon end screen | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/boss-banner.png` | 103x28 | ChatGPT N-14 boss intro, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/boss-portrait.png` | 31x29 | ChatGPT N-14 boss intro, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/dungeon/card-class-healer.png` | 55x61 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:64 | keep |
-| `art/dungeon/card-class-marksman.png` | 54x60 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:64 | keep |
-| `art/dungeon/card-class-rogue.png` | 55x57 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:64 | keep |
-| `art/dungeon/card-class-tank.png` | 53x59 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:64 | keep |
+| `art/dungeon/card-class-healer.png` | 55x61 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:66 | keep |
+| `art/dungeon/card-class-marksman.png` | 54x60 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:66 | keep |
+| `art/dungeon/card-class-rogue.png` | 55x57 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:66 | keep |
+| `art/dungeon/card-class-tank.png` | 53x59 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:66 | keep |
 | `art/dungeon/fx/hit-spark-0.png` | 32x32 | ChatGPT N-13 combat FX (round 2), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/fx/hit-spark-1.png` | 32x32 | ChatGPT N-13 combat FX (round 2), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/fx/hit-spark-2.png` | 32x32 | ChatGPT N-13 combat FX (round 2), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
@@ -79,22 +81,33 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/dungeon/icons/phase-out-32.png` | 32x32 | ChatGPT N-12 move/mode icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/icons/shield-charge-16.png` | 16x16 | ChatGPT N-12 move/mode icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/icons/shield-charge-32.png` | 32x32 | ChatGPT N-12 move/mode icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/dungeon/potion.png` | 16x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | CODE ONLY | src/dungeon.ts:351, src/dungeon.ts:871, src/dungeonScene.ts:840 | replace (see OLD_ART_CHECKLIST) |
-| `art/dungeon/revive.png` | 48x20 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | CODE ONLY | src/dungeon.ts:349, src/dungeon.ts:533, src/dungeon.ts:575 (+2) | replace (see OLD_ART_CHECKLIST) |
-| `art/dungeon/weapons/crossbow-16.png` | 16x16 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/dungeon/potion.png` | 16x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | CODE ONLY | src/dungeon.ts:353, src/dungeon.ts:905, src/dungeonScene.ts:859 | replace (see OLD_ART_CHECKLIST) |
+| `art/dungeon/revive.png` | 48x20 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | CODE ONLY | src/dungeon.ts:351, src/dungeon.ts:562, src/dungeon.ts:604 (+2) | replace (see OLD_ART_CHECKLIST) |
+| `art/dungeon/ui/boss-bar-frame.png` | 160x16 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/dungeon/ui/boss-emblem.png` | 16x16 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/dungeon/ui/btn-round-disabled-48.png` | 48x48 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/dungeon/ui/btn-round-disabled-64.png` | 64x64 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/dungeon/ui/btn-round-normal-48.png` | 48x48 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/dungeon/ui/btn-round-normal-64.png` | 64x64 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/dungeon/ui/btn-round-pressed-48.png` | 48x48 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/dungeon/ui/btn-round-pressed-64.png` | 64x64 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/dungeon/ui/hazard-ring-0.png` | 48x32 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/dungeon/ui/hazard-ring-1.png` | 48x32 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/dungeon/ui/hazard-ring-2.png` | 48x32 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/dungeon/ui/hazard-ring-3.png` | 48x32 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/dungeon/ui/hazard-ring.png` | 192x32 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/dungeon/weapons/crossbow-16.png` | 16x16 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonScene.ts:41 | keep |
 | `art/dungeon/weapons/crossbow-32.png` | 32x32 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/weapons/dagger-16.png` | 16x16 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/weapons/dagger-32.png` | 32x32 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/weapons/hammer.png` | 20x13 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonText.ts:10, src/dungeon.ts:39, src/dungeon.ts:41 (+3) | keep |
-| `art/dungeon/weapons/ninja-crossbow.png` | 16x10 | Claude-drawn: scripts/ninja_weapons.py (Ninja palette) | Own art (CC0) | IN GAME | src/dungeonScene.ts:40 | keep (pending Stefan rating) |
-| `art/dungeon/weapons/ninja-shield.png` | 12x12 | Claude-drawn: scripts/ninja_weapons.py (Ninja palette) | Own art (CC0) | IN GAME | src/dungeonScene.ts:39 | keep (pending Stefan rating) |
-| `art/dungeon/weapons/shield-16.png` | 16x16 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/dungeon/weapons/shield-16.png` | 16x16 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonScene.ts:40 | keep |
 | `art/dungeon/weapons/shield-32.png` | 32x32 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/weapons/shield.png` | 19x19 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:39, src/dungeon.ts:41, src/dungeon.ts:45 (+6) | keep |
 | `art/dungeon/weapons/spear.png` | 38x8 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonText.ts:10, src/dungeon.ts:39, src/dungeon.ts:41 (+2) | keep |
 | `art/dungeon/weapons/sword-16.png` | 16x16 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/weapons/sword-32.png` | 32x32 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/dungeon/weapons/sword.png` | 27x11 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonUi.ts:22, src/dungeonUi.ts:145, src/dungeonText.ts:10 (+5) | keep |
+| `art/dungeon/weapons/sword.png` | 27x11 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonUi.ts:22, src/dungeonUi.ts:147, src/dungeonText.ts:10 (+5) | keep |
 | `art/dungeon/weapons/wand-16.png` | 16x16 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/weapons/wand-32.png` | 32x32 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/fine/fx/dust.png` | 112x24 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | CODE ONLY | src/game.ts:295, src/game.ts:1106, src/game.ts:1108 | replace (see OLD_ART_CHECKLIST) |
@@ -102,21 +115,72 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/fine/fx/plate-glow.png` | 42x32 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | CODE ONLY | src/game.ts:293, src/game.ts:959 | replace (see OLD_ART_CHECKLIST) |
 | `art/fine/gather/chips-stone.png` | 64x24 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | CODE ONLY | src/game.ts:233, src/game.ts:1029 | replace (see OLD_ART_CHECKLIST) |
 | `art/fine/gather/chips-wood.png` | 64x24 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | CODE ONLY | src/game.ts:232, src/game.ts:1029 | replace (see OLD_ART_CHECKLIST) |
-| `art/fine/icons/chest.png` | 36x28 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | CODE ONLY | src/dungeon.ts:352, src/dungeon.ts:877, src/dungeonScene.ts:794 | replace (see OLD_ART_CHECKLIST) |
+| `art/fine/icons/chest.png` | 36x28 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | CODE ONLY | src/dungeon.ts:354, src/dungeon.ts:911, src/dungeonScene.ts:813 | replace (see OLD_ART_CHECKLIST) |
 | `art/fine/icons/magnet.png` | 30x30 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | CODE ONLY | src/sim.ts:45, src/sim.ts:768 | replace (see OLD_ART_CHECKLIST) |
 | `art/fine/icons/speed.png` | 32x32 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | CODE ONLY | src/sim.ts:45, src/sim.ts:699, src/sim.ts:768 (+3) | replace (see OLD_ART_CHECKLIST) |
 | `art/gather/star-empty.png` | 19x17 | ChatGPT N-10, sliced by scripts/slice_n_orders.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/ninjaArt.ts:13, index.html:110, index.html:111 (+2) | keep |
 | `art/gather/star.png` | 19x17 | ChatGPT N-10, sliced by scripts/slice_n_orders.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/ninjaArt.ts:13, src/main.ts:548, src/main.ts:551 | keep |
 | `art/gather/sun.png` | 13x13 | Claude-drawn: scripts/gather_art.py | Own art (CC0) | CODE ONLY | index.html:115 | replace (see OLD_ART_CHECKLIST) |
-| `art/icons/back.png` | 13x9 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonUi.ts:72, index.html:80, index.html:87 | replace (see OLD_ART_CHECKLIST) |
+| `art/icons/back.png` | 13x9 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonUi.ts:74, index.html:80, index.html:87 | replace (see OLD_ART_CHECKLIST) |
 | `art/icons/check.png` | 19x16 | ChatGPT N-10, sliced by scripts/slice_n_orders.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/uikit.ts:11, src/ninjaArt.ts:12, src/style.css:306 (+2) | keep |
-| `art/icons/dash-arrow.png` | 14x10 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/ninjaArt.ts:33, src/dungeonUi.ts:265, index.html:147 | replace (see OLD_ART_CHECKLIST) |
-| `art/icons/dash.png` | 19x14 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/controls.ts:20, src/dungeonDemo.ts:43, src/dungeonDemo.ts:47 (+6) | replace (see OLD_ART_CHECKLIST) |
+| `art/icons/dash-arrow.png` | 14x10 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/ninjaArt.ts:33, src/dungeonUi.ts:284, index.html:147 | replace (see OLD_ART_CHECKLIST) |
+| `art/icons/dash.png` | 19x14 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonUi.ts:150, src/controls.ts:20, src/dungeonDemo.ts:43 (+7) | replace (see OLD_ART_CHECKLIST) |
 | `art/icons/dice.png` | 12x12 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | index.html:56 | replace (see OLD_ART_CHECKLIST) |
+| `art/icons/state/can-build-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/state/can-build-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/state/done-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/state/done-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/state/lock-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/state/lock-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/state/tick-gold-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/state/tick-gold-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/state/tick-green-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/state/tick-green-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/state/you-arrow-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/state/you-arrow-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/back-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/back-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/close-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/close-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/colour-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/colour-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/dice-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/dice-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/eyes-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/eyes-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/hammer-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/hammer-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/hat-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/hat-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/home-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/home-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/join-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/join-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/mouth-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/mouth-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/new-game-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/new-game-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/pass-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/pass-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/play-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/play-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/quill-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/quill-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/settings-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/settings-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/shape-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/ui/shape-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/loading-landscape.png` | 1672x941 | ChatGPT N-3 loading screen | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/style.css:728 | keep |
 | `art/loading-portrait.png` | 941x1672 | ChatGPT N-3 loading screen | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/style.css:721 | keep |
 | `art/loading.png` | 470x836 | ChatGPT N-3 loading screen | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY (loaded, not shown) | src/style.css:463, src/style.css:470, src/main.ts:27 (+1) | keep |
 | `art/lobby.png` | 992x1586 | ChatGPT order 60 (lobby) | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/style.css:267, src/i18n.ts:5, src/i18n.ts:51 (+51) | replace (see OLD_ART_CHECKLIST) |
+| `art/lobby/party-platform.png` | 160x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/lobby/searching-blob-0.png` | 32x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/lobby/searching-blob-1.png` | 32x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/lobby/searching-blob-2.png` | 32x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/lobby/searching-blob-3.png` | 32x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/lobby/searching-blob.png` | 128x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/lobby/waiting-silhouette.png` | 20x20 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/logo-A.png` | 634x407 | ChatGPT N-1 logo (A/B/old = earlier variants) | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/logo-B.png` | 653x442 | ChatGPT N-1 logo (A/B/old = earlier variants) | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/logo-old.png` | 680x279 | ChatGPT N-1 logo (A/B/old = earlier variants) | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
@@ -160,8 +224,12 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/props-winter/tree-snow-pine.png` | 13x30 | Kenney Tiny Ski cut by scripts/winter_props.py | CC0 1.0 (Kenney) | CODE ONLY (loaded, not shown) | src/game.ts:49, src/game.ts:245, index.html:92 | replace (see OLD_ART_CHECKLIST) |
 | `art/props-winter/tree-snow-round.png` | 21x21 | Claude-drawn: scripts/winter_props.py | Own art (CC0) | CODE ONLY (loaded, not shown) | src/game.ts:49, src/game.ts:245, index.html:92 | replace (see OLD_ART_CHECKLIST) |
 | `art/props-winter/tree-snow-small.png` | 10x15 | Kenney Tiny Ski cut by scripts/winter_props.py | CC0 1.0 (Kenney) | CODE ONLY | src/game.ts:49, src/game.ts:245 | replace (see OLD_ART_CHECKLIST) |
+| `art/props/berry-bush-16.png` | 16x16 | ChatGPT N-16 berry bush, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/berry-bush-32.png` | 32x32 | ChatGPT N-16 berry bush, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/berry-bush-ninja-s.png` | 16x16 | Claude-drawn: scripts/berry_bush.py (berries on a Ninja bush) | Own art (CC0) | UNUSED | UNUSED | replace (Stefan dislikes; Code uses a Ninja bush + Ninja berry) |
 | `art/props/berry-bush-ninja.png` | 32x32 | Claude-drawn: scripts/berry_bush.py (berries on a Ninja bush) | Own art (CC0) | UNUSED | UNUSED | replace (Stefan dislikes; Code uses a Ninja bush + Ninja berry) |
+| `art/props/berry-bush-picked-16.png` | 16x16 | ChatGPT N-16 berry bush, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/berry-bush-picked-32.png` | 32x32 | ChatGPT N-16 berry bush, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/bush.png` | 15x13 | ChatGPT order 30 (map props), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | index.html:91 | replace (see OLD_ART_CHECKLIST) |
 | `art/props/gate.png` | 18x14 | ChatGPT order 30 (map props), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/sim.ts:250, src/sim.ts:723, src/game.ts:1085 | replace (see OLD_ART_CHECKLIST) |
 | `art/start-portrait.png` | 941x1672 | ChatGPT N-2 start screen, portrait | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/style.css:704, src/style.css:847 | keep |
@@ -245,7 +313,8 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `assets/ninja-adventure/Items/Weapons/Hammer/Sprite.png` | 9x16 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Items/Weapons/Lance/Sprite.png` | 6x23 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Items/Weapons/MagicWand/Sprite.png` | 5x18 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
-| `assets/ninja-adventure/Items/Weapons/Sai/Sprite.png` | 7x13 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
+| `assets/ninja-adventure/Items/Weapons/Ninjaku/SpriteInHand.png` | 3x12 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
+| `assets/ninja-adventure/Items/Weapons/Sai/Sprite.png` | 7x13 | Ninja Adventure | CC0 1.0 | CODE ONLY (loaded, not shown) | referenced by code | keep |
 | `assets/ninja-adventure/Items/Weapons/Sword/Sprite.png` | 6x17 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Emote/emote29.png` | 14x13 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Emote/emote3.png` | 14x13 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
@@ -257,10 +326,10 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `assets/ninja-adventure/Ui/Receptacle/Receptacle Sphere/ProgressWhite.png` | 22x22 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Amulet.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Armor.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
-| `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Arrow.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY (loaded, not shown) | referenced by code | keep |
+| `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Arrow.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Boot.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
-| `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Guard.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
-| `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Helmet.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY (loaded, not shown) | referenced by code | keep |
+| `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Guard.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
+| `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Helmet.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Hook.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Kunai.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Ring.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
@@ -268,10 +337,10 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `assets/ninja-adventure/Ui/Skill Icon/Job & Action/Harvest.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Job & Action/Mine.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Job & Action/Plant.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
-| `assets/ninja-adventure/Ui/Skill Icon/Job & Action/Potion.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
+| `assets/ninja-adventure/Ui/Skill Icon/Job & Action/Potion.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Job & Action/Punch.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Job & Action/Repair.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
-| `assets/ninja-adventure/Ui/Skill Icon/Job & Action/Talk.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
+| `assets/ninja-adventure/Ui/Skill Icon/Job & Action/Talk.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Meteo/Sun.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Spell/AttackUpgrade.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Spell/BookIce.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
@@ -285,12 +354,13 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `assets/ninja-adventure/Ui/Skill Icon/Spell/Heal.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Spell/LuckUpgrade.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Spell/MagicWeapon.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
+| `assets/ninja-adventure/Ui/Skill Icon/Spell/Mist.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Spell/OrbFire.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
-| `assets/ninja-adventure/Ui/Skill Icon/Spell/OrbLight.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
-| `assets/ninja-adventure/Ui/Skill Icon/Spell/OrbPlant.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
+| `assets/ninja-adventure/Ui/Skill Icon/Spell/OrbLight.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
+| `assets/ninja-adventure/Ui/Skill Icon/Spell/OrbPlant.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Spell/OrbWater.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Spell/RockSpike.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
-| `assets/ninja-adventure/Ui/Skill Icon/Spell/Upgrade.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
+| `assets/ninja-adventure/Ui/Skill Icon/Spell/Upgrade.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Spell/Vision.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Theme/Theme Wood/arrow_left.png` | 16x16 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Theme/Theme Wood/button_disabled.png` | 16x8 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
@@ -308,13 +378,13 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `assets/ninja-adventure/Actor/**` | 1366 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 13 referenced (rows above) | keep (the art source) |
 | `assets/ninja-adventure/Backgrounds/**` | 61 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 9 referenced (rows above) | keep (the art source) |
 | `assets/ninja-adventure/FX/**` | 105 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 31 referenced (rows above) | keep (the art source) |
-| `assets/ninja-adventure/Items/**` | 142 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 22 referenced (rows above) | keep (the art source) |
-| `assets/ninja-adventure/Ui/**` | 360 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 53 referenced (rows above) | keep (the art source) |
+| `assets/ninja-adventure/Items/**` | 142 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 23 referenced (rows above) | keep (the art source) |
+| `assets/ninja-adventure/Ui/**` | 360 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 54 referenced (rows above) | keep (the art source) |
 | `assets/ninja-adventure/Palette.png` | 10x9 | Ninja Adventure (pack preview / palette) | CC0 1.0 | UNUSED | keep (reference) |
 | `assets/ninja-adventure/preview-part-1.png` | 641x417 | Ninja Adventure (pack preview / palette) | CC0 1.0 | UNUSED | keep (reference) |
 | `assets/ninja-adventure/preview-part-2.png` | 641x417 | Ninja Adventure (pack preview / palette) | CC0 1.0 | UNUSED | keep (reference) |
 
-## Archived (`blobz/archive/`, not shipped): 229 files
+## Archived (`blobz/archive/`, not shipped): 231 files
 
 See `archive/README.md`.
 
@@ -409,6 +479,8 @@ See `archive/README.md`.
 | `archive/art/dungeon/weapons/dagger-1.png` | 16x6 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
 | `archive/art/dungeon/weapons/dagger-2.png` | 16x7 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
 | `archive/art/dungeon/weapons/daggers.png` | 16x14 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
+| `archive/art/dungeon/weapons/ninja-crossbow.png` | 16x10 | Claude-drawn: scripts/ninja_weapons.py (Ninja palette) | Own art (CC0) | archived (not shipped) |
+| `archive/art/dungeon/weapons/ninja-shield.png` | 12x12 | Claude-drawn: scripts/ninja_weapons.py (Ninja palette) | Own art (CC0) | archived (not shipped) |
 | `archive/art/dungeon/weapons/staff.png` | 29x9 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | archived (not shipped) |
 | `archive/art/dungeon/xp-fill.png` | 40x6 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
 | `archive/art/dungeon/xp-frame.png` | 42x8 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | archived (not shipped) |
