@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  BASE, CHEST_BUNDLE, createState, makePuzzles, makeTrees, puzzleNeeds, snapshot, step, viewFromSnapshot,
+  BASE, CHEST_BUNDLE, createState, PUZZLES_ENABLED, makePuzzles, makeTrees, puzzleNeeds, snapshot, step, viewFromSnapshot,
   WORLD_H, WORLD_W, type Input, type State,
 } from './sim';
 
@@ -13,7 +13,7 @@ const park = (s: State, id: string, x: number, y: number) => {
 /** Move everyone far from the plates so the test controls exactly who stands where. */
 const clear = (s: State) => s.players.forEach((p, i) => park(s, p.id, BASE.x - 40 + i * 40, BASE.y));
 
-describe('co-op puzzles', () => {
+describe.skipIf(!PUZZLES_ENABLED)('co-op puzzles', () => {
   it('layout is deterministic, inside the world, 2 pens in different corners, gate faces the base', () => {
     for (const seed of [1, 42, 999, 123456]) {
       const a = makePuzzles(seed), b = makePuzzles(seed);
@@ -90,6 +90,18 @@ describe('co-op puzzles', () => {
     for (let i = 0; i < 600; i++) step(s, idle, 1 / 10);
     for (const it of [...s.gems, ...s.powers]) for (const l of s.layout) {
       expect(it.x > l.zone.x0 && it.x < l.zone.x1 && it.y > l.zone.y0 && it.y < l.zone.y1).toBe(false);
+    }
+  });
+});
+
+describe('co-op puzzles archived', () => {
+  it.skipIf(PUZZLES_ENABLED)('no pens, plates, gates or chests on the meadow while PUZZLES_ENABLED is off', () => {
+    for (const seed of [1, 7, 424242]) {
+      expect(makePuzzles(seed)).toEqual([]);
+      const s = createState(['a', 'b', 'c'].map(P), seed);
+      expect(s.layout).toEqual([]);
+      expect(s.puzzles).toEqual([]);
+      expect(viewFromSnapshot(snapshot(s)).puzzles).toEqual([]);
     }
   });
 });

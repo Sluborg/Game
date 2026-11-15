@@ -45,3 +45,17 @@
 - Code stays behind one flag: `STONE_ENABLED = false` in `src/sim.ts` (rock art, pickaxe, rubble kept).
 - Tests: unit tests branch on `STONE_ENABLED`; `e2e/gather.cjs` chops a second tree instead of mining while stone is off.
 - To bring it back: set the flag to `true` and run the unit tests + `e2e/gather.cjs`, `e2e/build.cjs`.
+
+## archived: co-op puzzle pens (2026-11-15, Stefan via Lead: "put the puzzle pens ON HOLD")
+- No pressure plates, "0/1" plate counters, fenced pens, gates or reward chests on the meadow. The two pen corners
+  fill with ordinary meadow (trees, bushes, pickups may spawn there now).
+- Code stays behind one flag: `PUZZLES_ENABLED = false` in `src/sim.ts`. `makePuzzles` returns no pens, so the sim
+  (walls, plates, chest bundle), the snapshot, the renderer (`buildPuzzle` / `drawPuzzle` in `src/game.ts`) and the
+  keep-clear zones all see an empty list. Pen art (fence, gate, plates, chest) is kept.
+- `puzzleCorners` still runs, so the water corner keeps its old seeded spot, and `entranceOf` still reads the seeded
+  pen areas (`penLayouts`), so the dungeon cave stays where it was.
+- Stars / quest never counted puzzles (they are the goal bars only), so nothing else changes.
+- Tests: `src/puzzle.test.ts` skips the pen suite and checks that no pens exist; `e2e/puzzles.cjs` is skipped unless
+  `BLOBZ_PUZZLES=1`.
+- To bring it back: set the flag to `true` and run the unit tests + `BLOBZ_PUZZLES=1 node e2e/puzzles.cjs`.
+
