@@ -1360,3 +1360,7 @@ body.nostone .qrow[data-k="stone"], body.nostone .edge[data-k="stone"], body.nos
   background: var(--k-parch2); color: var(--k-plum); font-weight: 700; z-index: 2;
 }
 #custom .opts { position: relative; z-index: 1; }
+
+/* ChatGPT N-27 wood (Stefan 2026-11-15): the HUD picture is the 32 px file; where icons show at their own size
+   (build cost strip, end rows) it is drawn at 16 px, like the other 1x resource icons */
+#build-panel .bcard .bcost .c img[src*="res-wood-32"], #end .endrows .qicon[src*="res-wood-32"] { width: 16px; height: 16px; }
