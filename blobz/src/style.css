@@ -1404,3 +1404,8 @@ button.big:not(.alt):active, button.big:not(.alt).down {
   width: 100%; max-width: none; box-sizing: border-box; padding-bottom: 10.833%;
   background-size: 100% auto; background-origin: border-box; background-clip: border-box; background-position: center bottom;
 }
+
+/* BUG fix (Stefan 2026-11-15, "the colour tiles show no colours"): the option tile became a grid with a content-sized
+   column, so the swatch's width: 100% resolved to 0. One full-size cell, the swatch stretches over it. */
+#custom .opt.swatch-opt { display: grid; grid-template: 1fr / 1fr; }
+#custom .opt.swatch-opt i { width: auto; height: auto; justify-self: stretch; align-self: stretch; min-height: 0; }

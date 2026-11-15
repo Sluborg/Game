@@ -23,6 +23,14 @@ const tab = (p) => p.getAttribute('.tab.on', 'data-part');
     // layout width (offsetWidth): the preview squash-bounces, so its on-screen box changes from frame to frame
     const pw = await p.evaluate(() => document.getElementById('preview2').offsetWidth);
     ok(pw >= 118, `bigger live preview (${pw}px wide)`);
+    // BUG guard (Stefan 2026-11-15): the colour tiles must show their colours (a zero-width swatch once hid them)
+    await p.click('.tab[data-part="color"]'); await p.waitForTimeout(300);
+    const sw = await p.evaluate(() => [...document.querySelectorAll('#opts .swatch-opt i')].map((i) => {
+      const r = i.getBoundingClientRect(); return { w: r.width, h: r.height, bg: getComputedStyle(i).backgroundColor };
+    }));
+    const cream = ['rgb(255, 250, 240)', 'rgb(251, 242, 218)', 'rgb(246, 232, 196)', 'rgba(0, 0, 0, 0)'];
+    ok(sw.length >= 4 && sw.every((s) => s.w >= 40 && s.h >= 40 && !cream.includes(s.bg)) && new Set(sw.map((s) => s.bg)).size === sw.length,
+      `colour tiles show distinct colours (${sw.length} tiles, smallest ${Math.min(...sw.map((s) => Math.round(s.w)))}px wide)`);
     await p.click('.tab[data-part="eyes"]');
     await p.locator('#opts .opt').nth(3).click();
     ok(await p.locator('#preview2 .boing').count() === 1, 'choosing an option squash-bounces the preview');
