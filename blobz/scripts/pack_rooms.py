@@ -2,9 +2,10 @@
 """Test rooms built ONLY from a ready-made CC0 pack's own floor, walls, corners and door (contrast as the pack
 designs it), 10x8 tiles at 3x, door/exit at the top, entrance gap at the bottom, our blob + one pack monster.
 
-usage (from blobz/): python3 scripts/pack_rooms.py <packs dir>
-  -> docs/art-review/room-0x72-ii.png, room-0x72-v1.png (packs are NOT vendored; <packs dir> holds
-     0x72_dt2/0x72_DungeonTilesetII_v1.7.png and 0x72_dt1/sheet.png)
+usage (from blobz/): python3 scripts/pack_rooms.py [<packs dir>]
+  -> docs/art-review/room-0x72-ii.png (from the vendored public/assets/0x72-dungeon-ii sheet, chosen 2026-11-15)
+     + room-0x72-v1.png when <packs dir> holds 0x72_dt1/sheet.png (v1 is not vendored)
+Reference for Code: dt2() shows how the room is assembled (frame rects from tile_list_v1.7.txt).
 """
 import os
 import random
@@ -38,7 +39,7 @@ def finish(im, title, notes, out):
 
 
 def dt2(packs):
-    sh = Image.open(os.path.join(packs, '0x72_dt2', '0x72_DungeonTilesetII_v1.7.png')).convert('RGBA')
+    sh = Image.open(os.path.join(ROOT, 'public', 'assets', '0x72-dungeon-ii', '0x72_DungeonTilesetII_v1.7.png')).convert('RGBA')
     T = lambda x, y, w=16, h=16: sh.crop((x, y, x + w, y + h))  # noqa: E731
     rnd = random.Random(7)
     floors = [T(16, 64)] * 24 + [T(32, 64), T(48, 64), T(16, 80), T(32, 80), T(48, 80), T(16, 96), T(32, 96)]
@@ -123,5 +124,6 @@ def dt1(packs):
 
 
 if __name__ == '__main__':
-    dt2(sys.argv[1])
-    dt1(sys.argv[1])
+    dt2(None)  # the vendored sheet (public/assets/0x72-dungeon-ii)
+    if len(sys.argv) > 1:
+        dt1(sys.argv[1])  # v1 is not vendored: needs the downloaded sheet

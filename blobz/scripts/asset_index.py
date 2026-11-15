@@ -96,6 +96,7 @@ SOURCES = [
     ('art/mini/*.png', 'ChatGPT N-9 Bärregn background', GPT, True),
     ('icon-*.png', 'ChatGPT app icon (old, before N-7)', GPT, False),
     ('apple-touch-icon.png', 'ChatGPT app icon (old, before N-7)', GPT, False),
+    ('assets/0x72-dungeon-ii/*.png', '0x72 16x16 DungeonTileset II v1.7 sheet (frames in tile_list_v1.7.txt), chosen for the Archero rooms 2026-11-15', 'CC0 1.0 (0x72)', True),
     ('assets/kenney-*/*.png', 'Kenney pack (see public/assets/LICENSES.md)', CC0K, False),
 ]
 

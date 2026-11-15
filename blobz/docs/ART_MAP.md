@@ -264,6 +264,27 @@ Reference for wiring art. **One art source:** CC0 "Ninja Adventure" pack, vendor
 | Pit / hole | Backgrounds/Tilesets/TilesetHole.png | 3x3 pit 0,0,48,48 | Dark hole with brown rim. |
 | Door | TilesetHouse.png | wooden doors 400,304,16,16 / 416,304,16,16 | MISSING a dungeon gate: use the stone arch, or Art draws in code. |
 
+## Dungeon rooms: 0x72 DungeonTileset II (chosen 2026-11-15)
+
+Stefan picked "Tileset 2" (docs/art-review/room-0x72-ii.png) for the Archero rooms. Vendored as
+`public/assets/0x72-dungeon-ii/0x72_DungeonTilesetII_v1.7.png` (512x512, CC0, https://0x72.itch.io/dungeontileset-ii);
+frame rects (name x y w h) in `tile_list_v1.7.txt`. Reference build: scripts/pack_rooms.py dt2().
+
+| Part | Frames (x,y,w,h on the sheet) |
+|---|---|
+| Floor | floor_1 16,64 (main) + floor_2..8: 32,64 / 48,64 / 16,80 / 32,80 / 48,80 / 16,96 / 32,96 (cracks, use sparingly) |
+| Top wall | cap row: wall_top_left 16,0 / wall_top_mid 32,0 / wall_top_right 48,0; face row: wall_left 16,16 / wall_mid 32,16 / wall_right 48,16 |
+| Room corners + sides | wall_edge_top_left 31,120 / wall_edge_top_right 48,120 (cap row), wall_edge_left 32,136 / wall_edge_right 48,136 (face row), wall_edge_mid_left 32,152 / wall_edge_mid_right 48,152 (sides), wall_edge_bottom_left 32,168 / wall_edge_bottom_right 48,168 (bottom corners); bottom wall = wall_top_mid 32,0 |
+| Inner corners / T | wall_edge_tshape_bottom_right 64,152 / _bottom_left 80,152 / tshape_right 64,168 / tshape_left 80,168; outer walls wall_outer_* 0..16,136..168 |
+| Door | doors_frame_top 32,224,32,16; doors_frame_left 16,240,16,32; doors_frame_right 64,240,16,32; doors_leaf_closed 32,240,32,32; doors_leaf_open 80,240,32,32 |
+| Exit / holes | floor_stairs 80,192; floor_ladder 48,96; hole 96,144; edge_down 96,128 |
+| Decor | wall_banner_red 16,32 / blue 32,32 / green 16,48 / yellow 32,48; column 80,80,16,48; column_wall 96,80,16,48; wall fountains 64..96,0..64; wall_goo 64,80 |
+| Traps / props | floor_spikes_anim_f0..f3 16..64,192; lever_left 80,208 / lever_right 96,208; crate 288,408,16,24; skull 288,432; chests 304..336,400..432 |
+| Monsters (scale) | goblin_idle 368,40 (16x16), imp 368,64, tiny_zombie 368,16, big_demon 16,428,32,36, ... see tile_list |
+
+The ChatGPT wall sets N-34/N-34b/N-34c/N-34d (`art/dungeon/door-*`, `wall-*`), N-35 (`sand-*`) and N-36 (marble,
+not cut) are SUPERSEDED by this pack (files kept).
+
 ## Puzzle art ON HOLD (puzzles on hold 2026-11-15)
 
 Stefan put puzzles on hold: no fence, pressure plates or chests on the meadow for now. The ChatGPT art stays in
