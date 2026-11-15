@@ -7,10 +7,10 @@ import { BASE, GATE_W, makePuzzles, makeTrees, PLATE_R, rng, WORLD_H, WORLD_W } 
 import { isSolid, RES } from './sim';
 import { affordable, BUILDING_ENABLED, BUILD_KINDS, BUILD_R, BUILD_SPOTS, COTTAGE_PAD, makeWater, nodeRes } from './sim';
 import type { Biome, BuildKind } from './sim';
-import { DUNGEON_ENABLED, entranceOf, ICE_RX, ICE_RY, makeIce, WATER_TILE } from './sim';
+import { DUNGEON_ENABLED, ENTRANCE_R, entranceOf, ICE_RX, ICE_RY, makeIce, WATER_TILE } from './sim';
 import { autotileMask, waterTiles, type Shore } from './water';
 import { cavePath } from './cavePath';
-import { RES_ART } from './resArt';
+import { isImgArt, RES_ART } from './resArt';
 import { ARENA, BOMB_R, DROP_HEIGHT } from './mini';
 import type { PuzzleLayout, Res, Tool } from './sim';
 import type { FxEvent, Input, ItemKind, PlayerInfo, View } from './sim';
@@ -84,6 +84,14 @@ const NINJA_COMPOSE: Record<string, { w: number; h: number; parts: Placed[] }> =
 const NINJA_VSTACK: Record<string, Crop[]> = {
   'b-cottage-3': [['n-house', 400, 112, 64, 80], ['n-house', 400, 192, 64, 32]],
 };
+/** Resource textures (resArt.ts, one line each): a Ninja crop, or a ready ChatGPT picture loaded in preload (RES_IMG). */
+const RES_KINDS = ['wood', 'stone', 'berry'] as const;
+const RES_TEX: Record<(typeof RES_KINDS)[number], string> = { wood: 'ic-log', stone: 'g-item-stone', berry: 'g-item-berries' };
+function resCrops(): Record<string, [string, number, number, number, number]> {
+  const out: Record<string, [string, number, number, number, number]> = {};
+  for (const k of RES_KINDS) { const a = RES_ART[k]; if (!isImgArt(a)) out[RES_TEX[k]] = [`res-${k}-src`, a.x, a.y, a.w, a.h]; }
+  return out;
+}
 const NINJA_CROPS: Record<string, Crop | Crop[]> = {
   // resource nodes (sim kinds 0-5) and their used-up looks
   // trees (PLAN step 2): no mega-trunk round tree (Nature 0,0); the tree with roots, the blossom tree, the pine
@@ -103,9 +111,7 @@ const NINJA_CROPS: Record<string, Crop | Crop[]> = {
   'ic-magnet': ['nx-hook', 0, 0, 24, 24], 'ic-house': ['n-house', 48, 128, 47, 32],
   // carried resources
   // resources (resArt.ts): log, rock, food
-  'ic-log': ['res-wood-src', RES_ART.wood.x, RES_ART.wood.y, RES_ART.wood.w, RES_ART.wood.h],
-  'g-item-stone': ['res-stone-src', RES_ART.stone.x, RES_ART.stone.y, RES_ART.stone.w, RES_ART.stone.h],
-  'g-item-berries': ['res-berry-src', RES_ART.berry.x, RES_ART.berry.y, RES_ART.berry.w, RES_ART.berry.h],
+  ...resCrops(),
   // the base: cottage levels 1-3 and the six buildings
   // cottage levels (OLD_ART_CHECKLIST): 1 tent, 2 orange house, 3 the big hall (two crops stacked, NINJA_VSTACK)
   'b-cottage-1': ['n-house', 3, 120, 42, 39], 'b-cottage-2': ['n-house', 0, 0, 64, 48],
@@ -124,7 +130,7 @@ const NINJA_SHEETS: Record<string, string> = {
   'n-dungeon': 'Backgrounds/Tilesets/TilesetDungeon.png',
   'nx-chest': 'Items/Treasure/BigTreasureChest.png',
   // resources: the files named in resArt.ts (one line each)
-  'res-wood-src': RES_ART.wood.file, 'res-stone-src': RES_ART.stone.file, 'res-berry-src': RES_ART.berry.file,
+  ...Object.fromEntries(RES_KINDS.flatMap((k) => { const a = RES_ART[k]; return isImgArt(a) ? [] : [[`res-${k}-src`, a.file]]; })),
   'n-shadow': 'Actor/Character/Shadow.png',
   'nx-hook': 'Ui/Skill Icon/Items & Weapon/Hook.png',
   'nt-axe': 'Items/Tool/Axe.png', 'nt-pickaxe': 'Items/Tool/Pickaxe.png', 'nt-rake': 'Items/Tool/Hoe.png',
@@ -217,6 +223,7 @@ export class GameScene extends Phaser.Scene {
   private groves: { img: Phaser.GameObjects.Image; x: number; y: number; fade: number }[] = [];
   private dusk!: Phaser.GameObjects.Rectangle;
   private pile!: Phaser.GameObjects.Container;
+  private portal?: { glow: Phaser.GameObjects.Image; seed: number };
   private pileKey = '';
   private trailG!: Phaser.GameObjects.Graphics;
   private pickG!: Phaser.GameObjects.Graphics;
@@ -249,6 +256,11 @@ export class GameScene extends Phaser.Scene {
     const NJ = 'assets/ninja-adventure/';
     const sheet = (key: string, file: string, w: number, h: number) => this.load.spritesheet(key, encodeURI(NJ + file), { frameWidth: w, frameHeight: h });
     for (const [k, f] of Object.entries(NINJA_SHEETS)) this.load.image(k, encodeURI(NJ + f));
+    for (const k of RES_KINDS) { const a = RES_ART[k]; if (isImgArt(a)) this.load.image(RES_TEX[k], a.world); } // N-27 wood
+    // ChatGPT N-28 portal (Stefan 2026-11-15) instead of the grey stone cave. Code 2's drawEntrance (dungeonScene.ts) draws
+    // texture 'dg-entrance' at 3x and only builds its stone arch when that key is missing, so loading it here swaps the art
+    // without touching their file. The glow layer on top is ours (portalFrame).
+    if (DUNGEON_ENABLED) { this.load.image('dg-entrance', 'art/props/portal-idle.png'); this.load.image('portal-glow', 'art/props/portal-glow.png'); }
     const tiles = NJ + 'Backgrounds/Tilesets/';
     this.load.image('n-floor', tiles + 'TilesetFloor.png');
     this.load.image('n-floordetail', tiles + 'TilesetFloorDetail.png');
@@ -307,13 +319,30 @@ export class GameScene extends Phaser.Scene {
     n.img.setTexture(spent ? `stump-${n.tree}` : `tree-${n.tree}`).setScale(3).setTint(0xffffff).setOrigin(0.5, spent ? STUMP_FOOT : TREE_FOOT);
   }
 
+  /** N-28 portal: a foot shadow and the glow picture over Code 2's portal image (same spot, 3x, bottom at y + 30).
+   *  The glow pulses slowly while nobody is there and is fully on when a blob stands in the trigger ring or the
+   *  dungeon is about to start. */
+  private portalFrame(v: { players: { x: number; y: number }[]; entry: number; mode: string }) {
+    const e = entranceOf(this.s.seed);
+    if (!this.portal || this.portal.seed !== this.s.seed || !this.portal.glow.active) {
+      this.portal?.glow.destroy();
+      // the art has 4 empty rows under the stones: the foot line is 12 px above the picture's bottom (y + 30)
+      this.shadow(e.x, e.y + 16, 150, 26, 0.26).setDepth(e.y - 61);
+      this.portal = { seed: this.s.seed, glow: this.add.image(e.x, e.y + 30, 'portal-glow').setScale(3).setOrigin(0.5, 1).setDepth(e.y - 59) };
+    }
+    const on = v.players.some((p) => Math.hypot(p.x - e.x, p.y - e.y) < ENTRANCE_R);
+    const pulse = 0.5 - 0.5 * Math.cos(this.time.now / 900); // slow, about 5.7 s a cycle
+    this.portal.glow.setVisible(v.mode === 'meadow').setAlpha(on || v.entry > 0 ? 1 : 0.15 + 0.45 * pulse);
+  }
+
   /** Put a node's shadow under the foot of its picture (the bottom edge), 70% of its width, just below its depth. */
   private footShadow(n: { img: Phaser.GameObjects.Image; sh: Phaser.GameObjects.Image; tree?: TreeVariant }) {
     // N-26 art: the origin IS the foot row (the picture has empty rows below); other art stands on its bottom edge
     const im = n.img, foot = n.tree ? im.y : im.y + (1 - im.originY) * im.displayHeight;
     const sw = Math.max(36, im.displayWidth * 0.8), sh = Math.min(24, Math.round(sw * 0.36)); // flatter under small stumps
-    // Stefan 2026-11-15: N-26 tree + stump shadows sit 1 art px (3 screen px) lower
-    n.sh.setPosition(im.x, foot - sh / 2 + 4 + (n.tree ? 3 : 0)).setDisplaySize(sw, sh).setAlpha(0.34).setDepth(im.depth - 1);
+    // Stefan 2026-11-15: N-26 tree shadows 2 art px (6 screen px) lower than the first build; stump shadows on the
+    // first spot (a lower one made the stumps float)
+    n.sh.setPosition(im.x, foot - sh / 2 + 4 + (n.tree && !im.texture.key.startsWith('stump-') ? 6 : 0)).setDisplaySize(sw, sh).setAlpha(0.34).setDepth(im.depth - 1);
   }
 
   /** Soft Ninja drop shadow (Actor/Character/Shadow.png, 12x7) stretched under a blob, prop or building. */
@@ -542,6 +571,7 @@ export class GameScene extends Phaser.Scene {
     this.lastView = v;
     this.onView(v);
     if (dungeonFrame(this, v, this.s)) return; // [dungeon hook, Code 2] underground the dungeon scene draws
+    if (DUNGEON_ENABLED) this.portalFrame(v);
     const smooth = this.s.role === 'client';
     const k = Math.min(1, dt * 14);
     const now = this.time.now;
@@ -551,7 +581,8 @@ export class GameScene extends Phaser.Scene {
     this.baseG.clear();
     void pulse; // the dirt yard itself marks the drop-off zone (no glow ring)
 
-    // ---- items: pickups bob and sit on a pulsing light ring so they read as "take me" ----
+    // ---- items: pickups LIE STILL on the ground (Stefan 2026-11-15: nothing on the ground bobs or has a breathing
+    //      shadow), with a fixed foot shadow and a light ring so they read as "take me" ----
     const seenI = new Set<number>();
     this.pickG.clear();
     for (const it of v.items) {
@@ -562,11 +593,10 @@ export class GameScene extends Phaser.Scene {
         this.tweens.add({ targets: img, scale: ITEM_SCALE[it.kind] ?? 1.8, duration: 250, ease: 'Back.Out' });
         this.items.set(it.id, img);
       }
-      const bob = Math.abs(Math.sin(now / 260 + it.id)) * 5;
-      img.x = it.x; img.y = it.y - 4 - bob;
+      img.x = it.x; img.y = it.y - 4;
       img.setDepth(it.y - 10);
       const pr = 15;
-      this.pickG.fillStyle(0x000000, 0.18).fillEllipse(it.x, it.y + 9, 22 - bob, 7);
+      this.pickG.fillStyle(0x000000, 0.18).fillEllipse(it.x, it.y + 9, 22, 7);
       this.pickG.lineStyle(2, 0xffffff, 0.75).strokeEllipse(it.x, it.y + 6, pr * 2, pr);
     }
     for (const [id, img] of this.items) if (!seenI.has(id)) { img.destroy(); this.items.delete(id); }
@@ -645,7 +675,7 @@ export class GameScene extends Phaser.Scene {
           : this.add.container(w.x, w.y, [this.add.circle(0, 0, 32, 0xff6b8b, 0.4).setStrokeStyle(3, 0xffffff, 0.9), this.add.image(0, -1, 'ic-magnet').setScale(2)]);
         this.powers.set(w.id, c);
       }
-      c.setPosition(w.x, w.y + Math.sin(now / 250 + w.id) * 4).setDepth(w.y);
+      c.setPosition(w.x, w.y).setDepth(w.y); // power-ups rest on the ground too: no bob (Stefan 2026-11-15)
     }
     for (const [id, c] of this.powers) if (!seenW.has(id)) { c.destroy(); this.powers.delete(id); }
 

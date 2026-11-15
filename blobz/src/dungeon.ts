@@ -213,7 +213,12 @@ export const POTION_HP = 25;
 export interface Room { x: number; y: number; w: number; h: number } // tiles
 export interface Floor {
   floor: number;
-  solid: Uint8Array; // GW*GH, 1 = wall
+  solid: Uint8Array; // gw*gh (default GW*GH), 1 = wall
+  gw?: number; gh?: number; // grid size when not GW x GH (the tall Archero rooms)
+  columns?: { x: number; y: number }[]; // rooms: 0x72 columns as cover (tile x, base row y; rows y-1..y are solid)
+  dt?: number; // tile size in world px when not DT (rooms: 48 = the 0x72 16 px tiles at 3x)
+  waves?: { kind: EnemyKind; x: number; y: number }[][]; // rooms mode: the waves of this room (spawned one after another)
+  lines?: number[]; // rooms mode (corridor): wave k+1 also starts when a blob climbs above lines[k] (world y)
   rooms: Room[];
   start: { x: number; y: number }; // world px: arrival (and revive) point
   exit: { x: number; y: number }; // stairs up in the first room's corner: leave the dungeon
@@ -224,6 +229,116 @@ export interface Floor {
 
 const cx = (r: Room) => (r.x + r.w / 2) * DT;
 const cy = (r: Room) => (r.y + r.h / 2) * DT;
+
+// ---- Archero-style rooms (behind ROOMS_ENABLED; docs/dungeon-rooms-plan.md) ----
+/** Off until Stefan rates it; `?rooms` in the host's URL turns it on for testing. */
+export const ROOMS_ENABLED = false;
+export const roomsOn = () => ROOMS_ENABLED || (typeof location !== 'undefined' && new URLSearchParams(location.search).has('rooms'));
+export const ROOMS = 10; // rooms per dungeon (boss room last)
+export const MINIBOSS_ROOM = 5;
+export const ROOM_W = 7; // floor tiles between the side walls (0x72 tiles at 3x: 9 x 48 = 432 px = the screen width)
+const ROOM_FIRST_WAVE = 1.2; // seconds before the first wave lands (a calm arrival)
+const WAVE_GAP = 0.8; // seconds between a cleared wave and the next
+export const SPAWN_WARN = 0.8; // a landing ring shows this long before the monster appears
+export type RoomType = 'arena' | 'corridor' | 'boss';
+export const roomType = (room: number): RoomType => (room === ROOMS || room === MINIBOSS_ROOM ? 'boss' : room % 2 === 1 ? 'arena' : 'corridor');
+/** the last floor / room of the run */
+export const lastFloor = (d: { rooms?: boolean }) => (d.rooms ? ROOMS : FLOORS);
+/** the floor the difficulty reads (rooms spread one dungeon's 5 floors over its 10 rooms) */
+export const diffFloor = (d: { rooms?: boolean; floor: number }) => (d.rooms ? 1 + ((Math.max(1, d.floor) - 1) * (FLOORS - 1)) / (ROOMS - 1) : d.floor);
+/** rooms: every wave started and nothing left alive or landing = the door opens */
+export const roomClear = (d: DState) => !!d.rooms && (d.wave ?? 0) >= (d.map.waves?.length ?? 0) && !d.pending?.length && d.enemies.length === 0;
+
+/** One tall room on the 0x72 DungeonTileset II grid: 48 px tiles (16 px art at 3x). 7 floor tiles wide between the
+ *  thin side walls (9 tiles = 432 px = the screen width in portrait); rows: 0 = room for the door frame, 1 = wall cap,
+ *  2 = wall face (the door sits in it), 3.. = floor, last = the bottom wall with the entrance gap. Floor 27 (arena) /
+ *  36 (corridor) / 31 (boss) tiles tall, +1 per player above 2. Start at the bottom, the door at the top. */
+export const ROOM_T = 48;
+/** rooms 1-3: max 1 shooter per wave, ~30 % slower shots, a longer wind-up (the ramp starts in room 4) */
+export const EARLY_ROOMS = 3, EARLY_SPIT = 0.7, EARLY_AIM = 1.4;
+const early = (d: DState) => !!d.rooms && d.floor <= EARLY_ROOMS;
+export function makeRoom(seed: number, room: number, players = 1, dungeon = 1): Floor {
+  const r = rng(seed * 89 + room * 157 + 7);
+  const T = ROOM_T;
+  const type = roomType(room);
+  const h = (type === 'arena' ? 27 : type === 'corridor' ? 36 : 31) + Math.max(0, Math.min(5, players) - 2);
+  const gw = ROOM_W + 2, gh = 3 + h + 1, y0 = 3, y1 = 3 + h - 1; // floor rows y0..y1
+  const solid = new Uint8Array(gw * gh).fill(1);
+  for (let y = y0; y <= y1; y++) for (let x = 1; x <= ROOM_W; x++) solid[y * gw + x] = 0;
+  const o: Room = { x: 1, y: y0, w: ROOM_W, h };
+  const mx = (gw / 2) * T;
+  const start = { x: mx, y: (y1 + 0.3) * T }; // in the entrance gap at the bottom (the camera starts there too)
+  const stairs = { x: mx, y: (y0 + 0.5) * T }; // in front of the door
+  const exit = { x: 1.5 * T, y: (y1 + 0.5) * T - 8 };
+  const chests = type === 'arena' ? [{ x: mx, y: (y0 + h / 2) * T }] : [];
+  const crowd = crowdOf(dungeon, 1 + ((room - 1) * (FLOORS - 1)) / (ROOMS - 1));
+  const extra = Math.max(0, Math.min(5, players) - 1);
+  const band = (a: number, b: number) => ({ x: (1.4 + r() * (ROOM_W - 1.8)) * T, y: (a + r() * (b - a)) * T });
+  const top = y0 + 1, safe = y1 - 4; // never spawn in the arrival area at the bottom
+  const wave = (a: number, b: number, n: number, mediums: number, spitters: number) => {
+    const out: { kind: EnemyKind; x: number; y: number }[] = [];
+    for (let k = 0; k < n; k++) out.push({ kind: 0, ...band(a, b) });
+    for (let k = 0; k < mediums; k++) out.push({ kind: 1, ...band(a, b) });
+    for (let k = 0; k < Math.min(spitters, room <= EARLY_ROOMS ? 1 : 9); k++) out.push({ kind: 3, ...band(a, Math.min(b, a + (b - a) / 2)) });
+    return out;
+  };
+  const n = 2 + crowd + Math.min(3, extra);
+  let waves: Floor['waves'] = [];
+  let lines: number[] | undefined;
+  const midY = (top + safe) / 2;
+  if (type === 'arena') waves = [wave(top, safe, n, 1, 0), wave(top, midY, n - 1, crowd >= 2 ? 1 : 0, 2)];
+  else if (type === 'corridor') {
+    const third = (safe - top) / 3;
+    waves = [wave(top + 2 * third, safe, n, 1, 0), wave(top + third, top + 2 * third, n, 1, 1), wave(top, top + third, n, crowd >= 2 ? 2 : 1, 1)];
+    lines = [(top + 2 * third) * T, (top + third) * T]; // climbing above a line starts the next wave early
+  } else waves = [[{ kind: 2, x: mx, y: (y0 + h * 0.3) * T }, ...wave(y0 + h * 0.4, safe, 2 + Math.min(3, extra), 0, 0)], wave(top, safe, n - 1, 1, 1)];
+  // cover: 2-3 0x72 columns in arena rooms (block shots and walking), never in the middle lane (entrance -> chest ->
+  // door) nor on a spawn spot
+  const columns: { x: number; y: number }[] = [];
+  if (type === 'arena') {
+    const want = 2 + (r() < 0.5 ? 1 : 0);
+    for (let tries = 0; columns.length < want && tries < 60; tries++) {
+      const cx = r() < 0.5 ? 2 : ROOM_W - 1, cy = top + 3 + Math.floor(r() * (safe - top - 5)); // cy = the column's base row (cy-1 is solid too)
+      if (columns.some((c) => Math.abs(c.y - cy) < 5)) continue;
+      columns.push({ x: cx, y: cy });
+      solid[cy * gw + cx] = 1; solid[(cy - 1) * gw + cx] = 1;
+    }
+    // spawn spots next to a column move into the middle lane (a monster never lands in or on a column)
+    for (const sp of waves.flat()) if (columns.some((c) => Math.abs(sp.x / T - (c.x + 0.5)) < 1.2 && sp.y / T > c.y - 2.2 && sp.y / T < c.y + 1.8)) sp.x = mx;
+  }
+  const spawns: Floor['spawns'] = [];
+  return { floor: room, solid, rooms: [o], start, exit, stairs, chests, spawns, gw, gh, dt: T, waves, lines, columns };
+}
+
+/** rooms: start the next wave when the last one is gone (or a blob climbed past the corridor line); spawns land after
+ *  their ring; the first room of Dungeon 1 stays calm (no telegraphed attacks). */
+function stepWaves(d: DState, alive: Body[], dt: number, fx: DFx[]) {
+  const waves = d.map.waves ?? [];
+  d.pending ??= [];
+  for (let i = d.pending.length - 1; i >= 0; i--) {
+    const p = d.pending[i];
+    p.t -= dt;
+    if (p.t > 0) continue;
+    d.pending.splice(i, 1);
+    const e = makeGoo(d, p.kind, p.x, p.y);
+    e.awake = true;
+    if (d.dungeon === 1 && d.floor === 1) e.calm = true;
+    d.enemies.push(e);
+  }
+  const w = d.wave ?? 0;
+  if (w >= waves.length) return;
+  const climbed = w > 0 && d.map.lines?.[w - 1] !== undefined && alive.some((b) => b.y < d.map.lines![w - 1]);
+  if (d.enemies.length === 0 && !d.pending.length) d.waveT = (d.waveT ?? 0) - dt;
+  if ((d.waveT ?? 0) > 0 && !climbed) return;
+  d.wave = w + 1; d.waveT = WAVE_GAP;
+  for (const sp of waves[w]) {
+    // never land on a blob: slide the spot away from anyone within 80 px
+    let { x, y } = sp;
+    for (const b of alive) if (Math.hypot(b.x - x, b.y - y) < 80) y = Math.max(4 * ft(d.map), b.y - 120);
+    d.pending.push({ kind: sp.kind, x, y, t: SPAWN_WARN });
+    fx.push({ t: 'spawn', x, y });
+  }
+}
 
 /** Rooms + corridors for one floor, from the run seed. The last room is the farthest from the start;
  *  on the last floor it is the boss room. */
@@ -286,18 +401,22 @@ export function makeFloor(seed: number, floor: number, players = 1, dungeon = 1)
   return { floor, solid, rooms, start, exit, stairs, chests, spawns };
 }
 
+export const fw = (f: Floor) => f.gw ?? GW;
+export const ft = (f: Floor) => f.dt ?? DT;
+export const fh = (f: Floor) => f.gh ?? GH;
 export const isWall = (f: Floor, x: number, y: number) => {
-  const tx = Math.floor(x / DT), ty = Math.floor(y / DT);
-  return tx < 0 || ty < 0 || tx >= GW || ty >= GH || f.solid[ty * GW + tx] === 1;
+  const T = ft(f), tx = Math.floor(x / T), ty = Math.floor(y / T), w = fw(f);
+  return tx < 0 || ty < 0 || tx >= w || ty >= fh(f) || f.solid[ty * w + tx] === 1;
 };
 
 /** Push a circle out of wall tiles (and stop its velocity into them). */
 export function collideWalls(f: Floor, o: { x: number; y: number; vx: number; vy: number }, rad: number) {
-  const tx0 = Math.floor((o.x - rad) / DT), tx1 = Math.floor((o.x + rad) / DT);
-  const ty0 = Math.floor((o.y - rad) / DT), ty1 = Math.floor((o.y + rad) / DT);
+  const T = ft(f);
+  const tx0 = Math.floor((o.x - rad) / T), tx1 = Math.floor((o.x + rad) / T);
+  const ty0 = Math.floor((o.y - rad) / T), ty1 = Math.floor((o.y + rad) / T);
   for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) {
-    if (!(tx < 0 || ty < 0 || tx >= GW || ty >= GH || f.solid[ty * GW + tx])) continue;
-    const qx = Math.max(tx * DT, Math.min(o.x, (tx + 1) * DT)), qy = Math.max(ty * DT, Math.min(o.y, (ty + 1) * DT));
+    if (!(tx < 0 || ty < 0 || tx >= fw(f) || ty >= fh(f) || f.solid[ty * fw(f) + tx])) continue;
+    const qx = Math.max(tx * T, Math.min(o.x, (tx + 1) * T)), qy = Math.max(ty * T, Math.min(o.y, (ty + 1) * T));
     let dx = o.x - qx, dy = o.y - qy;
     const d = Math.hypot(dx, dy);
     if (d >= rad) continue;
@@ -306,6 +425,22 @@ export function collideWalls(f: Floor, o: { x: number; y: number; vx: number; vy
     const vn = o.vx * dx + o.vy * dy;
     if (vn < 0) { o.vx -= vn * dx; o.vy -= vn * dy; }
   }
+}
+
+/** Anything whose centre ended up inside a wall or outside the room (big knockback, crowding) snaps to the nearest
+ *  floor tile, so nobody gets locked in a wall. */
+export function unstick(f: Floor, o: { x: number; y: number; vx: number; vy: number }) {
+  if (!isWall(f, o.x, o.y)) return;
+  const T = ft(f), W = fw(f), H = fh(f);
+  const tx = Math.max(0, Math.min(W - 1, Math.floor(o.x / T))), ty = Math.max(0, Math.min(H - 1, Math.floor(o.y / T)));
+  let best: [number, number] | null = null, bd = Infinity;
+  for (let rr = 0; rr < Math.max(W, H) && !best; rr++) for (let y = ty - rr; y <= ty + rr; y++) for (let x = tx - rr; x <= tx + rr; x++) {
+    if (x < 0 || y < 0 || x >= W || y >= H || f.solid[y * W + x]) continue;
+    const dd = Math.hypot((x + 0.5) * T - o.x, (y + 0.5) * T - o.y);
+    if (dd < bd) { bd = dd; best = [x, y]; }
+  }
+  if (!best) return;
+  o.x = (best[0] + 0.5) * T; o.y = (best[1] + 0.5) * T; o.vx = 0; o.vy = 0;
 }
 
 export interface Enemy {
@@ -332,6 +467,7 @@ export interface Hero {
   shield: number; wallT: number; regenT: number; kills: number; // healer shield charges, tank wall, regen clock, own kills
   mode: 0 | 1; held: number; guard: boolean; // healer wand mode (1 = heal), big button held (s left), knight shield up
   mvCd: number; charges: number; side: number; chargeT: number; phase: number; // class move: recharge clock, rogue charges, last dodge side, knight charge, healer phase
+  tgt?: number; tgtT?: number; // sticky auto-aim: the monster id it keeps shooting, how long a clearly closer one has been there
 }
 export type EndWhy = 'boss' | 'exit' | 'time';
 export interface LootVote { item: string; t: number; rolls: Record<string, number> } // -1 undecided, 0 pass, 1-100 roll
@@ -345,6 +481,9 @@ export interface DState {
   gold: number; xp: number; level: number; kills: number;
   bossMax: number; players: number;
   dungeon: number; // which dungeon (1, 2, ...): its difficulty step
+  rooms?: boolean; // Archero-style rooms mode (ROOMS_ENABLED / ?rooms): floor = room number
+  wave?: number; waveT?: number; // rooms: waves started so far, delay before the next one
+  pending?: { kind: EnemyKind; x: number; y: number; t: number }[]; // rooms: spawns showing their landing ring
   time: number; // seconds left of the run
   ready: number; // seconds every blob has stood on the stairs (goes down / out at 1.5)
   done: number; // > 0: "Dungeon klar!" shows, counts down, then back to the meadow
@@ -376,6 +515,7 @@ export type DFx =
   | { t: 'skill'; id: string; s: string }
   | { t: 'loot'; item: string; win: string | null; roll: number }
   | { t: 'floor'; floor: number }
+  | { t: 'spawn'; x: number; y: number } // rooms: a monster lands here soon (landing ring)
   | { t: 'spit'; x: number; y: number }
   | { t: 'phase2'; x: number; y: number }
   | { t: 'slam'; x: number; y: number };
@@ -416,16 +556,18 @@ export function newHero(weapon: Weapon, maxHp?: number): Hero {
 }
 
 /** A goo of `kind` with health for this floor and team size. */
-export function makeGoo(d: Pick<DState, 'nextId' | 'floor' | 'players' | 'bossMax'> & { dungeon?: number }, kind: EnemyKind, x: number, y: number): Enemy {
-  const mx = kind === 2 ? d.bossMax : Math.round(ENEMY_HP[kind] * floorHp(d.floor, d.players, d.dungeon ?? 1));
+export function makeGoo(d: Pick<DState, 'nextId' | 'floor' | 'players' | 'bossMax'> & { dungeon?: number; rooms?: boolean }, kind: EnemyKind, x: number, y: number): Enemy {
+  const mini = kind === 2 && !!d.rooms && d.floor === MINIBOSS_ROOM; // the mid-run mini-boss: half the boss
+  const mx = kind === 2 ? Math.round(d.bossMax * (mini ? 0.5 : 1)) : Math.round(ENEMY_HP[kind] * floorHp(diffFloor(d), d.players, d.dungeon ?? 1));
   return { id: d.nextId++, kind, x, y, vx: 0, vy: 0, hp: mx, mx, awake: false, stun: 0, slamT: SLAM_EVERY, slam: null, cd: SPIT_EVERY * (0.5 + Math.random()) };
 }
 
 export function enterFloor(d: Omit<DState, 'map'> & { map?: Floor }, seed: number, floor: number, players: number): DState {
   const out = d as DState;
   out.dungeon ??= 1;
-  const map = makeFloor(seed, floor, players, out.dungeon);
+  const map = out.rooms ? makeRoom(seed, floor, players, out.dungeon) : makeFloor(seed, floor, players, out.dungeon);
   out.floor = floor; out.map = map; out.ready = 0; out.players = players;
+  if (out.rooms) { out.wave = 0; out.waveT = ROOM_FIRST_WAVE; out.pending = []; }
   out.bossMax = bossHp(players, out.dungeon);
   out.enemies = map.spawns.map((sp) => Object.assign(makeGoo(out, sp.kind, sp.x, sp.y), sp.calm ? { calm: true } : {}));
   out.coins = []; out.spit = [];
@@ -433,11 +575,11 @@ export function enterFloor(d: Omit<DState, 'map'> & { map?: Floor }, seed: numbe
   return out;
 }
 
-export function newRun(seed: number, picks: Record<string, Weapon>, dungeon = 1): DState {
+export function newRun(seed: number, picks: Record<string, Weapon>, dungeon = 1, rooms = roomsOn()): DState {
   const heroes: Record<string, Hero> = {};
   for (const [id, w] of Object.entries(picks)) heroes[id] = newHero(w);
   return enterFloor({
-    floor: 1, dungeon: Math.max(1, Math.floor(dungeon)), enemies: [], coins: [], spit: [], opened: [], gold: 0, xp: 0, level: 1, kills: 0, bossMax: ENEMY_HP[2], players: 1,
+    floor: 1, dungeon: Math.max(1, Math.floor(dungeon)), rooms, enemies: [], coins: [], spit: [], opened: [], gold: 0, xp: 0, level: 1, kills: 0, bossMax: ENEMY_HP[2], players: 1,
     time: RUN_SECONDS, ready: 0, done: 0, why: 'exit', heroes, loot: null, lootQ: [], lootLast: null, nextId: 1,
   }, seed, 1, Object.keys(picks).length);
 }
@@ -534,8 +676,8 @@ function classMove(d: DState, h: Hero, b: Body, m: Mods, fx: DFx[]) {
     ax = px * h.side; ay = py * h.side; go(ax, ay);
     h.dodge = MOVE_DODGE.rogue + m.dodge;
   } else if (h.cls === 'marksman') {
-    // jump back: away from the nearest monster (else away from the aim)
-    const e = nearestEnemy(d, b.x, b.y, 260);
+    // jump back: away from the current target (else the nearest monster, else away from the aim)
+    const e = (h.tgt !== undefined ? d.enemies.find((q) => q.id === h.tgt && q.hp > 0) : undefined) ?? nearestEnemy(d, b.x, b.y, 2000);
     if (e) { ax = b.x - e.x; ay = b.y - e.y; } else { ax = -h.fx; ay = -h.fy; }
     go(ax, ay);
     h.dodge = MOVE_DODGE.marksman + m.dodge;
@@ -602,6 +744,27 @@ function special(d: DState, h: Hero, b: Body, bodies: Body[], m: Mods, fx: DFx[]
   fx.push(at);
 }
 
+const STICK_CLOSER = 0.75, STICK_T = 0.5; // switch only to a monster >25 % closer, after it stayed closer 0.5 s
+/** Sticky auto-aim, run every tick: keep the current target while it lives and stays in reach (and sight for bolts);
+ *  a clearly closer monster (>25 %) for STICK_T takes over. */
+function aimTick(d: DState, h: Hero, b: Body, reach: number, f: Floor | undefined, dt: number) {
+  const near = nearestEnemy(d, b.x, b.y, reach, f);
+  const cur = h.tgt !== undefined ? d.enemies.find((e) => e.id === h.tgt && e.hp > 0) : undefined;
+  const dist = (e: Enemy) => Math.hypot(e.x - b.x, e.y - b.y) - ENEMY_R[e.kind];
+  if (!cur || dist(cur) > reach || (f && !lineOfSight(f, b.x, b.y, cur.x, cur.y))) { h.tgt = near?.id; h.tgtT = 0; return; }
+  if (near && near !== cur && dist(near) < dist(cur) * STICK_CLOSER) {
+    h.tgtT = (h.tgtT ?? 0) + dt;
+    if (h.tgtT >= STICK_T) { h.tgt = near.id; h.tgtT = 0; }
+  } else h.tgtT = 0;
+}
+function stickyTarget(d: DState, h: Hero, b: Body, reach: number, f?: Floor): Enemy | null {
+  const cur = h.tgt !== undefined ? d.enemies.find((e) => e.id === h.tgt && e.hp > 0) : undefined;
+  if (cur && Math.hypot(cur.x - b.x, cur.y - b.y) - ENEMY_R[cur.kind] <= reach && (!f || lineOfSight(f, b.x, b.y, cur.x, cur.y))) return cur;
+  const near = nearestEnemy(d, b.x, b.y, reach, f);
+  h.tgt = near?.id; h.tgtT = 0;
+  return near;
+}
+
 /** Auto-attack: melee swing at the nearest goo in reach, or a bolt at the nearest goo in sight. */
 function autoAttack(d: DState, h: Hero, b: Body, m: Mods, fx: DFx[], bodies: Body[]) {
   const st = WEAPON_STATS[h.weapon];
@@ -628,7 +791,7 @@ function autoAttack(d: DState, h: Hero, b: Body, m: Mods, fx: DFx[], bodies: Bod
     fx.push({ t: 'heal', id: o.id, x: o.x, y: o.y });
     return;
   }
-  const t = nearestEnemy(d, b.x, b.y, reach, st.ranged ? d.map : undefined);
+  const t = stickyTarget(d, h, b, reach, st.ranged ? d.map : undefined);
   if (!t) return;
   face(h, b, t.x, t.y);
   h.atkCd = st.cd * m.rate; h.swing = Math.min(0.3, h.atkCd * 0.8);
@@ -656,7 +819,8 @@ function autoAttack(d: DState, h: Hero, b: Body, m: Mods, fx: DFx[], bodies: Bod
 }
 
 function spitAt(d: DState, x: number, y: number, a: number, fx: DFx[], dmg?: number) {
-  d.spit.push({ id: d.nextId++, x, y, vx: Math.cos(a) * SPIT_SPEED, vy: Math.sin(a) * SPIT_SPEED, t: SPIT_LIFE, dmg });
+  const sp = SPIT_SPEED * (early(d) ? EARLY_SPIT : 1), life = SPIT_LIFE / (early(d) ? EARLY_SPIT : 1); // slower, same range
+  d.spit.push({ id: d.nextId++, x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, t: life, dmg });
   fx.push({ t: 'spit', x, y });
 }
 
@@ -667,7 +831,7 @@ function stepAct(d: DState, e: Enemy, tgt: Body | null, dt: number, fx: DFx[]) {
   const a = e.ang ?? 0, ux = Math.cos(a), uy = Math.sin(a);
   const still = () => { e.vx *= Math.exp(-10 * dt); e.vy *= Math.exp(-10 * dt); };
   const go = (sp: number) => { e.vx = ux * sp; e.vy = uy * sp; };
-  const done = () => { e.act = 0; e.cd = ACT_CD[e.kind] * actMul(d.dungeon ?? 1, d.floor) * (0.85 + Math.random() * 0.3); };
+  const done = () => { e.act = 0; e.cd = ACT_CD[e.kind] * actMul(d.dungeon ?? 1, diffFloor(d)) * (0.85 + Math.random() * 0.3); };
   switch (e.act) {
     case 1: still(); if (e.actT <= 0) { e.act = 2; e.actT = DASH_TIME; go(DASH_SPEED); fx.push({ t: 'mdash', x: e.x, y: e.y, a }); } break;
     case 2:
@@ -712,7 +876,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
     const h = d.heroes[b.id] ??= newHero('dagger');
     const m = heroMods(h);
     mods.set(b.id, m);
-    collideWalls(f, b, BLOB_R);
+    collideWalls(f, b, BLOB_R); unstick(f, b);
     h.atkCd = Math.max(0, h.atkCd - dt); h.inv = Math.max(0, h.inv - dt); h.swing = Math.max(0, h.swing - dt);
     h.spCd = Math.max(0, h.spCd - dt); h.spT = Math.max(0, h.spT - dt); h.dodge = Math.max(0, h.dodge - dt); h.aim = Math.max(0, h.aim - dt);
     h.wallT = Math.max(0, h.wallT - dt);
@@ -782,6 +946,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
         hitEnemy(d, e, Math.round(def.dmg * m.dmg), def.kb * m.kb, def.stun + m.stun, b.x, b.y, fx, b.id);
       }
     }
+    { const st = WEAPON_STATS[h.weapon]; aimTick(d, h, b, st.reach + m.reach, st.ranged ? d.map : undefined, dt); }
     if (h.atkCd <= 0 && h.phase <= 0) autoAttack(d, h, b, m, fx, bodies); // phased out: no attacks
   }
   // standing blobz: not knocked out and not busy with the level-up cards (goo ignore those, stairs don't wait for them)
@@ -808,7 +973,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
     if (e.kind === 2) d.lootQ.push(ITEMS[Math.floor(Math.random() * ITEMS.length)].id);
     gainXp(d, ENEMY_XP[e.kind], fx);
   }
-  const dmgMul = floorDmg(d.floor, d.dungeon ?? 1);
+  const dmgMul = floorDmg(diffFloor(d), d.dungeon ?? 1);
   // enemies: wake up (and call friends), chase the nearest standing blob (tanks pull them in), touching hurts;
   // spitters keep their distance and spit; the boss slams, and below half health gets angry (phase 2)
   const woke: Enemy[] = [];
@@ -829,7 +994,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
       e.cd = (e.cd ?? ACT_CD[e.kind]) - dt;
       const a = Math.atan2(tgt.y - e.y, tgt.x - e.x);
       if (e.cd <= 0 && !e.calm && lineOfSight(f, e.x, e.y, tgt.x, tgt.y)) {
-        if (e.kind === 3 && dist < 320) { e.act = 5; e.actT = AIM_WARN; e.ang = a; }
+        if (e.kind === 3 && dist < 320) { e.act = 5; e.actT = AIM_WARN * (early(d) ? EARLY_AIM : 1); e.ang = a; }
         else if (e.kind <= 1 && dist > DASH_MIN && dist < DASH_MAX) { e.act = 1; e.actT = DASH_WARN; e.ang = a; }
       }
     }
@@ -846,14 +1011,14 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
       e.vy += ((dy / dl) * spd * dir - e.vy) * Math.min(1, dt * 5);
     } else { e.vx *= Math.exp(-5 * dt); e.vy *= Math.exp(-5 * dt); }
     e.x += e.vx * dt; e.y += e.vy * dt;
-    collideWalls(f, e, ENEMY_R[e.kind]);
+    collideWalls(f, e, ENEMY_R[e.kind]); unstick(f, e);
     if (e.kind === 2 && e.awake) {
       if (e.slam) {
         e.slam.t -= dt;
         if (e.slam.t <= 0) {
           // it lands there (the leap is drawn during the warning), then the shockwave
           e.x = e.slam.x; e.y = e.slam.y; e.vx = 0; e.vy = 0;
-          collideWalls(f, e, ENEMY_R[e.kind]);
+          collideWalls(f, e, ENEMY_R[e.kind]); unstick(f, e);
           fx.push({ t: 'slam', x: e.slam.x, y: e.slam.y });
           for (const b of alive) if (Math.hypot(b.x - e.slam.x, b.y - e.slam.y) < SLAM_R + BLOB_R) hurt(d, b, e.slam.x, e.slam.y, SLAM_DMG * dmgMul, fx, bodies);
           if (angry) {
@@ -875,7 +1040,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
       const hb = d.heroes[b.id];
       if (hb && hb.spT > 0 && specialOf(hb.cls, hb.weapon).kind === 'lunge') continue; // a lunge goes right through
       const nx = (b.x - e.x) / dd, ny = (b.y - e.y) / dd;
-      b.x = e.x + nx * min; b.y = e.y + ny * min;
+      b.x = e.x + nx * min; b.y = e.y + ny * min; collideWalls(f, b, BLOB_R); unstick(f, b); // a monster never shoves a blob into a wall
       hurt(d, b, e.x, e.y, ENEMY_TOUCH[e.kind] * dmgMul * (angry ? 1.3 : 1), fx, bodies);
     }
   }
@@ -910,7 +1075,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
     if (dd >= min) continue;
     const nx = dd > 0.001 ? dx / dd : 1, ny = dd > 0.001 ? dy / dd : 0, push = (min - dd) / 2;
     p.x -= nx * push; p.y -= ny * push; q.x += nx * push; q.y += ny * push;
-    collideWalls(f, p, BLOB_R); collideWalls(f, q, BLOB_R);
+    collideWalls(f, p, BLOB_R); collideWalls(f, q, BLOB_R); unstick(f, p); unstick(f, q);
   }
   // pickups (slide to a near blob): coins -> team gold, potions -> health for everyone; chests
   for (const c of d.coins) {
@@ -928,6 +1093,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
     }
     f.chests.forEach((c, i) => {
       if (d.opened[i] || Math.hypot(c.x - b.x, c.y - b.y) > BLOB_R + 20) return;
+      if (d.rooms && !roomClear(d)) return; // rooms: the chest appears after the last wave
       d.opened[i] = true; d.gold += CHEST_GOLD;
       fx.push({ t: 'chest', x: c.x, y: c.y, n: CHEST_GOLD });
       // a rare item only sometimes; else a potion
@@ -938,8 +1104,9 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
   }
   stepLoot(d, dt, fx);
   // stairs: everyone standing (KO'd blobz don't count) on them for 1.5 s; the last floor's exit needs the boss gone
-  const last = d.floor === FLOORS;
-  const open = !last || !d.enemies.some((e) => e.kind === 2);
+  if (d.rooms) stepWaves(d, alive, dt, fx);
+  const last = d.floor === lastFloor(d);
+  const open = d.rooms ? roomClear(d) : !last || !d.enemies.some((e) => e.kind === 2);
   const exitUp = d.floor === 1 && alive.length > 0 && alive.every((b) => Math.hypot(b.x - f.exit.x, b.y - f.exit.y) < STAIRS_R);
   const onStairs = open && alive.length > 0 && alive.every((b) => Math.hypot(b.x - f.stairs.x, b.y - f.stairs.y) < STAIRS_R);
   if (onStairs || exitUp) d.ready += dt; else d.ready = 0;
@@ -1015,7 +1182,7 @@ function hurt(d: DState, b: Body, fromX: number, fromY: number, dmg: number, fx:
 const r1 = (n: number) => Math.round(n * 10) / 10;
 type HeroTuple = [string, number, number, number, number, number, number, number?, number?, number?, number?, number?, string?, string?, string?, number?, number?, number?];
 export interface DSnap {
-  sd: number; f: number; du?: number; g: number; xp: number; lv: number; k: number; rd: number; dn: number; tm?: number; wy?: number; bm?: number;
+  sd: number; f: number; du?: number; rm?: [number, number, number, number?]; g: number; xp: number; lv: number; k: number; rd: number; dn: number; tm?: number; wy?: number; bm?: number; // rm: rooms mode [1, wave, waves]
   e: [number, number, number, number, number, number, number, number, number?, number?, number?, number?][]; // id, kind, x, y, hp, slam x, slam y, slam t (-1 none), max hp, act, angle*100, act time*100
   c: [number, number, number, number?][]; // pickup id, x, y, kind
   sp?: [number, number, number][]; // spit id, x, y
@@ -1031,7 +1198,7 @@ export interface DHeroView {
   mode: number; guard: boolean; phase: boolean; mvCd: number; mvMax: number; charges: number; maxCharges: number; shield: number; wallT: number; item: string | null; skills: string[]; offer: string[]; offerT: number;
 }
 export interface DView {
-  seed: number; floor: number; dungeon: number; gold: number; xp: number; level: number; kills: number; ready: number; done: number; time: number; why: EndWhy; bossMax: number;
+  seed: number; floor: number; dungeon: number; rooms: boolean; wave: number; waves: number; landing: number; gold: number; xp: number; level: number; kills: number; ready: number; done: number; time: number; why: EndWhy; bossMax: number;
   enemies: { id: number; kind: EnemyKind; x: number; y: number; hp: number; mx: number; slam: { x: number; y: number; t: number } | null; act: Act; ang: number; at: number }[];
   coins: { id: number; x: number; y: number; k: number }[];
   spit: { id: number; x: number; y: number }[];
@@ -1043,7 +1210,7 @@ export interface DView {
 const WHY: EndWhy[] = ['boss', 'exit', 'time'];
 export function dsnap(d: DState, seed: number): DSnap {
   return {
-    sd: seed, f: d.floor, du: d.dungeon ?? 1, g: d.gold, xp: d.xp, lv: d.level, k: d.kills, rd: Math.round((d.ready / READY_SECONDS) * 100), dn: r1(d.done),
+    sd: seed, f: d.floor, du: d.dungeon ?? 1, rm: d.rooms ? [1, d.wave ?? 0, d.map.waves?.length ?? 0, d.pending?.length ?? 0] : undefined, g: d.gold, xp: d.xp, lv: d.level, k: d.kills, rd: Math.round((d.ready / READY_SECONDS) * 100), dn: r1(d.done),
     tm: Math.ceil(d.time), wy: WHY.indexOf(d.why), bm: d.bossMax,
     e: d.enemies.map((e) => [e.id, e.kind, r1(e.x), r1(e.y), Math.ceil(e.hp), e.slam ? r1(e.slam.x) : 0, e.slam ? r1(e.slam.y) : 0, e.slam ? r1(e.slam.t) : -1, e.mx, e.act ?? 0, Math.round((e.ang ?? 0) * 100), Math.round((e.actT ?? 0) * 100)]),
     c: d.coins.map((c) => [c.id, r1(c.x), r1(c.y), c.k ?? 0]),
@@ -1059,7 +1226,7 @@ export function dsnap(d: DState, seed: number): DSnap {
 const list = (s: string | undefined) => (s ? s.split(',').filter(Boolean) : []);
 export function dview(n: DSnap): DView {
   return {
-    seed: n.sd, floor: n.f, dungeon: n.du ?? 1, gold: n.g, xp: n.xp, level: n.lv, kills: n.k, ready: n.rd / 100, done: n.dn, time: n.tm ?? 0, why: WHY[n.wy ?? 1] ?? 'exit', bossMax: n.bm ?? ENEMY_HP[2],
+    seed: n.sd, floor: n.f, dungeon: n.du ?? 1, rooms: !!n.rm, wave: n.rm?.[1] ?? 0, waves: n.rm?.[2] ?? 0, landing: n.rm?.[3] ?? 0, gold: n.g, xp: n.xp, level: n.lv, kills: n.k, ready: n.rd / 100, done: n.dn, time: n.tm ?? 0, why: WHY[n.wy ?? 1] ?? 'exit', bossMax: n.bm ?? ENEMY_HP[2],
     enemies: n.e.map(([id, kind, x, y, hp, sx, sy, st, mx, act, ang, at]) => ({ id, kind: kind as EnemyKind, x, y, hp, mx: mx ?? hp, slam: st >= 0 ? { x: sx, y: sy, t: st } : null, act: (act ?? 0) as Act, ang: (ang ?? 0) / 100, at: (at ?? 0) / 100 })),
     coins: n.c.map(([id, x, y, k]) => ({ id, x, y, k: k ?? 0 })),
     spit: (n.sp ?? []).map(([id, x, y]) => ({ id, x, y })),

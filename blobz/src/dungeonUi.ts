@@ -5,7 +5,7 @@
 import './dungeon.css';
 import type { Controls } from './controls';
 import {
-  DUNGEON_TIMER_ENABLED, skillIcon, ITEM_ICON, CLASS_WEAPONS, CLASSES, FLOORS, heroMods, itemOf, LEVEL_XP, LOOT_SECONDS, skillOf, specialOf,
+  DUNGEON_TIMER_ENABLED, ROOMS, skillIcon, ITEM_ICON, CLASS_WEAPONS, CLASSES, FLOORS, heroMods, itemOf, LEVEL_XP, LOOT_SECONDS, skillOf, specialOf,
   type DView, type HeroClass, type Weapon,
 } from './dungeon';
 import { sfx } from './sfx';
@@ -132,7 +132,7 @@ function renderHud(d: DView, myId: string) {
   const h = d.heroes[myId];
   if (h) renderHearts(h.hp, h.maxHp);
   bump($('dg-gold'), String(d.gold));
-  setText($('dg-floor'), t('dg.floor', { d: d.dungeon, n: d.floor, max: FLOORS }));
+  setText($('dg-floor'), d.rooms ? t('dg.room', { n: d.floor, max: ROOMS, w: Math.max(1, d.wave), wm: d.waves }) : t('dg.floor', { d: d.dungeon, n: d.floor, max: FLOORS }));
   $('dg-time').classList.toggle('hidden', !DUNGEON_TIMER_ENABLED); // no time limit underground (flag off)
   if (DUNGEON_TIMER_ENABLED) { setText($('dg-time'), fmt(d.time)); $('dg-time').classList.toggle('low', d.time <= 30); }
   bump($('dg-level'), String(d.level));

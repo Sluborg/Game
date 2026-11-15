@@ -437,11 +437,17 @@ export function createState(infos: PlayerInfo[], seed: number, village: Village 
   return s;
 }
 
+/** Village spawn (Stefan 2026-11-15): a row on open ground just SOUTH of the main building, never on it. The building
+ *  stands on BASE.y + 30; the flag (BASE + 58, foot at + 62) and the delivery pile (BASE + 52, 40) end above the row
+ *  (a blob is about 40 px tall). The host stands in the middle, the others alternate left / right, 48 px apart. */
+export const SPAWN_Y = BASE.y + 108;
+const SPAWN_DX = [0, -48, 48, -96, 96];
+export const spawnSpot = (slot: number) => ({ x: BASE.x + SPAWN_DX[((slot % MAX_PLAYERS) + MAX_PLAYERS) % MAX_PLAYERS], y: SPAWN_Y });
+
 export function addPlayer(s: State, p: PlayerInfo, slot = s.players.length) {
   if (s.players.some((q) => q.id === p.id) || s.players.length >= MAX_PLAYERS) return;
-  const a = (slot / MAX_PLAYERS) * Math.PI * 2;
   // a late joiner during a dungeon run appears at the floor's start (the host creates their hero)
-  const home = s.mode === 'dungeon' && s.dg ? s.dg.map.start : { x: BASE.x + Math.cos(a) * 50, y: BASE.y + Math.sin(a) * 50 };
+  const home = s.mode === 'dungeon' && s.dg ? s.dg.map.start : spawnSpot(slot);
   s.players.push({
     ...p, x: home.x, y: home.y, vx: 0, vy: 0,
     carry: [], shield: 0, shieldT: 0, dashCd: 0, dashT: 0, boostT: 0, magnetT: 0, toolCd: 0, lastDash: 0,
@@ -635,7 +641,8 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     }
     clampSpeed(p, mul);
     p.x += p.vx * dt; p.y += p.vy * dt;
-    // world edges: soft bounce
+    // world edges: soft bounce (the dungeon has its own walls: rooms are taller than the meadow) [dungeon hook (Code 2)]
+    if (inDungeon) continue;
     if (p.x < BLOB_R) { p.x = BLOB_R; p.vx = Math.abs(p.vx) * 0.6; }
     if (p.x > WORLD_W - BLOB_R) { p.x = WORLD_W - BLOB_R; p.vx = -Math.abs(p.vx) * 0.6; }
     if (p.y < BLOB_R) { p.y = BLOB_R; p.vy = Math.abs(p.vy) * 0.6; }

@@ -1312,3 +1312,55 @@ img[src$="star-empty.png"] { filter: sepia(0.6) saturate(0.6) brightness(1.75) c
 
 /* stone archived (STONE_ENABLED=false): no stone row in the quest card / end screen, no stone counter or arrow */
 body.nostone .qrow[data-k="stone"], body.nostone .edge[data-k="stone"], body.nostone #hud-bank img[src*="res-stone"], body.nostone #bank-stone { display: none !important; }
+
+/* menu fix (Stefan 2026-11-15, home-white-dots.jpg): the parchment background stopped at the frame, so the frame's
+   transparent corner pixels show the scene behind instead of cream specks (every panel_3 frame: home card, lobby /
+   join / designer / end cards, build panel, HUD boxes) */
+#menu #custom.card, #menu #join.card, #lobby .card, #end .card, #build-panel, #hud-quest, #hud-bank, #mini-hud, #menu #home .me {
+  background-clip: padding-box;
+}
+/* menu fix (Stefan 2026-11-15, lobby-slots.jpg): five equal columns that always fit the panel, and every seat stands on
+   one line on the platform; a free seat keeps a spacer the height of a name tag instead of a margin guess */
+#lobby #lobby-list {
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: end; justify-items: center;
+  width: min(320px, 100%); box-sizing: border-box; column-gap: 0;
+}
+#lobby #lobby-list .seat, #lobby #lobby-list li.seat { width: 100%; min-width: 0; max-width: 60px; margin-bottom: -6px; }
+#lobby #lobby-list .seat .blob, #lobby #lobby-list .seat .blob img,
+#lobby #lobby-list .seat.free img { width: min(60px, 100%); height: auto; aspect-ratio: 1; }
+#lobby #lobby-list .seat.free img { margin-bottom: 0; }
+/* feet on the plank deck: the name tag hangs over the platform's front edge instead of lifting the blob */
+/* lobby v2 (Stefan: "Layering above wooden platform"): every seat stands ON the deck, in front of the platform. The
+   platform art is 160x32 at 2x; its deck surface runs from 10 px (back edge) to 36 px (front edge) below the art's top,
+   so feet at 34 px under the top = 30 px above the list bottom stand near the front of the deck. */
+/* v3 (Stefan: "all up 3-4 px, to 1 px under where the platform is widest"): the deck's widest rows are art rows
+   11-17 (2x: 22-36 px under the platform top, the top = list bottom - 64), so feet sit at list bottom - 27 */
+#lobby #lobby-list { padding-bottom: 27px; position: relative; }
+#lobby #lobby-list .seat, #lobby #lobby-list li.seat { z-index: 1; }
+/* the silhouette art has 3 empty rows under the feet (9 px at 3x): pull it down so its feet touch the deck too */
+/* the silhouette art has 3 empty rows under the feet: crop them off the box (top 17 of 20 rows), so the dashed
+   outline ends at the feet and the box bottom is the feet line, like a joined blob; no bobbing off the deck */
+#lobby #lobby-list .seat.free img { margin-bottom: 0; aspect-ratio: 20 / 17; object-fit: cover; object-position: center top; animation: none; }
+/* free seats are solid (no see-through), so the deck never shows through them and they read as standing in front;
+   still calm and light so a joined blob stands out */
+#lobby #lobby-list .seat.free img { opacity: 1; filter: sepia(0.55) brightness(0.93) contrast(0.8); }
+#lobby #lobby-list .seat, #lobby #lobby-list li.seat { margin-bottom: 0; position: relative; }
+#lobby #lobby-list .seat .seatname { position: absolute; left: 50%; top: calc(100% + 4px); transform: translateX(-50%); max-width: 64px; box-sizing: border-box; z-index: 1; }
+
+/* menu fix (Stefan 2026-11-15, designer-tabs.jpg): real tabs, not cut-off buttons. The tabs sit right on the option
+   panel, whose top border is the one baseline under every tab; the active tab has the panel's fill and edge, covers
+   that line and joins the panel; inactive tabs are a darker parchment, 4 px lower, behind the line */
+#custom .tabs { margin-bottom: -10px; gap: 3px; align-items: end; } /* -10 = the .fields row gap: tabs touch the panel */
+#custom .tab, #custom .tab.on {
+  border: 2px solid var(--k-edge); border-bottom: 0; border-radius: 6px 6px 0 0; padding: 0; margin: 0;
+}
+#custom .tab { min-height: 44px; background: #efdcae; color: #6e4f57; font-weight: 600; position: relative; z-index: 0; }
+#custom .tab.on {
+  min-height: 50px; margin-bottom: -2px; /* 48 px + the 2 px it lays over the panel's top border */
+  background: var(--k-parch2); color: var(--k-plum); font-weight: 700; z-index: 2;
+}
+#custom .opts { position: relative; z-index: 1; }
+
+/* ChatGPT N-27 wood (Stefan 2026-11-15): the HUD picture is the 32 px file; where icons show at their own size
+   (build cost strip, end rows) it is drawn at 16 px, like the other 1x resource icons */
+#build-panel .bcard .bcost .c img[src*="res-wood-32"], #end .endrows .qicon[src*="res-wood-32"] { width: 16px; height: 16px; }
