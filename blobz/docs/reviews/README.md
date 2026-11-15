@@ -27,3 +27,14 @@ Lead have discussed and planned them together.
   missing, build menu in 3 columns.
 - End screen: **simplify**: side-by-side in landscape, three big stars + one row per resource, gold stars, cream tracks.
 - After the quest (Bärregn archived): not a focus now; minimal default = straight to the end screen.
+
+## Decisions after review 2 (Stefan, 2026-11-15)
+- Selection: undecided between **green tick badge** and **gold inset border + check**; Stefan needs to SEE both
+  side by side (UI-kit v2 comparison).
+- Icons: **icon + word only if the icons are good** (Ninja pixel symbols on the 3x grid; never emoji or native icons).
+  Shown in the UI-kit v2 comparison first.
+- Added to the plan: **player visibility** (foliage fades over blobz, "you" marker, one compact nameplate),
+  **designer face crops** (Eyes/Mouth zoomed faces; shapes with neutral face, no hat), **quieter frames** (thin inner
+  tiles; heavy wood only on outer panel + primary button), **combat clarity** (smaller routine FX, boss strip at top,
+  bold danger zones, bigger loot item, team shown on the end screen).
+- Skipped: Bärregn points (archived); new loading art (dusk cave = dungeon entry, sunny village = app start).

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { KEYS } from './i18n';
 import {
-  AIM_WARN, BITE_TIME, CLASS_WEAPONS, BITE_WARN, bossHp, BURST, BURST_DMG, BURST_GAP, BURST_SPREAD, CLASS_HP, CLASSES, DASH_TIME, DASH_WARN, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, GH, GW,
+  AIM_WARN, BITE_TIME, CLASS_MOVE_COOLDOWN, CLASS_WEAPONS, BITE_WARN, bossHp, BURST, BURST_DMG, BURST_GAP, BURST_SPREAD, CLASS_HP, CLASSES, DASH_TIME, DASH_WARN, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, GH, GW,
   HEAL_BOLT, heroMods, refresh, inSwing, isWall, ITEMS, itemOf, KO_SECONDS, LEVEL_XP, LOOT_SECONDS, makeFloor, makeGoo, newRun, POTION_HP, REGEN_EVERY,
   skillIcon, skillOf, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
 } from './dungeon';
@@ -361,6 +361,53 @@ describe('dungeon', () => {
     // released: the shield drops after a moment
     run1(d, [p, k, r], new Map([['r', 2]]), 0.5);
     expect(d.heroes.r.guard).toBe(false);
+  });
+
+  it('class moves (small button): rogue 2 dodge charges sideways, marksman jumps back, knight shield charge + slash, healer phases out', () => {
+    const press = (d: DState, bs: B[], i = 0) => { bs[i].lastDash++; return run1(d, bs).fx; };
+    // rogue: two dodges in a row, the third waits for the recharge (6 s per charge)
+    const r = quiet(newRun(40, { a: 'dagger' })), st = r.map.start, ra = [body('a', st.x, st.y)];
+    run1(r, ra);
+    const h = r.heroes.a; h.fx = 1; h.fy = 0;
+    expect(press(r, ra).some((f) => f.t === 'move')).toBe(true);
+    expect(Math.abs(ra[0].vy)).toBeGreaterThan(300); // sideways to an aim pointing right
+    expect(h.dodge).toBeGreaterThan(0);
+    const side1 = Math.sign(ra[0].vy);
+    ra[0].vx = 0; ra[0].vy = 0;
+    expect(press(r, ra).some((f) => f.t === 'move')).toBe(true);
+    expect(Math.sign(ra[0].vy)).toBe(-side1); // stick idle: alternates
+    expect(press(r, ra).some((f) => f.t === 'move')).toBe(false);
+    expect(h.charges).toBe(0);
+    run1(r, ra, undefined, CLASS_MOVE_COOLDOWN.rogue + 0.1);
+    expect(h.charges).toBe(1);
+    // marksman: jumps away from the nearest monster
+    const mk = quiet(newRun(41, { b: 'bow' })), ms = mk.map.start, mb = [body('b', ms.x, ms.y)];
+    run1(mk, mb);
+    goo(mk, 1, ms.x + 80, ms.y, still);
+    press(mk, mb);
+    expect(mb[0].vx).toBeLessThan(-300);
+    expect(press(mk, mb).some((f) => f.t === 'move')).toBe(false); // 8 s cooldown
+    // knight: rushes at the monster with the shield up, then slashes
+    const k = quiet(newRun(42, { k: 'shield' })), ks = roomMid(k), kb = [body('k', ks.x, ks.y)];
+    run1(k, kb);
+    goo(k, 1, ks.x + 150, ks.y, { ...still, hp: 999, mx: 999 });
+    k.heroes.k.atkCd = 99;
+    press(k, kb);
+    expect(k.heroes.k.guard).toBe(true);
+    expect(kb[0].vx).toBeGreaterThan(300);
+    let slashed = false;
+    for (let i = 0; i < 40 && !slashed; i++) { kb[0].x += kb[0].vx / 60; slashed = run1(k, kb).fx.some((f) => f.t === 'swing'); }
+    expect(slashed).toBe(true);
+    // healer: phased out 2 s: no attacks, no damage
+    const p = quiet(newRun(43, { p: 'staff' })), ps = p.map.start, pb = [body('p', ps.x, ps.y)];
+    run1(p, pb);
+    goo(p, 1, ps.x + 60, ps.y, { ...still, hp: 999, mx: 999 });
+    press(p, pb);
+    expect(p.heroes.p.phase).toBeGreaterThan(1.5);
+    expect(run1(p, pb, undefined, 1).fx.some((f) => f.t === 'shot')).toBe(false);
+    expect(dview(dsnap(p, 1)).heroes.p.phase).toBe(true);
+    run1(p, pb, undefined, 1.2);
+    expect(run1(p, pb, undefined, 0.7).fx.some((f) => f.t === 'shot')).toBe(true);
   });
 
   it('marksman shoots only while standing still', () => {

@@ -71,16 +71,16 @@ export const HEAL_HP = 25; // healer's light, per friend (old special)
 export const HEAL_BOLT = 10; // the healer's wand in heal mode, per bolt
 export const STILL_SPEED = 25; // the marksman only shoots standing still (slower than this)
 const HOLD_GAP = 0.4; // the big button repeats every 0.3 s while held: held = a press within this long
-/** Small button per class: how long the blob is untouchable, plus a twist. */
-export const SIDESTEPS: Record<HeroClass, { dodge: number; heal?: number; away?: boolean; hold?: boolean }> = {
-  rogue: { dodge: 0.4 },
-  healer: { dodge: 0.4, heal: 8 }, // a little self-heal
-  marksman: { dodge: 0.5, away: true }, // jumps away from the nearest goo
-  tank: { dodge: 0.7, hold: true }, // stands its ground, blocks longer
-};
+/** The small round button = a CLASS MOVE (Stefan): rogue dodge sideways (2 charges), marksman jump back, knight shield
+ *  charge ending in a slash, healer phase out (untouchable, can't attack). Seconds until it is ready again (per charge). */
+export const CLASS_MOVE_COOLDOWN: Record<HeroClass, number> = { rogue: 6, marksman: 8, tank: 8, healer: 8 };
+export const ROGUE_CHARGES = 2;
+export const MOVE_SPEED = 400; // the sim lets a dashing blob reach 1.7x its top speed (~408)
+export const MOVE_DODGE: Record<HeroClass, number> = { rogue: 0.4, marksman: 0.45, tank: 0, healer: 2 }; // untouchable (s); healer = the phase
+export const CHARGE_T = 0.45; // knight shield charge (stops early once the sword reaches a monster)
 const LUNGE_SPEED = 400; // the sim lets a dashing blob reach 1.7x its top speed (~408)
 const LUNGE_T = 0.35;
-export const DODGE_T = 0.4; // rogue sidestep (see SIDESTEPS)
+export const DODGE_T = 0.4; // rogue dodge (see MOVE_DODGE)
 export const WALL_T = 3;
 
 /** What skills and items change on a hero. `dmg`, `rate`, `spCd`, `spR`, `kb`, `heal` multiply (start 1), the rest add.
@@ -312,6 +312,7 @@ export interface Hero {
   zx: number; zy: number; picking: boolean; // frozen + safe while the cards are open
   shield: number; wallT: number; regenT: number; kills: number; // healer shield charges, tank wall, regen clock, own kills
   mode: 0 | 1; held: number; guard: boolean; // healer wand mode (1 = heal), big button held (s left), knight shield up
+  mvCd: number; charges: number; side: number; chargeT: number; phase: number; // class move: recharge clock, rogue charges, last dodge side, knight charge, healer phase
 }
 export type EndWhy = 'boss' | 'exit' | 'time';
 export interface LootVote { item: string; t: number; rolls: Record<string, number> } // -1 undecided, 0 pass, 1-100 roll
@@ -338,6 +339,7 @@ export type DFx =
   | { t: 'mode'; id: string; x: number; y: number; m: number }
   | { t: 'special'; id: string; k: SpecialKind; x: number; y: number; a: number; r: number }
   | { t: 'dodge'; id: string; x: number; y: number }
+  | { t: 'move'; id: string; x: number; y: number; k: HeroClass; a: number } // a class move started (a = its direction)
   | { t: 'hurt'; e: number; x: number; y: number; kind: EnemyKind }
   | { t: 'kill'; x: number; y: number; kind: EnemyKind }
   | { t: 'mdash'; x: number; y: number; a: number }
@@ -389,7 +391,7 @@ export function newHero(weapon: Weapon, maxHp?: number): Hero {
   return {
     cls, hp: max, maxHp: max, ko: 0, inv: 0, weapon, fx: 0, fy: 1, aim: 0, atkCd: 0, swing: 0,
     spCd: 0, spT: 0, lastAtk: -1, lunge: [], dodge: 0, lastDash: -1, kx: 0, ky: 0,
-    skills: [], item: null, offer: [], offerT: 0, pending: 0, zx: 0, zy: 0, picking: false, shield: 0, wallT: 0, regenT: 0, kills: 0, mode: 0, held: 0, guard: false,
+    skills: [], item: null, offer: [], offerT: 0, pending: 0, zx: 0, zy: 0, picking: false, shield: 0, wallT: 0, regenT: 0, kills: 0, mode: 0, held: 0, guard: false, mvCd: 0, charges: cls === 'rogue' ? ROGUE_CHARGES : 1, side: 1, chargeT: 0, phase: 0,
   };
 }
 
@@ -498,6 +500,33 @@ function hitEnemy(d: DState, e: Enemy, dmg: number, kb: number, stun: number, fr
   e.vx = (dx / dl) * k; e.vy = (dy / dl) * k; e.stun = Math.max(e.stun, e.kind === 2 ? stun * 0.4 : stun);
   if (e.hp <= 0) e.by = by;
   fx.push(e.hp > 0 ? { t: 'hurt', e: e.id, x: e.x, y: e.y, kind: e.kind } : { t: 'kill', x: e.x, y: e.y, kind: e.kind });
+}
+
+/** Start the class move (charge already paid). */
+function classMove(d: DState, h: Hero, b: Body, m: Mods, fx: DFx[]) {
+  let ax = h.fx, ay = h.fy;
+  const go = (x: number, y: number) => { const l = Math.hypot(x, y) || 1; b.vx = (x / l) * MOVE_SPEED; b.vy = (y / l) * MOVE_SPEED; b.dashT = 0.3; };
+  if (h.cls === 'rogue') {
+    // sideways relative to the aim: the stick's side if it points sideways, else alternate left / right
+    const px = -h.fy, py = h.fx, v = Math.hypot(b.vx, b.vy), side = b.vx * px + b.vy * py;
+    h.side = v > 30 && Math.abs(side) > v * 0.3 ? Math.sign(side) : -h.side;
+    ax = px * h.side; ay = py * h.side; go(ax, ay);
+    h.dodge = MOVE_DODGE.rogue + m.dodge;
+  } else if (h.cls === 'marksman') {
+    // jump back: away from the nearest monster (else away from the aim)
+    const e = nearestEnemy(d, b.x, b.y, 260);
+    if (e) { ax = b.x - e.x; ay = b.y - e.y; } else { ax = -h.fx; ay = -h.fy; }
+    go(ax, ay);
+    h.dodge = MOVE_DODGE.marksman + m.dodge;
+  } else if (h.cls === 'tank') {
+    const e = nearestEnemy(d, b.x, b.y, 240);
+    if (e) face(h, b, e.x, e.y);
+    ax = h.fx; ay = h.fy;
+    h.chargeT = CHARGE_T; b.dashT = CHARGE_T; h.dodge = MOVE_DODGE.tank + m.dodge; // (tank-block: a short untouchable start)
+  } else {
+    h.phase = MOVE_DODGE.healer; h.dodge = MOVE_DODGE.healer + m.dodge;
+  }
+  fx.push({ t: 'move', id: b.id, x: b.x, y: b.y, k: h.cls, a: Math.atan2(ay, ax) });
 }
 
 function face(h: Hero, b: Body, tx: number, ty: number) {
@@ -691,23 +720,28 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
       h.regenT += dt;
       if (h.regenT >= REGEN_EVERY) { h.regenT = 0; healHero(h, m.regen); fx.push({ t: 'heal', id: b.id, x: b.x, y: b.y }); }
     } else h.regenT = 0;
-    // sidestep: the sim already gave the dash impulse; the class decides the twist
+    // the class move (small button; the sim gives no dash impulse underground, the class decides the move)
+    const maxCh = h.cls === 'rogue' ? ROGUE_CHARGES : 1, mvMax = CLASS_MOVE_COOLDOWN[h.cls];
+    if (h.charges < maxCh) { h.mvCd -= dt; if (h.mvCd <= 0) { h.charges++; h.mvCd = h.charges < maxCh ? mvMax : 0; } }
     if (b.lastDash !== undefined && b.lastDash !== h.lastDash) {
+      const first = h.lastDash === -1; // the first frame only syncs the counter
       h.lastDash = b.lastDash;
-      if (b.dashT > 0.25) {
-        const ss = SIDESTEPS[h.cls];
-        h.dodge = ss.dodge + m.dodge;
-        if (ss.heal) healHero(h, ss.heal);
-        if (ss.hold) { b.vx *= 0.3; b.vy *= 0.3; }
-        if (ss.away) {
-          const e = nearestEnemy(d, b.x, b.y, 220);
-          if (e) { const sp = Math.max(300, Math.hypot(b.vx, b.vy)), dx = b.x - e.x, dy = b.y - e.y, dl = Math.hypot(dx, dy) || 1; b.vx = (dx / dl) * sp; b.vy = (dy / dl) * sp; }
-        }
-        fx.push({ t: 'dodge', id: b.id, x: b.x, y: b.y });
+      if (!first && h.charges > 0 && h.chargeT <= 0 && h.phase <= 0) {
+        if (h.charges === maxCh) h.mvCd = mvMax;
+        h.charges--;
+        classMove(d, h, b, m, fx);
       }
     }
+    h.phase = Math.max(0, h.phase - dt);
+    if (h.chargeT > 0) {
+      // knight shield charge: rush on with the shield forward (blocks), then a sword slash at the end
+      h.chargeT -= dt; b.dashT = Math.max(b.dashT, 0.05);
+      b.vx = h.fx * MOVE_SPEED; b.vy = h.fy * MOVE_SPEED;
+      const hit = nearestEnemy(d, b.x, b.y, (WEAPON_STATS[h.weapon].reach + m.reach) * 0.8);
+      if (h.chargeT <= 0 || hit) { h.chargeT = 0; b.vx *= 0.2; b.vy *= 0.2; h.atkCd = 0; }
+    }
     const sp = Math.hypot(b.vx, b.vy);
-    if (sp > 30 && h.aim <= 0 && h.spT <= 0) { h.fx = b.vx / sp; h.fy = b.vy / sp; }
+    if (sp > 30 && h.aim <= 0 && h.spT <= 0 && h.dodge <= 0 && h.chargeT <= 0) { h.fx = b.vx / sp; h.fy = b.vy / sp; } // a dodge / jump does not turn the blob
     // special attack (big button)
     // the big button: healer = toggle the wand's mode (per press), knight = hold the shield up, others = special
     if (a !== h.lastAtk) {
@@ -716,8 +750,8 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
       if (h.cls === 'healer') { if (fresh) { h.mode = h.mode ? 0 : 1; fx.push({ t: 'mode', id: b.id, x: b.x, y: b.y, m: h.mode }); } }
       else if (h.cls !== 'tank' && h.spCd <= 0) special(d, h, b, bodies, m, fx);
     } else h.held = Math.max(0, h.held - dt);
-    h.guard = h.cls === 'tank' && h.held > 0;
-    if (h.guard) { const v = Math.hypot(b.vx, b.vy); if (v > 70) { b.vx *= 70 / v; b.vy *= 70 / v; } } // shield up: slow
+    h.guard = h.cls === 'tank' && (h.held > 0 || h.chargeT > 0);
+    if (h.guard && h.chargeT <= 0) { const v = Math.hypot(b.vx, b.vy); if (v > 70) { b.vx *= 70 / v; b.vy *= 70 / v; } } // shield up: slow
     // lunge in progress: pierce every goo it touches once
     if (h.spT > 0 && specialOf(h.cls, h.weapon).kind === 'lunge') {
       const def = specialOf(h.cls, h.weapon);
@@ -727,7 +761,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
         hitEnemy(d, e, Math.round(def.dmg * m.dmg), def.kb * m.kb, def.stun + m.stun, b.x, b.y, fx, b.id);
       }
     }
-    if (h.atkCd <= 0) autoAttack(d, h, b, m, fx, bodies);
+    if (h.atkCd <= 0 && h.phase <= 0) autoAttack(d, h, b, m, fx, bodies); // phased out: no attacks
   }
   // standing blobz: not knocked out and not busy with the level-up cards (goo ignore those, stairs don't wait for them)
   const alive = bodies.filter((b) => (d.heroes[b.id]?.ko ?? 0) <= 0 && !d.heroes[b.id]?.offer.length);
@@ -958,7 +992,7 @@ function hurt(d: DState, b: Body, fromX: number, fromY: number, dmg: number, fx:
 
 // ---- network snapshot / view (sim.ts puts it in its Snapshot as `dg`) ----
 const r1 = (n: number) => Math.round(n * 10) / 10;
-type HeroTuple = [string, number, number, number, number, number, number, number?, number?, number?, number?, number?, string?, string?, string?, number?];
+type HeroTuple = [string, number, number, number, number, number, number, number?, number?, number?, number?, number?, string?, string?, string?, number?, number?, number?];
 export interface DSnap {
   sd: number; f: number; g: number; xp: number; lv: number; k: number; rd: number; dn: number; tm?: number; wy?: number; bm?: number;
   e: [number, number, number, number, number, number, number, number, number?, number?, number?, number?][]; // id, kind, x, y, hp, slam x, slam y, slam t (-1 none), max hp, act, angle*100, act time*100
@@ -973,7 +1007,7 @@ export interface DSnap {
 }
 export interface DHeroView {
   cls: HeroClass; hp: number; maxHp: number; ko: number; weapon: Weapon; face: number; swing: number; spCd: number; spMax: number; spT: number; dodge: boolean; inv: boolean;
-  mode: number; guard: boolean; shield: number; wallT: number; item: string | null; skills: string[]; offer: string[]; offerT: number;
+  mode: number; guard: boolean; phase: boolean; mvCd: number; mvMax: number; charges: number; maxCharges: number; shield: number; wallT: number; item: string | null; skills: string[]; offer: string[]; offerT: number;
 }
 export interface DView {
   seed: number; floor: number; gold: number; xp: number; level: number; kills: number; ready: number; done: number; time: number; why: EndWhy; bossMax: number;
@@ -995,8 +1029,8 @@ export function dsnap(d: DState, seed: number): DSnap {
     sp: (d.spit ?? []).map((s) => [s.id, r1(s.x), r1(s.y)]),
     op: d.opened.map((o) => (o ? '1' : '0')).join(''),
     h: Object.entries(d.heroes).map(([id, h]): HeroTuple => [id, Math.ceil(h.hp), h.maxHp, r1(h.ko), WEAPONS.indexOf(h.weapon), Math.round(Math.atan2(h.fy, h.fx) * 100),
-      Math.round(h.swing * 100), Math.ceil(h.spCd * 10), Math.round(h.spT * 100), (h.dodge > 0 ? 1 : 0) | (h.inv > 0 ? 2 : 0) | (h.mode ? 4 : 0) | (h.guard ? 8 : 0),
-      h.shield, Math.ceil(h.wallT * 10), h.item ?? '', h.skills.join(','), h.offer.join(','), Math.ceil(h.offerT)]),
+      Math.round(h.swing * 100), Math.ceil(h.spCd * 10), Math.round(h.spT * 100), (h.dodge > 0 ? 1 : 0) | (h.inv > 0 ? 2 : 0) | (h.mode ? 4 : 0) | (h.guard ? 8 : 0) | (h.phase > 0 ? 16 : 0),
+      h.shield, Math.ceil(h.wallT * 10), h.item ?? '', h.skills.join(','), h.offer.join(','), Math.ceil(h.offerT), Math.ceil(h.mvCd * 10), h.charges]),
     lt: d.loot ? [d.loot.item, Math.ceil(d.loot.t), Object.entries(d.loot.rolls)] : null,
     ll: d.lootLast ? [d.lootLast.item, d.lootLast.win ?? '', d.lootLast.roll] : null,
   };
@@ -1009,12 +1043,13 @@ export function dview(n: DSnap): DView {
     coins: n.c.map(([id, x, y, k]) => ({ id, x, y, k: k ?? 0 })),
     spit: (n.sp ?? []).map(([id, x, y]) => ({ id, x, y })),
     opened: [...n.op].map((c) => c === '1'),
-    heroes: Object.fromEntries(n.h.map(([id, hp, maxHp, ko, w, face, swing, cd, spT, fl, sh, wl, it, sk, of, ot]) => {
+    heroes: Object.fromEntries(n.h.map(([id, hp, maxHp, ko, w, face, swing, cd, spT, fl, sh, wl, it, sk, of, ot, mv, ch]) => {
       const weapon = WEAPONS[w] ?? 'sword', cls = classOf(weapon);
       return [id, {
         cls, hp, maxHp, ko, weapon, face: face / 100, swing: swing / 100,
-        spCd: (cd ?? 0) / 10, spMax: specialOf(cls, weapon).cd, spT: (spT ?? 0) / 100, dodge: !!((fl ?? 0) & 1), inv: !!((fl ?? 0) & 2), mode: (fl ?? 0) & 4 ? 1 : 0, guard: !!((fl ?? 0) & 8),
+        spCd: (cd ?? 0) / 10, spMax: specialOf(cls, weapon).cd, spT: (spT ?? 0) / 100, dodge: !!((fl ?? 0) & 1), inv: !!((fl ?? 0) & 2), mode: (fl ?? 0) & 4 ? 1 : 0, guard: !!((fl ?? 0) & 8), phase: !!((fl ?? 0) & 16),
         shield: sh ?? 0, wallT: (wl ?? 0) / 10, item: it || null, skills: list(sk), offer: list(of), offerT: ot ?? 0,
+        mvCd: (mv ?? 0) / 10, mvMax: CLASS_MOVE_COOLDOWN[cls], charges: ch ?? 1, maxCharges: cls === 'rogue' ? ROGUE_CHARGES : 1,
       }];
     })),
     loot: n.lt ? { item: n.lt[0], t: n.lt[1], rolls: Object.fromEntries(n.lt[2]) } : null,

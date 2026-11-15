@@ -33,6 +33,7 @@ const WSCALE = 3; // 1 art px = 1 blob px (BLOB_SCALE): the weapons' pixels matc
 const WIMG: Record<string, { src: string; w: number; h: number; px: number; py: number; up?: boolean }> = {
   sword: { src: NA + 'Items/Weapons/Sword/Sprite.png', w: 6, h: 17, px: 3, py: 14, up: true },
   sai: { src: NA + 'Items/Weapons/Sai/Sprite.png', w: 7, h: 13, px: 3.5, py: 11, up: true },
+  dagger: { src: NA + 'Items/Weapons/Ninjaku/SpriteInHand.png', w: 3, h: 12, px: 1.5, py: 9.5, up: true }, // Stefan: a plain straight dagger
   hammer: { src: NA + 'Items/Weapons/Hammer/Sprite.png', w: 9, h: 16, px: 4.5, py: 14, up: true },
   wand: { src: NA + 'Items/Weapons/MagicWand/Sprite.png', w: 5, h: 18, px: 2.5, py: 16, up: true },
   lance: { src: NA + 'Items/Weapons/Lance/Sprite.png', w: 6, h: 23, px: 3, py: 20, up: true },
@@ -40,7 +41,7 @@ const WIMG: Record<string, { src: string; w: number; h: number; px: number; py: 
   crossbow: { src: 'art/dungeon/weapons/ninja-crossbow.png', w: 16, h: 10, px: 2, py: 5 },
 };
 /** which sprite each weapon id draws (the Riddare, id 'shield', slashes with the sword) */
-const WART: Record<Weapon, string> = { sword: 'sword', shield: 'sword', dagger: 'sai', hammer: 'hammer', staff: 'wand', spear: 'lance', bow: 'crossbow' };
+const WART: Record<Weapon, string> = { sword: 'sword', shield: 'sword', dagger: 'dagger', hammer: 'hammer', staff: 'wand', spear: 'lance', bow: 'crossbow' };
 const FONT = "'Fredoka', sans-serif"; // same as the meadow
 const DEBUG = new URLSearchParams(location.search).has('debug');
 const HITBOX = new URLSearchParams(location.search).has('hitbox'); // ?hitbox draws the sim's circles
@@ -69,7 +70,7 @@ interface HeroGfx {
   wshadow?: Phaser.GameObjects.Ellipse; // the hovering weapon's small shadow on the ground
   weapon2?: Phaser.GameObjects.Sprite; // the rogue's second dagger / the Riddare's guarding shield
   arcFor?: number; // which swing already has its slash fx
-  glow?: Phaser.GameObjects.Arc; mode?: number; // the wand's glow, its mode (from the snapshot)
+  glow?: Phaser.GameObjects.Arc; mode?: number; hopT?: number; // the wand's glow, its mode (from the snapshot)
   wa?: number; woff?: number; wsa?: number; lastSwing?: number; // smoothed weapon angle, slash offset, shield angle, time of the last swing
   tip?: { x: number; y: number }; // crossbow tip (bolts start there) // knight's shield wall (Art's fx-wall)
 }
@@ -433,11 +434,16 @@ export class DungeonScene extends Phaser.Scene {
       const sp = Math.hypot(b.vx, b.vy);
       const stretch = ko ? 0 : Math.min(0.18, sp / 1600);
       b.shadow.setPosition(b.x, b.y + 12).setDepth(b.y - 20);
-      b.body.setPosition(b.x, b.y - 4 + (ko ? 8 : 0)).setDepth(b.y)
+      // the marksman's jump back: a little hop arc
+      b.hopT = Math.max(0, (b.hopT ?? 0) - dt);
+      const hop = b.hopT > 0 ? Math.sin((1 - b.hopT / 0.32) * Math.PI) * 18 : 0;
+      b.body.setPosition(b.x, b.y - 4 + (ko ? 8 : 0) - hop).setDepth(b.y)
         .setScale(BLOB_SCALE * (1 + stretch) * (ko ? 1.2 : 1), BLOB_SCALE * (1 - stretch * 0.6) * (ko ? 0.6 : 1))
         .setRotation(ko ? 0 : Phaser.Math.Clamp(b.vx / 1400, -0.18, 0.18))
-        .setTint(ko ? 0x888888 : 0xffffff)
-        .setAlpha(h?.dodge ? 0.45 : h?.inv && !ko ? (Math.floor(now / 90) % 2 ? 0.4 : 1) : 1);
+        .setTint(ko ? 0x888888 : h?.phase ? 0xbfe6ff : 0xffffff)
+        // the healer phased out: ghostly and shimmering; a dodge: see-through
+        .setAlpha(h?.phase ? 0.3 + Math.sin(now / 70) * 0.08 : h?.dodge ? 0.45 : h?.inv && !ko ? (Math.floor(now / 90) % 2 ? 0.4 : 1) : 1);
+      b.weapon.setAlpha(h?.phase ? 0.3 : 1); b.glow?.setAlpha(h?.phase ? 0.2 : 1);
       b.label.setPosition(b.x, b.y + 24).setDepth(b.y + 2);
       b.me.setPosition(b.x, b.y - 50).setDepth(b.y + 3);
       // friends' health: the Ninja mini life bar (green, red when low)
@@ -536,11 +542,14 @@ export class DungeonScene extends Phaser.Scene {
     const spot = (ang: number, out: number) => ({ x: cx + Math.cos(ang) * (EDGE_X + HOVER + out), y: cy + Math.sin(ang) * (EDGE_Y + HOVER + 4 + out * 0.7) + DROP }); // vertical: clears the body top (hat) too
     const dbg = (extra: Record<string, unknown>) => { if (DEBUG) ((window as unknown as { __dgWeapon?: Record<string, unknown> }).__dgWeapon ??= {})[b.id] = { aim: wrap(swinging ? b.swingA : aim), prog, swing: swinging, n: b.swings, bx: cx, by: cy, w, bob, ...extra }; };
     if (w === 'dagger') {
-      // ONE sai held close to the body, pointing along the aim; each attack stabs it straight out and back, fast
+      // ONE straight dagger held close to the body; each attack stabs it straight out at the target and back, fast
+      // (a stab points right at the target, no easing in: the smoothed angle could still be turning from rest)
+      const aim = swinging ? b.swingA : b.wa!;
+      if (swinging) b.wa = aim;
       const out = swinging ? Math.sin(prog * Math.PI) * DAGGER_STAB : 0;
       const g = spot(aim, -4);
       const px = g.x + Math.cos(aim) * out, py = g.y + Math.sin(aim) * out * 0.7 + bob;
-      const im = WIMG.sai;
+      const im = WIMG.dagger;
       b.weapon.setVisible(true).setFlipX(Math.cos(aim) < 0).setScale(WSCALE).setOrigin(im.px / im.w, im.py / im.h)
         .setPosition(px, py).setRotation(aim + Math.PI / 2).setDepth(b.body.depth + (Math.sin(aim) < -0.35 ? -1 : 1));
       b.wshadow.setVisible(true).setPosition(cx + Math.cos(aim) * (EDGE_X + 2), Math.max(g.y, cy) + 22).setDepth(b.body.depth - 2).setScale(1, 1);
@@ -764,6 +773,16 @@ export class DungeonScene extends Phaser.Scene {
           if (b) { b.swingDur = 0.35; b.swingT = 0.35; this.ride(b, 'dg-fx-charge', 'dg-charge', 'charge', f.a, 1, 0.5, 2.5); }
           sfx.dash();
         }
+        break;
+      }
+      case 'move': {
+        // the class moves (small button), each with a Ninja FX
+        const b = this.heroes.get(f.id);
+        if (f.k === 'rogue') { const c = this.add.sprite(f.x, f.y + 14, 'dg-fx-sidestep', 0).setOrigin(0.5, 1).setScale(1.6).setDepth(f.y - 2); c.play('dg-sidestep'); c.once('animationcomplete', () => c.destroy()); }
+        else if (f.k === 'marksman') { this.nfx('nf-dust', f.x, f.y + 14, 2.4); if (b) b.hopT = 0.32; }
+        else if (f.k === 'tank') { if (b) this.ride(b, 'dg-fx-charge', 'dg-charge', 'charge', f.a, 1, 0.5, 2.5); this.nfx('nf-dust', f.x, f.y + 14, 2.2); }
+        else { this.nfx('nf-smoke', f.x, f.y - 4, 2.6, 0xbfe6ff); this.time.delayedCall(2000, () => { const bb = this.heroes.get(f.id); if (bb) this.nfx('nf-smoke', bb.x, bb.y - 4, 2.2, 0xbfe6ff); }); }
+        sfx.dash();
         break;
       }
       case 'dodge': { const c = this.add.sprite(f.x, f.y + 14, 'dg-fx-sidestep', 0).setOrigin(0.5, 1).setScale(1.6).setDepth(f.y - 2); c.play('dg-sidestep'); c.once('animationcomplete', () => c.destroy()); sfx.dash(); break; }

@@ -593,7 +593,7 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
       const node = inDungeon ? -1 : toolNode(s.trees, (i) => s.trees[i].left, p.x, p.y);
       if (node >= 0) {
         if (p.toolCd <= 0) { hitNode(s, p, node); p.toolCd = TOOL_COOLDOWN; }
-      } else if (p.dashCd <= 0) {
+      } else if (!inDungeon && p.dashCd <= 0) { // dungeon hook (Code 2): underground the small button is a class move (dungeon.ts)
         let dx = il > 0.2 ? ix : p.vx, dy = il > 0.2 ? iy : p.vy;
         const dl = Math.hypot(dx, dy) || 1;
         dx /= dl; dy /= dl;
