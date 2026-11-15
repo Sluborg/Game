@@ -5,7 +5,8 @@ Lead have discussed and planned them together.
 
 | File | Reviewer | Build | Status |
 |---|---|---|---|
-| review-1.md | external AI (live play, ~70 screens) | v047c | saved, waiting for review 2 before planning |
+| review-1.md | external AI (live play, ~70 screens) | v047c | decisions below |
+| review-2.md | external AI (live v047e + repo screenshots) | v047e | compared, decisions below |
 
 ## Decisions from review 1 (Stefan, 2026-11-15)
 - Panel fill: **parchment** everywhere (no white).
