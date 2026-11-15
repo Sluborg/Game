@@ -41,7 +41,7 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (none are TO DO now; queue empty, more orders coming). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
+ChatGPT works only on N-orders with status TO DO (N-15b is TO DO now). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
@@ -69,6 +69,7 @@ ChatGPT works only on N-orders with status TO DO (none are TO DO now; queue empt
 | N-20 | DONE (received 2026-11-15) | Lobby: waiting-blob silhouette, searching blob (4 frames), party platform (sizes in order) | `art/lobby/*` |
 | N-21 | DONE (received 2026-11-15) | Boss + danger UI: boss health strip frame, hazard ring pattern (sizes in order) | `dungeon/ui/*` |
 | N-22 | DONE (received 2026-11-15) | Dungeon end screen illustration: treasure haul, portrait 9:16 + landscape 16:9 | `art/dungeon-end*.png` |
+| N-15b | TO DO | Speed power-up redo: winged boot fully INSIDE its glow circle (16x16 + 32x32) | `art/meadow/speed-*` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
@@ -150,7 +151,8 @@ Redo the app icon (reference: https://raw.githubusercontent.com/sluborg/Game/cla
 Draw every sprite on the exact pixel grid named in the order (e.g. 16x16 = sixteen by sixteen art pixels), then deliver
 it UPSCALED with hard nearest-neighbour pixels so one art pixel = 8x8 image pixels (16x16 -> 128x128, 32x32 -> 256x256).
 When an order says "16x16 + 32x32", draw the SAME object twice: once on a 16x16 grid and once redrawn on a 32x32 grid
-(more detail, not a blurry upscale). Lay the sprites out in a neat grid on one sheet, solid flat magenta #ff00ff background (NOT transparent) (or flat
+(more detail, not a blurry upscale). The 32x32 version must be EXACTLY 32 art pixels across with a 1-pixel outline at
+that scale (twice the detail of the 16x16), never the 16x16 drawing with bigger pixels. Lay the sprites out in a neat grid on one sheet, solid flat magenta #ff00ff background (NOT transparent) (or flat
 magenta #ff00ff), at least one empty sprite-cell between them, labels NOT drawn in the image.
 ALWAYS: a solid flat magenta #ff00ff background (never fake transparency), hard pixel edges only, NO soft glows,
 halos, blur or semi-transparent pixels around any sprite (glows break the background removal). If an effect needs a
@@ -252,6 +254,11 @@ Ninja Adventure style (style block), a full scene (own painted background, no ma
 cave entrance at golden hour with an open treasure chest, coins, a few gems and potions, all happy and cheering. No
 coins on the floor in front of the text area: keep the top 35% calm (sky/rock) for the results. No text. Make it twice:
 portrait 9:16 and landscape 16:9 (key content in the central 60%).
+```
+
+### N-15b Speed power-up, round 2
+```
+Ninja Adventure style (style block). Redo ONLY the speed power-up from N-15 (reference: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n15-meadow-extras.png, the winged boot on a soft yellow disc): the whole boot and its wing must sit fully INSIDE the disc with a 1-pixel margin, nothing sticking out. Disc = solid pale yellow with a 1 px darker rim (no soft glow). On a 16x16 grid AND again EXACTLY 32 art pixels across on a 32x32 grid.
 ```
 
 ## Ninja style block (for N-orders)
