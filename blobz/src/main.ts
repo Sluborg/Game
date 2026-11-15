@@ -525,7 +525,7 @@ function renderVillage(el: HTMLElement) {
     img(NI.flag, 'vbadge'),
     img(building(`cottage-${v.cottage}`), 'vcot'),
     ...BUILD_KINDS.filter((k) => v.builds[k]).map((k) => img(building(k), 'vb')),
-    res(NI.wood, v.bank.wood), res(NI.stone, v.bank.stone), res(NI.berry, v.bank.berry),
+    res(NI.wood, v.bank.wood), ...(STONE_ENABLED ? [res(NI.stone, v.bank.stone)] : []), res(NI.berry, v.bank.berry), // stone archived: no "0" stone
   );
 }
 
