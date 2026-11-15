@@ -3,7 +3,7 @@
 // Also draws the dungeon entrance on the meadow (dungeonFrame is the one hook GameScene calls).
 import Phaser from 'phaser';
 import { blobCanvas, BLOB_FRAMES, BODY_CY, clampLook, facingFromVelocity, type Facing } from './blob';
-import { AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, GH, GW, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
+import { fw, fh, makeRoom, ROOMS, MINIBOSS_ROOM, SPAWN_WARN, AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
 /** Weapons without Art's strip yet: a Kenney Tiny Dungeon tile in hand (bow: drawn in code). */
 import type { Session } from './game';
 import { sfx } from './sfx';
@@ -110,6 +110,7 @@ export class DungeonScene extends Phaser.Scene {
   private s!: Session;
   private floorKey = '';
   private map: Floor | null = null;
+  private rooms = false; // Archero rooms mode (the camera keeps x on the room's middle)
   private mapObjs: Phaser.GameObjects.GameObject[] = [];
   private chests: Phaser.GameObjects.Image[] = [];
   private stairs!: Phaser.GameObjects.Image;
@@ -156,6 +157,7 @@ export class DungeonScene extends Phaser.Scene {
     img('na-floor', NA + 'Backgrounds/Tilesets/Interior/TilesetInteriorFloor.png');
     img('na-walls', NA + 'Backgrounds/Tilesets/Interior/TilesetWallSimple.png');
     img('na-elem', NA + 'Backgrounds/Tilesets/TilesetElement.png');
+    img('na-tdungeon', NA + 'Backgrounds/Tilesets/TilesetDungeon.png'); // rooms: the placeholder door (bars)
     sheet('na-chest', NA + 'Items/Treasure/BigTreasureChest.png', 16, 14);
     sheet('na-coin', NA + 'Items/Treasure/Coin2.png', 10, 10);
     img('na-potion', NA + 'Items/Potion/LifePot.png');
@@ -232,15 +234,17 @@ export class DungeonScene extends Phaser.Scene {
   }
 
   /** Bake the floor into one canvas (no tile seams at fractional zoom), slightly darker than the meadow. */
-  private buildFloor(seed: number, floor: number, players: number, dungeon = 1) {
+  private buildFloor(seed: number, floor: number, players: number, dungeon = 1, rooms = false) {
     for (const o of this.mapObjs) o.destroy();
     this.mapObjs = []; this.chests = [];
-    const f = makeFloor(seed, floor, players);
+    // rooms mode (Archero): one tall screen-wide room instead of the floor maze; the same baking below
+    const f = rooms ? makeRoom(seed, floor, players, dungeon) : makeFloor(seed, floor, players);
     this.map = f;
-    const key = `dgmap-${seed}-${floor}`;
+    this.rooms = rooms;
+    const key = rooms ? `dgmap-room-${seed}-${players}-${floor}` : `dgmap-${seed}-${floor}`;
     if (!this.textures.exists(key)) {
       const c = document.createElement('canvas');
-      c.width = GW * TP; c.height = GH * TP;
+      c.width = fw(f) * TP; c.height = fh(f) * TP;
       const g = c.getContext('2d')!;
       g.imageSmoothingEnabled = false;
       // Ninja Adventure tiles at 2x (16 px -> one 32 px dungeon tile): stone-brick floor, the brown wall frame
@@ -250,12 +254,12 @@ export class DungeonScene extends Phaser.Scene {
         if (!flip) { g.drawImage(im, sx, sy, 16, 16, tx * TP, ty * TP, TP, TP); return; }
         g.save(); g.translate(tx * TP + TP, ty * TP); g.scale(-1, 1); g.drawImage(im, sx, sy, 16, 16, 0, 0, TP, TP); g.restore();
       };
-      const solid = (tx: number, ty: number) => tx < 0 || ty < 0 || tx >= GW || ty >= GH || f.solid[ty * GW + tx] === 1;
+      const solid = (tx: number, ty: number) => tx < 0 || ty < 0 || tx >= fw(f) || ty >= fh(f) || f.solid[ty * fw(f) + tx] === 1;
       let n = seed + floor * 7;
       const rnd = () => { n = (n * 1103515245 + 12345) & 0x7fffffff; return n / 0x7fffffff; };
       g.fillStyle = '#141b1b';
       g.fillRect(0, 0, c.width, c.height);
-      for (let ty = 0; ty < GH; ty++) for (let tx = 0; tx < GW; tx++) {
+      for (let ty = 0; ty < fh(f); ty++) for (let tx = 0; tx < fw(f); tx++) {
         if (!solid(tx, ty)) { put(fl, 192, 208, tx, ty, rnd() < 0.5); continue; }
         // a wall next to floor gets the frame piece facing that floor (edges first, then outer corners)
         const S = !solid(tx, ty + 1), N = !solid(tx, ty - 1), E = !solid(tx + 1, ty), W = !solid(tx - 1, ty);
@@ -281,13 +285,20 @@ export class DungeonScene extends Phaser.Scene {
         this.textures.addCanvas(k, cv)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
       }
     }
-    this.stairs = this.add.image(f.stairs.x, f.stairs.y, floor < FLOORS ? 'na-stairs-down' : 'na-stairs-up').setScale(3).setDepth(-900);
+    if (!this.textures.exists('dg-door-closed') && this.textures.exists('na-tdungeon')) {
+      // placeholder door (rooms): the Ninja bars tile (TilesetDungeon 80,16) until the ChatGPT door arrives
+      const cv = document.createElement('canvas'); cv.width = cv.height = 16;
+      cv.getContext('2d')!.drawImage(this.textures.get('na-tdungeon').getSourceImage() as HTMLImageElement, 80, 16, 16, 16, 0, 0, 16, 16);
+      this.textures.addCanvas('dg-door-closed', cv)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    }
+    // rooms: the door at the top (placeholder until the ChatGPT door: Ninja bars closed, stairs up open)
+    this.stairs = this.add.image(f.stairs.x, f.stairs.y, rooms ? 'dg-door-closed' : floor < FLOORS ? 'na-stairs-down' : 'na-stairs-up').setScale(3).setDepth(-900);
     this.mapObjs.push(this.stairs);
     if (floor === 1) this.mapObjs.push(this.add.image(f.exit.x, f.exit.y, 'na-stairs-up').setScale(3).setDepth(-900));
     this.chests = f.chests.map((c) => this.add.image(c.x, c.y + 8, 'na-chest', 0).setScale(3).setOrigin(0.5, 1).setDepth(c.y));
     this.mapObjs.push(...this.chests);
     // a big floor banner
-    const banner = this.add.text(f.start.x, f.start.y - 90, t(floor === FLOORS ? 'dg.floorBoss' : 'dg.floorBanner', { d: dungeon, n: floor }), { fontFamily: FONT, fontSize: '34px', color: '#ffe08a', fontStyle: 'bold', stroke: '#3f2631', strokeThickness: 7 })
+    const banner = this.add.text(f.start.x, f.start.y - 90, rooms ? t(floor === ROOMS ? 'dg.roomBoss' : floor === MINIBOSS_ROOM ? 'dg.roomMini' : 'dg.roomBanner', { d: dungeon, n: floor }) : t(floor === FLOORS ? 'dg.floorBoss' : 'dg.floorBanner', { d: dungeon, n: floor }), { fontFamily: FONT, fontSize: '34px', color: '#ffe08a', fontStyle: 'bold', stroke: '#3f2631', strokeThickness: 7 })
       .setOrigin(0.5).setDepth(7000);
     this.tweens.add({ targets: banner, y: banner.y - 30, alpha: 0, delay: 1400, duration: 900, onComplete: () => banner.destroy() });
     // the camera jumps to the arrival point
@@ -302,8 +313,8 @@ export class DungeonScene extends Phaser.Scene {
     const v = this.s.view();
     const d = v?.dungeon;
     if (!v || !d) return;
-    const fk = `${d.seed}-${d.floor}`;
-    if (fk !== this.floorKey) { this.floorKey = fk; this.buildFloor(d.seed, d.floor, v.players.length, d.dungeon); }
+    const fk = `${d.seed}-${d.floor}-${d.rooms ? 'r' : 'f'}`;
+    if (fk !== this.floorKey) { this.floorKey = fk; this.buildFloor(d.seed, d.floor, v.players.length, d.dungeon, d.rooms); }
     const f = this.map!;
     const now = this.time.now;
     const smooth = this.s.role === 'client';
@@ -313,7 +324,13 @@ export class DungeonScene extends Phaser.Scene {
     d.opened.forEach((o, i) => { const c = this.chests[i]; if (c && o && c.frame.name !== '1') c.setFrame(1); });
     // the boss exit glows only once the boss is gone
     const bossAlive = d.enemies.some((e) => e.kind === 2);
-    this.stairs.setAlpha(d.floor === FLOORS && bossAlive ? 0.35 : 1);
+    // rooms: the door opens (and the chest shows) once every wave is gone
+    const roomOpen = d.rooms && d.wave >= d.waves && d.landing === 0 && d.enemies.length === 0;
+    if (d.rooms) {
+      const want = roomOpen ? 'na-stairs-up' : 'dg-door-closed';
+      if (this.stairs.texture.key !== want) { this.stairs.setTexture(want); if (roomOpen) this.nfx('nf-smoke', f.stairs.x, f.stairs.y, 2); }
+      this.chests.forEach((c) => c.setVisible(roomOpen));
+    } else this.stairs.setAlpha(d.floor === FLOORS && bossAlive ? 0.35 : 1);
 
     // ---- coins ----
     const seenC = new Set<number>();
@@ -482,7 +499,7 @@ export class DungeonScene extends Phaser.Scene {
     // ---- stairs: progress ring + "2/3" bubble when someone stands on them ----
     this.bubble.setVisible(false);
     const alive = v.players.filter((p) => (d.heroes[p.id]?.ko ?? 0) <= 0);
-    const spots = [{ at: f.stairs, open: d.floor < FLOORS || !bossAlive }, ...(d.floor === 1 ? [{ at: f.exit, open: true }] : [])];
+    const spots = [{ at: f.stairs, open: d.rooms ? roomOpen : d.floor < FLOORS || !bossAlive }, ...(d.floor === 1 ? [{ at: f.exit, open: true }] : [])];
     for (const s of spots) {
       if (!s.open) continue;
       const on = alive.filter((p) => Math.hypot(p.x - s.at.x, p.y - s.at.y) < STAIRS_R).length;
@@ -515,7 +532,7 @@ export class DungeonScene extends Phaser.Scene {
     // landscape: the HUD sits top-left, so the camera keeps my blob a little right of centre (the room to its left stays
     // visible instead of hiding monsters under the HUD)
     const landscape = this.scale.width > this.scale.height;
-    if (me) { this.camTarget.x = me.x - (landscape ? 70 / cam.zoom : 0); this.camTarget.y = me.y + this.cardShift(landscape) / cam.zoom; }
+    if (me) { this.camTarget.x = this.rooms && this.map ? (fw(this.map) * DT) / 2 : me.x - (landscape ? 70 / cam.zoom : 0); this.camTarget.y = me.y + this.cardShift(landscape) / cam.zoom; } // rooms: x locked on the room, y follows my blob
     cam.centerOn(cam.midPoint.x + (this.camTarget.x - cam.midPoint.x) * Math.min(1, dt * 6), cam.midPoint.y + (this.camTarget.y - cam.midPoint.y) * Math.min(1, dt * 6));
   }
 
@@ -886,6 +903,7 @@ export class DungeonScene extends Phaser.Scene {
         this.tweens.add({ targets: ar, x: f.tx, y: f.ty - 6, duration: Math.max(60, Math.hypot(f.tx - sx, f.ty - sy) / 1.2), onComplete: () => ar.destroy() });
         break;
       }
+      case 'spawn': { const r = this.add.sprite(f.x, f.y + 10, 'n13-slam-warning', 0).setScale(2.2).setDepth(-300).play({ key: 'n13-slam-warning', repeat: -1 }); this.time.delayedCall(SPAWN_WARN * 1000, () => { r.destroy(); this.nfx('nf-smoke', f.x, f.y, 2); }); break; } // rooms: a monster lands here
       case 'mode': { const b = this.heroes.get(f.id); if (b?.glow) this.burst(b.glow.x, b.glow.y, MODE_COL[f.m], 8, 20); sfx.pick(); break; }
       case 'heal': {
         const c = this.add.sprite(f.x, f.y - 6, 'dg-fx-heal', 0).setOrigin(0.5, 0.6).setScale(3).setDepth(f.y + 7);

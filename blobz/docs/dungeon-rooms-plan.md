@@ -44,3 +44,15 @@ fights **2-3 waves** in a room; when the last wave is gone the **door at the top
   rings = N-13 slam-warning / N-21 hazard ring (have them). **Needed from ChatGPT (1 order)**: the **door**, closed +
   open, 32x32 and 48x32 (16 px art grid, Ninja palette, 8x nearest-neighbour) so it reads as "the way on"; optional
   later: a mini-boss sprite if Stefan wants something other than a bigger Ninja slime.
+
+## Build step 1 (done, behind the flag)
+- **Switch it on for testing**: add `?rooms` to the host's URL (e.g. `https://sluborg.github.io/Game/?rooms`); the
+  host's runs use the rooms, joiners follow automatically. For everyone: `ROOMS_ENABLED = true` in `src/dungeon.ts`.
+- In: tall screen-wide rooms (`makeRoom`), 10 rooms (arena / corridor / boss; mini-boss in room 5 at half health,
+  boss in room 10), waves with an N-13 landing ring 0.8 s before each monster, corridor lines start the next wave
+  early, door at the top opens when the room is clear (placeholder: Ninja bars -> stairs), chest in arena rooms after
+  the last wave, the camera keeps x on the room and follows my blob up/down, HUD "Rum 3/10 · Våg 2/3", difficulty
+  spread over the 10 rooms, calm first room on Dungeon 1. Old dungeon unchanged (flag off).
+- Not yet (steps 2-3): room transition wipe, boss helper waves at 66/33 %, plates + bonus room, the ChatGPT door,
+  tuning, a 10-room e2e.
+- Screenshot: `docs/screenshots/dungeon-rooms/room-midwave.png` (390x844 at 2x, room 1 wave 2).
