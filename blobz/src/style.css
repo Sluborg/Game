@@ -1212,3 +1212,8 @@ input, #name {
 .qrow.done .qstar { animation: pop 0.5s ease-out both; }
 /* friendly empty state on Join: the searching blob keeps looking, with a calm message under it */
 #join .help { color: #6f5546; }
+
+/* end screen landscape (fix): the victory art covers the whole screen (no letterboxed strip + flat green) */
+@media (orientation: landscape) {
+  #end.screen { background: #6bc144 url('/art/victory.png') center 80% / cover no-repeat; }
+}

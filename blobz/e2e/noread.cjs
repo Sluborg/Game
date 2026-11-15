@@ -2,7 +2,7 @@
 // Arrow home when the bank can pay for a building, the build goal as a picture, a pulsing Build button, icon rows on
 // the build cards, the Bärregn picture intro before the rain, and the sunset + numbers-only Bärregn line at the end.
 // Usage: npm run build && npx vite preview --port 4173 &  node e2e/noread.cjs [baseUrl] [shotDir]
-const { LANDSCAPE, ok, place, sim, startGame, view } = require('./helpers.cjs');
+const { flatShare, LANDSCAPE, ok, place, sim, startGame } = require('./helpers.cjs');
 const base = process.argv[2] || 'http://localhost:4173/';
 const shots = process.argv[3] || '';
 
@@ -48,6 +48,10 @@ const shots = process.argv[3] || '';
     const title = await ada.locator('#end-title').boundingBox();
     ok(title && title.width <= 1 && (await ada.textContent('#end-title')).trim() === 'Uppdraget klart!', 'end title is picture-only (words kept for screen readers)');
     ok(!(await ada.isVisible('#end-mini')), 'no Bärregn line on the end screen (archived)');
+    // landscape end screen: the victory art fills the screen (no letterboxed strip with a flat green fill)
+    await ada.waitForTimeout(600);
+    const flat = await flatShare(ada, await ada.locator('#end .card').boundingBox());
+    ok(flat < 0.15, `landscape end screen: the art covers the screen (flat cells ${(flat * 100).toFixed(0)}%)`);
     if (shots) await host.screenshot({ path: `${shots}/noread-end-portrait.png` });
     console.log('ALL PASSED');
   } finally {
