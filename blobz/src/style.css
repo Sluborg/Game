@@ -1312,3 +1312,24 @@ img[src$="star-empty.png"] { filter: sepia(0.6) saturate(0.6) brightness(1.75) c
 
 /* stone archived (STONE_ENABLED=false): no stone row in the quest card / end screen, no stone counter or arrow */
 body.nostone .qrow[data-k="stone"], body.nostone .edge[data-k="stone"], body.nostone #hud-bank img[src*="res-stone"], body.nostone #bank-stone { display: none !important; }
+
+/* menu fix (Stefan 2026-11-15, home-white-dots.jpg): the parchment background stopped at the frame, so the frame's
+   transparent corner pixels show the scene behind instead of cream specks (every panel_3 frame: home card, lobby /
+   join / designer / end cards, build panel, HUD boxes) */
+#menu #custom.card, #menu #join.card, #lobby .card, #end .card, #build-panel, #hud-quest, #hud-bank, #mini-hud, #menu #home .me {
+  background-clip: padding-box;
+}
+/* menu fix (Stefan 2026-11-15, lobby-slots.jpg): five equal columns that always fit the panel, and every seat stands on
+   one line on the platform; a free seat keeps a spacer the height of a name tag instead of a margin guess */
+#lobby #lobby-list {
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: end; justify-items: center;
+  width: min(320px, 100%); box-sizing: border-box; column-gap: 0;
+}
+#lobby #lobby-list .seat, #lobby #lobby-list li.seat { width: 100%; min-width: 0; max-width: 60px; margin-bottom: -6px; }
+#lobby #lobby-list .seat .blob, #lobby #lobby-list .seat .blob img,
+#lobby #lobby-list .seat.free img { width: min(60px, 100%); height: auto; aspect-ratio: 1; }
+#lobby #lobby-list .seat.free img { margin-bottom: 0; }
+/* feet on the plank deck: the name tag hangs over the platform's front edge instead of lifting the blob */
+#lobby #lobby-list { padding-bottom: 40px; }
+#lobby #lobby-list .seat, #lobby #lobby-list li.seat { margin-bottom: 0; position: relative; }
+#lobby #lobby-list .seat .seatname { position: absolute; left: 50%; top: calc(100% + 4px); transform: translateX(-50%); max-width: 64px; box-sizing: border-box; z-index: 1; }
