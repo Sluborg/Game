@@ -198,7 +198,7 @@ function renderOffer(d: DView, myId: string) {
     $('dg-cards-row').replaceChildren(...offer.map((id) => {
       const sk = skillOf(id)!;
       const b = document.createElement('button');
-      b.className = 'skcard'; b.type = 'button'; b.dataset.s = id;
+      b.className = 'skcard'; b.type = 'button'; b.dataset.s = id; b.dataset.cls = sk.cls; // the badge takes the class colour
       b.append(icon(encodeURI(skillIcon(id)), sk.icon, 3));
       b.insertAdjacentHTML('beforeend', `<b>${tSkill(sk.id)}</b><small class="skfx">${tEffects(sk.mod)}</small>`);
       b.onclick = () => { sfx.pick(); sendPick('skill:' + id); b.classList.add('on'); };
