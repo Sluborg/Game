@@ -53,8 +53,19 @@ def crop(spec):
     return out
 
 
+def res_crops():
+    """The resource pictures, read from src/resArt.ts (one line each) so the HUD and the game share one source."""
+    import re
+    src = open(os.path.join(ROOT, 'src', 'resArt.ts'), encoding='utf-8').read()
+    out = {}
+    for k, f, x, y, w, h in re.findall(r"(\w+): \{ file: '([^']+)', x: (\d+), y: (\d+), w: (\d+), h: (\d+) \}", src):
+        out['res-' + k] = (f, int(x), int(y), int(w), int(h))
+    return out
+
+
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)
+    CROPS.update(res_crops())
     for name, spec in CROPS.items():
         crop(spec).save(os.path.join(OUT, name + '.png'), optimize=True)
     print(f'{len(CROPS)} crops -> public/art/ninja/')
