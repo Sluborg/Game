@@ -1062,3 +1062,65 @@ input, #name {
 #build-panel .bcard .beff { font-size: 14px; } #build-panel .bcard .bcost { font-size: 16px; }
 .lanrow b { font-size: 18px; }
 .lanrow small, .lanrow span { font-size: 15px; }
+
+/* ---------- build menu layout (PLAN step 3) ---------- */
+#build-panel { top: calc(max(8px, env(safe-area-inset-top)) + 96px); transform: translateX(-50%); max-height: calc(100% - 120px); padding: 8px; }
+#build-panel .bcards { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+#build-panel .bcard {
+  position: relative; display: grid; grid-template-rows: auto 104px 1fr auto; justify-items: center; align-items: center;
+  gap: 4px; padding: 8px 4px; min-height: 0; filter: none; opacity: 1;
+}
+#build-panel .bcard .bname { font-size: 16px; font-weight: 700; line-height: 1.15; text-align: center; min-height: 2.3em; display: flex; align-items: center; }
+#build-panel .bcard .bimg { position: relative; width: 100%; height: 104px; display: flex; align-items: flex-end; justify-content: center; }
+#build-panel .bcard .bimg img { max-width: none; max-height: none; image-rendering: pixelated; }
+#build-panel .bcard .beff { font-size: 14px; line-height: 1.2; color: #6f5546; text-align: center; display: block; min-height: 0; }
+#build-panel .bcard .bcost { align-self: end; width: 100%; padding-top: 4px; border-top: 2px solid #e4cf9f; gap: 8px; }
+#build-panel .bcard .bcost .c { font-size: 16px; font-weight: 700; gap: 2px; }
+#build-panel .bcard .bcost { flex-wrap: wrap; gap: 2px 6px; }
+#build-panel .bcard { min-width: 0; }
+#build-panel .bcard .bcost .c img { height: auto; width: auto; } /* resource art at 1x in the cost strip */
+#build-panel .bcard .bcost .c.ok { color: var(--k-plum); }
+#build-panel .bcard .bcost .c.no { color: #c0392b; }
+#build-panel .bcard .bimg .bstate { position: absolute; right: 0; top: 0; width: 32px; height: 32px; image-rendering: pixelated; }
+#build-panel .bcard:disabled:not(.built), #build-panel .bcard.built { filter: none; opacity: 1; }
+#build-panel .bcard.built .bimg img { opacity: 0.75; }
+#build-panel .bcard.can { border: 3px solid #4caf3a; }
+@media (orientation: landscape) and (max-height: 520px) {
+  #build-panel { top: 50%; transform: translate(-50%, -50%); max-height: 96vh; width: min(96vw, 860px); padding: 6px; }
+  #build-panel .bcards { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+  #build-panel .bcard { grid-template-rows: auto 72px 1fr auto; padding: 6px 2px; }
+  #build-panel .bcard .bimg { height: 72px; }
+  #build-panel .bcard .bname { font-size: 14px; }
+  #build-panel .bcard .beff { font-size: 14px; display: block; }
+}
+
+/* ---------- designer (PLAN step 3): no title, a fixed grid that pages, tiles show only the item ---------- */
+#menu #custom > h2 { display: none; }
+#menu #custom .opts {
+  grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 72px; height: calc(72px * 2 + 8px + 16px + 4px);
+  min-height: 0; max-height: none; overflow: visible; align-content: start;
+}
+#menu #custom .opt { min-height: 0; height: 72px; display: grid; place-items: center; }
+#menu #custom .opt .blob, #menu #custom .opt .blob img { width: 60px; height: 60px; }
+#menu #custom .opt .part { display: grid; place-items: center; width: 100%; height: 100%; }
+#menu #custom .opt .part img { image-rendering: pixelated; max-width: none; }
+#menu #custom .opt .part.none::before { content: ''; width: 36px; height: 36px; border: 3px dashed var(--k-edge); border-radius: 50%; }
+.pager { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.pgbtn {
+  width: 56px; height: 48px; padding: 0; display: grid; place-items: center; border: 2px solid var(--k-edge-lo); border-radius: 4px;
+  background: var(--k-parch2); box-shadow: inset 0 -3px 0 0 #e4cf9f, 0 4px 0 0 var(--k-shadow); cursor: pointer;
+}
+.pgbtn img { width: 48px; height: 48px; image-rendering: pixelated; }
+.pgbtn.next img { transform: scaleX(-1); }
+.pgbtn:disabled { opacity: 0.35; cursor: default; }
+.pgbtn:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 0 -3px 0 0 #e4cf9f, 0 2px 0 0 var(--k-shadow); filter: brightness(0.9); }
+.pgdots { display: flex; gap: 6px; }
+.pgdots i { width: 10px; height: 10px; border-radius: 50%; background: var(--k-edge); }
+.pgdots i.on { background: var(--k-plum); }
+@media (orientation: landscape) and (max-height: 520px) {
+  #menu #custom .opts { grid-template-columns: repeat(6, minmax(0, 1fr)); height: calc(72px + 16px + 4px); }
+}
+/* designer tiles: room for the 60 px (3x) blob on a 360 px phone */
+#menu #custom .opts { padding: 6px; gap: 6px; }
+#menu #custom .opt, #menu #custom .opt.on { padding: 0; }
+@media (max-width: 380px) and (orientation: portrait) { #menu { padding-left: 10px; padding-right: 10px; } #menu #custom.card { padding-left: 8px; padding-right: 8px; } }
