@@ -530,7 +530,7 @@ def preview(paths, out_path=None):
 
 
 def main():
-    which = sys.argv[1:] or ['n11', 'n12', 'n13', 'n14', 'n15']
+    which = sys.argv[1:] or ['n11', 'n12', 'n13', 'n14', 'n15']  # the preview sheet is picked by the orders given
     made = []
     for w in which:
         res = globals()[w]()
@@ -539,7 +539,7 @@ def main():
         made += [r[0] for r in res]
     big = [p for p in made if 'dungeon-end' in p]
     preview([p for p in made if not os.path.basename(p)[:-4][-2:] in ('-0', '-1', '-2', '-3') and p not in big],
-            os.path.join(REV, 'n26-n23b-raw-preview.png' if 'n26' in which else 'n23-n25-sliced.png' if 'n23' in which else 'n16-n22-sliced.png' if any(x in which for x in ('n16', 'n17', 'n18', 'n19', 'n20', 'n21')) else 'n12-n15-sliced.png'))
+            os.path.join(REV, 'n26-n23b-raw-preview.png' if ('n26' in which or 'n23b' in which) else 'n23-n25-sliced.png' if 'n23' in which else 'n16-n22-sliced.png' if any(x in which for x in ('n16', 'n17', 'n18', 'n19', 'n20', 'n21')) else 'n12-n15-sliced.png'))
 
 
 if __name__ == '__main__':
