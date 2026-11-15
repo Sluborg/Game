@@ -17,7 +17,7 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 
 **Kenney still IN GAME** (0): none
 
-**Counts by source:** 0x72 1 / ChatGPT 268 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 16 (Ninja: 113 referenced by code). **Own files:** 319, 29 delete candidates.
+**Counts by source:** 0x72 1 / ChatGPT 268 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 16 (Ninja: 112 referenced by code). **Own files:** 319, 29 delete candidates.
 
 ## Own files (art, Kenney, app icons)
 
@@ -36,8 +36,8 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/base/watchtower.png` | 30x52 | Claude-drawn: scripts/base_art.py | Own art (CC0) | CODE ONLY | src/uikit2.ts:201, src/sim.ts:146, src/sim.ts:147 (+2) | replace (see OLD_ART_CHECKLIST) |
 | `art/base/well.png` | 28x36 | Claude-drawn: scripts/base_art.py | Own art (CC0) | CODE ONLY | src/sim.ts:146, src/sim.ts:147, src/sim.ts:155 (+1) | replace (see OLD_ART_CHECKLIST) |
 | `art/base/workshop.png` | 44x38 | Claude-drawn: scripts/base_art.py | Own art (CC0) | CODE ONLY | src/sim.ts:146, src/sim.ts:147, src/sim.ts:155 (+2) | replace (see OLD_ART_CHECKLIST) |
-| `art/dungeon-end-landscape.png` | 1672x941 | ChatGPT N-22 dungeon end screen | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:234 | keep |
-| `art/dungeon-end.png` | 941x1672 | ChatGPT N-22 dungeon end screen | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:232 | keep |
+| `art/dungeon-end-landscape.png` | 1672x941 | ChatGPT N-22 dungeon end screen | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:237 | keep |
+| `art/dungeon-end.png` | 941x1672 | ChatGPT N-22 dungeon end screen | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:235 | keep |
 | `art/dungeon/boss-banner.png` | 103x28 | ChatGPT N-14 boss intro, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/boss-portrait.png` | 31x29 | ChatGPT N-14 boss intro, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/card-class-healer.png` | 55x61 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:69 | keep |
@@ -129,18 +129,18 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/dungeon/skills/tank-guard.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:30, src/dungeon.ts:33, src/dungeon.ts:137 | keep |
 | `art/dungeon/skills/tank-stun.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:30, src/dungeon.ts:33, src/dungeon.ts:136 | keep |
 | `art/dungeon/skills/tank-taunt.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:29, src/dungeon.ts:33, src/dungeon.ts:133 | keep |
-| `art/dungeon/ui/boss-bar-frame.png` | 160x16 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:212 | keep |
+| `art/dungeon/ui/boss-bar-frame.png` | 160x16 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:215 | keep |
 | `art/dungeon/ui/boss-emblem.png` | 16x16 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonUi.ts:281 | keep |
-| `art/dungeon/ui/btn-round-disabled-18.png` | 18x18 | ChatGPT N-19b round button rings, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:121, src/dungeon.css:318, src/uikit2.ts:23 | keep |
+| `art/dungeon/ui/btn-round-disabled-18.png` | 18x18 | ChatGPT N-19b round button rings, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:124, src/dungeon.css:321, src/uikit2.ts:23 | keep |
 | `art/dungeon/ui/btn-round-disabled-24.png` | 24x24 | ChatGPT N-19b round button rings, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:23 | keep |
 | `art/dungeon/ui/btn-round-disabled-48.png` | 48x48 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:23 | keep |
 | `art/dungeon/ui/btn-round-disabled-64.png` | 64x64 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:23 | keep |
-| `art/dungeon/ui/btn-round-normal-18.png` | 18x18 | ChatGPT N-19b round button rings, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:115, src/dungeon.css:316, src/uikit2.ts:23 | keep |
-| `art/dungeon/ui/btn-round-normal-24.png` | 24x24 | ChatGPT N-19b round button rings, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:101, src/style.css:1299, src/uikit2.ts:23 | keep |
+| `art/dungeon/ui/btn-round-normal-18.png` | 18x18 | ChatGPT N-19b round button rings, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:118, src/dungeon.css:319, src/uikit2.ts:23 | keep |
+| `art/dungeon/ui/btn-round-normal-24.png` | 24x24 | ChatGPT N-19b round button rings, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:104, src/style.css:1299, src/uikit2.ts:23 | keep |
 | `art/dungeon/ui/btn-round-normal-48.png` | 48x48 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/style.css:1046, src/uikit2.ts:23 | keep |
 | `art/dungeon/ui/btn-round-normal-64.png` | 64x64 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:23 | keep |
-| `art/dungeon/ui/btn-round-pressed-18.png` | 18x18 | ChatGPT N-19b round button rings, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:119, src/dungeon.css:317, src/uikit2.ts:23 | keep |
-| `art/dungeon/ui/btn-round-pressed-24.png` | 24x24 | ChatGPT N-19b round button rings, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:104, src/uikit2.ts:23 | keep |
+| `art/dungeon/ui/btn-round-pressed-18.png` | 18x18 | ChatGPT N-19b round button rings, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:122, src/dungeon.css:320, src/uikit2.ts:23 | keep |
+| `art/dungeon/ui/btn-round-pressed-24.png` | 24x24 | ChatGPT N-19b round button rings, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:107, src/uikit2.ts:23 | keep |
 | `art/dungeon/ui/btn-round-pressed-48.png` | 48x48 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:23 | keep |
 | `art/dungeon/ui/btn-round-pressed-64.png` | 64x64 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:23 | keep |
 | `art/dungeon/ui/hazard-ring-0.png` | 48x32 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
@@ -243,8 +243,8 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/icons/ui/settings-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
 | `art/icons/ui/shape-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
 | `art/icons/ui/shape-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
-| `art/loading-landscape.png` | 1672x941 | ChatGPT N-3 loading screen | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeon.css:229, src/style.css:728 | keep |
-| `art/loading-portrait.png` | 941x1672 | ChatGPT N-3 loading screen | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeon.css:224, src/style.css:721 | keep |
+| `art/loading-landscape.png` | 1672x941 | ChatGPT N-3 loading screen | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeon.css:232, src/style.css:728 | keep |
+| `art/loading-portrait.png` | 941x1672 | ChatGPT N-3 loading screen | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeon.css:227, src/style.css:721 | keep |
 | `art/loading.png` | 470x836 | ChatGPT N-3 loading screen | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY (loaded, not shown) | src/style.css:463, src/style.css:470, src/main.ts:31 (+1) | keep |
 | `art/lobby.png` | 992x1586 | ChatGPT order 60 (lobby) | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/style.css:267, src/i18n.ts:5, src/i18n.ts:52 (+51) | replace (see OLD_ART_CHECKLIST) |
 | `art/lobby/party-platform.png` | 160x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/style.css:1133 | keep |
@@ -458,7 +458,6 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `assets/ninja-adventure/Ui/Skill Icon/Spell/OrbWater.png` | 24x24 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Spell/Upgrade.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Skill Icon/Spell/Vision.png` | 24x24 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
-| `assets/ninja-adventure/Ui/Theme/Theme Wood/button_normal.png` | 16x8 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Theme/Theme Wood/inventory_cell.png` | 16x16 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 
 ## Ninja Adventure folders (cover every other pack file)
@@ -469,7 +468,7 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `assets/ninja-adventure/Backgrounds/**` | 61 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 9 referenced (rows above) | keep (the art source) |
 | `assets/ninja-adventure/FX/**` | 105 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 31 referenced (rows above) | keep (the art source) |
 | `assets/ninja-adventure/Items/**` | 142 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 22 referenced (rows above) | keep (the art source) |
-| `assets/ninja-adventure/Ui/**` | 360 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 37 referenced (rows above) | keep (the art source) |
+| `assets/ninja-adventure/Ui/**` | 360 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 36 referenced (rows above) | keep (the art source) |
 | `assets/ninja-adventure/Palette.png` | 10x9 | Ninja Adventure (pack preview / palette) | CC0 1.0 | UNUSED | keep (reference) |
 | `assets/ninja-adventure/preview-part-1.png` | 641x417 | Ninja Adventure (pack preview / palette) | CC0 1.0 | UNUSED | keep (reference) |
 | `assets/ninja-adventure/preview-part-2.png` | 641x417 | Ninja Adventure (pack preview / palette) | CC0 1.0 | UNUSED | keep (reference) |

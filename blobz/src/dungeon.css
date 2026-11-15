@@ -42,13 +42,16 @@
 }
 .wcard.on b, .skcard.on b { color: var(--dw-plum); text-shadow: none; }
 .wcard.off { opacity: 0.5; }
-/* buttons: primary orange (Theme Wood button), secondary cream + plum text + quiet wood edge; calm press */
+/* buttons option A (Stefan 2026-11-15, as the menu's button.big): primary = CSS orange "Slumpa" family, secondary =
+   cream + plum text + quiet wood edge; same geometry (2 px border, 4 px radius, inner bottom line), calm press */
 #dg-loot-btns button {
-  min-height: 48px; padding: 0 18px; font: 700 20px var(--font); cursor: pointer; image-rendering: pixelated;
+  min-height: 48px; padding: 0 18px; font: 700 20px var(--font); cursor: pointer;
   box-shadow: 0 4px 0 0 var(--dw-shadow);
 }
-#dg-roll { color: #fff8e8; text-shadow: 0 2px 0 #8a3d12; background: none; border: 6px solid;
-  border-image: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/button_normal.png') 2 fill / 6px stretch; }
+#dg-roll { color: #fff8e8; text-shadow: 0 1px 0 var(--k-orange-edge, #a8461f); background: var(--k-orange, #f06733);
+  border: 2px solid var(--k-orange-edge, #a8461f); border-radius: 4px; border-image: none;
+  box-shadow: inset 0 -3px 0 0 var(--k-orange-lo, #c9521f), 0 4px 0 0 var(--dw-shadow); }
+#dg-roll:active { box-shadow: inset 0 -3px 0 0 var(--k-orange-lo, #c9521f), 0 2px 0 0 var(--dw-shadow); }
 #dg-pass { color: var(--dw-plum); background: var(--dw-parch-2); border: 2px solid var(--dw-edge); border-radius: 4px;
   box-shadow: inset 0 -3px 0 0 #e4cf9f, 0 4px 0 0 var(--dw-shadow); }
 #dg-loot-btns button:active { transform: translateY(2px); filter: brightness(0.9); box-shadow: 0 2px 0 0 var(--dw-shadow); }
