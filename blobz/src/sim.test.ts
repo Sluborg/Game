@@ -71,3 +71,24 @@ describe('sim', () => {
     expect(questTargets(5).wood).toBeGreaterThan(questTargets(1).wood);
   });
 });
+
+describe('village spawn (Stefan 2026-11-15)', () => {
+  it('puts all 5 blobz in one row south of the main building, apart, clear of the building, flag, pile, nodes and the cave', async () => {
+    const { spawnSpot, SPAWN_Y, MAX_PLAYERS, makeTrees, entranceOf, ENTRANCE_R, BASE: B } = await import('./sim');
+    const spots = Array.from({ length: MAX_PLAYERS }, (_, i) => spawnSpot(i));
+    expect(new Set(spots.map((p) => p.x)).size).toBe(MAX_PLAYERS);
+    for (const p of spots) {
+      expect(p.y).toBe(SPAWN_Y);
+      expect(p.y - 40).toBeGreaterThan(B.y + 62); // a 40 px blob stands fully below the building foot (+30) and the flag foot (+62)
+      expect(Math.abs(p.x - B.x)).toBeLessThanOrEqual(96);
+    }
+    for (let i = 1; i < spots.length; i++) for (let j = 0; j < i; j++) expect(Math.abs(spots[i].x - spots[j].x)).toBeGreaterThanOrEqual(44);
+    for (const seed of [1, 7, 424242]) {
+      for (const p of spots) for (const t of makeTrees(seed)) expect(Math.hypot(t.x - p.x, t.y - p.y)).toBeGreaterThan(40);
+      const e = entranceOf(seed);
+      for (const p of spots) expect(Math.hypot(e.x - p.x, e.y - p.y)).toBeGreaterThan(ENTRANCE_R + 20);
+    }
+    const s = createState(['a', 'b', 'c', 'd', 'e'].map((id) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 })), 7);
+    expect(s.players.map((p) => [p.x, p.y])).toEqual(spots.map((p) => [p.x, p.y]));
+  });
+});
