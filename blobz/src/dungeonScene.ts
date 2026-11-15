@@ -157,7 +157,8 @@ export class DungeonScene extends Phaser.Scene {
     img('na-floor', NA + 'Backgrounds/Tilesets/Interior/TilesetInteriorFloor.png');
     img('na-walls', NA + 'Backgrounds/Tilesets/Interior/TilesetWallSimple.png');
     img('na-elem', NA + 'Backgrounds/Tilesets/TilesetElement.png');
-    img('na-tdungeon', NA + 'Backgrounds/Tilesets/TilesetDungeon.png'); // rooms: the placeholder door (bars)
+    // rooms: the ChatGPT N-34 door (48x32, floor line on the bottom row), closed / open
+    img('dg-door-closed', 'art/dungeon/door-closed-48.png'); img('dg-door-open', 'art/dungeon/door-open-48.png');
     sheet('na-chest', NA + 'Items/Treasure/BigTreasureChest.png', 16, 14);
     sheet('na-coin', NA + 'Items/Treasure/Coin2.png', 10, 10);
     img('na-potion', NA + 'Items/Potion/LifePot.png');
@@ -285,14 +286,10 @@ export class DungeonScene extends Phaser.Scene {
         this.textures.addCanvas(k, cv)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
       }
     }
-    if (!this.textures.exists('dg-door-closed') && this.textures.exists('na-tdungeon')) {
-      // placeholder door (rooms): the Ninja bars tile (TilesetDungeon 80,16) until the ChatGPT door arrives
-      const cv = document.createElement('canvas'); cv.width = cv.height = 16;
-      cv.getContext('2d')!.drawImage(this.textures.get('na-tdungeon').getSourceImage() as HTMLImageElement, 80, 16, 16, 16, 0, 0, 16, 16);
-      this.textures.addCanvas('dg-door-closed', cv)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
-    }
-    // rooms: the door at the top (placeholder until the ChatGPT door: Ninja bars closed, stairs up open)
-    this.stairs = this.add.image(f.stairs.x, f.stairs.y, rooms ? 'dg-door-closed' : floor < FLOORS ? 'na-stairs-down' : 'na-stairs-up').setScale(3).setDepth(-900);
+    // rooms: the N-34 door in the top wall at 2x (the tiles' scale), its floor line on the room's top edge
+    this.stairs = rooms
+      ? this.add.image(f.stairs.x, DT + 4, 'dg-door-closed').setOrigin(0.5, 1).setScale(2).setDepth(-890)
+      : this.add.image(f.stairs.x, f.stairs.y, floor < FLOORS ? 'na-stairs-down' : 'na-stairs-up').setScale(3).setDepth(-900);
     this.mapObjs.push(this.stairs);
     if (floor === 1) this.mapObjs.push(this.add.image(f.exit.x, f.exit.y, 'na-stairs-up').setScale(3).setDepth(-900));
     this.chests = f.chests.map((c) => this.add.image(c.x, c.y + 8, 'na-chest', 0).setScale(3).setOrigin(0.5, 1).setDepth(c.y));
@@ -327,8 +324,8 @@ export class DungeonScene extends Phaser.Scene {
     // rooms: the door opens (and the chest shows) once every wave is gone
     const roomOpen = d.rooms && d.wave >= d.waves && d.landing === 0 && d.enemies.length === 0;
     if (d.rooms) {
-      const want = roomOpen ? 'na-stairs-up' : 'dg-door-closed';
-      if (this.stairs.texture.key !== want) { this.stairs.setTexture(want); if (roomOpen) this.nfx('nf-smoke', f.stairs.x, f.stairs.y, 2); }
+      const want = roomOpen ? 'dg-door-open' : 'dg-door-closed';
+      if (this.stairs.texture.key !== want) { this.stairs.setTexture(want); if (roomOpen) this.nfx('nf-smoke', f.stairs.x, DT - 16, 2); }
       this.chests.forEach((c) => c.setVisible(roomOpen));
     } else this.stairs.setAlpha(d.floor === FLOORS && bossAlive ? 0.35 : 1);
 
