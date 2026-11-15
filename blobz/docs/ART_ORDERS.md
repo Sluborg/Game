@@ -49,6 +49,7 @@ ChatGPT works only on N-orders with status TO DO (next: N-37). ChatGPT fills eve
 | N-38 | TO DO | Start/loading background, village scene, EXACT 240x430 art px portrait (shown 2x) | `art/title.png` |
 | N-39 | TO DO | Logo "Blobz" as true pixel art, EXACT 150x104 art px (shown 2x) | `art/logo.png` |
 | N-40 | TO DO | Village tent (cottage level 1) icon, EXACT 16x16 art px | `art/icons/cottage-1.png` (new) |
+| N-41 | TO DO | Berry food icon: small cluster of red berries with a leaf, EXACT 16x16 + 32x32 | `art/icons/res-berry-16.png`, `res-berry-32.png` |
 | N-34 | SUPERSEDED by 0x72 DungeonTileset II (2026-11-15, files kept). Was: DONE (received 2026-11-15; sliced to art/dungeon/door-{closed,open}-{32,48}.png by scripts/slice_grid_orders.py n34) | Dungeon room door for the Archero rooms, closed + open, 32x32 + 48x32 | `art/dungeon/door-*` |
 | N-34b | SUPERSEDED by 0x72 DungeonTileset II (2026-11-15, files kept). Was: DONE, REPLACED by N-34d (received 2026-11-15, unordered extra; sliced to art/dungeon/wall-{tl,t,tr,l,r,bl,br}.png 16x16 by scripts/room_walls.py; room test docs/art-review/n34-room-test.png; MISSING: inner corners; the plain bottom edge came with N-34c) | Dungeon room walls matching the N-34 door: top corners + top edge, left/right side, bottom corners | `art/dungeon/wall-*` |
 | N-34c | SUPERSEDED by 0x72 DungeonTileset II (2026-11-15, files kept). Was: DONE (received 2026-11-15, asked by Stefan; sliced by scripts/room_walls.py to art/dungeon/wall-b.png (plain bottom edge) + wall-entrance-{l,mid,r}.png, 16x16; in docs/art-review/n34-room-test.png) | Room entrance: bottom wall with an opening (wall, pillar, low threshold, pillar, wall), same set as N-34/N-34b | `art/dungeon/wall-b`, `wall-entrance-*` |
@@ -431,6 +432,19 @@ EXACTLY 8x nearest-neighbour (every art pixel = an 8x8 block). No text unless as
 A small icon of the village tent (the cottage at level 1) for the HUD and the lobby, same tent as in this Ninja Adventure
 tileset (the canvas tent at the left, rows 120-160 of the sheet): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/assets/ninja-adventure/Backgrounds/Tilesets/TilesetHouse.png
 EXACT canvas: 16 x 16 art pixels (delivered 128 x 128), the tent filling the square, 1 px dark outline.
+```
+
+### N-41 Berry food icon
+```
+STYLE: exactly like your N-26 trees (same dark near-black outline, palette, 2-3 tone shading, pixel size): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n26-trees.png
+TRUE PIXEL ART: every art pixel is one flat colour, NO anti-aliasing, no gradients, no blur. Solid flat magenta #ff00ff
+background, hard pixel edges, no glow, halo or shadow touching the magenta. Deliver at EXACTLY 8x nearest-neighbour.
+No text, no labels.
+The FOOD resource icon: a small cluster of 3-5 shiny round red berries with one green leaf and a tiny stem, the same red
+berries as on our berry bush: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/art/props/berry-bush-32.png
+It sits next to the wood icon (match its size and outline): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/art/icons/res-wood-32.png
+Draw it twice, each natively at its size (NOT one scaled up): EXACTLY 16x16 art px (left) and EXACTLY 32x32 art px
+(right), 1 px dark outline at each scale, generous magenta between them.
 ```
 
 ### N-34 Dungeon room door (DONE)
