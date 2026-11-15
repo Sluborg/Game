@@ -157,7 +157,7 @@ const sv = {
   'dg.skill.healerBubble': 'Skyddsbubbla',
   'dg.skill.healerRevive': 'Väck snabbare',
   'dg.skill.healerHoly': 'Starkare trollstav',
-  'dg.skill.healerCleanse': 'Snabbare stav',
+  'dg.skill.healerCleanse': 'Snabbare trollstav',
   'dg.skill.marksmanMultishot': 'Fler pilar',
   'dg.skill.marksmanPierce': 'Pil genom monster',
   'dg.skill.marksmanCrit': 'Fullträff',
