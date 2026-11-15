@@ -83,9 +83,7 @@ const tap = async (page) => { await page.locator('#dash').dispatchEvent('pointer
     // no day cycle (archived): no sun bar; the round ends when all three goals are filled
     ok(!(await bo.isVisible('#hud-day')), 'no day bar in the HUD (day cycle archived)');
     await sim(host, (s) => { s.delivered = { ...s.quest }; });
-    // the complete quest starts Bärregn; the host skips it to reach the end screen
-    await host.waitForSelector('#btn-skip-mini:not(.hidden)', { timeout: 5000 });
-    await host.click('#btn-skip-mini');
+    // the complete quest ends the round: straight to the end screen (Bärregn archived)
     await ada.waitForSelector('#end:not(.hidden)', { timeout: 5000 });
     ok((await ada.textContent('#end-title')) === 'Uppdraget klart!', 'end screen: "Uppdraget klart!"');
     const endStars = await ada.locator('#end-stars .star.on').count();

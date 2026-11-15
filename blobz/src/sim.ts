@@ -299,7 +299,8 @@ export { rng } from './rng';
 import { rng } from './rng';
 import { ARENA, keepInArena, miniStars, newMini, stepMini, type Mini, type MiniFx } from './mini';
 /** "Bärregn" co-op mini game after sunset, before the end screen. */
-export const MINI_ENABLED = true;
+/** Bärregn mini game is ARCHIVED (Stefan 2026-11-15, docs/ARCHIVED.md): the round goes straight to the end screen. */
+export const MINI_ENABLED = false;
 /** Day cycle (sun bar + time limit) is ARCHIVED (Stefan 2026-11-15, docs/ARCHIVED.md): with it off the meadow has no
  *  time limit and the round ends when all three quest goals are filled, then Bärregn as before. Code kept. */
 export const DAY_CYCLE_ENABLED = false;

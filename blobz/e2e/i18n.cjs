@@ -85,12 +85,8 @@ async function phone(browser, name, locale, size = PORTRAIT) {
     if (shots) await en.screenshot({ path: `${shots}/i18n-build-en.png` });
     await en.click('#btn-build-close');
 
-    // Bärregn + end screen
+    // end screen (Bärregn archived: the complete quest goes straight there)
     await sim(en, (s) => { s.delivered = { ...s.quest }; });
-    await en.waitForSelector('#mini-hud:not(.hidden)', { timeout: 6000 });
-    ok((await en.textContent('#mini-hud .mtitle')).trim() === 'Berry Rain!' && (await en.textContent('#btn-skip-mini')).trim() === 'Skip', 'Berry Rain HUD in English ("Berry Rain!", "Skip")');
-    await noSwedish(en, 'Berry Rain');
-    await en.click('#btn-skip-mini');
     await en.waitForSelector('#end:not(.hidden)', { timeout: 6000 });
     await sv.waitForSelector('#end:not(.hidden)', { timeout: 6000 });
     ok((await en.textContent('#end-title')).trim() === 'Quest complete!', 'end screen in English');

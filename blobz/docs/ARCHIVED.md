@@ -26,3 +26,12 @@
 - Tests: `src/dungeon.test.ts` checks the clock no longer ends a run and that picking waits; `e2e/dungeon.cjs` checks no
   clock in the HUD and no countdown on the class cards.
 - To bring them back: set the flags to `true` (the i18n texts then get " · N s" appended in code).
+
+## archived: Bärregn mini game (2026-11-15, review-1 decision "Bärregn: archived")
+- After the meadow round the game goes straight to the end screen (no berry rain, no Bärregn line).
+- Code stays behind one flag: `MINI_ENABLED = false` in `src/sim.ts` (`src/mini.ts`, the drawing in `src/game.ts`,
+  `art/mini/*`, the `#mini-hud` / `#mini-intro` markup are all kept).
+- Tests: `src/mini.test.ts` is skipped while off; `e2e/mini.cjs` is skipped unless `BLOBZ_MINI=1`; the other e2e end
+  the round by filling the quest and expect the end screen right away.
+- To bring it back: set the flag to `true`, run `npx vitest run src/mini.test.ts` and `BLOBZ_MINI=1 node e2e/mini.cjs`,
+  and restore the Bärregn checks in `e2e/noread.cjs` / `e2e/i18n.cjs` / `e2e/build.cjs` / `e2e/gather.cjs` from git history.
