@@ -970,7 +970,9 @@ export class GameScene extends Phaser.Scene {
       };
       if (YARD_ENABLED) {
         blob(BASE.x, BASE.y + 6, 96 + 16 * level, 84 + 12 * level);
-        for (const k of built) { const at = BUILD_SPOTS[k]; blob(at.x, at.y - 30, 66, 52); }
+        // a patch at each building's foot line, as wide as its plot (Stefan 2026-11-15: the storage's patch sat hidden
+        // under its tall picture; the small well showed its own), so every built house stands on visible dirt
+        for (const k of built) { if (k === 'bridge') continue; const r = plotRect(k); blob((r.x0 + r.x1) / 2, r.y1 + 6, Math.max(66, (r.x1 - r.x0) / 2 + 48), 60); }
       }
       const routed = DUNGEON_ENABLED ? cavePath(this.s.seed) : new Set<string>();
       for (const k of routed) { const [tx, ty] = k.split(',').map(Number); add(tx, ty); }
