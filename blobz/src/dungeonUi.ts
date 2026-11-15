@@ -123,7 +123,7 @@ function renderHud(d: DView, myId: string) {
   const h = d.heroes[myId];
   if (h) renderHearts(h.hp, h.maxHp);
   setText($('dg-gold'), String(d.gold));
-  setText($('dg-floor'), t('dg.floor', { n: d.floor, max: FLOORS }));
+  setText($('dg-floor'), t('dg.floor', { d: d.dungeon, n: d.floor, max: FLOORS }));
   $('dg-time').classList.toggle('hidden', !DUNGEON_TIMER_ENABLED); // no time limit underground (flag off)
   if (DUNGEON_TIMER_ENABLED) { setText($('dg-time'), fmt(d.time)); $('dg-time').classList.toggle('low', d.time <= 30); }
   setText($('dg-level'), String(d.level));
@@ -266,10 +266,39 @@ function buildOverlays() {
   applyI18n(loot);
   $('dg-roll').onclick = () => { sfx.pick(); sendPick('loot:roll'); };
   $('dg-pass').onclick = () => { sfx.pick(); sendPick('loot:pass'); };
+  // boss strip + entry screen
+  const boss = document.createElement('div');
+  boss.id = 'dg-boss'; boss.className = 'hidden';
+  boss.innerHTML = '<img class="dg-boss-emblem" src="art/dungeon/ui/boss-emblem.png" alt="" /><div class="dg-boss-col"><b id="dg-boss-name"></b><div class="dg-boss-bar"><i id="dg-boss-fill"></i></div></div>';
+  hud.append(boss);
+  const load = document.createElement('div');
+  load.id = 'dg-loading'; load.className = 'hidden';
+  load.innerHTML = '<b data-i18n="dg.entering"></b>';
+  document.body.append(load);
+  applyI18n(load);
   const item = document.createElement('span');
   item.id = 'dg-item'; item.className = 'hidden';
   $('dg-row').append(item);
   void LOOT_SECONDS;
+}
+
+// ---------- boss strip at the top (N-21 bar frame + emblem + name) while the boss is on the floor ----------
+function renderBoss(d: DView) {
+  const boss = d.enemies.find((e) => e.kind === 2);
+  show('dg-boss', !!boss);
+  if (!boss) return;
+  setText($('dg-boss-name'), t('dg.bossName'));
+  $('dg-boss-fill').style.width = (Math.max(0, Math.min(1, boss.hp / Math.max(1, boss.mx))) * 95).toFixed(1) + '%'; // 95% = the frame's inner slot
+}
+
+// ---------- dungeon entry: the dusk cave art for ~2 s (atmosphere, even when loading is done) ----------
+export const ENTRY_MS = 2000;
+let loadingTimer = 0;
+function showLoading() {
+  const el = $('dg-loading');
+  el.classList.remove('hidden', 'out');
+  clearTimeout(loadingTimer);
+  loadingTimer = window.setTimeout(() => { el.classList.add('out'); loadingTimer = window.setTimeout(() => el.classList.add('hidden'), 400); }, ENTRY_MS);
 }
 
 /** Called first thing in main.ts onView. Returns true when the meadow HUD/end logic should be skipped. */
@@ -279,13 +308,13 @@ export function dungeonUi(v: View, myId: string | undefined, controls: Controls,
   buildOverlays();
   if (mode !== lastMode) {
     if (mode === 'pick') { myPick = null; pickClass = null; buildCards(); }
-    if (mode === 'dungeon') { endShown = false; heartsKey = ''; controls.setTool(null); }
+    if (mode === 'dungeon') { endShown = false; heartsKey = ''; controls.setTool(null); showLoading(); }
     controls.setDungeon(mode === 'dungeon');
     // the small button: sidestep icon underground, the dash arrow again on the meadow
     const dashImg = controls.dashBtn.querySelector('img');
     if (dashImg && !controls.tool) dashImg.src = mode === 'dungeon' ? encodeURI(NAU + 'Ui/Skill Icon/Spell/Camouflage.png') : 'art/icons/dash-arrow.png';
     show('hud-dg', mode === 'dungeon');
-    if (mode !== 'dungeon') { controls.dashBtn.querySelector('.dg-pips')?.remove(); controls.dashBtn.style.removeProperty('--cd'); controls.dashBtn.classList.remove('cd'); show('dg-ko', false); show('dg-end', false); show('dg-cards', false); show('dg-loot', false); offerKey = ''; lootKey = ''; }
+    if (mode !== 'dungeon') { show('dg-boss', false); controls.dashBtn.querySelector('.dg-pips')?.remove(); controls.dashBtn.style.removeProperty('--cd'); controls.dashBtn.classList.remove('cd'); show('dg-ko', false); show('dg-end', false); show('dg-cards', false); show('dg-loot', false); offerKey = ''; lootKey = ''; }
     lastMode = mode;
   }
   show('weapon-pick', mode === 'pick');
@@ -300,6 +329,7 @@ export function dungeonUi(v: View, myId: string | undefined, controls: Controls,
   if (mode !== 'dungeon' || !v.dungeon) return false;
   const d = v.dungeon;
   if (myId) { renderHud(d, myId); renderOffer(d, myId); renderLoot(d, myId, nameOf); }
+  renderBoss(d);
   if (d.done > 0 && !endShown) {
     endShown = true;
     setText($('dg-end-gold'), String(d.gold));

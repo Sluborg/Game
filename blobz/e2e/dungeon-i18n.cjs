@@ -52,8 +52,8 @@ async function phone(browser, name, locale, size = PORTRAIT) {
     for (const p of [en, sv]) await p.waitForSelector('#hud-dg:not(.hidden)', { timeout: 8000 });
 
     // HUD
-    await en.waitForFunction(() => /Floor 1\/3/.test(document.getElementById('dg-floor')?.textContent ?? ''), null, { timeout: 5000 });
-    ok((await sv.textContent('#dg-floor')).includes('Våning 1/3'), 'HUD floor: "Floor 1/3" (EN) / "Våning 1/3" (SV)');
+    await en.waitForFunction(() => /Dungeon 1 · Floor 1\/5/.test(document.getElementById('dg-floor')?.textContent ?? ''), null, { timeout: 15000 });
+    ok((await sv.textContent('#dg-floor')).includes('Grotta 1 · Våning 1/5'), 'HUD: "Dungeon 1 · Floor 1/5" (EN) / "Grotta 1 · Våning 1/5" (SV)');
     ok(await en.getAttribute('#attack', 'aria-label') === 'Dagger whirl', 'special button aria-label in English ("Dagger whirl")');
     await noSwedish(en, 'HUD');
 

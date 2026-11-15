@@ -43,7 +43,7 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     ok(d.floor === 1 && hs[0].cls === 'rogue' && hs[0].weapon === 'dagger' && hs[1].cls === 'healer' && hs[2].cls === 'marksman',
       'down together: Rogue (dagger) / Helare / Skytt on every phone');
     ok(hs[2].maxHp === 80 && hs[0].maxHp === 100, 'health follows the class (Skytt 80, Rogue 100)');
-    ok(d.bossMax === 660, `boss health scales with 3 players (${d.bossMax})`);
+    ok(d.dungeon === 1 && d.bossMax === 440, `Dungeon 1 (gentle): boss health scales with 3 players (${d.bossMax}; 660 on Dungeon 3)`);
     ok(await bo.isVisible('#attack') && await host.isVisible('#attack'), 'special button shows underground');
     ok(!(await host.isVisible('#dg-time')) && !(await bo.isVisible('#dg-time')), 'no dungeon clock in the HUD (no time limit)');
 

@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { KEYS } from './i18n';
 import {
-  AIM_WARN, BITE_TIME, CLASS_MOVE_COOLDOWN, DUNGEON_TIMER_ENABLED, CLASS_WEAPONS, BITE_WARN, bossHp, BURST, BURST_DMG, BURST_GAP, BURST_SPREAD, CLASS_HP, CLASSES, DASH_TIME, DASH_WARN, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, GH, GW,
+  AIM_WARN, BITE_TIME, CLASS_MOVE_COOLDOWN, DUNGEON_TIMER_ENABLED, CLASS_WEAPONS, BITE_WARN, bossHp, BURST, BURST_DMG, BURST_GAP, BURST_SPREAD, CLASS_HP, CLASSES, DASH_TIME, DASH_WARN, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, floorDmg, actMul, GH, GW,
   HEAL_BOLT, heroMods, refresh, inSwing, isWall, ITEMS, itemOf, KO_SECONDS, LEVEL_XP, LOOT_SECONDS, makeFloor, makeGoo, newRun, POTION_HP, REGEN_EVERY,
   skillIcon, skillOf, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
 } from './dungeon';
-import { createState, DUNGEON_ENABLED, PICK_TIMER_ENABLED, ENTRANCE_R, entranceOf, makePuzzles, makeTrees, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
+import { cleanVillage, createState, DUNGEON_ENABLED, newVillage, villageOf, PICK_TIMER_ENABLED, ENTRANCE_R, entranceOf, makePuzzles, makeTrees, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
 
 /** Art's skill icons in the repo (vite glob, no node fs types needed). */
 const NA_ICONS = Object.keys(import.meta.glob('../public/assets/ninja-adventure/Ui/Skill Icon/**/*.png')).map((k) => k.replace('../public/', ''));
@@ -62,14 +62,25 @@ describe('dungeon', () => {
     expect(count(2)).toBeGreaterThan(count(1) - 3);
   });
 
-  it('goo get tougher per floor and team size; boss health grows with the team', () => {
-    expect(floorHp(1, 1)).toBe(1);
-    expect(floorHp(3, 1)).toBeCloseTo(1.7);
-    expect(floorHp(1, 3)).toBeCloseTo(1.5);
-    expect(bossHp(1)).toBe(300);
-    expect(bossHp(3)).toBe(660);
+  it('difficulty (Stefan): a gentle Dungeon 1, slow scaling per floor, each dungeon a step harder; Dungeon 3 = the old difficulty', () => {
+    expect(FLOORS).toBe(5);
+    expect(floorHp(1, 1, 1)).toBeCloseTo(0.6); // Dungeon 1 floor 1: 60% monster health
+    expect(floorDmg(1, 1)).toBeCloseTo(0.5); // and half damage
+    expect(actMul(1, 1)).toBeCloseTo(1.5); // and 50% longer between attacks
+    expect(floorHp(FLOORS, 1, 1)).toBeCloseTo(0.8); // slow scaling over the dungeon
+    expect(floorHp(1, 1, 2)).toBeCloseTo(floorHp(FLOORS, 1, 1)); // the next dungeon starts where the last one ended
+    expect(floorHp(1, 1, 3)).toBeCloseTo(1); // Dungeon 3 = the old floor 1
+    expect(floorDmg(1, 3)).toBeCloseTo(1);
+    expect(floorHp(1, 3, 3)).toBeCloseTo(1.5); // more blobz = more health
+    expect(bossHp(1, 3)).toBe(300);
+    expect(bossHp(3, 3)).toBe(660);
+    expect(bossHp(1, 1)).toBe(200);
+    const d1 = makeFloor(7, 1, 1, 1).spawns.length, d3 = makeFloor(7, 1, 1, 3).spawns.length;
+    expect(d1).toBeLessThan(d3); // fewer monsters at the start
     const d = newRun(3, { a: 'sword', b: 'bow' });
-    expect(d.enemies.find((e) => e.kind === 0)!.mx).toBe(Math.round(ENEMY_HP[0] * floorHp(1, 2)));
+    expect(d.dungeon).toBe(1);
+    expect(d.enemies.find((e) => e.kind === 0)!.mx).toBe(Math.round(ENEMY_HP[0] * floorHp(1, 2, 1)));
+    expect(dview(dsnap(d, 3)).dungeon).toBe(1);
   });
 
   it('weapon balance (Stefan): no spear on offer; the crossbow hits clearly softer than melee; the Riddare below the sword', () => {
@@ -135,7 +146,7 @@ describe('dungeon', () => {
   });
 
   it('health is points: a touch costs the goo\'s damage; 0 = knocked out, back after 5 s with full health', () => {
-    const d = quiet(newRun(6, { a: 'hammer' }));
+    const d = quiet(newRun(6, { a: 'hammer' }, 3));
     const st = d.map.start, a = body('a', st.x, st.y);
     d.heroes.a.atkCd = 999;
     expect(d.heroes.a.hp).toBe(CLASS_HP.rogue);
@@ -170,7 +181,7 @@ describe('dungeon', () => {
   });
 
   it('spitters keep their distance; they aim first (warning), then fire a burst of 3 along the aim; spit hurts, walls stop it', () => {
-    const d = quiet(newRun(16, { a: 'staff' }));
+    const d = quiet(newRun(16, { a: 'staff' }, 3));
     const st = roomMid(d), a = body('a', st.x, st.y);
     d.heroes.a.atkCd = 999;
     const s = goo(d, 3, st.x + 120, st.y, { awake: true, cd: 0.01 });
@@ -269,7 +280,7 @@ describe('dungeon', () => {
   });
 
   it('boss: telegraphed slam; below half health it turns angry (phase 2): spit ring + small goo per slam', () => {
-    const d = quiet(newRun(9, { a: 'sword' }));
+    const d = quiet(newRun(9, { a: 'sword' }, 3));
     const st = d.map.start, a = body('a', st.x, st.y);
     d.heroes.a.atkCd = 999;
     const boss = goo(d, 2, st.x + 150, st.y, { awake: true, stun: 999, slamT: 0.01 });
@@ -705,11 +716,11 @@ describe('dungeon', () => {
   it('stairs: everyone on them 1.5 s goes down; the last floor exit needs the boss gone', () => {
     const d = quiet(newRun(10, { a: 'sword', b: 'sword' }));
     const go = (x: number, y: number, secs: number) => { const bs = [body('a', x, y), body('b', x + 5, y)]; return { bs, ...run1(d, bs, undefined, secs) }; };
-    go(d.map.stairs.x, d.map.stairs.y, 1.6);
-    expect(d.floor).toBe(2);
-    quiet(d);
-    go(d.map.stairs.x, d.map.stairs.y, 1.6);
-    expect(d.floor).toBe(3);
+    for (let fl = 2; fl <= FLOORS; fl++) {
+      go(d.map.stairs.x, d.map.stairs.y, 1.6);
+      expect(d.floor).toBe(fl);
+      if (fl < FLOORS) quiet(d);
+    }
     expect(d.enemies.some((e) => e.kind === 2)).toBe(true);
     d.enemies = d.enemies.filter((e) => e.kind === 2).map((e) => ({ ...e, stun: 999, slamT: 999, x: 40, y: 40 }));
     d.spit = [];
@@ -736,6 +747,32 @@ describe('dungeon', () => {
       expect(e.x).toBeGreaterThan(100); expect(e.y).toBeGreaterThan(100);
     }
     expect(used.size).toBeGreaterThan(1);
+  });
+
+  it.skipIf(!DUNGEON_ENABLED)('the entrance leads to the next unlocked dungeon; beating the boss unlocks the next one, saved with the village', () => {
+    const s = createState([P('a')], 12, { ...newVillage(), dungeon: 2 });
+    expect(s.dungeon).toBe(2);
+    const idle = new Map<string, Input>();
+    Object.assign(s.players[0], { x: s.entrance.x, y: s.entrance.y, vx: 0, vy: 0 });
+    for (let i = 0; i < 100; i++) step(s, idle, 1 / 60);
+    pickWeapon(s, 'a', 'dagger');
+    step(s, idle, 1 / 60);
+    expect(s.mode).toBe('dungeon');
+    expect(s.dg!.dungeon).toBe(2);
+    s.dg!.done = 0.01; s.dg!.why = 'exit'; // leaving early does not unlock
+    for (let i = 0; i < 10; i++) step(s, idle, 1 / 60);
+    expect(s.mode).toBe('meadow');
+    expect(s.dungeon).toBe(2);
+    Object.assign(s.players[0], { x: s.entrance.x, y: s.entrance.y, vx: 0, vy: 0 });
+    for (let i = 0; i < 100; i++) step(s, idle, 1 / 60);
+    pickWeapon(s, 'a', 'dagger');
+    step(s, idle, 1 / 60);
+    s.dg!.done = 0.01; s.dg!.why = 'boss';
+    for (let i = 0; i < 10; i++) step(s, idle, 1 / 60);
+    expect(s.dungeon).toBe(3);
+    expect(villageOf(s).dungeon).toBe(3);
+    expect(cleanVillage(JSON.parse(JSON.stringify(villageOf(s)))).dungeon).toBe(3);
+    expect(cleanVillage({ ...newVillage(), dungeon: 'x' }).dungeon).toBe(1);
   });
 
   it.skipIf(!DUNGEON_ENABLED)('meadow: all on the entrance -> weapon cards -> down together; the sun waits underground', () => {

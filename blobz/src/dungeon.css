@@ -198,3 +198,38 @@
 #dg-end .dgstat { font-size: 20px; margin: 4px 0; }
 #dg-end .dgstat img.icon { height: 24px; width: 24px; object-fit: cover; object-position: 0 50%; aspect-ratio: 1; vertical-align: -4px; }
 #dg-end .tag { color: var(--dw-muted); font-size: 16px; }
+
+/* ---------- boss strip (N-21): emblem + name + the bar frame at 2x ---------- */
+#dg-boss {
+  position: absolute; left: 50%; transform: translateX(-50%); top: calc(max(8px, env(safe-area-inset-top)) + 124px);
+  display: flex; align-items: center; gap: 8px; pointer-events: none; z-index: 6; font-family: var(--font);
+}
+.dg-boss-emblem { width: 48px; height: 48px; image-rendering: pixelated; flex: none; }
+.dg-boss-col { display: flex; flex-direction: column; gap: 2px; }
+#dg-boss-name { font-size: 16px; color: #fff3d6; text-shadow: 0 2px 0 #1b0f0a, 0 0 4px #1b0f0a; }
+.dg-boss-bar {
+  position: relative; width: min(64vw, 320px); height: 32px; image-rendering: pixelated;
+  background: url('/art/dungeon/ui/boss-bar-frame.png') center / 100% 100% no-repeat;
+}
+/* the fill sits inside the frame's inner slot (x 4..156, y 5..11 of 160x16) */
+.dg-boss-bar i { position: absolute; left: 2.5%; top: 31%; height: 38%; width: 0; background: #d4333a; box-shadow: inset 0 2px 0 #ff6b7d; transition: width 0.2s steps(8); }
+@media (orientation: landscape) and (max-height: 500px) {
+  #dg-boss { top: max(8px, env(safe-area-inset-top)); left: auto; right: max(16px, env(safe-area-inset-right)); transform: none; }
+  .dg-boss-bar { width: 260px; height: 26px; }
+}
+
+/* ---------- dungeon entry: the dusk cave art for ~2 s ---------- */
+#dg-loading {
+  position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 12vh;
+  background: #1b1018 url('/art/loading-portrait.png') center / cover no-repeat; image-rendering: pixelated;
+  font-family: var(--font); transition: opacity 0.4s; pointer-events: none; /* atmosphere only: never blocks a tap */
+}
+#dg-loading.out { opacity: 0; }
+#dg-loading b { font-size: 24px; color: #fff3d6; text-shadow: 0 3px 0 #1b0f0a; padding: 8px 16px; background: #2a1810cc; border: 4px solid var(--dw-wood); border-radius: 6px; }
+@media (orientation: landscape) { #dg-loading { background-image: url('/art/loading-landscape.png'); } }
+
+/* ---------- end of a run: the N-22 art behind the card ---------- */
+#dg-end.screen { background: #2a1810 url('/art/dungeon-end.png') center / cover no-repeat; align-items: flex-start; padding-top: max(24px, env(safe-area-inset-top)); }
+@media (orientation: landscape) {
+  #dg-end.screen { background-image: url('/art/dungeon-end-landscape.png'); align-items: center; justify-content: flex-start; padding-left: max(24px, env(safe-area-inset-left)); }
+}
