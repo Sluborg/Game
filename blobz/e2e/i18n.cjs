@@ -7,7 +7,7 @@ const { LANDSCAPE, PORTRAIT, ok, sim } = require('./helpers.cjs');
 const base = process.argv[2] || 'http://localhost:4173/';
 const shots = process.argv[3] || '';
 
-const SWEDISH = /[åäöÅÄÖ]|\b(Nytt spel|Joina|Starta|Lobby väntar|Väntar|Samla|Bygg|Tillbaka|Spela igen|Ny by|Slumpa|Klar|Namn|Hatt|Mun|Ögon|Laddar|Letar|Solen)\b/;
+const SWEDISH = /[åäöÅÄÖ]|\b(Nytt spel|Joina|Starta|Lobby väntar|Väntar|Samla|Bygg|Tillbaka|Spela igen|Ny by|Slumpa|Klar|Namn|Hatt|Mun|Ögon|Laddar|Letar|Solen|Uppdraget)\b/;
 /** Visible text of the page (innerText skips display:none), minus player names. */
 const visible = (p) => p.evaluate(() => document.body.innerText.replace(/\b(Stefan|Ada)\b/g, ''));
 async function noSwedish(p, where) {
@@ -86,15 +86,15 @@ async function phone(browser, name, locale, size = PORTRAIT) {
     await en.click('#btn-build-close');
 
     // Bärregn + end screen
-    await sim(en, (s) => { s.time = 0.05; });
+    await sim(en, (s) => { s.delivered = { ...s.quest }; });
     await en.waitForSelector('#mini-hud:not(.hidden)', { timeout: 6000 });
     ok((await en.textContent('#mini-hud .mtitle')).trim() === 'Berry Rain!' && (await en.textContent('#btn-skip-mini')).trim() === 'Skip', 'Berry Rain HUD in English ("Berry Rain!", "Skip")');
     await noSwedish(en, 'Berry Rain');
     await en.click('#btn-skip-mini');
     await en.waitForSelector('#end:not(.hidden)', { timeout: 6000 });
     await sv.waitForSelector('#end:not(.hidden)', { timeout: 6000 });
-    ok((await en.textContent('#end-title')).trim() === 'The sun went down!', 'end screen in English');
-    ok((await sv.textContent('#end-title')).trim() === 'Solen gick ner!', 'joiner end screen in Swedish');
+    ok((await en.textContent('#end-title')).trim() === 'Quest complete!', 'end screen in English');
+    ok((await sv.textContent('#end-title')).trim() === 'Uppdraget klart!', 'joiner end screen in Swedish');
     await noSwedish(en, 'end screen');
     if (shots) await en.screenshot({ path: `${shots}/i18n-end-en.png` });
 

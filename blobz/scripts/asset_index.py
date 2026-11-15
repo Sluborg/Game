@@ -26,6 +26,11 @@ OWN = 'Own art (CC0)'
 CC0K = 'CC0 1.0 (Kenney)'
 # (glob on the path under public/, source, license, approved?) first match wins
 SOURCES = [
+    ('art/dungeon/weapons/[dwsc]*-[13][62].png', 'ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py', GPT, True),
+    ('art/dungeon/icons/*.png', 'ChatGPT N-12 move/mode icons, sliced by scripts/slice_grid_orders.py', GPT, True),
+    ('art/dungeon/fx/*.png', 'ChatGPT N-13 combat FX (round 2), sliced by scripts/slice_grid_orders.py', GPT, True),
+    ('art/dungeon/boss-*.png', 'ChatGPT N-14 boss intro, sliced by scripts/slice_grid_orders.py', GPT, True),
+    ('art/meadow/*.png', 'ChatGPT N-15 meadow extras, sliced by scripts/slice_grid_orders.py', GPT, True),
     ('art/ninja/*', 'Ninja crop: Ninja Adventure rect cut by scripts/ninja_crops.py (Code)', 'CC0 1.0 (Ninja Adventure)', True),
     ('art/dungeon/card-class-*.png', 'ChatGPT N-5 class cards, sliced by scripts/slice_cards.py', GPT, True),
     ('art/dungeon/weapons/ninja-*.png', 'Claude-drawn: scripts/ninja_weapons.py (Ninja palette)', OWN, None),
@@ -91,14 +96,13 @@ def uses(rel, texts):
     d = os.path.dirname(rel)
     hits = []
     for f, t in texts.items():
-        loads_dir = bool(d) and re.search(r"['\"`/(]" + re.escape(d) + r"/", t) is not None
         for i, line in enumerate(t.split('\n')):
             hit = rel in line
             if not hit and d:  # template prefix: `art/dungeon/card-class-${c}.png`
                 for m in re.finditer(re.escape(d) + r"/([A-Za-z0-9_-]*)\$\{", line):
                     if stem.startswith(m.group(1)):
                         hit = True
-            if not hit and loads_dir and re.search(r"['\"`]" + re.escape(stem) + r"['\"`]", line):
+            if not hit and re.search(r"['\"`/]" + re.escape(stem) + r"['\"`.]", line):  # any quoted stem counts (preload lists)
                 hit = True
             if hit:
                 hits.append(f'{f}:{i + 1}')
@@ -228,7 +232,7 @@ def main():
           '`docs/OLD_ART_CHECKLIST.md`. Ninja rects: `docs/ART_MAP.md`.', '',
           '- **Status:** keep / replace (old art still used, a Ninja or ChatGPT replacement is mapped) / delete (no code',
           '  reference found: a candidate only, Lead decides).',
-          '- "Used where" is a grep of `src/` + `index.html`; dynamic paths are matched by their template prefix or quoted stem.',
+          '- "Used where" is a grep of `src/` + `index.html`: exact path, template prefix, or the file stem quoted ANYWHERE (preload lists count; safe side).',
           '- **Runtime** (`node scripts/asset_runtime.cjs`, the whole e2e suite with a hook): IN GAME = drawn on screen (visible DOM',
           '  image / CSS background or border image / canvas icon, or a WebGL texture bound at a Phaser draw call); CODE ONLY =',
           '  referenced but never shown in the run (remove the reference and the file); UNUSED = no reference and never shown.',

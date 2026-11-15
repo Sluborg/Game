@@ -40,7 +40,7 @@ const shots = process.argv[3] || '';
     if (shots) await host.screenshot({ path: `${shots}/noread-hud-portrait.png` });
 
     // sunset: picture intro with my own blob, no drops yet; then the rain starts
-    await sim(host, (s) => { s.time = 0.05; });
+    await sim(host, (s) => { s.delivered = { ...s.quest }; });
     await ada.waitForSelector('#mini-intro:not(.hidden)', { timeout: 6000 });
     await host.waitForSelector('#mini-intro:not(.hidden)', { timeout: 6000 });
     ok(await ada.locator('#mini-intro .mi-blob .blob').count() === 2, 'Bärregn intro: berry -> my blob (check), bomb -> dizzy blob (cross)');
@@ -53,9 +53,10 @@ const shots = process.argv[3] || '';
     // end: sunset picture, Bärregn line is icon + number + stars
     await host.click('#btn-skip-mini');
     await ada.waitForSelector('#end:not(.hidden)', { timeout: 6000 });
-    ok(await ada.isVisible('#end .endsun'), 'end screen shows a setting sun');
+    ok(!(await ada.locator('#end .endsun').count()) && (await ada.evaluate(() => getComputedStyle(document.getElementById('end')).backgroundImage)).includes('victory.png'),
+      'end screen: no sunset; the N-6 victory picture (blobz cheering with their haul) behind the card');
     const title = await ada.locator('#end-title').boundingBox();
-    ok(title && title.width <= 1 && (await ada.textContent('#end-title')).trim() === 'Solen gick ner!', 'end title is picture-only (words kept for screen readers)');
+    ok(title && title.width <= 1 && (await ada.textContent('#end-title')).trim() === 'Uppdraget klart!', 'end title is picture-only (words kept for screen readers)');
     const line = (await ada.textContent('#end-mini')).trim();
     ok(/^\d+$/.test(line), `Bärregn line has no words, only the number ("${line}")`);
     if (shots) await host.screenshot({ path: `${shots}/noread-end-portrait.png` });

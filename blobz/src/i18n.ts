@@ -104,7 +104,7 @@ const sv = {
   'mini.name': 'Bärregn',
   'mini.skip': 'Hoppa över',
   // end screen
-  'end.title': 'Solen gick ner!',
+  'end.title': 'Uppdraget klart!',
   'end.good': 'Bra jobbat!',
   'end.again': 'Spela igen',
   'end.waitHost': 'Väntar på värden...',
@@ -320,7 +320,7 @@ const en: Record<Key, string> = {
   'mini.title': 'Berry Rain!',
   'mini.name': 'Berry Rain',
   'mini.skip': 'Skip',
-  'end.title': 'The sun went down!',
+  'end.title': 'Quest complete!',
   'end.good': 'Well done!',
   'end.again': 'Play again',
   'end.waitHost': 'Waiting for the host...',

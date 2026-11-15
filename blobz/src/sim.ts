@@ -132,9 +132,12 @@ export const BUILD_COST: Record<BuildKind, Res> = {
 /** Six fixed spots in a ring ~180 px around the cottage, one building each. */
 export const BUILD_RING = 180;
 const RING_ORDER: BuildKind[] = ['workshop', 'storage', 'garden', 'well', 'watchtower', 'bridge']; // 0, 60, ... 300 degrees
+/** Spots moved off the ring: the level-3 hall is 192 px wide at 3x (x 544-736) and hid the watchtower at 240 deg,
+ *  so the tower stands further out to the upper left (Lead 2026-11-15). */
+const SPOT_OVERRIDE: Partial<Record<BuildKind, { x: number; y: number }>> = { watchtower: { x: 470, y: 318 } };
 export const BUILD_SPOTS = Object.fromEntries(RING_ORDER.map((k, i) => {
   const a = (i * 60 * Math.PI) / 180;
-  return [k, { x: Math.round(BASE.x + Math.cos(a) * BUILD_RING), y: Math.round(BASE.y + Math.sin(a) * BUILD_RING) }];
+  return [k, SPOT_OVERRIDE[k] ?? { x: Math.round(BASE.x + Math.cos(a) * BUILD_RING), y: Math.round(BASE.y + Math.sin(a) * BUILD_RING) }];
 })) as Record<BuildKind, { x: number; y: number }>;
 export const COTTAGE_PAD = { x: BASE.x, y: BASE.y + 124 };
 export const COTTAGE_COST: Res[] = [res(20, 15, 10), res(40, 30, 20)]; // to level 2, to level 3
@@ -293,6 +296,9 @@ import { rng } from './rng';
 import { ARENA, keepInArena, miniStars, newMini, stepMini, type Mini, type MiniFx } from './mini';
 /** "Bärregn" co-op mini game after sunset, before the end screen. */
 export const MINI_ENABLED = true;
+/** Day cycle (sun bar + time limit) is ARCHIVED (Stefan 2026-11-15, docs/ARCHIVED.md): with it off the meadow has no
+ *  time limit and the round ends when all three quest goals are filled, then Bärregn as before. Code kept. */
+export const DAY_CYCLE_ENABLED = false;
 import { dsnap, dungeonChoice, dview, newRun, READY_SECONDS, stepDungeon, WEAPONS, type DFx, type DSnap, type DState, type DView, type Weapon } from './dungeon';
 
 
@@ -557,7 +563,7 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     return;
   }
   const inDungeon = s.mode === 'dungeon';
-  if (!inDungeon) s.time = Math.max(0, s.time - dt); // the sun waits while the team is underground
+  if (!inDungeon && DAY_CYCLE_ENABLED) s.time = Math.max(0, s.time - dt); // the sun waits while the team is underground
   s.buildLock = Math.max(0, s.buildLock - dt);
   // former totem effects now come from buildings: workshop boots (+10% speed), storage reach (+10 px pickup)
   const speedMul = built(s, 'workshop') ? 1.1 : 1;
@@ -763,7 +769,8 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     }
   }
 
-  if (s.time <= 0) { if (MINI_ENABLED && s.players.length) startMini(s); else s.phase = 'end'; }
+  const over = DAY_CYCLE_ENABLED ? s.time <= 0 : starsFor(s.delivered, s.quest) === RES.length; // sunset, or the quest is complete
+  if (over) { if (MINI_ENABLED && s.players.length) startMini(s); else s.phase = 'end'; }
 }
 
 /** A player taps a card in the build panel at the cottage. Host-authoritative: needs the price in the bank,
