@@ -115,7 +115,7 @@ export const SKILLS: SkillDef[] = [
   { id: 'rogue-knockback', cls: 'rogue', icon: 118, mod: { kb: 1.5 } }, // 50% harder push
   { id: 'rogue-whirlwind', cls: 'rogue', icon: 107, mod: { spR: 1.3 } }, // special 30% bigger
   { id: 'rogue-extraheart', cls: 'rogue', icon: 115, mod: { hp: 25 } },
-  { id: 'rogue-lifesteal', cls: 'rogue', icon: 127, mod: { killHeal: 5 } }, // +5 health per splat
+  { id: 'rogue-lifesteal', cls: 'rogue', icon: 127, mod: { killHeal: 1 } }, // +1 health per splat, at most LIFESTEAL_CAP a second (Stefan: was 5, far too strong)
   { id: 'rogue-power', cls: 'rogue', icon: 104, mod: { dmg: 1.25 } },
   { id: 'healer-heal', cls: 'healer', icon: 115, mod: { heal: 1.5 } },
   { id: 'healer-regen', cls: 'healer', icon: 114, mod: { regen: 4 } }, // +4 health every 4 s
@@ -539,6 +539,7 @@ export interface Hero {
   shield: number; wallT: number; regenT: number; kills: number; // healer shield charges, tank wall, regen clock, own kills
   mode: 0 | 1; held: number; guard: boolean; // healer wand mode (1 = heal), big button held (s left), knight shield up
   mvCd: number; charges: number; side: number; chargeT: number; phase: number; // class move: recharge clock, rogue charges, last dodge side, knight charge, healer phase
+  lsBud?: number; // lifesteal budget: refills LIFESTEAL_CAP health a second
   tgt?: number; tgtT?: number; // sticky auto-aim: the monster id it keeps shooting, how long a clearly closer one has been there
 }
 export type EndWhy = 'boss' | 'exit' | 'time';
@@ -594,6 +595,8 @@ export type DFx =
   | { t: 'slam'; x: number; y: number };
 
 export const STAIRS_R = 40;
+/** lifesteal heals at most this much health a second (a nice-to-have, not a full heal) */
+export const LIFESTEAL_CAP = 3;
 /** rooms: the open doorway = the leaf's tiles in the wall face + 1 floor tile below (gathering there counts; blobz
  *  don't push each other inside it) */
 export const inDoorway = (f: Floor, x: number, y: number) => Math.abs(x - f.stairs.x) < 1.5 * ft(f) && y > 1.8 * ft(f) && y < 4.3 * ft(f);
@@ -959,6 +962,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
     h.atkCd = Math.max(0, h.atkCd - dt); h.inv = Math.max(0, h.inv - dt); h.swing = Math.max(0, h.swing - dt);
     h.spCd = Math.max(0, h.spCd - dt); h.spT = Math.max(0, h.spT - dt); h.dodge = Math.max(0, h.dodge - dt); h.aim = Math.max(0, h.aim - dt);
     h.wallT = Math.max(0, h.wallT - dt);
+    h.lsBud = Math.min(LIFESTEAL_CAP, (h.lsBud ?? LIFESTEAL_CAP) + LIFESTEAL_CAP * dt);
     const a = atk.get(b.id) ?? h.lastAtk;
     if (h.lastAtk < 0) h.lastAtk = a; // first tick: whatever the counter was on the meadow
     if (h.lastDash < 0) h.lastDash = b.lastDash ?? 0;
@@ -1040,7 +1044,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
     if (killer) {
       killer.kills++;
       const km = mods.get(e.by!);
-      if (km?.killHeal) healHero(killer, km.killHeal);
+      if (km?.killHeal) { const n = Math.min(km.killHeal, Math.floor(killer.lsBud ?? LIFESTEAL_CAP)); if (n > 0) { healHero(killer, n); killer.lsBud = (killer.lsBud ?? LIFESTEAL_CAP) - n; } }
     }
     const n = ENEMY_GOLD[e.kind];
     const pieces = Math.min(5, n);

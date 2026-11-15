@@ -662,6 +662,20 @@ describe('dungeon', () => {
     });
   });
 
+  it('lifesteal (Stefan: was far too strong): +1 per splat, at most 3 health a second', () => {
+    const d = quiet(newRun(51, { a: 'dagger' }));
+    d.heroes.a.skills.push('rogue-lifesteal'); refresh(d.heroes.a);
+    const st = d.map.start, a = [body('a', st.x, st.y)];
+    run1(d, a);
+    d.heroes.a.hp = 10;
+    for (let k = 0; k < 10; k++) goo(d, 0, st.x + 20, st.y + (k - 5) * 2, { ...still, hp: 1, mx: 1, by: 'a' });
+    for (const e of d.enemies) e.hp = 0; // ten splats in the same tick
+    const rnd = vi.spyOn(Math, 'random').mockReturnValue(0.99); // no potion drop
+    run1(d, a);
+    rnd.mockRestore();
+    expect(d.heroes.a.hp).toBe(13);
+  });
+
   it('marksman shoots only while standing still', () => {
     const d = quiet(newRun(14, { b: 'bow' }));
     const st = d.map.start;
