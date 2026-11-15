@@ -55,7 +55,7 @@ describe.skipIf(!BUILDING_ENABLED)('base building (build panel at the cottage)',
     expect(requestBuild(s, 'b', 'well')).toBe(true);
   });
 
-  it('no totems any more; their effects live in buildings: workshop +10% speed, storage +pickup, well doubles berries', () => {
+  it('no totems any more; their effects live in buildings: workshop +10% speed, storage +pickup, garden doubles food', () => {
     expect('totems' in createState([P('a')], 3)).toBe(false);
     const top = (shop: boolean) => {
       const w = createState([P('a')], 4);
@@ -75,7 +75,7 @@ describe.skipIf(!BUILDING_ENABLED)('base building (build panel at the cottage)',
     at(s, 0, 300 + 32, 300); step(s, idle, 1 / 60);
     expect(s.players[0].carry).toEqual(['wood']);
     const w = createState([P('a')], 6);
-    finish(w, 'well');
+    finish(w, 'garden'); // Stefan 2026-11-15: the garden (not the well) doubles delivered food
     home(w);
     w.players[0].carry = ['berry', 'wood'];
     step(w, idle, 1 / 60);
@@ -102,16 +102,29 @@ describe.skipIf(!BUILDING_ENABLED)('base building (build panel at the cottage)',
     expect(t.left).toBe(2);
   });
 
-  it('garden grows berries beside it and berry bushes regrow 2x', () => {
-    const s = createState([P('a')], 5);
-    finish(s, 'garden');
-    at(s, 0, 100, 480);
-    run(s, 13);
-    expect(s.items.some((it) => it.kind === 'berry' && Math.hypot(it.x - BUILD_SPOTS.garden.x, it.y - BUILD_SPOTS.garden.y) < 90)).toBe(true);
-    const bush = s.trees.find((t) => t.kind === 5)!;
-    bush.left = 0; bush.regrow = 20;
-    run(s, 10.2);
-    expect(bush.left).toBe(3);
+  it('well: trees and bushes regrow 1.5x faster; cottage level 3: blobz glide faster (Stefan 2026-11-15)', () => {
+    const regrowAfter = (well: boolean, kind: number) => {
+      const s = createState([P('a')], 5);
+      if (well) finish(s, 'well');
+      at(s, 0, 100, 480);
+      const n = s.trees.find((t) => (kind === 5 ? t.kind === 5 : t.kind < 3))!;
+      n.left = 0; n.regrow = 15;
+      run(s, 10.2);
+      return n.left > 0;
+    };
+    expect(regrowAfter(true, 5)).toBe(true); // 15 s of regrowth done in 10 s
+    expect(regrowAfter(true, 0)).toBe(true);
+    expect(regrowAfter(false, 5)).toBe(false);
+    const g = createState([P('a')], 5); finish(g, 'garden'); at(g, 0, 100, 480); run(g, 13);
+    expect(g.items.some((it) => Math.hypot(it.x - BUILD_SPOTS.garden.x, it.y - BUILD_SPOTS.garden.y) < 90)).toBe(false);
+    const top = (lvl: number) => {
+      const w = createState([P('a')], 4);
+      w.trees = []; w.cottage.level = lvl;
+      at(w, 0, 100, 300);
+      run(w, 2, new Map([['a', { x: 1, y: 0, dash: 0 }]]));
+      return w.players[0].vx;
+    };
+    expect(top(3)).toBeGreaterThan(top(2) * 1.05);
   });
 
   it('the water corner is a free corner behind water; the bridge opens it', () => {

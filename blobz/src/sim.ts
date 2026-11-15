@@ -170,6 +170,12 @@ export function affordable(bank: Res, builds: { kind: BuildKind; state: number }
   return cottageLevel < COTTAGE_MAX && canAfford(bank, COTTAGE_COST[cottageLevel - 1]) ? 'cottage' : null;
 }
 // cottage team bonus (besides +20% quest): level 2 carries one more, level 3 regrows faster
+/** Building effects (Stefan 2026-11-15): well = every tree / bush regrows WELL_REGROW x faster; garden = delivered food
+ *  counts double (award); cottage level 3 = blobz glide COTTAGE3_SPEED x faster. The garden's old farm patch (berries
+ *  growing beside it) is off; flip GARDEN_FARM to bring it back. */
+export const WELL_REGROW = 1.5;
+export const COTTAGE3_SPEED = 1.1;
+export const GARDEN_FARM = false;
 export const BUILD_R = 30; // stand this close to a spot to build
 /** state: 0 = empty spot, 2 = built (1 is unused: buildings are bought at once, like totems). */
 export interface Build { kind: BuildKind; state: 0 | 1 | 2; paid: Res; buy: number; armed: boolean }
@@ -489,9 +495,9 @@ export function toolNode(trees: { x: number; y: number; kind: number }[], left: 
   return best;
 }
 
-/** Add resources to the bank and the quest tally (the well doubles delivered berries). */
+/** Add resources to the bank and the quest tally (the garden doubles delivered food, Stefan 2026-11-15). */
 function award(s: State, x: number, y: number, r: Res) {
-  const got = res(r.wood, r.stone, r.berry * (built(s, 'well') ? 2 : 1));
+  const got = res(r.wood, r.stone, r.berry * (built(s, 'garden') ? 2 : 1));
   for (const k of RES) { s.bank[k] += got[k]; s.delivered[k] += got[k]; }
   s.villageDirty = true; // the bank is part of the saved village
   s.fx.push({ t: 'gain', x, y, r: got });
@@ -613,7 +619,7 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
   if (!inDungeon && DAY_CYCLE_ENABLED) s.time = Math.max(0, s.time - dt); // the sun waits while the team is underground
   s.buildLock = Math.max(0, s.buildLock - dt);
   // former totem effects now come from buildings: workshop boots (+10% speed), storage reach (+10 px pickup)
-  const speedMul = built(s, 'workshop') ? 1.1 : 1;
+  const speedMul = (built(s, 'workshop') ? 1.1 : 1) * (s.cottage.level >= 3 ? COTTAGE3_SPEED : 1); // cottage 3: faster blobz
   const pickR = PICKUP_R + (built(s, 'storage') ? 10 : 0);
   const carryMax = CARRY_MAX + (built(s, 'storage') ? 1 : 0) + (s.cottage.level >= 2 ? 1 : 0);
 
@@ -676,7 +682,8 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
   for (const t of s.trees) {
     t.cd = Math.max(0, t.cd - dt);
     // garden: berry bushes regrow 2x; cottage level 3: everything regrows 25% faster
-    if (t.left <= 0) { t.regrow -= dt * (t.kind === 5 && built(s, 'garden') ? 2 : 1) * (s.cottage.level >= 3 ? 1.25 : 1); if (t.regrow <= 0) { t.left = NODE_YIELD[t.kind]; t.hits = 0; t.regrow = 0; } }
+    // the well: every tree and bush regrows faster
+    if (t.left <= 0) { t.regrow -= dt * (built(s, 'well') ? WELL_REGROW : 1); if (t.regrow <= 0) { t.left = NODE_YIELD[t.kind]; t.hits = 0; t.regrow = 0; } }
     if (!isSolid(t.kind)) continue; // blobz glide through berry bushes
     for (const p of s.players) {
       const dx = p.x - t.x, dy = p.y - t.y;
@@ -854,8 +861,8 @@ export const HOME_R = 110;
 export const atHome = (x: number, y: number) => Math.hypot(x - BASE.x, y - BASE.y) < HOME_R;
 
 function stepBuilding(s: State, dt: number) {
-  // garden: a small farm patch beside it grows berries (max 3 waiting)
-  if (built(s, 'garden')) {
+  // garden (until 2026-11-15): a small farm patch beside it grew berries; now the garden doubles delivered food instead
+  if (GARDEN_FARM && built(s, 'garden')) {
     s.gardenT -= dt;
     const g = BUILD_SPOTS.garden;
     if (s.gardenT <= 0) {
