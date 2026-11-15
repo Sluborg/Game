@@ -177,6 +177,50 @@ def two_size_sheet(src, names, folder, n_small=16, n_big=32, gap=40, anchor='cen
     return made
 
 
+def region_sheet(src, names, folder, n, xr=(0.0, 1.0), yr=(0.0, 1.0), anchor='centre', open_r=0.3, gap=20, suffix=True):
+    """A block of the sheet (fractions xr, yr) holding len(names) sprites on one N x N grid, row-major in bands."""
+    rgb, m = load(src)
+    H, W = m.shape
+    X0, X1, Y0, Y1 = int(xr[0] * W), int(xr[1] * W), int(yr[0] * H), int(yr[1] * H)
+    rgb, m = rgb[Y0:Y1, X0:X1], m[Y0:Y1, X0:X1]
+    objs = []
+    for y0, y1 in bands(opening(m, 3)):
+        for x0, x1, oy0, oy1 in objects(opening(m[y0:y1], 3), gap):
+            objs.append((x0, x1, y0 + oy0, y0 + oy1))
+    assert len(objs) == len(names), (src, xr, yr, len(objs), len(names))
+    crops = []
+    for name, (x0, x1, y0, y1) in zip(names, objs):
+        pad = 6
+        sl = (slice(max(0, y0 - pad), y1 + pad), slice(max(0, x0 - pad), x1 + pad))
+        orgb, om = rgb[sl], m[sl]
+        p0 = outline_pitch(orgb, om)
+        om = opening(om, int(p0 * open_r))
+        best = sample(orgb, om, p0, (n, n)) or sample(orgb, om, max(om.shape) / n * 1.02, (n, n))
+        crops.append((name, orgb, om, best[2]))
+    prow = float(np.median([c[3] for c in crops]))  # one grid for the block
+    made = []
+    for name, orgb, om, _ in crops:
+        best = sample_fixed(orgb, om, prow, (n, n)) or sample(orgb, om, prow, (n, n))
+        g = place(best[1], n, n, anchor)
+        fn = f'{name}-{n}.png' if suffix else f'{name}.png'
+        made.append((save(g, os.path.join(folder, fn)), round(best[2], 2), best[1].shape[1], best[1].shape[0]))
+    return made
+
+
+N17 = ['new-game', 'join', 'shape', 'colour', 'eyes', 'mouth', 'hat', 'back', 'close', 'home', 'settings', 'dice',
+       'pass', 'hammer', 'play', 'quill']
+
+
+def n17():
+    f = os.path.join(ART, 'icons', 'ui')
+    return region_sheet('n17-ui-icons.png', N17, f, 16, xr=(0.0, 0.42)) + region_sheet('n17-ui-icons.png', N17, f, 32, xr=(0.42, 1.0))
+
+
+def n18():
+    return two_size_sheet('n18-state-badges.png', ['can-build', 'lock', 'done', 'tick-green', 'tick-gold', 'you-arrow'],
+                          os.path.join(ART, 'icons', 'state'))
+
+
 def n11():
     return two_size_sheet('n11-weapons-r2.png', ['dagger', 'wand', 'sword', 'crossbow', 'shield'], os.path.join(ART, 'dungeon', 'weapons'))
 
