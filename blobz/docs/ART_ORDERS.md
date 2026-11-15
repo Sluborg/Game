@@ -46,6 +46,7 @@ ChatGPT works only on N-orders with status TO DO (next: none, queue empty). Chat
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
 | N-34 | DONE (received 2026-11-15; sliced to art/dungeon/door-{closed,open}-{32,48}.png by scripts/slice_grid_orders.py n34) | Dungeon room door for the Archero rooms, closed + open, 32x32 + 48x32 | `art/dungeon/door-*` |
+| N-34b | DONE (received 2026-11-15, unordered extra; sliced to art/dungeon/wall-{tl,t,tr,l,r,bl,br}.png 16x16 by scripts/room_walls.py; room test docs/art-review/n34-room-test.png; MISSING: plain bottom edge, inner corners) | Dungeon room walls matching the N-34 door: top corners + top edge, left/right side, bottom corners | `art/dungeon/wall-*` |
 | N-1 | DONE (C chosen) | Title header / logo in Ninja Adventure style | `art/logo.png` |
 | N-2 | DONE (portrait + landscape) | Start screen background | `art/title.png` |
 | N-3 | DONE | Loading screen (portrait + landscape approved) | `art/loading.png`, `art/loading-landscape.png` |
