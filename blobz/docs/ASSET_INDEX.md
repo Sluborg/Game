@@ -11,13 +11,13 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
   image / CSS background or border image / canvas icon, or a WebGL texture bound at a Phaser draw call); CODE ONLY =
   referenced but never shown in the run (remove the reference and the file); UNUSED = no reference and never shown.
 
-**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 51 / IN GAME 27 / UNUSED 110.
+**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 95 / IN GAME 27 / UNUSED 66.
 
 **Claude-drawn still IN GAME** (2): `art/dungeon/weapons/ninja-crossbow.png`, `art/dungeon/weapons/ninja-shield.png`
 
 **Kenney still IN GAME** (0): none
 
-**Counts by source:** ChatGPT 138 / Claude-drawn 31 / Kenney 5 / Ninja 2037 / Ninja crop 14 (Ninja: 132 referenced by code). **Own files:** 188, 0 delete candidates.
+**Counts by source:** ChatGPT 138 / Claude-drawn 31 / Kenney 5 / Ninja 2037 / Ninja crop 14 (Ninja: 131 referenced by code). **Own files:** 188, 0 delete candidates.
 
 ## Own files (art, Kenney, app icons)
 
@@ -108,55 +108,55 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/gather/star-empty.png` | 19x17 | ChatGPT N-10, sliced by scripts/slice_n_orders.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/ninjaArt.ts:13, index.html:110, index.html:111 (+2) | keep |
 | `art/gather/star.png` | 19x17 | ChatGPT N-10, sliced by scripts/slice_n_orders.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/ninjaArt.ts:13, src/main.ts:548, src/main.ts:551 | keep |
 | `art/gather/sun.png` | 13x13 | Claude-drawn: scripts/gather_art.py | Own art (CC0) | CODE ONLY | index.html:115 | replace (see OLD_ART_CHECKLIST) |
-| `art/icons/back.png` | 13x9 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonUi.ts:74, index.html:80, index.html:87 | replace (see OLD_ART_CHECKLIST) |
-| `art/icons/check.png` | 19x16 | ChatGPT N-10, sliced by scripts/slice_n_orders.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/uikit.ts:11, src/ninjaArt.ts:12, src/style.css:306 (+3) | keep |
+| `art/icons/back.png` | 13x9 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonUi.ts:74, src/uikit2.ts:42, index.html:80 (+1) | replace (see OLD_ART_CHECKLIST) |
+| `art/icons/check.png` | 19x16 | ChatGPT N-10, sliced by scripts/slice_n_orders.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/uikit.ts:11, src/ninjaArt.ts:12, src/style.css:306 (+2) | keep |
 | `art/icons/dash-arrow.png` | 14x10 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/ninjaArt.ts:33, src/dungeonUi.ts:284, index.html:147 | replace (see OLD_ART_CHECKLIST) |
 | `art/icons/dash.png` | 19x14 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonUi.ts:150, src/controls.ts:20, src/dungeonDemo.ts:43 (+7) | replace (see OLD_ART_CHECKLIST) |
-| `art/icons/dice.png` | 12x12 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | index.html:56 | replace (see OLD_ART_CHECKLIST) |
-| `art/icons/state/can-build-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/state/can-build-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/state/done-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/state/done-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/state/lock-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/state/lock-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/state/tick-gold-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/state/tick-gold-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/state/tick-green-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/state/tick-green-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/state/you-arrow-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/state/you-arrow-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/back-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/back-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/close-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/close-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/colour-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/colour-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/dice-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/dice-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/eyes-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/eyes-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/hammer-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/hammer-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/hat-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/hat-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/home-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/home-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/join-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/join-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/mouth-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/mouth-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/new-game-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/new-game-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/pass-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/pass-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/play-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/play-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/quill-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/quill-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/settings-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/settings-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/shape-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/ui/shape-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/icons/dice.png` | 12x12 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:20, index.html:56 | replace (see OLD_ART_CHECKLIST) |
+| `art/icons/state/can-build-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16 | keep |
+| `art/icons/state/can-build-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16 | keep |
+| `art/icons/state/done-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16 | keep |
+| `art/icons/state/done-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16 | keep |
+| `art/icons/state/lock-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16 | keep |
+| `art/icons/state/lock-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16 | keep |
+| `art/icons/state/tick-gold-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16 | keep |
+| `art/icons/state/tick-gold-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16 | keep |
+| `art/icons/state/tick-green-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16 | keep |
+| `art/icons/state/tick-green-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16 | keep |
+| `art/icons/state/you-arrow-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16 | keep |
+| `art/icons/state/you-arrow-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16 | keep |
+| `art/icons/ui/back-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/back-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/close-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/close-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/colour-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/colour-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/dice-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/dice-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/eyes-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/eyes-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/hammer-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/hammer-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/hat-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/hat-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/home-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/home-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/join-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/join-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/mouth-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/mouth-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/new-game-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/new-game-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/pass-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/pass-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/play-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/play-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/quill-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/quill-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/settings-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/settings-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/shape-16.png` | 16x16 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
+| `art/icons/ui/shape-32.png` | 32x32 | ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:15 | keep |
 | `art/loading-landscape.png` | 1672x941 | ChatGPT N-3 loading screen | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/style.css:728 | keep |
 | `art/loading-portrait.png` | 941x1672 | ChatGPT N-3 loading screen | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/style.css:721 | keep |
 | `art/loading.png` | 470x836 | ChatGPT N-3 loading screen | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY (loaded, not shown) | src/style.css:463, src/style.css:470, src/main.ts:27 (+1) | keep |
@@ -293,7 +293,6 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `assets/ninja-adventure/Items/Weapons/Ninjaku/SpriteInHand.png` | 3x12 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
 | `assets/ninja-adventure/Items/Weapons/Sai/Sprite.png` | 7x13 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Items/Weapons/Sword/Sprite.png` | 6x17 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
-| `assets/ninja-adventure/Ui/Emote/emote1.png` | 14x13 | Ninja Adventure | CC0 1.0 | CODE ONLY | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Emote/emote29.png` | 14x13 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Emote/emote3.png` | 14x13 | Ninja Adventure | CC0 1.0 | IN GAME | referenced by code | keep |
 | `assets/ninja-adventure/Ui/Receptacle/IconHeart.png` | 14x12 | Ninja Adventure | CC0 1.0 | CODE ONLY (loaded, not shown) | referenced by code | keep |
@@ -357,7 +356,7 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `assets/ninja-adventure/Backgrounds/**` | 61 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 9 referenced (rows above) | keep (the art source) |
 | `assets/ninja-adventure/FX/**` | 105 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 31 referenced (rows above) | keep (the art source) |
 | `assets/ninja-adventure/Items/**` | 142 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 24 referenced (rows above) | keep (the art source) |
-| `assets/ninja-adventure/Ui/**` | 360 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 55 referenced (rows above) | keep (the art source) |
+| `assets/ninja-adventure/Ui/**` | 360 files | Ninja Adventure (Pixel-boy & AAA) | CC0 1.0 | 54 referenced (rows above) | keep (the art source) |
 | `assets/ninja-adventure/Palette.png` | 10x9 | Ninja Adventure (pack preview / palette) | CC0 1.0 | UNUSED | keep (reference) |
 | `assets/ninja-adventure/preview-part-1.png` | 641x417 | Ninja Adventure (pack preview / palette) | CC0 1.0 | UNUSED | keep (reference) |
 | `assets/ninja-adventure/preview-part-2.png` | 641x417 | Ninja Adventure (pack preview / palette) | CC0 1.0 | UNUSED | keep (reference) |
