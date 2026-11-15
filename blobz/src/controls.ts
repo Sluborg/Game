@@ -124,6 +124,8 @@ export class Controls {
   private setKnob(dx: number, dy: number) { this.knob.style.transform = `translate(${dx}px, ${dy}px)`; }
 
   read(): Input {
+    // "turn your phone" overlay up: no movement (dash / attack counters stay, nothing new can be pressed under it)
+    if (document.body.classList.contains('rotate-block')) { if (this.stickId !== null) this.release(); return { x: 0, y: 0, dash: this.dashCount, atk: this.atkCount }; }
     let x = this.sx + this.kx, y = this.sy + this.ky;
     const l = Math.hypot(x, y);
     if (l > 1) { x /= l; y /= l; }

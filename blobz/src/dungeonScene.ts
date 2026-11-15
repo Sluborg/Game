@@ -4,7 +4,7 @@
 import Phaser from 'phaser';
 import { blobCanvas, BLOB_FRAMES, BODY_CY, clampLook, facingFromVelocity, type Facing } from './blob';
 import { drawGatherRing } from './gatherRing';
-import { fw, fh, ft, inDoorway, makeRoom, roomCracks, ROOMS, MINIBOSS_ROOM, SPAWN_WARN, AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
+import { fw, fh, ft, inDoorway, makeRoom, roomCracks, roomGap, ROOMS, MINIBOSS_ROOM, SPAWN_WARN, AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
 /** Weapons without Art's strip yet: a Kenney Tiny Dungeon tile in hand (bow: drawn in code). */
 import type { Session } from './game';
 import { sfx } from './sfx';
@@ -233,12 +233,34 @@ export class DungeonScene extends Phaser.Scene {
     cam.setBackgroundColor('#141b1b');
     this.fitCamera();
     this.scale.on('resize', this.fitCamera, this);
-    this.events.once('shutdown', () => this.scale.off('resize', this.fitCamera, this));
+    // rotating or coming back from another app: the browser may report the new size late (or not fire resize while
+    // hidden), so re-measure now and once more after the rotation settles (no stale canvas / camera / HUD sizes)
+    const remeasure = () => { this.scale.refresh(); this.fitCamera(); this.time.delayedCall(350, () => { this.scale.refresh(); this.fitCamera(); }); };
+    const onVis = () => { if (document.visibilityState === 'visible') remeasure(); };
+    window.addEventListener('orientationchange', remeasure);
+    document.addEventListener('visibilitychange', onVis);
+    this.events.once('shutdown', () => { this.scale.off('resize', this.fitCamera, this); window.removeEventListener('orientationchange', remeasure); document.removeEventListener('visibilitychange', onVis); });
   }
 
   private fitCamera() {
     const w = this.scale.width, h = this.scale.height;
-    this.cameras.main.setZoom(Math.max(0.55, Math.min(2.2, Math.min(Math.max(w, h) / 820, Math.min(w, h) / 430))));
+    const cam = this.cameras.main;
+    if (cam.width !== w || cam.height !== h) cam.setSize(w, h);
+    // rooms in portrait: exactly 3x (zoom 1: 1 art px = 3 CSS px); the room is as wide as the narrowest phone allows,
+    // so on wider phones a dark margin shows left / right. Only a phone narrower than the room shrinks (never happens
+    // when every phone reports its width). Landscape and the classic dungeon keep the fitted zoom.
+    const roomPx = this.rooms && this.map ? fw(this.map) * ft(this.map) : 0;
+    if (roomPx && h >= w) cam.setZoom(w >= roomPx ? 1 : w / roomPx);
+    else cam.setZoom(Math.max(0.55, Math.min(2.2, Math.min(Math.max(w, h) / 820, Math.min(w, h) / 430))));
+    if (this.rooms) cam.setBackgroundColor('#181425'); // the margin = the room's own dark
+    // jump straight to where the camera should be for the new size (the easing would start from the stale view)
+    const me = this.s ? this.heroes.get(this.s.myId) : undefined;
+    if (me && this.map) {
+      const landscape = w > h;
+      const x = this.rooms ? (fw(this.map) * ft(this.map)) / 2 : me.x - (landscape ? 70 / cam.zoom : 0);
+      this.camTarget = { x, y: this.roomCamY(me.y) };
+      cam.centerOn(x, this.camTarget.y);
+    }
   }
 
   /** Rooms (Archero): bake one room from 0x72 DungeonTileset II only, at its native 16 px (drawn at 3x): floor_1 with a
@@ -256,7 +278,7 @@ export class DungeonScene extends Phaser.Scene {
     const CRACKS: [number, number][] = [[32, 64], [48, 64], [16, 80], [32, 80], [48, 80], [16, 96], [32, 96]];
     g.fillStyle = '#181425';
     g.fillRect(0, 0, c.width, c.height);
-    const mid = Math.floor(W / 2), gap = [mid - 1, mid, mid + 1];
+    const gap = roomGap(W);
     const cracks = roomCracks(f, seed); // 1-2 per 3x3 block, never touching (Stefan: far fewer)
     for (let ty = 3; ty < H; ty++) for (let tx = 0; tx < W; tx++) {
       if (ty === H - 1 && !gap.includes(tx)) continue;
@@ -292,11 +314,11 @@ export class DungeonScene extends Phaser.Scene {
   }
 
   /** Bake the floor into one canvas (no tile seams at fractional zoom), slightly darker than the meadow. */
-  private buildFloor(seed: number, floor: number, players: number, dungeon = 1, rooms = false) {
+  private buildFloor(seed: number, floor: number, players: number, dungeon = 1, rooms = false, tiles = 9) {
     for (const o of this.mapObjs) o.destroy();
     this.mapObjs = []; this.chests = [];
     // rooms mode (Archero): one tall screen-wide room instead of the floor maze; the same baking below
-    const f = rooms ? makeRoom(seed, floor, players, dungeon) : makeFloor(seed, floor, players);
+    const f = rooms ? makeRoom(seed, floor, players, dungeon, tiles) : makeFloor(seed, floor, players);
     this.map = f;
     this.rooms = rooms;
     const key = rooms ? `dgmap-room-${seed}-${players}-${floor}` : `dgmap-${seed}-${floor}`;
@@ -376,8 +398,8 @@ export class DungeonScene extends Phaser.Scene {
     const v = this.s.view();
     const d = v?.dungeon;
     if (!v || !d) return;
-    const fk = `${d.seed}-${d.floor}-${d.rooms ? 'r' : 'f'}`;
-    if (fk !== this.floorKey) { this.floorKey = fk; this.buildFloor(d.seed, d.floor, v.players.length, d.dungeon, d.rooms); }
+    const fk = `${d.seed}-${d.floor}-${d.rooms ? 'r' + d.roomTiles : 'f'}`;
+    if (fk !== this.floorKey) { this.floorKey = fk; this.buildFloor(d.seed, d.floor, v.players.length, d.dungeon, d.rooms, d.roomTiles); this.fitCamera(); }
     const f = this.map!;
     const now = this.time.now;
     const smooth = this.s.role === 'client';
@@ -400,7 +422,7 @@ export class DungeonScene extends Phaser.Scene {
     for (const c of d.coins) {
       seenC.add(c.id);
       let img = this.coins.get(c.id);
-      if (!img) { img = c.k === 1 ? this.add.sprite(c.x, c.y, 'na-potion').setScale(2.5) : this.add.sprite(c.x, c.y, 'na-coin', 0).setScale(2.4).play('na-coin'); img.setData('sh', this.add.ellipse(c.x, c.y + 6, 18, 6, 0x000000, 0.28)); this.coins.set(c.id, img); }
+      if (!img) { img = c.k === 1 ? this.add.sprite(c.x, c.y, 'na-potion').setScale(2) : this.add.sprite(c.x, c.y, 'na-coin', 0).setScale(2).play('na-coin'); img.setData('sh', this.add.ellipse(c.x, c.y + 6, 18, 6, 0x000000, 0.28)); this.coins.set(c.id, img); }
       // lying on the floor: no bob, a fixed foot shadow (Stefan: things on the ground lie still)
       img.x += (c.x - img.x) * (smooth ? k : 1); img.y += (c.y - 4 - img.y) * (smooth ? k : 1);
       img.setDepth(c.y - 5);
@@ -416,7 +438,7 @@ export class DungeonScene extends Phaser.Scene {
       if (!c) {
         const boss = d.enemies.some((e) => e.kind === 2 && Math.hypot(e.x - sp.x, e.y - sp.y) < 80);
         const col = boss ? HOSTILE.purple : HOSTILE.orange;
-        const o = this.add.sprite(sp.x, sp.y, 'nf-fire').play('nf-fire').setScale(2.4).setTintFill(HOSTILE.outline);
+        const o = this.add.sprite(sp.x, sp.y, 'nf-fire').play('nf-fire').setScale(2).setTintFill(HOSTILE.outline);
         c = { s: this.add.sprite(sp.x, sp.y, 'nf-fire').play('nf-fire').setScale(2).setTint(col), o, px: sp.x, py: sp.y };
         this.spits.set(sp.id, c);
       }
@@ -716,7 +738,7 @@ export class DungeonScene extends Phaser.Scene {
         if (!this.anims.exists('na-arc')) this.anims.create({ key: 'na-arc', frames: this.anims.generateFrameNumbers('na-arc', {}), frameRate: 22 });
         const blade = (WIMG[art].up ? WIMG[art].h : WIMG[art].w) * WSCALE, r = EDGE_X + HOVER + blade * 0.55, sweepT = b.swingDur * 0.6 * (1 - 0.08 / 0.6);
         const sa = b.swingA;
-        const arc = this.add.sprite(cx + Math.cos(sa) * r, cy + Math.sin(sa) * r * 0.75, 'na-arc', 0).setScale(Math.max(1, (blade * 1.6) / 38))
+        const arc = this.add.sprite(cx + Math.cos(sa) * r, cy + Math.sin(sa) * r * 0.75, 'na-arc', 0).setScale(Math.max(1, Math.round((blade * 1.6) / 38)))
           .setRotation(sa - Math.PI / 2).setFlipX(dir < 0).setDepth(b.body.depth + 3).setAlpha(0.9);
         arc.play({ key: 'na-arc', frameRate: 6 / Math.max(0.1, sweepT) }).once('animationcomplete', () => arc.destroy());
       }
@@ -752,7 +774,7 @@ export class DungeonScene extends Phaser.Scene {
       b.wsa = b.wsa === undefined ? sTarget : b.wsa + wrap(sTarget - b.wsa) * Math.min(1, dt * 14);
       const sa = b.wsa;
       const sg = spot(sa, guard ? 6 : -4);
-      b.weapon2.setVisible(true).setFlipX(Math.cos(sa) < 0).setScale(WSCALE * (guard ? 1.35 : 1)).setRotation(0).setOrigin(0.5, 0.5)
+      b.weapon2.setVisible(true).setFlipX(Math.cos(sa) < 0).setScale(guard ? 4 : WSCALE).setRotation(0).setOrigin(0.5, 0.5)
         .setPosition(sg.x, sg.y - bob).setDepth(b.body.depth + (guard || Math.sin(sa) > -0.35 ? 2 : -1));
     }
     // the shadow sits on the ground under the weapon's middle and stays still while the weapon bobs
@@ -767,7 +789,7 @@ export class DungeonScene extends Phaser.Scene {
   private ride(b: HeroGfx, tex: string, anim: string, kind: 'spin' | 'charge', a: number, ox: number, oy: number, sc: number) {
     b.fx?.spr.destroy();
     const left = Math.cos(a) < 0;
-    const spr = this.add.sprite(b.x, b.y, tex, 0).setScale(sc);
+    const spr = this.add.sprite(b.x, b.y, tex, 0).setScale(Math.max(1, Math.round(sc))); // whole numbers only (integer pixels)
     if (kind === 'charge') spr.setFlipX(left).setOrigin(left ? 0 : 1, oy).setRotation(left ? a - Math.PI : a);
     else spr.setOrigin(ox, oy);
     b.fx = { spr, kind, a };
@@ -830,7 +852,7 @@ export class DungeonScene extends Phaser.Scene {
         const a = e.ang, ux = Math.cos(a), uy = Math.sin(a), x0 = e.x, y0 = e.y, fl = this.map;
         if (e.kind === 2 && e.slam) {
           // N-21 hazard ring: exactly the slam's reach on the ground, plus chevrons closing in
-          const ring = this.add.sprite(e.slam.x, e.slam.y + 8, 'n21-hazard', 0).setScale((SLAM_R * 2) / 46, (SLAM_R * 1.4) / 26).setDepth(-300).play('n21-hazard');
+          const ring = this.add.sprite(e.slam.x, e.slam.y + 8, 'n21-hazard', 0).setScale(Math.max(1, Math.round((SLAM_R * 2) / 46)), Math.max(1, Math.round((SLAM_R * 1.4) / 26))).setDepth(-300).play('n21-hazard');
           g.tele.push(ring);
           for (let i = 0; i < 6; i++) {
             const b = (i / 6) * Math.PI * 2;
@@ -848,10 +870,10 @@ export class DungeonScene extends Phaser.Scene {
             this.hostile(g.tele, 'nf-chev', x, y, 0.9, HOSTILE.red, a, 2).setData('d', d); // thin, under the blobz (depth -300)
           }
           // N-13 slam-warning ring where the dash lands
-          g.tele.push(this.add.sprite(ex, ey + 10, 'n13-slam-warning', 0).setScale(2.2).setDepth(-300).play({ key: 'n13-slam-warning', repeat: -1 }));
+          g.tele.push(this.add.sprite(ex, ey + 10, 'n13-slam-warning', 0).setScale(2).setDepth(-300).play({ key: 'n13-slam-warning', repeat: -1 }));
         } else if (e.act === 3) {
           for (let k2 = 1; k2 <= 3; k2++) this.hostile(g.tele, 'nf-chev', x0 + ux * (ENEMY_R[e.kind] + k2 * 20), y0 + uy * (ENEMY_R[e.kind] + k2 * 20), 0.8, HOSTILE.red, a, 2);
-          g.tele.push(this.add.sprite(x0 + ux * (ENEMY_R[e.kind] + 50), y0 + uy * (ENEMY_R[e.kind] + 50) + 10, 'n13-slam-warning', 0).setScale(1.6).setDepth(-300).play({ key: 'n13-slam-warning', repeat: -1 }));
+          g.tele.push(this.add.sprite(x0 + ux * (ENEMY_R[e.kind] + 50), y0 + uy * (ENEMY_R[e.kind] + 50) + 10, 'n13-slam-warning', 0).setScale(2).setDepth(-300).play({ key: 'n13-slam-warning', repeat: -1 }));
         } else if (e.act === 5) {
           let d = ENEMY_R[e.kind] + 12, x = x0, y = y0;
           for (; d <= 300; d += 13) { x = x0 + ux * d; y = y0 + uy * d; if (fl && isWall(fl, x, y)) break; this.hostile(g.tele, 'nf-dot', x, y, 1.7, HOSTILE.orange, a).setData('d', d); }
@@ -896,7 +918,7 @@ export class DungeonScene extends Phaser.Scene {
           if (b) { b.spin = 0.35; this.ride(b, 'dg-fx-spin', 'dg-spin', 'spin', f.a, 0.5, 0.5, (f.r * 2) / 32); }
           sfx.dash();
         } else if (f.k === 'slam') {
-          const sw = this.add.sprite(f.x, f.y + 10, 'dg-fx-slam', 0).setOrigin(0.5, 0.6).setScale((f.r * 1.6) / 30).setDepth(f.y + 20);
+          const sw = this.add.sprite(f.x, f.y + 10, 'dg-fx-slam', 0).setOrigin(0.5, 0.6).setScale(Math.max(1, Math.round((f.r * 1.6) / 30))).setDepth(f.y + 20);
           sw.play('dg-slam'); sw.once('animationcomplete', () => sw.destroy());
           if (b) { b.swingDur = 0.4; b.swingT = 0.4; }
           this.cameras.main.shake(160, 0.006); sfx.bump();
@@ -910,7 +932,7 @@ export class DungeonScene extends Phaser.Scene {
           sfx.dash();
         } else if (f.k === 'lunge') {
           // speed streaks behind the blob: right edge at its back, flipped when it charges left
-          if (b) { b.swingDur = 0.35; b.swingT = 0.35; this.ride(b, 'dg-fx-charge', 'dg-charge', 'charge', f.a, 1, 0.5, 2.5); }
+          if (b) { b.swingDur = 0.35; b.swingT = 0.35; this.ride(b, 'dg-fx-charge', 'dg-charge', 'charge', f.a, 1, 0.5, 3); }
           sfx.dash();
         }
         break;
@@ -918,16 +940,16 @@ export class DungeonScene extends Phaser.Scene {
       case 'move': {
         // the class moves (small button), each with a Ninja FX
         const b = this.heroes.get(f.id);
-        if (f.k === 'rogue') { const c = this.add.sprite(f.x, f.y + 14, 'dg-fx-sidestep', 0).setOrigin(0.5, 1).setScale(1.6).setDepth(f.y - 2); c.play('dg-sidestep'); c.once('animationcomplete', () => c.destroy()); }
-        else if (f.k === 'marksman') { this.nfx('nf-dust', f.x, f.y + 14, 2.4); if (b) { b.hopT = 0.32; b.hopH = 18; } }
-        else if (f.k === 'tank') { if (b) this.ride(b, 'dg-fx-charge', 'dg-charge', 'charge', f.a, 1, 0.5, 2.5); this.nfx('nf-dust', f.x, f.y + 14, 2.2); }
+        if (f.k === 'rogue') { const c = this.add.sprite(f.x, f.y + 14, 'dg-fx-sidestep', 0).setOrigin(0.5, 1).setScale(2).setDepth(f.y - 2); c.play('dg-sidestep'); c.once('animationcomplete', () => c.destroy()); }
+        else if (f.k === 'marksman') { this.nfx('nf-dust', f.x, f.y + 14, 2); if (b) { b.hopT = 0.32; b.hopH = 18; } }
+        else if (f.k === 'tank') { if (b) this.ride(b, 'dg-fx-charge', 'dg-charge', 'charge', f.a, 1, 0.5, 3); this.nfx('nf-dust', f.x, f.y + 14, 2); }
         else { this.nfx('nf-smoke', f.x, f.y - 4, 2.6, 0xbfe6ff); this.time.delayedCall(2000, () => { const bb = this.heroes.get(f.id); if (bb) this.nfx('nf-smoke', bb.x, bb.y - 4, 2.2, 0xbfe6ff); }); }
         sfx.dash();
         break;
       }
-      case 'dodge': { const c = this.add.sprite(f.x, f.y + 14, 'dg-fx-sidestep', 0).setOrigin(0.5, 1).setScale(1.6).setDepth(f.y - 2); c.play('dg-sidestep'); c.once('animationcomplete', () => c.destroy()); sfx.dash(); break; }
-      case 'hurt': { const g = this.goo.get(f.e); if (g) g.flash = 0.12; this.nfx('n13-hit-spark', f.x, f.y - 6, 1.5); break; } // a small N-13 hit spark (routine FX kept small)
-      case 'mdash': this.nfx('nf-dust', f.x, f.y + 14, 2.2); break;
+      case 'dodge': { const c = this.add.sprite(f.x, f.y + 14, 'dg-fx-sidestep', 0).setOrigin(0.5, 1).setScale(2).setDepth(f.y - 2); c.play('dg-sidestep'); c.once('animationcomplete', () => c.destroy()); sfx.dash(); break; }
+      case 'hurt': { const g = this.goo.get(f.e); if (g) g.flash = 0.12; this.nfx('n13-hit-spark', f.x, f.y - 6, 2); break; } // a small N-13 hit spark (routine FX kept small)
+      case 'mdash': this.nfx('nf-dust', f.x, f.y + 14, 2); break;
       case 'bite': break; // no enemy slash fx (Stefan): the telegraph before it is the warning
       case 'kill': {
         // Ninja smoke puff + star (the boss explodes)
@@ -945,12 +967,12 @@ export class DungeonScene extends Phaser.Scene {
       case 'ko': this.floatText(f.x, f.y - 50, t('dg.ko'), '#ffffff', 22); break;
       case 'revive': {
         // a friendly wake-up: spirit puff, a happy hop and a heart
-        const r = this.add.sprite(f.x, f.y - 16, 'dg-revive', 0).setScale(2.5).setDepth(5000); r.play('dg-revive'); r.once('animationcomplete', () => r.destroy());
+        const r = this.add.sprite(f.x, f.y - 16, 'dg-revive', 0).setScale(2).setDepth(5000); r.play('dg-revive'); r.once('animationcomplete', () => r.destroy());
         const b = this.heroes.get(f.id); if (b) { b.hopT = 0.32; b.hopH = 14; }
         this.floatText(f.x, f.y - 46, '♥', '#ff8aa0', 26); sfx.power(); break;
       }
       case 'coin': {
-        const s = this.add.sprite(f.x, f.y - 8, 'dg-sparkle', 0).setScale(1.2).setDepth(5000);
+        const s = this.add.sprite(f.x, f.y - 8, 'dg-sparkle', 0).setScale(1).setDepth(5000);
         s.play('dg-sparkle'); s.once('animationcomplete', () => s.destroy());
         this.floatText(f.x, f.y - 20, '+' + f.n, '#ffe08a', 18); sfx.pick();
         break;
@@ -959,7 +981,7 @@ export class DungeonScene extends Phaser.Scene {
       case 'level': {
         const me = this.heroes.get(this.s.myId);
         this.floatText(me?.x ?? 0, (me?.y ?? 0) - 80, t('dg.level', { n: f.level }), '#8fd3ff', 30);
-        for (const hb of this.heroes.values()) { this.nfx('n13-levelup', hb.x, hb.y - 20, 2.5); hb.hopT = 0.32; hb.hopH = 22; } // N-13 sparkle + a happy hop on every blob
+        for (const hb of this.heroes.values()) { this.nfx('n13-levelup', hb.x, hb.y - 20, 2); hb.hopT = 0.32; hb.hopH = 22; } // N-13 sparkle + a happy hop on every blob
         sfx.star();
         break;
       }
@@ -986,11 +1008,11 @@ export class DungeonScene extends Phaser.Scene {
           this.tweens.add({ targets: [orb, halo], x: f.tx, y: f.ty - 6, duration: Math.max(80, Math.hypot(f.tx - sx, f.ty - sy) / 0.9), onComplete: () => { orb.destroy(); halo.destroy(); } });
           break;
         }
-        const ar = this.add.image(sx, sy, 'dg-arrow').setScale(2.5).setRotation(a).setDepth(4500); // Ninja arrow points right
+        const ar = this.add.image(sx, sy, 'dg-arrow').setScale(3).setRotation(a).setDepth(4500); // Ninja arrow points right
         this.tweens.add({ targets: ar, x: f.tx, y: f.ty - 6, duration: Math.max(60, Math.hypot(f.tx - sx, f.ty - sy) / 1.2), onComplete: () => ar.destroy() });
         break;
       }
-      case 'spawn': { const r = this.add.sprite(f.x, f.y + 10, 'n13-slam-warning', 0).setScale(2.2).setDepth(-300).play({ key: 'n13-slam-warning', repeat: -1 }); this.time.delayedCall(SPAWN_WARN * 1000, () => { r.destroy(); this.nfx('nf-smoke', f.x, f.y, 2); }); break; } // rooms: a monster lands here
+      case 'spawn': { const r = this.add.sprite(f.x, f.y + 10, 'n13-slam-warning', 0).setScale(2).setDepth(-300).play({ key: 'n13-slam-warning', repeat: -1 }); this.time.delayedCall(SPAWN_WARN * 1000, () => { r.destroy(); this.nfx('nf-smoke', f.x, f.y, 2); }); break; } // rooms: a monster lands here
       case 'mode': { const b = this.heroes.get(f.id); if (b?.glow) this.burst(b.glow.x, b.glow.y, MODE_COL[f.m], 8, 20); sfx.pick(); break; }
       case 'heal': {
         const c = this.add.sprite(f.x, f.y - 6, 'dg-fx-heal', 0).setOrigin(0.5, 0.6).setScale(3).setDepth(f.y + 7);
@@ -999,7 +1021,7 @@ export class DungeonScene extends Phaser.Scene {
         break;
       }
       case 'block': {
-        const c = this.add.sprite(f.x, f.y - 10, 'dg-fx-block', 0).setScale(2.2).setDepth(4500);
+        const c = this.add.sprite(f.x, f.y - 10, 'dg-fx-block', 0).setScale(2).setDepth(4500);
         c.play('dg-block'); c.once('animationcomplete', () => c.destroy());
         sfx.tool('pickaxe', false);
         break;
@@ -1011,7 +1033,7 @@ export class DungeonScene extends Phaser.Scene {
         const b = f.win ? this.heroes.get(f.win) : undefined; const it = itemOf(f.item);
         if (b && it) {
           this.floatText(b.x, b.y - 70, tItem(it.id), '#c58bff', 22); this.burst(b.x, b.y - 10, 0xc58bff, 10, 36);
-          b.hopT = 0.32; b.hopH = 22; this.nfx('n13-levelup', b.x, b.y - 24, 2.2);
+          b.hopT = 0.32; b.hopH = 22; this.nfx('n13-levelup', b.x, b.y - 24, 2);
         }
         break;
       }

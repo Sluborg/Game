@@ -1409,3 +1409,27 @@ button.big:not(.alt):active, button.big:not(.alt).down {
    column, so the swatch's width: 100% resolved to 0. One full-size cell, the swatch stretches over it. */
 #custom .opt.swatch-opt { display: grid; grid-template: 1fr / 1fr; }
 #custom .opt.swatch-opt i { width: auto; height: auto; justify-self: stretch; align-self: stretch; min-height: 0; }
+
+/* build menu (Stefan 2026-11-15): the cottage card name breaks after "Stuga"; a built building is clearly marked: green
+   N-18 tick on the corner, "Byggd" in green, the art in full colour, no cost strip */
+#build-panel .bcard .bname { white-space: pre-line; }
+#build-panel .bcard.built .bimg img { opacity: 1; filter: none; }
+#build-panel .bcard.built .bcost { display: none; }
+#build-panel .bcard.built .beff { color: #2f8a2f; font-weight: 700; }
+#build-panel .bcard.built { border-color: #4caf3a !important; }
+/* meadow (Stefan 2026-11-15): no dash; the action button only appears, with the tool icon, when a node is in reach.
+   The dungeon keeps its dash button (#hud.dungeon). */
+#hud:not(.dungeon) #dash:not(.tool) { display: none; }
+
+/* "turn your phone" (landscape parked, viewport.ts): a calm full-screen card over everything; the game keeps running */
+#rotate { display: none; }
+body.rotate-block #rotate {
+  display: flex; position: fixed; inset: 0; z-index: 100000; flex-direction: column; align-items: center; justify-content: center;
+  gap: 16px; background: #45b2fc; color: var(--k-plum); font: 700 24px var(--font); text-align: center; touch-action: none;
+}
+body.rotate-block #rotate b { background: var(--k-parch2); border: 2px solid var(--k-edge-lo); border-radius: 4px; padding: 8px 16px; box-shadow: 0 4px 0 0 var(--k-shadow); }
+#rotate #rotate-blob .blob, #rotate #rotate-blob .blob img { width: 96px; height: 96px; image-rendering: pixelated; }
+#rotate #rotate-blob { animation: rotate-tilt 2.4s ease-in-out infinite; }
+@keyframes rotate-tilt { 0%, 30% { transform: rotate(0); } 50%, 80% { transform: rotate(-90deg); } 100% { transform: rotate(0); } }
+#rotate .rotate-hint { width: 34px; height: 56px; border: 4px solid var(--k-plum); border-radius: 8px; animation: rotate-phone 2.4s ease-in-out infinite; }
+@keyframes rotate-phone { 0%, 30% { transform: rotate(90deg); } 50%, 80% { transform: rotate(0); } 100% { transform: rotate(90deg); } }

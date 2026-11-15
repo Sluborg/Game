@@ -224,6 +224,75 @@ exists), overlays 20 levelUp, 30 loot, 40 bossStrip, and the HUD dungeonHud. Ele
 - **Buttons:** `#dg-roll` is still the old Ninja `button_normal` 9-slice (Code 2's `dungeon.css`), not yet option A; `#dg-pass` is a cream CSS button with a different edge
   (`#b88b55`). `#attack` uses the round ring (N-19b), like meadowHud.dash.
 
+## Scale audit (2026-11-15)
+
+Stefan: art must never lose pixels across screen sizes (integer scale only). Measured in Chromium at **360, 390 and 412
+px** wide portrait (844 tall): every visible DOM image, background and 9-slice frame (computed sizes) and the Phaser
+camera zoom. Docs only, nothing changed. "Factor" = displayed CSS px per art px.
+
+**The device-pixel catch (read first).** Stefan's Pixel renders at a device-pixel ratio of about **2.625** (his
+screenshots are 1080 px for 411 CSS px). So even an icon at an exact **3x in CSS is 7.875 device px per art px**: the
+phone still has to round, some art pixels come out 7 device px wide and some 8. Integer CSS factors are only truly
+crisp on 1x / 2x / 3x screens. Real "never loses pixels" means an integer number of **device** pixels per art pixel.
+Proposed rule:
+- read `devicePixelRatio` at start;
+- size pixel art in device px (e.g. one art px = 8 device px = 3.048 CSS px on the Pixel);
+- render the Phaser canvas at the device resolution too (today it renders at CSS resolution, 1 canvas px = 1 CSS px,
+  and the browser stretches it by 2.625).
+
+### World (Phaser canvas): the biggest item
+
+| What | Native | Factor 360 / 390 / 412 | Why |
+|---|---|---|---|
+| all meadow art (props at 3x, items at 2x, blobz) | 16 px tiles | 3x times zoom 0.837 / 0.907 / 0.958 = **2.51 / 2.72 / 2.87** CSS px per art px | `fitCamera` zoom = min(max(w,h)/820, min(w,h)/430); never an integer |
+| the same, in device px (Pixel, 2.625) | | 6.6 / 7.1 / 7.5 device px per art px | canvas is drawn at CSS resolution and stretched by the browser |
+
+- **Snapping rule (proposed):** zoom = max(1, round(3 * rawZoom)) / 3. That gives zoom 1 on all three widths, so every
+  art px is exactly 3 CSS px.
+- **Cost:** about 10% less world on screen (390 x 844 world px instead of 430 x 930).
+- **Device level:** also set the Phaser resolution to `devicePixelRatio` and pick the zoom so an art px is a whole
+  number of device px.
+
+### DOM art at a non-integer factor
+
+| Element (UI_INDEX name) | File | Native | Displayed 360 / 390 / 412 (CSS px) | Factor | Native size (or rule) for an exact integer on all three |
+|---|---|---|---|---|---|
+| lobby.platform | `art/lobby/party-platform.png` | 160x32 | 284 / 314 / 324 wide | 1.78 / 1.96 / 2.03 | **140x28** at 2x = 280 px (fits all three panels); or rule: floor(width / 160), centred (1x at 360, 2x at 390 / 412) |
+| home.background, lobby.background | `art/start-portrait.png` | 941x1672 | cover, 475x844 | 0.505 | ChatGPT art has **no clean pixel grid** (resampled), so no integer exists. Order a native **240x430** pixel picture at 2x (480x860 covers all three, centred) |
+| meadowEnd.background | `art/victory.png` | 941x1672 | cover, 475x844 | 0.505 | same: native **240x430** at 2x |
+| home.logo | `art/logo.png` | 672x464 | 317 / 343 / 363 wide | 0.47 / 0.51 / 0.54 | no clean grid; native **150x104** at 2x = 300 px (fits all three) |
+| loading.screen, dungeonEnd (Code 2) | `art/loading-portrait.png`, `art/dungeon-end.png` | 941x1672 | cover | 0.505 | same as the backgrounds |
+| F-PANEL frames (all cards, HUD boxes) | `nine_path_panel_3.png`, slice 6 5 5 6 / 6px | 16x16 | right and bottom 5 px slices drawn 6 px | 1.0 (left/top) / **1.2** (right/bottom) | CSS only: `border-image-width: 6px 5px 5px 6px` (1x everywhere), or slice 6 on all sides |
+| meadowHud.quest wood, bank wood, build cost wood, edge arrow | `art/icons/res-wood-32.png` | 32x32 | 20 / 17 / 16 / 18 | 0.62 / 0.53 / 0.50 / 0.56 | use **res-wood-16.png** at 1x (16 px) everywhere, or 2x (32 px) where there is room |
+| meadowHud.quest food, bank food | `art/ninja/res-berry.png` | 15x15 | 20 / 17 | 1.33 / 1.13 | 1x (15) or 2x (30) |
+| meadowHud.quest.home, edge home | `art/ninja/hut.png` | 47x32 | 32x22 | 0.69 | order a **16x16** hut icon (2x = 32 px) |
+| meadowEnd.bar star | `art/gather/star.png` | 19x17 | 24x22 | 1.26 | 1x (19) or 2x (38) |
+| meadowHud.build hammer | `art/icons/ui/hammer-16.png` | 16x16 | 52.9 / 48.2 / 51.2 | 3.30 / 3.01 / 3.20 | CSS only: the chip's flex sizing stretches the 48 px icon; pin it to 48x48 |
+| meadowHud.questBuild picture / badge | `art/ninja/bridge.png`, hammer-16 | 64x46, 16x16 | 33x24, 19-20 | 0.52, 1.2-1.27 | 1x picture (64x46) or a 16 px icon at 2x (32) |
+| designer.preview | blob grid (code) | 20x20 grid (120 px image) | 115.5 | **5.77** | 6x = 120 px (or 5x = 100 px) |
+| lobby.seat blob | blob grid | 20x20 | 50.7 / 60.9 / 62.2 (breathing) | 2.54 / 3.04 / 3.11 | fixed 60 px (3x); 2x at 360 if the column is narrower (floor, centred) |
+| home.playerCard blob | blob grid | 20x20 | 60 / 62 / 62 (breathing) | 3.0-3.1 | already 3x; the breathing squash briefly makes it uneven (by design) |
+| meadowHud.stick, knob | Ninja Receptacle 32 / 22 | | 120 / 52 | 3.75 / 2.36 | 128 px (4x) / 44 px (2x) |
+| dungeon hearts, coin, item slot, cell (Code 2) | see ICON_INDEX #34, #35, #40, #44 | | | 1.71 / 0.6 strip / 1.5 / 1.88 | 2x of the native (or the first coin frame at 2x) |
+
+### Already exact (integer at all three widths)
+
+- **Icons at 2x:** tick badge, can-build / lock badges, dungeon move icon.
+- **Icons at 3x:** quill, back chevron, close, home, dash symbol and ring, mouths, searching blob.
+- **Build-card pictures:** 1x / 2x / 3x.
+- **Stars:** quest star 1x, end-screen stars 4x.
+- **Other:** the designer tick badge, and the designer blob tiles (3x).
+
+### Snapping rule (proposed, one rule for all pixel art)
+
+- **Fit:** factor = the largest whole number k with native x k <= the space available (at least 1), centred in that
+  space. Never stretch to fill.
+- **Full-screen pictures:** pixel-art originals at a small native size, shown at the smallest whole k that covers the
+  screen, centred and cropped.
+- **Where it must fill a width** (the platform): order native art sized so 2x fits the narrowest phone (360 px wide:
+  about 284 px available).
+- **Crisp on the phone itself:** compute k in device px (k / devicePixelRatio CSS px).
+
 ## Summary: distinct button/frame styles
 
 Counted per element row in the meadow-side sections above (a tab set or a tile grid counts once). The dungeon is not

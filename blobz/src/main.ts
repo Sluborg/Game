@@ -1,3 +1,5 @@
+import { onViewport, watchViewport } from './viewport';
+import { intFit } from './pixelScale';
 import Phaser from 'phaser';
 import '@fontsource/fredoka/500.css';
 import '@fontsource/fredoka/600.css';
@@ -374,6 +376,10 @@ function startScene(session: Session) {
       scene: [],
     });
     game.scene.add('game', GameScene, false);
+    // every settled resize / rotation / return to the app: the canvas follows the viewport (and the camera via the
+    // scale 'resize' event); a canvas left at an old size was the "half the screen green" bug
+    const g = game;
+    onViewport((w, h) => { if (g.scale.width !== w || g.scale.height !== h) g.scale.resize(w, h); else g.scale.refresh(); });
   }
   loading(true, 0.1);
   loadPending = true;
@@ -415,7 +421,7 @@ let treesFor = { seed: -1, trees: [] as ReturnType<typeof makeTrees> };
 let sendBuild: (k: BuildKind | 'cottage') => void = () => {};
 let panelOpen = false;
 const COST_ICON: Record<string, string> = { wood: NI.wood, stone: NI.stone, berry: NI.berry };
-const STATE_ICON = { can: 'art/icons/state/can-build-16.png', lock: 'art/icons/state/lock-16.png', done: 'art/icons/state/done-16.png' }; // ChatGPT N-18
+const STATE_ICON = { can: 'art/icons/state/can-build-16.png', lock: 'art/icons/state/lock-16.png', done: 'art/icons/state/tick-green-16.png' }; // ChatGPT N-18 (built = the green tick, like the designer)
 const buildName = (k: BuildKind) => t(`build.name.${k}` as Key);
 /** Building picture box in the build cards (css px); pictures use the largest whole scale that fits. */
 const BIMG_BOX = 64;
@@ -427,10 +433,9 @@ function buildCard(kind: BuildKind | 'cottage'): HTMLButtonElement {
   b.innerHTML = '<b class="bname"></b><span class="bimg"><img alt="" /></span><span class="beff"></span><span class="bcost"></span><img class="bstate" alt="" />';
   const im = b.querySelector<HTMLImageElement>('.bimg img')!;
   im.onload = () => {
-    const box = BIMG_BOX; // same box in both orientations so all 7 cards fit
-    const fit = Math.min(box / im.naturalWidth, box / im.naturalHeight);
-    const sc = fit >= 1 ? Math.floor(fit) : fit; // whole scales; only a picture taller than the box shrinks
-    im.style.width = im.naturalWidth * sc + 'px'; im.style.height = im.naturalHeight * sc + 'px';
+    // largest WHOLE number of device px per art px that fits the box (pixelScale.ts), centred by the box's flex
+    const { w, h } = intFit(im.naturalWidth, im.naturalHeight, BIMG_BOX, BIMG_BOX);
+    im.style.width = w + 'px'; im.style.height = h + 'px';
   };
   b.onclick = () => { if (!b.disabled) { b.classList.remove('tap'); void b.offsetWidth; b.classList.add('tap'); sendBuild(kind); } };
   return b;
@@ -473,7 +478,7 @@ function renderBuildPanel(v: View) {
     card.querySelector<HTMLImageElement>('.bstate')!.src = built ? STATE_ICON.done : can ? STATE_ICON.can : STATE_ICON.lock;
     card.querySelector('.bname')!.textContent = name;
     card.querySelector('.beff')!.textContent = built ? t('build.built') : eff;
-    card.setAttribute('aria-label', `${name}: ${built ? t('build.built') : eff}`);
+    card.setAttribute('aria-label', `${name.replace('\n', ' ')}: ${built ? t('build.built') : eff}`);
     card.querySelector('.bcost')!.replaceChildren(...(built || !cost ? [] : RES.filter((k) => cost[k] > 0).map((k) => {
       const s = document.createElement('span');
       s.className = 'c ' + (v.bank[k] >= cost[k] ? 'ok' : 'no');
@@ -496,7 +501,7 @@ function renderBuildGoal(v: View) {
   const k = doneK ?? next;
   show('q-build', !!k);
   if (!k) return;
-  const name = k === 'cottage' ? t('build.cottage', { lvl: lvl + 1 }) : buildName(k);
+  const name = k === 'cottage' ? t('build.cottage', { lvl: lvl + 1 }).replace('\n', ' ') : buildName(k);
   const text = doneK ? t('build.goalDone', { name }) : t('build.goal', { name });
   if (row.getAttribute('aria-label') === text) return;
   row.setAttribute('aria-label', text); row.title = text;
@@ -707,7 +712,7 @@ async function hostGame() {
     session = {
       role: 'host', myId, seed, biome,
       infos: () => infos,
-      readInput: () => controls.read(),
+      readInput: () => ({ ...controls.read(), sw: Math.min(innerWidth, innerHeight) }), // [dungeon hook (Code 2)] portrait width -> room width
       tick(dt, input) {
         if (!state) return;
         inputs.set(myId, input);
@@ -789,7 +794,7 @@ async function joinGame(target: string, row?: HTMLButtonElement) {
       session = {
         role: 'client', myId: net.id, seed: m.seed, biome: cleanBiome(m.map),
         infos: () => infos,
-        readInput: () => controls.read(),
+        readInput: () => ({ ...controls.read(), sw: Math.min(innerWidth, innerHeight) }), // [dungeon hook (Code 2)] portrait width -> room width
         tick(dt, input) {
           sendAcc += dt;
           const key = `${input.x},${input.y},${input.dash},${input.atk ?? 0}`;
@@ -842,3 +847,12 @@ const DEBUG = new URLSearchParams(location.search).has('debug');
 // Optional round length for quick games/tests: ?t=60
 const roundSecs = Math.max(0, Math.min(600, Number(new URLSearchParams(location.search).get('t')) || 0));
 
+
+// viewport watcher + the "turn your phone" overlay (landscape is parked); the overlay shows the player's own blob
+watchViewport();
+onViewport(() => {
+  if (!document.body.classList.contains('rotate-block')) return;
+  const slot = $('rotate-blob');
+  const key = JSON.stringify(profile.look);
+  if (slot.dataset.look !== key) { slot.dataset.look = key; slot.replaceChildren(blobEl(clampLook(profile.look))); }
+});
