@@ -63,9 +63,17 @@ const angDiff = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)))
     // standing still, and shows the glide frame (1) while moving, the idle frame (0) when still
     for (const [vx, vy, facing, frame] of [[160, 0, 'right', 1], [-160, 0, 'left', 1], [0, 160, 'left', 1], [0, 0, 'left', 0], [160, 0, 'right', 1]]) {
       await sim(host, (s) => { s.dg.enemies = []; s.players.forEach((q) => { const h = s.dg.heroes[q.id]; h.atkCd = 1e9; }); });
-      for (let k = 0; k < 8; k++) { await sim(host, (s, a) => { const q = s.players[0]; q.x = s.dg.map.start.x; q.y = s.dg.map.start.y; q.vx = a.vx; q.vy = a.vy; }, { vx, vy }); await host.waitForTimeout(40); }
-      const f = await host.evaluate((id) => window.__dgFace?.[id], ids[0]);
-      const g = await ada.evaluate((id) => window.__dgFace?.[id], ids[0]);
+      // keep it gliding and poll (up to ~1 s after the first 8 ticks) until both phones show the expected facing + frame,
+      // instead of sampling once (a single sample could land on frame 0 of the walk cycle)
+      let f, g;
+      for (let k = 0; k < 33; k++) {
+        await sim(host, (s, a) => { const q = s.players[0]; q.x = s.dg.map.start.x; q.y = s.dg.map.start.y; q.vx = a.vx; q.vy = a.vy; }, { vx, vy });
+        await host.waitForTimeout(40);
+        if (k < 7) continue;
+        f = await host.evaluate((id) => window.__dgFace?.[id], ids[0]);
+        g = await ada.evaluate((id) => window.__dgFace?.[id], ids[0]);
+        if (f?.facing === facing && g?.facing === facing && f?.frame === frame && g?.frame === frame) break;
+      }
       ok(f?.facing === facing && g?.facing === facing && f?.frame === frame && g?.frame === frame, `blob v${vx},${vy}: faces ${facing}, frame ${frame} (host ${JSON.stringify(f)}, joiner ${JSON.stringify(g)})`);
     }
     console.log('\ndungeon weapons e2e passed');

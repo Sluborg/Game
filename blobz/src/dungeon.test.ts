@@ -2,14 +2,17 @@ import { describe, expect, it, vi } from 'vitest';
 import { KEYS } from './i18n';
 import {
   AIM_WARN, BITE_TIME, CLASS_MOVE_COOLDOWN, DUNGEON_TIMER_ENABLED, CLASS_WEAPONS, BITE_WARN, bossHp, BURST, BURST_DMG, BURST_GAP, BURST_SPREAD, CLASS_HP, CLASSES, DASH_TIME, DASH_WARN, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, floorDmg, actMul, GH, GW,
-  HEAL_BOLT, heroMods, refresh, inSwing, isWall, ITEMS, itemOf, KO_SECONDS, LEVEL_XP, LOOT_SECONDS, makeFloor, makeGoo, newRun, POTION_HP, REGEN_EVERY,
-  ITEM_ICON, skillIcon, skillOf, unstick, EARLY_ROOMS, ROOM_T, ROOMS_ENABLED, ROOMS, ROOM_W, MINIBOSS_ROOM, SPAWN_WARN, READY_SECONDS, makeRoom, roomType, roomClear, diffFloor, enterFloor, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
+  HEAL_BOLT, heroMods, refresh, inSwing, isWall, ITEMS, itemOf, KO_SECONDS, LEVEL_XP, LOOT_SECONDS, makeFloor, makeGoo, newRun as newRunAny, POTION_HP, roomCracks, REGEN_EVERY,
+  ITEM_ICON, skillIcon, skillOf, unstick, inDoorway, EARLY_ROOMS, ROOM_T, ROOMS_ENABLED, ROOMS, ROOM_W, MINIBOSS_ROOM, SPAWN_WARN, READY_SECONDS, makeRoom, roomType, roomClear, diffFloor, enterFloor, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
 } from './dungeon';
 import { cleanVillage, createState, DUNGEON_ENABLED, newVillage, villageOf, PICK_TIMER_ENABLED, ENTRANCE_R, entranceOf, makePuzzles, makeTrees, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
 
 /** Art's skill icons in the repo (vite glob, no node fs types needed). */
 /** ChatGPT N-23 skill + item icons (art/dungeon/skills, art/dungeon/items) */
 const N23 = Object.keys(import.meta.glob(['../public/art/dungeon/skills/*.png', '../public/art/dungeon/items/*.png'])).map((k) => k.replace('../public/', ''));
+/** The classic 5-floor dungeon unless a test passes rooms = true (rooms are the default since 2026-11-15, ?classic keeps
+ *  the old one reachable; its tests stay). */
+const newRun = (seed: number, picks: Record<string, (typeof WEAPONS)[number]>, dungeon = 1, rooms = false) => newRunAny(seed, picks, dungeon, rooms, false);
 const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 });
 type B = { id: string; x: number; y: number; vx: number; vy: number; dashT: number; lastDash: number };
 const body = (id: string, x: number, y: number): B => ({ id, x, y, vx: 0, vy: 0, dashT: 0, lastDash: 0 });
@@ -434,11 +437,35 @@ describe('dungeon', () => {
       // play the room out: let each wave land, then remove it, until the door is open
       for (let i = 0; i < 20 && !roomClear(d); i++) { run1(d, bs, undefined, 2.2); d.enemies = []; d.spit = []; }
     };
-    it('off by default: the old 5-floor dungeon is unchanged', () => {
-      expect(ROOMS_ENABLED).toBe(false);
-      const d = newRun(3, { a: 'sword' });
+    it('on by default (Stefan 2026-11-15); the old 5-floor dungeon stays reachable (?classic)', () => {
+      expect(ROOMS_ENABLED).toBe(true);
+      expect(newRunAny(3, { a: 'sword' }).rooms).toBe(true);
+      const d = newRunAny(3, { a: 'sword' }, 1, false);
       expect(d.rooms).toBe(false);
       expect(d.map.gw).toBeUndefined();
+      expect(newRunAny(3, { a: 'sword' }).nw).toBeUndefined(); // ?noweapons is off by default
+      expect(dview(dsnap(newRunAny(3, { a: 'sword' }, 1, true, true), 3)).noWeapons).toBe(true); // synced to joiners
+    });
+    it('cracks: 1-2 per 3x3 block (~11-20 % of the floor), never two touching; the entrance gap and every spawn reachable for 1-5 blobz', () => {
+      for (const players of [1, 2, 3, 4, 5]) for (let room = 1; room <= ROOMS; room++) {
+        const f = makeRoom(7 + players, room, players), W = f.gw!, H = f.gh!, T = f.dt!;
+        const c = roomCracks(f, 99 + room);
+        let floor = 0;
+        for (let y = 3; y < H - 1; y++) for (let x = 1; x < W - 1; x++) floor++;
+        expect(c.size / floor).toBeGreaterThanOrEqual(0.11);
+        expect(c.size / floor).toBeLessThanOrEqual(0.2);
+        for (const i of c) {
+          const x = i % W, y = Math.floor(i / W);
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (dx || dy) expect(c.has((y + dy) * W + x + dx)).toBe(false);
+        }
+        // start in the last floor row, above the bottom wall's gap (the 3 middle tiles); every spawn reachable from it
+        expect(Math.floor(f.start.y / T)).toBe(H - 2);
+        expect(Math.abs(Math.floor(f.start.x / T) - Math.floor(W / 2))).toBeLessThanOrEqual(1);
+        const seen = new Uint8Array(W * H), q = [[Math.floor(f.start.x / T), Math.floor(f.start.y / T)]];
+        while (q.length) { const [x, y] = q.pop()!; if (x < 0 || y < 0 || x >= W || y >= H || seen[y * W + x] || f.solid[y * W + x]) continue; seen[y * W + x] = 1; q.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]); }
+        for (const w of f.waves!) for (const sp of w) expect(seen[Math.floor(sp.y / T) * W + Math.floor(sp.x / T)]).toBe(1);
+        expect(seen[Math.floor(f.stairs.y / T) * W + Math.floor(f.stairs.x / T)]).toBe(1);
+      }
     });
     it('a room is screen-wide and tall, the start at the bottom and the door at the top; taller with more blobz', () => {
       for (let room = 1; room <= ROOMS; room++) {
@@ -556,6 +583,23 @@ describe('dungeon', () => {
         return s.actT ?? 0;
       };
       expect(wind(2)).toBeGreaterThan(wind(4) * 1.25);
+    });
+    it('the open door: the doorway is walkable, the whole doorway + 1 tile below counts, no bumping inside it', () => {
+      const d = newRun(26, { a: 'sword', b: 'bow', c: 'staff' }, 1, true);
+      const T = d.map.dt!, sx = d.map.stairs.x;
+      expect(isWall(d.map, sx, 2.5 * T)).toBe(true); // closed: the wall face
+      d.wave = 99; d.pending = []; d.enemies = [];
+      expect(roomClear(d)).toBe(true);
+      // three blobz squeezed into the doorway, two of them overlapping: they stay put and the 1.5 s count runs
+      const bs = [body('a', sx - 50, 2.4 * T), body('b', sx, 2.6 * T), body('c', sx + 6, 2.6 * T)];
+      run1(d, bs, undefined, 0.5);
+      expect(isWall(d.map, sx, 2.5 * T)).toBe(false); // open: walk into it
+      expect(bs.every((b) => inDoorway(d.map, b.x, b.y))).toBe(true);
+      expect(Math.hypot(bs[1].x - bs[2].x, bs[1].y - bs[2].y)).toBeLessThan(10); // not pushed apart
+      expect(d.ready).toBeGreaterThan(0.4);
+      run1(d, bs, undefined, READY_SECONDS);
+      expect(d.floor).toBe(2);
+      expect(inDoorway(d.map, d.map.start.x, d.map.start.y)).toBe(false);
     });
     it('corridor: climbing past the line starts the next wave early; the difficulty spreads over the 10 rooms', () => {
       const d = newRun(22, { a: 'sword' }, 1, true);

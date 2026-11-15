@@ -130,6 +130,53 @@ auto-revive, no fail state), even when the whole team is down at once; the floor
 at the exit (floor 1 stairs up, "Ni klev upp ur grottan") or by beating the boss (floor 5); both show 110 dungeonEnd.
 The time-out end ("Tiden tog slut") is archived with the dungeon clock (`DUNGEON_TIMER_ENABLED` off).
 
+## Scale audit (integer pixels, portrait 360 / 390 / 412 px; measured 2026-11-15 in Chromium, DPR 1)
+
+Bottom line: **the world is never at an integer scale today** (the camera zoom is fitted to the screen), several HUD /
+card images are not either, and on top of that the canvas is drawn at CSS size and stretched by the phone's
+devicePixelRatio (2.625 on Pixel 7, 3 on iPhone), so even integer CSS scales lose pixels on most Android phones.
+
+### World (Phaser canvas, `cam.zoom = min(max(w,h)/820, min(w,h)/430)`, dungeonScene.ts:241)
+| Screen | zoom | 0x72 room tile 16 art px -> CSS px | per art px | Room 9 x 16 art px |
+|---|---|---|---|---|
+| 360x780 | 0.837 | 40.2 | x2.51 | 362 px wide (overflows 360 by 2) |
+| 390x844 | 0.907 | 43.5 | x2.72 | 392 px (overflows by 2) |
+| 412x915 | 0.958 | 46.0 | x2.87 | 414 px (overflows by 2) |
+- Every world sprite multiplies by the same zoom, so none is integer: blobz / weapons / door / columns / chest
+  (`setScale(3)`), goo (`GOO_SCALE` 2, 3, 3, 2.5), coins (2.4), potion (2.5), FX (`nfx` 1.1, 2, 2.2, 2.4, 2.6, 3).
+- Even at zoom 1 these stay non-integer: goo kind 3 x2.5, coin x2.4, potion x2.5, FX x1.1 / 2.2 / 2.4 / 2.6.
+
+### DOM (CSS px; integer only when the factor below is whole)
+| Piece | Native | Shown | Factor | Fix |
+|---|---|---|---|---|
+| Class cards `card-class-*.png` (classPick) | 53-55 x 57-61 | 96x128 box, contain | x1.75-1.81 | show at x2 (106-110 x 114-122 box) or ask ChatGPT for 48x64 exports (x2 = 96x128) |
+| Coin `Coin2.png` (HUD row + end screen) | 40x10 strip, 10x10 frame | was 24x24 (x2.4) / end screen the whole strip | - | **FIXED**: first frame only, 20x20 (x2), class `coin1` |
+| Heart `IconHeart.png` (HUD) | 14x12 | 24x24 | x1.71 / x2 (squashed) | 28x24 (x2) |
+| Item slot `.dgicon` in `#dg-item` | 16x16 | 24x24 | x1.5 | 32 px (x2) |
+| Item cell frame `#dg-item` (`inventory_cell.png`) | 16x16 | 30x30 | x1.88 | 32 px (x2) round a 16 px item (x1), or 48 px (x3) round 32 px (x2) |
+| Thumbstick `BackgroundWood.png` / knob `ProgressYellow.png` | 32 / 22 | 120 / 52 | x3.75 / x2.36 | 128 (x4) / 44 (x2) or 66 (x3) |
+| Round buttons: attack icon ChatGPT 16 px vs Ninja icons | 16 | 48 / 32 | x3 vs x2 mixed | one source per button and one scale: all ChatGPT N-12/N-23 16 px icons at x3 (48) in the big button, x2 (32) in the small one |
+| Skill card icon, landscape | 16x16 | 36x36 | x2.25 | 32 px (x2) |
+| Boss emblem `boss-emblem.png` | 16x16 | 48x48 | x3 | ok |
+| Attack button + icon | 24 / 16 | 72 / 48 | x3 | ok |
+| Dash icon | 16 | 32 | x2 | ok |
+| Skill cards / loot icon / slot | 16 | 48 / 64 / 64+16 cell | x3 / x4 / x5 | ok |
+| Room wipe (data URL) | 120 | 48 | x0.4 | a transition, fine |
+
+### Proposed fix (one step at a time, Stefan rates each)
+1. **World at exact 3x, room width per screen** (recommended): camera zoom 1 in portrait (1 art px = 3 CSS px). Room
+   width in tiles = `floor(screenWidth / 48)` so the room fits: 360 -> 7 tiles (336 px + 12 px dark margins), 390 / 412
+   -> 8 tiles (384 px + 3 / 14 px). The room is shared, so the host picks the **smallest** width among the players
+   (sent in the snapshot like `rm`). Then snap the odd scales: goo kind 3 2.5 -> 3, coin 2.4 -> 2, potion 2.5 -> 2,
+   FX to 2 / 3.
+   - Alternative: **2x on small phones** (zoom 2/3: 1 art px = 2 CSS px, 9 tiles = 288 px) below 432 px width, 3x at
+     >= 432. Keeps today's 9-tile rooms but everything looks a third smaller on most phones.
+2. **Device pixels** (needed for "never loses pixels" on Android): render the canvas at physical size
+   (`width * devicePixelRatio`) and pick the zoom so 1 art px = a whole number of *physical* px:
+   `n = floor(phys width / (tiles * 16))`, e.g. 412 px at DPR 2.625 = 1081 phys px, 7 tiles -> n = 9 (1008 px + margin).
+   Same idea for the DOM images: size them in multiples of `16 / devicePixelRatio` px via a CSS variable set at start.
+3. **DOM table above**: the listed sizes (heart 28x24, coin 20, item slot 32, landscape skill 32, class cards x2).
+
 ## Notes for the merge
 
 - DUP rows are layered history in `src/dungeon.css`: the file grew in passes (kit A rewrite, then fixes appended at

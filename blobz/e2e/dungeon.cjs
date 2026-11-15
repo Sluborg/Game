@@ -13,7 +13,7 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
 }, { i, kind, dx, dy });
 
 (async () => {
-  const { browser, pages } = await startGame(base, ['Stefan', 'Ada', 'Bo'], [undefined, undefined, LANDSCAPE]);
+  const { browser, pages } = await startGame(base, ['Stefan', 'Ada', 'Bo'], [undefined, undefined, LANDSCAPE], '&classic'); // the classic 5-floor dungeon (rooms: dungeon-rooms.cjs)
   const [host, ada, bo] = pages;
   try {
     const ent = await host.evaluate(() => window.__blobz.state.entrance);

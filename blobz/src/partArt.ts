@@ -2,10 +2,10 @@
 // body with a neutral face. Built from blob.ts's pixel grid (Art's file, only read here): a pixel belongs to the item
 // when it does not change with the body colour (so it is not body) and it changes between the options of this part
 // (so it is not another part). Face parts are a few pixels, so they get a bigger whole scale (SCALE).
-import { blobEl, blobGrid, COLORS, type BlobLook } from './blob';
+import { blobEl, blobGrid, COLORS, EYES, type BlobLook } from './blob';
 
 export type TilePart = 'shape' | 'eyes' | 'mouth' | 'hat';
-const COUNT: Record<Exclude<TilePart, 'shape'>, number> = { eyes: 5, mouth: 5, hat: 15 };
+const COUNT: Record<Exclude<TilePart, 'shape'>, number> = { eyes: EYES.length, mouth: 5, hat: 15 };
 /** Whole scale per part: face parts are only a few pixels, so they are shown bigger to read on a 72 px tile. */
 const SCALE: Record<Exclude<TilePart, 'shape'>, number> = { eyes: 6, mouth: 8, hat: 4 };
 const cache = new Map<string, string>();

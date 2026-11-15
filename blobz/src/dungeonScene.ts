@@ -3,12 +3,13 @@
 // Also draws the dungeon entrance on the meadow (dungeonFrame is the one hook GameScene calls).
 import Phaser from 'phaser';
 import { blobCanvas, BLOB_FRAMES, BODY_CY, clampLook, facingFromVelocity, type Facing } from './blob';
-import { fw, fh, ft, makeRoom, ROOMS, MINIBOSS_ROOM, SPAWN_WARN, AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
+import { drawGatherRing } from './gatherRing';
+import { fw, fh, ft, inDoorway, makeRoom, roomCracks, ROOMS, MINIBOSS_ROOM, SPAWN_WARN, AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
 /** Weapons without Art's strip yet: a Kenney Tiny Dungeon tile in hand (bow: drawn in code). */
 import type { Session } from './game';
 import { sfx } from './sfx';
 import { t, tItem, tSkill } from './dungeonText';
-import { entranceOf, ENTRANCE_R, DUNGEON_ENABLED, type View } from './sim';
+import { entranceOf, DUNGEON_ENABLED, type View } from './sim';
 
 const BLOB_SCALE = 3; // blobz v2: 16x18 grid at the Ninja world scale, same as the meadow (game.ts)
 const FACE_DEAD = 40; // px/s, same as the meadow: slower = idle frame, facing kept
@@ -16,6 +17,8 @@ const FACE_DEAD = 40; // px/s, same as the meadow: slower = idle frame, facing k
 const EDGE_X = 22, EDGE_Y = 13, DROP = 3;
 // hovering weapons (no hands): they float this far beyond the body edge, bob gently and lunge out on each attack
 const HOVER = 7, BOB_PX = 1.5, BOB_S = 1.5;
+/** class colours (the N-23 skill badges): ?noweapons rings */
+const CLS_RING: Record<HeroClass, number> = { rogue: 0x7a4fb0, healer: 0x3f9a4a, marksman: 0x2f7fb8, tank: 0xb0503a };
 const LUNGE: Record<Weapon, number> = { sword: 4, hammer: 4, spear: 20, staff: 3, bow: -3, shield: 10, dagger: 4 }; // spear thrusts, the crossbow kicks back a little
 // slashing weapons sweep in an arc around the blob across the aim line (deg); the hammer's arc speeds up into a slam
 // (the Riddare's id stays 'shield', but it slashes with a sword: the shield hovers on the other side as its guard)
@@ -32,6 +35,7 @@ const WSCALE = 3; // 1 art px = 1 blob px (BLOB_SCALE): the weapons' pixels matc
  *  are in art/dungeon/weapons/ (README). The ChatGPT sprites there stay in the repo, unused. */
 const WIMG: Record<string, { src: string; w: number; h: number; px: number; py: number; up?: boolean }> = {
   sword: { src: NA + 'Items/Weapons/Sword/Sprite.png', w: 6, h: 17, px: 3, py: 14, up: true },
+  bigsword: { src: NA + 'Items/Weapons/BigSword/Sprite.png', w: 7, h: 16, px: 3, py: 13, up: true }, // the knight's sword (Stefan's pick #3), pivot at the grip
   sai: { src: NA + 'Items/Weapons/Sai/Sprite.png', w: 7, h: 13, px: 3.5, py: 11, up: true },
   dagger: { src: NA + 'Items/Weapons/Ninjaku/SpriteInHand.png', w: 3, h: 12, px: 1.5, py: 9.5, up: true }, // Stefan: a plain straight dagger
   hammer: { src: NA + 'Items/Weapons/Hammer/Sprite.png', w: 9, h: 16, px: 4.5, py: 14, up: true },
@@ -41,7 +45,7 @@ const WIMG: Record<string, { src: string; w: number; h: number; px: number; py: 
   crossbow: { src: 'art/dungeon/weapons/crossbow-16.png', w: 16, h: 16, px: 1, py: 7 }, // ChatGPT N-11
 };
 /** which sprite each weapon id draws (the Riddare, id 'shield', slashes with the sword) */
-const WART: Record<Weapon, string> = { sword: 'sword', shield: 'sword', dagger: 'dagger', hammer: 'hammer', staff: 'wand', spear: 'lance', bow: 'crossbow' };
+const WART: Record<Weapon, string> = { sword: 'sword', shield: 'bigsword', dagger: 'dagger', hammer: 'hammer', staff: 'wand', spear: 'lance', bow: 'crossbow' };
 const FONT = "'Fredoka', sans-serif"; // same as the meadow
 const DEBUG = new URLSearchParams(location.search).has('debug');
 const HITBOX = new URLSearchParams(location.search).has('hitbox'); // ?hitbox draws the sim's circles
@@ -119,6 +123,8 @@ export class DungeonScene extends Phaser.Scene {
   private coins = new Map<number, Phaser.GameObjects.Sprite>();
   private spits = new Map<number, { s: Phaser.GameObjects.Sprite; o: Phaser.GameObjects.Sprite; px: number; py: number }>();
   private ringG!: Phaser.GameObjects.Graphics;
+  private clsG!: Phaser.GameObjects.Graphics;
+  private doorG!: Phaser.GameObjects.Graphics;
   private auraG!: Phaser.GameObjects.Graphics;
   private hitG!: Phaser.GameObjects.Graphics;
   private bubble!: Phaser.GameObjects.Text;
@@ -214,6 +220,8 @@ export class DungeonScene extends Phaser.Scene {
     this.auraG = this.add.graphics().setDepth(-300);
     this.hitG = this.add.graphics().setDepth(9000);
     this.ringG = this.add.graphics().setDepth(4000);
+    this.doorG = this.add.graphics().setDepth(-790); // rooms: the gather ring at the open door (on the floor, under the blobz)
+    this.clsG = this.add.graphics().setDepth(-800); // ?noweapons: class-colour rings on the ground under the blobz
     this.bubble = this.add.text(0, 0, '', { fontFamily: FONT, fontSize: '22px', color: '#3f2631', fontStyle: 'bold', backgroundColor: '#fff7e6', padding: { x: 8, y: 2 } })
       .setOrigin(0.5, 1).setDepth(6000).setVisible(false);
     if (DEBUG) (window as unknown as { __dgScene?: Phaser.Scene }).__dgScene = this; // e2e: map + camera checks
@@ -249,9 +257,10 @@ export class DungeonScene extends Phaser.Scene {
     g.fillStyle = '#181425';
     g.fillRect(0, 0, c.width, c.height);
     const mid = Math.floor(W / 2), gap = [mid - 1, mid, mid + 1];
+    const cracks = roomCracks(f, seed); // 1-2 per 3x3 block, never touching (Stefan: far fewer)
     for (let ty = 3; ty < H; ty++) for (let tx = 0; tx < W; tx++) {
       if (ty === H - 1 && !gap.includes(tx)) continue;
-      const [sx, sy] = rnd() < 0.25 ? CRACKS[Math.floor(rnd() * CRACKS.length)] : [16, 64];
+      const [sx, sy] = cracks.has(ty * W + tx) ? CRACKS[Math.floor(rnd() * CRACKS.length)] : [16, 64];
       put(sx, sy, tx, ty); // floor_1 / floor_2..8, also under the thin side walls and in the entrance gap
     }
     for (let tx = 0; tx < W; tx++) {
@@ -271,6 +280,12 @@ export class DungeonScene extends Phaser.Scene {
       const d = document.createElement('canvas'); d.width = 64; d.height = 48;
       const dg = d.getContext('2d')!;
       dg.drawImage(sh, 16, 240, 16, 32, 0, 16, 16, 32); dg.drawImage(sh, 64, 240, 16, 32, 48, 16, 16, 32);
+      if (k === 'x72-door-open') {
+        // the open doorway reads as a way on: a dark passage (no wall behind the open leaf), the room's floor
+        // fading into it from below
+        const gr = dg.createLinearGradient(0, 16, 0, 48); gr.addColorStop(0, '#040208'); gr.addColorStop(0.55, '#140d18'); gr.addColorStop(1, '#4a3b40');
+        dg.fillStyle = gr; dg.fillRect(16, 16, 32, 32);
+      }
       dg.drawImage(sh, 32, 224, 32, 16, 16, 0, 32, 16); dg.drawImage(sh, lx, 240, 32, 32, 16, 16, 32, 32);
       this.textures.addCanvas(k, d)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
@@ -385,11 +400,13 @@ export class DungeonScene extends Phaser.Scene {
     for (const c of d.coins) {
       seenC.add(c.id);
       let img = this.coins.get(c.id);
-      if (!img) { img = c.k === 1 ? this.add.sprite(c.x, c.y, 'na-potion').setScale(2.5) : this.add.sprite(c.x, c.y, 'na-coin', 0).setScale(2.4).play('na-coin'); this.coins.set(c.id, img); }
-      img.x += (c.x - img.x) * (smooth ? k : 1); img.y += (c.y - 4 - Math.abs(Math.sin(now / 200 + c.id)) * 4 - img.y) * (smooth ? k : 1);
+      if (!img) { img = c.k === 1 ? this.add.sprite(c.x, c.y, 'na-potion').setScale(2.5) : this.add.sprite(c.x, c.y, 'na-coin', 0).setScale(2.4).play('na-coin'); img.setData('sh', this.add.ellipse(c.x, c.y + 6, 18, 6, 0x000000, 0.28)); this.coins.set(c.id, img); }
+      // lying on the floor: no bob, a fixed foot shadow (Stefan: things on the ground lie still)
+      img.x += (c.x - img.x) * (smooth ? k : 1); img.y += (c.y - 4 - img.y) * (smooth ? k : 1);
       img.setDepth(c.y - 5);
+      (img.getData('sh') as Phaser.GameObjects.Ellipse).setPosition(img.x, img.y + 10).setDepth(c.y - 6);
     }
-    for (const [id, img] of this.coins) if (!seenC.has(id)) { img.destroy(); this.coins.delete(id); }
+    for (const [id, img] of this.coins) if (!seenC.has(id)) { (img.getData('sh') as Phaser.GameObjects.Ellipse | undefined)?.destroy(); img.destroy(); this.coins.delete(id); }
 
     // ---- monster shots (dodge them with a sidestep): Ninja fireballs, hostile orange (boss: purple), dark outline ----
     const seenS = new Set<number>();
@@ -462,7 +479,7 @@ export class DungeonScene extends Phaser.Scene {
     for (const [id, g] of this.goo) if (!seenE.has(id)) { g.img.destroy(); g.shadow.destroy(); g.bar?.destroy(); g.hb?.u.destroy(); g.hb?.p.destroy(); g.tele.forEach((t) => t.destroy()); this.goo.delete(id); }
 
     // ---- blobz ----
-    this.ringG.clear(); this.auraG.clear();
+    this.ringG.clear(); this.auraG.clear(); this.clsG.clear();
     const infos = this.s.infos();
     const seenP = new Set<string>();
     for (const p of v.players) {
@@ -534,6 +551,12 @@ export class DungeonScene extends Phaser.Scene {
       b.stars.setVisible(ko).setPosition(b.x, b.y - 34).setDepth(b.y + 4);
       b.mode = h?.mode ?? 0;
       this.drawWeapon(b, w, h?.face ?? 0, ko, dt, !!h && (h.guard || !!h.dodge || h.wallT > 0));
+      if (d.noWeapons && h && !ko) {
+        // ?noweapons test: the weapon only shows while attacking (+0.5 s) or guarding; a class-colour ring keeps classes readable
+        const show = b.swingT > 0 || (b.lastSwing !== undefined && now - b.lastSwing < b.swingDur * 1000 + 500) || h.guard || h.wallT > 0;
+        if (!show) { b.weapon.setVisible(false); b.weapon2?.setVisible(false); b.glow?.setVisible(false); b.wshadow?.setVisible(false); }
+        this.clsG.fillStyle(CLS_RING[h.cls], 0.3).fillEllipse(b.x, b.y + 14, 74, 30).lineStyle(5, CLS_RING[h.cls], 1).strokeEllipse(b.x, b.y + 14, 74, 30);
+      }
       // picking level-up cards: frozen and safe (a soft bubble so friends see why it stands still)
       if (h && !ko && h.offer.length) this.ringG.fillStyle(0xfff7e6, 0.25).fillCircle(b.x, b.y - 6, 30).lineStyle(3, 0xffe08a, 0.9).strokeCircle(b.x, b.y - 6, 30);
       if (b.fx) {
@@ -547,7 +570,11 @@ export class DungeonScene extends Phaser.Scene {
     // ---- stairs: progress ring + "2/3" bubble when someone stands on them ----
     this.bubble.setVisible(false);
     const alive = v.players.filter((p) => (d.heroes[p.id]?.ko ?? 0) <= 0);
-    const spots = [{ at: f.stairs, open: d.rooms ? roomOpen : d.floor < FLOORS || !bossAlive }, ...(d.floor === 1 ? [{ at: f.exit, open: true }] : [])];
+    // rooms: the open door gets Code's kit gather ring (one segment per standing blob, gold while inside the doorway,
+    // the 1.5 s count sweeps it); the old ring stays for the classic stairs and the way out
+    if (d.rooms && roomOpen) drawGatherRing(this.doorG, { x: f.stairs.x, y: 3.4 * ft(f), rx: 1.5 * ft(f), ry: 0.8 * ft(f), inside: alive.map((p) => inDoorway(f, p.x, p.y)), fill: Math.min(1, d.ready), now });
+    else this.doorG.clear();
+    const spots = [...(d.rooms ? [] : [{ at: f.stairs, open: d.floor < FLOORS || !bossAlive }]), ...(d.floor === 1 ? [{ at: f.exit, open: true }] : [])];
     for (const s of spots) {
       if (!s.open) continue;
       const on = alive.filter((p) => Math.hypot(p.x - s.at.x, p.y - s.at.y) < STAIRS_R).length;
@@ -588,7 +615,10 @@ export class DungeonScene extends Phaser.Scene {
   private roomCamY(y: number): number {
     if (!this.rooms || !this.map) return y;
     const cam = this.cameras.main, half = cam.height / cam.zoom / 2, H = fh(this.map) * ft(this.map);
-    return half * 2 >= H ? H / 2 : Math.max(half, Math.min(H - half, y));
+    // the top may scroll above the room by the HUD's height so the door is never hidden under the HUD
+    const hud = document.getElementById('hud-dg')?.getBoundingClientRect();
+    const top = hud && hud.height ? (hud.bottom * (this.scale.height / window.innerHeight)) / cam.zoom : 0;
+    return half * 2 >= H + top ? (H - top) / 2 : Math.max(half - top, Math.min(H - half, y));
   }
 
   /** While the loot card or the level-up cards are open, keep my blob in the biggest free screen band (between the HUD
@@ -990,7 +1020,7 @@ export class DungeonScene extends Phaser.Scene {
 }
 
 // ---------- the hook GameScene calls every frame ----------
-interface EntranceGfx { seed: number; at: { x: number; y: number }; img: Phaser.GameObjects.Image; ring: Phaser.GameObjects.Graphics; bubble: Phaser.GameObjects.Text }
+interface EntranceGfx { seed: number; at: { x: number; y: number }; img: Phaser.GameObjects.Image }
 const entrances = new WeakMap<Phaser.Scene, EntranceGfx>();
 
 /** Called by GameScene.update after onView. Returns true while the dungeon scene draws (the meadow
@@ -1020,7 +1050,7 @@ function entranceKey(scene: Phaser.Scene): string | null {
 function drawEntrance(scene: Phaser.Scene, v: View, seed: number) {
   let g = entrances.get(scene);
   if (!g || !g.img.active || g.seed !== seed) {
-    if (g) for (const o of [g.img, g.ring, g.bubble]) o.destroy();
+    if (g) g.img.destroy();
     const ENTRANCE = entranceOf(seed);
     // loaded on first use (keeps the meadow's preload untouched); shown as soon as it is there.
     // Snow map hook (Code): GameScene puts the biome in the registry; entrance-snow.png is used when it exists.
@@ -1031,38 +1061,17 @@ function drawEntrance(scene: Phaser.Scene, v: View, seed: number) {
       im.onerror = () => { /* no snowy cave yet: the normal one is used */ };
       im.src = src;
     };
-    // Ninja Adventure stone arch (TilesetHouse 464,322,48,42) over a dark stairs-down tile, both biomes
-    if (!scene.textures.exists('dg-entrance')) {
-      const im = new Image();
-      im.onload = () => {
-        if (scene.textures.exists('dg-entrance')) return;
-        const c = document.createElement('canvas'); c.width = 48; c.height = 42;
-        const g2 = c.getContext('2d')!;
-        g2.fillStyle = '#141b1b'; g2.fillRect(12, 16, 24, 26);
-        g2.drawImage(im, 464, 322, 48, 42, 0, 0, 48, 42);
-        scene.textures.addCanvas('dg-entrance', c)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
-      };
-      im.src = 'assets/ninja-adventure/Backgrounds/Tilesets/TilesetHouse.png';
-    }
+    // the cave mouth = ChatGPT N-28 portal-idle.png, preloaded by the meadow (game.ts) under 'dg-entrance'
     void load;
     g = {
       seed, at: ENTRANCE,
       img: scene.add.image(ENTRANCE.x, ENTRANCE.y + 30, entranceKey(scene) ?? '__MISSING').setScale(3).setOrigin(0.5, 1).setDepth(ENTRANCE.y - 60).setVisible(!!entranceKey(scene)),
-      ring: scene.add.graphics().setDepth(ENTRANCE.y - 50),
-      bubble: scene.add.text(ENTRANCE.x, ENTRANCE.y - 66, '', { fontFamily: FONT, fontSize: '22px', color: '#3f2631', fontStyle: 'bold', backgroundColor: '#fff7e6', padding: { x: 8, y: 2 } }).setOrigin(0.5, 1).setDepth(4000),
     };
     entrances.set(scene, g);
   }
   const ENTRANCE = g.at;
   const key = entranceKey(scene);
   if (key && (!g.img.visible || g.img.texture.key !== key)) g.img.setTexture(key).setVisible(true);
-  const on = v.players.filter((p) => Math.hypot(p.x - ENTRANCE.x, p.y - ENTRANCE.y) < ENTRANCE_R).length;
-  g.ring.clear();
-  g.ring.lineStyle(3, 0xfff7e6, on ? 0.9 : 0.5).strokeEllipse(ENTRANCE.x, ENTRANCE.y + 10, ENTRANCE_R * 2, ENTRANCE_R);
-  if (on && on === v.players.length && v.entry > 0) {
-    g.ring.lineStyle(7, 0x6cc644, 1).beginPath();
-    g.ring.arc(ENTRANCE.x, ENTRANCE.y - 66 - 40, 14, -Math.PI / 2, -Math.PI / 2 + Math.min(1, v.entry) * Math.PI * 2);
-    g.ring.strokePath();
-  }
-  g.bubble.setText(`${on}/${v.players.length}`).setVisible(on > 0 && v.mode === 'meadow');
+  // the gather ring (segments per player, start sweep) is drawn by the meadow with gatherRing.ts (game.ts portalFrame)
+  void ENTRANCE; void v;
 }

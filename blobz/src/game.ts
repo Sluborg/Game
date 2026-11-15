@@ -7,7 +7,8 @@ import { BASE, GATE_W, makePuzzles, makeTrees, PLATE_R, rng, WORLD_H, WORLD_W } 
 import { isSolid, RES } from './sim';
 import { affordable, BUILDING_ENABLED, BUILD_KINDS, BUILD_R, BUILD_SPOTS, COTTAGE_PAD, makeWater, nodeRes } from './sim';
 import type { Biome, BuildKind } from './sim';
-import { DUNGEON_ENABLED, ENTRANCE_R, entranceOf, ICE_RX, ICE_RY, makeIce, WATER_TILE } from './sim';
+import { DUNGEON_ENABLED, ENTRANCE_RING, entranceOf, ICE_RX, ICE_RY, makeIce, onEntrance, WATER_TILE } from './sim';
+import { drawGatherRing } from './gatherRing';
 import { autotileMask, waterTiles, type Shore } from './water';
 import { cavePath } from './cavePath';
 import { isImgArt, RES_ART } from './resArt';
@@ -36,6 +37,8 @@ const ITEM_ICON: Record<ItemKind, string> = { wood: 'ic-log', stone: 'g-item-sto
 // pixels to match the blobz, so they are drawn at HALF the old scale.
 // Ninja items are 16 px: 2x on the ground, 1x carried over the head
 const ITEM_SCALE: Record<ItemKind, number> = { wood: 2, stone: 2, berry: 2 };
+/** Empty transparent rows under each ground token's art (N-27 wood: 2 of 16; Ninja food / rock: none). */
+const ITEM_FOOT_GAP: Record<ItemKind, number> = { wood: 2, stone: 0, berry: 0 };
 const CARRY_SCALE: Record<ItemKind, number> = { wood: 1, stone: 1, berry: 1 };
 // Obstacles (sim kinds 0-4) and decor from ChatGPT order 30 (public/art/props)
 const OBSTACLE_ART: [string, number][] = [['pr-tree-green', 3], ['pr-tree-orange', 3], ['pr-tree-pine', 3], ['pr-rock', 3], ['pr-boulder', 3], ['g-bush-berries', 3]];
@@ -182,7 +185,6 @@ interface BlobGfx {
   label: Phaser.GameObjects.Text;
   carry: Phaser.GameObjects.Image[];
   aura: Phaser.GameObjects.Graphics;
-  you?: Phaser.GameObjects.Image; // N-18 arrow over my own blob
   tool?: Phaser.GameObjects.Sprite;
   swingT: number; // seconds left of the current tool swing
   faceLeft: boolean; // tool swing direction
@@ -223,7 +225,10 @@ export class GameScene extends Phaser.Scene {
   private groves: { img: Phaser.GameObjects.Image; x: number; y: number; fade: number }[] = [];
   private dusk!: Phaser.GameObjects.Rectangle;
   private pile!: Phaser.GameObjects.Container;
-  private portal?: { glow: Phaser.GameObjects.Image; seed: number };
+  private portal?: { glow: Phaser.GameObjects.Image; ring: Phaser.GameObjects.Graphics; seed: number };
+  private portalImg?: Phaser.GameObjects.Image; // Code 2's portal picture (drawEntrance), found by its texture key
+  private portalFade = 1;
+  private bFade = new Map<Phaser.GameObjects.Image, number>();
   private pileKey = '';
   private trailG!: Phaser.GameObjects.Graphics;
   private pickG!: Phaser.GameObjects.Graphics;
@@ -275,10 +280,8 @@ export class GameScene extends Phaser.Scene {
     sheet('mini-wave', 'FX/Elemental/Explosion/SpriteSheet.png', 40, 40);
     sheet('mini-warn', 'FX/Magic/Circle/SpriteSheetWhite.png', 32, 32);
     sheet('mini-ko', 'Ui/Emote/emote3.png', 14, 13);
-    sheet('m-flag', 'Backgrounds/Animated/Flag/FlagRed16x16.png', 16, 16);
     this.load.image('mini-bg', 'art/mini/bg.png');
     // berry bush ChatGPT N-16 (full / picked), 32 px art at 3x
-    this.load.image('st-you', 'art/icons/state/you-arrow-16.png'); // ChatGPT N-18
     this.load.image('pw-speed-32', 'art/meadow/speed-32.png'); // ChatGPT N-15b speed power-up (32 px art)
     for (const v of ['round', 'pine', 'apple']) { // ChatGPT N-26 trees + matching stumps
       this.load.image(`tree-${v}`, `art/props/tree-${v}.png`);
@@ -325,14 +328,23 @@ export class GameScene extends Phaser.Scene {
   private portalFrame(v: { players: { x: number; y: number }[]; entry: number; mode: string }) {
     const e = entranceOf(this.s.seed);
     if (!this.portal || this.portal.seed !== this.s.seed || !this.portal.glow.active) {
-      this.portal?.glow.destroy();
+      this.portal?.glow.destroy(); this.portal?.ring.destroy();
       // the art has 4 empty rows under the stones: the foot line is 12 px above the picture's bottom (y + 30)
       this.shadow(e.x, e.y + 16, 150, 26, 0.26).setDepth(e.y - 61);
-      this.portal = { seed: this.s.seed, glow: this.add.image(e.x, e.y + 30, 'portal-glow').setScale(3).setOrigin(0.5, 1).setDepth(e.y - 59) };
+      this.portal = {
+        seed: this.s.seed,
+        glow: this.add.image(e.x, e.y + 30, 'portal-glow').setScale(3).setOrigin(0.5, 1).setDepth(e.y - 59),
+        // the gather ring lies on the ground in front of the portal: under every blob standing on it
+        // the portal stands IN FRONT of the ring (Stefan 2026-11-15): its base hides the ring's top; above the shadow
+        ring: this.add.graphics().setDepth(e.y - 60.5),
+      };
     }
-    const on = v.players.some((p) => Math.hypot(p.x - e.x, p.y - e.y) < ENTRANCE_R);
+    const inside = v.players.map((p) => onEntrance(e, p.x, p.y));
+    const on = inside.some(Boolean);
+    drawGatherRing(this.portal.ring, { x: e.x, y: e.y + ENTRANCE_RING.dy, rx: ENTRANCE_RING.rx, ry: ENTRANCE_RING.ry, inside, fill: v.entry, now: this.time.now });
+    this.portal.ring.setVisible(v.mode === 'meadow');
     const pulse = 0.5 - 0.5 * Math.cos(this.time.now / 900); // slow, about 5.7 s a cycle
-    this.portal.glow.setVisible(v.mode === 'meadow').setAlpha(on || v.entry > 0 ? 1 : 0.15 + 0.45 * pulse);
+    this.portal.glow.setVisible(v.mode === 'meadow').setAlpha((on || v.entry > 0 ? 1 : 0.15 + 0.45 * pulse) * this.portalFade);
   }
 
   /** Put a node's shadow under the foot of its picture (the bottom edge), 70% of its width, just below its depth. */
@@ -383,7 +395,6 @@ export class GameScene extends Phaser.Scene {
 
   create() {
     if (!this.anims.exists('mini-ko')) this.anims.create({ key: 'mini-ko', frames: this.anims.generateFrameNumbers('mini-ko', { frames: [0] }), frameRate: 6, repeat: -1 });
-    if (!this.anims.exists('m-flag')) this.anims.create({ key: 'm-flag', frames: this.anims.generateFrameNumbers('m-flag', { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
     if (!this.anims.exists('plate-glow')) this.anims.create({ key: 'plate-glow', frames: this.anims.generateFrameNumbers('fx-plate-glow', { start: 0, end: 4 }), frameRate: 8, repeat: -1 });
     if (!this.anims.exists('mini-wave')) this.anims.create({ key: 'mini-wave', frames: this.anims.generateFrameNumbers('mini-wave', { start: 0, end: 8 }), frameRate: 18 });
     if (!this.anims.exists('dust')) this.anims.create({ key: 'dust', frames: this.anims.generateFrameNumbers('fx-dust', { start: 0, end: 7 }), frameRate: 18 });
@@ -438,7 +449,7 @@ export class GameScene extends Phaser.Scene {
       this.buildBase();
     }
     // "this is home": Art's base-marker sign (post foot = anchor), beside the drop-off (no reading needed; was BAS)
-    this.add.sprite(BASE.x + 58, BASE.y + 62, 'm-flag', 0).setOrigin(0.5, 1).setScale(NINJA_SCALE).setDepth(BASE.y + 62).play('m-flag');
+    // no base flag (Stefan 2026-11-15: it stood in the wood pile)
 
     // resource nodes (same layout as the host sim, from the shared seed); textures swap when used up
     // the pink blossom tree (sim kind 1) only for a couple of trees, away from the cave mouth
@@ -589,15 +600,19 @@ export class GameScene extends Phaser.Scene {
       seenI.add(it.id);
       let img = this.items.get(it.id);
       if (!img) {
-        img = this.add.image(it.x, it.y, ITEM_ICON[it.kind] ?? 'ic-log').setScale(0.1);
+        // stands on its foot (origin = bottom), so the pop-in grows up out of the ground
+        img = this.add.image(it.x, it.y, ITEM_ICON[it.kind] ?? 'ic-log').setScale(0.1).setOrigin(0.5, 1);
         this.tweens.add({ targets: img, scale: ITEM_SCALE[it.kind] ?? 1.8, duration: 250, ease: 'Back.Out' });
         this.items.set(it.id, img);
       }
-      img.x = it.x; img.y = it.y - 4;
+      // Stefan 2026-11-15 ("the wood still floats"): every token's VISIBLE foot sits on one line (it.y + 8) and the shadow
+      // is centred on that foot, so it covers the token's bottom ~2.5 art px; the art's empty bottom rows are skipped
+      const foot = it.y + 8;
+      img.x = it.x; img.y = foot + (ITEM_FOOT_GAP[it.kind] ?? 0) * (ITEM_SCALE[it.kind] ?? 2);
       img.setDepth(it.y - 10);
       const pr = 15;
-      this.pickG.fillStyle(0x000000, 0.18).fillEllipse(it.x, it.y + 9, 22, 7);
-      this.pickG.lineStyle(2, 0xffffff, 0.75).strokeEllipse(it.x, it.y + 6, pr * 2, pr);
+      this.pickG.fillStyle(0x000000, 0.22).fillEllipse(it.x, foot, 26, 10);
+      this.pickG.lineStyle(2, 0xffffff, 0.75).strokeEllipse(it.x, foot, pr * 2, pr);
     }
     for (const [id, img] of this.items) if (!seenI.has(id)) { img.destroy(); this.items.delete(id); }
 
@@ -648,6 +663,24 @@ export class GameScene extends Phaser.Scene {
       const want = hidden ? 0.45 : 1;
       if (g.fade !== want) { g.fade += Math.sign(want - g.fade) * Math.min(Math.abs(want - g.fade), dt * 4); g.img.setAlpha(g.fade); }
     }
+    // ---- buildings + the portal fade while a blob stands behind them (Stefan 2026-11-15): the bottom third is the solid
+    //      base (sim solidBoxes), so a blob above it and inside the picture is behind the walls / roof ----
+    const fadeOne = (im: Phaser.GameObjects.Image | undefined) => {
+      if (!im || !im.visible || this.tweens.isTweening(im)) return 1; // the build drop-in owns the alpha while it plays
+      const top = im.y - im.displayHeight, baseTop = im.y - im.displayHeight / 3, half = im.displayWidth / 2 - 6;
+      let hidden = false;
+      for (const b of this.blobs.values()) if (b.y < baseTop && b.y > top + 10 && Math.abs(b.x - im.x) < half) { hidden = true; break; }
+      const want = hidden ? 0.45 : 1, cur = this.bFade.get(im) ?? 1;
+      const next = cur === want ? cur : cur + Math.sign(want - cur) * Math.min(Math.abs(want - cur), dt * 4);
+      this.bFade.set(im, next); im.setAlpha(next);
+      return next;
+    };
+    fadeOne(this.cottageImg);
+    for (const [k, g] of this.bgfx) if (g.built && k !== 'bridge') fadeOne(g.img);
+    if (DUNGEON_ENABLED) {
+      if (!this.portalImg?.active) this.portalImg = this.children.list.find((o): o is Phaser.GameObjects.Image => o instanceof Phaser.GameObjects.Image && o.texture.key === 'dg-entrance');
+      this.portalFade = fadeOne(this.portalImg);
+    }
     // ---- dusk ----
     this.dusk.setFillStyle(v.phase === 'end' ? 0x4a2a6a : 0xff7a2f, v.phase === 'end' ? 0.38 : v.time >= 20 ? 0 : 0.1 + Math.min(1, (20 - v.time) / 20) * 0.25);
 
@@ -670,9 +703,11 @@ export class GameScene extends Phaser.Scene {
       let c = this.powers.get(w.id);
       if (!c) {
         // speed: ChatGPT N-15b (winged boot inside its own glow circle), 16 px art at 3x; magnet: Ninja hook on a circle
+        // a shadow centred on the disc's foot, so the power-up rests on the ground (speed art: 1 empty row = foot at +30)
+        const sh = (fy: number) => this.add.ellipse(0, fy, 44, 12, 0x000000, 0.22);
         c = w.kind === 'speed'
-          ? this.add.container(w.x, w.y, [this.add.image(0, 0, 'pw-speed-32').setScale(2)]) // N-15b 32 px art, 64 world px
-          : this.add.container(w.x, w.y, [this.add.circle(0, 0, 32, 0xff6b8b, 0.4).setStrokeStyle(3, 0xffffff, 0.9), this.add.image(0, -1, 'ic-magnet').setScale(2)]);
+          ? this.add.container(w.x, w.y, [sh(30), this.add.image(0, 0, 'pw-speed-32').setScale(2)]) // N-15b 32 px art, 64 world px
+          : this.add.container(w.x, w.y, [sh(32), this.add.circle(0, 0, 32, 0xff6b8b, 0.4).setStrokeStyle(3, 0xffffff, 0.9), this.add.image(0, -1, 'ic-magnet').setScale(2)]);
         this.powers.set(w.id, c);
       }
       c.setPosition(w.x, w.y).setDepth(w.y); // power-ups rest on the ground too: no bob (Stefan 2026-11-15)
@@ -723,7 +758,7 @@ export class GameScene extends Phaser.Scene {
     }
     for (const [id, b] of this.blobs) if (!seenP.has(id)) {
       b.tool?.destroy();
-      b.you?.destroy(); b.shadow.destroy(); b.body.destroy(); b.eyes.destroy(); b.label.destroy(); b.aura.destroy(); b.carry.forEach((c) => c.destroy());
+      b.shadow.destroy(); b.body.destroy(); b.eyes.destroy(); b.label.destroy(); b.aura.destroy(); b.carry.forEach((c) => c.destroy());
       this.blobs.delete(id);
     }
 
@@ -788,16 +823,10 @@ export class GameScene extends Phaser.Scene {
     if (p.boostT > 0) b.aura.lineStyle(3, 0xffc93c, 0.8).strokeCircle(b.x, b.y - 4 + hover, 26 + Math.sin(now / 60) * 2);
     if (p.magnetT > 0) b.aura.lineStyle(2, 0xff6b8b, 0.5).strokeCircle(b.x, b.y, 60 + Math.sin(now / 200) * 6);
     if (p.shield > 0) b.aura.fillStyle(0x5ec8ff, 0.16).fillCircle(b.x, b.y - 6 + hover, 30).lineStyle(2, 0x8fd3ff, 0.7).strokeCircle(b.x, b.y - 6 + hover, 30);
-    if (isMe) b.aura.fillStyle(0xffffff, 0.9).fillTriangle(b.x - 6, b.y - 68 + hover, b.x + 6, b.y - 68 + hover, b.x, b.y - 60 + hover);
 
-    // nameplate: always on top of the world (tools, the base flag, props), just under the "you" arrow
+    // nameplate: always on top of the world (tools, props); no "you" arrow any more (Stefan 2026-11-15)
     b.label.setPosition(b.x, b.y + 14).setDepth(this.dB + 19990);
     if (DEBUG) ((window as unknown as { __blobzCovers?: Record<string, () => string[]> }).__blobzCovers ??= {})[p.id] = () => this.coversOf(b.label); // e2e
-    // "you": the N-18 arrow over my own blob (3x), bobbing gently
-    if (isMe) {
-      b.you ??= this.add.image(0, 0, 'st-you').setScale(3).setOrigin(0.5, 1);
-      b.you.setPosition(b.x, b.y - 46 + Math.sin(now / 260) * 3).setDepth(this.dB + 20000);
-    }
 
     // carried items stack
     while (b.carry.length < p.carry.length) b.carry.push(this.add.image(0, 0, 'ic-log').setScale(1));

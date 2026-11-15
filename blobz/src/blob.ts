@@ -13,7 +13,7 @@ export const COLORS = [
   0x4fe0c3, 0xf2f2f2, 0xe63946, 0x3d6bff, 0xc08850, 0x9aa0b4,
 ];
 export const SHAPES = ['Kupol', 'Boll', 'Lång', 'Platt', 'Päron', 'Kub'];
-export const EYES = ['Prick', 'Stora', 'Glada', 'Sömniga', 'Blink'];
+export const EYES = ['Prick', 'Stora', 'Glada', 'Sömniga', 'Blink', 'Prickögon hög', 'Prickögon låg'];
 export const MOUTHS = ['Leende', 'Öppen', 'Lugn', 'Flin', 'Katt'];
 export const HATS = ['Ingen', 'Keps', 'Krona', 'Grodd', 'Mössa', 'Trollkarl', 'Rosett', 'Lurar',
   'Kattöron', 'Enhörning', 'Kaninöron', 'Djävulshorn', 'Antenn', 'Gloria', 'Drottningkrona'];
@@ -61,6 +61,10 @@ const EYE_SPRITES: Sprite[] = [
   sp(['.K..K.', 'K.KK.K'], 3), // Glada
   sp(['KK.KK'], 2), // Sömniga
   sp(['WW...', 'WK.KK'], 2), // Blink
+  // dot eyes v2 (Alea, Stefan 2026-11-15: "merge the dots"): each eye is a SOLID block, top-left and bottom-right pixel
+  // white, the rest black, 2 px between the eyes. Tall = 2 wide x 3 high, low = 3 wide x 2 high. Both fit every shape.
+  sp(['WK..WK', 'KK..KK', 'KW..KW'], 3), // Prickögon hög
+  sp(['WKK..WKK', 'KKW..KKW'], 5), // Prickögon låg
 ];
 /** Mouths: anchor = centre column, top row. */
 const MOUTH_SPRITES: Sprite[] = [

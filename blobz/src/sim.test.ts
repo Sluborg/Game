@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BASE, createState, DAY_CYCLE_ENABLED, STONE_ENABLED, finishMini, MINI_ENABLED, questTargets, step, type Input } from './sim';
+import { BASE, createState, DAY_CYCLE_ENABLED, DUNGEON_ENABLED, STONE_ENABLED, finishMini, MINI_ENABLED, questTargets, step, type Input } from './sim';
 
 const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 });
 
@@ -90,5 +90,56 @@ describe('village spawn (Stefan 2026-11-15)', () => {
     }
     const s = createState(['a', 'b', 'c', 'd', 'e'].map((id) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 })), 7);
     expect(s.players.map((p) => [p.x, p.y])).toEqual(spots.map((p) => [p.x, p.y]));
+  });
+});
+
+describe('building footprints + portal ring (Stefan 2026-11-15)', () => {
+  const P5 = ['a', 'b', 'c', 'd', 'e'].map((id) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 }));
+  const idle = new Map<string, Input>();
+  const inBox = (b: { x0: number; x1: number; y0: number; y1: number }, x: number, y: number) => x > b.x0 && x < b.x1 && y > b.y0 && y < b.y1;
+
+  it('the main building base is solid: a blob placed inside is snapped out and stays out; it can pass behind the roof', async () => {
+    const { solidBoxes } = await import('./sim');
+    const s = createState(P5.slice(0, 1), 7);
+    const house = solidBoxes(s)[0];
+    expect(house.y1).toBe(BASE.y + 30); // the base ends where the picture stands
+    const p = s.players[0];
+    Object.assign(p, { x: BASE.x, y: BASE.y + 10, vx: 0, vy: 0 });
+    for (let i = 0; i < 10; i++) step(s, idle, 1 / 60);
+    expect(inBox(house, p.x, p.y)).toBe(false);
+    // behind (north of) the base, under the roof: free to stand there
+    Object.assign(p, { x: BASE.x, y: house.y0 - 30, vx: 0, vy: 0 });
+    step(s, idle, 1 / 60);
+    expect(Math.round(p.y)).toBe(house.y0 - 30);
+  });
+
+  it('a blob gliding into the house bounces off the wall', () => {
+    const s = createState(P5.slice(0, 1), 7);
+    const p = s.players[0];
+    Object.assign(p, { x: BASE.x - 150, y: BASE.y + 20, vx: 0, vy: 0 });
+    const right = new Map<string, Input>([['a', { x: 1, y: 0, dash: 0 }]]);
+    for (let i = 0; i < 90; i++) step(s, right, 1 / 60);
+    expect(p.x).toBeLessThan(BASE.x - 40);
+  });
+
+  it.skipIf(!DUNGEON_ENABLED)('the portal ring is an ellipse in front of the portal, below the pillars; no pushing on it', async () => {
+    const { ENTRANCE_RING, onEntrance, solidBoxes } = await import('./sim');
+    const s = createState(P5, 7);
+    const e = s.entrance;
+    expect(onEntrance(e, e.x, e.y + ENTRANCE_RING.dy)).toBe(true);
+    expect(onEntrance(e, e.x + ENTRANCE_RING.rx + 1, e.y + ENTRANCE_RING.dy)).toBe(false);
+    expect(onEntrance(e, e.x, e.y + 70)).toBe(false); // where blobz come back out of the dungeon
+    // two blobz on the same spot inside the ring are not shoved apart
+    const [a, b] = s.players;
+    Object.assign(a, { x: e.x - 5, y: e.y + 30, vx: 0, vy: 0 }); Object.assign(b, { x: e.x + 5, y: e.y + 30, vx: 0, vy: 0 });
+    for (const q of s.players.slice(2)) Object.assign(q, { x: BASE.x, y: BASE.y + 200 });
+    step(s, idle, 1 / 60);
+    expect(b.x - a.x).toBeCloseTo(10, 0);
+    // all 5 fit on open ground inside the ring (none inside a pillar)
+    const spots = [-40, -20, 0, 20, 40].map((dx, i) => ({ x: e.x + dx, y: e.y + ENTRANCE_RING.dy + (i % 2 ? 12 : -2) }));
+    for (const q of spots) {
+      expect(onEntrance(e, q.x, q.y)).toBe(true);
+      for (const box of solidBoxes(s)) expect(inBox(box, q.x, q.y)).toBe(false);
+    }
   });
 });

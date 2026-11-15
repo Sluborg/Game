@@ -43,7 +43,7 @@ const HEALER_ICON = ['art/dungeon/icons/damage-mode-16.png', 'art/dungeon/icons/
 /** the big round button's free symbol for the other classes: their own weapon (ChatGPT N-11, 16 px art at 3x) */
 const BIG_ICON: Record<string, string> = { rogue: 'art/dungeon/weapons/dagger-16.png', marksman: 'art/dungeon/weapons/crossbow-16.png', tank: 'art/dungeon/weapons/shield-16.png' };
 /** Ninja weapon sprites on the rogue's weapon cards. */
-const WEAPON_CARD: Partial<Record<Weapon, string>> = { sword: 'Items/Weapons/Sword/Sprite.png', hammer: 'Items/Weapons/Hammer/Sprite.png', dagger: 'Items/Weapons/Ninjaku/SpriteInHand.png', spear: 'Items/Weapons/Lance/Sprite.png' };
+const WEAPON_CARD: Partial<Record<Weapon, string>> = { sword: 'Items/Weapons/Sword/Sprite.png', shield: 'Items/Weapons/BigSword/Sprite.png', hammer: 'Items/Weapons/Hammer/Sprite.png', dagger: 'Items/Weapons/Ninjaku/SpriteInHand.png', spear: 'Items/Weapons/Lance/Sprite.png' };
 
 let lastMode = 'meadow';
 let myPick: Weapon | null = null;

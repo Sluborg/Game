@@ -1364,3 +1364,48 @@ body.nostone .qrow[data-k="stone"], body.nostone .edge[data-k="stone"], body.nos
 /* ChatGPT N-27 wood (Stefan 2026-11-15): the HUD picture is the 32 px file; where icons show at their own size
    (build cost strip, end rows) it is drawn at 16 px, like the other 1x resource icons */
 #build-panel .bcard .bcost .c img[src*="res-wood-32"], #end .endrows .qicon[src*="res-wood-32"] { width: 16px; height: 16px; }
+
+/* buttons option A (Stefan 2026-11-15): the primary button is the CSS "Slumpa" family too, in orange. Same geometry as
+   the secondary (2 px even border, 4 px radius, inner bottom line, 4 px flush shadow, calm 2 px press), no pixel
+   image left on any menu button: Nytt spel, Klar, Starta, Spela igen. */
+:root { --k-orange: #f06733; --k-orange-edge: #a8461f; --k-orange-lo: #c9521f; }
+button.big:not(.alt) {
+  border: 2px solid var(--k-orange-edge); border-image: none; border-radius: 4px; background: var(--k-orange);
+  color: #fff8e8; font: 700 20px var(--font); text-shadow: 0 1px 0 var(--k-orange-edge); -webkit-text-stroke: 0;
+  box-shadow: inset 0 -3px 0 0 var(--k-orange-lo), 0 4px 0 0 var(--k-shadow); filter: none;
+}
+button.big:not(.alt):active, button.big:not(.alt).down {
+  transform: translateY(2px); border-image: none; box-shadow: inset 0 -3px 0 0 var(--k-orange-lo), 0 2px 0 0 var(--k-shadow);
+  filter: brightness(0.9);
+}
+
+/* lobby v4 (Stefan 2026-11-15: the empty spots "are still stones"): a free spot is a blob-shaped 2 px dashed dark-plum
+   outline, transparent inside, standing on the same feet line as a joined blob, with three waiting dots that blink in
+   turn. 46 px wide (20:17) so neighbours never touch; its bottom is the v3 feet line. */
+#lobby #lobby-list .seat.free .freeblob {
+  display: flex; align-items: center; justify-content: center; gap: 5px; box-sizing: border-box;
+  width: min(46px, 80%); aspect-ratio: 20 / 17; border: 2px dashed var(--k-plum); background: transparent;
+  border-radius: 48% 48% 14% 14% / 62% 62% 20% 20%; padding-top: 4px; gap: 4px;
+}
+#lobby #lobby-list .seat.free .freeblob i {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--k-plum); opacity: 0.4; animation: freedot 1.4s ease-in-out infinite;
+}
+#lobby #lobby-list .seat.free .freeblob i:nth-child(2) { animation-delay: 0.2s; }
+#lobby #lobby-list .seat.free .freeblob i:nth-child(3) { animation-delay: 0.4s; }
+@keyframes freedot { 0%, 60%, 100% { opacity: 0.4; transform: none; } 30% { opacity: 1; transform: translateY(-2px); } }
+
+/* lobby v5 (Stefan 2026-11-15): (1) the whole oval platform is visible: it is scaled to the panel's inner width
+   instead of a fixed 320 px that the panel clipped at both ends; (2) every seat's feet sit at 1/3 of the deck height
+   above the deck's front edge. Measured in party-platform.png (160x32): at the centre column the light-brown deck is
+   rows 6-18 (row 5 = top outline, row 19 = the dark front edge), so the deck is 13 rows high and its front edge is
+   y = 19; feet at y = 19 - 13/3 = 14.67, i.e. 17.33 art rows above the picture's bottom. The list is exactly as wide as
+   its containing block, so a percentage padding (17.33 / 160 of the width) puts the feet there at any phone width. */
+#lobby #lobby-list {
+  width: 100%; max-width: none; box-sizing: border-box; padding-bottom: 11.458%; /* v5b (Stefan: 1 art px up): 18.33 / 160 */
+  background-size: 100% auto; background-origin: border-box; background-clip: border-box; background-position: center bottom;
+}
+
+/* BUG fix (Stefan 2026-11-15, "the colour tiles show no colours"): the option tile became a grid with a content-sized
+   column, so the swatch's width: 100% resolved to 0. One full-size cell, the swatch stretches over it. */
+#custom .opt.swatch-opt { display: grid; grid-template: 1fr / 1fr; }
+#custom .opt.swatch-opt i { width: auto; height: auto; justify-self: stretch; align-self: stretch; min-height: 0; }

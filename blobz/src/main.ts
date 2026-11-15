@@ -348,8 +348,11 @@ function renderLobby() {
   const free = Array.from({ length: Math.max(0, MAX_PLAYERS - players.length) }, () => {
     const s = document.createElement('span');
     s.className = 'seat free';
-    const im = new Image(); im.src = 'art/lobby/waiting-silhouette.png'; im.alt = '';
-    s.append(im);
+    // lobby v4 (Stefan 2026-11-15): "a friend can stand here", not a boulder: a dashed blob outline, empty inside, with
+    // three waiting dots (CSS .freeblob)
+    const blob = document.createElement('span'); blob.className = 'freeblob';
+    blob.append(...[0, 1, 2].map(() => document.createElement('i')));
+    s.append(blob);
     return s;
   });
   $('lobby-list').replaceChildren(...players, ...free);
@@ -519,10 +522,9 @@ function renderVillage(el: HTMLElement) {
   const img = (src: string, cls: string) => { const im = new Image(); im.src = src; im.alt = ''; im.className = cls; return im; };
   const res = (src: string, n: number) => { const s = document.createElement('span'); s.className = 'vres'; s.append(img(src, ''), String(n)); return s; };
   el.replaceChildren(
-    img(NI.flag, 'vbadge'),
     img(building(`cottage-${v.cottage}`), 'vcot'),
     ...BUILD_KINDS.filter((k) => v.builds[k]).map((k) => img(building(k), 'vb')),
-    res(NI.wood, v.bank.wood), res(NI.stone, v.bank.stone), res(NI.berry, v.bank.berry),
+    res(NI.wood, v.bank.wood), ...(STONE_ENABLED ? [res(NI.stone, v.bank.stone)] : []), res(NI.berry, v.bank.berry), // stone archived: no "0" stone
   );
 }
 
