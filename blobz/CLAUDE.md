@@ -66,6 +66,9 @@ Stefan works phone-only; replies in Swedish or English, docs and code in English
   buildings, characters, scenes) are ordered from ChatGPT with a prompt Stefan can paste (see docs/TEAM.md).
 - Art pipeline for non-trivial art: Art makes 3 rough SVG/PNG variants -> board question with pictures -> Stefan picks
   -> Art writes a ChatGPT prompt from the pick -> Stefan runs it -> Art slices and integrates.
+- **Keep ChatGPT busy (Stefan 2026-11-15):** the ChatGPT queue should always have TO DO orders. Every art gap anyone
+  notices (Art, Code, Code 2, Lead, Stefan) becomes an N-order right away, with exact pixel grid sizes (e.g. 16x16 +
+  32x32, delivered 8x nearest-neighbour). ChatGPT is the default for missing pieces; Claude-drawn art still needs OK.
 - **ChatGPT art queue = `docs/ART_ORDERS.md`** (ChatGPT reads it from GitHub raw on every "next"). Every new order,
   status change (READY/WAITING/DONE) or prompt fix goes into that file and is pushed to the deploy branch. Never ask
   Stefan to change ChatGPT's project instructions.
