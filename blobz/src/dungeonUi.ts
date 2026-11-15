@@ -5,13 +5,13 @@
 import './dungeon.css';
 import type { Controls } from './controls';
 import {
-  skillIcon, ITEM_ICON, CLASS_WEAPONS, CLASSES, FLOORS, heroMods, itemOf, LEVEL_XP, LOOT_SECONDS, skillOf, specialOf,
+  DUNGEON_TIMER_ENABLED, skillIcon, ITEM_ICON, CLASS_WEAPONS, CLASSES, FLOORS, heroMods, itemOf, LEVEL_XP, LOOT_SECONDS, skillOf, specialOf,
   type DView, type HeroClass, type Weapon,
 } from './dungeon';
 import { sfx } from './sfx';
 import { t, tClass, tClassHint, tEffects, tItem, tSkill, tSpecial, tWeapon, tWeaponHint } from './dungeonText';
 import { applyI18n } from './i18n';
-import type { View } from './sim';
+import { PICK_TIMER_ENABLED, type View } from './sim';
 
 const $ = (id: string) => document.getElementById(id)!;
 const show = (id: string, on: boolean) => document.getElementById(id)?.classList.toggle('hidden', !on);
@@ -36,9 +36,11 @@ const SPECIAL_ICON: Record<Weapon, string> = {
   bow: 'Ui/Skill Icon/Items & Weapon/Kunai.png', shield: 'Ui/Skill Icon/Spell/DefenseUpgrade.png', dagger: 'Ui/Skill Icon/Items & Weapon/Shuriken.png',
 };
 /** the small button's class move icon (Ninja skill icons) */
-const MOVE_ICON: Record<string, string> = { rogue: 'Ui/Skill Icon/Spell/Camouflage.png', marksman: 'Ui/Skill Icon/Spell/Upgrade.png', tank: 'Ui/Skill Icon/Spell/Counter.png', healer: 'Ui/Skill Icon/Spell/Mist.png' };
+const MOVE_ICON: Record<string, string> = { rogue: 'art/dungeon/icons/dodge-16.png', marksman: 'art/dungeon/icons/jump-back-16.png', tank: 'art/dungeon/icons/shield-charge-16.png', healer: 'art/dungeon/icons/phase-out-16.png' }; // ChatGPT N-12
 /** the healer's button shows the wand's current mode: damage (red orb) / heal (green) */
-const HEALER_ICON = ['Ui/Skill Icon/Spell/OrbFire.png', 'Ui/Skill Icon/Spell/Heal.png'];
+const HEALER_ICON = ['art/dungeon/icons/damage-mode-16.png', 'art/dungeon/icons/heal-mode-16.png']; // ChatGPT N-12
+/** the big round button's free symbol for the other classes: their own weapon (ChatGPT N-11, 16 px art at 3x) */
+const BIG_ICON: Record<string, string> = { rogue: 'art/dungeon/weapons/dagger-16.png', marksman: 'art/dungeon/weapons/crossbow-16.png', tank: 'art/dungeon/weapons/shield-16.png' };
 /** Ninja weapon sprites on the rogue's weapon cards. */
 const WEAPON_CARD: Partial<Record<Weapon, string>> = { sword: 'Items/Weapons/Sword/Sprite.png', hammer: 'Items/Weapons/Hammer/Sprite.png', dagger: 'Items/Weapons/Ninjaku/SpriteInHand.png', spear: 'Items/Weapons/Lance/Sprite.png' };
 
@@ -117,14 +119,22 @@ function ensureExtras() {
 
 const fmt = (t: number) => Math.floor(t / 60) + ':' + String(Math.max(0, Math.floor(t % 60))).padStart(2, '0');
 
+/** Set a HUD number; when it goes up it pops (juice). */
+function bump(el: HTMLElement, v: string) {
+  if (el.textContent === v) return;
+  const up = Number(v) > Number(el.textContent || 0);
+  el.textContent = v;
+  if (up) { el.classList.remove('dg-bump'); void el.offsetWidth; el.classList.add('dg-bump'); }
+}
+
 function renderHud(d: DView, myId: string) {
   const h = d.heroes[myId];
   if (h) renderHearts(h.hp, h.maxHp);
-  setText($('dg-gold'), String(d.gold));
-  setText($('dg-floor'), t('dg.floor', { n: d.floor, max: FLOORS }));
-  setText($('dg-time'), fmt(d.time));
-  $('dg-time').classList.toggle('low', d.time <= 30);
-  setText($('dg-level'), String(d.level));
+  bump($('dg-gold'), String(d.gold));
+  setText($('dg-floor'), t('dg.floor', { d: d.dungeon, n: d.floor, max: FLOORS }));
+  $('dg-time').classList.toggle('hidden', !DUNGEON_TIMER_ENABLED); // no time limit underground (flag off)
+  if (DUNGEON_TIMER_ENABLED) { setText($('dg-time'), fmt(d.time)); $('dg-time').classList.toggle('low', d.time <= 30); }
+  bump($('dg-level'), String(d.level));
   const lo = d.level >= 2 ? LEVEL_XP[d.level - 2] : 0, hi = LEVEL_XP[d.level - 1] ?? lo + 1;
   $('dg-xpfill').style.width = Math.round(Math.max(0, Math.min(1, (d.xp - lo) / Math.max(1, hi - lo))) * 100) + '%';
   // knocked out: countdown
@@ -144,7 +154,7 @@ function renderHud(d: DView, myId: string) {
   // Art's icon per weapon special (spin / slam / charge)
   const spIcon = document.getElementById('attack-icon') as HTMLImageElement | null;
   // Art's special icon per weapon (spin / slam / charge / heal / volley / wall)
-  const src = encodeURI(NAU + (h?.cls === 'healer' ? HEALER_ICON[h.mode ? 1 : 0] : SPECIAL_ICON[h?.weapon ?? 'sword']));
+  const src = h?.cls === 'healer' ? HEALER_ICON[h.mode ? 1 : 0] : h && BIG_ICON[h.cls] ? BIG_ICON[h.cls] : encodeURI(NAU + SPECIAL_ICON[h?.weapon ?? 'sword']);
   if (spIcon && !spIcon.src.endsWith(src)) spIcon.src = src;
   // the small button = my class move: its icon, a radial sweep while recharging, the rogue's charge pips
   const dash = document.getElementById('dash');
@@ -154,7 +164,7 @@ function renderHud(d: DView, myId: string) {
     dash.classList.toggle('cd', h.charges <= 0);
     dash.dataset.cls = h.cls;
     const di = dash.querySelector('img');
-    const dsrc = encodeURI(NAU + MOVE_ICON[h.cls]);
+    const dsrc = MOVE_ICON[h.cls];
     if (di && !di.src.endsWith(dsrc)) di.src = dsrc;
     let pips = dash.querySelector('.dg-pips') as HTMLElement | null;
     if (h.maxCharges > 1) {
@@ -264,10 +274,39 @@ function buildOverlays() {
   applyI18n(loot);
   $('dg-roll').onclick = () => { sfx.pick(); sendPick('loot:roll'); };
   $('dg-pass').onclick = () => { sfx.pick(); sendPick('loot:pass'); };
+  // boss strip + entry screen
+  const boss = document.createElement('div');
+  boss.id = 'dg-boss'; boss.className = 'hidden';
+  boss.innerHTML = '<img class="dg-boss-emblem" src="art/dungeon/ui/boss-emblem.png" alt="" /><div class="dg-boss-col"><b id="dg-boss-name"></b><div class="dg-boss-bar"><i id="dg-boss-fill"></i></div></div>';
+  hud.append(boss);
+  const load = document.createElement('div');
+  load.id = 'dg-loading'; load.className = 'hidden';
+  load.innerHTML = '<b data-i18n="dg.entering"></b>';
+  document.body.append(load);
+  applyI18n(load);
   const item = document.createElement('span');
   item.id = 'dg-item'; item.className = 'hidden';
   $('dg-row').append(item);
   void LOOT_SECONDS;
+}
+
+// ---------- boss strip at the top (N-21 bar frame + emblem + name) while the boss is on the floor ----------
+function renderBoss(d: DView) {
+  const boss = d.enemies.find((e) => e.kind === 2);
+  show('dg-boss', !!boss);
+  if (!boss) return;
+  setText($('dg-boss-name'), t('dg.bossName'));
+  $('dg-boss-fill').style.width = (Math.max(0, Math.min(1, boss.hp / Math.max(1, boss.mx))) * 95).toFixed(1) + '%'; // 95% = the frame's inner slot
+}
+
+// ---------- dungeon entry: the dusk cave art for ~2 s (atmosphere, even when loading is done) ----------
+export const ENTRY_MS = 2000;
+let loadingTimer = 0;
+function showLoading() {
+  const el = $('dg-loading');
+  el.classList.remove('hidden', 'out');
+  clearTimeout(loadingTimer);
+  loadingTimer = window.setTimeout(() => { el.classList.add('out'); loadingTimer = window.setTimeout(() => el.classList.add('hidden'), 400); }, ENTRY_MS);
 }
 
 /** Called first thing in main.ts onView. Returns true when the meadow HUD/end logic should be skipped. */
@@ -277,25 +316,28 @@ export function dungeonUi(v: View, myId: string | undefined, controls: Controls,
   buildOverlays();
   if (mode !== lastMode) {
     if (mode === 'pick') { myPick = null; pickClass = null; buildCards(); }
-    if (mode === 'dungeon') { endShown = false; heartsKey = ''; controls.setTool(null); }
+    if (mode === 'dungeon') { endShown = false; heartsKey = ''; controls.setTool(null); showLoading(); }
     controls.setDungeon(mode === 'dungeon');
     // the small button: sidestep icon underground, the dash arrow again on the meadow
     const dashImg = controls.dashBtn.querySelector('img');
     if (dashImg && !controls.tool) dashImg.src = mode === 'dungeon' ? encodeURI(NAU + 'Ui/Skill Icon/Spell/Camouflage.png') : 'art/icons/dash-arrow.png';
     show('hud-dg', mode === 'dungeon');
-    if (mode !== 'dungeon') { controls.dashBtn.querySelector('.dg-pips')?.remove(); controls.dashBtn.style.removeProperty('--cd'); controls.dashBtn.classList.remove('cd'); show('dg-ko', false); show('dg-end', false); show('dg-cards', false); show('dg-loot', false); offerKey = ''; lootKey = ''; }
+    if (mode !== 'dungeon') { show('dg-boss', false); controls.dashBtn.querySelector('.dg-pips')?.remove(); controls.dashBtn.style.removeProperty('--cd'); controls.dashBtn.classList.remove('cd'); show('dg-ko', false); show('dg-end', false); show('dg-cards', false); show('dg-loot', false); offerKey = ''; lootKey = ''; }
     lastMode = mode;
   }
   show('weapon-pick', mode === 'pick');
   if (mode === 'pick') {
     const picked = v.picked?.length ?? 0;
     const secs = Math.max(0, Math.ceil(v.pickT));
-    setText($('pick-wait'), myPick ? t('dg.waitFriends', { n: picked, max: v.players.length, s: secs }) : t(pickClass ? 'dg.tapWeapon' : 'dg.tapClass', { s: secs }));
+    // no pick timer (PICK_TIMER_ENABLED off): pick in your own time, no seconds shown
+    const tail = PICK_TIMER_ENABLED ? ` · ${secs} s` : '';
+    setText($('pick-wait'), (myPick ? t('dg.waitFriends', { n: picked, max: v.players.length }) : t(pickClass ? 'dg.tapWeapon' : 'dg.tapClass')) + tail);
     return true;
   }
   if (mode !== 'dungeon' || !v.dungeon) return false;
   const d = v.dungeon;
   if (myId) { renderHud(d, myId); renderOffer(d, myId); renderLoot(d, myId, nameOf); }
+  renderBoss(d);
   if (d.done > 0 && !endShown) {
     endShown = true;
     setText($('dg-end-gold'), String(d.gold));

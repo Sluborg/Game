@@ -1,247 +1,248 @@
-/* Dungeon UI (Code 2). Markup in index.html; logic in dungeonUi.ts. */
+/* Dungeon UI (Code 2). Markup in index.html; logic in dungeonUi.ts.
+   UI kit A, dark-wood variant (docs/reviews/PLAN.md, reference: Code's ?uikit=2 page): parchment interiors, ONE thin
+   dark-wood frame, calm press (sinks 2 px, shadow 4 -> 2 px, a little darker, no image swap), selection = dark outline +
+   green tick badge (N-18), words only, Fredoka body 18 / headings 24 / never under 14 px, 8 px rhythm, targets >= 48 px.
+   Round combat buttons = N-19 wooden ring with a free N-12 symbol (no square inside). */
+
+:root {
+  --dw-wood: #3b2416;     /* dark-wood frame */
+  --dw-wood-hi: #7a4b2a;  /* its inner highlight */
+  --dw-parch: #f3e2bc;    /* parchment interior */
+  --dw-parch-2: #fbf0d6;  /* lighter parchment (tiles, secondary buttons) */
+  --dw-edge: #b88b55;     /* quiet tile edge */
+  --dw-plum: #3f2631;
+  --dw-green: #4caf3a;
+  --dw-gold: #e3a520;
+  --dw-muted: #6f5546;
+  --dw-shadow: #1b0f0a80;
+}
 
 /* underground: the meadow HUD steps aside */
 #hud.dungeon #hud-quest, #hud.dungeon #hud-day, #hud.dungeon #hud-bank, #hud.dungeon #hud-double,
 #hud.dungeon #hint, #hud.dungeon #edge-arrows { display: none !important; }
 
-/* big special button bottom-right; the dash button turns into a small sidestep button above-left of it */
-#attack {
-  position: absolute; right: max(18px, env(safe-area-inset-right)); bottom: max(22px, env(safe-area-inset-bottom));
-  width: 104px; height: 104px; padding: 0; pointer-events: auto; touch-action: none; border-style: solid; border-color: var(--plum);
-  display: flex; align-items: center; justify-content: center; image-rendering: pixelated;
-  border-width: 12px; background: none; border-image: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/button_normal.png') 2 fill / 12px stretch;
-  filter: drop-shadow(0 6px 0 #3f263140); --cd: 0;
+/* ---------- the kit pieces ---------- */
+/* panel: parchment inside one thin dark-wood frame (heavy wood only here and on the primary button) */
+#weapon-pick .card, #dg-end .card, #dg-cards, #dg-loot, #dg-ko {
+  background: var(--dw-parch); color: var(--dw-plum); font-family: var(--font);
+  border: 4px solid var(--dw-wood); border-image: none; border-radius: 6px;
+  box-shadow: inset 0 0 0 2px var(--dw-wood-hi), 0 4px 0 0 var(--dw-shadow);
 }
-#attack .icon { height: 60px; width: auto; margin: 0; filter: none; position: relative; z-index: 1; }
-#attack:active { border-image-source: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/button_pressed.png'); }
-#attack .icon { image-rendering: pixelated; }
-/* cooldown ring (Art's spec): plum #3f2631 at ~55% over the button, shrinking clockwise from 12 o'clock */
-#attack::after {
-  content: ''; position: absolute; inset: -10px; border-radius: 50%; pointer-events: none; z-index: 2;
+#weapon-pick h2, #dg-end h2, #dg-cards-title, #dg-loot-title { font-size: 24px; font-weight: 700; color: var(--dw-plum); margin: 0 0 8px; }
+/* tiles (class / skill cards): quiet thin edge; selected = dark outline + green tick badge top-right */
+.wcard, .skcard {
+  position: relative; background: var(--dw-parch-2); border: 2px solid var(--dw-edge); border-image: none; border-radius: 4px;
+  box-shadow: 0 4px 0 0 var(--dw-shadow); color: var(--dw-plum); font-family: var(--font); cursor: pointer;
+}
+.wcard:active, .skcard:active { transform: translateY(2px); box-shadow: 0 2px 0 0 var(--dw-shadow); filter: brightness(0.95); }
+.wcard.on, .skcard.on { background: var(--dw-parch-2); border: 3px solid var(--dw-plum); transform: none; box-shadow: 0 4px 0 0 var(--dw-shadow); }
+.wcard.on::after, .skcard.on::after {
+  content: ''; position: absolute; right: -12px; top: -12px; width: 32px; height: 32px; z-index: 2;
+  background: url('/art/icons/state/tick-green-16.png') center / 32px 32px no-repeat; image-rendering: pixelated;
+}
+.wcard.on b, .skcard.on b { color: var(--dw-plum); text-shadow: none; }
+.wcard.off { opacity: 0.5; }
+/* buttons: primary orange (Theme Wood button), secondary cream + plum text + quiet wood edge; calm press */
+#dg-loot-btns button {
+  min-height: 48px; padding: 0 18px; font: 700 20px var(--font); cursor: pointer; image-rendering: pixelated;
+  box-shadow: 0 4px 0 0 var(--dw-shadow);
+}
+#dg-roll { color: #fff8e8; text-shadow: 0 2px 0 #8a3d12; background: none; border: 6px solid;
+  border-image: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/button_normal.png') 2 fill / 6px stretch; }
+#dg-pass { color: var(--dw-plum); background: var(--dw-parch-2); border: 2px solid var(--dw-edge); border-radius: 4px;
+  box-shadow: inset 0 -3px 0 0 #e4cf9f, 0 4px 0 0 var(--dw-shadow); }
+#dg-loot-btns button:active { transform: translateY(2px); filter: brightness(0.9); box-shadow: 0 2px 0 0 var(--dw-shadow); }
+#dg-pass:active { box-shadow: inset 0 -3px 0 0 #e4cf9f, 0 2px 0 0 var(--dw-shadow); }
+
+/* ---------- HUD (top-left): one dark-wood plate, cream words, bars ---------- */
+#hud-dg {
+  position: absolute; left: max(8px, env(safe-area-inset-left)); top: max(8px, env(safe-area-inset-top));
+  display: flex; flex-direction: column; gap: 8px; padding: 8px 12px; pointer-events: none;
+  background: #2a1810e6; border: 4px solid var(--dw-wood); border-radius: 6px; box-shadow: inset 0 0 0 2px var(--dw-wood-hi), 0 4px 0 0 var(--dw-shadow);
+  color: #fff3d6; font-family: var(--font); font-weight: 700;
+}
+#dg-hearts { display: flex; align-items: center; gap: 8px; }
+#dg-hearts::before {
+  content: ''; width: 24px; height: 24px; flex: none; image-rendering: pixelated;
+  background: url('/assets/ninja-adventure/Ui/Receptacle/IconHeart.png') center / 100% 100% no-repeat;
+}
+.hpbar, #dg-xp .xpbar { padding: 2px; background: #140b07; border: 2px solid var(--dw-wood-hi); border-radius: 3px; box-sizing: border-box; }
+.hpbar { width: 150px; height: 18px; }
+.hpbar i { display: block; height: 100%; width: 100%; background: #e0394c; box-shadow: inset 0 3px 0 #ff6b7d; transition: width 0.2s steps(10); }
+.hpbar i.low { background: #ff3b3b; animation: hplow 0.6s steps(2) infinite; }
+@keyframes hplow { 50% { opacity: 0.55; } }
+.hpnum { font-size: 16px; min-width: 64px; }
+#dg-row { display: flex; align-items: center; gap: 8px; font-size: 18px; }
+#dg-row img.icon { height: 24px; width: 24px; image-rendering: pixelated; object-fit: cover; object-position: 0 50%; aspect-ratio: 1; }
+#dg-floor, #dg-time { padding: 0 6px; font-size: 16px; color: #fff3d6; }
+#dg-time.low { color: #ff8a8a; }
+#dg-xp { display: flex; align-items: center; gap: 8px; }
+#dg-level {
+  display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; font-size: 16px;
+  color: var(--dw-plum); background: var(--dw-gold); border: 2px solid #8a5a12; border-radius: 50%;
+}
+#dg-xp .xpbar { width: 126px; height: 14px; }
+#dg-xpfill { height: 100%; width: 0; background: #ffad5d; box-shadow: inset 0 3px 0 #ffe08a; transition: width 0.3s steps(6); }
+/* my item next to the gold: a square wood cell (items = square cells, skills = round gold) */
+#dg-item { display: inline-flex; width: 30px; height: 30px; align-items: center; justify-content: center;
+  background: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/inventory_cell.png') center / 100% 100% no-repeat; image-rendering: pixelated; }
+#dg-item .dgicon { width: 24px; height: 24px; }
+.dgicon { width: 32px; height: 32px; image-rendering: pixelated; }
+
+/* knocked out banner */
+#dg-ko { position: absolute; left: 50%; top: 38%; transform: translate(-50%, -50%); padding: 8px 16px; font-size: 22px; white-space: nowrap; }
+#dg-ko b { color: #c0392b; }
+
+/* ---------- round combat buttons: N-19 ring (30 px art in its 64 / 48 px file) + a free N-12 symbol ---------- */
+#attack {
+  position: absolute; right: max(16px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom));
+  width: 96px; height: 96px; padding: 0; pointer-events: auto; touch-action: none; border: 0; border-image: none; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; image-rendering: pixelated; filter: none; box-shadow: none;
+  background: url('/art/dungeon/ui/btn-round-normal-64.png') center / 192px 192px no-repeat; --cd: 0; /* 3x: ring 90 px */
+}
+#attack .icon { width: 48px; height: 48px; margin: 0; filter: none; position: relative; z-index: 1; image-rendering: pixelated; object-fit: contain; }
+#attack:active { background-image: url('/art/dungeon/ui/btn-round-pressed-64.png'); filter: none; transform: none; }
+#attack:active .icon { transform: translateY(3px); }
+#attack::after, #hud.dungeon #dash::after {
+  content: ''; position: absolute; inset: 9px; border-radius: 50%; pointer-events: none; z-index: 2;
   background: conic-gradient(transparent calc((1 - var(--cd)) * 360deg), #3f26318c 0);
 }
 #attack.cd .icon { filter: saturate(0.2) brightness(0.85); }
 #hud.dungeon #dash {
-  width: 64px; height: 64px; border-width: 12px;
-  right: calc(max(18px, env(safe-area-inset-right)) + 104px); bottom: calc(max(22px, env(safe-area-inset-bottom)) + 92px);
+  position: absolute; width: 64px; height: 64px; padding: 0; border: 0; border-image: none; border-radius: 50%; box-shadow: none; filter: none;
+  right: calc(max(16px, env(safe-area-inset-right)) + 96px); bottom: calc(max(20px, env(safe-area-inset-bottom)) + 80px);
+  display: flex; align-items: center; justify-content: center; image-rendering: pixelated;
+  background: url('/art/dungeon/ui/btn-round-normal-48.png') center / 96px 96px no-repeat; --cd: 0; /* 2x: ring 60 px */
 }
-#hud.dungeon #dash .icon, #hud.dungeon #dash img { height: 32px; width: auto; image-rendering: pixelated; }
-
-/* top-left: hearts, gold + floor + time, level badge + XP bar */
-#hud-dg {
-  position: absolute; left: max(10px, env(safe-area-inset-left)); top: max(10px, env(safe-area-inset-top));
-  display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; pointer-events: none;
-  background: #3f2631d0; box-shadow: var(--o3); color: #fff7e6; font-family: var(--font); font-weight: 700;
-}
-#dg-hearts { display: flex; align-items: center; gap: 8px; }
-.hpbar { width: 150px; height: 18px; padding: 3px; background: #1b1018; box-shadow: 0 0 0 2px #fff7e6; }
-.hpbar i { display: block; height: 100%; width: 100%; background: linear-gradient(#ff7a7a, #d4333a); transition: width 0.2s steps(10); }
-.hpbar i.low { background: linear-gradient(#ffb27a, #ff3b3b); animation: hplow 0.6s steps(2) infinite; }
-@keyframes hplow { 50% { opacity: 0.55; } }
-.hpnum { font-size: 16px; min-width: 64px; }
-#dg-row { display: flex; align-items: center; gap: 8px; font-size: 18px; }
-#dg-row .icon { height: 20px; vertical-align: 0; }
-#dg-floor, #dg-time { padding: 0 6px; background: #fff7e620; }
-#dg-time.low { color: #ff8a8a; }
-#dg-xp { display: flex; align-items: center; gap: 8px; }
-#dg-level {
-  display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 32px; padding-top: 2px;
-  image-rendering: pixelated;
-  color: #3f2631; font-size: 16px;
-}
-#dg-xp .xpbar { width: 126px; height: 24px; padding: 3px 3px; image-rendering: pixelated; }
-#dg-xpfill { height: 100%; width: 0; image-rendering: pixelated; transition: width 0.3s steps(6); }
-
-#dg-ko {
-  position: absolute; left: 50%; top: 38%; transform: translate(-50%, -50%); padding: 10px 16px;
-  background: #3f2631e6; color: #fff; font-family: var(--font); font-size: 22px; box-shadow: var(--o3); white-space: nowrap;
-}
-#dg-ko b { color: #ffe08a; }
-
-/* weapon cards */
-#weapon-pick { z-index: 30; background: #1b1018b0; }
-#weapon-pick .card { max-width: min(96vw, 560px); }
-.wcards { display: flex; gap: 10px; justify-content: center; margin: 8px 0; }
-.wcard {
-  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 6px 8px; min-width: 0; flex: 1 1 0;
-  background: #fff7e6; border: 0; box-shadow: var(--o3), 0 6px 0 0 #3f263140; cursor: pointer; font-family: var(--font);
-}
-.wcard img { width: 96px; height: 128px; image-rendering: pixelated; max-width: 100%; object-fit: contain; }
-.wcard b { font-size: 18px; color: #3f2631; }
-.wcard small { font-size: 13px; color: #8a7466; }
-.wcard.on { background: #ffe08a; transform: translateY(-6px); box-shadow: 0 0 0 4px #6cc644, 0 10px 0 0 #3f263140; }
-.wcard.off { opacity: 0.45; }
-@media (orientation: landscape) and (max-height: 500px) {
-  #weapon-pick .card { padding-top: 4px; padding-bottom: 4px; }
-  #weapon-pick h2 { margin: 0; font-size: 22px; }
-  .wcard img { width: 66px; height: 88px; }
-}
-
-/* summary */
-#dg-end { z-index: 30; }
-#dg-end .dgstat { font-size: 20px; margin: 6px 0; }
-#dg-end .dgstat .icon { height: 22px; }
-
-/* class cards (Kenney tile until Art's card-<class>.png) */
-.wcard .cardimg { width: 96px; height: 128px; image-rendering: pixelated; object-fit: contain; max-width: 100%; }
-.wcard canvas.cardimg { width: 84px; height: 84px; margin: 22px 0; }
-.wcard .back { display: flex; align-items: center; justify-content: center; font-size: 48px; color: #3f2631; height: 128px; }
-.wcards { flex-wrap: wrap; }
-.wcard { flex: 1 1 calc(50% - 10px); max-width: 160px; }
-@media (min-width: 560px) { .wcard { flex: 1 1 0; } }
-@media (orientation: landscape) and (max-height: 500px) {
-  .wcard .cardimg { width: 54px; height: 72px; }
-  .wcard canvas.cardimg { width: 54px; height: 54px; margin: 9px 0; }
-  .wcard .back { height: 72px; }
-  .wcard { flex: 1 1 0; }
-}
-.dgicon { width: 32px; height: 32px; image-rendering: pixelated; }
-#dg-item { display: inline-flex; padding: 1px; background: #fff7e630; box-shadow: 0 0 0 2px #ffe08a; }
-#dg-item .dgicon { width: 24px; height: 24px; }
-
-/* level-up: 1 of 3 skill cards (no timer; my blob is frozen and safe until I pick) */
-#dg-cards, #dg-loot {
-  position: absolute; left: 50%; transform: translateX(-50%); pointer-events: auto; z-index: 8;
-  background: #fff7e6; box-shadow: var(--o3), 0 6px 0 0 #3f263140; padding: 8px 10px; font-family: var(--font); color: #3f2631; text-align: center;
-}
-#dg-cards { top: max(150px, calc(env(safe-area-inset-top) + 150px)); width: min(94vw, 420px); }
-#dg-cards-title, #dg-loot-title { font-weight: 900; font-size: 20px; margin-bottom: 6px; }
-#dg-cards-row { display: flex; gap: 8px; justify-content: center; }
-.skcard {
-  flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; border: 0; cursor: pointer;
-  background: #ffe08a; box-shadow: var(--o3), 0 4px 0 0 #3f263140; font-family: var(--font); color: #3f2631;
-}
-.skcard .dgicon { width: 48px; height: 48px; }
-.skcard b { font-size: 15px; line-height: 1.1; }
-.skcard.on { background: #6cc644; }
-.dgbar { height: 6px; margin-top: 8px; background: #3f263130; }
-.dgbar i { display: block; height: 100%; background: var(--orange); }
-@media (orientation: landscape) and (max-height: 500px) {
-  #dg-cards { top: 8px; left: auto; right: max(130px, calc(env(safe-area-inset-right) + 130px)); transform: none; width: min(calc(100vw - 400px), 420px); }
-  .skcard .dgicon { width: 36px; height: 36px; }
-}
-
-/* rare loot: my item vs the new one, roll or pass */
-#dg-loot { bottom: max(150px, calc(env(safe-area-inset-bottom) + 150px)); width: min(86vw, 340px); }
-#dg-loot-items { display: flex; align-items: center; justify-content: center; gap: 12px; }
-#dg-loot-items > .dgicon { width: 64px; height: 64px; }
-.lootside { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 90px; }
-.lootside .dgicon { width: 56px; height: 56px; }
-.lootside i { display: block; width: 56px; height: 56px; background: #3f263118; }
-.lootside small { color: #8a7466; font-weight: 700; }
-.lootarrow { font-size: 28px; font-weight: 900; }
-#dg-loot-btns { display: flex; gap: 10px; justify-content: center; margin: 8px 0 4px; }
-#dg-loot-btns button { font-family: var(--font); font-weight: 900; font-size: 20px; padding: 8px 18px; border: 0; cursor: pointer; box-shadow: var(--o3), 0 4px 0 0 #3f263140; }
-#dg-roll { background: #6cc644; color: #fff; }
-#dg-pass { background: #f1e4c6; color: #3f2631; }
-#dg-loot-msg { font-size: 14px; color: #8a7466; min-height: 18px; }
-@media (orientation: landscape) and (max-height: 500px) {
-  /* landscape: the loot card bottom-left (under the HUD), the level-up cards top-right, so they never overlap */
-  #dg-loot { bottom: 8px; top: auto; left: max(10px, env(safe-area-inset-left)); right: auto; transform: none; width: 290px; padding: 4px 8px; }
-  #dg-loot-title { font-size: 17px; margin-bottom: 2px; }
-  #dg-loot .lootside .dgicon, #dg-loot .lootside i { width: 44px; height: 44px; }
-  #dg-loot-btns { margin: 4px 0 2px; }
-}
-
-#dg-cards-safe { margin-top: 6px; font-size: 13px; font-weight: 700; color: #2f8a2f; }
-
-.skcard .skfx, .lootside .skfx { font-size: 13px; font-weight: 800; color: #2f8a2f; line-height: 1.15; }
-
-/* ---- Ninja Adventure UI (CC0, docs/ART_MAP.md section 7): panels, buttons, bars, icons. Pixel art at integer
-   scale via border-image 9-slices. Placed last so it overrides the earlier dungeon styles. ---- */
-/* HUD: dark wood-framed panel (nine_path_bg), heart icon + Ninja life bar, Ninja gold coin, XP bar, level cell */
-#hud-dg {
-  background: none; box-shadow: none; border-style: solid; border-width: 12px; padding: 2px 6px;
-  border-image: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/nine_path_bg.png') 4 fill / 12px stretch; image-rendering: pixelated;
-}
-#dg-hearts::before {
-  content: ''; width: 28px; height: 24px; flex: none; image-rendering: pixelated;
-  background: url('/assets/ninja-adventure/Ui/Receptacle/IconHeart.png') center / 100% 100% no-repeat;
-}
-.hpbar, #dg-xp .xpbar {
-  padding: 0; box-shadow: none; background: none; border-style: solid; border-width: 3px; image-rendering: pixelated;
-  border-image: url('/assets/ninja-adventure/Ui/Receptacle/LifeBarMiniUnder.png') 1 fill / 3px stretch;
-}
-.hpbar { width: 150px; height: 18px; }
-.hpbar i { background: #e0394c; box-shadow: inset 0 3px 0 #ff6b7d; }
-.hpbar i.low { background: #ff3b3b; }
-#dg-xp .xpbar { width: 126px; height: 16px; }
-#dg-xpfill { background: #ffad5d; box-shadow: inset 0 3px 0 #ffe08a; }
-#dg-level {
-  width: 32px; height: 32px; padding: 0; color: #fff7e6; text-shadow: 0 2px 0 #131b1b;
-  background: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/inventory_cell.png') center / 100% 100% no-repeat;
-}
-#dg-row .icon { height: 21px; width: 21px; image-rendering: pixelated; }
-#dg-floor, #dg-time { background: #131b1b55; }
-
-/* cards: the cream wooden panel (nine_path_panel_3); picked = the orange panel; buttons = Ninja wood buttons */
-#weapon-pick .card, #dg-end .card {
-  background: none; box-shadow: none; border-style: solid; border-width: 18px;
-  border-image: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/nine_path_panel_3.png') 6 fill / 18px stretch; image-rendering: pixelated;
-}
-.wcard, .skcard, #dg-cards, #dg-loot {
-  background: none; box-shadow: none; border-style: solid; border-width: 12px;
-  border-image: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/nine_path_panel_3.png') 6 fill / 12px stretch; image-rendering: pixelated;
-}
-.wcard, .skcard { padding: 2px; }
-.wcard.on, .skcard.on {
-  background: none; box-shadow: none;
-  border-image: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/nine_path_panel.png') 6 fill / 12px stretch;
-}
-.wcard.on b, .skcard.on b { color: #fff7e6; text-shadow: 0 2px 0 #131b1b; }
-#dg-loot-btns button {
-  box-shadow: none; border-style: solid; border-width: 9px 9px 12px; padding: 2px 12px; color: #fff7e6; text-shadow: 0 2px 0 #131b1b;
-  background: none; image-rendering: pixelated;
-  border-image: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/button_normal.png') 3 3 4 fill / 9px 9px 12px stretch;
-}
-#dg-loot-btns button:active { border-image-source: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/button_pressed.png'); }
-#dg-pass { border-image-source: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/button_disabled.png') !important; }
-.lootside i, #dg-item { background: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/inventory_cell.png') center / 100% 100% no-repeat; box-shadow: none; image-rendering: pixelated; }
-
-/* the small sidestep button underground: Ninja wood button too */
-#hud.dungeon #dash { background: none; border-style: solid; border-image: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/button_normal.png') 2 fill / 12px stretch; image-rendering: pixelated; }
-#hud.dungeon #dash:active { border-image-source: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/button_pressed.png'); }
-/* rogue weapon cards: the Ninja weapon sprite, upright, big and crisp */
-.wcard img.wpnimg { object-fit: contain; padding: 14px 30px; box-sizing: border-box; image-rendering: pixelated; }
-
-/* gold: the round Ninja coin (frame 0 of the Coin2 strip) instead of the square GoldCoin */
-#dg-row img.icon, #dg-end .dgstat img.icon { object-fit: cover; object-position: 0 50%; aspect-ratio: 1; }
-
-/* ---- round Ninja buttons + Ninja joystick underground (Stefan: round action buttons, Ninja stick) ---- */
-#attack, #hud.dungeon #dash {
-  border: 0; border-image: none; border-radius: 50%;
-  background: url('/assets/ninja-adventure/Ui/Receptacle/Receptacle Sphere/BackgroundRed.png') center / 100% 100% no-repeat;
-  image-rendering: pixelated;
-}
-#attack:active, #hud.dungeon #dash:active { border-image: none; filter: brightness(0.8) drop-shadow(0 3px 0 #3f263140); transform: translateY(2px); }
-#attack .icon { height: 54px; }
-#attack::after { inset: 8px; }
-/* the healer's wand mode / the knight's raised shield light the button's ring */
-#attack[data-mode='dmg'] { box-shadow: 0 0 0 4px #ff4a3a99, 0 0 18px #ff4a3a88; }
-#attack[data-mode='heal'] { box-shadow: 0 0 0 4px #5fe36a99, 0 0 18px #5fe36a88; }
-#attack[data-mode='guard'] { box-shadow: 0 0 0 4px #8fd3ffaa, 0 0 18px #8fd3ff88; }
-#hud.dungeon #dash { width: 68px; height: 68px; }
+#hud.dungeon #dash::after { inset: 6px; }
+#hud.dungeon #dash img, #hud.dungeon #dash .icon { width: 32px; height: 32px; margin: 0; image-rendering: pixelated; object-fit: contain; position: relative; z-index: 1; }
+#hud.dungeon #dash:active { background-image: url('/art/dungeon/ui/btn-round-pressed-48.png'); transform: none; box-shadow: none; }
+#hud.dungeon #dash:active img { transform: translateY(2px); }
+#hud.dungeon #dash.cd { filter: none; background-image: url('/art/dungeon/ui/btn-round-disabled-48.png'); }
+#hud.dungeon #dash.cd img { filter: saturate(0.2) brightness(0.85); }
+.dg-pips { position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%); display: flex; gap: 4px; z-index: 3; pointer-events: none; }
+.dg-pips i { width: 10px; height: 10px; border-radius: 50%; background: var(--dw-plum); box-shadow: 0 0 0 2px #fff3d6; }
+.dg-pips i.on { background: var(--dw-gold); }
+/* joystick underground: Ninja wood ring + white knob */
 #hud.dungeon #stick { border: 0; border-radius: 50%; background: url('/assets/ninja-adventure/Ui/Receptacle/Receptacle Sphere/BackgroundWood.png') center / 100% 100% no-repeat; image-rendering: pixelated; opacity: 0.9; }
 #hud.dungeon #knob { border-radius: 50%; box-shadow: none; background: url('/assets/ninja-adventure/Ui/Receptacle/Receptacle Sphere/ProgressWhite.png') center / 100% 100% no-repeat; image-rendering: pixelated; }
 
-/* loot: the new item big first, what it replaces small underneath */
-#dg-loot-items { flex-direction: column; gap: 4px; }
-.lootnew { display: flex; align-items: center; gap: 10px; text-align: left; }
-.lootnew .dgicon { width: 56px; height: 56px; }
-.lootnew b { display: block; font-size: 19px; }
-.lootnew .skfx { font-size: 14px; font-weight: 800; color: #2f8a2f; }
-.lootrep { display: flex; align-items: center; gap: 6px; color: #8a7466; font-weight: 700; }
-.lootrep .dgicon { width: 24px; height: 24px; }
-@media (orientation: landscape) and (max-height: 500px) { .lootnew .dgicon { width: 44px; height: 44px; } }
-
-/* the small button = class move: radial recharge sweep (like the big button) + the rogue's charge pips */
-#hud.dungeon #dash { position: absolute; --cd: 0; }
-#hud.dungeon #dash::after {
-  content: ''; position: absolute; inset: 5px; border-radius: 50%; pointer-events: none; z-index: 2;
-  background: conic-gradient(transparent calc((1 - var(--cd)) * 360deg), #3f26318c 0);
+/* ---------- class select ---------- */
+#weapon-pick { z-index: 30; background: #120a07d0; }
+#weapon-pick .card { max-width: min(96vw, 560px); padding: 16px 12px; gap: 8px; }
+.wcards { display: flex; flex-wrap: wrap; gap: 16px 8px; justify-content: center; margin: 12px 0 0; }
+.wcard { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; min-width: 0; flex: 1 1 calc(50% - 8px); max-width: 160px; }
+@media (min-width: 560px) { .wcard { flex: 1 1 0; } }
+.wcard .cardimg { width: 96px; height: 128px; image-rendering: pixelated; object-fit: contain; max-width: 100%; }
+.wcard canvas.cardimg { width: 84px; height: 84px; margin: 22px 0; }
+.wcard img.wpnimg { object-fit: contain; padding: 14px 30px; box-sizing: border-box; }
+.wcard .back { display: flex; align-items: center; justify-content: center; font-size: 48px; height: 128px; }
+.wcard b { font-size: 18px; }
+.wcard small { font-size: 14px; color: var(--dw-muted); line-height: 1.2; }
+#pick-wait { color: var(--dw-muted); font-size: 16px; }
+@media (orientation: landscape) and (max-height: 500px) {
+  #weapon-pick .card { padding: 8px 12px; }
+  #weapon-pick h2 { margin: 0; font-size: 22px; }
+  .wcards { margin-top: 8px; }
+  .wcard { flex: 1 1 0; }
+  .wcard .cardimg { width: 54px; height: 72px; }
+  .wcard canvas.cardimg { width: 54px; height: 54px; margin: 9px 0; }
+  .wcard .back { height: 72px; }
 }
-#hud.dungeon #dash.cd img { filter: saturate(0.2) brightness(0.85); }
-#hud.dungeon #dash[data-cls='marksman'] img { transform: rotate(180deg); } /* the arrow points back: jump back */
-.dg-pips { position: absolute; left: 50%; bottom: -10px; transform: translateX(-50%); display: flex; gap: 4px; z-index: 3; pointer-events: none; }
-.dg-pips i { width: 10px; height: 10px; border-radius: 50%; background: #3f2631; box-shadow: 0 0 0 2px #fff7e6; }
-.dg-pips i.on { background: #ffe08a; }
+
+/* ---------- level-up: 1 of 3 skill cards (skills = round gold frame around the icon) ---------- */
+#dg-cards, #dg-loot { position: absolute; left: 50%; transform: translateX(-50%); pointer-events: auto; z-index: 8; padding: 12px; text-align: center; }
+#dg-cards { top: max(150px, calc(env(safe-area-inset-top) + 150px)); width: min(94vw, 420px); }
+#dg-cards-row { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
+.skcard { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; }
+.skcard .dgicon {
+  width: 48px; height: 48px; padding: 6px; box-sizing: content-box; border-radius: 50%;
+  background: radial-gradient(circle, #fff3d6 58%, transparent 60%); border: 3px solid var(--dw-gold); box-shadow: 0 0 0 2px #8a5a12;
+}
+.skcard b { font-size: 16px; line-height: 1.1; }
+.skcard .skfx, .lootnew .skfx { font-size: 14px; font-weight: 700; color: #2f7a2a; line-height: 1.2; }
+#dg-cards-safe { margin-top: 8px; font-size: 14px; font-weight: 700; color: #2f7a2a; }
+.dgbar { height: 6px; margin-top: 8px; background: #3f263130; }
+.dgbar i { display: block; height: 100%; background: var(--orange); }
+@media (orientation: landscape) and (max-height: 500px) {
+  #dg-cards { top: 8px; left: auto; right: max(130px, calc(env(safe-area-inset-right) + 130px)); transform: none; width: min(calc(100vw - 400px), 420px); padding: 8px; }
+  .skcard .dgicon { width: 36px; height: 36px; }
+}
+
+/* ---------- rare loot: the new item big first (square wood cell = item), what it replaces underneath ---------- */
+#dg-loot { bottom: max(150px, calc(env(safe-area-inset-bottom) + 150px)); width: min(88vw, 340px); }
+#dg-loot-items { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.lootnew { display: flex; align-items: center; gap: 12px; text-align: left; }
+.lootnew .dgicon {
+  width: 64px; height: 64px; padding: 8px; box-sizing: content-box; image-rendering: pixelated;
+  background: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/inventory_cell.png') center / 100% 100% no-repeat;
+}
+.lootnew b { display: block; font-size: 20px; }
+.lootrep { display: flex; align-items: center; gap: 6px; color: var(--dw-muted); font-weight: 700; font-size: 14px; }
+.lootrep small { font-size: 14px; }
+.lootrep .dgicon { width: 24px; height: 24px; }
+#dg-loot-items > .dgicon { width: 64px; height: 64px; padding: 8px; box-sizing: content-box; background: url('/assets/ninja-adventure/Ui/Theme/Theme Wood/inventory_cell.png') center / 100% 100% no-repeat; }
+#dg-loot-btns { display: flex; gap: 16px; justify-content: center; margin: 12px 0 4px; }
+#dg-loot-msg { font-size: 14px; color: var(--dw-muted); min-height: 18px; }
+@media (orientation: landscape) and (max-height: 500px) {
+  /* landscape: the loot card bottom-left (under the HUD), the level-up cards top-right, so they never overlap */
+  #dg-loot { bottom: 8px; top: auto; left: max(8px, env(safe-area-inset-left)); right: auto; transform: none; width: 300px; padding: 8px; }
+  #dg-loot-title { font-size: 20px; margin-bottom: 4px; }
+  .lootnew .dgicon { width: 48px; height: 48px; padding: 6px; }
+  #dg-loot-btns { margin: 8px 0 2px; }
+}
+
+/* ---------- end of a run ---------- */
+#dg-end { z-index: 30; }
+#dg-end .card { max-width: 360px; padding: 16px; gap: 8px; }
+#dg-end .dgstat { font-size: 20px; margin: 4px 0; }
+#dg-end .dgstat img.icon { height: 24px; width: 24px; object-fit: cover; object-position: 0 50%; aspect-ratio: 1; vertical-align: -4px; }
+#dg-end .tag { color: var(--dw-muted); font-size: 16px; }
+
+/* ---------- boss strip (N-21): emblem + name + the bar frame at 2x ---------- */
+#dg-boss {
+  position: absolute; left: 50%; transform: translateX(-50%); top: calc(max(8px, env(safe-area-inset-top)) + 124px);
+  display: flex; align-items: center; gap: 8px; pointer-events: none; z-index: 6; font-family: var(--font);
+}
+.dg-boss-emblem { width: 48px; height: 48px; image-rendering: pixelated; flex: none; }
+.dg-boss-col { display: flex; flex-direction: column; gap: 2px; }
+#dg-boss-name { font-size: 16px; color: #fff3d6; text-shadow: 0 2px 0 #1b0f0a, 0 0 4px #1b0f0a; }
+.dg-boss-bar {
+  position: relative; width: min(64vw, 320px); height: 32px; image-rendering: pixelated;
+  background: url('/art/dungeon/ui/boss-bar-frame.png') center / 100% 100% no-repeat;
+}
+/* the fill sits inside the frame's inner slot (x 4..156, y 5..11 of 160x16) */
+.dg-boss-bar i { position: absolute; left: 2.5%; top: 31%; height: 38%; width: 0; background: #d4333a; box-shadow: inset 0 2px 0 #ff6b7d; transition: width 0.2s steps(8); }
+@media (orientation: landscape) and (max-height: 500px) {
+  #dg-boss { top: max(8px, env(safe-area-inset-top)); left: auto; right: max(16px, env(safe-area-inset-right)); transform: none; }
+  .dg-boss-bar { width: 260px; height: 26px; }
+}
+
+/* ---------- dungeon entry: the dusk cave art for ~2 s ---------- */
+#dg-loading {
+  position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 12vh;
+  background: #1b1018 url('/art/loading-portrait.png') center / cover no-repeat; image-rendering: pixelated;
+  font-family: var(--font); transition: opacity 0.4s; pointer-events: none; /* atmosphere only: never blocks a tap */
+}
+#dg-loading.out { opacity: 0; }
+#dg-loading b { font-size: 24px; color: #fff3d6; text-shadow: 0 3px 0 #1b0f0a; padding: 8px 16px; background: #2a1810cc; border: 4px solid var(--dw-wood); border-radius: 6px; }
+@media (orientation: landscape) { #dg-loading { background-image: url('/art/loading-landscape.png'); } }
+
+/* ---------- end of a run: the N-22 art behind the card ---------- */
+#dg-end.screen { background: #2a1810 url('/art/dungeon-end.png') center / cover no-repeat; align-items: flex-start; padding-top: max(24px, env(safe-area-inset-top)); }
+@media (orientation: landscape) {
+  #dg-end.screen { background-image: url('/art/dungeon-end-landscape.png'); align-items: center; justify-content: flex-start; padding-left: max(24px, env(safe-area-inset-left)); }
+}
+
+/* ---------- polish: juice ---------- */
+/* cards and banners pop in (the independent `scale` property keeps each one's own translate) */
+@keyframes dgpop { 0% { scale: 0.8; opacity: 0; } 60% { scale: 1.05; opacity: 1; } 100% { scale: 1; } }
+#dg-cards:not(.hidden), #dg-loot:not(.hidden), #dg-ko:not(.hidden), #dg-end:not(.hidden) .card, #dg-boss:not(.hidden) { animation: dgpop 0.28s ease-out; }
+/* a picked skill card gives a little bounce */
+@keyframes dgpick { 0% { scale: 1; } 40% { scale: 1.08; } 100% { scale: 1; } }
+.skcard.on { animation: dgpick 0.25s ease-out; }
+/* HUD numbers pop when they go up (gold, level) */
+@keyframes dgbump { 0% { scale: 1; } 35% { scale: 1.35; color: #ffe08a; } 100% { scale: 1; } }
+#dg-gold { display: inline-block; } /* (scale needs a box) */
+.dg-bump { animation: dgbump 0.35s ease-out; }
+@media (prefers-reduced-motion: reduce) { #dg-cards, #dg-loot, #dg-ko, #dg-end .card, #dg-boss, .skcard.on, .dg-bump { animation: none !important; } }

@@ -154,10 +154,10 @@ export const BUILD_R = 30; // stand this close to a spot to build
 export interface Build { kind: BuildKind; state: 0 | 1 | 2; paid: Res; buy: number; armed: boolean }
 export interface Cottage { level: number; state: 0 | 1; paid: Res; buy: number; armed: boolean }
 /** What the host saves between rounds (localStorage 'blobz.village'): buildings, cottage level, bank. */
-export interface Village { v: 2; cottage: number; builds: Record<BuildKind, boolean>; bank: Res }
+export interface Village { v: 2; cottage: number; builds: Record<BuildKind, boolean>; bank: Res; dungeon?: number } // dungeon: the next unlocked dungeon (Code 2 hook)
 export const VILLAGE_VERSION = 2;
 export const newVillage = (): Village => ({
-  v: 2, cottage: 1, builds: Object.fromEntries(BUILD_KINDS.map((k) => [k, false])) as Village['builds'], bank: res(),
+  v: 2, cottage: 1, builds: Object.fromEntries(BUILD_KINDS.map((k) => [k, false])) as Village['builds'], bank: res(), dungeon: 1,
 });
 const cleanRes = (r: unknown): Res => {
   const o = (r ?? {}) as Partial<Res>;
@@ -172,6 +172,7 @@ export function cleanVillage(raw: unknown): Village {
   out.cottage = Math.max(1, Math.min(COTTAGE_MAX, Math.floor(Number(v.cottage)) || 1));
   for (const k of BUILD_KINDS) out.builds[k] = v.builds?.[k] === true;
   out.bank = cleanRes(v.bank);
+  out.dungeon = Math.max(1, Math.min(99, Math.floor(Number(v.dungeon)) || 1)); // [dungeon hook] unlocked dungeon
   return out;
 }
 export const built = (s: { builds: { kind: BuildKind; state: number }[] }, k: BuildKind) => s.builds.some((b) => b.kind === k && b.state === 2);
@@ -217,7 +218,9 @@ export function entranceOf(seed: number): { x: number; y: number } {
     && !(BUILDING_ENABLED && Object.values(BUILD_SPOTS).some((b) => Math.hypot(b.x - p.x, b.y - p.y) < 120));
   return spots.find(clear) ?? spots[0];
 }
-export const PICK_SECONDS = 20; // unpicked blobz get the sword after this
+export const PICK_SECONDS = 20; // unpicked blobz get the sword after this (only with the pick timer on)
+/** Stefan 2026-11-15 (Code 2 hook): no class-pick timer, the run starts when everyone has picked (docs/ARCHIVED.md). */
+export const PICK_TIMER_ENABLED = false;
 export type Mode = 'meadow' | 'pick' | 'dungeon';
 export const MODES: Mode[] = ['meadow', 'pick', 'dungeon'];
 
@@ -270,6 +273,7 @@ export interface State {
   runs: number; // dungeon runs this round (seeds a new dungeon each time)
   dg: DState | null;
   bank: Res; // spendable team resources (buildings, cottage)
+  dungeon: number; // [dungeon hook] the dungeon the entrance leads to (beat its boss -> the next one); saved with the village
   buildLock: number; // seconds until the next build may start
   builds: Build[];
   cottage: Cottage;
@@ -394,7 +398,7 @@ export function createState(infos: PlayerInfo[], seed: number, village: Village 
     phase: 'play', time: ROUND_SECONDS,
     mini: null, miniResult: null,
     seed, biome: cleanBiome(biome), ice: cleanBiome(biome) === 'snow' ? makeIce(seed) : [], entrance: entranceOf(seed), mode: 'meadow', entry: 0, picks: {}, pickT: 0, runs: 0, dg: null,
-    bank: { ...vil.bank }, delivered: res(), quest: questTargets(infos.length, vil.cottage),
+    bank: { ...vil.bank }, dungeon: vil.dungeon ?? 1, delivered: res(), quest: questTargets(infos.length, vil.cottage),
     builds: BUILD_KINDS.map((kind) => ({ kind, state: vil.builds[kind] ? 2 : 0, paid: res(), buy: 0, armed: true })),
     cottage: { level: vil.cottage, state: 0, paid: res(), buy: 0, armed: true }, water,
     builtNow: [], villageDirty: false, gardenT: GARDEN_EVERY,
@@ -490,7 +494,7 @@ export function pickWeapon(s: State, id: string, w: string) {
 function enterDungeon(s: State) {
   for (const p of s.players) s.picks[p.id] ??= 'dagger'; // [dungeon hook] unpicked = Rogue with two daggers
   s.runs++;
-  s.dg = newRun(s.seed * 7919 + s.runs * 104729, s.picks);
+  s.dg = newRun(s.seed * 7919 + s.runs * 104729, s.picks, s.dungeon);
   s.mode = 'dungeon';
   for (const p of s.players) { p.x = s.dg.map.start.x + (Math.random() - 0.5) * 30; p.y = s.dg.map.start.y + (Math.random() - 0.5) * 30; p.vx = 0; p.vy = 0; p.carry = []; }
   s.fx.push({ t: 'floor', floor: 1 });
@@ -498,6 +502,8 @@ function enterDungeon(s: State) {
 
 function leaveDungeon(s: State) {
   const done = !!s.dg && s.dg.done !== 0;
+  // [dungeon hook] the boss of the last floor beaten: the entrance leads to the next dungeon (saved with the village)
+  if (s.dg?.why === 'boss' && s.dg.dungeon >= s.dungeon) { s.dungeon = Math.min(99, s.dg.dungeon + 1); s.villageDirty = true; }
   s.mode = 'meadow'; s.dg = null; s.entry = 0; s.picks = {};
   s.players.forEach((p, i) => { p.x = s.entrance.x - 40 + i * 20; p.y = s.entrance.y + 70; p.vx = 0; p.vy = 0; });
   s.fx.push({ t: 'leave', done });
@@ -558,8 +564,8 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
   if (s.phase !== 'play') return;
   if (s.mode === 'pick') {
     // weapon cards on every phone; go down when all picked (or after PICK_SECONDS)
-    s.pickT -= dt;
-    if (s.players.every((p) => s.picks[p.id]) || s.pickT <= 0) enterDungeon(s);
+    if (PICK_TIMER_ENABLED) s.pickT -= dt;
+    if (s.players.every((p) => s.picks[p.id]) || (PICK_TIMER_ENABLED && s.pickT <= 0)) enterDungeon(s);
     return;
   }
   const inDungeon = s.mode === 'dungeon';
@@ -818,7 +824,7 @@ function stepBuilding(s: State, dt: number) {
 /** The village to save (host): buildings, cottage level and the bank. The quest resets each round. */
 export function villageOf(s: State): Village {
   return {
-    v: 2, cottage: s.cottage.level, bank: { ...s.bank },
+    v: 2, cottage: s.cottage.level, bank: { ...s.bank }, dungeon: s.dungeon,
     builds: Object.fromEntries(s.builds.map((b) => [b.kind, b.state === 2])) as Village['builds'],
   };
 }

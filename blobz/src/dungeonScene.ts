@@ -70,7 +70,7 @@ interface HeroGfx {
   wshadow?: Phaser.GameObjects.Ellipse; // the hovering weapon's small shadow on the ground
   weapon2?: Phaser.GameObjects.Sprite; // the rogue's second dagger / the Riddare's guarding shield
   arcFor?: number; // which swing already has its slash fx
-  glow?: Phaser.GameObjects.Arc; mode?: number; hopT?: number; // the wand's glow, its mode (from the snapshot)
+  glow?: Phaser.GameObjects.Arc; mode?: number; hopT?: number; hopH?: number; sqT?: number; // hop (height), squash on a hit // the wand's glow, its mode (from the snapshot)
   wa?: number; woff?: number; wsa?: number; lastSwing?: number; // smoothed weapon angle, slash offset, shield angle, time of the last swing
   tip?: { x: number; y: number }; // crossbow tip (bolts start there) // knight's shield wall (Art's fx-wall)
 }
@@ -138,7 +138,9 @@ export class DungeonScene extends Phaser.Scene {
     const sheet = (key: string, url: string, w: number, h: number) => { if (!this.textures.exists(key)) this.load.spritesheet(key, url, { frameWidth: w, frameHeight: h }); };
     // Ninja Adventure FX for the specials, revive, sidestep, pickups (docs/OLD_ART_CHECKLIST.md); keys kept from the old art
     sheet('na-arc', NA + 'FX/Slash/SpriteSheetArc.png', 38, 34); // slash arc for slashing weapons
-    img('na-ko', NA + 'Ui/Emote/emote29.png'); // knocked out: a star bubble (Ninja has no dizzy stars)
+    // ChatGPT N-13 FX strips (4 x 32 px) and N-21 hazard ring (4 x 48x32): art/dungeon/fx, art/dungeon/ui
+    for (const k of ['hit-spark', 'ko-stars', 'levelup', 'shockwave', 'slam-warning']) sheet('n13-' + k, `art/dungeon/fx/${k}.png`, 32, 32);
+    sheet('n21-hazard', 'art/dungeon/ui/hazard-ring.png', 48, 32);
     sheet('dg-revive', NA + 'FX/Magic/Spirit/SpriteSheetBlue.png', 32, 32);
     sheet('dg-fx-spin', NA + 'FX/Attack/CircularSlash/SpriteSheet.png', 32, 32);
     sheet('dg-fx-slam', NA + 'FX/Elemental/Rock/SpriteSheet.png', 30, 30);
@@ -201,6 +203,9 @@ export class DungeonScene extends Phaser.Scene {
     anim('dg-charge', 'dg-fx-charge', seq(8), 20);
     anim('dg-sidestep', 'dg-fx-sidestep', seq(6), 16);
     anim('dg-heal', 'dg-fx-heal', seq(5), 10);
+    for (const k of ['hit-spark', 'levelup', 'shockwave', 'slam-warning']) anim('n13-' + k, 'n13-' + k, seq(4), 14);
+    anim('n13-ko-stars', 'n13-ko-stars', seq(4), 8, -1);
+    anim('n21-hazard', 'n21-hazard', seq(4), 8, -1);
     anim('dg-wall', 'dg-fx-wall', seq(6), 12);
     anim('dg-block', 'dg-fx-block', seq(6), 16);
     anim('dg-sparkle', 'dg-sparkle', seq(6), 18);
@@ -227,7 +232,7 @@ export class DungeonScene extends Phaser.Scene {
   }
 
   /** Bake the floor into one canvas (no tile seams at fractional zoom), slightly darker than the meadow. */
-  private buildFloor(seed: number, floor: number, players: number) {
+  private buildFloor(seed: number, floor: number, players: number, dungeon = 1) {
     for (const o of this.mapObjs) o.destroy();
     this.mapObjs = []; this.chests = [];
     const f = makeFloor(seed, floor, players);
@@ -282,7 +287,7 @@ export class DungeonScene extends Phaser.Scene {
     this.chests = f.chests.map((c) => this.add.image(c.x, c.y + 8, 'na-chest', 0).setScale(3).setOrigin(0.5, 1).setDepth(c.y));
     this.mapObjs.push(...this.chests);
     // a big floor banner
-    const banner = this.add.text(f.start.x, f.start.y - 90, t(floor === FLOORS ? 'dg.floorBoss' : 'dg.floorBanner', { n: floor }), { fontFamily: FONT, fontSize: '34px', color: '#ffe08a', fontStyle: 'bold', stroke: '#3f2631', strokeThickness: 7 })
+    const banner = this.add.text(f.start.x, f.start.y - 90, t(floor === FLOORS ? 'dg.floorBoss' : 'dg.floorBanner', { d: dungeon, n: floor }), { fontFamily: FONT, fontSize: '34px', color: '#ffe08a', fontStyle: 'bold', stroke: '#3f2631', strokeThickness: 7 })
       .setOrigin(0.5).setDepth(7000);
     this.tweens.add({ targets: banner, y: banner.y - 30, alpha: 0, delay: 1400, duration: 900, onComplete: () => banner.destroy() });
     // the camera jumps to the arrival point
@@ -298,7 +303,7 @@ export class DungeonScene extends Phaser.Scene {
     const d = v?.dungeon;
     if (!v || !d) return;
     const fk = `${d.seed}-${d.floor}`;
-    if (fk !== this.floorKey) { this.floorKey = fk; this.buildFloor(d.seed, d.floor, v.players.length); }
+    if (fk !== this.floorKey) { this.floorKey = fk; this.buildFloor(d.seed, d.floor, v.players.length, d.dungeon); }
     const f = this.map!;
     const now = this.time.now;
     const smooth = this.s.role === 'client';
@@ -419,7 +424,7 @@ export class DungeonScene extends Phaser.Scene {
           body: this.add.image(p.x, p.y, texKey).setOrigin(0.5, BODY_CY).setScale(BLOB_SCALE),
           label: this.add.text(p.x, p.y, info.name, { fontFamily: FONT, fontSize: '13px', color: '#ffffff', fontStyle: 'bold', stroke: '#000000', strokeThickness: 3 }).setOrigin(0.5),
           weapon: this.add.sprite(p.x, p.y, 'w-' + WART[w]),
-          stars: this.add.sprite(p.x, p.y, 'na-ko').setScale(2.5).setVisible(false),
+          stars: this.add.sprite(p.x, p.y, 'n13-ko-stars', 0).setScale(2).setVisible(false).play('n13-ko-stars'), // N-13 dizzy stars
           me: this.add.triangle(p.x, p.y, 0, 0, 12, 0, 6, 8, 0xffffff, 0.9).setVisible(p.id === this.s.myId),
           texKey, x: p.x, y: p.y, vx: 0, vy: 0, id: p.id, facing, swingT: 0, swingDur: 0.3, swingA: 0, swings: 0, spin: 0,
         };
@@ -433,12 +438,15 @@ export class DungeonScene extends Phaser.Scene {
       const ko = (h?.ko ?? 0) > 0;
       const sp = Math.hypot(b.vx, b.vy);
       const stretch = ko ? 0 : Math.min(0.18, sp / 1600);
+      // blob reactions (polish): a squash when hit (wobbles back), a happy hop on level-up / loot / revive
+      b.sqT = Math.max(0, (b.sqT ?? 0) - dt);
+      const sq = b.sqT > 0 ? Math.sin((b.sqT / 0.3) * Math.PI * 2) * 0.22 * (b.sqT / 0.3) : 0;
       b.shadow.setPosition(b.x, b.y + 12).setDepth(b.y - 20);
       // the marksman's jump back: a little hop arc
       b.hopT = Math.max(0, (b.hopT ?? 0) - dt);
-      const hop = b.hopT > 0 ? Math.sin((1 - b.hopT / 0.32) * Math.PI) * 18 : 0;
+      const hop = b.hopT > 0 ? Math.sin((1 - b.hopT / 0.32) * Math.PI) * (b.hopH ?? 18) : 0;
       b.body.setPosition(b.x, b.y - 4 + (ko ? 8 : 0) - hop).setDepth(b.y)
-        .setScale(BLOB_SCALE * (1 + stretch) * (ko ? 1.2 : 1), BLOB_SCALE * (1 - stretch * 0.6) * (ko ? 0.6 : 1))
+        .setScale(BLOB_SCALE * (1 + stretch + sq) * (ko ? 1.2 : 1), BLOB_SCALE * (1 - stretch * 0.6 - sq) * (ko ? 0.6 : 1))
         .setRotation(ko ? 0 : Phaser.Math.Clamp(b.vx / 1400, -0.18, 0.18))
         .setTint(ko ? 0x888888 : h?.phase ? 0xbfe6ff : 0xffffff)
         // the healer phased out: ghostly and shimmering; a dodge: see-through
@@ -458,7 +466,7 @@ export class DungeonScene extends Phaser.Scene {
         b.dome.setPosition(b.x, b.y + 16).setScale(Math.max(2, Math.round((r * 1.6) / 24))).setDepth(b.y + 6).setAlpha(h.wallT < 0.6 ? h.wallT / 0.6 : 1);
       } else if (b.dome) { b.dome.destroy(); b.dome = undefined; }
       if (h && !ko && h.shield > 0) this.ringG.lineStyle(3, 0x8fd3ff, 0.9).strokeCircle(b.x, b.y - 6, 28);
-      b.stars.setVisible(ko).setPosition(b.x, b.y - 30 + Math.sin(now / 200) * 3).setDepth(b.y + 4);
+      b.stars.setVisible(ko).setPosition(b.x, b.y - 34).setDepth(b.y + 4);
       b.mode = h?.mode ?? 0;
       this.drawWeapon(b, w, h?.face ?? 0, ko, dt, !!h && (h.guard || !!h.dodge || h.wallT > 0));
       // picking level-up cards: frozen and safe (a soft bubble so friends see why it stands still)
@@ -696,23 +704,29 @@ export class DungeonScene extends Phaser.Scene {
       if (key) {
         const a = e.ang, ux = Math.cos(a), uy = Math.sin(a), x0 = e.x, y0 = e.y, fl = this.map;
         if (e.kind === 2 && e.slam) {
-          const r = this.hostile(g.tele, 'nf-rune', e.slam.x, e.slam.y + 8, 0.6, HOSTILE.red);
-          r.setData('grow', (SLAM_R * 2.4) / 32);
-          for (let i = 0; i < 8; i++) {
-            const b = (i / 8) * Math.PI * 2;
-            const c = this.hostile(g.tele, 'nf-chev', e.slam.x + Math.cos(b) * SLAM_R * 1.6, e.slam.y + 8 + Math.sin(b) * SLAM_R * 1.1, 1.5, HOSTILE.red, b + Math.PI, 2);
+          // N-21 hazard ring: exactly the slam's reach on the ground, plus chevrons closing in
+          const ring = this.add.sprite(e.slam.x, e.slam.y + 8, 'n21-hazard', 0).setScale((SLAM_R * 2) / 46, (SLAM_R * 1.4) / 26).setDepth(-300).play('n21-hazard');
+          g.tele.push(ring);
+          for (let i = 0; i < 6; i++) {
+            const b = (i / 6) * Math.PI * 2;
+            const c = this.hostile(g.tele, 'nf-chev', e.slam.x + Math.cos(b) * SLAM_R * 1.6, e.slam.y + 8 + Math.sin(b) * SLAM_R * 1.1, 1.3, HOSTILE.red, b + Math.PI, 2);
             c.setData('in', { cx: e.slam.x, cy: e.slam.y + 8, b });
           }
         } else if (e.act === 1) {
           this.hostile(g.tele, 'nf-aura', x0, y0 - 6, 2.4, HOSTILE.purple, 0, undefined, y0 - 1);
           const len = DASH_SPEED * DASH_TIME + ENEMY_R[e.kind];
+          let ex = x0, ey = y0;
           for (let d = ENEMY_R[e.kind] + 10; d <= len; d += 26) {
             const x = x0 + ux * d, y = y0 + uy * d;
             if (fl && isWall(fl, x, y)) break;
+            ex = x; ey = y;
             this.hostile(g.tele, 'nf-chev', x, y, 1.3, HOSTILE.red, a, 2).setData('d', d);
           }
+          // N-13 slam-warning ring where the dash lands
+          g.tele.push(this.add.sprite(ex, ey + 10, 'n13-slam-warning', 0).setScale(2.2).setDepth(-300).play({ key: 'n13-slam-warning', repeat: -1 }));
         } else if (e.act === 3) {
           for (let k2 = 1; k2 <= 3; k2++) this.hostile(g.tele, 'nf-chev', x0 + ux * (ENEMY_R[e.kind] + k2 * 20), y0 + uy * (ENEMY_R[e.kind] + k2 * 20), 1.1, HOSTILE.red, a, 2);
+          g.tele.push(this.add.sprite(x0 + ux * (ENEMY_R[e.kind] + 50), y0 + uy * (ENEMY_R[e.kind] + 50) + 10, 'n13-slam-warning', 0).setScale(1.6).setDepth(-300).play({ key: 'n13-slam-warning', repeat: -1 }));
         } else if (e.act === 5) {
           let d = ENEMY_R[e.kind] + 12, x = x0, y = y0;
           for (; d <= 300; d += 13) { x = x0 + ux * d; y = y0 + uy * d; if (fl && isWall(fl, x, y)) break; this.hostile(g.tele, 'nf-dot', x, y, 1.7, HOSTILE.orange, a).setData('d', d); }
@@ -779,31 +793,36 @@ export class DungeonScene extends Phaser.Scene {
         // the class moves (small button), each with a Ninja FX
         const b = this.heroes.get(f.id);
         if (f.k === 'rogue') { const c = this.add.sprite(f.x, f.y + 14, 'dg-fx-sidestep', 0).setOrigin(0.5, 1).setScale(1.6).setDepth(f.y - 2); c.play('dg-sidestep'); c.once('animationcomplete', () => c.destroy()); }
-        else if (f.k === 'marksman') { this.nfx('nf-dust', f.x, f.y + 14, 2.4); if (b) b.hopT = 0.32; }
+        else if (f.k === 'marksman') { this.nfx('nf-dust', f.x, f.y + 14, 2.4); if (b) { b.hopT = 0.32; b.hopH = 18; } }
         else if (f.k === 'tank') { if (b) this.ride(b, 'dg-fx-charge', 'dg-charge', 'charge', f.a, 1, 0.5, 2.5); this.nfx('nf-dust', f.x, f.y + 14, 2.2); }
         else { this.nfx('nf-smoke', f.x, f.y - 4, 2.6, 0xbfe6ff); this.time.delayedCall(2000, () => { const bb = this.heroes.get(f.id); if (bb) this.nfx('nf-smoke', bb.x, bb.y - 4, 2.2, 0xbfe6ff); }); }
         sfx.dash();
         break;
       }
       case 'dodge': { const c = this.add.sprite(f.x, f.y + 14, 'dg-fx-sidestep', 0).setOrigin(0.5, 1).setScale(1.6).setDepth(f.y - 2); c.play('dg-sidestep'); c.once('animationcomplete', () => c.destroy()); sfx.dash(); break; }
-      case 'hurt': { const g = this.goo.get(f.e); if (g) g.flash = 0.12; this.nfx('nf-star', f.x, f.y - 4, 1.6, 0xffffff); break; } // a friendly white spark on the monster
+      case 'hurt': { const g = this.goo.get(f.e); if (g) g.flash = 0.12; this.nfx('n13-hit-spark', f.x, f.y - 6, 1.5); break; } // a small N-13 hit spark (routine FX kept small)
       case 'mdash': this.nfx('nf-dust', f.x, f.y + 14, 2.2); break;
       case 'bite': break; // no enemy slash fx (Stefan): the telegraph before it is the warning
       case 'kill': {
         // Ninja smoke puff + star (the boss explodes)
         if (f.kind === 2) this.nfx('nf-boom', f.x, f.y, 3);
-        this.nfx('nf-smoke', f.x, f.y, f.kind === 2 ? 5 : 3);
-        this.nfx('nf-star', f.x, f.y, f.kind === 2 ? 4 : 2.4, 0xffffff);
+        this.nfx('nf-smoke', f.x, f.y, f.kind === 2 ? 4 : 2); // routine kills stay small
+        this.nfx('n13-hit-spark', f.x, f.y - 4, f.kind === 2 ? 3 : 1.8);
         if (f.kind === 2) { this.cameras.main.shake(300, 0.01); sfx.star(); } else sfx.bump();
         break;
       }
       case 'ouch': {
         this.cameras.main.shake(90, 0.004); sfx.bump();
-        const b = this.heroes.get(f.id); if (b) this.tweens.add({ targets: b.body, alpha: 0.3, yoyo: true, duration: 80 });
+        const b = this.heroes.get(f.id); if (b) { this.tweens.add({ targets: b.body, alpha: 0.3, yoyo: true, duration: 80 }); b.sqT = 0.3; }
         break;
       }
       case 'ko': this.floatText(f.x, f.y - 50, t('dg.ko'), '#ffffff', 22); break;
-      case 'revive': { const r = this.add.sprite(f.x, f.y - 16, 'dg-revive', 0).setScale(2.5).setDepth(5000); r.play('dg-revive'); r.once('animationcomplete', () => r.destroy()); sfx.power(); break; }
+      case 'revive': {
+        // a friendly wake-up: spirit puff, a happy hop and a heart
+        const r = this.add.sprite(f.x, f.y - 16, 'dg-revive', 0).setScale(2.5).setDepth(5000); r.play('dg-revive'); r.once('animationcomplete', () => r.destroy());
+        const b = this.heroes.get(f.id); if (b) { b.hopT = 0.32; b.hopH = 14; }
+        this.floatText(f.x, f.y - 46, '♥', '#ff8aa0', 26); sfx.power(); break;
+      }
       case 'coin': {
         const s = this.add.sprite(f.x, f.y - 8, 'dg-sparkle', 0).setScale(1.2).setDepth(5000);
         s.play('dg-sparkle'); s.once('animationcomplete', () => s.destroy());
@@ -814,14 +833,15 @@ export class DungeonScene extends Phaser.Scene {
       case 'level': {
         const me = this.heroes.get(this.s.myId);
         this.floatText(me?.x ?? 0, (me?.y ?? 0) - 80, t('dg.level', { n: f.level }), '#8fd3ff', 30);
+        for (const hb of this.heroes.values()) { this.nfx('n13-levelup', hb.x, hb.y - 20, 2.5); hb.hopT = 0.32; hb.hopH = 22; } // N-13 sparkle + a happy hop on every blob
         sfx.star();
         break;
       }
       case 'slam': {
-        // the Giant Slime crashes down: rock spikes burst out around it, rocks + dust, a big shake
-        for (let i = 0; i < 5; i++) { const b = (i / 5) * Math.PI * 2 + 0.3; this.nfx('nf-spike', f.x + Math.cos(b) * SLAM_R * 0.8, f.y + Math.sin(b) * SLAM_R * 0.55 - 20, 1.8); }
-        this.nfx('nf-rock', f.x, f.y + 10, 3.5); this.nfx('nf-dust', f.x, f.y + 30, 4.5);
-        this.cameras.main.shake(260, 0.014); sfx.bump();
+        // the Giant Slime crashes down: the N-13 shockwave fills the danger ring, a little dust, a short shake
+        this.nfx('n13-shockwave', f.x, f.y + 8, (SLAM_R * 2) / 21);
+        this.nfx('nf-dust', f.x, f.y + 30, 3);
+        this.cameras.main.shake(180, 0.008); sfx.bump();
         break;
       }
       case 'floor': sfx.power(); break;
@@ -858,7 +878,15 @@ export class DungeonScene extends Phaser.Scene {
       }
       case 'potion': this.floatText(f.x, f.y - 30, t('dg.potion'), '#ff8a8a', 22); sfx.score(); break;
       case 'skill': { const b = this.heroes.get(f.id); const sk = skillOf(f.s); if (b && sk) this.floatText(b.x, b.y - 70, tSkill(sk.id), '#ffe08a', 20); break; }
-      case 'loot': { const b = f.win ? this.heroes.get(f.win) : undefined; const it = itemOf(f.item); if (b && it) { this.floatText(b.x, b.y - 70, tItem(it.id), '#c58bff', 22); this.burst(b.x, b.y - 10, 0xc58bff, 10, 36); } break; }
+      case 'loot': {
+        // the winner hops; the item flies up out of the blob and pops (juice)
+        const b = f.win ? this.heroes.get(f.win) : undefined; const it = itemOf(f.item);
+        if (b && it) {
+          this.floatText(b.x, b.y - 70, tItem(it.id), '#c58bff', 22); this.burst(b.x, b.y - 10, 0xc58bff, 10, 36);
+          b.hopT = 0.32; b.hopH = 22; this.nfx('n13-levelup', b.x, b.y - 24, 2.2);
+        }
+        break;
+      }
     }
   }
 }
