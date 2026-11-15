@@ -773,7 +773,9 @@ $('btn-leave').onclick = () => location.reload();
 $('btn-menu').onclick = () => location.reload();
 
 if (new URLSearchParams(location.search).get('demo') === 'monsters' || new URLSearchParams(location.search).has('dgdemo')) void import('./dungeonDemo').then((m) => m.runDemo()); // [dungeon hook] Ninja monster demo
-if (new URLSearchParams(location.search).has('uikit')) void import('./uikit').then((m) => m.showUiKit()); // UI-kit comparison page (Lead/Stefan pick)
+const UIKIT = new URLSearchParams(location.search).get('uikit'); // UI-kit comparison pages (Lead/Stefan pick)
+if (UIKIT === '2') void import('./uikit2').then((m) => m.showUiKit2());
+else if (UIKIT !== null) void import('./uikit').then((m) => m.showUiKit());
 const DEBUG = new URLSearchParams(location.search).has('debug');
 // Optional round length for quick games/tests: ?t=60
 const roundSecs = Math.max(0, Math.min(600, Number(new URLSearchParams(location.search).get('t')) || 0));

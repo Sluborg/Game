@@ -5,9 +5,13 @@ const N = (p: string) => encodeURI('assets/ninja-adventure/' + p);
 
 export const NI = {
   wood: N('Items/Resource/Branch.png'), stone: N('Items/Resource/Rock.png'), berry: N('Items/Food/Nut2.png'),
-  sun: N('Ui/Skill Icon/Meteo/Sun.png'), build: N('Ui/Skill Icon/Job & Action/Repair.png'),
-  dice: N('Items/Object/Dice 6.png'), back: N('Ui/Theme/Theme Wood/arrow_left.png'), dash: N('Ui/Skill Icon/Items & Weapon/Boot.png'),
-  axe: N('Ui/Skill Icon/Job & Action/Harvest.png'), pickaxe: N('Ui/Skill Icon/Job & Action/Mine.png'), rake: N('Ui/Skill Icon/Job & Action/Plant.png'),
+  sun: N('Ui/Skill Icon/Meteo/Sun.png'), build: 'art/icons/ui/hammer-16.png', // ChatGPT N-17 hammer
+  dice: 'art/icons/ui/dice-16.png', back: 'art/icons/ui/back-16.png', // ChatGPT N-17
+  dash: 'art/icons/ui/play-16.png', // N-17 stand-in until a free-standing speed symbol exists (no square backing)
+  // the meadow action button: free-standing Ninja tool sprites inside the N-19 ring (no square skill backing)
+  axe: N('Items/Tool/Axe.png'), pickaxe: N('Items/Tool/Pickaxe.png'), rake: N('Items/Tool/Hoe.png'),
+  quill: 'art/icons/ui/quill-16.png', hammer: 'art/icons/ui/hammer-16.png', close: 'art/icons/ui/close-16.png', home: 'art/icons/ui/home-16.png',
+  tickGreen: 'art/icons/state/tick-green-16.png', lock: 'art/icons/state/lock-16.png', canBuild: 'art/icons/state/can-build-16.png', you: 'art/icons/state/you-arrow-16.png',
   sparkle: N('Ui/Emote/emote29.png'), feather: N('Items/Resource/feather.png'),
   check: 'art/icons/check.png', // ChatGPT N-10 (approved)
   star: 'art/gather/star.png', starEmpty: 'art/gather/star-empty.png', // ChatGPT N-10 (approved)
