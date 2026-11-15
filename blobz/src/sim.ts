@@ -132,9 +132,12 @@ export const BUILD_COST: Record<BuildKind, Res> = {
 /** Six fixed spots in a ring ~180 px around the cottage, one building each. */
 export const BUILD_RING = 180;
 const RING_ORDER: BuildKind[] = ['workshop', 'storage', 'garden', 'well', 'watchtower', 'bridge']; // 0, 60, ... 300 degrees
+/** Spots moved off the ring: the level-3 hall is 192 px wide at 3x (x 544-736) and hid the watchtower at 240 deg,
+ *  so the tower stands further out to the upper left (Lead 2026-11-15). */
+const SPOT_OVERRIDE: Partial<Record<BuildKind, { x: number; y: number }>> = { watchtower: { x: 470, y: 318 } };
 export const BUILD_SPOTS = Object.fromEntries(RING_ORDER.map((k, i) => {
   const a = (i * 60 * Math.PI) / 180;
-  return [k, { x: Math.round(BASE.x + Math.cos(a) * BUILD_RING), y: Math.round(BASE.y + Math.sin(a) * BUILD_RING) }];
+  return [k, SPOT_OVERRIDE[k] ?? { x: Math.round(BASE.x + Math.cos(a) * BUILD_RING), y: Math.round(BASE.y + Math.sin(a) * BUILD_RING) }];
 })) as Record<BuildKind, { x: number; y: number }>;
 export const COTTAGE_PAD = { x: BASE.x, y: BASE.y + 124 };
 export const COTTAGE_COST: Res[] = [res(20, 15, 10), res(40, 30, 20)]; // to level 2, to level 3
