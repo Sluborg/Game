@@ -90,7 +90,7 @@ const NINJA_CROPS: Record<string, Crop | Crop[]> = {
   'pr-plate': ['n-dungeon', 0, 16, 16, 16], 'pr-plate-down': ['n-dungeon', 16, 16, 16, 16],
   'ic-chest': ['nx-chest', 0, 0, 16, 14],
   // power-ups (speed boot, magnet = hook) and the home icon of the edge arrow
-  'ic-boot': ['nx-boot', 0, 0, 24, 24], 'ic-magnet': ['nx-hook', 0, 0, 24, 24], 'ic-house': ['n-house', 48, 128, 47, 32],
+  'ic-magnet': ['nx-hook', 0, 0, 24, 24], 'ic-house': ['n-house', 48, 128, 47, 32],
   // carried resources
   // resources (resArt.ts): log, rock, food
   'ic-log': ['res-wood-src', RES_ART.wood.x, RES_ART.wood.y, RES_ART.wood.w, RES_ART.wood.h],
@@ -116,7 +116,7 @@ const NINJA_SHEETS: Record<string, string> = {
   // resources: the files named in resArt.ts (one line each)
   'res-wood-src': RES_ART.wood.file, 'res-stone-src': RES_ART.stone.file, 'res-berry-src': RES_ART.berry.file,
   'n-shadow': 'Actor/Character/Shadow.png',
-  'nx-boot': 'Ui/Skill Icon/Items & Weapon/Boot.png', 'nx-hook': 'Ui/Skill Icon/Items & Weapon/Hook.png',
+  'nx-hook': 'Ui/Skill Icon/Items & Weapon/Hook.png',
   'nt-axe': 'Items/Tool/Axe.png', 'nt-pickaxe': 'Items/Tool/Pickaxe.png', 'nt-rake': 'Items/Tool/Hoe.png',
 };
 /** Rebuilt keys survive scene restarts (the texture cache is global). */
@@ -254,6 +254,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image('mini-bg', 'art/mini/bg.png');
     // berry bush ChatGPT N-16 (full / picked), 32 px art at 3x
     this.load.image('st-you', 'art/icons/state/you-arrow-16.png'); // ChatGPT N-18
+    this.load.image('pw-speed', 'art/meadow/speed-16.png'); // ChatGPT N-15b speed power-up
     this.load.image('g-bush-berries', 'art/props/berry-bush-32.png');
     this.load.image('g-bush-empty', 'art/props/berry-bush-picked-32.png'); // Bärregn backdrop (ChatGPT N-9): sunset sky over the berry field
     if (this.s.biome === 'snow') { // archived snow map (SNOW_MAP_ENABLED): its own leftovers
@@ -568,9 +569,10 @@ export class GameScene extends Phaser.Scene {
       seenW.add(w.id);
       let c = this.powers.get(w.id);
       if (!c) {
-        const bg = this.add.circle(0, 0, 18, w.kind === 'speed' ? 0x5ec8ff : 0xff6b8b, 0.35).setStrokeStyle(2, 0xffffff, 0.8);
-        const ic = this.add.image(0, -1, w.kind === 'speed' ? 'ic-boot' : 'ic-magnet').setScale(1);
-        c = this.add.container(w.x, w.y, [bg, ic]);
+        // speed: ChatGPT N-15b (winged boot inside its own glow circle), 16 px art at 3x; magnet: Ninja hook on a circle
+        c = w.kind === 'speed'
+          ? this.add.container(w.x, w.y, [this.add.image(0, 0, 'pw-speed').setScale(3)])
+          : this.add.container(w.x, w.y, [this.add.circle(0, 0, 18, 0xff6b8b, 0.35).setStrokeStyle(2, 0xffffff, 0.8), this.add.image(0, -1, 'ic-magnet').setScale(1)]);
         this.powers.set(w.id, c);
       }
       c.setPosition(w.x, w.y + Math.sin(now / 250 + w.id) * 4).setDepth(w.y);

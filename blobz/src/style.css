@@ -1294,3 +1294,8 @@ img[src$="star-empty.png"] { filter: sepia(0.6) saturate(0.6) brightness(1.75) c
   #menu #home .me .blob, #menu #home .me .blob img { width: 60px; height: 60px; }
   #menu #home .me-text { flex: 1; justify-content: space-between; }
 }
+
+/* meadow action button: the N-19b ring at strict 3x (24 px art -> 72 px), one place to swap the ring */
+:root { --k-ring: url('/art/dungeon/ui/btn-round-normal-24.png'); }
+#dash { width: 72px; height: 72px; background: var(--k-ring) center / 72px 72px no-repeat; image-rendering: pixelated; }
+#dash .icon { width: 48px; height: 48px; }
