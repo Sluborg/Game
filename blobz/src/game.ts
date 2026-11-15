@@ -225,6 +225,9 @@ export class GameScene extends Phaser.Scene {
   private dusk!: Phaser.GameObjects.Rectangle;
   private pile!: Phaser.GameObjects.Container;
   private portal?: { glow: Phaser.GameObjects.Image; ring: Phaser.GameObjects.Graphics; seed: number };
+  private portalImg?: Phaser.GameObjects.Image; // Code 2's portal picture (drawEntrance), found by its texture key
+  private portalFade = 1;
+  private bFade = new Map<Phaser.GameObjects.Image, number>();
   private pileKey = '';
   private trailG!: Phaser.GameObjects.Graphics;
   private pickG!: Phaser.GameObjects.Graphics;
@@ -341,7 +344,7 @@ export class GameScene extends Phaser.Scene {
     drawGatherRing(this.portal.ring, { x: e.x, y: e.y + ENTRANCE_RING.dy, rx: ENTRANCE_RING.rx, ry: ENTRANCE_RING.ry, inside, fill: v.entry, now: this.time.now });
     this.portal.ring.setVisible(v.mode === 'meadow');
     const pulse = 0.5 - 0.5 * Math.cos(this.time.now / 900); // slow, about 5.7 s a cycle
-    this.portal.glow.setVisible(v.mode === 'meadow').setAlpha(on || v.entry > 0 ? 1 : 0.15 + 0.45 * pulse);
+    this.portal.glow.setVisible(v.mode === 'meadow').setAlpha((on || v.entry > 0 ? 1 : 0.15 + 0.45 * pulse) * this.portalFade);
   }
 
   /** Put a node's shadow under the foot of its picture (the bottom edge), 70% of its width, just below its depth. */
@@ -656,6 +659,24 @@ export class GameScene extends Phaser.Scene {
       for (const b of this.blobs.values()) if (b.y < g.y - 6 && b.y > g.y - 140 && Math.abs(b.x - g.x) < 96) { hidden = true; break; }
       const want = hidden ? 0.45 : 1;
       if (g.fade !== want) { g.fade += Math.sign(want - g.fade) * Math.min(Math.abs(want - g.fade), dt * 4); g.img.setAlpha(g.fade); }
+    }
+    // ---- buildings + the portal fade while a blob stands behind them (Stefan 2026-11-15): the bottom third is the solid
+    //      base (sim solidBoxes), so a blob above it and inside the picture is behind the walls / roof ----
+    const fadeOne = (im: Phaser.GameObjects.Image | undefined) => {
+      if (!im || !im.visible || this.tweens.isTweening(im)) return 1; // the build drop-in owns the alpha while it plays
+      const top = im.y - im.displayHeight, baseTop = im.y - im.displayHeight / 3, half = im.displayWidth / 2 - 6;
+      let hidden = false;
+      for (const b of this.blobs.values()) if (b.y < baseTop && b.y > top + 10 && Math.abs(b.x - im.x) < half) { hidden = true; break; }
+      const want = hidden ? 0.45 : 1, cur = this.bFade.get(im) ?? 1;
+      const next = cur === want ? cur : cur + Math.sign(want - cur) * Math.min(Math.abs(want - cur), dt * 4);
+      this.bFade.set(im, next); im.setAlpha(next);
+      return next;
+    };
+    fadeOne(this.cottageImg);
+    for (const [k, g] of this.bgfx) if (g.built && k !== 'bridge') fadeOne(g.img);
+    if (DUNGEON_ENABLED) {
+      if (!this.portalImg?.active) this.portalImg = this.children.list.find((o): o is Phaser.GameObjects.Image => o instanceof Phaser.GameObjects.Image && o.texture.key === 'dg-entrance');
+      this.portalFade = fadeOne(this.portalImg);
     }
     // ---- dusk ----
     this.dusk.setFillStyle(v.phase === 'end' ? 0x4a2a6a : 0xff7a2f, v.phase === 'end' ? 0.38 : v.time >= 20 ? 0 : 0.1 + Math.min(1, (20 - v.time) / 20) * 0.25);
