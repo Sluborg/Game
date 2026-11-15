@@ -19,6 +19,8 @@
   </head>
   <body>
     <div id="game"></div>
+    <!-- landscape is parked: on a phone held sideways this covers the game until it is turned back (viewport.ts) -->
+    <div id="rotate" role="alert"><span id="rotate-blob"></span><b data-i18n="rotate.msg">Vänd telefonen</b><span class="rotate-hint" aria-hidden="true"></span></div>
     <!-- Loading screen (Stefan's ChatGPT art, order 80): app start and every round start -->
     <div id="loading" role="status" aria-live="polite">
       <div class="load-ui">

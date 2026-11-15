@@ -1,3 +1,4 @@
+import { onViewport, watchViewport } from './viewport';
 import { intFit } from './pixelScale';
 import Phaser from 'phaser';
 import '@fontsource/fredoka/500.css';
@@ -375,6 +376,10 @@ function startScene(session: Session) {
       scene: [],
     });
     game.scene.add('game', GameScene, false);
+    // every settled resize / rotation / return to the app: the canvas follows the viewport (and the camera via the
+    // scale 'resize' event); a canvas left at an old size was the "half the screen green" bug
+    const g = game;
+    onViewport((w, h) => { if (g.scale.width !== w || g.scale.height !== h) g.scale.resize(w, h); else g.scale.refresh(); });
   }
   loading(true, 0.1);
   loadPending = true;
@@ -842,3 +847,12 @@ const DEBUG = new URLSearchParams(location.search).has('debug');
 // Optional round length for quick games/tests: ?t=60
 const roundSecs = Math.max(0, Math.min(600, Number(new URLSearchParams(location.search).get('t')) || 0));
 
+
+// viewport watcher + the "turn your phone" overlay (landscape is parked); the overlay shows the player's own blob
+watchViewport();
+onViewport(() => {
+  if (!document.body.classList.contains('rotate-block')) return;
+  const slot = $('rotate-blob');
+  const key = JSON.stringify(profile.look);
+  if (slot.dataset.look !== key) { slot.dataset.look = key; slot.replaceChildren(blobEl(clampLook(profile.look))); }
+});
