@@ -41,12 +41,48 @@ function toPng(g: (string | null)[][], SCALE: number): string | null {
   return c.toDataURL('image/png');
 }
 
+/** Face crop for the Eyes / Mouth tiles (review 2 "enlarged face crops", Lead 2026-11-15): the player's blob in their
+ *  colour, cropped to the face (every pixel any eye or mouth option touches, plus 1 px), the option applied and the
+ *  other part neutral, no hat, at 4x. Only the face changes between the tiles. */
+const FACE_SCALE = 4;
+const faceBox = new Map<number, [number, number, number, number]>();
+function faceRegion(shape: number): [number, number, number, number] {
+  const hit = faceBox.get(shape);
+  if (hit) return hit;
+  const base = { color: COLORS[0], shape, hat: 0, eyes: 0, mouth: 0 };
+  const g0 = blobGrid(base);
+  let x0 = Infinity, y0 = Infinity, x1 = -1, y1 = -1;
+  const mark = (g: (string | null)[][]) => g.forEach((row, y) => row.forEach((c, x) => {
+    if (c !== g0[y][x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  }));
+  for (let k = 1; k < COUNT.eyes; k++) mark(blobGrid({ ...base, eyes: k }));
+  for (let k = 1; k < COUNT.mouth; k++) mark(blobGrid({ ...base, mouth: k }));
+  const box: [number, number, number, number] = x1 < 0 ? [5, 7, 14, 13] : [x0 - 1, y0 - 1, x1 + 1, y1 + 1];
+  faceBox.set(shape, box);
+  return box;
+}
+function faceCrop(look: BlobLook, part: 'eyes' | 'mouth', i: number): string {
+  const g = blobGrid({ ...look, hat: 0, eyes: part === 'eyes' ? i : NEUTRAL.eyes, mouth: part === 'mouth' ? i : NEUTRAL.mouth });
+  const [x0, y0, x1, y1] = faceRegion(look.shape);
+  const c = document.createElement('canvas');
+  c.width = (x1 - x0 + 1) * FACE_SCALE; c.height = (y1 - y0 + 1) * FACE_SCALE;
+  const ctx = c.getContext('2d')!;
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const col = g[y]?.[x];
+    if (col) { ctx.fillStyle = col; ctx.fillRect((x - x0) * FACE_SCALE, (y - y0) * FACE_SCALE, FACE_SCALE, FACE_SCALE); }
+  }
+  return c.toDataURL('image/png');
+}
+
 /** The picture for one designer tile. A hat option without pixels ("none") gets an empty tile. */
 export function partTile(look: BlobLook, part: TilePart, i: number): HTMLElement {
   if (part === 'shape') return blobEl({ ...look, shape: i, ...NEUTRAL });
-  const key = `${part}|${i}|${look.shape}`;
+  const key = part === 'hat' ? `${part}|${i}|${look.shape}` : `${part}|${i}|${look.shape}|${look.color}|${look.eyes}|${look.mouth}`;
   let url = cache.get(key);
-  if (url === undefined) { url = toPng(isolate({ ...look, color: COLORS[0] }, part, i), SCALE[part]) ?? ''; cache.set(key, url); }
+  if (url === undefined) {
+    url = part === 'hat' ? toPng(isolate({ ...look, color: COLORS[0] }, part, i), SCALE[part]) ?? '' : faceCrop(look, part, i);
+    cache.set(key, url);
+  }
   const s = document.createElement('span');
   s.className = 'part part-' + part;
   if (url) { const img = new Image(); img.src = url; img.alt = ''; img.draggable = false; s.append(img); }
