@@ -78,3 +78,11 @@ fights **2-3 waves** in a room; when the last wave is gone the **door at the top
 - `?noweapons` (host URL, synced to joiners): weapons only show while attacking (+0.5 s) or guarding; a class-colour
   ring under each blob instead (rogue purple, healer green, marksman blue, knight red).
 - Screenshot: `docs/screenshots/dungeon-rooms/playtest-fix2.png` (?noweapons, mid-wave).
+
+## Door + floor fixes (v052g playtest)
+- Open door: the doorway is a dark passage (no wall behind the open leaf) and walkable; the camera may scroll above the
+  room by the HUD's height so the door is never hidden under the HUD.
+- Door zone: the whole doorway + 1 tile below (`inDoorway`); every living blob inside for 1.5 s = next room; blobz
+  don't push each other inside it.
+- Coins and potions lie still on the floor with a fixed foot shadow (no bob).
+- Screenshot: `docs/screenshots/dungeon-rooms/door-open-passage.png`.

@@ -276,6 +276,12 @@ export class DungeonScene extends Phaser.Scene {
       const d = document.createElement('canvas'); d.width = 64; d.height = 48;
       const dg = d.getContext('2d')!;
       dg.drawImage(sh, 16, 240, 16, 32, 0, 16, 16, 32); dg.drawImage(sh, 64, 240, 16, 32, 48, 16, 16, 32);
+      if (k === 'x72-door-open') {
+        // the open doorway reads as a way on: a dark passage (no wall behind the open leaf), the room's floor
+        // fading into it from below
+        const gr = dg.createLinearGradient(0, 16, 0, 48); gr.addColorStop(0, '#040208'); gr.addColorStop(0.55, '#140d18'); gr.addColorStop(1, '#4a3b40');
+        dg.fillStyle = gr; dg.fillRect(16, 16, 32, 32);
+      }
       dg.drawImage(sh, 32, 224, 32, 16, 16, 0, 32, 16); dg.drawImage(sh, lx, 240, 32, 32, 16, 16, 32, 32);
       this.textures.addCanvas(k, d)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
@@ -390,11 +396,13 @@ export class DungeonScene extends Phaser.Scene {
     for (const c of d.coins) {
       seenC.add(c.id);
       let img = this.coins.get(c.id);
-      if (!img) { img = c.k === 1 ? this.add.sprite(c.x, c.y, 'na-potion').setScale(2.5) : this.add.sprite(c.x, c.y, 'na-coin', 0).setScale(2.4).play('na-coin'); this.coins.set(c.id, img); }
-      img.x += (c.x - img.x) * (smooth ? k : 1); img.y += (c.y - 4 - Math.abs(Math.sin(now / 200 + c.id)) * 4 - img.y) * (smooth ? k : 1);
+      if (!img) { img = c.k === 1 ? this.add.sprite(c.x, c.y, 'na-potion').setScale(2.5) : this.add.sprite(c.x, c.y, 'na-coin', 0).setScale(2.4).play('na-coin'); img.setData('sh', this.add.ellipse(c.x, c.y + 6, 18, 6, 0x000000, 0.28)); this.coins.set(c.id, img); }
+      // lying on the floor: no bob, a fixed foot shadow (Stefan: things on the ground lie still)
+      img.x += (c.x - img.x) * (smooth ? k : 1); img.y += (c.y - 4 - img.y) * (smooth ? k : 1);
       img.setDepth(c.y - 5);
+      (img.getData('sh') as Phaser.GameObjects.Ellipse).setPosition(img.x, img.y + 10).setDepth(c.y - 6);
     }
-    for (const [id, img] of this.coins) if (!seenC.has(id)) { img.destroy(); this.coins.delete(id); }
+    for (const [id, img] of this.coins) if (!seenC.has(id)) { (img.getData('sh') as Phaser.GameObjects.Ellipse | undefined)?.destroy(); img.destroy(); this.coins.delete(id); }
 
     // ---- monster shots (dodge them with a sidestep): Ninja fireballs, hostile orange (boss: purple), dark outline ----
     const seenS = new Set<number>();
@@ -599,7 +607,10 @@ export class DungeonScene extends Phaser.Scene {
   private roomCamY(y: number): number {
     if (!this.rooms || !this.map) return y;
     const cam = this.cameras.main, half = cam.height / cam.zoom / 2, H = fh(this.map) * ft(this.map);
-    return half * 2 >= H ? H / 2 : Math.max(half, Math.min(H - half, y));
+    // the top may scroll above the room by the HUD's height so the door is never hidden under the HUD
+    const hud = document.getElementById('hud-dg')?.getBoundingClientRect();
+    const top = hud && hud.height ? (hud.bottom * (this.scale.height / window.innerHeight)) / cam.zoom : 0;
+    return half * 2 >= H + top ? (H - top) / 2 : Math.max(half - top, Math.min(H - half, y));
   }
 
   /** While the loot card or the level-up cards are open, keep my blob in the biggest free screen band (between the HUD
