@@ -70,7 +70,7 @@ interface HeroGfx {
   wshadow?: Phaser.GameObjects.Ellipse; // the hovering weapon's small shadow on the ground
   weapon2?: Phaser.GameObjects.Sprite; // the rogue's second dagger / the Riddare's guarding shield
   arcFor?: number; // which swing already has its slash fx
-  glow?: Phaser.GameObjects.Arc; mode?: number; hopT?: number; // the wand's glow, its mode (from the snapshot)
+  glow?: Phaser.GameObjects.Arc; mode?: number; hopT?: number; hopH?: number; sqT?: number; // hop (height), squash on a hit // the wand's glow, its mode (from the snapshot)
   wa?: number; woff?: number; wsa?: number; lastSwing?: number; // smoothed weapon angle, slash offset, shield angle, time of the last swing
   tip?: { x: number; y: number }; // crossbow tip (bolts start there) // knight's shield wall (Art's fx-wall)
 }
@@ -438,12 +438,15 @@ export class DungeonScene extends Phaser.Scene {
       const ko = (h?.ko ?? 0) > 0;
       const sp = Math.hypot(b.vx, b.vy);
       const stretch = ko ? 0 : Math.min(0.18, sp / 1600);
+      // blob reactions (polish): a squash when hit (wobbles back), a happy hop on level-up / loot / revive
+      b.sqT = Math.max(0, (b.sqT ?? 0) - dt);
+      const sq = b.sqT > 0 ? Math.sin((b.sqT / 0.3) * Math.PI * 2) * 0.22 * (b.sqT / 0.3) : 0;
       b.shadow.setPosition(b.x, b.y + 12).setDepth(b.y - 20);
       // the marksman's jump back: a little hop arc
       b.hopT = Math.max(0, (b.hopT ?? 0) - dt);
-      const hop = b.hopT > 0 ? Math.sin((1 - b.hopT / 0.32) * Math.PI) * 18 : 0;
+      const hop = b.hopT > 0 ? Math.sin((1 - b.hopT / 0.32) * Math.PI) * (b.hopH ?? 18) : 0;
       b.body.setPosition(b.x, b.y - 4 + (ko ? 8 : 0) - hop).setDepth(b.y)
-        .setScale(BLOB_SCALE * (1 + stretch) * (ko ? 1.2 : 1), BLOB_SCALE * (1 - stretch * 0.6) * (ko ? 0.6 : 1))
+        .setScale(BLOB_SCALE * (1 + stretch + sq) * (ko ? 1.2 : 1), BLOB_SCALE * (1 - stretch * 0.6 - sq) * (ko ? 0.6 : 1))
         .setRotation(ko ? 0 : Phaser.Math.Clamp(b.vx / 1400, -0.18, 0.18))
         .setTint(ko ? 0x888888 : h?.phase ? 0xbfe6ff : 0xffffff)
         // the healer phased out: ghostly and shimmering; a dodge: see-through
@@ -790,7 +793,7 @@ export class DungeonScene extends Phaser.Scene {
         // the class moves (small button), each with a Ninja FX
         const b = this.heroes.get(f.id);
         if (f.k === 'rogue') { const c = this.add.sprite(f.x, f.y + 14, 'dg-fx-sidestep', 0).setOrigin(0.5, 1).setScale(1.6).setDepth(f.y - 2); c.play('dg-sidestep'); c.once('animationcomplete', () => c.destroy()); }
-        else if (f.k === 'marksman') { this.nfx('nf-dust', f.x, f.y + 14, 2.4); if (b) b.hopT = 0.32; }
+        else if (f.k === 'marksman') { this.nfx('nf-dust', f.x, f.y + 14, 2.4); if (b) { b.hopT = 0.32; b.hopH = 18; } }
         else if (f.k === 'tank') { if (b) this.ride(b, 'dg-fx-charge', 'dg-charge', 'charge', f.a, 1, 0.5, 2.5); this.nfx('nf-dust', f.x, f.y + 14, 2.2); }
         else { this.nfx('nf-smoke', f.x, f.y - 4, 2.6, 0xbfe6ff); this.time.delayedCall(2000, () => { const bb = this.heroes.get(f.id); if (bb) this.nfx('nf-smoke', bb.x, bb.y - 4, 2.2, 0xbfe6ff); }); }
         sfx.dash();
@@ -810,11 +813,16 @@ export class DungeonScene extends Phaser.Scene {
       }
       case 'ouch': {
         this.cameras.main.shake(90, 0.004); sfx.bump();
-        const b = this.heroes.get(f.id); if (b) this.tweens.add({ targets: b.body, alpha: 0.3, yoyo: true, duration: 80 });
+        const b = this.heroes.get(f.id); if (b) { this.tweens.add({ targets: b.body, alpha: 0.3, yoyo: true, duration: 80 }); b.sqT = 0.3; }
         break;
       }
       case 'ko': this.floatText(f.x, f.y - 50, t('dg.ko'), '#ffffff', 22); break;
-      case 'revive': { const r = this.add.sprite(f.x, f.y - 16, 'dg-revive', 0).setScale(2.5).setDepth(5000); r.play('dg-revive'); r.once('animationcomplete', () => r.destroy()); sfx.power(); break; }
+      case 'revive': {
+        // a friendly wake-up: spirit puff, a happy hop and a heart
+        const r = this.add.sprite(f.x, f.y - 16, 'dg-revive', 0).setScale(2.5).setDepth(5000); r.play('dg-revive'); r.once('animationcomplete', () => r.destroy());
+        const b = this.heroes.get(f.id); if (b) { b.hopT = 0.32; b.hopH = 14; }
+        this.floatText(f.x, f.y - 46, '♥', '#ff8aa0', 26); sfx.power(); break;
+      }
       case 'coin': {
         const s = this.add.sprite(f.x, f.y - 8, 'dg-sparkle', 0).setScale(1.2).setDepth(5000);
         s.play('dg-sparkle'); s.once('animationcomplete', () => s.destroy());
@@ -825,7 +833,7 @@ export class DungeonScene extends Phaser.Scene {
       case 'level': {
         const me = this.heroes.get(this.s.myId);
         this.floatText(me?.x ?? 0, (me?.y ?? 0) - 80, t('dg.level', { n: f.level }), '#8fd3ff', 30);
-        for (const hb of this.heroes.values()) this.nfx('n13-levelup', hb.x, hb.y - 20, 2.5); // N-13 level-up sparkle on every blob
+        for (const hb of this.heroes.values()) { this.nfx('n13-levelup', hb.x, hb.y - 20, 2.5); hb.hopT = 0.32; hb.hopH = 22; } // N-13 sparkle + a happy hop on every blob
         sfx.star();
         break;
       }
@@ -870,7 +878,15 @@ export class DungeonScene extends Phaser.Scene {
       }
       case 'potion': this.floatText(f.x, f.y - 30, t('dg.potion'), '#ff8a8a', 22); sfx.score(); break;
       case 'skill': { const b = this.heroes.get(f.id); const sk = skillOf(f.s); if (b && sk) this.floatText(b.x, b.y - 70, tSkill(sk.id), '#ffe08a', 20); break; }
-      case 'loot': { const b = f.win ? this.heroes.get(f.win) : undefined; const it = itemOf(f.item); if (b && it) { this.floatText(b.x, b.y - 70, tItem(it.id), '#c58bff', 22); this.burst(b.x, b.y - 10, 0xc58bff, 10, 36); } break; }
+      case 'loot': {
+        // the winner hops; the item flies up out of the blob and pops (juice)
+        const b = f.win ? this.heroes.get(f.win) : undefined; const it = itemOf(f.item);
+        if (b && it) {
+          this.floatText(b.x, b.y - 70, tItem(it.id), '#c58bff', 22); this.burst(b.x, b.y - 10, 0xc58bff, 10, 36);
+          b.hopT = 0.32; b.hopH = 22; this.nfx('n13-levelup', b.x, b.y - 24, 2.2);
+        }
+        break;
+      }
     }
   }
 }

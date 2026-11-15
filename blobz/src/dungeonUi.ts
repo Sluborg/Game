@@ -119,14 +119,22 @@ function ensureExtras() {
 
 const fmt = (t: number) => Math.floor(t / 60) + ':' + String(Math.max(0, Math.floor(t % 60))).padStart(2, '0');
 
+/** Set a HUD number; when it goes up it pops (juice). */
+function bump(el: HTMLElement, v: string) {
+  if (el.textContent === v) return;
+  const up = Number(v) > Number(el.textContent || 0);
+  el.textContent = v;
+  if (up) { el.classList.remove('dg-bump'); void el.offsetWidth; el.classList.add('dg-bump'); }
+}
+
 function renderHud(d: DView, myId: string) {
   const h = d.heroes[myId];
   if (h) renderHearts(h.hp, h.maxHp);
-  setText($('dg-gold'), String(d.gold));
+  bump($('dg-gold'), String(d.gold));
   setText($('dg-floor'), t('dg.floor', { d: d.dungeon, n: d.floor, max: FLOORS }));
   $('dg-time').classList.toggle('hidden', !DUNGEON_TIMER_ENABLED); // no time limit underground (flag off)
   if (DUNGEON_TIMER_ENABLED) { setText($('dg-time'), fmt(d.time)); $('dg-time').classList.toggle('low', d.time <= 30); }
-  setText($('dg-level'), String(d.level));
+  bump($('dg-level'), String(d.level));
   const lo = d.level >= 2 ? LEVEL_XP[d.level - 2] : 0, hi = LEVEL_XP[d.level - 1] ?? lo + 1;
   $('dg-xpfill').style.width = Math.round(Math.max(0, Math.min(1, (d.xp - lo) / Math.max(1, hi - lo))) * 100) + '%';
   // knocked out: countdown

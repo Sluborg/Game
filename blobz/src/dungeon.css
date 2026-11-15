@@ -233,3 +233,16 @@
 @media (orientation: landscape) {
   #dg-end.screen { background-image: url('/art/dungeon-end-landscape.png'); align-items: center; justify-content: flex-start; padding-left: max(24px, env(safe-area-inset-left)); }
 }
+
+/* ---------- polish: juice ---------- */
+/* cards and banners pop in (the independent `scale` property keeps each one's own translate) */
+@keyframes dgpop { 0% { scale: 0.8; opacity: 0; } 60% { scale: 1.05; opacity: 1; } 100% { scale: 1; } }
+#dg-cards:not(.hidden), #dg-loot:not(.hidden), #dg-ko:not(.hidden), #dg-end:not(.hidden) .card, #dg-boss:not(.hidden) { animation: dgpop 0.28s ease-out; }
+/* a picked skill card gives a little bounce */
+@keyframes dgpick { 0% { scale: 1; } 40% { scale: 1.08; } 100% { scale: 1; } }
+.skcard.on { animation: dgpick 0.25s ease-out; }
+/* HUD numbers pop when they go up (gold, level) */
+@keyframes dgbump { 0% { scale: 1; } 35% { scale: 1.35; color: #ffe08a; } 100% { scale: 1; } }
+#dg-gold { display: inline-block; } /* (scale needs a box) */
+.dg-bump { animation: dgbump 0.35s ease-out; }
+@media (prefers-reduced-motion: reduce) { #dg-cards, #dg-loot, #dg-ko, #dg-end .card, #dg-boss, .skcard.on, .dg-bump { animation: none !important; } }
