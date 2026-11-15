@@ -150,7 +150,8 @@ Redo the app icon (reference: https://raw.githubusercontent.com/sluborg/Game/cla
 Draw every sprite on the exact pixel grid named in the order (e.g. 16x16 = sixteen by sixteen art pixels), then deliver
 it UPSCALED with hard nearest-neighbour pixels so one art pixel = 8x8 image pixels (16x16 -> 128x128, 32x32 -> 256x256).
 When an order says "16x16 + 32x32", draw the SAME object twice: once on a 16x16 grid and once redrawn on a 32x32 grid
-(more detail, not a blurry upscale). Lay the sprites out in a neat grid on one sheet, solid flat magenta #ff00ff background (NOT transparent) (or flat
+(more detail, not a blurry upscale). The 32x32 version must be EXACTLY 32 art pixels across with a 1-pixel outline at
+that scale (twice the detail of the 16x16), never the 16x16 drawing with bigger pixels. Lay the sprites out in a neat grid on one sheet, solid flat magenta #ff00ff background (NOT transparent) (or flat
 magenta #ff00ff), at least one empty sprite-cell between them, labels NOT drawn in the image.
 ALWAYS: a solid flat magenta #ff00ff background (never fake transparency), hard pixel edges only, NO soft glows,
 halos, blur or semi-transparent pixels around any sprite (glows break the background removal). If an effect needs a
