@@ -19,10 +19,10 @@ const ICON: Partial<Record<string, string>> = {
   Form: UI('shape'), Färg: UI('colour'), Ögon: UI('eyes'), Mun: UI('mouth'), Hatt: UI('hat'),
   'Nytt spel': UI('new-game'), Joina: UI('join'), Slumpa: UI('dice'),
 };
-/** N-19 round button ring (set once Art has sliced dungeon/ui/btn-round-*). */
-const ROUND_RING = '';
+/** N-19 round button (48x48 file, the wooden ring itself is ~30x32 art px; pressed has the same outline). */
+const ROUND = (state: 'normal' | 'pressed') => `art/dungeon/ui/btn-round-${state}-48.png`;
 const GAPS = [
-  'N-19 round combat button (dungeon/ui/btn-round-*) is not sliced yet: the ring here is plain CSS until it lands',
+  'N-19 round button: its ring is ~30 px art, so integer scales give a ~62 px ring (2x) or ~93 px (3x); the review asked for 64-72 / 48-56 px. Both shown; pick one, or order a 22-24 px ring for 3x',
   'Selection tick badge: the N-18 ticks are 16x16, at 3x (48 px) they cover a 56 px tile, so they are shown at 2x (32 px) here; an 8x8 or 10x10 tick would fit 3x',
 ];
 
@@ -62,10 +62,9 @@ body.uikit > *:not(.k2) { display: none !important; }
 /* calm press: nothing swaps, nothing changes size; the face moves 2 px down onto its shadow and darkens a little */
 .k2 .kbtn, .k2 .kchip { box-shadow: 0 4px 0 0 #3f263166; }
 .k2 .ksec { box-shadow: inset 0 -3px 0 0 #e4cf9f, 0 4px 0 0 #3f263166; }
-.k2 .press, .k2 .kbtn:active, .k2 .kchip:active, .k2 .kround:active { transform: translateY(2px); filter: brightness(0.9); }
+.k2 .kbtn.press, .k2 .kchip.press, .k2 .kbtn:active, .k2 .kchip:active { transform: translateY(2px); filter: brightness(0.9); }
 .k2 .kbtn.press, .k2 .kchip.press { box-shadow: 0 2px 0 0 #3f263166; }
 .k2 .ksec.press { box-shadow: inset 0 -3px 0 0 #e4cf9f, 0 2px 0 0 #3f263166; }
-.k2 .kround.press { box-shadow: inset 0 0 0 2px #c9965a, 0 2px 0 0 #3f263155; }
 .k2 .kbtn { height: 56px; display: flex; align-items: center; justify-content: center; gap: 8px; font: 700 20px var(--font); }
 .k2 .kpri { color: #fff8e8; text-shadow: 0 2px 0 #8a3d12; border: 6px solid; border-image: url('${TW}button_normal.png') 2 fill / 6px stretch; }
 .k2 .ksec { color: var(--plum); background: var(--parch-2); border: 2px solid var(--edge-lo); border-radius: 4px; box-shadow: inset 0 -3px 0 0 #e4cf9f; }
@@ -90,10 +89,8 @@ body.uikit > *:not(.k2) { display: none !important; }
 .k2 .card2.no { background: #efe3c6; }
 .k2 .card2.no .kpic { opacity: 0.6; }
 .k2 .kcombat { display: flex; align-items: center; gap: 16px; }
-.k2 .kround { width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center; background: var(--parch-2);
-  border: 6px solid #8a5a3c; box-shadow: inset 0 0 0 2px #c9965a, 0 4px 0 0 #3f263155; }
-.k2 .kround img { width: 18px; height: 51px; image-rendering: pixelated; transform: rotate(35deg); }
-.k2 .kround.s { width: 56px; height: 56px; }
+.k2 .kround { display: grid; place-items: center; background-repeat: no-repeat; background-position: center; image-rendering: pixelated; }
+.k2 .kround img { image-rendering: pixelated; transform: rotate(35deg); }
 .k2 .kgaps { margin-top: 8px; padding: 8px 12px; background: var(--parch); border: 2px solid var(--edge); border-radius: 4px; font-size: 14px; }
 .k2 .kgaps li { margin: 4px 0; }
 
@@ -141,12 +138,13 @@ function label(target: HTMLElement, word: string, icons: boolean) {
   return target;
 }
 
-/** Round combat button: one circular wooden rim (N-19 ring when sliced), plain backing, free-standing symbol. */
-function roundBtn(small: boolean, pressed: boolean) {
-  const r = el('div', 'kround' + (small ? ' s' : '') + (pressed ? ' press' : ''));
-  if (ROUND_RING) r.classList.add('art');
-  const sym = small ? img(u('Items/Action/Interact.png'), 48, 48) : img(u('Items/Weapons/Sword/Sprite.png'), 18, 51);
-  if (small) sym.style.cssText = 'width:48px;height:48px;transform:none';
+/** Round combat button (N-19): the wooden ring art, plain backing, a free-standing symbol on top. Pressed = N-19's own
+ *  pressed frame (same outline and size, darker sunk face), no jump. */
+function roundBtn(scale: 2 | 3, pressed: boolean) {
+  const r = el('div', 'kround' + (pressed ? ' press' : ''));
+  r.style.cssText = `width:${48 * scale}px;height:${48 * scale}px;background-image:url('${ROUND(pressed ? 'pressed' : 'normal')}');background-size:${48 * scale}px`;
+  const sym = img(u('Items/Weapons/Sword/Sprite.png'), 6 * scale, 17 * scale);
+  if (pressed) sym.style.marginTop = `${scale}px`;
   r.append(sym);
   return r;
 }
@@ -204,10 +202,14 @@ function variant(v: (typeof VARIANTS)[number]) {
   );
   s.append(cards);
 
-  s.append(el('div', 'klab', 'Stridsknappar 72 / 56 px: vanlig | nedtryckt'));
+  s.append(el('div', 'klab', 'Rund stridsknapp N-19 i 2x (ring ~62 px): vanlig | nedtryckt'));
   const cb = el('div', 'kcombat');
-  for (const [small, pressed] of [[false, false], [false, true], [true, false], [true, true]]) cb.append(roundBtn(small, pressed));
+  for (const pressed of [false, true]) cb.append(roundBtn(2, pressed));
   s.append(cb);
+  s.append(el('div', 'klab', 'Rund stridsknapp N-19 i 3x (ring ~93 px): vanlig | nedtryckt'));
+  const cb3 = el('div', 'kcombat');
+  for (const pressed of [false, true]) cb3.append(roundBtn(3, pressed));
+  s.append(cb3);
   return s;
 }
 
