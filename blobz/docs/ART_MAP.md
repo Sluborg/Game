@@ -264,6 +264,14 @@ Reference for wiring art. **One art source:** CC0 "Ninja Adventure" pack, vendor
 | Pit / hole | Backgrounds/Tilesets/TilesetHole.png | 3x3 pit 0,0,48,48 | Dark hole with brown rim. |
 | Door | TilesetHouse.png | wooden doors 400,304,16,16 / 416,304,16,16 | MISSING a dungeon gate: use the stone arch, or Art draws in code. |
 
+## Fallback options (not in use)
+
+- **Fence:** "16x16 Fence and Well [Tiny 16]", https://opengameart.org/node/114382 (reference: docs/art-review/fence-reference-tiny16.jpg).
+  Its page says no attribution required, and its fence source ("Fantastic Fence") is CC0. The licence field could not be
+  read (opengameart blocks automated fetches), and the well is a recolour of Tiny 16: Basic, which is CC-BY 4.0/3.0 /
+  OGA-BY 3.0. Before use, open the page and confirm the licence field (CC0 expected for the fence) and the author.
+  Current fence = ChatGPT N-30b (scripts/fence_pieces.py).
+
 ## Forbidden art (Stefan, PLAN.md 2026-11-15)
 Never use these, not as a stand-in either:
 | Art | File / rect | Why / use instead |

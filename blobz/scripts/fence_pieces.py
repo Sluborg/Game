@@ -3,10 +3,10 @@
 Replaces v1 (crops of the gate post + n30b-fence-chatgpt.png, commit 0ad91a1). Only crop, resample and align.
 
 usage (from blobz/): python3 scripts/fence_pieces.py
-  -> public/art/props/fence-post.png, fence-rail-h.png, fence-rail-v.png + docs/art-review/n30b-fence-pen-v3.png
-North-south runs (Stefan): fence-rail-v is drawn ON TOP of the posts (higher depth than every post), one tile per
-16 px from the upper post's top (tile y*16 - 11, the post's top row) down to the next post's top, so the run reads as
-one connected fence.
+  -> public/art/props/fence-post.png, fence-rail-h.png, fence-rail-v.png + docs/art-review/n30b-fence-pen-v4.png
+North-south runs (Stefan, like the Tiny 16 fence reference): a post on EVERY tile, y-sorted (each lower post in front of
+the one above), and fence-rail-v (a 3 px centre strip: outline, wood with iron bands, outline) drawn on top of each post
+from just below its cap (tile y*16 - 8) for 16 px, so it runs into the next post, whose cap covers its end.
 
 Grid: ChatGPT drew one rivet + plank repeat every 120.2 px. The pitch 120.2 * 3 / 16 = 22.54 puts exactly 3 repeats in a
 16 px tile, and makes the post 27 art px tall, the same as the N-30 gate post (26), so fence and gate share a scale.
@@ -14,8 +14,8 @@ The sampler keeps the 1 px outline: a cell that is 30%+ near-black outline takes
   fence-post   16x32: the post, centred, foot on row 31 (overhangs the tile above, like the gate and the trees)
   fence-rail-h 16x32: a 16-col window of each rail, picked where col w and col w+16 match (seamless left/right), at the
                rails' heights relative to the post in ChatGPT's picture (rows 10-15 and 20-25)
-  fence-rail-v 16x16: 14 rows of the vertical rail (mid-plank to mid-plank, one band), 2 plank rows repeated -> 16,
-               tiles top/bottom; 5 px wide, centred
+  fence-rail-v 16x16: 14 rows of the vertical rail (one plank + one band), 2 plank rows repeated -> 16, tiles
+               top/bottom; narrowed to a 3 px centre strip (outline, centre column, outline) at cols 6-8
 """
 import os
 import sys
@@ -89,8 +89,9 @@ def pieces():
     b0 = bands[len(bands) // 2]  # a row inside the second band
     rows = [r for r in range(b0 - 10, b0 + 4)]  # 14 rows: mid plank, band, plank (band period is 14)
     rows = rows[:3] + rows[3:5] + rows[3:]  # repeat 2 plank rows -> 16
+    strip = v[rows][:, [0, v.shape[1] // 2, v.shape[1] - 1]]  # thin centre strip: outline, centre column, outline
     rv = np.zeros((16, 16, 4), np.uint8)
-    rv[:, (16 - v.shape[1]) // 2:(16 - v.shape[1]) // 2 + v.shape[1]] = v[rows]
+    rv[:, 6:9] = strip  # centred on the post (post cols 4-11)
     return p, rh, rv, k
 
 
@@ -119,23 +120,23 @@ def pen(p, rh, rv):
                 items.append((y, 2, P, x * 16, y * 16 - 16))
     for x in (x0, x1, tx):
         yb = y1 if x != tx else y0 + 4  # the T divider runs 4 tiles down from the top side
-        for y in range(y0, yb):
-            items.append((99, y, RV, x * 16, y * 16 - 11))  # on top of the posts: post top-centre to the next post's top
-        for y in range(y0 + 1, yb + 1):
-            if (y - y0) % 2 == 0 or y == yb:
+        for y in range(y0, yb + 1):  # N-S run: a post on EVERY tile, y-sorted so each lower post overlaps the one above
+            if not (x in (x0, x1) and y in (y0, y1)) and not (x == tx and y == y0):
                 items.append((y, 2, P, x * 16, y * 16 - 16))
+            if y < yb:  # thin rail strip down the post's centre, on top of it, from below its cap to the next post's cap
+                items.append((y, 3, RV, x * 16, y * 16 - 8))
     items.append((y1, 1, gate.crop(gb), gx * 16 + gb[0], y1 * 16 + 16 - (gb[3] - gb[1])))
     items.append((y1 - 2, 3, blob, 7 * 16, (y1 - 2) * 16 + 16 - blob.height))
     for _, _, spr, x, y in sorted(items, key=lambda t: (t[0], t[1])):
         im.alpha_composite(spr, (x, y))
     big = im.resize((im.width * S, im.height * S), Image.NEAREST)
     bar = Image.new('RGBA', (big.width, 60), (20, 27, 27, 255))
-    ImageDraw.Draw(bar).text((10, 8), 'N-30b fence pen v3 (3x), from ChatGPT 3-piece set', fill='white', font_size=18)
-    ImageDraw.Draw(bar).text((10, 34), '4 corners, a T, N-30 gate, blob; N-S rail on top of posts', fill='#ffe18d', font_size=16)
+    ImageDraw.Draw(bar).text((10, 8), 'N-30b fence pen v4 (3x), from ChatGPT 3-piece set', fill='white', font_size=18)
+    ImageDraw.Draw(bar).text((10, 34), 'N-S: post on every tile + thin centre rail on top', fill='#ffe18d', font_size=16)
     out = Image.new('RGBA', (big.width, big.height + 60))
     out.paste(bar, (0, 0))
     out.paste(big, (0, 60))
-    out.save(os.path.join(REV, 'n30b-fence-pen-v3.png'))
+    out.save(os.path.join(REV, 'n30b-fence-pen-v4.png'))
 
 
 def main():
@@ -145,7 +146,7 @@ def main():
         Image.fromarray(a).save(os.path.join(PROPS, name + '.png'))
         print(name, a.shape[1], 'x', a.shape[0])
     pen(p, rh, rv)
-    print('docs/art-review/n30b-fence-pen-v3.png')
+    print('docs/art-review/n30b-fence-pen-v4.png')
 
 
 if __name__ == '__main__':
