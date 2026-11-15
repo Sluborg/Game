@@ -1,10 +1,12 @@
 // Ninja Adventure pictures for the HTML UI (docs/ART_MAP.md 7, docs/OLD_ART_CHECKLIST.md). One place for every DOM path
 // so no old art (art/gather, art/icons, art/base, art/fine) is referenced by the menus or the HUD.
 // Single Ninja files are used in place; pieces cut from tilesets live in art/ninja/ (scripts/ninja_crops.py).
+import { resIcon } from './resArt';
+
 const N = (p: string) => encodeURI('assets/ninja-adventure/' + p);
 
 export const NI = {
-  wood: N('Items/Resource/Branch.png'), stone: N('Items/Resource/Rock.png'), berry: N('Items/Food/Nut2.png'),
+  wood: resIcon('wood'), stone: resIcon('stone'), berry: resIcon('berry'), // one line each in resArt.ts
   sun: N('Ui/Skill Icon/Meteo/Sun.png'), build: 'art/icons/ui/hammer-16.png', // ChatGPT N-17 hammer
   dice: 'art/icons/ui/dice-16.png', back: 'art/icons/ui/back-16.png', // ChatGPT N-17
   dash: 'art/icons/ui/play-16.png', // N-17 stand-in until a free-standing speed symbol exists (no square backing)
