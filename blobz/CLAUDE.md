@@ -83,6 +83,8 @@ Stefan works phone-only; replies in Swedish or English, docs and code in English
   and do not ask for a merge; Lead posts the rating on the board and merges only after Stefan rates 4-5.
 - **Rating images (Stefan 2026-11-15):** one portrait screen (390x844) per rating, never several full screens.
   Small parts (buttons, icons) may be cropped side by side in one image. Landscape is parked until later.
+- **One clear question per item (Stefan 2026-11-16):** never bundle several things in one board question. One
+  image, one short question ("Bra?", "Övre eller undre?"), max 2-4 options. Split sheets into separate questions.
 - **One thing at a time, rated (Stefan 2026-11-14):** every deliverable (art or feature) goes on the board as a rating
   question (`rate: true`, `img`/`imgs`), Stefan rates 1-5 + comment. 4-5 = approved, 5 = "more of this". 1-3 = redo
   with his comment. Only one step in flight per area; the next step starts after a 4-5.
