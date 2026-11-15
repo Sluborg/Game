@@ -16,7 +16,7 @@ import { entranceOf, DUNGEON_ENABLED, type View } from './sim';
 const BLOB_SCALE = 3; // blobz v2: 16x18 grid at the Ninja world scale, same as the meadow (game.ts)
 const FACE_DEAD = 40; // px/s, same as the meadow: slower = idle frame, facing kept
 /** nameplate: 16 px class icon + 3 px gap + the name, at most PLATE_MAX px wide (13 px text, then 12 px, then "…") */
-const PLATE_ICON = 16, PLATE_GAP = 3, PLATE_MAX = 75; // 75 + rounding <= 76
+const PLATE_ICON = 16, PLATE_GAP = 3, PLATE_MAX = 75, PLATE_DEPTH = 6000; // plates draw above every world object (columns, bubbles, FX), below banners // 75 + rounding <= 76
 function fitPlate(t: Phaser.GameObjects.Text, name: string) {
   const room = PLATE_MAX - PLATE_ICON - PLATE_GAP;
   t.setFontSize(13).setText(name);
@@ -249,9 +249,9 @@ export class DungeonScene extends Phaser.Scene {
     // so on wider phones a dark margin shows left / right. Only a phone narrower than the room shrinks (never happens
     // when every phone reports its width). Landscape and the classic dungeon keep the fitted zoom.
     // Device pixels (pixelScale.ts; the canvas is CSS size x dpr() once Code flips DPR_CANVAS): one art px (3 world px)
-    // = k WHOLE device px, k = round(3 x dpr) unless the room would not fit, then the largest k that fits.
+    // = k WHOLE device px, k = floor(3 x dpr) unless the room would not fit, then the largest k that fits.
     const d = dpr(), roomPx = this.rooms && this.map ? fw(this.map) * ft(this.map) : 0;
-    if (roomPx && h >= w) { const k = Math.max(1, Math.min(Math.round(3 * d), Math.floor(w / (roomPx / 3)))); cam.setZoom(k / 3); }
+    if (roomPx && h >= w) { const k = Math.max(1, Math.min(Math.floor(3 * d + 1e-6), Math.floor(w / (roomPx / 3)))); cam.setZoom(k / 3); } // k: 3 at dpr 1, 6 at 2, 7 at 2.625, 9 at 3
     else cam.setZoom(snapZoom(Math.max(0.55, Math.min(2.2, Math.min(Math.max(w, h) / d / 820, Math.min(w, h) / d / 430)))));
     if (this.rooms) cam.setBackgroundColor('#181425'); // the margin = the room's own dark
     // jump straight to where the camera should be for the new size (the easing would start from the stale view)
@@ -561,7 +561,7 @@ export class DungeonScene extends Phaser.Scene {
       // nameplate: [class icon] name, centred together under the blob
       if (h && b.icon.texture.key !== 'cls-' + h.cls) b.icon.setTexture('cls-' + h.cls);
       if (b.plateName !== info.name) { b.plateName = info.name; fitPlate(b.label, info.name); }
-      b.plateY = b.y + 24; // placed after the loop (plates never overlap each other)
+      b.plateY = b.y + (h && !ko && h.offer.length ? 34 : 24); // below the card-picking bubble too; placed after the loop (plates never overlap each other)
       b.icon.setVisible(!!h);
       b.me.setPosition(b.x, b.y - 50).setDepth(b.y + 3);
       // friends' health: the Ninja mini life bar (green, red when low)
@@ -690,8 +690,8 @@ export class DungeonScene extends Phaser.Scene {
       let y = b.plateY ?? b.y + 24;
       while (placed.some((q) => x0 < q.x1 + 2 && x0 + w > q.x0 - 2 && Math.abs(q.y - y) < ROW)) y += ROW;
       placed.push({ x0, x1: x0 + w, y });
-      b.icon.setPosition(Math.round(x0 + PLATE_ICON / 2), Math.round(y)).setDepth(b.y + 2);
-      b.label.setPosition(Math.round(x0 + PLATE_ICON + PLATE_GAP + b.label.width / 2), Math.round(y)).setDepth(b.y + 2);
+      b.icon.setPosition(Math.round(x0 + PLATE_ICON / 2), Math.round(y)).setDepth(PLATE_DEPTH);
+      b.label.setPosition(Math.round(x0 + PLATE_ICON + PLATE_GAP + b.label.width / 2), Math.round(y)).setDepth(PLATE_DEPTH);
     }
   }
 
