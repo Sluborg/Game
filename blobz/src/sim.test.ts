@@ -193,3 +193,14 @@ describe('build spots keep the paths free (Stefan 2026-11-15)', () => {
     }
   });
 });
+
+describe('building plots (Stefan 2026-11-15: fixed, visible, kept clear)', () => {
+  it('no tree, bush or rock ever spawns on a plot', async () => {
+    const { makeTrees, plotRect, PLOT_KINDS, BUILDING_ENABLED } = await import('./sim');
+    if (!BUILDING_ENABLED) return;
+    for (let seed = 1; seed <= 80; seed++) for (const t of makeTrees(seed)) for (const k of PLOT_KINDS) {
+      const r = plotRect(k);
+      expect(t.x > r.x0 - 20 && t.x < r.x1 + 20 && t.y > r.y0 - 20 && t.y < r.y1 + 20, `seed ${seed}: node on the ${k} plot`).toBe(false);
+    }
+  });
+});

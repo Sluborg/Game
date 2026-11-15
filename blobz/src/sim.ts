@@ -170,6 +170,15 @@ export const BUILD_SPOTS = Object.fromEntries(RING_ORDER.map((k, i) => {
   return [k, SPOT_OVERRIDE[k] ?? { x: Math.round(BASE.x + Math.cos(a) * BUILD_RING), y: Math.round(BASE.y + Math.sin(a) * BUILD_RING) }];
 })) as Record<BuildKind, { x: number; y: number }>;
 export const COTTAGE_PAD = { x: BASE.x, y: BASE.y + 124 };
+/** Every building's fixed plot (Stefan 2026-11-15: "new buildings come at weird places"): the rectangle its picture
+ *  covers on the ground, art [width, height] at 3x with the bottom at the spot's foot line. Shown as a ghost outline
+ *  before it is built (game.ts), and no tree, bush or item ever spawns on it (makeTrees, freeSpot). */
+const PLOT_ART: Record<Exclude<BuildKind, 'bridge'>, [number, number]> = { storage: [32, 32], workshop: [48, 48], well: [16, 21], watchtower: [24, 32], garden: [64, 42] };
+export function plotRect(k: Exclude<BuildKind, 'bridge'>): Rect {
+  const at = BUILD_SPOTS[k], [w, h] = PLOT_ART[k], f = at.y - BUILD_R + 4;
+  return { x0: at.x - w * 1.5, x1: at.x + w * 1.5, y0: f - h * 3, y1: f };
+}
+export const PLOT_KINDS = Object.keys(PLOT_ART) as Exclude<BuildKind, 'bridge'>[];
 export const COTTAGE_COST: Res[] = [res(20, 15, 10), res(40, 30, 20)].map(priced); // to level 2, to level 3
 export const COTTAGE_MAX = 3;
 /** First thing the bank pays for right now: a missing building (BUILD_KINDS order), else the next cottage level. */
@@ -376,6 +385,7 @@ export function makeTrees(seed: number): Tree[] {
     const y = 70 + r() * (WORLD_H - 130);
     if (nearBase(x, y, 90)) continue;
     if (spots.some((p) => Math.hypot(p.x - x, p.y - y) < 80)) continue;
+    if (BUILDING_ENABLED && PLOT_KINDS.some((k) => inRect(plotRect(k), x, y, 30))) continue; // plots stay clear
     if (zones.some((z) => inRect(z, x, y, 40))) continue;
     if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < 150)) continue; // spread out (declutter)
     const roll = r();
@@ -497,6 +507,7 @@ function freeSpot(s: State, minBase = 60): { x: number; y: number } {
     if (s.trees.some((t) => Math.hypot(t.x - x, t.y - y) < 34)) continue;
     if (s.layout.some((l) => inRect(l.zone, x, y, 20))) continue;
     if ([...Object.values(BUILD_SPOTS), COTTAGE_PAD].some((p) => Math.hypot(p.x - x, p.y - y) < BUILD_R + 40)) continue;
+    if (BUILDING_ENABLED && PLOT_KINDS.some((k) => inRect(plotRect(k), x, y, 20))) continue;
     if (DUNGEON_ENABLED && Math.hypot(s.entrance.x - x, s.entrance.y - y) < ENTRANCE_R + 40) continue; // [dungeon hook]
     if (BUILDING_ENABLED && [s.water.area, ...s.water.water].some((r) => inRect(r, x, y, 30))) continue;
     return { x, y };

@@ -6,10 +6,10 @@ import { sfx } from './sfx';
 import { dungeonFrame } from './dungeonScene'; // [dungeon hook]
 import { BASE, GATE_W, makePuzzles, makeTrees, PLATE_R, rng, WORLD_H, WORLD_W } from './sim';
 import { isSolid, RES } from './sim';
-import { affordable, BUILDING_ENABLED, BUILD_KINDS, BUILD_R, BUILD_SPOTS, COTTAGE_PAD, makeWater, nodeRes } from './sim';
+import { affordable, BUILDING_ENABLED, BUILD_KINDS, BUILD_R, BUILD_SPOTS, COTTAGE_PAD, makeWater, nodeRes, plotRect, atHome } from './sim';
 import type { Biome, BuildKind } from './sim';
 import { DUNGEON_ENABLED, ENTRANCE_RING, entranceOf, ICE_RX, ICE_RY, makeIce, onEntrance, WATER_TILE } from './sim';
-import { drawGatherRing } from './gatherRing';
+import { drawGatherRing, GATHER_RING } from './gatherRing';
 import { autotileMask, waterTiles, type Shore } from './water';
 import { cavePath } from './cavePath';
 import { isImgArt, RES_ART } from './resArt';
@@ -165,6 +165,7 @@ function fitLabel(label: Phaser.GameObjects.Text, name: string) {
   label.setText(name);
   for (let n = name.length - 1; label.width > NAME_MAX && n > 0; n--) label.setText(name.slice(0, n) + '…');
 }
+const buildPanelOpen = () => typeof document !== 'undefined' && !document.getElementById('build-panel')?.classList.contains('hidden');
 const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.search).has('debug');
 const MAP_VIEW = DEBUG && new URLSearchParams(location.search).has('mapview');
 /** Below this speed (px/s) the face looks straight ahead. */
@@ -225,7 +226,7 @@ export class GameScene extends Phaser.Scene {
   private miniDeco: Phaser.GameObjects.GameObject[] = [];
   private miniBg?: Phaser.GameObjects.Image;
   private drops = new Map<number, { item: Phaser.GameObjects.Image; mark: Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse }>();
-  private bgfx = new Map<BuildKind, { img: Phaser.GameObjects.Image; sh?: Phaser.GameObjects.Image; built: boolean }>();
+  private bgfx = new Map<BuildKind, { img: Phaser.GameObjects.Image; sh?: Phaser.GameObjects.Image; built: boolean; ghost?: Phaser.GameObjects.Container }>();
   private cottageImg!: Phaser.GameObjects.Image;
   private water!: ReturnType<typeof makeWater>;
   private nodes: { img: Phaser.GameObjects.Image; sh: Phaser.GameObjects.Image; kind: number; left: number; x: number; y: number; sc: number; fade: number; blossom: boolean; tree?: TreeVariant }[] = [];
@@ -859,8 +860,25 @@ export class GameScene extends Phaser.Scene {
         ? this.add.image(w.bridge.x, w.bridge.y + 69, 'b-bridge').setScale(NINJA_SCALE).setOrigin(0.5, 1).setDepth(-930)
         : this.add.image(at.x, at.y - BUILD_R + 4, 'b-' + k).setScale(PROP_SCALE).setOrigin(0.5, 1).setDepth(at.y - BUILD_R + 4);
       const sh = k === 'bridge' ? undefined : this.shadow(at.x, at.y - BUILD_R + 2, img.displayWidth * 0.85, 24, 0.24).setDepth(at.y - BUILD_R + 3).setVisible(false);
-      this.bgfx.set(k, { img: img.setVisible(false), sh, built: false });
+      this.bgfx.set(k, { img: img.setVisible(false), sh, built: false, ghost: k === 'bridge' ? undefined : this.plotGhost(k) });
     }
+  }
+
+  /** The plot of a building not built yet (Stefan 2026-11-15): a faint dashed foundation on the ground where it will
+   *  stand (the picture's full width, its lower body deep) with the building's own picture small (1x) in the middle.
+   *  Shown while the build panel is open or your blob is near (drawBuilds). */
+  private plotGhost(k: Exclude<BuildKind, 'bridge'>) {
+    const r = plotRect(k);
+    const h = Math.min(r.y1 - r.y0, 66);
+    const x0 = r.x0, x1 = r.x1, y0 = r.y1 - h, y1 = r.y1;
+    const g = this.add.graphics();
+    g.fillStyle(GATHER_RING.track, 0.22).fillRect(x0, y0, x1 - x0, h);
+    g.fillStyle(GATHER_RING.plum, 0.6);
+    const hd = (y: number) => { for (let x = x0; x < x1; x += 15) g.fillRect(x, y - 1.5, Math.min(9, x1 - x), 3); }; // 9 px dashes, 6 px gaps
+    const vd = (x: number) => { for (let y = y0; y < y1; y += 15) g.fillRect(x - 1.5, y, 3, Math.min(9, y1 - y)); };
+    hd(y0); hd(y1); vd(x0); vd(x1);
+    const icon = this.add.image((x0 + x1) / 2, (y0 + y1) / 2, 'b-' + k).setScale(1).setAlpha(0.75);
+    return this.add.container(0, 0, [g, icon]).setDepth(-900).setAlpha(0).setVisible(false);
   }
 
   private drawBuilds(v: View, _now: number) {
@@ -874,6 +892,13 @@ export class GameScene extends Phaser.Scene {
       if (!g) continue;
       const on = b.state === 2;
       if (on !== g.built) { g.built = on; g.img.setVisible(on); g.sh?.setVisible(on); }
+      if (g.ghost) { // the plot ghost: build panel open, your blob on the home yard, or within 200 px of the spot
+        const at = BUILD_SPOTS[b.kind], me = this.blobs.get(this.s.myId);
+        const near = !!me && (Math.hypot(me.x - at.x, me.y - at.y) < 200 || atHome(me.x, me.y)); // on the yard: every plot
+        const want = !on && v.mode === 'meadow' && v.phase === 'play' && (buildPanelOpen() || near) ? 1 : 0;
+        const a = g.ghost.alpha + Math.sign(want - g.ghost.alpha) * Math.min(Math.abs(want - g.ghost.alpha), 0.08);
+        g.ghost.setAlpha(a).setVisible(a > 0.01);
+      }
     }
     this.drawYard(lvl, v.builds.filter((b) => b.state === 2 && b.kind !== 'bridge').map((b) => b.kind));
     this.drawArrows(v);
