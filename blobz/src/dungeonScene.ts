@@ -1042,19 +1042,7 @@ function drawEntrance(scene: Phaser.Scene, v: View, seed: number) {
       im.onerror = () => { /* no snowy cave yet: the normal one is used */ };
       im.src = src;
     };
-    // Ninja Adventure stone arch (TilesetHouse 464,322,48,42) over a dark stairs-down tile, both biomes
-    if (!scene.textures.exists('dg-entrance')) {
-      const im = new Image();
-      im.onload = () => {
-        if (scene.textures.exists('dg-entrance')) return;
-        const c = document.createElement('canvas'); c.width = 48; c.height = 42;
-        const g2 = c.getContext('2d')!;
-        g2.fillStyle = '#141b1b'; g2.fillRect(12, 16, 24, 26);
-        g2.drawImage(im, 464, 322, 48, 42, 0, 0, 48, 42);
-        scene.textures.addCanvas('dg-entrance', c)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
-      };
-      im.src = 'assets/ninja-adventure/Backgrounds/Tilesets/TilesetHouse.png';
-    }
+    // the cave mouth = ChatGPT N-28 portal-idle.png, preloaded by the meadow (game.ts) under 'dg-entrance'
     void load;
     g = {
       seed, at: ENTRANCE,
