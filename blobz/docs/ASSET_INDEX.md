@@ -11,13 +11,13 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
   image / CSS background or border image / canvas icon, or a WebGL texture bound at a Phaser draw call); CODE ONLY =
   referenced but never shown in the run (remove the reference and the file); UNUSED = no reference and never shown.
 
-**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 195 / IN GAME 27 / UNUSED 82.
+**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 195 / IN GAME 27 / UNUSED 86.
 
 **Claude-drawn still IN GAME** (0): none
 
 **Kenney still IN GAME** (0): none
 
-**Counts by source:** ChatGPT 253 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 17 (Ninja: 112 referenced by code). **Own files:** 304, 14 delete candidates.
+**Counts by source:** ChatGPT 257 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 17 (Ninja: 112 referenced by code). **Own files:** 308, 18 delete candidates.
 
 ## Own files (art, Kenney, app icons)
 
@@ -137,13 +137,17 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/dungeon/ui/hazard-ring-2.png` | 48x32 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/ui/hazard-ring-3.png` | 48x32 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/ui/hazard-ring.png` | 192x32 | ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:143 | keep |
-| `art/dungeon/wall-bl.png` | 16x16 | ChatGPT N-34b room walls, sliced by scripts/room_walls.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
-| `art/dungeon/wall-br.png` | 16x16 | ChatGPT N-34b room walls, sliced by scripts/room_walls.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
-| `art/dungeon/wall-l.png` | 16x16 | ChatGPT N-34b room walls, sliced by scripts/room_walls.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
-| `art/dungeon/wall-r.png` | 16x16 | ChatGPT N-34b room walls, sliced by scripts/room_walls.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
-| `art/dungeon/wall-t.png` | 16x16 | ChatGPT N-34b room walls, sliced by scripts/room_walls.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
-| `art/dungeon/wall-tl.png` | 16x16 | ChatGPT N-34b room walls, sliced by scripts/room_walls.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
-| `art/dungeon/wall-tr.png` | 16x16 | ChatGPT N-34b room walls, sliced by scripts/room_walls.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/wall-b.png` | 16x16 | ChatGPT N-34b room walls / N-34c entrance (wall-b, wall-entrance-*), sliced by scripts/room_walls.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/wall-bl.png` | 16x16 | ChatGPT N-34b room walls / N-34c entrance (wall-b, wall-entrance-*), sliced by scripts/room_walls.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/wall-br.png` | 16x16 | ChatGPT N-34b room walls / N-34c entrance (wall-b, wall-entrance-*), sliced by scripts/room_walls.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/wall-entrance-l.png` | 16x16 | ChatGPT N-34b room walls / N-34c entrance (wall-b, wall-entrance-*), sliced by scripts/room_walls.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/wall-entrance-mid.png` | 16x16 | ChatGPT N-34b room walls / N-34c entrance (wall-b, wall-entrance-*), sliced by scripts/room_walls.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/wall-entrance-r.png` | 16x16 | ChatGPT N-34b room walls / N-34c entrance (wall-b, wall-entrance-*), sliced by scripts/room_walls.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/wall-l.png` | 16x16 | ChatGPT N-34b room walls / N-34c entrance (wall-b, wall-entrance-*), sliced by scripts/room_walls.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/wall-r.png` | 16x16 | ChatGPT N-34b room walls / N-34c entrance (wall-b, wall-entrance-*), sliced by scripts/room_walls.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/wall-t.png` | 16x16 | ChatGPT N-34b room walls / N-34c entrance (wall-b, wall-entrance-*), sliced by scripts/room_walls.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/wall-tl.png` | 16x16 | ChatGPT N-34b room walls / N-34c entrance (wall-b, wall-entrance-*), sliced by scripts/room_walls.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/wall-tr.png` | 16x16 | ChatGPT N-34b room walls / N-34c entrance (wall-b, wall-entrance-*), sliced by scripts/room_walls.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
 | `art/dungeon/weapons/crossbow-16.png` | 16x16 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:44, src/dungeonScene.ts:41 | keep |
 | `art/dungeon/weapons/crossbow-32.png` | 32x32 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/weapons/dagger-16.png` | 16x16 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonUi.ts:44 | keep |
@@ -702,8 +706,12 @@ See `archive/README.md`.
 - `art/dungeon/door-closed-48.png`
 - `art/dungeon/door-open-32.png`
 - `art/dungeon/door-open-48.png`
+- `art/dungeon/wall-b.png`
 - `art/dungeon/wall-bl.png`
 - `art/dungeon/wall-br.png`
+- `art/dungeon/wall-entrance-l.png`
+- `art/dungeon/wall-entrance-mid.png`
+- `art/dungeon/wall-entrance-r.png`
 - `art/dungeon/wall-l.png`
 - `art/dungeon/wall-r.png`
 - `art/dungeon/wall-t.png`

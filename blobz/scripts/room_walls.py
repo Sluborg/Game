@@ -2,7 +2,7 @@
 """N-34b dungeon room walls (ChatGPT, docs/art-review/n34b-room-walls.png) -> 16 px tiles + a 3x room test.
 
 usage (from blobz/): python3 scripts/room_walls.py
-  -> public/art/dungeon/wall-{tl,t,tr,l,r,bl,br}.png (16x16) + docs/art-review/n34-room-test.png
+  -> public/art/dungeon/wall-{tl,t,tr,l,r,bl,br}.png (16x16) + wall-{b,entrance-l,entrance-mid,entrance-r}.png + docs/art-review/n34-room-test.png
 
 Every piece has a 1 art px outline all round; where a piece joins another wall piece (top edge left/right, top
 corners towards the edge, sides top/bottom, bottom corners top) that outline is cut off before sampling, so the
@@ -17,7 +17,8 @@ the 16 px row (7% squash). Outline-keeping sampler (a cell that is 30%+ near-bla
                    where row k and row k+16 match best, so they tile vertically
   wall-bl / wall-br: 16 wide x 13 tall, top-aligned in the 16 px cell (bricks continue from the side above, stone
                    bottom edge on row 12, floor shows below)
-MISSING from the delivery: a plain bottom edge (between wall-bl and wall-br) and inner corners.
+N-34c (entrance strip) adds wall-b (plain bottom edge) and wall-entrance-{l,mid,r}, see entrance().
+Still MISSING: inner corners.
 """
 import os
 import sys
@@ -122,8 +123,49 @@ def slice_all():
     return out
 
 
+def best_window(g, lo, hi):
+    """16-col window starting in [lo, hi] whose first col matches the col after it (tiles left/right)."""
+    d = {k: int(np.abs(g[:, k].astype(int) - g[:, k + 16]).sum()) for k in range(lo, hi + 1) if k + 16 < g.shape[1]}
+    k = min(d, key=d.get)
+    return g[:, k:k + 16], k
+
+
+def entrance():
+    """N-34c (docs/art-review/n34c-room-entrance.png): bottom wall | pillar | low threshold | pillar | bottom wall.
+    Sampled whole at pitch 248 / 16 = 15.5 (16 rows; bricks ~6 art px like the rest) -> a 16 x 69 strip: left wall
+    cols 0-19, left pillar 20-24, threshold 25-43 (rows 12-15 only: the opening), right pillar 44-48, right wall 49-68.
+      wall-b              16 cols of the left wall, window where col k == col k+16 (tiles left/right)
+      wall-entrance-l     cols 9-24: wall bricks + the left pillar (its outline faces the opening)
+      wall-entrance-mid   16 cols of the threshold, window where col k == col k+16 (repeat it for a wider opening)
+      wall-entrance-r     cols 44-59: the right pillar + wall bricks"""
+    rgb, m = load('n34c-room-entrance.png')
+    x0, x1, y0, y1 = 233, 1303, 446, 695
+    p = (y1 - y0) / 16
+    a, b = rgb[y0 - 8:y1 + 8, x0 - 8:x1 + 8], m[y0 - 8:y1 + 8, x0 - 8:x1 + 8]
+    best = None
+    for ox in np.arange(0, p, p / 8):
+        for oy in np.arange(0, p, p / 8):
+            g, sp = grid(a, b, p, p, ox, oy)
+            n = (g[:, :, 3] > 0).sum()
+            if n and (best is None or sp / n < best[0]):
+                best = (sp / n, g)
+    g = best[1]
+    ys, xs = np.where(g[:, :, 3] > 0)
+    g = g[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+    assert g.shape[:2] == (16, 69), g.shape
+    out = {}
+    out['b'], kb = best_window(g, 1, 3)
+    out['entrance-l'] = g[:, 9:25]
+    out['entrance-mid'], km = best_window(g, 25, 27)
+    out['entrance-r'] = g[:, 44:60]
+    for k, arr in out.items():
+        Image.fromarray(np.ascontiguousarray(arr)).save(os.path.join(DUN, f'wall-{k}.png'))
+    print('N-34c pitch', round(p, 2), 'wall-b from col', kb, 'threshold from col', km)
+    return out
+
+
 def room(w):
-    S, TW, TH = 3, 9, 7
+    S, TW, TH = 3, 10, 7
     na = os.path.join(ROOT, 'public', 'assets', 'ninja-adventure', 'Backgrounds', 'Tilesets', 'Interior', 'TilesetInteriorFloor.png')
     fl = Image.open(na).convert('RGBA').crop((192, 208, 208, 224))
     im = Image.new('RGBA', (TW * 16, TH * 16 + 16), (20, 27, 27, 255))
@@ -132,7 +174,7 @@ def room(w):
             im.alpha_composite(fl, (x * 16, y * 16 + 16))
     T = {k: Image.fromarray(a) for k, a in w.items()}
     oy = 16  # one spare row above for the door's overhang
-    dx = TW // 2 - 1  # door covers tiles dx, dx+1 of the top row
+    dx = TW // 2 - 1  # door covers tiles dx, dx+1 of the top row (above the entrance's 2 threshold tiles)
     for x in range(TW):
         key = 'tl' if x == 0 else 'tr' if x == TW - 1 else 't'
         if key == 't' and x in (dx, dx + 1):
@@ -141,15 +183,18 @@ def room(w):
     for y in range(1, TH - 1):
         im.alpha_composite(T['l'], (0, oy + y * 16))
         im.alpha_composite(T['r'], ((TW - 1) * 16, oy + y * 16))
-    im.alpha_composite(T['bl'], (0, oy + (TH - 1) * 16))
-    im.alpha_composite(T['br'], ((TW - 1) * 16, oy + (TH - 1) * 16))
+    yb = oy + (TH - 1) * 16
+    bottom = ['b'] * TW
+    bottom[3:7] = ['entrance-l', 'entrance-mid', 'entrance-mid', 'entrance-r']  # opening under the door
+    for x in range(1, TW - 1):
+        im.alpha_composite(T[bottom[x]], (x * 16, yb))
+    im.alpha_composite(T['bl'], (0, yb))
+    im.alpha_composite(T['br'], ((TW - 1) * 16, yb))
     door = Image.open(os.path.join(DUN, 'door-closed-32.png')).convert('RGBA')
     im.alpha_composite(door, (dx * 16, oy + 16 - 32))  # door's floor line on the top wall's bottom row
     big = im.resize((im.width * S, im.height * S), Image.NEAREST)
-    d = ImageDraw.Draw(big)
-    d.text((70, (oy + (TH - 1) * 16 + 4) * S), 'MISSING: plain bottom edge piece', fill='#ffe18d', font_size=16)
     bar = Image.new('RGBA', (big.width, 50), (20, 27, 27, 255))
-    ImageDraw.Draw(bar).text((10, 6), 'N-34b room walls + N-34 door (3x)', fill='white', font_size=18)
+    ImageDraw.Draw(bar).text((10, 6), 'N-34b walls + N-34 door + N-34c entrance (3x)', fill='white', font_size=18)
     ImageDraw.Draw(bar).text((10, 28), '16 px tiles, Ninja floor', fill='#ffe18d', font_size=14)
     out = Image.new('RGBA', (big.width, big.height + 50))
     out.paste(bar, (0, 0))
@@ -159,4 +204,6 @@ def room(w):
 
 
 if __name__ == '__main__':
-    room(slice_all())
+    w = slice_all()
+    w.update(entrance())
+    room(w)
