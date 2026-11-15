@@ -183,7 +183,6 @@ interface BlobGfx {
   label: Phaser.GameObjects.Text;
   carry: Phaser.GameObjects.Image[];
   aura: Phaser.GameObjects.Graphics;
-  you?: Phaser.GameObjects.Image; // N-18 arrow over my own blob
   tool?: Phaser.GameObjects.Sprite;
   swingT: number; // seconds left of the current tool swing
   faceLeft: boolean; // tool swing direction
@@ -279,10 +278,8 @@ export class GameScene extends Phaser.Scene {
     sheet('mini-wave', 'FX/Elemental/Explosion/SpriteSheet.png', 40, 40);
     sheet('mini-warn', 'FX/Magic/Circle/SpriteSheetWhite.png', 32, 32);
     sheet('mini-ko', 'Ui/Emote/emote3.png', 14, 13);
-    sheet('m-flag', 'Backgrounds/Animated/Flag/FlagRed16x16.png', 16, 16);
     this.load.image('mini-bg', 'art/mini/bg.png');
     // berry bush ChatGPT N-16 (full / picked), 32 px art at 3x
-    this.load.image('st-you', 'art/icons/state/you-arrow-16.png'); // ChatGPT N-18
     this.load.image('pw-speed-32', 'art/meadow/speed-32.png'); // ChatGPT N-15b speed power-up (32 px art)
     for (const v of ['round', 'pine', 'apple']) { // ChatGPT N-26 trees + matching stumps
       this.load.image(`tree-${v}`, `art/props/tree-${v}.png`);
@@ -336,7 +333,8 @@ export class GameScene extends Phaser.Scene {
         seed: this.s.seed,
         glow: this.add.image(e.x, e.y + 30, 'portal-glow').setScale(3).setOrigin(0.5, 1).setDepth(e.y - 59),
         // the gather ring lies on the ground in front of the portal: under every blob standing on it
-        ring: this.add.graphics().setDepth(e.y + ENTRANCE_RING.dy - ENTRANCE_RING.ry - 2),
+        // the portal stands IN FRONT of the ring (Stefan 2026-11-15): its base hides the ring's top; above the shadow
+        ring: this.add.graphics().setDepth(e.y - 60.5),
       };
     }
     const inside = v.players.map((p) => onEntrance(e, p.x, p.y));
@@ -395,7 +393,6 @@ export class GameScene extends Phaser.Scene {
 
   create() {
     if (!this.anims.exists('mini-ko')) this.anims.create({ key: 'mini-ko', frames: this.anims.generateFrameNumbers('mini-ko', { frames: [0] }), frameRate: 6, repeat: -1 });
-    if (!this.anims.exists('m-flag')) this.anims.create({ key: 'm-flag', frames: this.anims.generateFrameNumbers('m-flag', { start: 0, end: 3 }), frameRate: 6, repeat: -1 });
     if (!this.anims.exists('plate-glow')) this.anims.create({ key: 'plate-glow', frames: this.anims.generateFrameNumbers('fx-plate-glow', { start: 0, end: 4 }), frameRate: 8, repeat: -1 });
     if (!this.anims.exists('mini-wave')) this.anims.create({ key: 'mini-wave', frames: this.anims.generateFrameNumbers('mini-wave', { start: 0, end: 8 }), frameRate: 18 });
     if (!this.anims.exists('dust')) this.anims.create({ key: 'dust', frames: this.anims.generateFrameNumbers('fx-dust', { start: 0, end: 7 }), frameRate: 18 });
@@ -450,7 +447,7 @@ export class GameScene extends Phaser.Scene {
       this.buildBase();
     }
     // "this is home": Art's base-marker sign (post foot = anchor), beside the drop-off (no reading needed; was BAS)
-    this.add.sprite(BASE.x + 58, BASE.y + 62, 'm-flag', 0).setOrigin(0.5, 1).setScale(NINJA_SCALE).setDepth(BASE.y + 62).play('m-flag');
+    // no base flag (Stefan 2026-11-15: it stood in the wood pile)
 
     // resource nodes (same layout as the host sim, from the shared seed); textures swap when used up
     // the pink blossom tree (sim kind 1) only for a couple of trees, away from the cave mouth
@@ -753,7 +750,7 @@ export class GameScene extends Phaser.Scene {
     }
     for (const [id, b] of this.blobs) if (!seenP.has(id)) {
       b.tool?.destroy();
-      b.you?.destroy(); b.shadow.destroy(); b.body.destroy(); b.eyes.destroy(); b.label.destroy(); b.aura.destroy(); b.carry.forEach((c) => c.destroy());
+      b.shadow.destroy(); b.body.destroy(); b.eyes.destroy(); b.label.destroy(); b.aura.destroy(); b.carry.forEach((c) => c.destroy());
       this.blobs.delete(id);
     }
 
@@ -818,16 +815,10 @@ export class GameScene extends Phaser.Scene {
     if (p.boostT > 0) b.aura.lineStyle(3, 0xffc93c, 0.8).strokeCircle(b.x, b.y - 4 + hover, 26 + Math.sin(now / 60) * 2);
     if (p.magnetT > 0) b.aura.lineStyle(2, 0xff6b8b, 0.5).strokeCircle(b.x, b.y, 60 + Math.sin(now / 200) * 6);
     if (p.shield > 0) b.aura.fillStyle(0x5ec8ff, 0.16).fillCircle(b.x, b.y - 6 + hover, 30).lineStyle(2, 0x8fd3ff, 0.7).strokeCircle(b.x, b.y - 6 + hover, 30);
-    if (isMe) b.aura.fillStyle(0xffffff, 0.9).fillTriangle(b.x - 6, b.y - 68 + hover, b.x + 6, b.y - 68 + hover, b.x, b.y - 60 + hover);
 
-    // nameplate: always on top of the world (tools, the base flag, props), just under the "you" arrow
+    // nameplate: always on top of the world (tools, props); no "you" arrow any more (Stefan 2026-11-15)
     b.label.setPosition(b.x, b.y + 14).setDepth(this.dB + 19990);
     if (DEBUG) ((window as unknown as { __blobzCovers?: Record<string, () => string[]> }).__blobzCovers ??= {})[p.id] = () => this.coversOf(b.label); // e2e
-    // "you": the N-18 arrow over my own blob (3x), bobbing gently
-    if (isMe) {
-      b.you ??= this.add.image(0, 0, 'st-you').setScale(3).setOrigin(0.5, 1);
-      b.you.setPosition(b.x, b.y - 46 + Math.sin(now / 260) * 3).setDepth(this.dB + 20000);
-    }
 
     // carried items stack
     while (b.carry.length < p.carry.length) b.carry.push(this.add.image(0, 0, 'ic-log').setScale(1));

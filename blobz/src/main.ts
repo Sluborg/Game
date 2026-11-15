@@ -522,7 +522,6 @@ function renderVillage(el: HTMLElement) {
   const img = (src: string, cls: string) => { const im = new Image(); im.src = src; im.alt = ''; im.className = cls; return im; };
   const res = (src: string, n: number) => { const s = document.createElement('span'); s.className = 'vres'; s.append(img(src, ''), String(n)); return s; };
   el.replaceChildren(
-    img(NI.flag, 'vbadge'),
     img(building(`cottage-${v.cottage}`), 'vcot'),
     ...BUILD_KINDS.filter((k) => v.builds[k]).map((k) => img(building(k), 'vb')),
     res(NI.wood, v.bank.wood), ...(STONE_ENABLED ? [res(NI.stone, v.bank.stone)] : []), res(NI.berry, v.bank.berry), // stone archived: no "0" stone
