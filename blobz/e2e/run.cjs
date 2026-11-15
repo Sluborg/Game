@@ -11,7 +11,7 @@ const shots = process.argv[2] || '';
 const JOBS = Math.max(1, Number(process.env.E2E_JOBS) || 3);
 const SPEC_TIMEOUT = (Number(process.env.E2E_SPEC_TIMEOUT) || 300) * 1000;
 // longest first, so the slow ones do not end up alone at the tail
-const ALL = ['dungeon-map.cjs', 'blobfit.cjs', 'dungeon.cjs', 'gather.cjs', 'build.cjs', 'dungeon-weapons.cjs', 'lan-join.cjs', 'i18n.cjs',
+const ALL = ['dungeon-map.cjs', 'dungeon-map-deep.cjs', 'dungeon-map-boss.cjs', 'blobfit.cjs', 'dungeon.cjs', 'gather.cjs', 'build.cjs', 'dungeon-weapons.cjs', 'lan-join.cjs', 'i18n.cjs',
   'dungeon-i18n.cjs', 'dungeon-solo.cjs', 'dungeon-layout.cjs', 'puzzles.cjs', 'designer.cjs', 'noread.cjs',
   'face.cjs', 'snow.cjs', 'mini.cjs'];
 const only = (process.env.E2E_ONLY || '').split(',').map((s) => s.trim()).filter(Boolean);
