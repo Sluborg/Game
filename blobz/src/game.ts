@@ -62,7 +62,7 @@ const RUBBLE_ART: Crop = ['n-nature', 272, 272, 32, 16];
 /** At most this many blossom trees per map (they read as pink pillows in a crowd). */
 const BLOSSOM_MAX = 2;
 /** Meadow declutter: at most this many groves, at least ~3 grove widths (3 x 192 px) apart; no wild wheat tufts. */
-const GROVE_MAX = 5, GROVE_GAP = 520, WILD_PATCHES = false;
+const GROVE_MAX = 0, GROVE_GAP = 520, WILD_PATCHES = false; // groves removed (Stefan 2026-11-15): only single trees
 const TREE_ART: Crop[] = [['n-nature', 96, 128, 32, 32], ['n-nature', 96, 128, 32, 32], ['n-nature', 96, 128, 32, 32]]; // round tree on a trunk (Stefan 2026-11-15)
 /** Big groves (decor, no collision) near the map edges and around the cave: pine, green, lime (Stefan 2026-11-15). */
 const GROVE_ART: Crop[] = [['n-nature', 0, 32, 64, 48], ['n-nature', 64, 32, 64, 48], ['n-nature', 256, 32, 64, 48]];
