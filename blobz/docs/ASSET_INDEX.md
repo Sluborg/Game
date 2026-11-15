@@ -11,13 +11,13 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
   image / CSS background or border image / canvas icon, or a WebGL texture bound at a Phaser draw call); CODE ONLY =
   referenced but never shown in the run (remove the reference and the file); UNUSED = no reference and never shown.
 
-**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 197 / IN GAME 27 / UNUSED 102.
+**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 196 / IN GAME 27 / UNUSED 102.
 
 **Claude-drawn still IN GAME** (0): none
 
 **Kenney still IN GAME** (0): none
 
-**Counts by source:** 0x72 1 / ChatGPT 275 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 16 (Ninja: 109 referenced by code). **Own files:** 326, 38 delete candidates.
+**Counts by source:** 0x72 1 / ChatGPT 274 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 16 (Ninja: 109 referenced by code). **Own files:** 325, 38 delete candidates.
 
 ## Own files (art, Kenney, app icons)
 
@@ -63,7 +63,7 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/dungeon/fx/levelup-1.png` | 32x32 | ChatGPT N-13 combat FX (round 2), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:149 | keep |
 | `art/dungeon/fx/levelup-2.png` | 32x32 | ChatGPT N-13 combat FX (round 2), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:149 | keep |
 | `art/dungeon/fx/levelup-3.png` | 32x32 | ChatGPT N-13 combat FX (round 2), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:149 | keep |
-| `art/dungeon/fx/levelup.png` | 128x32 | ChatGPT N-13 combat FX (round 2), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:400, src/game.ts:1281, src/dungeonScene.ts:149 (+1) | keep |
+| `art/dungeon/fx/levelup.png` | 128x32 | ChatGPT N-13 combat FX (round 2), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:401, src/game.ts:1283, src/dungeonScene.ts:149 (+1) | keep |
 | `art/dungeon/fx/shockwave-0.png` | 32x32 | ChatGPT N-13 combat FX (round 2), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:149 | keep |
 | `art/dungeon/fx/shockwave-1.png` | 32x32 | ChatGPT N-13 combat FX (round 2), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:149 | keep |
 | `art/dungeon/fx/shockwave-2.png` | 32x32 | ChatGPT N-13 combat FX (round 2), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:149 | keep |
@@ -174,9 +174,9 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/dungeon/weapons/sword.png` | 27x11 | ChatGPT N-4 hovering weapons, sliced by scripts/slice_weapons.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonUi.ts:23, src/dungeonUi.ts:158, src/dungeonText.ts:10 (+5) | keep |
 | `art/dungeon/weapons/wand-16.png` | 16x16 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/weapons/wand-32.png` | 32x32 | ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/fine/fx/dust.png` | 112x24 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | CODE ONLY | src/game.ts:398, src/game.ts:1305, src/game.ts:1307 | replace (see OLD_ART_CHECKLIST) |
-| `art/fine/fx/levelup.png` | 256x44 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | CODE ONLY | src/game.ts:400, src/game.ts:1281, src/dungeonScene.ts:149 (+1) | replace (see OLD_ART_CHECKLIST) |
-| `art/fine/fx/plate-glow.png` | 42x32 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | CODE ONLY | src/game.ts:396, src/game.ts:1142 | replace (see OLD_ART_CHECKLIST) |
+| `art/fine/fx/dust.png` | 112x24 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | CODE ONLY | src/game.ts:399, src/game.ts:1307, src/game.ts:1309 | replace (see OLD_ART_CHECKLIST) |
+| `art/fine/fx/levelup.png` | 256x44 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | CODE ONLY | src/game.ts:401, src/game.ts:1283, src/dungeonScene.ts:149 (+1) | replace (see OLD_ART_CHECKLIST) |
+| `art/fine/fx/plate-glow.png` | 42x32 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | CODE ONLY | src/game.ts:397, src/game.ts:1144 | replace (see OLD_ART_CHECKLIST) |
 | `art/fine/gather/chips-stone.png` | 64x24 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | UNUSED | UNUSED | delete |
 | `art/fine/gather/chips-wood.png` | 64x24 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | UNUSED | UNUSED | delete |
 | `art/fine/icons/chest.png` | 36x28 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | CODE ONLY | src/dungeon.ts:562, src/dungeon.ts:1153, src/dungeonScene.ts:980 | replace (see OLD_ART_CHECKLIST) |
@@ -201,8 +201,7 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/icons/res-berry-32.png` | 32x32 | ChatGPT N-41 berry food icon, sliced by scripts/slice_n41.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
 | `art/icons/res-stone-16.png` | 16x16 | ChatGPT N-32 stone icon, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/icons/res-stone-32.png` | 32x32 | ChatGPT N-32 stone icon, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/icons/res-wood-16.png` | 16x16 | ChatGPT N-27 wood icon, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/resArt.ts:12 | keep |
-| `art/icons/res-wood-32.png` | 32x32 | ChatGPT N-27 wood icon, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/style.css:1366, src/resArt.ts:12, index.html:113 (+2) | keep |
+| `art/icons/res-wood-16.png` | 16x16 | ChatGPT N-27 wood icon, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/resArt.ts:12, index.html:113, index.html:119 (+1) | keep |
 | `art/icons/state/can-build-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/ninjaArt.ts:16, src/uikit2.ts:16, src/main.ts:424 | keep |
 | `art/icons/state/can-build-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16 | keep |
 | `art/icons/state/done-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16 | keep |
@@ -274,8 +273,8 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/meadow/sign-16.png` | 16x16 | ChatGPT N-15 meadow extras, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/meadow/sign-32.png` | 32x32 | ChatGPT N-15 meadow extras, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/meadow/speed-16.png` | 16x16 | ChatGPT N-15b speed power-up, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/meadow/speed-32.png` | 32x32 | ChatGPT N-15b speed power-up, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:283 | keep |
-| `art/mini/bg.png` | 941x1672 | ChatGPT N-9 Bärregn background | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/game.ts:281 | keep |
+| `art/meadow/speed-32.png` | 32x32 | ChatGPT N-15b speed power-up, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:284 | keep |
+| `art/mini/bg.png` | 941x1672 | ChatGPT N-9 Bärregn background | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/game.ts:282 | keep |
 | `art/ninja/bridge.png` | 64x46 | Ninja crop: Ninja Adventure rect cut by scripts/ninja_crops.py (Code) | CC0 1.0 (Ninja Adventure) | IN GAME | src/ninjaArt.ts:24, src/sim.ts:146, src/sim.ts:147 (+7) | keep |
 | `art/ninja/bush.png` | 32x32 | Ninja crop: Ninja Adventure rect cut by scripts/ninja_crops.py (Code) | CC0 1.0 (Ninja Adventure) | CODE ONLY (loaded, not shown) | src/ninjaArt.ts:24, index.html:94 | keep |
 | `art/ninja/cottage-1.png` | 42x39 | Ninja crop: Ninja Adventure rect cut by scripts/ninja_crops.py (Code) | CC0 1.0 (Ninja Adventure) | CODE ONLY (loaded, not shown) | src/ninjaArt.ts:24, src/sim.ts:890, src/main.ts:759 | keep |
@@ -292,26 +291,26 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/ninja/watchtower.png` | 24x32 | Ninja crop: Ninja Adventure rect cut by scripts/ninja_crops.py (Code) | CC0 1.0 (Ninja Adventure) | IN GAME | src/ninjaArt.ts:24, src/uikit2.ts:201, src/sim.ts:146 (+3) | keep |
 | `art/ninja/well.png` | 16x21 | Ninja crop: Ninja Adventure rect cut by scripts/ninja_crops.py (Code) | CC0 1.0 (Ninja Adventure) | IN GAME | src/ninjaArt.ts:24, src/sim.ts:146, src/sim.ts:147 (+2) | keep |
 | `art/ninja/workshop.png` | 48x48 | Ninja crop: Ninja Adventure rect cut by scripts/ninja_crops.py (Code) | CC0 1.0 (Ninja Adventure) | IN GAME | src/ninjaArt.ts:24, src/sim.ts:146, src/sim.ts:147 (+3) | keep |
-| `art/props-winter/bush-berries-snow.png` | 18x16 | Claude-drawn: scripts/winter_props.py | Own art (CC0) | CODE ONLY | src/game.ts:53, src/game.ts:292 | replace (see OLD_ART_CHECKLIST) |
-| `art/props-winter/bush-empty-snow.png` | 18x16 | Claude-drawn: scripts/winter_props.py | Own art (CC0) | CODE ONLY | src/game.ts:53, src/game.ts:292 | replace (see OLD_ART_CHECKLIST) |
-| `art/props-winter/ice-rock.png` | 16x13 | Claude-drawn: scripts/winter_props.py | Own art (CC0) | CODE ONLY | src/game.ts:53, src/game.ts:292 | replace (see OLD_ART_CHECKLIST) |
-| `art/props-winter/ice.png` | 24x13 | Claude-drawn: scripts/winter_props.py | Own art (CC0) | CODE ONLY | src/game.ts:53, src/game.ts:292 | replace (see OLD_ART_CHECKLIST) |
-| `art/props-winter/igloo.png` | 19x17 | Claude-drawn: scripts/winter_props.py | Own art (CC0) | CODE ONLY | src/game.ts:53, src/game.ts:292 | replace (see OLD_ART_CHECKLIST) |
-| `art/props-winter/pond-frozen-tiles.png` | 48x48 | Claude-drawn: scripts/winter_props.py | Own art (CC0) | CODE ONLY | src/game.ts:292 | replace (see OLD_ART_CHECKLIST) |
-| `art/props-winter/rock-snow.png` | 14x12 | Kenney Tiny Ski cut by scripts/winter_props.py | CC0 1.0 (Kenney) | CODE ONLY | src/game.ts:53, src/game.ts:292 | replace (see OLD_ART_CHECKLIST) |
-| `art/props-winter/rubble-snow.png` | 15x10 | Claude-drawn: scripts/winter_props.py | Own art (CC0) | CODE ONLY | src/game.ts:292 | replace (see OLD_ART_CHECKLIST) |
-| `art/props-winter/snowman.png` | 12x15 | Kenney Tiny Ski cut by scripts/winter_props.py | CC0 1.0 (Kenney) | CODE ONLY (loaded, not shown) | src/game.ts:53, src/game.ts:292, index.html:95 | replace (see OLD_ART_CHECKLIST) |
-| `art/props-winter/stump-snow.png` | 17x13 | Claude-drawn: scripts/winter_props.py | Own art (CC0) | CODE ONLY | src/game.ts:292 | replace (see OLD_ART_CHECKLIST) |
-| `art/props-winter/tree-bare.png` | 13x29 | Kenney Tiny Ski cut by scripts/winter_props.py | CC0 1.0 (Kenney) | CODE ONLY | src/game.ts:53, src/game.ts:292 | replace (see OLD_ART_CHECKLIST) |
-| `art/props-winter/tree-snow-pine.png` | 13x30 | Kenney Tiny Ski cut by scripts/winter_props.py | CC0 1.0 (Kenney) | CODE ONLY (loaded, not shown) | src/game.ts:53, src/game.ts:292, index.html:95 | replace (see OLD_ART_CHECKLIST) |
-| `art/props-winter/tree-snow-round.png` | 21x21 | Claude-drawn: scripts/winter_props.py | Own art (CC0) | CODE ONLY (loaded, not shown) | src/game.ts:53, src/game.ts:292, index.html:95 | replace (see OLD_ART_CHECKLIST) |
-| `art/props-winter/tree-snow-small.png` | 10x15 | Kenney Tiny Ski cut by scripts/winter_props.py | CC0 1.0 (Kenney) | CODE ONLY | src/game.ts:53, src/game.ts:292 | replace (see OLD_ART_CHECKLIST) |
+| `art/props-winter/bush-berries-snow.png` | 18x16 | Claude-drawn: scripts/winter_props.py | Own art (CC0) | CODE ONLY | src/game.ts:54, src/game.ts:293 | replace (see OLD_ART_CHECKLIST) |
+| `art/props-winter/bush-empty-snow.png` | 18x16 | Claude-drawn: scripts/winter_props.py | Own art (CC0) | CODE ONLY | src/game.ts:54, src/game.ts:293 | replace (see OLD_ART_CHECKLIST) |
+| `art/props-winter/ice-rock.png` | 16x13 | Claude-drawn: scripts/winter_props.py | Own art (CC0) | CODE ONLY | src/game.ts:54, src/game.ts:293 | replace (see OLD_ART_CHECKLIST) |
+| `art/props-winter/ice.png` | 24x13 | Claude-drawn: scripts/winter_props.py | Own art (CC0) | CODE ONLY | src/game.ts:54, src/game.ts:293 | replace (see OLD_ART_CHECKLIST) |
+| `art/props-winter/igloo.png` | 19x17 | Claude-drawn: scripts/winter_props.py | Own art (CC0) | CODE ONLY | src/game.ts:54, src/game.ts:293 | replace (see OLD_ART_CHECKLIST) |
+| `art/props-winter/pond-frozen-tiles.png` | 48x48 | Claude-drawn: scripts/winter_props.py | Own art (CC0) | CODE ONLY | src/game.ts:293 | replace (see OLD_ART_CHECKLIST) |
+| `art/props-winter/rock-snow.png` | 14x12 | Kenney Tiny Ski cut by scripts/winter_props.py | CC0 1.0 (Kenney) | CODE ONLY | src/game.ts:54, src/game.ts:293 | replace (see OLD_ART_CHECKLIST) |
+| `art/props-winter/rubble-snow.png` | 15x10 | Claude-drawn: scripts/winter_props.py | Own art (CC0) | CODE ONLY | src/game.ts:293 | replace (see OLD_ART_CHECKLIST) |
+| `art/props-winter/snowman.png` | 12x15 | Kenney Tiny Ski cut by scripts/winter_props.py | CC0 1.0 (Kenney) | CODE ONLY (loaded, not shown) | src/game.ts:54, src/game.ts:293, index.html:95 | replace (see OLD_ART_CHECKLIST) |
+| `art/props-winter/stump-snow.png` | 17x13 | Claude-drawn: scripts/winter_props.py | Own art (CC0) | CODE ONLY | src/game.ts:293 | replace (see OLD_ART_CHECKLIST) |
+| `art/props-winter/tree-bare.png` | 13x29 | Kenney Tiny Ski cut by scripts/winter_props.py | CC0 1.0 (Kenney) | CODE ONLY | src/game.ts:54, src/game.ts:293 | replace (see OLD_ART_CHECKLIST) |
+| `art/props-winter/tree-snow-pine.png` | 13x30 | Kenney Tiny Ski cut by scripts/winter_props.py | CC0 1.0 (Kenney) | CODE ONLY (loaded, not shown) | src/game.ts:54, src/game.ts:293, index.html:95 | replace (see OLD_ART_CHECKLIST) |
+| `art/props-winter/tree-snow-round.png` | 21x21 | Claude-drawn: scripts/winter_props.py | Own art (CC0) | CODE ONLY (loaded, not shown) | src/game.ts:54, src/game.ts:293, index.html:95 | replace (see OLD_ART_CHECKLIST) |
+| `art/props-winter/tree-snow-small.png` | 10x15 | Kenney Tiny Ski cut by scripts/winter_props.py | CC0 1.0 (Kenney) | CODE ONLY | src/game.ts:54, src/game.ts:293 | replace (see OLD_ART_CHECKLIST) |
 | `art/props/berry-bush-16.png` | 16x16 | ChatGPT N-16 berry bush, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/props/berry-bush-32.png` | 32x32 | ChatGPT N-16 berry bush, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:288 | keep |
+| `art/props/berry-bush-32.png` | 32x32 | ChatGPT N-16 berry bush, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:289 | keep |
 | `art/props/berry-bush-ninja-s.png` | 16x16 | Claude-drawn: scripts/berry_bush.py (berries on a Ninja bush) | Own art (CC0) | UNUSED | UNUSED | replace (Stefan dislikes; Code uses a Ninja bush + Ninja berry) |
 | `art/props/berry-bush-ninja.png` | 32x32 | Claude-drawn: scripts/berry_bush.py (berries on a Ninja bush) | Own art (CC0) | UNUSED | UNUSED | replace (Stefan dislikes; Code uses a Ninja bush + Ninja berry) |
 | `art/props/berry-bush-picked-16.png` | 16x16 | ChatGPT N-16 berry bush, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/props/berry-bush-picked-32.png` | 32x32 | ChatGPT N-16 berry bush, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:289 | keep |
+| `art/props/berry-bush-picked-32.png` | 32x32 | ChatGPT N-16 berry bush, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:290 | keep |
 | `art/props/boulder-1.png` | 32x32 | ChatGPT N-29 boulders + rubble (stone parked), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/boulder-2.png` | 32x32 | ChatGPT N-29 boulders + rubble (stone parked), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/boulder-3.png` | 48x32 | ChatGPT N-29 boulders + rubble (stone parked), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
@@ -330,21 +329,21 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/props/gate-open.png` | 32x32 | ChatGPT N-30 gate + posts, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/gate-post-l.png` | 32x32 | ChatGPT N-30 gate + posts, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/gate-post-r.png` | 32x32 | ChatGPT N-30 gate + posts, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/props/gate.png` | 18x14 | ChatGPT order 30 (map props), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/sim.ts:285, src/sim.ts:782, src/game.ts:1284 | replace (see OLD_ART_CHECKLIST) |
+| `art/props/gate.png` | 18x14 | ChatGPT order 30 (map props), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/sim.ts:285, src/sim.ts:782, src/game.ts:1286 | replace (see OLD_ART_CHECKLIST) |
 | `art/props/plate-down.png` | 16x16 | ChatGPT N-30 pressure plate, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/plate-up.png` | 16x16 | ChatGPT N-30 pressure plate, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/props/portal-glow.png` | 64x48 | ChatGPT N-28 meadow portal, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:268, src/game.ts:334 | keep |
-| `art/props/portal-idle.png` | 64x48 | ChatGPT N-28 meadow portal, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:268 | keep |
+| `art/props/portal-glow.png` | 64x48 | ChatGPT N-28 meadow portal, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:269, src/game.ts:335 | keep |
+| `art/props/portal-idle.png` | 64x48 | ChatGPT N-28 meadow portal, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:269 | keep |
 | `art/props/rubble-1.png` | 16x16 | ChatGPT N-26 rubble (stone parked), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/rubble-2.png` | 16x16 | ChatGPT N-26 rubble (stone parked), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/site-32.png` | 32x32 | ChatGPT N-31 build site, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/site-48.png` | 48x48 | ChatGPT N-31 build site, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/props/stump-apple.png` | 16x16 | ChatGPT N-26 stumps, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:286 | keep |
-| `art/props/stump-pine.png` | 16x16 | ChatGPT N-26 stumps, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:286 | keep |
-| `art/props/stump-round.png` | 16x16 | ChatGPT N-26 stumps, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:286 | keep |
-| `art/props/tree-apple.png` | 32x48 | ChatGPT N-26 meadow trees, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:285 | keep |
-| `art/props/tree-pine.png` | 32x48 | ChatGPT N-26 meadow trees, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:285 | keep |
-| `art/props/tree-round.png` | 32x48 | ChatGPT N-26 meadow trees, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:285 | keep |
+| `art/props/stump-apple.png` | 16x16 | ChatGPT N-26 stumps, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:287 | keep |
+| `art/props/stump-pine.png` | 16x16 | ChatGPT N-26 stumps, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:287 | keep |
+| `art/props/stump-round.png` | 16x16 | ChatGPT N-26 stumps, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:287 | keep |
+| `art/props/tree-apple.png` | 32x48 | ChatGPT N-26 meadow trees, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:286 | keep |
+| `art/props/tree-pine.png` | 32x48 | ChatGPT N-26 meadow trees, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:286 | keep |
+| `art/props/tree-round.png` | 32x48 | ChatGPT N-26 meadow trees, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:286 | keep |
 | `art/start-portrait.png` | 941x1672 | ChatGPT N-2 start screen, portrait | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/style.css:704, src/style.css:847, src/style.css:1187 | keep |
 | `art/title.png` | 1672x941 | ChatGPT N-2 start screen, landscape | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/style.css:36, src/style.css:848, src/style.css:1188 (+1) | keep |
 | `art/victory.png` | 941x1672 | ChatGPT N-6 end screen | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/style.css:38, src/style.css:1218 | keep |

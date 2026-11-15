@@ -9,7 +9,7 @@ export type ResArt = { file: string; x: number; y: number; w: number; h: number 
 export const isImgArt = (a: ResArt): a is { world: string; hud: string } => 'world' in a;
 
 export const RES_ART: Record<'wood' | 'stone' | 'berry', ResArt> = {
-  wood: { world: 'art/icons/res-wood-16.png', hud: 'art/icons/res-wood-32.png' }, // ChatGPT N-27 log (Stefan 2026-11-15); was the Ninja crop tileset_camp.png 0,0 32x16
+  wood: { world: 'art/icons/res-wood-16.png', hud: 'art/icons/res-wood-16.png' }, // ChatGPT N-27 log (Stefan 2026-11-15); was the Ninja crop tileset_camp.png 0,0 32x16
   stone: { file: 'Backgrounds/Tilesets/TilesetNature.png', x: 288, y: 144, w: 16, h: 16 }, // rock, grey small
   berry: { file: 'Items/Food/Meat.png', x: 0, y: 0, w: 15, h: 15 }, // food
 };
@@ -17,5 +17,5 @@ export const RES_ART: Record<'wood' | 'stone' | 'berry', ResArt> = {
 /** HUD picture for a resource (cut by scripts/ninja_crops.py from RES_ART). */
 export const resIcon = (k: keyof typeof RES_ART) => {
   const a = RES_ART[k];
-  return isImgArt(a) ? a.hud : `art/ninja/res-${k}.png`;
+  return isImgArt(a) ? a.world : `art/ninja/res-${k}.png`; // the 16 px file, sized to whole device px (snapAll)
 };

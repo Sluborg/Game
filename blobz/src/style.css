@@ -1363,7 +1363,6 @@ body.nostone .qrow[data-k="stone"], body.nostone .edge[data-k="stone"], body.nos
 
 /* ChatGPT N-27 wood (Stefan 2026-11-15): the HUD picture is the 32 px file; where icons show at their own size
    (build cost strip, end rows) it is drawn at 16 px, like the other 1x resource icons */
-#build-panel .bcard .bcost .c img[src*="res-wood-32"], #end .endrows .qicon[src*="res-wood-32"] { width: 16px; height: 16px; }
 
 /* buttons option A (Stefan 2026-11-15): the primary button is the CSS "Slumpa" family too, in orange. Same geometry as
    the secondary (2 px even border, 4 px radius, inner bottom line, 4 px flush shadow, calm 2 px press), no pixel
@@ -1433,3 +1432,12 @@ body.rotate-block #rotate b { background: var(--k-parch2); border: 2px solid var
 @keyframes rotate-tilt { 0%, 30% { transform: rotate(0); } 50%, 80% { transform: rotate(-90deg); } 100% { transform: rotate(0); } }
 #rotate .rotate-hint { width: 34px; height: 56px; border: 4px solid var(--k-plum); border-radius: 8px; animation: rotate-phone 2.4s ease-in-out infinite; }
 @keyframes rotate-phone { 0%, 30% { transform: rotate(90deg); } 50%, 80% { transform: rotate(0); } 100% { transform: rotate(90deg); } }
+
+/* whole-pixel fixes (Stefan 2026-11-15, scale audit): the panel frame's 5 px right / bottom slices at 1x (were 1.2x);
+   the thumbstick at 4x (32 px art -> 128) and its knob at 2x (22 -> 44). DOM pixel icons are sized to whole device px
+   in pixelScale.ts (snapAll). */
+#menu #custom.card, #menu #join.card, #lobby .card, #end .card, #build-panel, #hud-quest, #hud-bank, #mini-hud, #menu #home .me {
+  border-image-width: 6px 5px 5px 6px;
+}
+#stick { width: 128px; height: 128px; }
+#knob { width: 44px; height: 44px; margin: -22px; }

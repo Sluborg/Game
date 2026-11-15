@@ -1,4 +1,5 @@
 // Phaser scene: renders a View (from the host sim or from network snapshots).
+import { snapZoom } from './pixelScale';
 import Phaser from 'phaser';
 import { blobCanvas, BLOB_FRAMES, BODY_CY, clampLook, facingFromVelocity, GRID_H, GRID_W, type Facing } from './blob';
 import { sfx } from './sfx';
@@ -561,7 +562,8 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
-    const z = Math.max(0.55, Math.min(2.2, Math.min(Math.max(w, h) / 820, Math.min(w, h) / 430)));
+    // snapped so one art px (props are 3x) is a whole number of CSS px (device px once DPR_CANVAS is on): 3x on phones
+    const z = snapZoom(Math.max(0.55, Math.min(2.2, Math.min(Math.max(w, h) / 820, Math.min(w, h) / 430))));
     this.cameras.main.setZoom(z);
   }
 
