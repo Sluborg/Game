@@ -107,12 +107,27 @@ const tap = async (page) => { await page.locator('#dash').dispatchEvent('pointer
 
     // no day cycle (archived): no sun bar; the round ends when all three goals are filled
     ok(!(await bo.isVisible('#hud-day')), 'no day bar in the HUD (day cycle archived)');
+    // long game (Stefan 2026-11-15): a complete quest is a milestone, not the end. Every phone shows the toast, the
+    // round goes on with a bigger goal, and only the host's "Spara och gå hem" (in the build panel) ends it
+    const wood0 = (await view(ada)).quest.wood;
     await sim(host, (s) => { s.delivered = { ...s.quest }; });
-    // the complete quest ends the round: straight to the end screen (Bärregn archived)
+    await ada.waitForSelector('#goal-toast:not(.hidden)', { timeout: 5000 });
+    await bo.waitForSelector('#goal-toast:not(.hidden)', { timeout: 5000 });
+    const v1 = await view(ada);
+    ok(v1.phase === 'play' && v1.goal === 1 && v1.quest.wood > wood0, `full quest -> milestone toast, play goes on, next goal bigger (${wood0} -> ${v1.quest.wood} wood)`);
+    if (shots) await ada.screenshot({ path: `${shots}/a-goal-portrait.png` });
+    await ada.waitForTimeout(1500);
+    ok(await ada.isHidden('#end'), 'no end screen by itself');
+    await place(host, 0, 640, 548); await place(host, 1, 596, 548); await place(host, 2, 684, 548); // on the yard (HOME_R)
+    await ada.waitForSelector('#btn-build:not(.hidden)', { timeout: 5000 }); await ada.click('#btn-build');
+    ok(await ada.isHidden('#btn-gohome'), 'a joiner has no "Spara och gå hem" button');
+    await ada.click('#btn-build-close');
+    await host.waitForSelector('#btn-build:not(.hidden)', { timeout: 5000 }); await host.click('#btn-build');
+    await host.click('#btn-gohome');
     await ada.waitForSelector('#end:not(.hidden)', { timeout: 5000 });
     ok((await ada.textContent('#end-title')) === 'Uppdraget klart!', 'end screen: "Uppdraget klart!"');
     const endStars = await ada.locator('#end-stars .star.on').count();
-    ok((await ada.locator('#end-rows .qrow').count()) === 3 && endStars === 3, `end screen shows 3 rows and 3 stars (quest complete; got ${endStars})`);
+    ok((await ada.locator('#end-rows .qrow').count()) === 3 && endStars === 1, `end screen shows 3 rows and 1 star (1 milestone; got ${endStars})`);
     if (shots) { await ada.waitForTimeout(800); await ada.screenshot({ path: `${shots}/a-end-portrait.png` }); }
     console.log('ALL PASSED');
   } finally {

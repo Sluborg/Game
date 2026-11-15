@@ -41,7 +41,7 @@ const shots = process.argv[3] || '';
     if (shots) await host.screenshot({ path: `${shots}/noread-hud-portrait.png` });
 
     // quest complete: straight to the end screen (Bärregn archived)
-    await sim(host, (s) => { s.delivered = { ...s.quest }; });
+    await sim(host, (s) => { s.phase = 'end'; }); // long game: ended by choice (endRound)
     await ada.waitForSelector('#end:not(.hidden)', { timeout: 6000 });
     ok(!(await ada.locator('#end .endsun').count()) && (await ada.evaluate(() => getComputedStyle(document.getElementById('end')).backgroundImage)).includes('victory.png'),
       'end screen: no sunset; the N-6 victory picture (blobz cheering with their haul) behind the card');

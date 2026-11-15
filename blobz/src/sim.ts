@@ -294,6 +294,7 @@ export type FxEvent =
   | { t: 'gate'; x: number; y: number }
   | { t: 'build'; x: number; y: number; kind: BuildKind | 'cottage'; done: boolean }
   | { t: 'enter' } | { t: 'leave'; done: boolean }
+  | { t: 'goal'; n: number } // a milestone: every goal bar was full; the next goal has started
   | DFx
   | MiniFx
   | { t: 'minigame' } | { t: 'minidone'; caught: number; stars: number };
@@ -324,6 +325,7 @@ export interface State {
   gardenT: number;
   delivered: Res; // everything brought home this round (quest progress, never spent)
   quest: Res;
+  goal: number; // milestones reached this round (LONG_GAME)
   players: Player[];
   items: Item[];
   gems: Gem[];
@@ -345,6 +347,15 @@ export const MINI_ENABLED = false;
 /** Day cycle (sun bar + time limit) is ARCHIVED (Stefan 2026-11-15, docs/ARCHIVED.md): with it off the meadow has no
  *  time limit and the round ends when all three quest goals are filled, then Bärregn as before. Code kept. */
 export const DAY_CYCLE_ENABLED = false;
+/** Stefan 2026-11-15 ("victory happened unexpected; plan for long games"): the meadow never ends by itself. A full set
+ *  of goal bars is a milestone (fx 'goal': toast + star), the overflow carries over and the next, bigger goal starts;
+ *  the round ends only when the host chooses "Spara och gå hem" (endRound). false = the old automatic end screen. */
+export const LONG_GAME = true;
+/** Goal size per milestone: +50% of the base goal for every goal already reached. */
+export const goalTargets = (players: number, cottage: number, goal: number): Res => {
+  const q = questTargets(players, cottage);
+  return res(Math.ceil(q.wood * (1 + 0.5 * goal)), Math.ceil(q.stone * (1 + 0.5 * goal)), Math.ceil(q.berry * (1 + 0.5 * goal)));
+};
 import { dsnap, dungeonChoice, dview, newRun, READY_SECONDS, stepDungeon, WEAPONS, type DFx, type DSnap, type DState, type DView, type Weapon } from './dungeon';
 
 
@@ -443,7 +454,7 @@ export function createState(infos: PlayerInfo[], seed: number, village: Village 
     phase: 'play', time: ROUND_SECONDS,
     mini: null, miniResult: null,
     seed, biome: cleanBiome(biome), ice: cleanBiome(biome) === 'snow' ? makeIce(seed) : [], entrance: entranceOf(seed), mode: 'meadow', entry: 0, picks: {}, pickT: 0, runs: 0, dg: null,
-    bank: { ...vil.bank }, dungeon: vil.dungeon ?? 1, delivered: res(), quest: questTargets(infos.length, vil.cottage),
+    bank: { ...vil.bank }, dungeon: vil.dungeon ?? 1, delivered: res(), quest: questTargets(infos.length, vil.cottage), goal: 0,
     builds: BUILD_KINDS.map((kind) => ({ kind, state: vil.builds[kind] ? 2 : 0, paid: res(), buy: 0, armed: true })),
     cottage: { level: vil.cottage, state: 0, paid: res(), buy: 0, armed: true }, water,
     builtNow: [], villageDirty: false, gardenT: GARDEN_EVERY,
@@ -837,6 +848,15 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     }
   }
 
+  if (LONG_GAME && !DAY_CYCLE_ENABLED) {
+    if (questDone(s.delivered, s.quest)) { // a milestone, not the end
+      for (const k of RES) s.delivered[k] = Math.max(0, s.delivered[k] - s.quest[k]);
+      s.goal++;
+      s.quest = goalTargets(s.players.length, s.cottage.level, s.goal);
+      s.fx.push({ t: 'goal', n: s.goal });
+    }
+    return;
+  }
   const over = DAY_CYCLE_ENABLED ? s.time <= 0 : questDone(s.delivered, s.quest); // sunset, or the quest is complete
   if (over) { if (MINI_ENABLED && s.players.length) startMini(s); else s.phase = 'end'; }
 }
@@ -853,7 +873,7 @@ export function requestBuild(s: State, playerId: string, kind: BuildKind | 'cott
   for (const k of RES) s.bank[k] -= cost[k];
   if (kind === 'cottage') {
     s.cottage.level++;
-    s.quest = questTargets(s.players.length, s.cottage.level);
+    s.quest = goalTargets(s.players.length, s.cottage.level, s.goal);
   } else {
     const b = s.builds.find((x) => x.kind === kind);
     if (!b) return false;
@@ -867,6 +887,12 @@ export function requestBuild(s: State, playerId: string, kind: BuildKind | 'cott
 }
 /** "At home": on the cottage yard; the build panel (hammer button) is offered here. */
 export const HOME_R = 110;
+/** The host chooses to end the meadow round ("Spara och gå hem"): the end screen shows; the village is saved there. */
+export function endRound(s: State): boolean {
+  if (s.phase !== 'play' || s.mode !== 'meadow') return false;
+  s.phase = 'end'; s.villageDirty = true;
+  return true;
+}
 export const atHome = (x: number, y: number) => Math.hypot(x - BASE.x, y - BASE.y) < HOME_R;
 
 function stepBuilding(s: State, dt: number) {
@@ -938,6 +964,7 @@ export interface Snapshot {
   mn?: [number, number, [number, number, number], [number, number, number, number, number][], string[]]; // Bärregn: t, caught, goal, drops [id, bomb?, x, y, z], stunned ids
   mr?: [number, number]; // Bärregn result: caught, stars
   r: number[]; // bank w,s,b, delivered w,s,b, quest w,s,b
+  gl?: number; // milestones reached (LONG_GAME)
   n: string; // items left per node, one digit each
   p: [string, number, number, number, number, string, number, number, number, number?][]; // id,x,y,vx,vy,carry,boost,magnet,dashCd,shield
   i: [number, string, number, number][];
@@ -963,7 +990,7 @@ export function snapshot(s: State): Snapshot {
     ph: s.phase, tm: r1(s.time),
     mn: s.mini ? [r1(s.mini.t), s.mini.caught, s.mini.goal, s.mini.drops.map((d) => [d.id, d.kind === 'bomb' ? 1 : 0, r1(d.x), r1(d.y), r1(d.z)]), Object.keys(s.mini.stun)] : undefined,
     mr: s.miniResult ? [s.miniResult.caught, s.miniResult.stars] : undefined,
-    r: [...resArr(s.bank), ...resArr(s.delivered), ...resArr(s.quest)],
+    r: [...resArr(s.bank), ...resArr(s.delivered), ...resArr(s.quest)], gl: s.goal,
     n: s.trees.map((t) => Math.max(0, Math.min(9, t.left))).join(''),
     p: s.players.map((p) => [p.id, r1(p.x), r1(p.y), r1(p.vx), r1(p.vy), p.carry.map((k) => KIND_CODE[k]).join(''), r1(p.boostT), r1(p.magnetT), r1(p.dashCd), p.shield]),
     i: s.items.map((i) => [i.id, KIND_CODE[i.kind], r1(i.x), r1(i.y)]),
@@ -985,6 +1012,7 @@ export interface View {
   mini: { t: number; caught: number; goal: [number, number, number]; drops: { id: number; kind: 'berry' | 'bomb'; x: number; y: number; z: number }[]; stunned: string[] } | null;
   miniResult: { caught: number; stars: number } | null;
   bank: Res; delivered: Res; quest: Res;
+  goal: number; // milestones reached this round (LONG_GAME)
   nodes: number[]; // items left per node (same order as makeTrees)
   players: { id: string; x: number; y: number; vx: number; vy: number; carry: ItemKind[]; boostT: number; magnetT: number; dashCd: number; shield: number }[];
   items: Item[]; gems: { id: number; x: number; y: number; holders: number }[]; powers: Power[];
@@ -1001,7 +1029,7 @@ export function viewFromState(s: State): View {
     phase: s.phase, time: s.time,
     mini: s.mini ? { t: s.mini.t, caught: s.mini.caught, goal: s.mini.goal, drops: s.mini.drops, stunned: Object.keys(s.mini.stun) } : null,
     miniResult: s.miniResult,
-    bank: s.bank, delivered: s.delivered, quest: s.quest,
+    bank: s.bank, delivered: s.delivered, quest: s.quest, goal: s.goal,
     nodes: s.trees.map((t) => t.left),
     players: s.players.map((p) => ({ id: p.id, x: p.x, y: p.y, vx: p.vx, vy: p.vy, carry: p.carry, boostT: p.boostT, magnetT: p.magnetT, dashCd: p.dashCd, shield: p.shield })),
     items: s.items, gems: s.gems, powers: s.powers, puzzles: s.puzzles,
@@ -1016,7 +1044,7 @@ export function viewFromSnapshot(n: Snapshot): View {
     phase: n.ph, time: n.tm,
     mini: n.mn ? { t: n.mn[0], caught: n.mn[1], goal: n.mn[2], drops: n.mn[3].map(([id, b, x, y, z]) => ({ id, kind: b ? 'bomb' as const : 'berry' as const, x, y, z })), stunned: n.mn[4] } : null,
     miniResult: n.mr ? { caught: n.mr[0], stars: n.mr[1] } : null,
-    bank: arrRes(n.r, 0), delivered: arrRes(n.r, 3), quest: arrRes(n.r, 6),
+    bank: arrRes(n.r, 0), delivered: arrRes(n.r, 3), quest: arrRes(n.r, 6), goal: n.gl ?? 0,
     nodes: [...(n.n ?? '')].map(Number),
     players: n.p.map(([id, x, y, vx, vy, c, b, m, d, sh]) => ({ id, x, y, vx, vy, carry: c.split('').filter(Boolean).map((k) => CODE_KIND[k]), boostT: b, magnetT: m, dashCd: d, shield: sh ?? 0 })),
     items: n.i.map(([id, k, x, y]) => ({ id, kind: CODE_KIND[k], x, y })),

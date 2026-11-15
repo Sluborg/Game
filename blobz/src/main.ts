@@ -19,7 +19,7 @@ import { applyI18n, lang, lookName, setLang, t, type Key } from './i18n';
 import { lanNamespace, Scanner, type FoundRoom } from './discovery';
 import { sfx, unlockAudio } from './sfx';
 import {
-  addPlayer, affordable, atHome, BUILD_KINDS, COTTAGE_COST, COTTAGE_MAX, requestBuild, type BuildKind, BUILDING_ENABLED, DAY_CYCLE_ENABLED, STONE_ENABLED, finishMini, cleanBiome, type Biome, SNOW_MAP_ENABLED, BUILD_COST, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, pickWeapon, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
+  addPlayer, affordable, atHome, BUILD_KINDS, COTTAGE_COST, COTTAGE_MAX, requestBuild, endRound, LONG_GAME, type BuildKind, BUILDING_ENABLED, DAY_CYCLE_ENABLED, STONE_ENABLED, finishMini, cleanBiome, type Biome, SNOW_MAP_ENABLED, BUILD_COST, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, pickWeapon, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
   toolNode, viewFromSnapshot, viewFromState,
 } from './sim';
 import type { FxEvent, Input, PlayerInfo, Snapshot, State, View } from './sim';
@@ -373,7 +373,7 @@ onViewport(fitSeatNames);
 function startScene(session: Session) {
   wipe();
   if (DEBUG) (window as unknown as { __blobzBiome?: string }).__blobzBiome = session.biome ?? 'meadow';
-  endShown = false; lastStars = 0;
+  endShown = false; lastStars = 0; goalsShown = 0;
   show('menu', false); show('lobby', false); show('end', false); show('hud');
   try { (navigator as Navigator & { wakeLock?: { request(t: string): Promise<unknown> } }).wakeLock?.request('screen').catch(() => {}); } catch { /* optional */ }
   if (!game) {
@@ -434,6 +434,9 @@ let treesFor = { seed: -1, trees: [] as ReturnType<typeof makeTrees> };
 
 // ---------- build panel: the one place to build (hammer button when your blob is at home) ----------
 let sendBuild: (k: BuildKind | 'cottage') => void = () => {};
+/** Host only: end the meadow round by choice (LONG_GAME: it never ends by itself). */
+let hostEndRound: () => void = () => {};
+$('btn-gohome').onclick = () => hostEndRound();
 let panelOpen = false;
 const COST_ICON: Record<string, string> = { wood: NI.wood, stone: NI.stone, berry: NI.berry };
 const STATE_ICON = { can: 'art/icons/state/can-build-16.png', lock: 'art/icons/state/lock-16.png', done: 'art/icons/state/tick-green-16.png' }; // ChatGPT N-18 (built = the green tick, like the designer)
@@ -589,6 +592,8 @@ function renderMini(v: View) {
  *  runs create() synchronously inside scene.start(), before the once('create') hook exists; the first view
  *  is the reliable "ready" signal (the overlay otherwise stayed up and blocked every tap). */
 let loadPending = false;
+let goalToastT = 0;
+let goalsShown = 0; // milestones already toasted this round
 
 function onView(v: View) {
   if (loadPending) { loadPending = false; loading(false); }
@@ -596,6 +601,12 @@ function onView(v: View) {
   if (dungeonUi(v, session?.myId, controls, (id) => infos.get(id)?.name ?? '?')) return; // [dungeon hook, Code 2] pick cards / dungeon HUD
   renderQuestRows($('hud-quest'), v);
   renderBuildGoal(v);
+  show('btn-gohome', isHost && LONG_GAME && v.phase === 'play');
+  if (v.goal > goalsShown) { // a milestone (LONG_GAME): toast + star, the bars start on the next goal
+    goalsShown = v.goal; lastStars = 0; sfx.star();
+    const tt = $('goal-toast'); show('goal-toast'); tt.classList.remove('pop'); void tt.offsetWidth; tt.classList.add('pop');
+    clearTimeout(goalToastT); goalToastT = window.setTimeout(() => show('goal-toast', false), 2600);
+  }
   const st = starsFor(v.delivered, v.quest);
   if (st > lastStars) { sfx.star(); lastStars = st; }
   // day bar (archived, DAY_CYCLE_ENABLED): the sun rides left -> right; dusk in the last 20 s
@@ -627,8 +638,10 @@ function onView(v: View) {
       $('end-mini-n').textContent = String(v.miniResult.caught);
       $('end-mini-stars').replaceChildren(...[0, 1, 2].map((i) => { const im = new Image(); im.src = i < v.miniResult!.stars ? NI.star : NI.starEmpty; im.className = 'star'; im.alt = ''; return im; }));
     }
+    // long game: the end stars are the milestones reached (max 3), not the half-filled goal of the moment
+    const es = LONG_GAME ? Math.min(3, v.goal) : st;
     $('end-stars').replaceChildren(...[0, 1, 2].map((i) => {
-      const img = new Image(); img.src = i < st ? NI.star : NI.starEmpty; img.alt = ''; img.className = 'star' + (i < st ? ' on' : '');
+      const img = new Image(); img.src = i < es ? NI.star : NI.starEmpty; img.alt = ''; img.className = 'star' + (i < es ? ' on' : '');
       return img;
     }));
     // the team that did it: every blob, cheering (staggered hops)
@@ -637,7 +650,7 @@ function onView(v: View) {
     renderQuestRows($('end-rows'), v);
     show('btn-again', isHost); show('end-wait', !isHost);
     wipe(); show('end');
-    if (st) sfx.star();
+    if (es) sfx.star();
   }
 }
 
@@ -708,6 +721,7 @@ async function hostGame() {
   net.onPick = (id, w) => { if (state) pickWeapon(state, id, w); }; // [dungeon hook]
   net.onBuild = (id, k) => { if (state) requestBuild(state, id, k as BuildKind | 'cottage'); };
   sendBuild = (k) => { if (state) requestBuild(state, myId, k); };
+  hostEndRound = () => { if (state) endRound(state); };
   setPicker((w) => { if (state) pickWeapon(state, myId, w); });
   net.onLeave = (id) => {
     infos.delete(id); inputs.delete(id);

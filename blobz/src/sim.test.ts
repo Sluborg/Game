@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BASE, createState, DAY_CYCLE_ENABLED, DUNGEON_ENABLED, STONE_ENABLED, finishMini, MINI_ENABLED, questTargets, step, type Input } from './sim';
+import { BASE, createState, DAY_CYCLE_ENABLED, DUNGEON_ENABLED, STONE_ENABLED, finishMini, MINI_ENABLED, questTargets, step, type Input, LONG_GAME, endRound, snapshot, viewFromSnapshot } from './sim';
 
 const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 });
 
@@ -50,7 +50,7 @@ describe('sim', () => {
     expect(s.phase).toBe('end');
   });
 
-  it.skipIf(DAY_CYCLE_ENABLED)('no day cycle: no time limit; a complete quest ends the round', () => {
+  it.skipIf(DAY_CYCLE_ENABLED || LONG_GAME)('no day cycle: no time limit; a complete quest ends the round', () => {
     const s = createState([P('a')], 4);
     const t = s.time;
     for (let i = 0; i < 600; i++) step(s, new Map(), 1 / 60);
@@ -63,6 +63,27 @@ describe('sim', () => {
     step(s, new Map(), 1 / 60);
     if (MINI_ENABLED) { expect(s.phase).toBe('mini'); finishMini(s); }
     expect(s.phase).toBe('end'); // Bärregn archived: straight to the end screen
+  });
+
+  it.skipIf(DAY_CYCLE_ENABLED || !LONG_GAME)('long game (Stefan 2026-11-15): a full quest is a milestone, not the end; the host ends it by choice', () => {
+    const s = createState([P('a')], 4);
+    const q0 = { ...s.quest };
+    s.delivered = { ...s.quest, wood: s.quest.wood - 1 };
+    step(s, new Map(), 1 / 60);
+    expect(s.goal).toBe(0); // two of three goals is not a milestone
+    s.delivered.wood = s.quest.wood + 2; // 2 over the goal
+    step(s, new Map(), 1 / 60);
+    expect(s.phase).toBe('play');
+    expect(s.goal).toBe(1);
+    expect(s.fx.some((f) => f.t === 'goal' && f.n === 1)).toBe(true);
+    expect(s.quest.wood).toBe(Math.ceil(q0.wood * 1.5)); // the next goal is bigger
+    expect(s.delivered.wood).toBe(2); // the overflow counts toward it
+    expect(viewFromSnapshot(snapshot(s)).goal).toBe(1); // every phone sees the milestone
+    for (let i = 0; i < 600; i++) step(s, new Map(), 1 / 60);
+    expect(s.phase).toBe('play'); // still no end by itself
+    expect(endRound(s)).toBe(true);
+    expect(s.phase).toBe('end');
+    expect(endRound(s)).toBe(false);
   });
 
   it('quest targets grow with team size', () => {
