@@ -50,11 +50,12 @@ const tab = (p) => p.getAttribute('.tab.on', 'data-part');
     await lp.click('.tab[data-part="hat"]');
     const tiles = await lp.evaluate(() => [...document.querySelectorAll('#opts .opt')].slice(0, 16).map((t) => Math.round(t.getBoundingClientRect().height)));
     ok(tiles.every((h) => h >= 56 && h === tiles[0]), `landscape: every hat tile is the same readable height (${tiles[0]}px)`);
-    const perRow = await lp.evaluate(() => { const t = [...document.querySelectorAll('#opts .opt')]; return t.filter((x) => Math.abs(x.offsetTop - t[0].offsetTop) < 2).length; });
+    // paged grid (PLAN step 3): count the grid's columns, the last page may hold fewer tiles
+    const perRow = await lp.evaluate(() => getComputedStyle(document.getElementById('opts')).gridTemplateColumns.split(' ').length);
     ok(perRow >= 6 && perRow <= 8, `landscape: ${perRow} tiles per row`);
     // blobz v2 has 8 hats: the grid fits; with more it scrolls (never squeezes, tile height checked above)
-    const fitsOrScrolls = await lp.evaluate(() => { const o = document.getElementById('opts'); const last = [...o.querySelectorAll('.opt')].pop().getBoundingClientRect(); const ob = o.getBoundingClientRect(); return o.scrollHeight > o.clientHeight || last.bottom <= ob.bottom + 2; });
-    ok(fitsOrScrolls, 'landscape: the hat grid fits or scrolls (never squeezes)');
+    const fits = await lp.evaluate(() => { const o = document.getElementById('opts'); const last = [...o.querySelectorAll('.opt')].pop().getBoundingClientRect(); const ob = o.getBoundingClientRect(); return last.bottom <= ob.bottom + 2; });
+    ok(fits && await lp.isVisible('#opts-pager'), 'landscape: the hat page fits (no clipping) and the pager turns to the other hats');
     if (shots) await lp.screenshot({ path: `${shots}/b-designer-landscape.png` });
     console.log('ALL PASSED');
   } finally {

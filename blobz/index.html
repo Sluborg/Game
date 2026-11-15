@@ -66,6 +66,7 @@
             <button role="tab" data-part="hat" class="tab" data-i18n="design.hat">Hatt</button>
           </div>
           <div id="opts" class="opts" role="tabpanel"></div>
+          <div id="opts-pager" class="pager hidden"><button id="pg-prev" class="pgbtn" type="button" aria-label="Föregående" data-i18n-aria="design.prev"><img src="art/icons/ui/back-16.png" alt="" /></button><span id="pg-dots" class="pgdots"></span><button id="pg-next" class="pgbtn next" type="button" aria-label="Nästa" data-i18n-aria="design.next"><img src="art/icons/ui/back-16.png" alt="" /></button></div>
           <button id="btn-custom-done" class="big"><i data-icon="check"></i><span data-i18n="design.done">Klar</span></button>
         </div>
       </div>
@@ -73,6 +74,7 @@
       <!-- Join -->
       <div id="join" class="card panel joinp hidden">
         <h2 data-i18n="join.title">Joina spel</h2>
+        <div id="lan-search" class="lansearch" aria-hidden="true"></div>
         <p id="lan-status" class="help" aria-live="polite" data-i18n="join.searching">Letar efter spel på ditt Wi-Fi...</p>
         <ul id="lan-list" class="lanlist"></ul>
         <button id="btn-rescan" class="big alt hidden" type="button" data-i18n="join.rescan">Leta igen</button>
@@ -95,7 +97,7 @@
         <p id="lobby-lan" class="tag small"></p>
         <button id="btn-start" class="big" data-i18n="lobby.start">Starta</button>
         <p id="lobby-wait" class="msg" data-i18n="lobby.waitHost">Väntar på att värden startar...</p>
-        <button id="btn-newvillage" class="chip newvillage hidden" type="button"><img src="art/ninja/hut.png" alt="" /><span data-i18n="lobby.newVillage">Ny by</span></button>
+        <button id="btn-newvillage" class="chip newvillage hidden" type="button"><span data-i18n="lobby.newVillage">Ny by</span></button>
         <div id="newvillage-ask" class="ask hidden">
           <p data-i18n="lobby.newVillageAsk">Riv byn och börja om?</p>
           <div class="askrow"><button id="btn-newvillage-yes" class="chip" type="button" data-i18n="lobby.yes">Ja, riv</button><button id="btn-newvillage-no" class="chip" type="button" data-i18n="lobby.no">Nej</button></div>
@@ -172,13 +174,14 @@
     <section id="end" class="screen hidden">
       <div class="card">
         <h2 id="end-title" class="sr-only" data-i18n="end.title">Uppdraget klart!</h2>
-        <div id="end-stars" class="stars"></div>
-        <div id="end-rows" class="endrows"></div>
+        <div class="endleft"><div id="end-stars" class="stars"></div><div id="end-team" class="endteam" aria-hidden="true"></div></div>
+        <div class="endright"><div id="end-rows" class="endrows"></div>
         <p id="end-mini" class="endmini hidden" aria-label="Bärregn" data-i18n-aria="mini.name"><img src="art/ninja/res-berry.png" alt="" /> <b id="end-mini-n">0</b> <span id="end-mini-stars"></span></p>
         <p class="tag sr-only" data-i18n="end.good">Bra jobbat!</p>
         <button id="btn-again" class="big" data-i18n="end.again">Spela igen</button>
         <p id="end-wait" class="msg" data-i18n="end.waitHost">Väntar på värden...</p>
         <button id="btn-menu" class="big alt"><img src="art/icons/ui/home-16.png" alt="" class="kicon" /><span data-i18n="end.menu">Till menyn</span></button>
+        </div>
       </div>
     </section>
 

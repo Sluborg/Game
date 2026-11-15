@@ -30,8 +30,9 @@ const shots = process.argv[3] || '';
     ok(true, 'at home: the arrow is gone and the Build button pulses');
     await ada.click('#btn-build');
     await ada.waitForSelector('#build-panel:not(.hidden)');
-    const icons = await ada.$$eval('#build-cards .bcard', (cs) => cs.map((c) => c.querySelectorAll('.bicons img').length));
-    ok(icons.length === 7 && icons.every((n) => n >= 1), `every build card shows what it does as icons (${icons.join(',')})`);
+    const badges = await ada.$$eval('#build-cards .bcard', (cs) => cs.map((c) => (c.querySelector('.bstate')?.getAttribute('src') ?? '').replace(/.*\//, '')));
+    ok(badges.length === 7 && badges.every((b) => /^(can-build|lock|done)-16\.png$/.test(b)) && badges.includes('can-build-16.png') && badges.includes('lock-16.png'),
+      `every build card carries a state badge: can-build / lock (${badges.join(',')})`);
     const scroll = await ada.evaluate(() => { const p = document.getElementById('build-panel'); return p.scrollHeight - p.clientHeight; });
     ok(scroll <= 0, 'landscape build panel with icon rows still fits without scrolling');
     if (shots) await ada.screenshot({ path: `${shots}/noread-panel-landscape.png` });

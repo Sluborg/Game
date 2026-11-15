@@ -25,6 +25,7 @@ const sv = {
   // blob designer
   'design.title': 'Blob-designer',
   'design.random': 'Slumpa',
+  'design.prev': 'Föregående', 'design.next': 'Nästa',
   'design.name': 'Namn',
   'design.namePh': 'Skriv ditt namn',
   'design.shape': 'Form',
@@ -251,6 +252,7 @@ const en: Record<Key, string> = {
   'menu.lang': 'Language',
   'design.title': 'Blob designer',
   'design.random': 'Random',
+  'design.prev': 'Previous', 'design.next': 'Next',
   'design.name': 'Name',
   'design.namePh': 'Type your name',
   'design.shape': 'Shape',
