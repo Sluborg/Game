@@ -899,3 +899,24 @@ body.noday #hud-day { display: none !important; }
   body.noday #hud-bank { top: max(14px, env(safe-area-inset-top)); }
   body.noday #hud-double { top: calc(max(14px, env(safe-area-inset-top)) + 58px); }
 }
+
+/* home (Stefan 2026-11-15): the blob at the game's pixel density (3x: 60 px for the 20x20 frame) in a small centred
+   Ninja panel together with the name + edit button; the whole panel stays tappable. Logo big on top, buttons below. */
+#menu #home .me {
+  align-self: center; justify-self: center; width: auto; min-width: 150px; gap: 2px; padding: 4px 8px 2px;
+  border-style: solid; border-width: 12px 10px 10px 12px; image-rendering: pixelated;
+  border-image: url('/assets/ninja-adventure/Ui/Theme/Theme%20Wood/nine_path_panel_3.png') 6 5 5 6 fill / 12px 10px 10px 12px stretch;
+  filter: drop-shadow(0 5px 0 #3f263155);
+}
+#menu #home .me .blob, #menu #home .me .blob img { width: 60px; height: 60px; }
+#menu #home .me .blob img { image-rendering: pixelated; }
+#menu #home .me .blob::after { bottom: 0; }
+#menu #home .me .bounce { animation-name: bobsmall; }
+@keyframes bobsmall { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+#menu #home .me-text { border: 0; border-image: none; padding: 0; gap: 6px; }
+#menu #home .me-text b { font-size: 20px; max-width: 46vw; }
+#menu #home .me-text .edit { width: 34px; height: 30px; }
+#menu #home .me-text .edit::before { width: 18px; height: 18px; background-size: 18px 18px; }
+@media (orientation: landscape) {
+  #menu #home .me .blob, #menu #home .me .blob img { width: 60px; height: 60px; }
+}
