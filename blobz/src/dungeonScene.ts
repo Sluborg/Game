@@ -37,8 +37,8 @@ const WIMG: Record<string, { src: string; w: number; h: number; px: number; py: 
   hammer: { src: NA + 'Items/Weapons/Hammer/Sprite.png', w: 9, h: 16, px: 4.5, py: 14, up: true },
   wand: { src: NA + 'Items/Weapons/MagicWand/Sprite.png', w: 5, h: 18, px: 2.5, py: 16, up: true },
   lance: { src: NA + 'Items/Weapons/Lance/Sprite.png', w: 6, h: 23, px: 3, py: 20, up: true },
-  shield: { src: 'art/dungeon/weapons/ninja-shield.png', w: 12, h: 12, px: 6, py: 6 },
-  crossbow: { src: 'art/dungeon/weapons/ninja-crossbow.png', w: 16, h: 10, px: 2, py: 5 },
+  shield: { src: 'art/dungeon/weapons/shield-16.png', w: 16, h: 16, px: 8, py: 7 }, // ChatGPT N-11 (weapons/README.md)
+  crossbow: { src: 'art/dungeon/weapons/crossbow-16.png', w: 16, h: 16, px: 1, py: 7 }, // ChatGPT N-11
 };
 /** which sprite each weapon id draws (the Riddare, id 'shield', slashes with the sword) */
 const WART: Record<Weapon, string> = { sword: 'sword', shield: 'sword', dagger: 'dagger', hammer: 'hammer', staff: 'wand', spear: 'lance', bow: 'crossbow' };
