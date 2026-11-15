@@ -41,10 +41,11 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (next: N-30b). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
+ChatGPT works only on N-orders with status TO DO (next: N-34). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
+| N-34 | TO DO (FIRST) | Dungeon room door for the Archero rooms, closed + open, 32x32 + 48x32 | `art/dungeon/door-*` |
 | N-1 | DONE (C chosen) | Title header / logo in Ninja Adventure style | `art/logo.png` |
 | N-2 | DONE (portrait + landscape) | Start screen background | `art/title.png` |
 | N-3 | DONE | Loading screen (portrait + landscape approved) | `art/loading.png`, `art/loading-landscape.png` |
@@ -79,9 +80,9 @@ ChatGPT works only on N-orders with status TO DO (next: N-30b). ChatGPT fills ev
 | N-27 | DONE (received 2026-11-15) | Wood resource icon: 2-3 stacked cut logs with end rings (16x16 + 32x32) | `art/icons/res-wood-*` |
 | N-28 | DONE (received 2026-11-15) | Meadow portal to the dungeon: rune archway in a grassy mound, idle + glowing frame (64x48) | `art/props/portal-*` |
 | N-29 | DONE (received 2026-11-15) | Bigger plain grey boulders x3 (32x32 x2, 48x32) + matching rubble (16x16), stone parked | `art/props/boulder-*`, `boulder-rubble-*` |
-| N-30 | DONE (received 2026-11-15; ran before the fence row, fence = N-30b) | Puzzle set: pressure plate up/down (16x16), gate closed/open + posts (32x32) | `art/props/plate-*`, `gate-*` |
-| N-30b | TO DO (FIRST) | Fence tileset matching the N-30 gate and posts (15 pieces, 16x16) | `art/props/fence-*` |
-| N-33 | DONE (received 2026-11-15) | Treasure chest for puzzle rewards, closed + open (16x16 + 32x32) | `art/props/chest-*` |
+| N-30 | ON HOLD (puzzles on hold 2026-11-15; art kept in public/). Was: DONE (received 2026-11-15; ran before the fence row, fence = N-30b) | Puzzle set: pressure plate up/down (16x16), gate closed/open + posts (32x32) | `art/props/plate-*`, `gate-*` |
+| N-30b | ON HOLD (puzzles on hold 2026-11-15; art kept in public/). Was: DONE (v2 2026-11-15 from ChatGPT's 3-piece set n30b-fence-3pieces.png, by scripts/fence_pieces.py; pen preview docs/art-review/n30b-fence-pen-v4.png (v4: N-S post on every tile, thin centre rail on top, like the Tiny 16 reference), waits for Stefan's rating; v1 crop version replaced) | Fence tileset matching the N-30 gate and posts (15 pieces, 16x16) | `art/props/fence-*` |
+| N-33 | ON HOLD (puzzles on hold 2026-11-15; art kept in public/). Was: DONE (received 2026-11-15) | Treasure chest for puzzle rewards, closed + open (16x16 + 32x32) | `art/props/chest-*` |
 | N-31 | DONE (received 2026-11-15) | Build site: scaffold with timber for buildings under construction (32x32 + 48x48) | `art/props/site-*` |
 | N-32 | DONE (received 2026-11-15) | Stone resource icon, grey like the N-29 boulders (16x16 + 32x32) | `art/icons/res-stone-*` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
@@ -374,7 +375,26 @@ Row 2: under each boulder, its depleted rubble (a few small grey chips and pebbl
 grey palette as its boulder.
 ```
 
-### N-30 Puzzle set (do this FIRST)
+### N-34 Dungeon room door (do this FIRST)
+```
+STYLE: exactly like your N-26 trees (same dark near-black outline, 2-3 tone shading, pixel size): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n26-trees.png
+PALETTE: the stone colours of this dungeon tileset (dark blue-grey stone, warm brown wood): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/assets/ninja-adventure/Backgrounds/Tilesets/TilesetDungeon.png
+Solid flat magenta #ff00ff background, hard pixel edges, no glow, halo or shadow touching the magenta. Deliver at 8x
+nearest-neighbour, generous magenta space between sprites. Top-down 3/4 view like the game. No text, no labels.
+A DUNGEON ROOM DOOR set into the top edge of a dark stone wall (the wall the player walks up to at the top of a
+room): a stone arch frame with a heavy wooden door with iron bands. Two states:
+1 CLOSED: the wooden door shut inside the stone arch.
+2 OPEN: no door, a dark passage inside the arch with a faint warm light deep inside (a few lighter pixels, no glow
+  outside the arch).
+Each state in TWO sizes, each drawn natively at that size (NOT one scaled up):
+- EXACTLY 32x32 art pixels (door about 16 px wide inside the arch, wall stone filling the rest of the width)
+- EXACTLY 48x32 art pixels (wider: door about 24 px wide, more wall stone on both sides)
+Both sizes: 1 px dark outline at that scale, the wall stone runs to the left and right edge of the cell so it can sit
+on a stone wall row, the bottom row is the floor line.
+Layout: row 1 = 32x32 closed, 32x32 open; row 2 = 48x32 closed, 48x32 open. Magenta between all four.
+```
+
+### N-30 Puzzle set (ON HOLD: puzzles on hold 2026-11-15)
 ```
 STYLE: exactly like your N-26 trees (same dark outline, palette, 2-3 tone shading, pixel size): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n26-trees.png
 Solid flat magenta #ff00ff background, hard pixel edges, no glow, halo or shadow touching the magenta. Deliver at 8x
@@ -387,7 +407,7 @@ Row 2, each on EXACTLY a 32x32 art-pixel grid: 3 wooden gate CLOSED (sturdy plan
 hangs on). Same palette for all.
 ```
 
-### N-33 Treasure chest
+### N-33 Treasure chest (ON HOLD: puzzles on hold 2026-11-15)
 ```
 STYLE: exactly like your N-26 trees (same dark outline, palette, 2-3 tone shading, pixel size): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n26-trees.png
 Solid flat magenta #ff00ff background, hard pixel edges, no glow, halo or shadow touching the magenta. Deliver at 8x
@@ -420,7 +440,7 @@ The icon: one chunky grey stone (or a stone with one smaller chip leaning on it)
 dark near-black outline. No ore spots, no gems, no text. Must read as "stone" at 32 px next to the N-27 log pile.
 ```
 
-### N-30b Fence tileset (do this FIRST)
+### N-30b Fence tileset (ON HOLD: puzzles on hold 2026-11-15; do not make)
 ```
 STYLE: exactly like your N-26 trees (same dark outline, palette, 2-3 tone shading, pixel size): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n26-trees.png
 MATCH YOUR N-30 GATE AND POSTS: same orange wood, same posts with the light end-grain square on top, same iron look: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n30-puzzle.png
