@@ -41,7 +41,7 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (N-11 and N-13 round 2 are TO DO now). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
+ChatGPT works only on N-orders with status TO DO (N-11 is TO DO now). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
@@ -59,7 +59,7 @@ ChatGPT works only on N-orders with status TO DO (N-11 and N-13 round 2 are TO D
 | N-7b | DONE (received 2026-11-14) | App icon round 2: no background, no hands, no sparkles | app/PWA icon |
 | N-11 | TO DO | Class weapons sheet: dagger, wand, sword, crossbow, round shield (16x16 + 32x32) | `dungeon/weapons/*` |
 | N-12 | DONE (received 2026-11-15) | Class move + mode icons: dodge, jump back, shield charge, phase out, heal mode, damage mode (16x16 + 32x32) | `dungeon/icons/*` |
-| N-13 | TO DO (round 2) | Combat FX frames, ROUND 2 (round 1 had glow halos):  KO stars, shockwave ring, slam warning, level-up burst, hit spark (32x32, 4 frames each) | `dungeon/fx/*` |
+| N-13 | DONE (round 2 received 2026-11-15) | Combat FX frames, ROUND 2 (round 1 had glow halos):  KO stars, shockwave ring, slam warning, level-up burst, hit spark (32x32, 4 frames each) | `dungeon/fx/*` |
 | N-14 | DONE (received 2026-11-15) | Boss intro banner + boss portrait (portrait 64x64, banner 256x64) | `dungeon/boss-*` |
 | N-15 | DONE (received 2026-11-15) | Meadow extras: build-site marker, signpost, magnet power-up, speed power-up, home flag (16x16 + 32x32) | `art/meadow/*` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
