@@ -8,7 +8,8 @@ import { dungeonUi, setPicker } from './dungeonUi'; // [dungeon hook]
 import { GameScene, type Session } from './game';
 import { ClientNet, HostNet, friendlyError, type ToClient } from './net';
 import { MINI_SECONDS } from './mini';
-import { BUILD_HINT, building, DATA_ICON, NI } from './ninjaArt';
+import { building, DATA_ICON, NI } from './ninjaArt';
+import { partTile } from './partArt';
 import { applyI18n, lang, lookName, setLang, t, type Key } from './i18n';
 import { lanNamespace, Scanner, type FoundRoom } from './discovery';
 import { sfx, unlockAudio } from './sfx';
@@ -78,8 +79,9 @@ function renderPicker() {
     t.setAttribute('aria-selected', String(t.dataset.part === part));
   });
   const choose = (patch: Partial<BlobLook>) => { profile.look = { ...profile.look, ...patch }; saveLook(); boing = true; renderPicker(); };
+  let all: HTMLButtonElement[];
   if (part === 'color') {
-    $('opts').replaceChildren(...COLORS.map((c) => {
+    all = (COLORS.map((c) => {
       const b = document.createElement('button');
       b.className = 'opt swatch-opt' + (c === profile.look.color ? ' on' : '');
       b.setAttribute('aria-label', t('design.color'));
@@ -91,16 +93,40 @@ function renderPicker() {
     }));
   } else {
     const key = part;
-    $('opts').replaceChildren(...PART_OPTS[key].map((svLabel, i) => {
+    all = PART_OPTS[key].map((svLabel, i) => {
       const label = lookName(key, i, svLabel);
       const b = document.createElement('button');
       b.className = 'opt' + (profile.look[key] === i ? ' on' : '');
-      b.append(blobEl({ ...profile.look, [key]: i }));
+      b.append(partTile(profile.look, key, i)); // only the item (eyes alone, hat alone...), shape = neutral face
       b.setAttribute('aria-label', label); b.title = label;
       b.onclick = () => choose({ [key]: i });
       return b;
-    }));
+    });
   }
+  // paging instead of clipping/scrolling: a fixed grid, page arrows when the part has more options
+  const size = pageSize(), pages = Math.max(1, Math.ceil(all.length / size));
+  page = Math.max(0, Math.min(pages - 1, page));
+  $('opts').replaceChildren(...all.slice(page * size, page * size + size));
+  show('opts-pager', pages > 1);
+  $('pg-dots').replaceChildren(...Array.from({ length: pages }, (_, i) => { const d = document.createElement('i'); if (i === page) d.className = 'on'; return d; }));
+  ($('pg-prev') as HTMLButtonElement).disabled = page === 0;
+  ($('pg-next') as HTMLButtonElement).disabled = page >= pages - 1;
+}
+/** Options per page: 4 x 2 in portrait, 6 x 1 in a short landscape screen. */
+const pageSize = () => (matchMedia('(orientation: landscape) and (max-height: 520px)').matches ? 6 : 8);
+let page = 0;
+/** The page that holds the chosen option of the current part. */
+function chosenPage() {
+  const i = part === 'color' ? COLORS.indexOf(profile.look.color) : profile.look[part];
+  return Math.floor(Math.max(0, i) / pageSize());
+}
+function turnPage(d: number) {
+  const n = part === 'color' ? COLORS.length : PART_OPTS[part].length;
+  const next = page + d;
+  if (next < 0 || next * pageSize() >= n) return false;
+  page = next; renderPicker();
+  const opts = $('opts'); opts.classList.remove('from-left', 'from-right'); void opts.offsetWidth; opts.classList.add(d > 0 ? 'from-right' : 'from-left');
+  return true;
 }
 /** Switch tab: slide the options in from the side we came from, keep the chosen tile in view. */
 function setPart(next: Part) {
@@ -108,6 +134,7 @@ function setPart(next: Part) {
   slide = PARTS.indexOf(next) > PARTS.indexOf(part) ? 'from-right' : 'from-left';
   part = next;
   store.set('tab', part);
+  page = chosenPage();
   renderPicker();
   const opts = $('opts');
   opts.classList.remove('from-left', 'from-right'); void opts.offsetWidth;
@@ -117,6 +144,7 @@ function setPart(next: Part) {
 }
 /** Scroll the option grid so the selected tile is visible (only the grid scrolls, never the page). */
 function showChosen() {
+  if (page !== chosenPage()) { page = chosenPage(); renderPicker(); }
   const opts = $('opts');
   const on = opts.querySelector<HTMLElement>('.opt.on');
   if (!on) { opts.scrollTop = 0; return; }
@@ -137,14 +165,17 @@ document.querySelectorAll<HTMLButtonElement>('.tab').forEach((t) => {
     down = false;
     const dx = e.clientX - sx, dy = e.clientY - sy;
     if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    swipedAt = performance.now();
+    if (turnPage(dx < 0 ? 1 : -1)) return; // swipe turns the page first, then the tab
     const i = PARTS.indexOf(part) + (dx < 0 ? 1 : -1);
     if (i < 0 || i >= PARTS.length) return;
-    swipedAt = performance.now();
     setPart(PARTS[i]);
   });
   // a swipe must not also pick the tile it started on
   opts.addEventListener('click', (e) => { if (performance.now() - swipedAt < 400) { e.stopPropagation(); e.preventDefault(); } }, true);
 }
+$('pg-prev').onclick = () => turnPage(-1);
+$('pg-next').onclick = () => turnPage(1);
 $('btn-random').onclick = () => { profile.look = randomLook(); saveLook(); boing = true; renderPicker(); };
 saveLook();
 
@@ -177,6 +208,7 @@ const SEARCHING = (): string => t('join.searching');
 const NOTHING = (): string => t('join.nothing');
 function lanStatus(text: string, rescan = false) {
   $('lan-status').textContent = text;
+  show('lan-search', !rescan); // the N-20 searching blob while we look
   $('lan-status').classList.toggle('static', rescan);
   show('btn-rescan', rescan);
 }
@@ -210,6 +242,7 @@ function renderRooms(rooms: FoundRoom[]) {
   emptyRounds = rooms.length || connecting ? 0 : emptyRounds + 1;
   // ~10 s without a game: hint at the usual cause, still scanning
   lanStatus(connecting && !rooms.length ? t('join.connectingFound') : emptyRounds >= 3 ? NOTHING() : SEARCHING(), emptyRounds >= 3 && !connecting);
+  show('lan-search', rooms.length === 0 && !(emptyRounds >= 3 && !connecting));
   $('lan-list').replaceChildren(...rooms.map((r) => {
     const li = document.createElement('li');
     const b = document.createElement('button');
@@ -298,12 +331,24 @@ function sanitize(id: string, i: Partial<PlayerInfo>): PlayerInfo {
   return { id, name: String(i.name ?? 'Blob').slice(0, 10) || 'Blob', ...clampLook(i) };
 }
 
+/** Lobby (PLAN step 3): five seats on the N-20 party platform; joined blobz stand on it, free seats show the waiting
+ *  silhouette. Players stay <li> (tests count them), free seats are plain spans. */
 function renderLobby() {
-  $('lobby-list').replaceChildren(...[...infos.values()].map((p) => {
+  const players = [...infos.values()].map((p) => {
     const li = document.createElement('li');
-    li.append(blobEl(clampLook(p)), document.createTextNode(p.name));
+    li.className = 'seat';
+    const name = document.createElement('span'); name.className = 'seatname'; name.textContent = p.name;
+    li.append(blobEl(clampLook(p)), name);
     return li;
-  }));
+  });
+  const free = Array.from({ length: Math.max(0, MAX_PLAYERS - players.length) }, () => {
+    const s = document.createElement('span');
+    s.className = 'seat free';
+    const im = new Image(); im.src = 'art/lobby/waiting-silhouette.png'; im.alt = '';
+    s.append(im);
+    return s;
+  });
+  $('lobby-list').replaceChildren(...players, ...free);
 }
 
 function startScene(session: Session) {
@@ -362,19 +407,23 @@ let treesFor = { seed: -1, trees: [] as ReturnType<typeof makeTrees> };
 let sendBuild: (k: BuildKind | 'cottage') => void = () => {};
 let panelOpen = false;
 const COST_ICON: Record<string, string> = { wood: NI.wood, stone: NI.stone, berry: NI.berry };
+const STATE_ICON = { can: 'art/icons/state/can-build-16.png', lock: 'art/icons/state/lock-16.png', done: 'art/icons/state/done-16.png' }; // ChatGPT N-18
 const buildName = (k: BuildKind) => t(`build.name.${k}` as Key);
-/** What each building does, as pictures (no reading): Ninja icons (ninjaArt.ts BUILD_HINT). */
-const BUILD_ICONS = BUILD_HINT as Record<BuildKind | 'cottage2' | 'cottage3', string[]>;
-function iconRow(items: string[]): Node[] {
-  return items.map((it) => {
-    if (!it.endsWith('.png')) { const b = document.createElement('b'); b.textContent = it; return b; }
-    const im = new Image(); im.src = it; im.alt = ''; return im;
-  });
-}
+/** Building picture box in the build cards (css px); pictures use the largest whole scale that fits. */
+const BIMG_BOX = 104;
 function buildCard(kind: BuildKind | 'cottage'): HTMLButtonElement {
   const b = document.createElement('button');
   b.type = 'button'; b.className = 'bcard'; b.dataset.kind = kind;
-  b.innerHTML = '<span class="bimg"><img alt="" /></span><b class="bname"></b><span class="bicons"></span><span class="beff"></span><span class="bcost"></span>';
+  // PLAN step 3: name on top, the building in a fixed box (largest whole scale that fits), a short line, the cost strip
+  // at the bottom; N-18 badge top-left: can-build / lock / done. No icon row.
+  b.innerHTML = '<b class="bname"></b><span class="bimg"><img alt="" /><img class="bstate" alt="" /></span><span class="beff"></span><span class="bcost"></span>';
+  const im = b.querySelector<HTMLImageElement>('.bimg img')!;
+  im.onload = () => {
+    const box = matchMedia('(orientation: landscape) and (max-height: 520px)').matches ? 72 : BIMG_BOX;
+    const fit = Math.min(box / im.naturalWidth, box / im.naturalHeight);
+    const sc = fit >= 1 ? Math.floor(fit) : fit; // whole scales; only a picture taller than the box shrinks
+    im.style.width = im.naturalWidth * sc + 'px'; im.style.height = im.naturalHeight * sc + 'px';
+  };
   b.onclick = () => { if (!b.disabled) { b.classList.remove('tap'); void b.offsetWidth; b.classList.add('tap'); sendBuild(kind); } };
   return b;
 }
@@ -408,11 +457,11 @@ function renderBuildPanel(v: View) {
     card.disabled = built || !can;
     card.classList.toggle('built', !!built);
     card.classList.toggle('can', can);
-    card.querySelector('img')!.src = img;
+    const pic = card.querySelector<HTMLImageElement>('.bimg img')!;
+    if (!pic.src.endsWith(img)) pic.src = img;
+    card.querySelector<HTMLImageElement>('.bstate')!.src = built ? STATE_ICON.done : can ? STATE_ICON.can : STATE_ICON.lock;
     card.querySelector('.bname')!.textContent = name;
     card.querySelector('.beff')!.textContent = built ? t('build.built') : eff;
-    const icons = built ? [NI.check] : BUILD_ICONS[isCot ? (lvl + 1 === 2 ? 'cottage2' : 'cottage3') : kind];
-    card.querySelector('.bicons')!.replaceChildren(...iconRow(icons));
     card.setAttribute('aria-label', `${name}: ${built ? t('build.built') : eff}`);
     card.querySelector('.bcost')!.replaceChildren(...(built || !cost ? [] : RES.filter((k) => cost[k] > 0).map((k) => {
       const s = document.createElement('span');
@@ -551,6 +600,8 @@ function onView(v: View) {
       const img = new Image(); img.src = i < st ? NI.star : NI.starEmpty; img.alt = ''; img.className = 'star' + (i < st ? ' on' : '');
       return img;
     }));
+    // the team that did it: every blob, cheering (staggered hops)
+    $('end-team').replaceChildren(...[...infos.values()].map((p, i) => { const b = blobEl(clampLook(p)); b.style.animationDelay = `${i * 0.12}s`; return b; }));
     $('end-rows').innerHTML = QUEST_ROWS();
     renderQuestRows($('end-rows'), v);
     show('btn-again', isHost); show('end-wait', !isHost);

@@ -1062,3 +1062,133 @@ input, #name {
 #build-panel .bcard .beff { font-size: 14px; } #build-panel .bcard .bcost { font-size: 16px; }
 .lanrow b { font-size: 18px; }
 .lanrow small, .lanrow span { font-size: 15px; }
+
+/* ---------- build menu layout (PLAN step 3) ---------- */
+#build-panel { top: calc(max(8px, env(safe-area-inset-top)) + 96px); transform: translateX(-50%); max-height: calc(100% - 120px); padding: 8px; }
+#build-panel .bcards { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+#build-panel .bcard {
+  position: relative; display: grid; grid-template-rows: auto 104px 1fr auto; justify-items: center; align-items: center;
+  gap: 4px; padding: 8px 4px; min-height: 0; filter: none; opacity: 1;
+}
+#build-panel .bcard .bname { font-size: 16px; font-weight: 700; line-height: 1.15; text-align: center; min-height: 2.3em; display: flex; align-items: center; }
+#build-panel .bcard .bimg { position: relative; width: 100%; height: 104px; display: flex; align-items: flex-end; justify-content: center; }
+#build-panel .bcard .bimg img { max-width: none; max-height: none; image-rendering: pixelated; }
+#build-panel .bcard .beff { font-size: 14px; line-height: 1.2; color: #6f5546; text-align: center; display: block; min-height: 0; }
+#build-panel .bcard .bcost { align-self: end; width: 100%; padding-top: 4px; border-top: 2px solid #e4cf9f; gap: 8px; }
+#build-panel .bcard .bcost .c { font-size: 16px; font-weight: 700; gap: 2px; }
+#build-panel .bcard .bcost { flex-wrap: wrap; gap: 2px 6px; }
+#build-panel .bcard { min-width: 0; }
+#build-panel .bcard .bcost .c img { height: auto; width: auto; } /* resource art at 1x in the cost strip */
+#build-panel .bcard .bcost .c.ok { color: var(--k-plum); }
+#build-panel .bcard .bcost .c.no { color: #c0392b; }
+#build-panel .bcard .bimg .bstate { position: absolute; right: 0; top: 0; width: 32px; height: 32px; image-rendering: pixelated; }
+#build-panel .bcard:disabled:not(.built), #build-panel .bcard.built { filter: none; opacity: 1; }
+#build-panel .bcard.built .bimg img { opacity: 0.75; }
+#build-panel .bcard.can { border: 3px solid #4caf3a; }
+@media (orientation: landscape) and (max-height: 520px) {
+  #build-panel { top: 50%; transform: translate(-50%, -50%); max-height: 96vh; width: min(96vw, 860px); padding: 6px; }
+  #build-panel .bcards { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+  #build-panel .bcard { grid-template-rows: auto 72px 1fr auto; padding: 6px 2px; }
+  #build-panel .bcard .bimg { height: 72px; }
+  #build-panel .bcard .bname { font-size: 14px; }
+  #build-panel .bcard .beff { font-size: 14px; display: block; }
+}
+
+/* ---------- designer (PLAN step 3): no title, a fixed grid that pages, tiles show only the item ---------- */
+#menu #custom > h2 { display: none; }
+#menu #custom .opts {
+  grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 72px; height: calc(72px * 2 + 8px + 16px + 4px);
+  min-height: 0; max-height: none; overflow: visible; align-content: start;
+}
+#menu #custom .opt { min-height: 0; height: 72px; display: grid; place-items: center; }
+#menu #custom .opt .blob, #menu #custom .opt .blob img { width: 60px; height: 60px; }
+#menu #custom .opt .part { display: grid; place-items: center; width: 100%; height: 100%; }
+#menu #custom .opt .part img { image-rendering: pixelated; max-width: none; }
+#menu #custom .opt .part.none::before { content: ''; width: 36px; height: 36px; border: 3px dashed var(--k-edge); border-radius: 50%; }
+.pager { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.pgbtn {
+  width: 56px; height: 48px; padding: 0; display: grid; place-items: center; border: 2px solid var(--k-edge-lo); border-radius: 4px;
+  background: var(--k-parch2); box-shadow: inset 0 -3px 0 0 #e4cf9f, 0 4px 0 0 var(--k-shadow); cursor: pointer;
+}
+.pgbtn img { width: 48px; height: 48px; image-rendering: pixelated; }
+.pgbtn.next img { transform: scaleX(-1); }
+.pgbtn:disabled { opacity: 0.35; cursor: default; }
+.pgbtn:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 0 -3px 0 0 #e4cf9f, 0 2px 0 0 var(--k-shadow); filter: brightness(0.9); }
+.pgdots { display: flex; gap: 6px; }
+.pgdots i { width: 10px; height: 10px; border-radius: 50%; background: var(--k-edge); }
+.pgdots i.on { background: var(--k-plum); }
+@media (orientation: landscape) and (max-height: 520px) {
+  #menu #custom .opts { grid-template-columns: repeat(6, minmax(0, 1fr)); height: calc(72px + 16px + 4px); }
+}
+/* designer tiles: room for the 60 px (3x) blob on a 360 px phone */
+#menu #custom .opts { padding: 6px; gap: 6px; }
+#menu #custom .opt, #menu #custom .opt.on { padding: 0; }
+@media (max-width: 380px) and (orientation: portrait) { #menu { padding-left: 10px; padding-right: 10px; } #menu #custom.card { padding-left: 8px; padding-right: 8px; } }
+
+/* ---------- lobby + Join (PLAN step 3) ---------- */
+/* five seats on the N-20 party platform (160x32 art at 2x = 320 px; 3x would not fit a phone) */
+#lobby #lobby-list {
+  list-style: none; margin: 8px auto 0; padding: 0 10px 34px; width: 320px; max-width: 100%;
+  display: flex; flex-direction: row; justify-content: space-between; align-items: flex-end; gap: 0;
+  background: url('/art/lobby/party-platform.png') center bottom / 320px 64px no-repeat; image-rendering: pixelated;
+}
+#lobby #lobby-list .seat, #lobby #lobby-list li.seat {
+  border: 0 !important; background: none !important; padding: 0 !important; min-height: 0; width: 60px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 14px;
+}
+#lobby #lobby-list .seat .blob, #lobby #lobby-list .seat .blob img { width: 60px; height: 60px; }
+#lobby #lobby-list .seat .seatname { font-size: 14px; font-weight: 700; color: var(--k-plum); max-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#lobby #lobby-list .seat.free img { width: 60px; height: 60px; image-rendering: pixelated; opacity: 0.9; margin-bottom: 19px; }
+#lobby #lobby-list li.seat { animation: seat-in 0.35s ease-out both; }
+@keyframes seat-in { from { transform: translateY(-14px) scale(0.8); opacity: 0; } to { transform: none; opacity: 1; } }
+#lobby .card #btn-start { margin-top: 8px; }
+/* "Ny by" moved away from the start button: a small secondary at the bottom */
+#lobby .card #btn-newvillage { align-self: center; margin-top: 16px; min-height: 48px; font-size: 16px; opacity: 0.95; }
+#lobby .card #btn-newvillage img { display: none; }
+@media (orientation: landscape) and (max-height: 520px) {
+  #lobby .card { flex-direction: column; }
+  #lobby #lobby-list { margin-top: 0; }
+}
+/* Join: the searching blob (N-20, 4 frames 32x32 at 3x) while no game is found; big blob cards per game */
+.lansearch { width: 96px; height: 96px; margin: 0 auto; background: url('/art/lobby/searching-blob.png') 0 0 / 384px 96px no-repeat; image-rendering: pixelated; animation: lansearch 1.2s steps(4) infinite; }
+@keyframes lansearch { to { background-position: -384px 0; } }
+.lanrow { min-height: 80px; padding: 8px 12px; gap: 12px; border-width: 3px !important; border-color: #4caf3a !important; }
+.lanrow .blob, .lanrow .blob img { width: 60px; height: 60px; }
+.lanrow .lantext b { font-size: 20px; }
+.lanrow .lansub { font-size: 16px; }
+.lanrow.full { border-color: var(--k-edge) !important; }
+
+/* ---------- end screen (PLAN step 3): three big gold stars + the team, one row per resource, side by side in landscape ---------- */
+#end .card { max-width: 360px; }
+#end .endleft, #end .endright { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+#end .stars { display: flex; justify-content: center; gap: 8px; }
+#end .stars .star { width: 76px; height: 68px; image-rendering: pixelated; }
+#end .endteam { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px; min-height: 60px; }
+#end .endteam .blob, #end .endteam .blob img { width: 60px; height: 60px; }
+#end .endteam .blob { animation: cheer 0.9s ease-in-out infinite; }
+@keyframes cheer { 0%, 100% { transform: translateY(0) scale(1, 1); } 30% { transform: translateY(-10px) scale(0.95, 1.06); } 55% { transform: translateY(0) scale(1.08, 0.92); } }
+#end .endrows { width: 100%; gap: 8px; }
+#end .endrows .qrow { height: 40px; display: grid; grid-template-columns: 64px 1fr 64px 24px; align-items: center; gap: 8px; padding: 0 4px; }
+#end .endrows .qicon { justify-self: center; width: auto; height: auto; image-rendering: pixelated; }
+#end .endrows .qbar { height: 18px; border: 2px solid var(--k-edge) !important; border-image: none !important; border-radius: 4px; background: #efe0bb !important; overflow: hidden; }
+#end .endrows .qfill { height: 100%; background: #4caf3a !important; border: 0; border-image: none !important; }
+#end .endrows .qrow.done .qfill { background: #e3a520 !important; }
+#end .endrows .qnum { font-size: 18px; font-weight: 700; color: var(--k-plum); text-align: right; width: auto; }
+#end .endrows .qstar { width: 24px; height: 22px; }
+@media (orientation: landscape) and (max-height: 520px) {
+  #end.screen { justify-content: flex-start; }
+  #end .card { max-width: min(640px, 76vw); display: grid; grid-template-columns: 1fr 1.15fr; align-items: center; gap: 12px 16px; }
+  #end .stars .star { width: 57px; height: 51px; }
+  #end .endrows .qrow { height: 34px; }
+}
+
+/* ---------- app-start loading (PLAN step 3): the sunny village (N-2), logo + a wooden progress bar.
+   The dusk cave art (loading-*.png) is kept for the dungeon entry. ---------- */
+#loading { background: #45b2fc url('/art/start-portrait.png') center bottom / cover no-repeat; }
+@media (orientation: landscape) { #loading { background: #9ccd38 url('/art/title.png') center 70% / cover no-repeat; } #loading::after { content: none; } }
+.loadbar {
+  width: 82%; height: 36px; padding: 3px; box-shadow: none; background: none; border: 6px solid; box-sizing: border-box;
+  border-image: url('/assets/ninja-adventure/Ui/Theme/Theme%20Wood/nine_path_bg.png') 2 fill / 6px stretch; image-rendering: pixelated;
+  filter: drop-shadow(0 4px 0 #3f263155);
+}
+.loadbar i { height: 100%; border: 0; border-image: none; background: #f08a3c; box-shadow: inset 0 -4px 0 0 #c4561f, inset 0 3px 0 0 #ffbf7a; }
