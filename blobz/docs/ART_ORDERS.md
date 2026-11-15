@@ -79,7 +79,7 @@ ChatGPT works only on N-orders with status TO DO (next: N-30, then N-33, N-31, N
 | N-27 | DONE (received 2026-11-15) | Wood resource icon: 2-3 stacked cut logs with end rings (16x16 + 32x32) | `art/icons/res-wood-*` |
 | N-28 | DONE (received 2026-11-15) | Meadow portal to the dungeon: rune archway in a grassy mound, idle + glowing frame (64x48) | `art/props/portal-*` |
 | N-29 | DONE (received 2026-11-15) | Bigger plain grey boulders x3 (32x32 x2, 48x32) + matching rubble (16x16), stone parked | `art/props/boulder-*`, `boulder-rubble-*` |
-| N-30 | TO DO (FIRST) | Puzzle set: pressure plate up/down (16x16), gate closed/open + post (32x32) | `art/props/plate-*`, `gate-*` |
+| N-30 | TO DO (FIRST) | Puzzle set: pressure plate up/down (16x16), gate closed/open + post (32x32), matching fence tileset (16x16 pieces) | `art/props/plate-*`, `gate-*`, `fence-*` |
 | N-33 | TO DO | Treasure chest for puzzle rewards, closed + open (16x16 + 32x32) | `art/props/chest-*` |
 | N-31 | TO DO | Build site: scaffold with timber for buildings under construction (32x32 + 48x48) | `art/props/site-*` |
 | N-32 | TO DO | Stone resource icon, grey like the N-29 boulders (16x16 + 32x32) | `art/icons/res-stone-*` |
@@ -384,6 +384,10 @@ drawn in hard pixels).
 Row 2, each on EXACTLY a 32x32 art-pixel grid: 3 wooden gate CLOSED (sturdy planks with iron bands, blocks the path),
 4 the same gate OPEN (swung aside or lowered so the path is clear), 5 one gate POST (stone or thick wood pillar the gate
 hangs on). Same palette for all.
+Row 3, a FENCE TILESET in the same wood and style as the gate, every piece on EXACTLY a 16x16 art-pixel grid, laid out as
+a plain grid (no labels), pieces that connect seamlessly to each other and to the gate post when placed edge to edge:
+horizontal piece, vertical piece, 4 outer corners (top-left, top-right, bottom-left, bottom-right), 4 end caps (left,
+right, top, bottom), 4 T-pieces (open down, up, left, right) and 1 cross. 15 pieces in this order, left to right.
 ```
 
 ### N-33 Treasure chest
