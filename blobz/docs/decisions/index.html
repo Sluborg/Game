@@ -310,7 +310,18 @@ function renderQuestion(q) {
     } catch (e) { status.textContent = 'Kunde inte spara (' + (e && e.code || 'fel') + '). Försök igen.'; status.className = 'status err'; }
     finally { send.disabled = false; }
   });
-  card.append(el('div', { class: 'row' }, send, status));
+  const row = el('div', { class: 'row' }, send, status);
+  if (!q.decision) {
+    const close = el('button', { class: 'btn', type: 'button', text: 'Stäng', title: 'Flytta till arkivet', style: 'background:#fff7e6;color:var(--plum);margin-left:auto' });
+    close.addEventListener('click', async () => {
+      if (!needDb(status)) return;
+      close.disabled = true; status.textContent = 'Stänger...'; status.className = 'status';
+      try { await db.doc('questions/' + q.id).update({ decision: 'Stängd av Stefan ' + new Date().toISOString().slice(0, 10) }); }
+      catch (e) { status.textContent = 'Kunde inte stänga (' + (e && e.code || 'fel') + ').'; status.className = 'status err'; close.disabled = false; }
+    });
+    row.append(close);
+  }
+  card.append(row);
   if (q.followup && !q.decision) card.append(el('div', { class: 'followup', text: 'Claude undrar: ' + q.followup }));
   if (q.decision) card.append(el('div', { class: 'decision', text: 'Beslut: ' + q.decision }));
   return card;
