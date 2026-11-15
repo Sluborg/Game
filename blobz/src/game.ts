@@ -312,7 +312,8 @@ export class GameScene extends Phaser.Scene {
     // N-26 art: the origin IS the foot row (the picture has empty rows below); other art stands on its bottom edge
     const im = n.img, foot = n.tree ? im.y : im.y + (1 - im.originY) * im.displayHeight;
     const sw = Math.max(36, im.displayWidth * 0.8), sh = Math.min(24, Math.round(sw * 0.36)); // flatter under small stumps
-    n.sh.setPosition(im.x, foot - sh / 2 + 4).setDisplaySize(sw, sh).setAlpha(0.34).setDepth(im.depth - 1);
+    // Stefan 2026-11-15: N-26 tree + stump shadows sit 1 art px (3 screen px) lower
+    n.sh.setPosition(im.x, foot - sh / 2 + 4 + (n.tree ? 3 : 0)).setDisplaySize(sw, sh).setAlpha(0.34).setDepth(im.depth - 1);
   }
 
   /** Soft Ninja drop shadow (Actor/Character/Shadow.png, 12x7) stretched under a blob, prop or building. */
