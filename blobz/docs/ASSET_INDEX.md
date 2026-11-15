@@ -11,13 +11,13 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
   image / CSS background or border image / canvas icon, or a WebGL texture bound at a Phaser draw call); CODE ONLY =
   referenced but never shown in the run (remove the reference and the file); UNUSED = no reference and never shown.
 
-**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 189 / IN GAME 27 / UNUSED 74.
+**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 189 / IN GAME 27 / UNUSED 77.
 
 **Claude-drawn still IN GAME** (0): none
 
 **Kenney still IN GAME** (0): none
 
-**Counts by source:** ChatGPT 239 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 17 (Ninja: 112 referenced by code). **Own files:** 290, 0 delete candidates.
+**Counts by source:** ChatGPT 242 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 17 (Ninja: 112 referenced by code). **Own files:** 293, 3 delete candidates.
 
 ## Own files (art, Kenney, app icons)
 
@@ -291,6 +291,9 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/props/chest-closed-32.png` | 32x32 | ChatGPT N-33 treasure chest, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/chest-open-16.png` | 16x16 | ChatGPT N-33 treasure chest, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/chest-open-32.png` | 32x32 | ChatGPT N-33 treasure chest, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/props/fence-post.png` | 16x32 | ChatGPT N-30 gate post + N-30b fence crop, assembled by scripts/fence_pieces.py (pen rating pending) | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/props/fence-rail-h.png` | 16x32 | ChatGPT N-30 gate post + N-30b fence crop, assembled by scripts/fence_pieces.py (pen rating pending) | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/props/fence-rail-v.png` | 16x16 | ChatGPT N-30 gate post + N-30b fence crop, assembled by scripts/fence_pieces.py (pen rating pending) | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
 | `art/props/gate-closed.png` | 32x32 | ChatGPT N-30 gate + posts, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/gate-open.png` | 32x32 | ChatGPT N-30 gate + posts, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/gate-post-l.png` | 32x32 | ChatGPT N-30 gate + posts, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
@@ -684,3 +687,6 @@ See `archive/README.md`.
 
 ## Delete candidates (UNUSED, Lead decides)
 
+- `art/props/fence-post.png`
+- `art/props/fence-rail-h.png`
+- `art/props/fence-rail-v.png`
