@@ -163,6 +163,16 @@ devicePixelRatio (2.625 on Pixel 7, 3 on iPhone), so even integer CSS scales los
 | Skill cards / loot icon / slot | 16 | 48 / 64 / 64+16 cell | x3 / x4 / x5 | ok |
 | Room wipe (data URL) | 120 | 48 | x0.4 | a transition, fine |
 
+### Step 1 done (Stefan OK 2026-11-15): exact 3x world in portrait
+- Every phone sends its portrait width (`Input.sw`); the host takes the narrowest and builds each room
+  `roomTiles(sw) = floor(sw / 48)` tiles wide (7..9): 360 -> 7 (336 px, 12 px dark margin each side), 390 / 412 -> 8
+  (384 px, 3 / 14 px), 432+ -> 9. The width holds for the whole room and travels in the snapshot (`rm[4]`).
+- Rooms in portrait: camera zoom exactly 1 (1 art px = 3 CSS px), the margin is the room's dark (#181425).
+  Landscape and `?classic` keep the fitted zoom (parked).
+- Whole-number sprite scales: eye goo 2.5 -> 3, potion 2.5 -> 2, coin 2, revive 2, arrow 3, knight shield guard 4,
+  FX 1.1/1.2/1.6/2.2/2.4/2.6 -> 1/1/2/2/2/3, radius-fitted FX (slam, hazard ring, spin, arc) rounded.
+- Screenshots: `docs/screenshots/dungeon-rooms/integer-scale/step1-360.png`, `step1-412.png`.
+
 ### Proposed fix (one step at a time, Stefan rates each)
 1. **World at exact 3x, room width per screen** (recommended): camera zoom 1 in portrait (1 art px = 3 CSS px). Room
    width in tiles = `floor(screenWidth / 48)` so the room fits: 360 -> 7 tiles (336 px + 12 px dark margins), 390 / 412
