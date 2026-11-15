@@ -68,12 +68,12 @@ const openPanel = async (page) => { await page.waitForSelector('#btn-build:not(.
     if (shots) await bo.screenshot({ path: `${shots}/base-built-landscape.png` });
 
     // sunset, Bärregn skipped, then "Spela igen": the village + bank continue, the quest restarts
-    await sim(host, (s) => { s.villageDirty = true; s.time = 0.05; });
+    await sim(host, (s) => { s.villageDirty = true; s.delivered = { ...s.quest }; });
     await host.waitForSelector('#btn-skip-mini:not(.hidden)', { timeout: 5000 });
     await host.click('#btn-skip-mini');
     await host.waitForSelector('#end:not(.hidden)', { timeout: 5000 });
     await host.click('#btn-again');
-    await ada.waitForFunction(() => window.__blobzView.time > 170, null, { timeout: 8000 });
+    await ada.waitForFunction(() => window.__blobzView.phase === 'play' && window.__blobzView.delivered.wood === 0, null, { timeout: 8000 });
     const n = await view(ada);
     ok(n.builds.filter((b) => b.state === 2).map((b) => b.kind).sort().join() === 'bridge,storage' && n.cottage.level === 2,
       'next round: Förråd + Bro + cottage level 2 are still there');

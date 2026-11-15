@@ -31,7 +31,7 @@ const tap = async (page) => { await page.locator('#dash').dispatchEvent('pointer
     const v0 = await view(ada);
     ok(v0.items.length === 0, 'no random items on the map');
     ok(JSON.stringify(v0.quest) === '{"wood":14,"stone":9,"berry":7}', 'quest for 3 players: 14 wood, 9 stone, 7 berries');
-    ok(await ada.isHidden('#time') && await ada.isVisible('#hud-day .sun'), 'no countdown text, sun on the day bar');
+    ok(await ada.isHidden('#time') && await ada.isHidden('#hud-day'), 'no countdown text, no day bar (day cycle archived)');
 
     // Ada chops a tree with three taps on the real button
     const tree = await pick(host, [0, 1, 2]);
@@ -80,17 +80,16 @@ const tap = async (page) => { await page.locator('#dash').dispatchEvent('pointer
     await ada.waitForTimeout(500);
     if (shots) await ada.screenshot({ path: `${shots}/a-quest-portrait.png` });
 
-    // sunset: dusk, then the end screen with rows + stars
-    await sim(host, (s) => { s.time = 15; });
-    await bo.waitForSelector('#hud-day.dusk', { timeout: 5000 });
-    if (shots) await bo.screenshot({ path: `${shots}/a-dusk-landscape.png` });
-    await sim(host, (s) => { s.time = 0.05; });
-    // sunset starts Bärregn; the host skips it to reach the end screen
+    // no day cycle (archived): no sun bar; the round ends when all three goals are filled
+    ok(!(await bo.isVisible('#hud-day')), 'no day bar in the HUD (day cycle archived)');
+    await sim(host, (s) => { s.delivered = { ...s.quest }; });
+    // the complete quest starts Bärregn; the host skips it to reach the end screen
     await host.waitForSelector('#btn-skip-mini:not(.hidden)', { timeout: 5000 });
     await host.click('#btn-skip-mini');
     await ada.waitForSelector('#end:not(.hidden)', { timeout: 5000 });
     ok((await ada.textContent('#end-title')) === 'Solen gick ner!', 'end screen: "Solen gick ner!"');
-    ok((await ada.locator('#end-rows .qrow').count()) === 3 && (await ada.locator('#end-stars .star.on').count()) === 1, 'end screen shows 3 rows and 1 star');
+    const endStars = await ada.locator('#end-stars .star.on').count();
+    ok((await ada.locator('#end-rows .qrow').count()) === 3 && endStars === 3, `end screen shows 3 rows and 3 stars (quest complete; got ${endStars})`);
     if (shots) { await ada.waitForTimeout(800); await ada.screenshot({ path: `${shots}/a-end-portrait.png` }); }
     console.log('ALL PASSED');
   } finally {

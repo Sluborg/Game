@@ -13,7 +13,7 @@ import { applyI18n, lang, lookName, setLang, t, type Key } from './i18n';
 import { lanNamespace, Scanner, type FoundRoom } from './discovery';
 import { sfx, unlockAudio } from './sfx';
 import {
-  addPlayer, affordable, atHome, BUILD_KINDS, COTTAGE_COST, COTTAGE_MAX, requestBuild, type BuildKind, BUILDING_ENABLED, finishMini, cleanBiome, type Biome, SNOW_MAP_ENABLED, BUILD_COST, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, pickWeapon, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
+  addPlayer, affordable, atHome, BUILD_KINDS, COTTAGE_COST, COTTAGE_MAX, requestBuild, type BuildKind, BUILDING_ENABLED, DAY_CYCLE_ENABLED, finishMini, cleanBiome, type Biome, SNOW_MAP_ENABLED, BUILD_COST, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, pickWeapon, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
   toolNode, viewFromSnapshot, viewFromState,
 } from './sim';
 import type { FxEvent, Input, PlayerInfo, Snapshot, State, View } from './sim';
@@ -352,7 +352,9 @@ function renderQuestRows(root: ParentNode, v: View) {
     }
   });
 }
-const QUEST_ROWS = () => $('hud-quest').innerHTML.split('<div class="qrow"').slice(1).map((r) => '<div class="qrow"' + r).join('');
+/** The HUD quest rows (wood/stone/berry) as HTML for the end screen; finished rows carry "qrow done", so copy the
+ *  elements instead of splitting the markup on the class string. */
+const QUEST_ROWS = () => [...$('hud-quest').querySelectorAll<HTMLElement>('.qrow')].map((r) => r.outerHTML).join('');
 let savedAt = 0;
 let treesFor = { seed: -1, trees: [] as ReturnType<typeof makeTrees> };
 
@@ -517,7 +519,8 @@ function onView(v: View) {
   renderBuildGoal(v);
   const st = starsFor(v.delivered, v.quest);
   if (st > lastStars) { sfx.star(); lastStars = st; }
-  // day bar: the sun rides left -> right; dusk in the last 20 s
+  // day bar (archived, DAY_CYCLE_ENABLED): the sun rides left -> right; dusk in the last 20 s
+  document.body.classList.toggle('noday', !DAY_CYCLE_ENABLED);
   const day = Math.max(0, Math.min(1, 1 - v.time / ROUND_SECONDS));
   document.querySelector<HTMLElement>('#hud-day .dfill')!.style.clipPath = `inset(0 ${100 - day * 100}% 0 0)`;
   document.querySelector<HTMLElement>('#hud-day .sun')!.style.left = `calc(9px + (100% - 18px) * ${day.toFixed(4)})`;
@@ -770,6 +773,7 @@ $('btn-leave').onclick = () => location.reload();
 $('btn-menu').onclick = () => location.reload();
 
 if (new URLSearchParams(location.search).get('demo') === 'monsters' || new URLSearchParams(location.search).has('dgdemo')) void import('./dungeonDemo').then((m) => m.runDemo()); // [dungeon hook] Ninja monster demo
+if (new URLSearchParams(location.search).has('uikit')) void import('./uikit').then((m) => m.showUiKit()); // UI-kit comparison page (Lead/Stefan pick)
 const DEBUG = new URLSearchParams(location.search).has('debug');
 // Optional round length for quick games/tests: ?t=60
 const roundSecs = Math.max(0, Math.min(600, Number(new URLSearchParams(location.search).get('t')) || 0));
