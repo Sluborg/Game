@@ -283,6 +283,21 @@ Proposed rule:
 - **Stars:** quest star 1x, end-screen stars 4x.
 - **Other:** the designer tick badge, and the designer blob tiles (3x).
 
+### Applied (2026-11-15, commit after this audit)
+
+- **Shared helper (`src/pixelScale.ts`):** `intFit`, `snapImg` and `snapAll` size the DOM pixel art to whole DEVICE px
+  per art px. This covers HUD quest / bank / edge icons, build costs, end rows and stars, the round buttons' icons,
+  the back / close / pager icons, the home and designer blobs, and the lobby seats. Measured at DPR 2.625: every
+  snapped image is a whole number.
+- **Panel frame:** `border-image-width: 6px 5px 5px 6px` (1x everywhere).
+- **Wood:** the 16 px file everywhere (the 32 px file is removed).
+- **Thumbstick and knob:** thumbstick 128 px (4x), knob 44 px (2x).
+- **Meadow camera:** `snapZoom` gives zoom 1 on phones (each art px = 3 CSS px).
+- **DPR canvas (not yet on):** drawing the Phaser canvas at device resolution waits behind `DPR_CANVAS = false`
+  until Code 2's dungeon camera is converted (their zoom formula clamps at 2.2, which a device-px game size would hit).
+- **Still open:** the hut icon (47x32 crop) only fits 1 device px per art px in the quest title, so a 16 px hut icon
+  order would fix it. The backgrounds and logo still need small pixel originals.
+
 ### Snapping rule (proposed, one rule for all pixel art)
 
 - **Fit:** factor = the largest whole number k with native x k <= the space available (at least 1), centred in that
