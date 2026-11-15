@@ -1401,7 +1401,7 @@ button.big:not(.alt):active, button.big:not(.alt).down {
    y = 19; feet at y = 19 - 13/3 = 14.67, i.e. 17.33 art rows above the picture's bottom. The list is exactly as wide as
    its containing block, so a percentage padding (17.33 / 160 of the width) puts the feet there at any phone width. */
 #lobby #lobby-list {
-  width: 100%; max-width: none; box-sizing: border-box; padding-bottom: 10.833%;
+  width: 100%; max-width: none; box-sizing: border-box; padding-bottom: 11.458%; /* v5b (Stefan: 1 art px up): 18.33 / 160 */
   background-size: 100% auto; background-origin: border-box; background-clip: border-box; background-position: center bottom;
 }
 
