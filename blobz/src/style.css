@@ -1333,10 +1333,14 @@ body.nostone .qrow[data-k="stone"], body.nostone .edge[data-k="stone"], body.nos
 /* lobby v2 (Stefan: "Layering above wooden platform"): every seat stands ON the deck, in front of the platform. The
    platform art is 160x32 at 2x; its deck surface runs from 10 px (back edge) to 36 px (front edge) below the art's top,
    so feet at 34 px under the top = 30 px above the list bottom stand near the front of the deck. */
-#lobby #lobby-list { padding-bottom: 30px; position: relative; }
+/* v3 (Stefan: "all up 3-4 px, to 1 px under where the platform is widest"): the deck's widest rows are art rows
+   11-17 (2x: 22-36 px under the platform top, the top = list bottom - 64), so feet sit at list bottom - 27 */
+#lobby #lobby-list { padding-bottom: 27px; position: relative; }
 #lobby #lobby-list .seat, #lobby #lobby-list li.seat { z-index: 1; }
 /* the silhouette art has 3 empty rows under the feet (9 px at 3x): pull it down so its feet touch the deck too */
-#lobby #lobby-list .seat.free img { margin-bottom: -9px; }
+/* the silhouette art has 3 empty rows under the feet: crop them off the box (top 17 of 20 rows), so the dashed
+   outline ends at the feet and the box bottom is the feet line, like a joined blob; no bobbing off the deck */
+#lobby #lobby-list .seat.free img { margin-bottom: 0; aspect-ratio: 20 / 17; object-fit: cover; object-position: center top; animation: none; }
 /* free seats are solid (no see-through), so the deck never shows through them and they read as standing in front;
    still calm and light so a joined blob stands out */
 #lobby #lobby-list .seat.free img { opacity: 1; filter: sepia(0.55) brightness(0.93) contrast(0.8); }
