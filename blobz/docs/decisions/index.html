@@ -312,14 +312,15 @@ function renderQuestion(q) {
   });
   card.append(el('div', { class: 'row' }, send, status));
   if (!q.decision) {
-    const cb = el('input', { type: 'checkbox', 'aria-label': 'Stäng frågan', style: 'width:22px;height:22px;margin:0;accent-color:var(--plum)' });
+    const cb = el('input', { type: 'checkbox', 'aria-label': 'Stäng frågan', style: 'appearance:none;-webkit-appearance:none;width:22px;height:22px;margin:0;border:2px solid var(--plum);border-radius:4px;background:#fffaf0;cursor:pointer;display:grid;place-content:center' });
+    cb.addEventListener('change', () => { cb.style.background = cb.checked ? '#3fae5a' : '#fffaf0'; });
     cb.addEventListener('change', async () => {
       if (!cb.checked || !db) return;
       cb.disabled = true;
       try { await db.doc('questions/' + q.id).update({ decision: 'Stängd av Stefan ' + new Date().toISOString().slice(0, 10) }); }
       catch { cb.checked = false; cb.disabled = false; }
     });
-    card.querySelector('.meta').append(el('label', { class: 'tag', style: 'display:inline-flex;align-items:center;gap:6px;min-height:32px;cursor:pointer;margin-left:auto' }, cb, el('span', { text: 'Stäng' })));
+    card.querySelector('.meta').append(el('label', { style: 'display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:2px 10px;border-radius:999px;background:#fff7e6;color:var(--plum);font-weight:700;box-shadow:0 0 0 2px var(--plum) inset;cursor:pointer;margin-left:auto' }, cb, el('span', { text: 'Stäng' })));
   }
   if (q.followup && !q.decision) card.append(el('div', { class: 'followup', text: 'Claude undrar: ' + q.followup }));
   if (q.decision) card.append(el('div', { class: 'decision', text: 'Beslut: ' + q.decision }));
