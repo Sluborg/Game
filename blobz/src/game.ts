@@ -1,5 +1,5 @@
 // Phaser scene: renders a View (from the host sim or from network snapshots).
-import { snapZoom } from './pixelScale';
+import { dpr, snapZoom } from './pixelScale';
 import Phaser from 'phaser';
 import { blobCanvas, BLOB_FRAMES, BODY_CY, clampLook, facingFromVelocity, GRID_H, GRID_W, type Facing } from './blob';
 import { sfx } from './sfx';
@@ -541,9 +541,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private fitCamera() {
-    const w = this.scale.width, h = this.scale.height;
+    const d = dpr(), w = this.scale.width / d, h = this.scale.height / d; // CSS px (the game is device px, pixelScale.ts)
     if (MAP_VIEW) { // debug screenshots (?debug&mapview): the whole meadow on screen, camera centred, no follow
-      const z = Math.min(w / WORLD_W, h / WORLD_H);
+      const z = Math.min(w / WORLD_W, h / WORLD_H) * d;
       this.cameras.main.removeBounds(); this.cameras.main.setZoom(z); this.cameras.main.centerOn(WORLD_W / 2, WORLD_H / 2);
       return;
     }
@@ -551,7 +551,7 @@ export class GameScene extends Phaser.Scene {
       // Bärregn: the whole field on screen, below the mini HUD (~top 120 px) and above the buttons
       const top = 124, bottom = 24;
       const z = Math.min(w / (ARENA.x1 - ARENA.x0 + 40), (h - top - bottom) / (ARENA.y1 - ARENA.y0 + 30));
-      this.cameras.main.setZoom(z);
+      this.cameras.main.setZoom(z * d);
       this.miniCenterY = (ARENA.y0 + ARENA.y1) / 2 - (top - bottom) / 2 / z;
       this.cameras.main.removeBounds();
       this.cameras.main.centerOn((ARENA.x0 + ARENA.x1) / 2, this.miniCenterY);
@@ -979,7 +979,7 @@ export class GameScene extends Phaser.Scene {
     const box = document.getElementById('edge-arrows');
     if (!box) return;
     const tower = v.builds.some((b) => b.kind === 'watchtower' && b.state === 2);
-    const cam = this.cameras.main, wv = cam.worldView;
+    const cam = this.cameras.main, wv = cam.worldView, cz = cam.zoom / dpr(); // CSS px per world px
     const onScreen = (p: { x: number; y: number }) => p.x > wv.x && p.x < wv.right && p.y > wv.y && p.y < wv.bottom;
     const goHome = BUILDING_ENABLED && v.phase === 'play' && v.mode === 'meadow' && !onScreen(BASE)
       && !!affordable(v.bank, v.builds, v.cottage?.level ?? 1);
@@ -990,9 +990,9 @@ export class GameScene extends Phaser.Scene {
       const cx = wv.centerX, cy = wv.centerY;
       const ang = Math.atan2(t.y - cy, t.x - cx);
       // where the ray from the view centre leaves the view (inset), in screen pixels
-      const hw = wv.width / 2 - 40 / cam.zoom, hh = wv.height / 2 - 60 / cam.zoom;
+      const hw = wv.width / 2 - 40 / cz, hh = wv.height / 2 - 60 / cz;
       const sc = Math.min(Math.abs(hw / Math.cos(ang) || Infinity), Math.abs(hh / Math.sin(ang) || Infinity));
-      const sx = (cx + Math.cos(ang) * sc - wv.x) * cam.zoom, sy = (cy + Math.sin(ang) * sc - wv.y) * cam.zoom;
+      const sx = (cx + Math.cos(ang) * sc - wv.x) * cz, sy = (cy + Math.sin(ang) * sc - wv.y) * cz;
       el.style.display = 'flex';
       el.style.left = sx + 'px'; el.style.top = sy + 'px';
       (el.querySelector('.arr') as HTMLElement).style.transform = `rotate(${ang}rad)`;

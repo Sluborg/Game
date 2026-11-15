@@ -47,9 +47,14 @@ export function snapAll(root: ParentNode = document) {
   }
 }
 
-/** Phaser canvas at device resolution (one helper for the meadow and Code 2's dungeon). OFF until the dungeon camera
- *  is converted: with it on, the game size is CSS size x DPR and each scene multiplies its camera zoom by dpr(). */
-export const DPR_CANVAS = false;
+/** Phaser canvas at DEVICE resolution (Lead 2026-11-15: Code owns it; one helper for the meadow and Code 2's dungeon).
+ *  The game size is CSS size x dpr() (main.ts, viewport.ts) and Phaser shows it shrunk by 1 / dpr(), so one game px is
+ *  one device px. A scene therefore:
+ *    - reads its size in CSS px as  this.scale.width / dpr(), this.scale.height / dpr()
+ *    - sets its camera with  snapZoom(rawCssZoom, artScale): the CSS zoom it would have used, snapped so one art px
+ *      (drawn at artScale world px) is a whole number of device px, returned already multiplied by dpr()
+ *    - converts camera / world positions to CSS px with  cam.zoom / dpr()  (e.g. DOM markers over the game). */
+export const DPR_CANVAS = true;
 export const dpr = () => (DPR_CANVAS ? window.devicePixelRatio || 1 : 1);
 /** Meadow camera zoom snapped so one art px (drawn at artScale) is a whole number of device px (or CSS px while
  *  DPR_CANVAS is off): zoom = max(1, round(artScale * raw * d)) / (artScale * d), d = dpr(). */

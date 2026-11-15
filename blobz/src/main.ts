@@ -1,5 +1,5 @@
 import { onViewport, watchViewport } from './viewport';
-import { intFit, snapAll } from './pixelScale';
+import { dpr, intFit, snapAll } from './pixelScale';
 import Phaser from 'phaser';
 import '@fontsource/fredoka/500.css';
 import '@fontsource/fredoka/600.css';
@@ -371,7 +371,8 @@ function startScene(session: Session) {
       type: Phaser.AUTO,
       parent: 'game',
       backgroundColor: '#2b6b3a',
-      scale: { mode: Phaser.Scale.RESIZE, width: window.innerWidth, height: window.innerHeight },
+      // device-pixel canvas (pixelScale.ts): game size = CSS size x dpr, shown at 1 / dpr; the viewport watcher keeps it
+      scale: { mode: Phaser.Scale.NONE, width: Math.round(window.innerWidth * dpr()), height: Math.round(window.innerHeight * dpr()), zoom: 1 / dpr() },
       render: { pixelArt: true, antialias: false, roundPixels: true },
       scene: [],
     });
@@ -379,7 +380,11 @@ function startScene(session: Session) {
     // every settled resize / rotation / return to the app: the canvas follows the viewport (and the camera via the
     // scale 'resize' event); a canvas left at an old size was the "half the screen green" bug
     const g = game;
-    onViewport((w, h) => { if (g.scale.width !== w || g.scale.height !== h) g.scale.resize(w, h); else g.scale.refresh(); });
+    onViewport((w, h) => {
+      const d = dpr(), gw = Math.round(w * d), gh = Math.round(h * d);
+      if (g.scale.width !== gw || g.scale.height !== gh) g.scale.resize(gw, gh);
+      if (Math.abs(g.scale.zoom - 1 / d) > 1e-6) g.scale.setZoom(1 / d); else g.scale.refresh();
+    });
   }
   loading(true, 0.1);
   loadPending = true;
