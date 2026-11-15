@@ -515,8 +515,28 @@ export class DungeonScene extends Phaser.Scene {
     // landscape: the HUD sits top-left, so the camera keeps my blob a little right of centre (the room to its left stays
     // visible instead of hiding monsters under the HUD)
     const landscape = this.scale.width > this.scale.height;
-    if (me) { this.camTarget.x = me.x - (landscape ? 70 / cam.zoom : 0); this.camTarget.y = me.y; }
+    if (me) { this.camTarget.x = me.x - (landscape ? 70 / cam.zoom : 0); this.camTarget.y = me.y + this.cardShift(landscape) / cam.zoom; }
     cam.centerOn(cam.midPoint.x + (this.camTarget.x - cam.midPoint.x) * Math.min(1, dt * 6), cam.midPoint.y + (this.camTarget.y - cam.midPoint.y) * Math.min(1, dt * 6));
+  }
+
+  /** While the loot card or the level-up cards are open, keep my blob in the biggest free screen band (between the HUD
+   *  and the cards that cover my blob's column) instead of under a card. Returns how far the view centre moves down
+   *  (game px); the camera's own easing smooths it. */
+  private cardShift(landscape: boolean): number {
+    const H = window.innerHeight, cx = window.innerWidth / 2 + (landscape ? 70 * (window.innerHeight / this.scale.height) : 0);
+    const cards = ['dg-loot', 'dg-cards'].map((id) => document.getElementById(id))
+      .filter((e): e is HTMLElement => !!e && !e.classList.contains('hidden') && e.offsetParent !== null).map((e) => e.getBoundingClientRect())
+      .filter((r) => r.left < cx + 24 && r.right > cx - 24); // only cards over my blob's column
+    if (!cards.length) return 0;
+    const hud = document.getElementById('hud-dg')?.getBoundingClientRect();
+    const top = hud ? hud.bottom + 8 : 0;
+    // free bands between the HUD and the bottom of the screen, cut by the cards
+    let bands: [number, number][] = [[top, H]];
+    for (const r of cards) bands = bands.flatMap(([a, b]): [number, number][] => (r.bottom <= a || r.top >= b ? [[a, b]] : [[a, r.top], [r.bottom, b]])).filter(([a, b]) => b - a > 40);
+    if (!bands.length) return 0;
+    const [a, b] = bands.reduce((x, y) => (y[1] - y[0] > x[1] - x[0] ? y : x));
+    const want = (a + b) / 2; // where my blob should sit on screen
+    return (H / 2 - want) * (this.scale.height / H); // camera centre moves this far down from the blob (game px)
   }
 
   /** Weapon in hand: idle = first frame; a swing plays the 4-frame strip; the spin special whirls it. */

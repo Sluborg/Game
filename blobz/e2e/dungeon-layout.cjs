@@ -45,6 +45,15 @@ const hit = (a, b) => !!a && !!b && a.x < b.r && b.x < a.r && a.y < b.b && b.y <
         ok(r && !hit(r, btns.attack) && !hit(r, btns.dash), `${name}: ${card} does not cover the round buttons (${JSON.stringify(r && { x: Math.round(r.x), y: Math.round(r.y), r: Math.round(r.r), b: Math.round(r.b) })})`);
       }
       ok(!hit(await rect(p, '#dg-cards'), await rect(p, '#dg-loot')), `${name}: the level-up cards and the loot card do not overlap each other`);
+      // my blob stays visible: the camera moves it into the free band, never under a card (portrait)
+      await p.waitForTimeout(1200); // the camera eases there
+      const blob = await p.evaluate(() => {
+        const sc = window.__dgScene, cam = sc.cameras.main, q = window.__blobz.state.players[0];
+        const k = window.innerHeight / sc.scale.height;
+        return { x: (q.x - cam.worldView.x) * cam.zoom * k, y: (q.y - cam.worldView.y) * cam.zoom * k };
+      });
+      const around = { x: blob.x - 20, r: blob.x + 20, y: blob.y - 30, b: blob.y + 20 }; // the blob body, roughly
+      for (const card of ['#dg-cards', '#dg-loot']) ok(!hit(around, await rect(p, card)), `${name}: my blob (${Math.round(blob.x)}, ${Math.round(blob.y)}) is not under ${card}`);
       if (shots) await p.screenshot({ path: `${shots}/dg-layout-${name}.png` });
       // after the pick: the boss strip is back and clear of the buttons too
       await sim(p, (s) => { s.dg.heroes[s.players[0].id].offer = []; });
