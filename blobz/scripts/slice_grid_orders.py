@@ -143,7 +143,7 @@ def save(arr, path):
     return path
 
 
-def two_size_sheet(src, names, folder, n_small=16, n_big=32, gap=40, anchor='centre', open_r=0.3):
+def two_size_sheet(src, names, folder, n_small=16, n_big=32, gap=40, anchor='centre', open_r=0.3, fit=False):
     rgb, m = load(src)
     made = []
     bs = bands(opening(m, 3))
@@ -164,7 +164,7 @@ def two_size_sheet(src, names, folder, n_small=16, n_big=32, gap=40, anchor='cen
             pad = 6
             sl = (slice(max(0, y0 + oy0 - pad), y0 + oy1 + pad), slice(max(0, x0 - pad), x1 + pad))
             orgb, om = rgb[sl], m[sl]
-            p0 = outline_pitch(orgb, om)
+            p0 = (max(om.shape) - 12) / n * 1.02 if fit else outline_pitch(orgb, om)
             om = opening(om, int(p0 * open_r))
             best = sample(orgb, om, p0, (n, n)) or sample(orgb, om, max(om.shape) / n * 1.02, (n, n))
             crops.append((name, orgb, om, best[2]))
@@ -204,6 +204,96 @@ def region_sheet(src, names, folder, n, xr=(0.0, 1.0), yr=(0.0, 1.0), anchor='ce
         g = place(best[1], n, n, anchor)
         fn = f'{name}-{n}.png' if suffix else f'{name}.png'
         made.append((save(g, os.path.join(folder, fn)), round(best[2], 2), best[1].shape[1], best[1].shape[0]))
+    return made
+
+
+def frame_row(src, yr, k, W, H, name, folder, single=False):
+    """k animation frames (or one sprite) in equal columns of a horizontal band, each sampled on a W x H grid centred on
+    its column (common centre), one pitch for the row; writes name-0..k-1.png + a strip name.png (or name.png if single)."""
+    rgb, m = load(src)
+    Hh, Ww = m.shape
+    Y0, Y1 = int(yr[0] * Hh), int(yr[1] * Hh)
+    rgb, m = rgb[Y0:Y1], m[Y0:Y1]
+    xs = np.where(opening(m, 3).any(0))[0]
+    X0, X1 = xs.min() - 4, xs.max() + 5
+    cw = (X1 - X0) / k
+    cells = []
+    for c in range(k):
+        cr, cm = rgb[:, int(X0 + c * cw):int(X0 + (c + 1) * cw)], m[:, int(X0 + c * cw):int(X0 + (c + 1) * cw)]
+        om = opening(cm, 2)
+        ys, xs2 = np.where(om.any(1))[0], np.where(om.any(0))[0]
+        cy = (ys.min() + ys.max() + 1) / 2 if len(ys) else cm.shape[0] / 2
+        cx = (xs2.min() + xs2.max() + 1) / 2 if len(xs2) else cm.shape[1] / 2
+        cells.append((cr, cm, cy, cx))
+    p0 = outline_pitch(rgb, m)
+    reach_x = reach_y = 0.0
+    for cr, cm, cy, cx in cells:
+        yy, xx = np.where(opening(cm, 2))
+        if len(yy):
+            reach_x = max(reach_x, np.abs(xx - cx).max())
+            reach_y = max(reach_y, np.abs(yy - cy).max())
+    pmin = max(p0 * 0.85, (reach_x + 1) / (W / 2), (reach_y + 1) / (H / 2))
+    best = None
+    for p in np.arange(pmin, max(pmin, p0 * 1.15) + p0 / 25, p0 / 50):
+        tot, gs = 0.0, []
+        for cr, cm, cy, cx in cells:
+            h, w = cm.shape
+            ox, oy = cx - W / 2 * p, cy - H / 2 * p
+            g = np.zeros((H, W, 4), np.uint8)
+            sp = 0.0
+            for j in range(H):
+                for i in range(W):
+                    y0, x0 = oy + j * p, ox + i * p
+                    if y0 + p * 0.3 < 0 or x0 + p * 0.3 < 0 or y0 + p * 0.7 >= h or x0 + p * 0.7 >= w:
+                        continue
+                    sl = (slice(int(y0 + p * 0.3), int(y0 + p * 0.7) + 1), slice(int(x0 + p * 0.3), int(x0 + p * 0.7) + 1))
+                    mm = cm[sl]
+                    if mm.size == 0 or mm.mean() < 0.4:
+                        continue
+                    c = cr[sl][mm]
+                    g[j, i] = (*np.median(c, axis=0).astype(np.uint8), 255)
+                    sp += c.std(axis=0).sum()
+            tot += sp / max(1, (g[:, :, 3] > 0).sum())
+            gs.append(g)
+        if best is None or tot < best[0]:
+            best = (tot, gs, p)
+    if single:
+        return [(save(best[1][0], os.path.join(folder, f'{name}.png')), round(best[2], 2), W, H)]
+    for i, g in enumerate(best[1]):
+        save(g, os.path.join(folder, f'{name}-{i}.png'))
+    return [(save(np.concatenate(best[1], axis=1), os.path.join(folder, f'{name}.png')), round(best[2], 2), W * k, H)]
+
+
+def n16():
+    return two_size_sheet('n16-berry-bush.png', ['berry-bush', 'berry-bush-picked'], os.path.join(ART, 'props'), anchor='bottom', fit=True)
+
+
+def n19():
+    return two_size_sheet('n19-round-button.png', ['btn-round-normal', 'btn-round-pressed', 'btn-round-disabled'],
+                          os.path.join(ART, 'dungeon', 'ui'), n_small=48, n_big=64)
+
+
+def n20():
+    f = os.path.join(ART, 'lobby')
+    return (frame_row('n20-lobby.png', (0.0, 0.30), 1, 20, 20, 'waiting-silhouette', f, single=True)
+            + frame_row('n20-lobby.png', (0.30, 0.65), 4, 32, 32, 'searching-blob', f)
+            + frame_row('n20-lobby.png', (0.65, 1.0), 1, 160, 32, 'party-platform', f, single=True))
+
+
+def n21():
+    f = os.path.join(ART, 'dungeon', 'ui')
+    return (frame_row('n21-boss-ui.png', (0.0, 0.35), 1, 160, 16, 'boss-bar-frame', f, single=True)
+            + frame_row('n21-boss-ui.png', (0.35, 0.62), 1, 16, 16, 'boss-emblem', f, single=True)
+            + frame_row('n21-boss-ui.png', (0.62, 1.0), 4, 48, 32, 'hazard-ring', f))
+
+
+def n22():
+    made = []
+    for src, out in (('n22-dungeon-end-portrait.png', 'dungeon-end.png'), ('n22-dungeon-end-landscape.png', 'dungeon-end-landscape.png')):
+        im = Image.open(os.path.join(REV, src)).convert('RGB')
+        p = os.path.join(ART, out)
+        im.save(p, optimize=True)  # full scene, already a sensible size (941x1672 / 1672x941, like victory.png)
+        made.append((p, 0, im.width, im.height))
     return made
 
 
@@ -327,7 +417,7 @@ def n14():
     return made
 
 
-def preview(paths):
+def preview(paths, out_path=None):
     S = 4
     rows = {}
     for p in paths:
@@ -337,7 +427,7 @@ def preview(paths):
     Hs = [max(i.height * S for i in r) + 30 for r in ims]
     out = Image.new('RGBA', (W, sum(Hs) + 40), (98, 150, 72, 255))
     d = ImageDraw.Draw(out)
-    d.text((10, 8), 'ChatGPT N-11..N-15 sliced (4x, on game grass)', fill='white', font_size=18)
+    d.text((10, 8), 'ChatGPT ' + os.path.basename(out_path or 'n12-n15')[:7].upper() + ' sliced (4x, on game grass)', fill='white', font_size=18)
     y = 36
     for (folder, r), h in zip(zip(rows.keys(), ims), Hs):
         d.text((10, y), os.path.relpath(folder, ROOT), fill='white', font_size=14)
@@ -348,7 +438,7 @@ def preview(paths):
             out.alpha_composite(im.resize((im.width * S, im.height * S), Image.NEAREST), (x, y + 18))
             x += im.width * S + 10
         y += h
-    out.save(os.path.join(REV, 'n12-n15-sliced.png'))
+    out.save(out_path or os.path.join(REV, 'n12-n15-sliced.png'))
 
 
 def main():
@@ -359,7 +449,9 @@ def main():
         for path, p, w_, h_ in res:
             print(w, os.path.relpath(path, ROOT), f'{w_}x{h_}', 'pitch', p)
         made += [r[0] for r in res]
-    preview([p for p in made if not os.path.basename(p)[:-4][-2:] in ('-0', '-1', '-2', '-3')])
+    big = [p for p in made if 'dungeon-end' in p]
+    preview([p for p in made if not os.path.basename(p)[:-4][-2:] in ('-0', '-1', '-2', '-3') and p not in big],
+            os.path.join(REV, 'n16-n22-sliced.png' if any(x in which for x in ('n16', 'n17', 'n18', 'n19', 'n20', 'n21')) else 'n12-n15-sliced.png'))
 
 
 if __name__ == '__main__':
