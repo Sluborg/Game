@@ -1,5 +1,5 @@
 import { onViewport, watchViewport } from './viewport';
-import { intFit } from './pixelScale';
+import { intFit, snapAll } from './pixelScale';
 import Phaser from 'phaser';
 import '@fontsource/fredoka/500.css';
 import '@fontsource/fredoka/600.css';
@@ -850,6 +850,9 @@ const roundSecs = Math.max(0, Math.min(600, Number(new URLSearchParams(location.
 
 // viewport watcher + the "turn your phone" overlay (landscape is parked); the overlay shows the player's own blob
 watchViewport();
+// whole-device-pixel sizing of the DOM pixel art (pixelScale.ts SNAP rules): on every layout change and a light poll
+onViewport(() => snapAll());
+setInterval(() => snapAll(), 300);
 onViewport(() => {
   if (!document.body.classList.contains('rotate-block')) return;
   const slot = $('rotate-blob');
