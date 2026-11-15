@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import '@fontsource/fredoka/500.css';
 import '@fontsource/fredoka/600.css';
 import '@fontsource/fredoka/700.css';
-import { loadArt, pixelText } from './art';
 import { blobEl, clampLook, COLORS, EYES, HATS, MOUTHS, randomLook, SHAPES, type BlobLook } from './blob';
 import { Controls } from './controls';
 import { dungeonUi, setPicker } from './dungeonUi'; // [dungeon hook]
@@ -155,10 +154,10 @@ const icon = (name: string, cls = '') => { const i = new Image(); i.src = DATA_I
 document.querySelectorAll<HTMLElement>('[data-icon]').forEach((el) => el.replaceWith(icon(el.dataset.icon!)));
 function renderIcons() {
   const logo = $('logo');
-  // AI-generated logo (public/art/logo.png); Kenney pixel letters if it fails to load
+  // AI-generated logo (public/art/logo.png); plain text if it fails to load
   const img = new Image();
   img.src = 'art/logo.png'; img.alt = 'Blobz'; img.className = 'logo-img';
-  img.onerror = () => logo.replaceChildren(pixelText('BLOBZ', 4));
+  img.onerror = () => { const t = document.createElement('span'); t.className = 'logo-text'; t.textContent = 'BLOBZ'; logo.replaceChildren(t); };
   logo.replaceChildren(img);
 }
 
@@ -282,9 +281,9 @@ $('version').title = __APP_COMMIT__;
 renderPicker();
 // First visit: pick your blob before anything else.
 if (!store.get('name')) panel('custom');
-Promise.all([loadArt().then(() => setLoad(0.7)), new Promise((r) => (document.readyState === 'complete' ? r(null) : window.addEventListener('load', () => r(null), { once: true })))])
-  .then(() => loading(false));
-void loadArt().then(() => { renderPicker(); renderLobby(); renderIcons(); });
+new Promise((r) => (document.readyState === 'complete' ? r(null) : window.addEventListener('load', () => r(null), { once: true })))
+  .then(() => { setLoad(0.7); loading(false); });
+queueMicrotask(() => { renderLobby(); renderIcons(); }); // after the module has set up everything below
 
 // ---------- shared game plumbing ----------
 const controls = new Controls();
