@@ -3,7 +3,7 @@ import { KEYS } from './i18n';
 import {
   AIM_WARN, BITE_TIME, CLASS_MOVE_COOLDOWN, DUNGEON_TIMER_ENABLED, CLASS_WEAPONS, BITE_WARN, bossHp, BURST, BURST_DMG, BURST_GAP, BURST_SPREAD, CLASS_HP, CLASSES, DASH_TIME, DASH_WARN, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, floorDmg, actMul, GH, GW,
   HEAL_BOLT, heroMods, refresh, inSwing, isWall, ITEMS, itemOf, KO_SECONDS, LEVEL_XP, LOOT_SECONDS, makeFloor, makeGoo, newRun, POTION_HP, REGEN_EVERY,
-  ITEM_ICON, skillIcon, skillOf, ROOMS_ENABLED, ROOMS, ROOM_W, MINIBOSS_ROOM, SPAWN_WARN, READY_SECONDS, makeRoom, roomType, roomClear, diffFloor, enterFloor, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
+  ITEM_ICON, skillIcon, skillOf, unstick, EARLY_ROOMS, ROOM_T, ROOMS_ENABLED, ROOMS, ROOM_W, MINIBOSS_ROOM, SPAWN_WARN, READY_SECONDS, makeRoom, roomType, roomClear, diffFloor, enterFloor, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
 } from './dungeon';
 import { cleanVillage, createState, DUNGEON_ENABLED, newVillage, villageOf, PICK_TIMER_ENABLED, ENTRANCE_R, entranceOf, makePuzzles, makeTrees, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
 
@@ -489,6 +489,73 @@ describe('dungeon', () => {
       run1(d, b, undefined, READY_SECONDS + 0.1);
       expect(d.done).toBeGreaterThan(0);
       expect(d.why).toBe('boss');
+    });
+    it('playtest fixes: start in the entrance gap, max 1 shooter per wave in rooms 1-3, 2-3 columns as cover in arenas', () => {
+      for (const seed of [5, 9, 13]) for (let room = 1; room <= ROOMS; room++) {
+        const f = makeRoom(seed, room, 2);
+        expect(Math.floor(f.start.y / f.dt!)).toBe(f.gh! - 2); // the last floor row, right above the bottom wall's gap
+        if (room <= EARLY_ROOMS) for (const w of f.waves!) expect(w.filter((sp) => sp.kind === 3).length).toBeLessThanOrEqual(1);
+        const cols = f.columns ?? [];
+        if (roomType(room) === 'arena') {
+          expect(cols.length).toBeGreaterThanOrEqual(2);
+          expect(cols.length).toBeLessThanOrEqual(3);
+        } else expect(cols.length).toBe(0);
+        for (const c of cols) {
+          expect(isWall(f, (c.x + 0.5) * ROOM_T, (c.y + 0.5) * ROOM_T)).toBe(true); // blocks walking and shots
+          expect(Math.abs((c.x + 0.5) * ROOM_T - f.start.x)).toBeGreaterThan(ROOM_T); // never in the middle lane
+          for (const w of f.waves!) for (const sp of w) expect(isWall(f, sp.x, sp.y)).toBe(false);
+        }
+      }
+    });
+    it('playtest fixes: anything pushed into a wall or out of the room snaps back to the nearest floor tile', () => {
+      const f = makeRoom(5, 1, 1), T = f.dt!;
+      for (const o of [{ x: 4, y: 20 * T, vx: 300, vy: 0 }, { x: 4.5 * T, y: -50, vx: 0, vy: -300 }, { x: 999, y: 10.5 * T, vx: 0, vy: 0 }, { x: 4.5 * T, y: (f.gh! - 0.5) * T, vx: 0, vy: 0 }]) {
+        unstick(f, o);
+        expect(isWall(f, o.x, o.y)).toBe(false);
+        expect(o.vx).toBe(0);
+      }
+      // a monster shoving a blob into the side wall leaves it on the floor
+      const d = newRun(23, { a: 'sword' }, 1, true);
+      const a = body('a', 1.2 * T, 12 * T);
+      goo(d, 1, a.x + 20, a.y, { ...still, hp: 999, mx: 999 });
+      d.heroes.a.inv = 99;
+      run1(d, [a], undefined, 0.2);
+      expect(isWall(d.map, a.x, a.y)).toBe(false);
+    });
+    it('playtest fixes: sticky auto-aim, early rooms aim slower, the jump back goes away from the target', () => {
+      const d = quiet(newRun(24, { b: 'bow' }, 1, true));
+      enterFloor(d, 24, 4, 1); quiet(d); d.wave = 99;
+      const T = d.map.dt!, b = [body('b', 4.5 * T, 20 * T)];
+      d.heroes.b.inv = 99;
+      b[0].vx = 100; // walking: the crossbow holds fire (no knockback moving the monsters), the aim still updates
+      const e1 = goo(d, 1, b[0].x, b[0].y - 150, { ...still, hp: 9999, mx: 9999 });
+      run1(d, b, undefined, 0.2);
+      expect(d.heroes.b.tgt).toBe(e1.id);
+      const e2 = goo(d, 1, b[0].x + 70, b[0].y - 125, { ...still, hp: 9999, mx: 9999 }); // a bit closer: stays on e1
+      run1(d, b, undefined, 1);
+      expect(d.heroes.b.tgt).toBe(e1.id);
+      e2.x = b[0].x + 40; e2.y = b[0].y - 60; // clearly closer (>25 %) for 0.5 s: switches
+      run1(d, b, undefined, 0.3);
+      expect(d.heroes.b.tgt).toBe(e1.id);
+      run1(d, b, undefined, 0.4);
+      expect(d.heroes.b.tgt).toBe(e2.id);
+      // the jump back: away from the target (up the screen = target), even with another monster to the side
+      e1.hp = 0; d.enemies = d.enemies.filter((e) => e.hp > 0);
+      goo(d, 1, b[0].x + 60, b[0].y + 10, { ...still, hp: 9999, mx: 9999 });
+      d.heroes.b.tgt = e2.id; d.heroes.b.mvCd = 0; b[0].vx = 0;
+      b[0].lastDash++; run1(d, b);
+      expect(b[0].vy).toBeGreaterThan(200); // down, away from e2 (above), not left away from the side monster
+      // rooms 1-3: the shooter winds up longer than later rooms
+      const wind = (room: number) => {
+        const r = quiet(newRun(25, { a: 'sword' }, 1, true));
+        if (room > 1) { enterFloor(r, 25, room, 1); quiet(r); }
+        r.wave = 99;
+        const a = body('a', 4.5 * T, 20 * T); r.heroes.a.inv = 99;
+        const s = goo(r, 3, a.x, a.y - 200, { awake: true, cd: 0 });
+        run1(r, [a], undefined, 0.05);
+        return s.actT ?? 0;
+      };
+      expect(wind(2)).toBeGreaterThan(wind(4) * 1.25);
     });
     it('corridor: climbing past the line starts the next wave early; the difficulty spreads over the 10 rooms', () => {
       const d = newRun(22, { a: 'sword' }, 1, true);

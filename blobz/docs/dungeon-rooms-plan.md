@@ -57,3 +57,14 @@ fights **2-3 waves** in a room; when the last wave is gone the **door at the top
   tuning, a 10-room e2e.
 - Screenshot: `docs/screenshots/dungeon-rooms/room-midwave.png` (390x844 at 2x, room 1 wave 2).
 - **0x72 look** (Stefan picked 0x72 DungeonTileset II, CC0): floor_1 + cracks (~1 in 4), wall_top/wall rows on top with a red + blue banner, wall_edge sides, wall_top_mid bottom with a 3-tile entrance gap, door = frame + leaf closed/open, 0x72 floor_stairs as the room-1 exit; 16 px art at 3x (48 px tiles, 9 tiles = 432 px wide). Screenshot: `docs/screenshots/dungeon-rooms/room-0x72.png`.
+
+## Playtest fixes (Stefan's ?rooms playtest, v052c)
+- Root cause of "pushed out / stuck": the meadow's world edge (y <= 946) also held blobz in the taller rooms; now the
+  dungeon uses only its own walls, and anything inside a wall or outside the room snaps to the nearest floor tile.
+- Crossbow / wand point straight at the target (no swing); arrows leave on the line to the target.
+- Sticky auto-aim: keep the target until it dies / leaves reach; switch only to one >25 % closer for 0.5 s.
+- Start in the entrance gap at the bottom; the camera stays inside the room (starts low, bottom wall visible).
+- Rooms 1-3: max 1 shooter per wave, shots 30 % slower (same range), wind-up 1.4x; normal from room 4.
+- Marksman jump back: away from the current target (else the nearest monster).
+- Arena rooms: 2-3 0x72 columns as cover (block walking and shots), never in the middle lane or on a spawn.
+- Screenshot: `docs/screenshots/dungeon-rooms/playtest-fix.png`.
