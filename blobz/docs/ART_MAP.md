@@ -121,7 +121,7 @@ Reference for wiring art. **One art source:** CC0 "Ninja Adventure" pack, vendor
 | Big thatched hall | TilesetHouse.png | roof 400,112,64,80 + door front 400,192,64,32 (stack -> 64x112) | Modular; check the join in game. |
 | Tent | tileset_camp.png | 64,0,48,48 | 2 more at 112,0 and 160,0. |
 | Campfire | tileset_camp.png | 192,48,32,32 | Static; flames from FX/Particle/Fire.png. |
-| Fences | TilesetHouse.png | wood fence tiles 128,64..256,128; sand wall 128,128..256,160; iron fence 144,160,80,32 | |
+| Fences | TilesetHouse.png | wood fence tiles 128,64..256,128; sand wall 128,128..256,160; iron fence 144,160,80,32 | ON HOLD (puzzles on hold 2026-11-15) |
 | Flag (animated) | Backgrounds/Animated/Flag/Flag{Color}16x16.png | 4 frames 16x16 | Team / base marker. |
 | Cart | TilesetElement.png | empty 0,48,32,32; loaded 32,48,32,32 | Delivery / carry flavour. |
 | Signpost | TilesetElement.png | 96,48,16,32 | |
@@ -255,7 +255,7 @@ Reference for wiring art. **One art source:** CC0 "Ninja Adventure" pack, vendor
 | Floor hatch (entrance / exit) | TilesetWallSimple.png | 32,112,32,32 (brown), 112,112,32,32 (green) | Round hatch with a hole. Vent: 16,112,16,16. |
 | Stairs down / up | Backgrounds/Tilesets/TilesetElement.png | down: 96,176 / 112,176 / 128,176 / 144,176; up: same x at y192 (16x16) | Sand, snow, orange, green-stone styles. Trapdoor tiles at y208. |
 | Dungeon entrance (overworld) | TilesetHouse.png | stone arch 464,322,48,42 | Put a dark tile or stairs-down under it. Alt: green stone hut 464,208,32,32. |
-| Pressure plate | Backgrounds/Tilesets/TilesetDungeon.png | 0,16,16,16 (red); 16,16,16,16 (pressed) | Fits the "N blobz on a plate" co-op moment. |
+| Pressure plate | Backgrounds/Tilesets/TilesetDungeon.png | 0,16,16,16 (red); 16,16,16,16 (pressed) | ON HOLD (puzzles on hold 2026-11-15). Fits the "N blobz on a plate" co-op moment. |
 | Push block | TilesetDungeon.png | 32,16,16,16 / 48,16,16,16 | |
 | Spike trap / grate | TilesetDungeon.png | 64,16,16,16 / 80,16,16,16 | |
 | Lock block | TilesetDungeon.png | 0,0,16,16 | Keyhole. Second at 16,0. |
@@ -263,6 +263,12 @@ Reference for wiring art. **One art source:** CC0 "Ninja Adventure" pack, vendor
 | Orbs on pedestals | TilesetDungeon.png | 48,32,80,16 (5 colours) | |
 | Pit / hole | Backgrounds/Tilesets/TilesetHole.png | 3x3 pit 0,0,48,48 | Dark hole with brown rim. |
 | Door | TilesetHouse.png | wooden doors 400,304,16,16 / 416,304,16,16 | MISSING a dungeon gate: use the stone arch, or Art draws in code. |
+
+## Puzzle art ON HOLD (puzzles on hold 2026-11-15)
+
+Stefan put puzzles on hold: no fence, pressure plates or chests on the meadow for now. The ChatGPT art stays in
+public/ (not archived): N-30 `art/props/plate-*`, `gate-*`; N-30b `art/props/fence-*` (pen v4 last, fence work
+stopped); N-33 `art/props/chest-*`. The Ninja pressure plate and fence rows below are on hold too.
 
 ## Fallback options (not in use)
 
