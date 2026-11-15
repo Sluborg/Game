@@ -37,11 +37,16 @@ const tap = async (page) => { await page.locator('#dash').dispatchEvent('pointer
     const tree = await pick(host, [0, 1, 2]);
     await beside(host, 1, tree);
     await place(host, 0, 640, 420); await place(host, 2, 700, 420);
-    await ada.waitForFunction(() => document.querySelector('#dash img').src.includes('Harvest.png'), null, { timeout: 5000 });
+    await ada.waitForFunction(() => document.querySelector('#dash img').src.includes('Tool/Axe.png'), null, { timeout: 5000 });
     ok(true, 'Ada next to a tree: action button shows the axe');
     for (let h = 0; h < 3; h++) {
       await tap(ada);
       if (h === 1 && shots) { await ada.waitForTimeout(230); await ada.screenshot({ path: `${shots}/a-chop-portrait.png` }); }
+      if (h === 1) {
+        await ada.waitForTimeout(120); // mid-swing: the axe is out
+        const covers = await ada.evaluate(() => Object.values(window.__blobzCovers || {}).flatMap((f) => f()));
+        ok(covers.length === 0, `mid-swing: no nameplate is covered by the tool or anything else (${covers.join(',') || 'none'})`);
+      }
       await ada.waitForTimeout(380); await beside(host, 1, tree);
     }
     await ada.waitForFunction(() => window.__blobzView.players[1].carry.includes('wood'), null, { timeout: 5000 });
@@ -50,7 +55,7 @@ const tap = async (page) => { await page.locator('#dash').dispatchEvent('pointer
     // Bo mines a rock by holding the button (repeats every 0.35 s)
     const rock = await pick(host, [3, 4]);
     await beside(host, 2, rock);
-    await bo.waitForFunction(() => document.querySelector('#dash img').src.includes('Mine.png'), null, { timeout: 5000 });
+    await bo.waitForFunction(() => document.querySelector('#dash img').src.includes('Tool/Pickaxe.png'), null, { timeout: 5000 });
     await bo.locator('#dash').dispatchEvent('pointerdown');
     await bo.waitForFunction(() => window.__blobzView.players[2].carry.includes('stone'), null, { timeout: 6000 });
     await bo.locator('#dash').dispatchEvent('pointerup');
@@ -61,7 +66,7 @@ const tap = async (page) => { await page.locator('#dash').dispatchEvent('pointer
     // Stefan (host) rakes a berry bush with the keyboard
     const bush = await pick(host, [5]);
     await beside(host, 0, bush);
-    await host.waitForFunction(() => document.querySelector('#dash img').src.includes('Plant.png'), null, { timeout: 5000 });
+    await host.waitForFunction(() => document.querySelector('#dash img').src.includes('Tool/Hoe.png'), null, { timeout: 5000 });
     for (let h = 0; h < 2; h++) { await host.keyboard.press('Space'); await host.waitForTimeout(380); await beside(host, 0, bush); }
     await host.waitForFunction(() => window.__blobzView.players[0].carry.includes('berry'), null, { timeout: 5000 });
     ok(true, '2 rake hits -> Stefan carries berries');
@@ -71,6 +76,8 @@ const tap = async (page) => { await page.locator('#dash').dispatchEvent('pointer
     await bo.waitForFunction(() => { const v = window.__blobzView; return v.bank.wood >= 1 && v.bank.stone >= 1 && v.bank.berry >= 1; }, null, { timeout: 5000 });
     await ada.waitForFunction(() => document.getElementById('bank-wood').textContent !== '0', null, { timeout: 5000 });
     ok(true, 'bank counters show the delivery on a joiner');
+    const coversHome = await ada.evaluate(() => Object.values(window.__blobzCovers || {}).flatMap((f) => f()));
+    ok(coversHome.length === 0, `at home: no nameplate is covered by the base flag, the cottage or a tool (${coversHome.join(',') || 'none'})`);
 
     // finish the berry row: its star lights up
     await sim(host, (s) => { s.delivered.berry = s.quest.berry - 1; const p = s.players[1]; p.carry = ['berry']; p.x = 640; p.y = 480; });
@@ -83,9 +90,7 @@ const tap = async (page) => { await page.locator('#dash').dispatchEvent('pointer
     // no day cycle (archived): no sun bar; the round ends when all three goals are filled
     ok(!(await bo.isVisible('#hud-day')), 'no day bar in the HUD (day cycle archived)');
     await sim(host, (s) => { s.delivered = { ...s.quest }; });
-    // the complete quest starts Bärregn; the host skips it to reach the end screen
-    await host.waitForSelector('#btn-skip-mini:not(.hidden)', { timeout: 5000 });
-    await host.click('#btn-skip-mini');
+    // the complete quest ends the round: straight to the end screen (Bärregn archived)
     await ada.waitForSelector('#end:not(.hidden)', { timeout: 5000 });
     ok((await ada.textContent('#end-title')) === 'Uppdraget klart!', 'end screen: "Uppdraget klart!"');
     const endStars = await ada.locator('#end-stars .star.on').count();

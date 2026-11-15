@@ -2,6 +2,7 @@
 // leaks on the English dungeon screens (class/weapon cards, HUD, level-up cards, loot card, KO, summary)
 // and the Swedish phone stays Swedish.
 // Usage: npm run build && npx vite preview --port 4173 &  node e2e/dungeon-i18n.cjs [baseUrl] [shotDir]
+const EXIT_EN = 'You climbed out of the cave.';
 const { chromium } = require('playwright');
 const { LANDSCAPE, PORTRAIT, ok, sim } = require('./helpers.cjs');
 const base = process.argv[2] || 'http://localhost:4173/';
@@ -51,8 +52,8 @@ async function phone(browser, name, locale, size = PORTRAIT) {
     for (const p of [en, sv]) await p.waitForSelector('#hud-dg:not(.hidden)', { timeout: 8000 });
 
     // HUD
-    await en.waitForFunction(() => /Floor 1\/3/.test(document.getElementById('dg-floor')?.textContent ?? ''), null, { timeout: 5000 });
-    ok((await sv.textContent('#dg-floor')).includes('Våning 1/3'), 'HUD floor: "Floor 1/3" (EN) / "Våning 1/3" (SV)');
+    await en.waitForFunction(() => /Dungeon 1 · Floor 1\/5/.test(document.getElementById('dg-floor')?.textContent ?? ''), null, { timeout: 15000 });
+    ok((await sv.textContent('#dg-floor')).includes('Grotta 1 · Våning 1/5'), 'HUD: "Dungeon 1 · Floor 1/5" (EN) / "Grotta 1 · Våning 1/5" (SV)');
     ok(await en.getAttribute('#attack', 'aria-label') === 'Dagger whirl', 'special button aria-label in English ("Dagger whirl")');
     await noSwedish(en, 'HUD');
 
@@ -77,9 +78,9 @@ async function phone(browser, name, locale, size = PORTRAIT) {
     await noSwedish(en, 'KO banner');
 
     // summary
-    await sim(en, (s) => { s.dg.time = 0.05; });
+    await sim(en, (s) => { s.dg.done = 6; s.dg.why = 'exit'; }); // no clock any more: the run ends at the exit
     for (const p of [en, sv]) await p.waitForSelector('#dg-end:not(.hidden)', { timeout: 6000 });
-    ok((await en.textContent('#dg-end h2')).trim() === 'Dungeon done!' && (await en.textContent('#dg-end')).includes('Time ran out.'), 'EN summary ("Dungeon done!", "Time ran out.")');
+    ok((await en.textContent('#dg-end h2')).trim() === 'Dungeon done!' && (await en.textContent('#dg-end')).includes(EXIT_EN), `EN summary ("Dungeon done!", "${EXIT_EN}")`);
     ok((await sv.textContent('#dg-end h2')).trim() === 'Dungeon klar!', 'SV summary ("Dungeon klar!")');
     await noSwedish(en, 'summary');
     if (shots) await en.screenshot({ path: `${shots}/dg-i18n-end-en.png` });

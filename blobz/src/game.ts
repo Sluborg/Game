@@ -10,6 +10,7 @@ import type { Biome, BuildKind } from './sim';
 import { DUNGEON_ENABLED, entranceOf, ICE_RX, ICE_RY, makeIce, WATER_TILE } from './sim';
 import { autotileMask, waterTiles, type Shore } from './water';
 import { cavePath } from './cavePath';
+import { RES_ART } from './resArt';
 import { ARENA, BOMB_R, DROP_HEIGHT } from './mini';
 import type { PuzzleLayout, Res, Tool } from './sim';
 import type { FxEvent, Input, ItemKind, PlayerInfo, View } from './sim';
@@ -54,6 +55,10 @@ const SPENT_ART: [string, number][] = [['pr-stump', 3], ['pr-stump', 3], ['pr-st
  *  crops of the Ninja sheets, so the game code keeps its keys. A crop is [sheet, x, y, w, h]; a list is laid side by
  *  side. Sheets 'n-*' are Ninja tilesets, 'nx-*' single Ninja item files (or Art's Ninja-style berry bush). */
 type Crop = [string, number, number, number, number];
+/** The three tree kinds (sim kinds 0-2), one crop each: easy to swap after Stefan's pick. */
+/** At most this many blossom trees per map (they read as pink pillows in a crowd). */
+const BLOSSOM_MAX = 2;
+const TREE_ART: Crop[] = [['n-nature', 96, 0, 32, 32], ['n-nature', 224, 0, 32, 32], ['n-nature', 32, 0, 32, 32]];
 type Placed = [string, number, number, number, number, number, number]; // crop + where it goes (dx, dy)
 /** Pieces placed on one canvas: the garden = two rows of soil plots (camp) with vegetables planted on them
  *  (scripts/ninja_crops.py GARDEN draws the same picture for the build card). */
@@ -69,9 +74,9 @@ const NINJA_VSTACK: Record<string, Crop[]> = {
 };
 const NINJA_CROPS: Record<string, Crop | Crop[]> = {
   // resource nodes (sim kinds 0-5) and their used-up looks
-  'pr-tree-green': ['n-nature', 0, 0, 32, 32], 'pr-tree-orange': ['n-nature', 96, 0, 32, 32], 'pr-tree-pine': ['n-nature', 32, 0, 32, 32],
+  // trees (PLAN step 2): no mega-trunk round tree (Nature 0,0); the tree with roots, the blossom tree, the pine
+  'pr-tree-green': TREE_ART[0], 'pr-tree-orange': TREE_ART[1], 'pr-tree-pine': TREE_ART[2],
   'pr-rock': ['n-nature', 112, 224, 32, 32], 'pr-boulder': ['n-nature', 144, 224, 32, 32],
-  'g-bush-berries': ['n-nature', 256, 0, 32, 32], 'g-bush-empty': ['n-nature', 256, 0, 32, 32],
   'pr-stump': ['n-nature', 0, 128, 32, 32], 'g-rubble': ['n-nature', 288, 144, 16, 16],
   'pr-flowers': ['n-nature', 96, 176, 16, 16],
   // wild veg + wheat tufts near the yard (decor only, no farming)
@@ -84,7 +89,10 @@ const NINJA_CROPS: Record<string, Crop | Crop[]> = {
   // power-ups (speed boot, magnet = hook) and the home icon of the edge arrow
   'ic-boot': ['nx-boot', 0, 0, 24, 24], 'ic-magnet': ['nx-hook', 0, 0, 24, 24], 'ic-house': ['n-house', 48, 128, 47, 32],
   // carried resources
-  'ic-log': ['nx-branch', 0, 0, 16, 16], 'g-item-stone': ['nx-rock', 0, 0, 16, 16], 'g-item-berries': ['nx-nut2', 0, 0, 15, 15],
+  // resources (resArt.ts): log, rock, food
+  'ic-log': ['res-wood-src', RES_ART.wood.x, RES_ART.wood.y, RES_ART.wood.w, RES_ART.wood.h],
+  'g-item-stone': ['res-stone-src', RES_ART.stone.x, RES_ART.stone.y, RES_ART.stone.w, RES_ART.stone.h],
+  'g-item-berries': ['res-berry-src', RES_ART.berry.x, RES_ART.berry.y, RES_ART.berry.w, RES_ART.berry.h],
   // the base: cottage levels 1-3 and the six buildings
   // cottage levels (OLD_ART_CHECKLIST): 1 tent, 2 orange house, 3 the big hall (two crops stacked, NINJA_VSTACK)
   'b-cottage-1': ['n-house', 3, 120, 42, 39], 'b-cottage-2': ['n-house', 0, 0, 64, 48],
@@ -101,8 +109,10 @@ const NINJA_SHEETS: Record<string, string> = {
   'n-nature': 'Backgrounds/Tilesets/TilesetNature.png', 'n-house': 'Backgrounds/Tilesets/TilesetHouse.png',
   'n-element': 'Backgrounds/Tilesets/TilesetElement.png', 'n-camp': 'Backgrounds/Tilesets/tileset_camp.png', 'n-towers': 'Backgrounds/Tilesets/TilesetTowers.png',
   'n-dungeon': 'Backgrounds/Tilesets/TilesetDungeon.png',
-  'nx-chest': 'Items/Treasure/BigTreasureChest.png', 'nx-branch': 'Items/Resource/Branch.png', 'nx-rock': 'Items/Resource/Rock.png',
-  'nx-nut2': 'Items/Food/Nut2.png',
+  'nx-chest': 'Items/Treasure/BigTreasureChest.png',
+  // resources: the files named in resArt.ts (one line each)
+  'res-wood-src': RES_ART.wood.file, 'res-stone-src': RES_ART.stone.file, 'res-berry-src': RES_ART.berry.file,
+  'n-shadow': 'Actor/Character/Shadow.png',
   'nx-boot': 'Ui/Skill Icon/Items & Weapon/Boot.png', 'nx-hook': 'Ui/Skill Icon/Items & Weapon/Hook.png',
   'nt-axe': 'Items/Tool/Axe.png', 'nt-pickaxe': 'Items/Tool/Pickaxe.png', 'nt-rake': 'Items/Tool/Hoe.png',
 };
@@ -130,8 +140,6 @@ const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.se
 const FACE_DEAD = 40;
 const BLOB_SCALE = 3; // blobz v2: 16x18 grid on the Ninja 16 px grid, drawn at the Ninja world scale
 const TOOL_SCALE = 2; // Ninja tool icons (16 px)
-/** Where the Nut2 berries sit on a berry bush (offsets from the node centre, world px). */
-const BERRY_SPOTS: [number, number][] = [[-22, -36], [18, -44], [2, -16]];
 const DECOR: [string, number][] = [['pr-flowers', 3]]; // no decor bushes: bushes are berry nodes now
 
 interface PuzzleGfx {
@@ -148,12 +156,13 @@ interface PuzzleGfx {
 
 
 interface BlobGfx {
-  shadow: Phaser.GameObjects.Ellipse;
+  shadow: Phaser.GameObjects.Image;
   body: Phaser.GameObjects.Image;
   eyes: Phaser.GameObjects.Graphics;
   label: Phaser.GameObjects.Text;
   carry: Phaser.GameObjects.Image[];
   aura: Phaser.GameObjects.Graphics;
+  you?: Phaser.GameObjects.Image; // N-18 arrow over my own blob
   tool?: Phaser.GameObjects.Sprite;
   swingT: number; // seconds left of the current tool swing
   faceLeft: boolean; // tool swing direction
@@ -186,10 +195,10 @@ export class GameScene extends Phaser.Scene {
   private miniDeco: Phaser.GameObjects.GameObject[] = [];
   private miniBg?: Phaser.GameObjects.Image;
   private drops = new Map<number, { item: Phaser.GameObjects.Image; mark: Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse }>();
-  private bgfx = new Map<BuildKind, { img: Phaser.GameObjects.Image; built: boolean }>();
+  private bgfx = new Map<BuildKind, { img: Phaser.GameObjects.Image; sh?: Phaser.GameObjects.Image; built: boolean }>();
   private cottageImg!: Phaser.GameObjects.Image;
   private water!: ReturnType<typeof makeWater>;
-  private nodes: { img: Phaser.GameObjects.Image; kind: number; left: number; full: number; berries: Phaser.GameObjects.Image[]; x: number; y: number; sc: number }[] = [];
+  private nodes: { img: Phaser.GameObjects.Image; kind: number; left: number; x: number; y: number; sc: number; fade: number; blossom: boolean }[] = [];
   private dusk!: Phaser.GameObjects.Rectangle;
   private pile!: Phaser.GameObjects.Container;
   private pileKey = '';
@@ -239,7 +248,11 @@ export class GameScene extends Phaser.Scene {
     sheet('mini-warn', 'FX/Magic/Circle/SpriteSheetWhite.png', 32, 32);
     sheet('mini-ko', 'Ui/Emote/emote3.png', 14, 13);
     sheet('m-flag', 'Backgrounds/Animated/Flag/FlagRed16x16.png', 16, 16);
-    this.load.image('mini-bg', 'art/mini/bg.png'); // Bärregn backdrop (ChatGPT N-9): sunset sky over the berry field
+    this.load.image('mini-bg', 'art/mini/bg.png');
+    // berry bush ChatGPT N-16 (full / picked), 32 px art at 3x
+    this.load.image('st-you', 'art/icons/state/you-arrow-16.png'); // ChatGPT N-18
+    this.load.image('g-bush-berries', 'art/props/berry-bush-32.png');
+    this.load.image('g-bush-empty', 'art/props/berry-bush-picked-32.png'); // Bärregn backdrop (ChatGPT N-9): sunset sky over the berry field
     if (this.s.biome === 'snow') { // archived snow map (SNOW_MAP_ENABLED): its own leftovers
       this.load.on('loaderror', () => { /* winter art not drawn yet: tinted stand-ins below */ });
       for (const n of WINTER) if (!(('w-' + n) in NINJA_CROPS)) this.load.image('w-' + n, `art/props-winter/${n}.png`);
@@ -247,7 +260,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   /** Texture, scale and tint for a node (biome aware, with stand-ins for missing winter art). */
-  private nodeArt(kind: number, spent: boolean): [string, number, number] {
+  private nodeArt(kind: number, spent: boolean, blossom = true): [string, number, number] {
+    if (kind === 1 && !blossom) kind = 0; // the blossom tree is used sparingly (BLOSSOM_MAX), the rest are the green tree
     if (this.s.biome !== 'snow') { const [k, sc] = (spent ? SPENT_ART : OBSTACLE_ART)[kind] ?? OBSTACLE_ART[0]; return [k, sc, 0xffffff]; }
     const [k, sc] = (spent ? WINTER_SPENT : WINTER_ART)[kind] ?? WINTER_ART[0];
     if (this.textures.exists(k)) return [k, sc, 0xffffff];
@@ -256,6 +270,21 @@ export class GameScene extends Phaser.Scene {
   }
 
   /** Build every NINJA_CROPS key as a canvas texture (nearest filtering) from the loaded Ninja sheets. */
+  /** e2e: names of visible objects drawn above `o` that overlap it (a nameplate must never be covered). */
+  private coversOf(o: Phaser.GameObjects.Text): string[] {
+    const r = o.getBounds();
+    return this.children.list.filter((c) => {
+      const g = c as Phaser.GameObjects.Image;
+      if (c === o || !g.visible || !g.getBounds || (g.depth ?? 0) <= o.depth || g.alpha === 0) return false;
+      return Phaser.Geom.Rectangle.Overlaps(r, g.getBounds());
+    }).map((c) => (c as Phaser.GameObjects.Image).texture?.key ?? c.type);
+  }
+
+  /** Soft Ninja drop shadow (Actor/Character/Shadow.png, 12x7) stretched under a blob, prop or building. */
+  private shadow(x: number, y: number, w: number, h = Math.max(15, w * 0.3), alpha = 0.28) {
+    return this.add.image(x, y, 'n-shadow').setDisplaySize(w, h).setAlpha(alpha).setDepth(-500);
+  }
+
   private installNinjaArt() {
     const all: [string, Crop[], boolean][] = [
       ...Object.entries(NINJA_CROPS).map(([k, spec]) => [k, (Array.isArray(spec[0]) ? spec : [spec]) as Crop[], false] as [string, Crop[], boolean]),
@@ -335,6 +364,7 @@ export class GameScene extends Phaser.Scene {
     this.baseG = this.add.graphics().setDepth(-900);
     this.add.ellipse(BASE.x, BASE.y + 26, 110, 26, 0x000000, 0.18).setDepth(-880);
     // cottage (Art's base set, level 1-3), integer scale 2, anchored bottom centre
+    this.shadow(BASE.x, BASE.y + 30, 150, 27, 0.24).setDepth(BASE.y - 41);
     this.cottageImg = this.add.image(BASE.x, BASE.y + 30, this.s.biome === 'snow' ? 'w-igloo' : 'b-cottage-1').setScale(PROP_SCALE).setOrigin(0.5, 1).setDepth(BASE.y - 40);
     // the water corner (an L of water around a seeded corner; the bridge opens it)
     const water = makeWater(this.s.seed);
@@ -346,13 +376,15 @@ export class GameScene extends Phaser.Scene {
     this.add.sprite(BASE.x + 58, BASE.y + 62, 'm-flag', 0).setOrigin(0.5, 1).setScale(NINJA_SCALE).setDepth(BASE.y + 62).play('m-flag');
 
     // resource nodes (same layout as the host sim, from the shared seed); textures swap when used up
+    // the pink blossom tree (sim kind 1) only for a couple of trees, away from the cave mouth
+    const ent = entranceOf(this.s.seed);
+    let blossoms = 0;
     this.nodes = makeTrees(this.s.seed).map((t) => {
-      this.add.ellipse(t.x, t.y + 6, isSolid(t.kind) ? 34 : 40, 12, 0x000000, 0.18).setDepth(-500);
-      const [key, sc, tint] = this.nodeArt(t.kind, false);
+      const blossom = t.kind === 1 && blossoms < BLOSSOM_MAX && Math.hypot(t.x - ent.x, t.y - ent.y) > 260 && ++blossoms > 0;
+      this.shadow(t.x, t.y + 8, t.kind < 3 ? 66 : 72, 21);
+      const [key, sc, tint] = this.nodeArt(t.kind, false, blossom);
       const img = this.add.image(t.x, t.y + 10, key).setScale(sc).setTint(tint).setOrigin(0.5, t.kind < 3 ? 0.95 : 0.8).setDepth(isSolid(t.kind) ? t.y : t.y - 30);
-      // berry bush = the plain Ninja bush with Ninja Nut2 berries on top (one fewer per pick)
-      const berries = t.kind === 5 ? BERRY_SPOTS.map(([dx, dy]) => this.add.image(t.x + dx, t.y + dy, 'g-item-berries').setScale(2).setDepth(img.depth + 1)) : [];
-      return { img, kind: t.kind, left: t.left, full: Math.max(1, t.left), berries, x: t.x, y: t.y, sc };
+      return { img, kind: t.kind, left: t.left, x: t.x, y: t.y, sc, fade: 1, blossom };
     });
 
     // flat decorations (no collision), from the same seed on every phone; never on the puzzle pens/plates
@@ -375,6 +407,7 @@ export class GameScene extends Phaser.Scene {
       const a = r() * Math.PI * 2, d = BASE.r + 240 + r() * 120;
       const x = BASE.x + Math.cos(a) * d, y = BASE.y + Math.sin(a) * d * 0.8;
       if (x < 80 || y < 80 || x > WORLD_W - 80 || y > WORLD_H - 80 || trees.some((t) => Math.hypot(t.x - x, t.y - y) < 90) || inZone(x, y, 50)) continue;
+      if (DUNGEON_ENABLED && Math.hypot(x - entranceOf(this.s.seed).x, y - entranceOf(this.s.seed).y) < 170) continue; // not at the cave mouth
       if (DUNGEON_ENABLED && [-1, 0, 1].some((dx) => [-1, 0, 1].some((dy) => cavePath(this.s.seed).has(Math.floor(x / WATER_TILE + dx) + ',' + Math.floor(y / WATER_TILE + dy))))) continue;
       const kinds = placed === 0 ? ['pr-wheat', 'pr-wheat', 'pr-wheat', 'pr-veg'] : ['pr-veg', 'pr-veg2', 'pr-veg', 'pr-wheat'];
       kinds.forEach((k, j) => this.add.image(x + (j % 2) * 44 - 22 + (j > 1 ? 14 : 0), y + Math.floor(j / 2) * 34, k).setScale(PROP_SCALE).setOrigin(0.5, 0.9).setDepth(y + Math.floor(j / 2) * 34));
@@ -495,15 +528,22 @@ export class GameScene extends Phaser.Scene {
     v.nodes?.forEach((left, i) => {
       const n = this.nodes[i];
       if (!n) return;
-      const shown = Math.ceil(BERRY_SPOTS.length * Math.max(0, left) / n.full);
-      n.berries.forEach((b, k) => b.setVisible(k < shown));
       if ((left > 0) === (n.left > 0)) { n.left = left; return; }
       n.left = left;
-      const [key, sc, tint] = this.nodeArt(n.kind, left <= 0);
+      const [key, sc, tint] = this.nodeArt(n.kind, left <= 0, n.blossom);
       n.img.setTexture(key).setScale(sc).setTint(tint).setOrigin(0.5, left > 0 && n.kind < 3 ? 0.95 : 0.8);
       n.sc = sc;
       if (left > 0) { n.img.setScale(sc * 0.3); this.tweens.add({ targets: n.img, scale: sc, duration: 300, ease: 'Back.Out' }); }
     });
+    // ---- foliage fades while a blob stands behind it (player visibility, PLAN step 2) ----
+    for (const n of this.nodes) {
+      if (n.kind >= 3 && n.kind !== 5) continue; // trees + berry bushes only
+      const top = n.kind < 3 ? 96 : 66;
+      let hidden = false;
+      for (const b of this.blobs.values()) if (b.y < n.y + 4 && b.y > n.y - top && Math.abs(b.x - n.x) < 44) { hidden = true; break; }
+      const want = hidden ? 0.45 : 1;
+      if (n.fade !== want) { n.fade += Math.sign(want - n.fade) * Math.min(Math.abs(want - n.fade), dt * 4); n.img.setAlpha(n.fade); }
+    }
     // ---- dusk ----
     this.dusk.setFillStyle(v.phase === 'end' ? 0x4a2a6a : 0xff7a2f, v.phase === 'end' ? 0.38 : v.time >= 20 ? 0 : 0.1 + Math.min(1, (20 - v.time) / 20) * 0.25);
 
@@ -555,7 +595,7 @@ export class GameScene extends Phaser.Scene {
       const baseScale = BLOB_SCALE;
       if (!b) {
         b = {
-          shadow: this.add.ellipse(p.x, p.y, 34, 12, 0x000000, 0.22),
+          shadow: this.shadow(p.x, p.y, 36, 21, 0.32),
           aura: this.add.graphics(),
           body: this.add.image(p.x, p.y, texKey).setOrigin(0.5, BODY_CY).setScale(baseScale),
           eyes: this.add.graphics(),
@@ -578,7 +618,7 @@ export class GameScene extends Phaser.Scene {
     }
     for (const [id, b] of this.blobs) if (!seenP.has(id)) {
       b.tool?.destroy();
-      b.shadow.destroy(); b.body.destroy(); b.eyes.destroy(); b.label.destroy(); b.aura.destroy(); b.carry.forEach((c) => c.destroy());
+      b.you?.destroy(); b.shadow.destroy(); b.body.destroy(); b.eyes.destroy(); b.label.destroy(); b.aura.destroy(); b.carry.forEach((c) => c.destroy());
       this.blobs.delete(id);
     }
 
@@ -618,7 +658,7 @@ export class GameScene extends Phaser.Scene {
     for (const t of b.trail) this.trailG.fillStyle(color, t.a).fillCircle(t.x, t.y, 4 + t.a * 10);
 
     const stretch = Math.min(0.18, sp / 1600);
-    b.shadow.setPosition(b.x, b.y + 12).setDepth(this.dB + b.y - 20).setScale(1 - hover * 0.03, 1);
+    b.shadow.setPosition(b.x, b.y + 12).setDepth(this.dB + b.y - 20);
     b.body.setPosition(b.x, b.y - 4 + hover).setDepth(this.dB + b.y);
     b.body.setScale(b.baseScale * (1 + stretch) / breath, b.baseScale * (1 - stretch * 0.6) * breath);
     this.drawTool(b, dt);
@@ -644,7 +684,14 @@ export class GameScene extends Phaser.Scene {
     if (p.shield > 0) b.aura.fillStyle(0x5ec8ff, 0.16).fillCircle(b.x, b.y - 6 + hover, 30).lineStyle(2, 0x8fd3ff, 0.7).strokeCircle(b.x, b.y - 6 + hover, 30);
     if (isMe) b.aura.fillStyle(0xffffff, 0.9).fillTriangle(b.x - 6, b.y - 68 + hover, b.x + 6, b.y - 68 + hover, b.x, b.y - 60 + hover);
 
-    b.label.setPosition(b.x, b.y + 13).setDepth(this.dB + b.y + 2);
+    // nameplate: always on top of the world (tools, the base flag, props), just under the "you" arrow
+    b.label.setPosition(b.x, b.y + 14).setDepth(this.dB + 19990);
+    if (DEBUG) ((window as unknown as { __blobzCovers?: Record<string, () => string[]> }).__blobzCovers ??= {})[p.id] = () => this.coversOf(b.label); // e2e
+    // "you": the N-18 arrow over my own blob (3x), bobbing gently
+    if (isMe) {
+      b.you ??= this.add.image(0, 0, 'st-you').setScale(3).setOrigin(0.5, 1);
+      b.you.setPosition(b.x, b.y - 46 + Math.sin(now / 260) * 3).setDepth(this.dB + 20000);
+    }
 
     // carried items stack
     while (b.carry.length < p.carry.length) b.carry.push(this.add.image(0, 0, 'ic-log').setScale(1));
@@ -666,7 +713,8 @@ export class GameScene extends Phaser.Scene {
       const img = k === 'bridge'
         ? this.add.image(w.bridge.x, w.bridge.y + 69, 'b-bridge').setScale(NINJA_SCALE).setOrigin(0.5, 1).setDepth(-930)
         : this.add.image(at.x, at.y - BUILD_R + 4, 'b-' + k).setScale(PROP_SCALE).setOrigin(0.5, 1).setDepth(at.y - BUILD_R + 4);
-      this.bgfx.set(k, { img: img.setVisible(false), built: false });
+      const sh = k === 'bridge' ? undefined : this.shadow(at.x, at.y - BUILD_R + 2, img.displayWidth * 0.85, 24, 0.24).setDepth(at.y - BUILD_R + 3).setVisible(false);
+      this.bgfx.set(k, { img: img.setVisible(false), sh, built: false });
     }
   }
 
@@ -680,7 +728,7 @@ export class GameScene extends Phaser.Scene {
       const g = this.bgfx.get(b.kind);
       if (!g) continue;
       const on = b.state === 2;
-      if (on !== g.built) { g.built = on; g.img.setVisible(on); }
+      if (on !== g.built) { g.built = on; g.img.setVisible(on); g.sh?.setVisible(on); }
     }
     this.drawYard(lvl, v.builds.filter((b) => b.state === 2 && b.kind !== 'bridge').map((b) => b.kind));
     this.drawArrows(v);
@@ -1020,6 +1068,18 @@ export class GameScene extends Phaser.Scene {
         const c = this.add.container(0, 0, [t, ic]).setDepth(5000);
         this.tweens.add({ targets: c, y: -50, alpha: 0, duration: 1100, delay: j * 80, ease: 'Cubic.Out', onComplete: () => c.destroy() });
       });
+      // juice (PLAN step 5): the delivered items hop over to the storage pile beside the cottage, which bounces
+      let n = 0;
+      for (const k of parts) for (let i = 0; i < Math.min(4, f.r[k]); i++, n++) {
+        const it = this.add.image(f.x + (Math.random() - 0.5) * 20, f.y - 26, ITEM_ICON[k]).setScale(ITEM_SCALE[k] ?? 2).setDepth(5200);
+        const tx = this.pile.x + (Math.random() - 0.5) * 24, ty = this.pile.y - 6;
+        this.tweens.add({ targets: it, x: tx, duration: 420, delay: n * 70, ease: 'Sine.InOut' });
+        this.tweens.add({
+          targets: it, y: { from: it.y, to: ty }, duration: 420, delay: n * 70, ease: (t: number) => t * t, // falls into the pile
+          onStart: () => this.tweens.add({ targets: it, scale: (ITEM_SCALE[k] ?? 2) * 1.2, duration: 210, yoyo: true }),
+          onComplete: () => { it.destroy(); this.tweens.add({ targets: this.pile, scaleX: 1.12, scaleY: 0.9, duration: 90, yoyo: true }); },
+        });
+      }
     } else if (f.t === 'hit') {
       this.swing(f.id, f.tool, f.x);
       const n = this.nodes[f.node];
@@ -1075,9 +1135,17 @@ export class GameScene extends Phaser.Scene {
       sfx.power(); sfx.star();
       const g = f.kind === 'cottage' ? null : this.bgfx.get(f.kind);
       const img = f.kind === 'cottage' ? this.cottageImg : g?.img;
-      if (g) { g.built = true; g.img.setVisible(true); }
-      if (img) { const sc = img.scaleX; img.setScale(sc * 0.2); this.tweens.add({ targets: img, scale: sc, duration: 420, ease: 'Back.Out' }); }
-      for (let i = 0; i < 3; i++) this.time.delayedCall(i * 90, () => this.puff(f.x + (i - 1) * 22, f.y + 6, (i - 1) * 60, -40, 6));
+      if (g) { g.built = true; g.img.setVisible(true); g.sh?.setVisible(true); }
+      // juice (PLAN step 5): the building drops in from above, lands with a bounce, then the dust flies
+      if (img) {
+        const y0 = img.y;
+        img.setY(y0 - 90).setAlpha(0);
+        this.tweens.add({ targets: img, alpha: 1, duration: 120 });
+        this.tweens.add({
+          targets: img, y: y0, duration: 560, ease: 'Bounce.Out',
+          onComplete: () => { for (let i = 0; i < 3; i++) this.time.delayedCall(i * 60, () => this.puff(f.x + (i - 1) * 26, f.y + 6, (i - 1) * 70, -30, 7)); this.cameras.main.shake(90, 0.003); },
+        });
+      } else for (let i = 0; i < 3; i++) this.time.delayedCall(i * 90, () => this.puff(f.x + (i - 1) * 22, f.y + 6, (i - 1) * 60, -40, 6));
       const fx = this.add.sprite(f.x, f.y - 6, 'fx-levelup').setScale(2).setDepth(4500);
       fx.play('levelup');
       fx.once('animationcomplete', () => fx.destroy());

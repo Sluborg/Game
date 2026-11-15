@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ARENA, BOMB_R, DROP_HEIGHT, FALL_SECONDS, MINI_INTRO, MINI_SECONDS, miniGoal, miniStars, newMini, stepMini, type MiniFx } from './mini';
-import { createState, finishMini, snapshot, step, viewFromSnapshot, type Input, type State } from './sim';
+import { createState, finishMini, MINI_ENABLED, snapshot, step, viewFromSnapshot, type Input, type State } from './sim';
 
 const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 });
 const body = (id: string, x: number, y: number) => ({ id, x, y, vx: 0, vy: 0 });
@@ -8,7 +8,7 @@ const body = (id: string, x: number, y: number) => ({ id, x, y, vx: 0, vy: 0 });
 const sunset = (n: number) => { const s = createState(Array.from({ length: n }, (_, i) => P('p' + i)), 3); s.time = 0.01; s.delivered = { ...s.quest }; step(s, new Map(), 1 / 60); return s; };
 const run = (s: State, secs: number, inp = new Map<string, Input>()) => { for (let i = 0; i < secs * 60; i++) step(s, inp, 1 / 60); };
 
-describe('Bärregn mini game', () => {
+describe.skipIf(!MINI_ENABLED)('Bärregn mini game (archived)', () => {
   it('starts at sunset for 1-5 players, everyone inside the field, goal grows with the team', () => {
     for (let n = 1; n <= 5; n++) {
       const s = sunset(n);

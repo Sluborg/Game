@@ -42,7 +42,9 @@ const check = (p) => p.evaluate(() => {
 (async () => {
   const browser = await chromium.launch();
   try {
-    for (const [tag, vp] of [['390x844', { width: 390, height: 844 }], ['360x780', { width: 360, height: 780 }], ['844x390', { width: 844, height: 390 }]]) {
+    // BLOBFIT_VP picks one viewport (the run.cjs wrappers blobfit-390 / -360 / -844 run them in parallel)
+    const VPS = [['390x844', { width: 390, height: 844 }], ['360x780', { width: 360, height: 780 }], ['844x390', { width: 844, height: 390 }]];
+    for (const [tag, vp] of VPS.filter(([t]) => !process.env.BLOBFIT_VP || t === process.env.BLOBFIT_VP)) {
       for (const hat of [7, 8, 11]) { // Lurar, Kattöron, Djävulshorn
         for (let shape = 0; shape < 6; shape++) {
           const ctx = await browser.newContext({ locale: 'sv-SE', viewport: vp, isMobile: true, hasTouch: true });

@@ -14,14 +14,19 @@ const openPanel = async (page) => { await page.waitForSelector('#btn-build:not(.
   try {
     // a clean map: nothing to stand on around the cottage, no ghosts or price signs
     await sim(host, (s) => { s.players.forEach((p, i) => Object.assign(p, { x: 600 + i * 40, y: 330, vx: 0, vy: 0 })); });
-    await ada.waitForTimeout(1200);
+    await ada.waitForFunction(() => window.__blobzView.players.every((p) => p.y < 400), null, { timeout: 5000 });
+    await ada.waitForFunction(() => document.getElementById('btn-build').classList.contains('hidden'), null, { timeout: 5000 });
     ok(await ada.isHidden('#btn-build'), 'away from the cottage: no "Bygg" button');
     if (shots) await ada.screenshot({ path: `${shots}/base-clean-portrait.png` });
 
     // Ada at home -> hammer button -> panel with picture cards; 5 of 6 wood: Förråd is red and disabled
-    await sim(host, (s) => { s.bank = { wood: 5, stone: 0, berry: 0 }; });
+    // deterministic: empty hands (no delivery can top the bank up), wait until Ada's own view shows the bank of 5,
+    // then wait for the card's rendered state instead of reading it right after opening
+    await sim(host, (s) => { s.bank = { wood: 5, stone: 0, berry: 0 }; s.players.forEach((p) => { p.carry = []; }); s.items = []; });
+    await ada.waitForFunction(() => window.__blobzView.bank.wood === 5, null, { timeout: 5000 });
     await goHome(host, 1);
     await openPanel(ada);
+    await ada.waitForFunction(() => { const c = document.querySelector('#build-cards .bcard[data-kind="storage"]'); return !!c?.dataset.key && c.disabled; }, null, { timeout: 5000 });
     ok(await card(ada, 'storage').isDisabled(), 'build panel: Förråd needs 6 wood, the bank has 5 -> card disabled, cost red');
     ok((await ada.locator('#build-cards .bcard').count()) === 7, 'build panel: 6 buildings + the cottage upgrade');
     await sim(host, (s) => { s.bank.wood = 7; });
@@ -62,16 +67,15 @@ const openPanel = async (page) => { await page.waitForSelector('#btn-build:not(.
     await ada.waitForFunction(() => window.__blobzView.cottage.level === 2, null, { timeout: 5000 });
     ok(true, 'cottage level 2 from the panel (20/15/10)');
     await host.click('#btn-build-close');
-    await sim(host, (s) => { s.bank = { wood: 4, stone: 3, berry: 2 }; s.players.forEach((p, i) => Object.assign(p, { x: 600 + i * 40, y: 330, vx: 0, vy: 0 })); });
-    await ada.waitForTimeout(1200);
+    await sim(host, (s) => { s.bank = { wood: 4, stone: 3, berry: 2 }; s.items = []; s.players.forEach((p, i) => Object.assign(p, { x: 600 + i * 40, y: 330, vx: 0, vy: 0, carry: [] })); });
+    await ada.waitForFunction(() => window.__blobzView.bank.wood === 4 && window.__blobzView.players.every((p) => p.y < 400), null, { timeout: 5000 });
+    await ada.waitForTimeout(600); // let the built village settle for the screenshots
     if (shots) await ada.screenshot({ path: `${shots}/base-built-portrait.png` });
     if (shots) await bo.screenshot({ path: `${shots}/base-built-landscape.png` });
 
     // sunset, Bärregn skipped, then "Spela igen": the village + bank continue, the quest restarts
     await sim(host, (s) => { s.villageDirty = true; s.delivered = { ...s.quest }; });
-    await host.waitForSelector('#btn-skip-mini:not(.hidden)', { timeout: 5000 });
-    await host.click('#btn-skip-mini');
-    await host.waitForSelector('#end:not(.hidden)', { timeout: 5000 });
+    await host.waitForSelector('#end:not(.hidden)', { timeout: 5000 }); // Bärregn archived: straight to the end
     await host.click('#btn-again');
     await ada.waitForFunction(() => window.__blobzView.phase === 'play' && window.__blobzView.delivered.wood === 0, null, { timeout: 8000 });
     const n = await view(ada);
@@ -95,7 +99,7 @@ const openPanel = async (page) => { await page.waitForSelector('#btn-build:not(.
         localStorage.setItem('blobz.village', JSON.stringify({ v: 2, cottage: 2, builds: { storage: true, workshop: false, garden: false, well: false, watchtower: false, bridge: true }, bank: { wood: 3, stone: 0, berry: 0 } }));
       }
     });
-    await p.goto(base + '?lan=e2e-ny&debug');
+    await p.goto(base + '?lan=e2e-ny-' + Math.random().toString(36).slice(2) + '&debug');
     await p.click('#btn-host');
     await p.waitForSelector('#lobby:not(.hidden)');
     ok((await p.getAttribute('#lobby-village', 'aria-label')).includes('stuga nivå 2') && (await p.getAttribute('#lobby-village .vcot', 'src')).endsWith('cottage-2.png'),

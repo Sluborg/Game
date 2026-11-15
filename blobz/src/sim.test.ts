@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BASE, createState, DAY_CYCLE_ENABLED, finishMini, questTargets, step, type Input } from './sim';
+import { BASE, createState, DAY_CYCLE_ENABLED, finishMini, MINI_ENABLED, questTargets, step, type Input } from './sim';
 
 const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 });
 
@@ -50,7 +50,7 @@ describe('sim', () => {
     expect(s.phase).toBe('end');
   });
 
-  it.skipIf(DAY_CYCLE_ENABLED)('no day cycle: no time limit; a complete quest starts Bärregn, then the end', () => {
+  it.skipIf(DAY_CYCLE_ENABLED)('no day cycle: no time limit; a complete quest ends the round', () => {
     const s = createState([P('a')], 4);
     const t = s.time;
     for (let i = 0; i < 600; i++) step(s, new Map(), 1 / 60);
@@ -61,9 +61,8 @@ describe('sim', () => {
     expect(s.phase).toBe('play'); // two of three goals is not enough
     s.delivered.wood = s.quest.wood;
     step(s, new Map(), 1 / 60);
-    expect(s.phase).toBe('mini');
-    finishMini(s);
-    expect(s.phase).toBe('end');
+    if (MINI_ENABLED) { expect(s.phase).toBe('mini'); finishMini(s); }
+    expect(s.phase).toBe('end'); // Bärregn archived: straight to the end screen
   });
 
   it('quest targets grow with team size', () => {

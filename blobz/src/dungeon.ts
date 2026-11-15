@@ -8,7 +8,8 @@ import { rng } from './rng';
 export const DT = 32; // one dungeon tile in world px
 export const GW = 40;
 export const GH = 30;
-export const FLOORS = 3;
+/** Floors per dungeon (Stefan 2026-11-15: Dungeon 1 = 5 floors, Dungeon 2 = 5 floors, ...; the boss on the last). */
+export const FLOORS = 5;
 const BLOB_R = 17;
 
 // ---- classes, weapons, specials, sidesteps, level-up skills, loot items (all data) ----
@@ -18,13 +19,14 @@ export const CLASSES: HeroClass[] = ['healer', 'rogue', 'tank', 'marksman'];
 /** Art's skill icon: art/dungeon/skills/<class>-<id>.png (file names = skill ids). */
 /** Ninja Adventure skill icons (24x24, Ui/Skill Icon/..., docs/OLD_ART_CHECKLIST.md) per level-up skill. */
 const NA_SKILL: Record<string, string> = {
-  'rogue-rage': 'Spell/OrbFire', 'rogue-knockback': 'Spell/Explosion', 'rogue-whirlwind': 'Items & Weapon/Shuriken', 'rogue-extraheart': 'Spell/Heal',
+  // interim Ninja picks matching the texts, no duplicates (ChatGPT N-23 icons replace them)
+  'rogue-rage': 'Items & Weapon/Boot', 'rogue-knockback': 'Spell/Explosion', 'rogue-whirlwind': 'Items & Weapon/Shuriken', 'rogue-extraheart': 'Job & Action/Dish',
   'rogue-lifesteal': 'Job & Action/Potion', 'rogue-power': 'Spell/AttackUpgrade',
-  'healer-heal': 'Spell/Heal', 'healer-regen': 'Spell/OrbPlant', 'healer-bubble': 'Spell/DefenseUpgrade', 'healer-revive': 'Spell/OrbLight',
-  'healer-holy': 'Spell/BookLight', 'healer-cleanse': 'Spell/OrbWater',
+  'healer-heal': 'Spell/Heal', 'healer-regen': 'Spell/OrbPlant', 'healer-bubble': 'Spell/OrbWater', 'healer-revive': 'Spell/OrbLight',
+  'healer-holy': 'Spell/BookLight', 'healer-cleanse': 'Spell/MagicWeapon',
   'marksman-multishot': 'Items & Weapon/Kunai', 'marksman-pierce': 'Items & Weapon/Arrow', 'marksman-crit': 'Spell/Vision', 'marksman-speed': 'Spell/Upgrade',
-  'marksman-poison': 'Spell/BookIce', 'marksman-trap': 'Items & Weapon/Hook',
-  'tank-block': 'Spell/Counter', 'tank-taunt': 'Job & Action/Talk', 'tank-armor': 'Items & Weapon/Armor', 'tank-charge': 'Spell/RockSpike',
+  'marksman-poison': 'Spell/BookIce', 'marksman-trap': 'Meteo/Snow',
+  'tank-block': 'Spell/DefenseUpgrade', 'tank-taunt': 'Job & Action/Sing', 'tank-armor': 'Items & Weapon/Armor', 'tank-charge': 'Spell/Cut',
   'tank-stun': 'Spell/BookThunder', 'tank-guard': 'Items & Weapon/Guard',
 };
 export const skillIcon = (id: string) => `assets/ninja-adventure/Ui/Skill Icon/${NA_SKILL[id] ?? 'Spell/Upgrade'}.png`;
@@ -89,19 +91,20 @@ export interface Mods {
   dmg: number; rate: number; reach: number; hp: number; spCd: number; spR: number; heal: number; shieldAll: number; regen: number;
   arrows: number; pierce: number; wallT: number; taunt: number; killHeal: number;
   kb: number; stun: number; crit: number; trap: number; dodge: number; koFast: number;
+  mvCd: number; // class move recharge time (x)
 }
 const NO_MODS: Mods = {
   dmg: 1, rate: 1, reach: 0, hp: 0, spCd: 1, spR: 1, heal: 1, shieldAll: 0, regen: 0, arrows: 0, pierce: 0, wallT: 0, taunt: 0, killHeal: 0,
-  kb: 1, stun: 0, crit: 0, trap: 0, dodge: 0, koFast: 0,
+  kb: 1, stun: 0, crit: 0, trap: 0, dodge: 0, koFast: 0, mvCd: 1,
 };
-const MULT: (keyof Mods)[] = ['dmg', 'rate', 'spCd', 'spR', 'kb', 'heal'];
+const MULT: (keyof Mods)[] = ['mvCd', 'dmg', 'rate', 'spCd', 'spR', 'kb', 'heal'];
 export const REGEN_EVERY = 4; // seconds; regen heals `regen` points each time
 /** One line per effect for the cards: a number the player can read ("+20% skada"). Keys: dg.fx.<key>. */
 export function effectLines(mod: Partial<Mods>): { key: string; n: number }[] {
   const out: { key: string; n: number }[] = [];
   const pct = (v: number) => Math.round(Math.abs(v - 1) * 100);
   for (const [k, v] of Object.entries(mod) as [keyof Mods, number][]) {
-    if (k === 'rate' || k === 'spCd') out.push({ key: k, n: pct(v) }); // shorter wait = faster
+    if (k === 'rate' || k === 'spCd' || k === 'mvCd') out.push({ key: k, n: pct(v) }); // shorter wait = faster
     else if (MULT.includes(k)) out.push({ key: k, n: pct(v) });
     else out.push({ key: k, n: k === 'crit' ? Math.round(v * 100) : v });
   }
@@ -142,7 +145,7 @@ export const ITEMS: ItemDef[] = [
   { id: 'ring', icon: 113, mod: { dmg: 1.2 } },
   { id: 'helm', icon: 96, mod: { hp: 30 } },
   { id: 'gloves', icon: 105, mod: { rate: 0.85 } },
-  { id: 'amulet', icon: 126, mod: { spCd: 0.7 } },
+  { id: 'amulet', icon: 126, mod: { mvCd: 0.7 } }, // class move recharges 30% faster (works for every class)
   { id: 'stone', icon: 114, mod: { regen: 5 } },
 ];
 export const itemOf = (id: string | null | undefined) => ITEMS.find((i) => i.id === id);
@@ -164,9 +167,20 @@ export const ENEMY_GOLD = [1, 3, 15, 2];
 export const ENEMY_XP = [1, 3, 10, 2];
 const ENEMY_SIGHT = 300; // they wake up and chase within this range
 const ALERT_R = 240; // a goo that wakes calls the goo around it: they gang up
-/** Floor scaling: tougher and harder-hitting further down; more blobz = more goo health. */
-export const floorHp = (floor: number, players: number) => (1 + 0.35 * (floor - 1)) * (1 + 0.25 * Math.max(0, Math.min(5, players) - 1));
-export const floorDmg = (floor: number) => 1 + 0.25 * (floor - 1);
+/** Difficulty (Stefan: gentle start, slow scaling, each dungeon a step harder; the old 3-floor difficulty is about
+ *  Dungeon 3). tier = 0 on Dungeon 1 floor 1, +1 per dungeon, +0.25 per floor. */
+export const tierOf = (dungeon: number, floor: number) => Math.max(0, dungeon - 1) + (Math.max(1, floor) - 1) / (FLOORS - 1);
+/** monster health: 60% at the start, the old floor-1 health from Dungeon 3 */
+export const hpMul = (dungeon: number, floor: number) => 0.6 + 0.2 * tierOf(dungeon, floor);
+/** monster damage: half at the start, the old floor-1 damage from Dungeon 3 */
+export const dmgMulOf = (dungeon: number, floor: number) => 0.5 + 0.25 * tierOf(dungeon, floor);
+/** pause between telegraphed attacks: 1.5x at the start, the old pause from Dungeon 3 */
+export const actMul = (dungeon: number, floor: number) => Math.max(1, 1.5 - 0.25 * tierOf(dungeon, floor));
+/** how crowded a floor is (the old floor number 1..3+): 1 on Dungeon 1's first floors */
+export const crowdOf = (dungeon: number, floor: number) => Math.min(5, 1 + Math.round(tierOf(dungeon, floor)));
+/** Monster health on a floor; more blobz = more health. */
+export const floorHp = (floor: number, players: number, dungeon = 1) => hpMul(dungeon, floor) * (1 + 0.25 * Math.max(0, Math.min(5, players) - 1));
+export const floorDmg = (floor: number, dungeon = 1) => dmgMulOf(dungeon, floor);
 export const SPIT_EVERY = 2.2;
 export const SPIT_SPEED = 210;
 export const SPIT_DMG = 10;
@@ -185,13 +199,16 @@ export const SLAM_WARN = 1.1; // red ring on the ground before it lands
 export const SLAM_R = 72;
 export const SLAM_DMG = 25;
 export const KO_SECONDS = 5;
-export const RUN_SECONDS = 300; // a run ends (back to the meadow) after 5 minutes at the latest
+export const RUN_SECONDS = 300; // a run ends (back to the meadow) after 5 minutes at the latest (only with the timer on)
+/** Stefan 2026-11-15: no time limit underground (docs/ARCHIVED.md). The clock is hidden and never ends a run. */
+export const DUNGEON_TIMER_ENABLED = false;
 export const DONE_SECONDS = 6; // "Dungeon klar!" stays this long
 const HURT_INV = 0.8; // invulnerable after a hit
 /** Team XP needed to reach level n+1 (index = current level - 1). */
 export const LEVEL_XP = [5, 12, 22, 35, 52, 75];
 /** Boss health grows with the team: 300 for one blob, +60% per extra blob. */
-export const bossHp = (players: number) => Math.round(ENEMY_HP[2] * (1 + 0.6 * Math.max(0, Math.min(5, players) - 1)));
+/** Boss health: the old 300 (x team size) on Dungeon 3, less before (Dungeon 1: 200), more after. */
+export const bossHp = (players: number, dungeon = 3) => Math.round(ENEMY_HP[2] * (hpMul(dungeon, FLOORS) / hpMul(3, FLOORS)) * (1 + 0.6 * Math.max(0, Math.min(5, players) - 1)));
 export const POTION_HP = 25;
 
 
@@ -204,7 +221,7 @@ export interface Floor {
   exit: { x: number; y: number }; // stairs up in the first room's corner: leave the dungeon
   stairs: { x: number; y: number }; // stairs down (floors 1-2) or the exit after the boss (floor 3)
   chests: { x: number; y: number }[];
-  spawns: { kind: EnemyKind; x: number; y: number }[];
+  spawns: { kind: EnemyKind; x: number; y: number; calm?: boolean }[]; // calm = no telegraphed attacks (a calm start)
 }
 
 const cx = (r: Room) => (r.x + r.w / 2) * DT;
@@ -212,7 +229,7 @@ const cy = (r: Room) => (r.y + r.h / 2) * DT;
 
 /** Rooms + corridors for one floor, from the run seed. The last room is the farthest from the start;
  *  on the last floor it is the boss room. */
-export function makeFloor(seed: number, floor: number, players = 1): Floor {
+export function makeFloor(seed: number, floor: number, players = 1, dungeon = 1): Floor {
   const r = rng(seed * 97 + floor * 131 + 11);
   const solid = new Uint8Array(GW * GH).fill(1);
   const rooms: Room[] = [];
@@ -256,14 +273,17 @@ export function makeFloor(seed: number, floor: number, players = 1): Floor {
   // goo per room: more and tougher further down; mediums from floor 1, spitters from floor 1 (one) and every other room later
   const spawns: Floor['spawns'] = [];
   const extra = Math.floor(Math.max(1, players) / 2);
+  const crowd = crowdOf(dungeon, floor); // monsters per room follow the difficulty, not the floor number (the map does)
   order.slice(1).forEach((o, i) => {
     const isGoal = o === goal;
     const at = () => ({ x: (o.x + 1 + r() * (o.w - 2)) * DT, y: (o.y + 1 + r() * (o.h - 2)) * DT });
-    const smalls = (isGoal && boss ? 2 : 2 + Math.floor(r() * 2)) + (floor - 1) + extra;
+    const smalls = (isGoal && boss ? 2 : 1 + Math.floor(r() * 2) + (crowd >= 2 ? 1 : 0)) + (crowd - 1) + extra;
     for (let k = 0; k < smalls; k++) spawns.push({ kind: 0, ...at() });
-    if (floor >= 2 || i % 2 === 0 || isGoal) spawns.push({ kind: 1, x: cx(o) + DT, y: cy(o) });
-    if ((floor >= 2 && i % 2 === 1) || (floor === 1 && i === 2)) spawns.push({ kind: 3, ...at() });
+    if (crowd >= 2 || i % 2 === 0 || isGoal) spawns.push({ kind: 1, x: cx(o) + DT, y: cy(o) });
+    if ((crowd >= 2 && i % 2 === 1) || (crowd === 1 && i === 2)) spawns.push({ kind: 3, ...at() });
     if (isGoal && boss) spawns.push({ kind: 2, x: cx(o), y: cy(o) - DT });
+    // a calm start (Stefan via Lead): the first monster room of Dungeon 1 floor 1 has no telegraphed attacks
+    if (i === 0 && dungeon === 1 && floor === 1) for (const sp of spawns) sp.calm = true;
   });
   return { floor, solid, rooms, start, exit, stairs, chests, spawns };
 }
@@ -294,6 +314,7 @@ export interface Enemy {
   id: number; kind: EnemyKind; x: number; y: number; vx: number; vy: number; hp: number; mx: number; awake: boolean; stun: number;
   slamT: number; slam: { x: number; y: number; t: number } | null; by?: string; cd?: number; p2?: boolean; // attack cooldown, boss phase 2
   act?: Act; actT?: number; ang?: number; shots?: number; // telegraphed attack in progress: state, time left, direction, burst left
+  calm?: boolean; // the first room of Dungeon 1 floor 1: these monsters only chase and bump, no telegraphed attacks
 }
 /** Floor pickups: kind 0 = coin (team gold), 1 = potion (+POTION_HP for everyone). */
 export interface Coin { id: number; x: number; y: number; v: number; k?: 0 | 1 }
@@ -325,6 +346,7 @@ export interface DState {
   opened: boolean[]; // chests
   gold: number; xp: number; level: number; kills: number;
   bossMax: number; players: number;
+  dungeon: number; // which dungeon (1, 2, ...): its difficulty step
   time: number; // seconds left of the run
   ready: number; // seconds every blob has stood on the stairs (goes down / out at 1.5)
   done: number; // > 0: "Dungeon klar!" shows, counts down, then back to the meadow
@@ -396,27 +418,28 @@ export function newHero(weapon: Weapon, maxHp?: number): Hero {
 }
 
 /** A goo of `kind` with health for this floor and team size. */
-export function makeGoo(d: Pick<DState, 'nextId' | 'floor' | 'players' | 'bossMax'>, kind: EnemyKind, x: number, y: number): Enemy {
-  const mx = kind === 2 ? d.bossMax : Math.round(ENEMY_HP[kind] * floorHp(d.floor, d.players));
+export function makeGoo(d: Pick<DState, 'nextId' | 'floor' | 'players' | 'bossMax'> & { dungeon?: number }, kind: EnemyKind, x: number, y: number): Enemy {
+  const mx = kind === 2 ? d.bossMax : Math.round(ENEMY_HP[kind] * floorHp(d.floor, d.players, d.dungeon ?? 1));
   return { id: d.nextId++, kind, x, y, vx: 0, vy: 0, hp: mx, mx, awake: false, stun: 0, slamT: SLAM_EVERY, slam: null, cd: SPIT_EVERY * (0.5 + Math.random()) };
 }
 
 export function enterFloor(d: Omit<DState, 'map'> & { map?: Floor }, seed: number, floor: number, players: number): DState {
-  const map = makeFloor(seed, floor, players);
   const out = d as DState;
+  out.dungeon ??= 1;
+  const map = makeFloor(seed, floor, players, out.dungeon);
   out.floor = floor; out.map = map; out.ready = 0; out.players = players;
-  out.bossMax = bossHp(players);
-  out.enemies = map.spawns.map((sp) => makeGoo(out, sp.kind, sp.x, sp.y));
+  out.bossMax = bossHp(players, out.dungeon);
+  out.enemies = map.spawns.map((sp) => Object.assign(makeGoo(out, sp.kind, sp.x, sp.y), sp.calm ? { calm: true } : {}));
   out.coins = []; out.spit = [];
   out.opened = map.chests.map(() => false);
   return out;
 }
 
-export function newRun(seed: number, picks: Record<string, Weapon>): DState {
+export function newRun(seed: number, picks: Record<string, Weapon>, dungeon = 1): DState {
   const heroes: Record<string, Hero> = {};
   for (const [id, w] of Object.entries(picks)) heroes[id] = newHero(w);
   return enterFloor({
-    floor: 1, enemies: [], coins: [], spit: [], opened: [], gold: 0, xp: 0, level: 1, kills: 0, bossMax: ENEMY_HP[2], players: 1,
+    floor: 1, dungeon: Math.max(1, Math.floor(dungeon)), enemies: [], coins: [], spit: [], opened: [], gold: 0, xp: 0, level: 1, kills: 0, bossMax: ENEMY_HP[2], players: 1,
     time: RUN_SECONDS, ready: 0, done: 0, why: 'exit', heroes, loot: null, lootQ: [], lootLast: null, nextId: 1,
   }, seed, 1, Object.keys(picks).length);
 }
@@ -646,7 +669,7 @@ function stepAct(d: DState, e: Enemy, tgt: Body | null, dt: number, fx: DFx[]) {
   const a = e.ang ?? 0, ux = Math.cos(a), uy = Math.sin(a);
   const still = () => { e.vx *= Math.exp(-10 * dt); e.vy *= Math.exp(-10 * dt); };
   const go = (sp: number) => { e.vx = ux * sp; e.vy = uy * sp; };
-  const done = () => { e.act = 0; e.cd = ACT_CD[e.kind] * (0.85 + Math.random() * 0.3); };
+  const done = () => { e.act = 0; e.cd = ACT_CD[e.kind] * actMul(d.dungeon ?? 1, d.floor) * (0.85 + Math.random() * 0.3); };
   switch (e.act) {
     case 1: still(); if (e.actT <= 0) { e.act = 2; e.actT = DASH_TIME; go(DASH_SPEED); fx.push({ t: 'mdash', x: e.x, y: e.y, a }); } break;
     case 2:
@@ -683,8 +706,8 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
     for (const b of bodies) { b.vx = 0; b.vy = 0; collideWalls(f, b, BLOB_R); }
     return d.done <= 0 ? 'out' : 'stay';
   }
-  d.time = Math.max(0, d.time - dt);
-  if (d.time <= 0) { d.done = DONE_SECONDS; d.why = 'time'; return 'stay'; }
+  if (DUNGEON_TIMER_ENABLED) d.time = Math.max(0, d.time - dt);
+  if (DUNGEON_TIMER_ENABLED && d.time <= 0) { d.done = DONE_SECONDS; d.why = 'time'; return 'stay'; }
   const mods = new Map<string, Mods>();
   // heroes: facing, timers, auto-attack, special, sidestep, KO/revive, cards
   for (const b of bodies) {
@@ -721,7 +744,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
       if (h.regenT >= REGEN_EVERY) { h.regenT = 0; healHero(h, m.regen); fx.push({ t: 'heal', id: b.id, x: b.x, y: b.y }); }
     } else h.regenT = 0;
     // the class move (small button; the sim gives no dash impulse underground, the class decides the move)
-    const maxCh = h.cls === 'rogue' ? ROGUE_CHARGES : 1, mvMax = CLASS_MOVE_COOLDOWN[h.cls];
+    const maxCh = h.cls === 'rogue' ? ROGUE_CHARGES : 1, mvMax = CLASS_MOVE_COOLDOWN[h.cls] * m.mvCd;
     if (h.charges < maxCh) { h.mvCd -= dt; if (h.mvCd <= 0) { h.charges++; h.mvCd = h.charges < maxCh ? mvMax : 0; } }
     if (b.lastDash !== undefined && b.lastDash !== h.lastDash) {
       const first = h.lastDash === -1; // the first frame only syncs the counter
@@ -787,7 +810,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
     if (e.kind === 2) d.lootQ.push(ITEMS[Math.floor(Math.random() * ITEMS.length)].id);
     gainXp(d, ENEMY_XP[e.kind], fx);
   }
-  const dmgMul = floorDmg(d.floor);
+  const dmgMul = floorDmg(d.floor, d.dungeon ?? 1);
   // enemies: wake up (and call friends), chase the nearest standing blob (tanks pull them in), touching hurts;
   // spitters keep their distance and spit; the boss slams, and below half health gets angry (phase 2)
   const woke: Enemy[] = [];
@@ -807,7 +830,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
     if (e.kind !== 2 && e.stun <= 0 && tgt && !e.act) {
       e.cd = (e.cd ?? ACT_CD[e.kind]) - dt;
       const a = Math.atan2(tgt.y - e.y, tgt.x - e.x);
-      if (e.cd <= 0 && lineOfSight(f, e.x, e.y, tgt.x, tgt.y)) {
+      if (e.cd <= 0 && !e.calm && lineOfSight(f, e.x, e.y, tgt.x, tgt.y)) {
         if (e.kind === 3 && dist < 320) { e.act = 5; e.actT = AIM_WARN; e.ang = a; }
         else if (e.kind <= 1 && dist > DASH_MIN && dist < DASH_MAX) { e.act = 1; e.actT = DASH_WARN; e.ang = a; }
       }
@@ -994,7 +1017,7 @@ function hurt(d: DState, b: Body, fromX: number, fromY: number, dmg: number, fx:
 const r1 = (n: number) => Math.round(n * 10) / 10;
 type HeroTuple = [string, number, number, number, number, number, number, number?, number?, number?, number?, number?, string?, string?, string?, number?, number?, number?];
 export interface DSnap {
-  sd: number; f: number; g: number; xp: number; lv: number; k: number; rd: number; dn: number; tm?: number; wy?: number; bm?: number;
+  sd: number; f: number; du?: number; g: number; xp: number; lv: number; k: number; rd: number; dn: number; tm?: number; wy?: number; bm?: number;
   e: [number, number, number, number, number, number, number, number, number?, number?, number?, number?][]; // id, kind, x, y, hp, slam x, slam y, slam t (-1 none), max hp, act, angle*100, act time*100
   c: [number, number, number, number?][]; // pickup id, x, y, kind
   sp?: [number, number, number][]; // spit id, x, y
@@ -1010,7 +1033,7 @@ export interface DHeroView {
   mode: number; guard: boolean; phase: boolean; mvCd: number; mvMax: number; charges: number; maxCharges: number; shield: number; wallT: number; item: string | null; skills: string[]; offer: string[]; offerT: number;
 }
 export interface DView {
-  seed: number; floor: number; gold: number; xp: number; level: number; kills: number; ready: number; done: number; time: number; why: EndWhy; bossMax: number;
+  seed: number; floor: number; dungeon: number; gold: number; xp: number; level: number; kills: number; ready: number; done: number; time: number; why: EndWhy; bossMax: number;
   enemies: { id: number; kind: EnemyKind; x: number; y: number; hp: number; mx: number; slam: { x: number; y: number; t: number } | null; act: Act; ang: number; at: number }[];
   coins: { id: number; x: number; y: number; k: number }[];
   spit: { id: number; x: number; y: number }[];
@@ -1022,7 +1045,7 @@ export interface DView {
 const WHY: EndWhy[] = ['boss', 'exit', 'time'];
 export function dsnap(d: DState, seed: number): DSnap {
   return {
-    sd: seed, f: d.floor, g: d.gold, xp: d.xp, lv: d.level, k: d.kills, rd: Math.round((d.ready / READY_SECONDS) * 100), dn: r1(d.done),
+    sd: seed, f: d.floor, du: d.dungeon ?? 1, g: d.gold, xp: d.xp, lv: d.level, k: d.kills, rd: Math.round((d.ready / READY_SECONDS) * 100), dn: r1(d.done),
     tm: Math.ceil(d.time), wy: WHY.indexOf(d.why), bm: d.bossMax,
     e: d.enemies.map((e) => [e.id, e.kind, r1(e.x), r1(e.y), Math.ceil(e.hp), e.slam ? r1(e.slam.x) : 0, e.slam ? r1(e.slam.y) : 0, e.slam ? r1(e.slam.t) : -1, e.mx, e.act ?? 0, Math.round((e.ang ?? 0) * 100), Math.round((e.actT ?? 0) * 100)]),
     c: d.coins.map((c) => [c.id, r1(c.x), r1(c.y), c.k ?? 0]),
@@ -1038,7 +1061,7 @@ export function dsnap(d: DState, seed: number): DSnap {
 const list = (s: string | undefined) => (s ? s.split(',').filter(Boolean) : []);
 export function dview(n: DSnap): DView {
   return {
-    seed: n.sd, floor: n.f, gold: n.g, xp: n.xp, level: n.lv, kills: n.k, ready: n.rd / 100, done: n.dn, time: n.tm ?? 0, why: WHY[n.wy ?? 1] ?? 'exit', bossMax: n.bm ?? ENEMY_HP[2],
+    seed: n.sd, floor: n.f, dungeon: n.du ?? 1, gold: n.g, xp: n.xp, level: n.lv, kills: n.k, ready: n.rd / 100, done: n.dn, time: n.tm ?? 0, why: WHY[n.wy ?? 1] ?? 'exit', bossMax: n.bm ?? ENEMY_HP[2],
     enemies: n.e.map(([id, kind, x, y, hp, sx, sy, st, mx, act, ang, at]) => ({ id, kind: kind as EnemyKind, x, y, hp, mx: mx ?? hp, slam: st >= 0 ? { x: sx, y: sy, t: st } : null, act: (act ?? 0) as Act, ang: (ang ?? 0) / 100, at: (at ?? 0) / 100 })),
     coins: n.c.map(([id, x, y, k]) => ({ id, x, y, k: k ?? 0 })),
     spit: (n.sp ?? []).map(([id, x, y]) => ({ id, x, y })),
@@ -1049,7 +1072,7 @@ export function dview(n: DSnap): DView {
         cls, hp, maxHp, ko, weapon, face: face / 100, swing: swing / 100,
         spCd: (cd ?? 0) / 10, spMax: specialOf(cls, weapon).cd, spT: (spT ?? 0) / 100, dodge: !!((fl ?? 0) & 1), inv: !!((fl ?? 0) & 2), mode: (fl ?? 0) & 4 ? 1 : 0, guard: !!((fl ?? 0) & 8), phase: !!((fl ?? 0) & 16),
         shield: sh ?? 0, wallT: (wl ?? 0) / 10, item: it || null, skills: list(sk), offer: list(of), offerT: ot ?? 0,
-        mvCd: (mv ?? 0) / 10, mvMax: CLASS_MOVE_COOLDOWN[cls], charges: ch ?? 1, maxCharges: cls === 'rogue' ? ROGUE_CHARGES : 1,
+        mvCd: (mv ?? 0) / 10, mvMax: CLASS_MOVE_COOLDOWN[cls] * (itemOf(it || null)?.mod.mvCd ?? 1), charges: ch ?? 1, maxCharges: cls === 'rogue' ? ROGUE_CHARGES : 1,
       }];
     })),
     loot: n.lt ? { item: n.lt[0], t: n.lt[1], rolls: Object.fromEntries(n.lt[2]) } : null,

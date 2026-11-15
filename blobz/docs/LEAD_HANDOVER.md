@@ -25,11 +25,14 @@ Merge routine: fetch, merge each branch, resolve, `npx tsc --noEmit && npm test 
 - ChatGPT art queue: `blobz/docs/ART_ORDERS.md` (ChatGPT project instructions point to its raw GitHub URL on the deploy branch).
   D-orders = small direction tests; A-orders stay WAITING until Stefan locks the direction for their area.
 
-## State (2026-11-15, v048c live)
+## State (2026-11-15 morning, v051f live, Test PASS)
 - Art: Ninja Adventure + ChatGPT N-orders (docs/ART_ORDERS.md). No Claude-drawn or Kenney art on screen. Every image
   indexed in docs/ASSET_INDEX.md (Art's scripts); unused files go to blobz/archive/art/ (not shipped).
 - Archived behind flags: snow map, day cycle, Bärregn (pending), dungeon timers (pending). See docs/ARCHIVED.md.
 - Outside reviews + Stefan's decisions: docs/reviews/ (README.md = decisions, PLAN.md = approved plan, steps 1-5).
-- Plan approved 2026-11-15 night; Code (menus/meadow) and Code 2 (dungeon) implement it; each step -> one board rating.
+- Plan (docs/reviews/PLAN.md) steps 1-5 DONE overnight (v049-v051f); each step is a board rating question (plan-step*).
+- Waiting on Stefan: step ratings, res-wood/res-food/res-stone picks (Code swaps RES_ART), pink blossom tree keep/remove,
+  Claude-drawn blink frame (needs OK). ChatGPT TO DO: N-15b, N-19b, N-23 (skills/items), N-24 (dash), N-25 (mouths).
+- e2e: run.cjs is parallel (~4 min). Splitting dungeon-map + blobfit specs (low prio).
 - Rules added this session (see blobz/CLAUDE.md): discuss before a redo, reset rating on a changed item, Claude art
   only with OK, keep ChatGPT busy, every image indexed.
