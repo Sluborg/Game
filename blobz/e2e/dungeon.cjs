@@ -88,6 +88,9 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     const sp = await bo.evaluate((ids) => [ids[0], ids[2]].map((id) => window.__blobzView.dungeon.heroes[id].spCd > 0), ids);
     ok(sp.every(Boolean), 'rogue + marksman specials on cooldown (the healer toggles instead)');
     await sim(host, (s) => { s.dg.enemies = []; });
+    // the rogue's dodge (class move) slides it away: let it land, then stand still
+    await host.waitForTimeout(500);
+    await sim(host, (s) => { s.players.forEach((p) => { p.vx = 0; p.vy = 0; }); });
 
     // level-up: 1 of 3 skill cards on every phone, from each one's own class
     await sim(host, (s) => { s.dg.xp = 4; s.dg.level = 1; });

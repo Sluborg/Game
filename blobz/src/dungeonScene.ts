@@ -542,7 +542,10 @@ export class DungeonScene extends Phaser.Scene {
     const spot = (ang: number, out: number) => ({ x: cx + Math.cos(ang) * (EDGE_X + HOVER + out), y: cy + Math.sin(ang) * (EDGE_Y + HOVER + 4 + out * 0.7) + DROP }); // vertical: clears the body top (hat) too
     const dbg = (extra: Record<string, unknown>) => { if (DEBUG) ((window as unknown as { __dgWeapon?: Record<string, unknown> }).__dgWeapon ??= {})[b.id] = { aim: wrap(swinging ? b.swingA : aim), prog, swing: swinging, n: b.swings, bx: cx, by: cy, w, bob, ...extra }; };
     if (w === 'dagger') {
-      // ONE sai held close to the body, pointing along the aim; each attack stabs it straight out and back, fast
+      // ONE straight dagger held close to the body; each attack stabs it straight out at the target and back, fast
+      // (a stab points right at the target, no easing in: the smoothed angle could still be turning from rest)
+      const aim = swinging ? b.swingA : b.wa!;
+      if (swinging) b.wa = aim;
       const out = swinging ? Math.sin(prog * Math.PI) * DAGGER_STAB : 0;
       const g = spot(aim, -4);
       const px = g.x + Math.cos(aim) * out, py = g.y + Math.sin(aim) * out * 0.7 + bob;
