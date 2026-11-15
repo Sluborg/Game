@@ -41,7 +41,7 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (next: N-30, then N-33, N-31, N-32). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
+ChatGPT works only on N-orders with status TO DO (next: N-30b). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
@@ -79,10 +79,11 @@ ChatGPT works only on N-orders with status TO DO (next: N-30, then N-33, N-31, N
 | N-27 | DONE (received 2026-11-15) | Wood resource icon: 2-3 stacked cut logs with end rings (16x16 + 32x32) | `art/icons/res-wood-*` |
 | N-28 | DONE (received 2026-11-15) | Meadow portal to the dungeon: rune archway in a grassy mound, idle + glowing frame (64x48) | `art/props/portal-*` |
 | N-29 | DONE (received 2026-11-15) | Bigger plain grey boulders x3 (32x32 x2, 48x32) + matching rubble (16x16), stone parked | `art/props/boulder-*`, `boulder-rubble-*` |
-| N-30 | TO DO (FIRST) | Puzzle set: pressure plate up/down (16x16), gate closed/open + post (32x32), matching fence tileset (16x16 pieces) | `art/props/plate-*`, `gate-*`, `fence-*` |
-| N-33 | TO DO | Treasure chest for puzzle rewards, closed + open (16x16 + 32x32) | `art/props/chest-*` |
-| N-31 | TO DO | Build site: scaffold with timber for buildings under construction (32x32 + 48x48) | `art/props/site-*` |
-| N-32 | TO DO | Stone resource icon, grey like the N-29 boulders (16x16 + 32x32) | `art/icons/res-stone-*` |
+| N-30 | DONE (received 2026-11-15; ran before the fence row, fence = N-30b) | Puzzle set: pressure plate up/down (16x16), gate closed/open + posts (32x32) | `art/props/plate-*`, `gate-*` |
+| N-30b | TO DO (FIRST) | Fence tileset matching the N-30 gate and posts (15 pieces, 16x16) | `art/props/fence-*` |
+| N-33 | DONE (received 2026-11-15) | Treasure chest for puzzle rewards, closed + open (16x16 + 32x32) | `art/props/chest-*` |
+| N-31 | DONE (received 2026-11-15) | Build site: scaffold with timber for buildings under construction (32x32 + 48x48) | `art/props/site-*` |
+| N-32 | DONE (received 2026-11-15) | Stone resource icon, grey like the N-29 boulders (16x16 + 32x32) | `art/icons/res-stone-*` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
@@ -384,10 +385,6 @@ drawn in hard pixels).
 Row 2, each on EXACTLY a 32x32 art-pixel grid: 3 wooden gate CLOSED (sturdy planks with iron bands, blocks the path),
 4 the same gate OPEN (swung aside or lowered so the path is clear), 5 one gate POST (stone or thick wood pillar the gate
 hangs on). Same palette for all.
-Row 3, a FENCE TILESET in the same wood and style as the gate, every piece on EXACTLY a 16x16 art-pixel grid, laid out as
-a plain grid (no labels), pieces that connect seamlessly to each other and to the gate post when placed edge to edge:
-horizontal piece, vertical piece, 4 outer corners (top-left, top-right, bottom-left, bottom-right), 4 end caps (left,
-right, top, bottom), 4 T-pieces (open down, up, left, right) and 1 cross. 15 pieces in this order, left to right.
 ```
 
 ### N-33 Treasure chest
@@ -421,6 +418,18 @@ nearest-neighbour. ONE icon drawn twice, side by side: once on EXACTLY a 16x16 a
 32x32 art-pixel grid (32 art pixels across with a 1 px outline at that scale, NOT the 16x16 scaled up).
 The icon: one chunky grey stone (or a stone with one smaller chip leaning on it), a light top face and darker sides,
 dark near-black outline. No ore spots, no gems, no text. Must read as "stone" at 32 px next to the N-27 log pile.
+```
+
+### N-30b Fence tileset (do this FIRST)
+```
+STYLE: exactly like your N-26 trees (same dark outline, palette, 2-3 tone shading, pixel size): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n26-trees.png
+MATCH YOUR N-30 GATE AND POSTS: same orange wood, same posts with the light end-grain square on top, same iron look: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n30-puzzle.png
+Solid flat magenta #ff00ff background, hard pixel edges, no glow, halo or shadow touching the magenta. Deliver at 8x
+nearest-neighbour. Top-down 3/4 view like the game. No text, no labels.
+A FENCE TILESET: every piece on EXACTLY a 16x16 art-pixel grid, laid out as a plain grid with magenta between pieces.
+Pieces connect seamlessly to each other and to the gate posts when placed edge to edge. 15 pieces in this order, left
+to right, top to bottom: horizontal piece, vertical piece, 4 outer corners (top-left, top-right, bottom-left,
+bottom-right), 4 end caps (left, right, top, bottom), 4 T-pieces (open down, open up, open left, open right), 1 cross.
 ```
 
 ## Ninja style block (for N-orders)
