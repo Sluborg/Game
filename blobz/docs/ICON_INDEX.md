@@ -3,8 +3,8 @@
 Every icon on screen, side by side, so they can be judged together before deciding on one icon standard (Stefan
 2026-11-15). Docs only, no visual change.
 
-- **Pictures:** [`screenshots/icons/all-icons-1.png`](screenshots/icons/all-icons-1.png) and
-  [`screenshots/icons/all-icons-2.png`](screenshots/icons/all-icons-2.png) (portrait, split in two). Each icon has:
+- **Picture:** [`screenshots/icons/all-icons.png`](screenshots/icons/all-icons.png) (one portrait image, two
+  columns, 780x3082: at real size it cannot get shorter, the thumbstick alone is 240 px tall). Each icon has:
   - a number;
   - its UI_INDEX name and where it shows;
   - its source;
