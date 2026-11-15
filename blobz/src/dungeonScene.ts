@@ -339,6 +339,10 @@ export class DungeonScene extends Phaser.Scene {
       if (!this.textures.exists('x72-stairs')) { const cv = document.createElement('canvas'); cv.width = cv.height = 16; cv.getContext('2d')!.drawImage(this.textures.get('x72').getSourceImage() as HTMLImageElement, 80, 192, 16, 16, 0, 0, 16, 16); this.textures.addCanvas('x72-stairs', cv)!.setFilter(Phaser.Textures.FilterMode.NEAREST); }
       this.mapObjs.push(this.add.image(f.exit.x, f.exit.y, 'x72-stairs').setScale(3).setDepth(-900));
     } else if (floor === 1) this.mapObjs.push(this.add.image(f.exit.x, f.exit.y, 'na-stairs-up').setScale(3).setDepth(-900));
+    if (rooms && f.columns?.length) {
+      if (!this.textures.get('x72').has('column')) this.textures.get('x72').add('column', 0, 80, 80, 16, 48);
+      for (const c of f.columns) this.mapObjs.push(this.add.image((c.x + 0.5) * ft(f), (c.y + 1) * ft(f), 'x72', 'column').setOrigin(0.5, 1).setScale(3).setDepth((c.y + 1) * ft(f) - 10));
+    }
     this.chests = f.chests.map((c) => this.add.image(c.x, c.y + 8, 'na-chest', 0).setScale(3).setOrigin(0.5, 1).setDepth(c.y));
     this.mapObjs.push(...this.chests);
     // a big floor banner
@@ -346,8 +350,8 @@ export class DungeonScene extends Phaser.Scene {
       .setOrigin(0.5).setDepth(7000);
     this.tweens.add({ targets: banner, y: banner.y - 30, alpha: 0, delay: 1400, duration: 900, onComplete: () => banner.destroy() });
     // the camera jumps to the arrival point
-    this.camTarget = { ...f.start };
-    this.cameras.main.centerOn(f.start.x, f.start.y);
+    this.camTarget = { x: f.start.x, y: this.roomCamY(f.start.y) };
+    this.cameras.main.centerOn(this.camTarget.x, this.camTarget.y);
   }
 
   update() {
@@ -576,8 +580,15 @@ export class DungeonScene extends Phaser.Scene {
     // landscape: the HUD sits top-left, so the camera keeps my blob a little right of centre (the room to its left stays
     // visible instead of hiding monsters under the HUD)
     const landscape = this.scale.width > this.scale.height;
-    if (me) { this.camTarget.x = this.rooms && this.map ? (fw(this.map) * ft(this.map)) / 2 : me.x - (landscape ? 70 / cam.zoom : 0); this.camTarget.y = me.y + this.cardShift(landscape) / cam.zoom; } // rooms: x locked on the room, y follows my blob
+    if (me) { const sh = this.cardShift(landscape); this.camTarget.x = this.rooms && this.map ? (fw(this.map) * ft(this.map)) / 2 : me.x - (landscape ? 70 / cam.zoom : 0); this.camTarget.y = sh ? me.y + sh / cam.zoom : this.roomCamY(me.y); } // rooms: x locked on the room, y follows my blob inside the room
     cam.centerOn(cam.midPoint.x + (this.camTarget.x - cam.midPoint.x) * Math.min(1, dt * 6), cam.midPoint.y + (this.camTarget.y - cam.midPoint.y) * Math.min(1, dt * 6));
+  }
+
+  /** rooms: the camera's y stays inside the room (at the entrance the blob sits low on the screen, the bottom wall shows) */
+  private roomCamY(y: number): number {
+    if (!this.rooms || !this.map) return y;
+    const cam = this.cameras.main, half = cam.height / cam.zoom / 2, H = fh(this.map) * ft(this.map);
+    return half * 2 >= H ? H / 2 : Math.max(half, Math.min(H - half, y));
   }
 
   /** While the loot card or the level-up cards are open, keep my blob in the biggest free screen band (between the HUD
@@ -623,7 +634,7 @@ export class DungeonScene extends Phaser.Scene {
     // Where the weapon points (smoothed, never teleports): in a fight (a swing in the last 0.9 s) at the last target;
     // otherwise it rests beside the blob on the side it faces, blade up and forward (it no longer orbits over the head
     // or under the blob while gliding).
-    const fighting = swinging || (b.lastSwing !== undefined && this.time.now - b.lastSwing < 900);
+    const fighting = swinging || (b.lastSwing !== undefined && this.time.now - b.lastSwing < (w === 'bow' || w === 'staff' ? 1600 : 900)); // ranged: keeps aiming between shots
     const rest = b.facing === 'left' ? Math.PI + 0.75 : -0.75;
     const want = fighting ? (b.swingA ?? face) : rest;
     const wrap = (x: number) => Math.atan2(Math.sin(x), Math.cos(x));
@@ -841,6 +852,7 @@ export class DungeonScene extends Phaser.Scene {
         const b = this.heroes.get(f.id);
         if (b) {
           b.swingDur = f.w === 'hammer' ? 0.4 : f.w === 'bow' ? 0.45 : f.w === 'dagger' ? 0.18 : 0.26; b.swingT = b.swingDur; b.swingA = f.a; b.swings++; b.lastSwing = this.time.now;
+          if (f.w === 'bow' || f.w === 'staff') b.wa = f.a; // ranged: the weapon points straight at the target, no swing
         }
         // a dagger stab: a small friendly spark at the stabbing sai's tip when it lands
         if (b && f.w === 'dagger') this.time.delayedCall(b.swingDur * 450, () => { if (b.weapon.visible) this.nfx('nf-star', b.weapon.x + Math.cos(f.a) * 18, b.weapon.y + Math.sin(f.a) * 14, 1.1, 0xfff2b0); });
@@ -935,6 +947,7 @@ export class DungeonScene extends Phaser.Scene {
         // the bolt flies from the crossbow's tip to the monster
         let sx = f.x, sy = f.y - 10;
         for (const hb of this.heroes.values()) if (hb.tip && Math.hypot(hb.x - f.x, hb.y - f.y) < 40) { sx = hb.tip.x; sy = hb.tip.y; }
+        if (f.k === undefined) { const a0 = Math.atan2(f.ty - f.y, f.tx - f.x); sx = f.x + Math.cos(a0) * 30; sy = f.y - 4 + Math.sin(a0) * 24; } // the arrow leaves the bow on the line to the target (never from a stale tip)
         const a = Math.atan2(f.ty - 6 - sy, f.tx - sx);
         if (f.k !== undefined) {
           // the healer's wand: a glowing bolt, red (damage) or green (heal)

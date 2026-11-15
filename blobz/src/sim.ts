@@ -635,7 +635,8 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     }
     clampSpeed(p, mul);
     p.x += p.vx * dt; p.y += p.vy * dt;
-    // world edges: soft bounce
+    // world edges: soft bounce (the dungeon has its own walls: rooms are taller than the meadow) [dungeon hook (Code 2)]
+    if (inDungeon) continue;
     if (p.x < BLOB_R) { p.x = BLOB_R; p.vx = Math.abs(p.vx) * 0.6; }
     if (p.x > WORLD_W - BLOB_R) { p.x = WORLD_W - BLOB_R; p.vx = -Math.abs(p.vx) * 0.6; }
     if (p.y < BLOB_R) { p.y = BLOB_R; p.vy = Math.abs(p.vy) * 0.6; }
