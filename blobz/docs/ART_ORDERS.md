@@ -36,7 +36,7 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (none are TO DO now; queue empty). New orders only for pieces the pack lacks.**
+ChatGPT works only on N-orders with status TO DO (N-11..N-15 are TO DO now). New orders only for pieces the pack lacks.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
@@ -52,6 +52,11 @@ ChatGPT works only on N-orders with status TO DO (none are TO DO now; queue empt
 | N-10 | DONE | Small UI icons: check mark, star, empty star (one small sheet) | `art/icons/check.png`, `art/gather/star.png`, `art/gather/star-empty.png` |
 | N-5b | DONE (received 2026-11-14) | Rogue class card only: ONE plain dagger beside the blob (not a sai) | `dungeon/card-class-rogue.png` |
 | N-7b | DONE (received 2026-11-14) | App icon round 2: no background, no hands, no sparkles | app/PWA icon |
+| N-11 | TO DO | Class weapons sheet: dagger, wand, sword, crossbow, round shield (16x16 + 32x32) | `dungeon/weapons/*` |
+| N-12 | TO DO | Class move + mode icons: dodge, jump back, shield charge, phase out, heal mode, damage mode (16x16 + 32x32) | `dungeon/icons/*` |
+| N-13 | TO DO | Combat FX frames: KO stars, shockwave ring, slam warning, level-up burst, hit spark (32x32, 4 frames each) | `dungeon/fx/*` |
+| N-14 | TO DO | Boss intro banner + boss portrait (portrait 64x64, banner 256x64) | `dungeon/boss-*` |
+| N-15 | TO DO | Meadow extras: build-site marker, signpost, magnet power-up, speed power-up, home flag (16x16 + 32x32) | `art/meadow/*` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
 | D-3 | CANCELLED (Ninja Adventure chosen) | Direction test 3: one enemy in 3 poses | nothing, a test |
@@ -127,6 +132,54 @@ Redo ONLY the Rogue card from the class-card sheet (reference: https://raw.githu
 ### N-7b App icon, round 2
 ```
 Redo the app icon (reference: https://raw.githubusercontent.com/sluborg/Game/claude/blobz-art/blobz/docs/art-review/n7-app-icon.png) with these changes: NO background (transparent around the castle and blob), the blob has NO hands or arms (it just peeks over the castle wall), NO sparkles. Same blob, same castle, same style. Square 1:1.
+```
+
+### Sizes (applies to N-11 and later)
+Draw every sprite on the exact pixel grid named in the order (e.g. 16x16 = sixteen by sixteen art pixels), then deliver
+it UPSCALED with hard nearest-neighbour pixels so one art pixel = 8x8 image pixels (16x16 -> 128x128, 32x32 -> 256x256).
+When an order says "16x16 + 32x32", draw the SAME object twice: once on a 16x16 grid and once redrawn on a 32x32 grid
+(more detail, not a blurry upscale). Lay the sprites out in a neat grid on one sheet, transparent background (or flat
+magenta #ff00ff), at least one empty sprite-cell between them, labels NOT drawn in the image.
+
+### N-11 Class weapons sheet
+```
+Ninja Adventure style (style block). Weapons that FLOAT beside a jelly blob (no hands), each pointing RIGHT, no blood,
+steel blades grey/white, gold or brown grips. On a 16x16 grid AND again on a 32x32 grid:
+1 plain straight dagger (short blade, small crossguard, NOT a sai), 2 small magic wand (short wooden wand, glowing gem
+tip, neutral white glow), 3 short sword, 4 small crossbow (bolt nocked at the string), 5 round wooden shield with a
+steel rim, seen from the front.
+```
+
+### N-12 Class move + mode icons
+```
+Ninja Adventure style (style block). Simple bold icons for ROUND buttons, white/cream symbol with dark outline on a
+transparent background, readable at 32 px on a phone. On a 16x16 grid AND again on a 32x32 grid:
+1 dodge (a blob shape with two side-swoosh lines), 2 jump back (curved arrow leaping backwards), 3 shield charge
+(shield with forward speed lines), 4 phase out (a ghostly, half-transparent blob outline), 5 heal mode (green plus
+with a soft glow), 6 damage mode (red spark/bolt).
+```
+
+### N-13 Combat FX frames
+```
+Ninja Adventure style (style block), 32x32 grid per frame, 4 frames in a row per effect (an animation strip), soft
+friendly colours, no blood, no gore:
+1 KO stars circling (yellow stars orbiting), 2 shockwave ring (expanding pale ring), 3 slam warning (red dashed circle
+pulsing on the ground, seen from above at 3/4), 4 level-up burst (golden sparkles bursting upward), 5 hit spark
+(small white-yellow star spark).
+```
+
+### N-14 Boss intro
+```
+Ninja Adventure style (style block). 1 a boss portrait on a 64x64 grid: a big grumpy slime king with a small crown,
+purple, menacing but kid-friendly. 2 a horizontal banner on a 256x64 grid: a dark wooden plank sign with iron corners
+and an empty middle area (the game writes the boss name on it), no text.
+```
+
+### N-15 Meadow extras
+```
+Ninja Adventure style (style block). On a 16x16 grid AND again on a 32x32 grid: 1 build-site marker (a small wooden
+stake with a ribbon and a hammer), 2 wooden signpost (blank board), 3 magnet power-up (a horseshoe magnet on a soft
+glow disc), 4 speed power-up (a winged boot on a soft glow disc), 5 home flag (a small orange flag on a pole, waving).
 ```
 
 ## Ninja style block (for N-orders)
