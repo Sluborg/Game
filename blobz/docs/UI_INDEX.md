@@ -29,8 +29,9 @@ sheet) comes after Stefan has seen this index.
 - **ARCH**: belongs to an archived feature (`docs/ARCHIVED.md`), hidden in the game today.
 
 **Shorthand for the shared styles** (used in the tables, counted in the [Summary](#summary-distinct-buttonframe-styles))
-- `B-PRIMARY`: orange Ninja `button_normal.png` 9-slice, 6 px, white Fredoka 20 bold, 4 px flush shadow (`button.big`,
-  `src/style.css:946`).
+- `B-PRIMARY`: option A (2026-11-15): the B-SECONDARY geometry in orange. `#f06733` fill, 2 px `#a8461f` border, 4 px
+  radius, inner bottom line `#c9521f`, 4 px flush shadow, cream Fredoka 20 bold, same 2 px press (`button.big:not(.alt)`,
+  last block of `src/style.css`). Was the Ninja `button_normal.png` 9-slice.
 - `B-SECONDARY`: the "Slumpa" style. Parchment `#fbf2da`, 2 px solid `#a87e46` border, 4 px radius, inner
   bottom line `#e4cf9f`, 4 px flush shadow, plum text (`button.big.alt, .chip, #btn-build`, `src/style.css:952`, plus
   `.backbtn` 972, `.kclose` 980, `.pgbtn` 1109, `.edit` 1027).
@@ -84,7 +85,7 @@ Stefan's approved ids (2026-11-15). An element is named `<id>.<element>`, e.g. `
 | home.playerCard.blob | blob picture | Code | `#preview .blob`, blob.ts data URL (Art's file) | index.html:36 | KIT-A |
 | home.playerCard.name | label | CSS | `#me-name`, Fredoka 22 | index.html:37, style.css:826 | KIT-A |
 | home.editBlob | icon button (quill) | CSS + Ninja icon | `.me-text .edit`, B-SECONDARY 48x48 + `Items/Resource/feather.png` via `::before` | index.html:37, style.css:1027 / 830 | KIT-A |
-| home.newGame | primary button | 9-slice | `#btn-host.big`, B-PRIMARY | index.html:40 | KIT-A |
+| home.newGame | primary button | CSS | `#btn-host.big`, B-PRIMARY | index.html:40 | KIT-A |
 | home.join | secondary button | CSS | `#btn-show-join.big.alt`, B-SECONDARY | index.html:41 | KIT-A |
 | home.msg | message line | CSS | `#menu-msg.msg` | index.html:42, style.css:942 | KIT-A |
 | home.version | version text | CSS | `#version.version` | index.html:45, style.css:834 | KIT-A |
@@ -110,7 +111,7 @@ Stefan's approved ids (2026-11-15). An element is named `<id>.<element>`, e.g. `
 | designer.part.hat | tile picture | Code | isolated hat pixels at 4x | partArt.ts:92 | KIT-A |
 | designer.pagerPrev / pagerNext | icon buttons | CSS + ChatGPT icon | `.pgbtn`, B-SECONDARY + `art/icons/ui/back-16.png` (N-17) | index.html:68, style.css:1109 | KIT-A |
 | designer.pagerDots | page dots | CSS | `#pg-dots > i`, 10 px dots, plum = current | main.ts:114 | KIT-A |
-| designer.done | primary button | 9-slice | `#btn-custom-done.big`, B-PRIMARY (check icon hidden) | index.html:69 | KIT-A |
+| designer.done | primary button | CSS | `#btn-custom-done.big`, B-PRIMARY (check icon hidden) | index.html:69 | KIT-A |
 
 ## 40 lobby
 
@@ -126,7 +127,7 @@ Stefan's approved ids (2026-11-15). An element is named `<id>.<element>`, e.g. `
 | lobby.freeSeat | empty seat | ChatGPT + CSS | `span.seat.free`, `art/lobby/waiting-silhouette.png` (N-20) + CSS dashed outline + bob | main.ts:350, style.css:1248 | KIT-A |
 | lobby.mapPick | selection cards (meadow / snow) | 9-slice | `.mapcard`, Ninja `button_hover.png` 9-slice + 4 px plum ring; previews use Ninja / winter props | index.html:91, style.css:502-538 | OLD + ARCH (snow map archived, hidden) |
 | lobby.villageTag / lanTag | info tags | CSS | `#lobby-village.tag`, `#lobby-lan.tag` | index.html:95-96, style.css:50 / 942 | KIT-A |
-| lobby.start | primary button | 9-slice | `#btn-start.big`, B-PRIMARY | index.html:97 | KIT-A |
+| lobby.start | primary button | CSS | `#btn-start.big`, B-PRIMARY | index.html:97 | KIT-A |
 | lobby.wait | message line | CSS | `#lobby-wait.msg` | index.html:98 | KIT-A |
 | lobby.newVillage | small secondary button | CSS | `#btn-newvillage.chip.newvillage`, B-SECONDARY | index.html:99, style.css:1146 | KIT-A |
 | lobby.newVillageAsk | confirm box (overlay in the card) | CSS | `#newvillage-ask.ask`, red bold question, no frame | index.html:100, style.css:495 | OLD |
@@ -167,7 +168,7 @@ In-world UI drawn by Phaser (`src/game.ts`).
 | meadowEnd.stars | 3 stars | ChatGPT | `img.star`, `art/gather/star(-empty).png` (N-10), 76x68 | main.ts:609, style.css:1165 | KIT-A |
 | meadowEnd.team | team blobs | Code | `#end-team .blob` | index.html:176, style.css:1166 | KIT-A |
 | meadowEnd.bar | result bar per resource | CSS | `.endrows .qbar` F-THIN 18 px + plain CSS `.qfill` (gold / green) | style.css:1173-1175 | DUP (same job as meadowHud.questBar, different fill) |
-| meadowEnd.again | primary button | 9-slice | `#btn-again.big`, B-PRIMARY | index.html:180 | KIT-A |
+| meadowEnd.again | primary button | CSS | `#btn-again.big`, B-PRIMARY | index.html:180 | KIT-A |
 | meadowEnd.menu | secondary button with icon | CSS + ChatGPT icon | `#btn-menu.big.alt`, B-SECONDARY + `art/icons/ui/home-16.png` (N-17) | index.html:182 | KIT-A |
 | meadowEnd.wait | message line | CSS | `#end-wait.msg` | index.html:181 | KIT-A |
 | meadowEnd.mini | mini-game result | Ninja + ChatGPT | `#end-mini`, berry icon + stars | index.html:178 | ARCH (Bärregn) |
@@ -220,7 +221,7 @@ exists), overlays 20 levelUp, 30 loot, 40 bossStrip, and the HUD dungeonHud. Ele
 `#dg-loot`, `#dg-boss`, `#attack`), dungeon end (`#dg-end`, index.html:162) and the in-world dungeon UI
 (`src/dungeonScene.ts`, `src/dungeonUi.ts`, `src/dungeon.css`). From the meadow scan only, for orientation:
 - **Frames:** the dungeon cards use a dark-wood CSS frame (6 px `#2a1810` border + 2 px `#7a4b2a` ring).
-- **Buttons:** `#dg-roll` is B-PRIMARY with a darker shadow; `#dg-pass` is a cream CSS button with a different edge
+- **Buttons:** `#dg-roll` is still the old Ninja `button_normal` 9-slice (Code 2's `dungeon.css`), not yet option A; `#dg-pass` is a cream CSS button with a different edge
   (`#b88b55`). `#attack` uses the round ring (N-19b), like meadowHud.dash.
 
 ## Summary: distinct button/frame styles
@@ -232,7 +233,7 @@ counted.
 
 | Style | Looks like | System | Places | Where | Note for option A |
 |---|---|---|---|---|---|
-| B-PRIMARY | orange Ninja button, pixel edge | 9-slice | 4 | home.newGame, designer.done, lobby.start, meadowEnd.again | becomes the orange CSS primary |
+| B-PRIMARY | orange "Slumpa" geometry (option A, done 2026-11-15) | CSS | 4 | home.newGame, designer.done, lobby.start, meadowEnd.again | done: no pixel image left on a menu button |
 | B-SECONDARY | "Slumpa": parchment, 2 px wood edge, 4 px radius, flush shadow | CSS | 15 | home.join, home.editBlob, designer.random, designer.pagerPrev/Next (2), join.back, join.rescan, lobby.back, lobby.newVillage, lobby.newVillageYes, lobby.newVillageNo, meadowHud.build (= build.open), build.close, meadowEnd.menu, meadowHud.miniSkip (ARCH) | already the target style |
 | Tab | joined tab, darker inactive | CSS | 1 (5 tabs) | designer.tab | kit A, matches the target family |
 | Selection tile | white tile, plum outline + green tick when chosen | CSS | 2 | designer.optionTile, designer.colorSwatch | kit A |
@@ -255,8 +256,9 @@ counted.
 | Thumbstick | Ninja receptacle sphere | Ninja | 1 | meadowHud.stick | OLD, pixel art (stays as a world control) |
 
 **Bottom line**
-- **Buttons:** 9 looks today. B-SECONDARY (15 places) is already the option-A target; B-PRIMARY (4 places) is the only
-  big change. Tabs, tiles and the build card already belong to the same CSS family.
+- **Buttons:** option A is in: B-PRIMARY (4 places) and B-SECONDARY (15 places) are one CSS family (orange / cream).
+  Tabs, tiles and the build card belong to it too. Pixel frames left on buttons: home.playerCard (the F-PANEL card
+  frame), the archived map cards and the dungeon `#dg-roll` (Code 2).
 - **Leftovers (OLD):** the language pill, the map card (archived), the edge arrows, the hint toast, the "new village"
   confirm box, the build-goal row and the thumbstick.
 - **Duplicates (DUP):** three different bar fills (Ninja image, flat CSS, loading orange), two bar frames (F-THIN and

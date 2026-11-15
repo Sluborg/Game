@@ -1364,3 +1364,17 @@ body.nostone .qrow[data-k="stone"], body.nostone .edge[data-k="stone"], body.nos
 /* ChatGPT N-27 wood (Stefan 2026-11-15): the HUD picture is the 32 px file; where icons show at their own size
    (build cost strip, end rows) it is drawn at 16 px, like the other 1x resource icons */
 #build-panel .bcard .bcost .c img[src*="res-wood-32"], #end .endrows .qicon[src*="res-wood-32"] { width: 16px; height: 16px; }
+
+/* buttons option A (Stefan 2026-11-15): the primary button is the CSS "Slumpa" family too, in orange. Same geometry as
+   the secondary (2 px even border, 4 px radius, inner bottom line, 4 px flush shadow, calm 2 px press), no pixel
+   image left on any menu button: Nytt spel, Klar, Starta, Spela igen. */
+:root { --k-orange: #f06733; --k-orange-edge: #a8461f; --k-orange-lo: #c9521f; }
+button.big:not(.alt) {
+  border: 2px solid var(--k-orange-edge); border-image: none; border-radius: 4px; background: var(--k-orange);
+  color: #fff8e8; font: 700 20px var(--font); text-shadow: 0 1px 0 var(--k-orange-edge); -webkit-text-stroke: 0;
+  box-shadow: inset 0 -3px 0 0 var(--k-orange-lo), 0 4px 0 0 var(--k-shadow); filter: none;
+}
+button.big:not(.alt):active, button.big:not(.alt).down {
+  transform: translateY(2px); border-image: none; box-shadow: inset 0 -3px 0 0 var(--k-orange-lo), 0 2px 0 0 var(--k-shadow);
+  filter: brightness(0.9);
+}
