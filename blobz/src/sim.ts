@@ -227,7 +227,12 @@ const GARDEN_EVERY = 12; // the garden grows a berry this often (max 3 waiting)
 // ---- test dungeon v1: everyone stands on the entrance, picks a weapon, goes down together ----
 /** Dungeon (handed off to Code 2, WIP): OFF = no entrance on the meadow, nothing of it shows. */
 export const DUNGEON_ENABLED = true;
-export const ENTRANCE_R = 46;
+export const ENTRANCE_R = 60; // Stefan 2026-11-15: ~30% bigger (was 46) so 5 blobz fit without crowding
+/** The portal's gather ring: an ellipse (top-down 3/4 view) in front of the portal, below its two pillars, so all 5
+ *  fit on open ground. The sim test and the drawn ring (gatherRing.ts, game.ts) use these same numbers. */
+export const ENTRANCE_RING = { dy: 20, rx: ENTRANCE_R, ry: Math.round(ENTRANCE_R * 0.6) };
+export const onEntrance = (e: { x: number; y: number }, x: number, y: number) =>
+  ((x - e.x) / ENTRANCE_RING.rx) ** 2 + ((y - e.y - ENTRANCE_RING.dy) / ENTRANCE_RING.ry) ** 2 < 1;
 /** Where the cave entrance goes on this map: the first of four spots around the base (west, east, south,
  *  north) that is clear of the puzzle pens, the water corner, build spots and totem pads. Seeded, so every
  *  phone puts it in the same place. */
@@ -657,7 +662,7 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
   }
 
   // --- dungeon entrance: everyone on it for 1.5 s ---
-  if (DUNGEON_ENABLED && s.players.length && s.players.every((p) => Math.hypot(p.x - s.entrance.x, p.y - s.entrance.y) < ENTRANCE_R)) {
+  if (DUNGEON_ENABLED && s.players.length && s.players.every((p) => onEntrance(s.entrance, p.x, p.y))) {
     s.entry += dt;
     if (s.entry >= READY_SECONDS) { s.entry = 0; s.mode = 'pick'; s.picks = {}; s.pickT = PICK_SECONDS; s.fx.push({ t: 'enter' }); return; }
   } else s.entry = 0;
@@ -695,10 +700,14 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     for (const p of s.players) for (const b of boxes) collideBox(p, b);
   });
 
-  // --- blob vs blob: bouncy bumps ---
+  // --- buildings: their base (the walls at ground level) is solid; blobz walk round it and behind the roof ---
+  for (const b of solidBoxes(s)) for (const p of s.players) collideBox(p, b);
+
+  // --- blob vs blob: bouncy bumps (not on the portal ring: gathering there must not shove anyone off) ---
   for (let i = 0; i < s.players.length; i++) {
     for (let j = i + 1; j < s.players.length; j++) {
       const a = s.players[i], b = s.players[j];
+      if (DUNGEON_ENABLED && onEntrance(s.entrance, a.x, a.y) && onEntrance(s.entrance, b.x, b.y)) continue;
       const dx = b.x - a.x, dy = b.y - a.y;
       const d = Math.hypot(dx, dy);
       if (d < BLOB_R * 2 && d > 0.001) {
@@ -859,6 +868,32 @@ export function villageOf(s: State): Village {
     v: 2, cottage: s.cottage.level, bank: { ...s.bank }, dungeon: s.dungeon,
     builds: Object.fromEntries(s.builds.map((b) => [b.kind, b.state === 2])) as Village['builds'],
   };
+}
+
+/** Building footprints (Stefan 2026-11-15): the bottom third of each picture (Ninja art at 3x, 80% of its width) is
+ *  solid, so blobz walk round the walls at ground level and still pass behind roofs (the world is y-sorted). Art sizes
+ *  in art px, matching the crops in game.ts. The garden is flat soil plots (no walls) and the bridge is the river
+ *  crossing, so neither is solid. */
+const FOOT_ART: Record<string, [number, number]> = {
+  'cottage-1': [42, 39], 'cottage-2': [64, 48], 'cottage-3': [64, 112],
+  storage: [32, 32], workshop: [48, 48], well: [16, 21], watchtower: [24, 32],
+};
+const footBox = (cx: number, footY: number, [w, h]: [number, number]): Rect =>
+  ({ x0: cx - w * 1.2, x1: cx + w * 1.2, y0: footY - h, y1: footY }); // 3x art: half of 80% width = 1.2 w, a third of 3h = h
+/** Portal (N-28, 64x48 at 3x, bottom at entrance.y + 30): the two stone pillars beside the doorway, art columns 0-22 and
+ *  42-64, rows 30-41 (ground level). The doorway between them (and the steps in front) stays open. */
+const portalBoxes = (e: { x: number; y: number }): Rect[] => [
+  { x0: e.x - 90, x1: e.x - 33, y0: e.y - 24, y1: e.y + 9 },
+  { x0: e.x + 33, x1: e.x + 90, y0: e.y - 24, y1: e.y + 9 },
+];
+export function solidBoxes(s: Pick<State, 'cottage' | 'builds' | 'entrance' | 'mode'>): Rect[] {
+  const out: Rect[] = [footBox(BASE.x, BASE.y + 30, FOOT_ART['cottage-' + Math.max(1, Math.min(3, s.cottage.level))])];
+  if (BUILDING_ENABLED) for (const k of BUILD_KINDS) {
+    const art = FOOT_ART[k];
+    if (art && built(s, k)) out.push(footBox(BUILD_SPOTS[k].x, BUILD_SPOTS[k].y - BUILD_R + 4, art));
+  }
+  if (DUNGEON_ENABLED) out.push(...portalBoxes(s.entrance));
+  return out;
 }
 
 /** Push a blob out of an axis-aligned box and bounce it off. */

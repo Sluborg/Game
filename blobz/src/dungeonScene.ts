@@ -8,7 +8,7 @@ import { fw, fh, ft, makeRoom, roomCracks, ROOMS, MINIBOSS_ROOM, SPAWN_WARN, AIM
 import type { Session } from './game';
 import { sfx } from './sfx';
 import { t, tItem, tSkill } from './dungeonText';
-import { entranceOf, ENTRANCE_R, DUNGEON_ENABLED, type View } from './sim';
+import { entranceOf, DUNGEON_ENABLED, type View } from './sim';
 
 const BLOB_SCALE = 3; // blobz v2: 16x18 grid at the Ninja world scale, same as the meadow (game.ts)
 const FACE_DEAD = 40; // px/s, same as the meadow: slower = idle frame, facing kept
@@ -1013,7 +1013,7 @@ export class DungeonScene extends Phaser.Scene {
 }
 
 // ---------- the hook GameScene calls every frame ----------
-interface EntranceGfx { seed: number; at: { x: number; y: number }; img: Phaser.GameObjects.Image; ring: Phaser.GameObjects.Graphics; bubble: Phaser.GameObjects.Text }
+interface EntranceGfx { seed: number; at: { x: number; y: number }; img: Phaser.GameObjects.Image }
 const entrances = new WeakMap<Phaser.Scene, EntranceGfx>();
 
 /** Called by GameScene.update after onView. Returns true while the dungeon scene draws (the meadow
@@ -1043,7 +1043,7 @@ function entranceKey(scene: Phaser.Scene): string | null {
 function drawEntrance(scene: Phaser.Scene, v: View, seed: number) {
   let g = entrances.get(scene);
   if (!g || !g.img.active || g.seed !== seed) {
-    if (g) for (const o of [g.img, g.ring, g.bubble]) o.destroy();
+    if (g) g.img.destroy();
     const ENTRANCE = entranceOf(seed);
     // loaded on first use (keeps the meadow's preload untouched); shown as soon as it is there.
     // Snow map hook (Code): GameScene puts the biome in the registry; entrance-snow.png is used when it exists.
@@ -1059,21 +1059,12 @@ function drawEntrance(scene: Phaser.Scene, v: View, seed: number) {
     g = {
       seed, at: ENTRANCE,
       img: scene.add.image(ENTRANCE.x, ENTRANCE.y + 30, entranceKey(scene) ?? '__MISSING').setScale(3).setOrigin(0.5, 1).setDepth(ENTRANCE.y - 60).setVisible(!!entranceKey(scene)),
-      ring: scene.add.graphics().setDepth(ENTRANCE.y - 50),
-      bubble: scene.add.text(ENTRANCE.x, ENTRANCE.y - 66, '', { fontFamily: FONT, fontSize: '22px', color: '#3f2631', fontStyle: 'bold', backgroundColor: '#fff7e6', padding: { x: 8, y: 2 } }).setOrigin(0.5, 1).setDepth(4000),
     };
     entrances.set(scene, g);
   }
   const ENTRANCE = g.at;
   const key = entranceKey(scene);
   if (key && (!g.img.visible || g.img.texture.key !== key)) g.img.setTexture(key).setVisible(true);
-  const on = v.players.filter((p) => Math.hypot(p.x - ENTRANCE.x, p.y - ENTRANCE.y) < ENTRANCE_R).length;
-  g.ring.clear();
-  g.ring.lineStyle(3, 0xfff7e6, on ? 0.9 : 0.5).strokeEllipse(ENTRANCE.x, ENTRANCE.y + 10, ENTRANCE_R * 2, ENTRANCE_R);
-  if (on && on === v.players.length && v.entry > 0) {
-    g.ring.lineStyle(7, 0x6cc644, 1).beginPath();
-    g.ring.arc(ENTRANCE.x, ENTRANCE.y - 66 - 40, 14, -Math.PI / 2, -Math.PI / 2 + Math.min(1, v.entry) * Math.PI * 2);
-    g.ring.strokePath();
-  }
-  g.bubble.setText(`${on}/${v.players.length}`).setVisible(on > 0 && v.mode === 'meadow');
+  // the gather ring (segments per player, start sweep) is drawn by the meadow with gatherRing.ts (game.ts portalFrame)
+  void ENTRANCE; void v;
 }
