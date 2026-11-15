@@ -11,13 +11,13 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
   image / CSS background or border image / canvas icon, or a WebGL texture bound at a Phaser draw call); CODE ONLY =
   referenced but never shown in the run (remove the reference and the file); UNUSED = no reference and never shown.
 
-**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 197 / IN GAME 27 / UNUSED 100.
+**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 197 / IN GAME 27 / UNUSED 102.
 
 **Claude-drawn still IN GAME** (0): none
 
 **Kenney still IN GAME** (0): none
 
-**Counts by source:** 0x72 1 / ChatGPT 273 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 16 (Ninja: 109 referenced by code). **Own files:** 324, 36 delete candidates.
+**Counts by source:** 0x72 1 / ChatGPT 275 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 16 (Ninja: 109 referenced by code). **Own files:** 326, 38 delete candidates.
 
 ## Own files (art, Kenney, app icons)
 
@@ -197,6 +197,8 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/icons/mouth-3.png` | 16x16 | ChatGPT N-25 mouths, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/partArt.ts:49 | keep |
 | `art/icons/mouth-4.png` | 16x16 | ChatGPT N-25 mouths, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/partArt.ts:49 | keep |
 | `art/icons/mouth-5.png` | 16x16 | ChatGPT N-25 mouths, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/partArt.ts:49 | keep |
+| `art/icons/res-berry-16.png` | 16x16 | ChatGPT N-41 berry food icon, sliced by scripts/slice_n41.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/icons/res-berry-32.png` | 32x32 | ChatGPT N-41 berry food icon, sliced by scripts/slice_n41.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
 | `art/icons/res-stone-16.png` | 16x16 | ChatGPT N-32 stone icon, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/icons/res-stone-32.png` | 32x32 | ChatGPT N-32 stone icon, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/icons/res-wood-16.png` | 16x16 | ChatGPT N-27 wood icon, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/resArt.ts:12 | keep |
@@ -745,6 +747,8 @@ See `archive/README.md`.
 - `art/fine/gather/chips-stone.png`
 - `art/fine/gather/chips-wood.png`
 - `art/icons/cottage-1-32.png`
+- `art/icons/res-berry-16.png`
+- `art/icons/res-berry-32.png`
 - `art/lobby/party-platform-140.png`
 - `art/logo-150.png`
 - `art/logo-64.png`

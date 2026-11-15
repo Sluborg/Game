@@ -41,7 +41,7 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (next: N-41). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
+ChatGPT works only on N-orders with status TO DO (next: none, queue empty). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
@@ -49,7 +49,7 @@ ChatGPT works only on N-orders with status TO DO (next: N-41). ChatGPT fills eve
 | N-38 | DONE (received 2026-11-15, 937x1678 = 3.9 src px per art px; 240x430 -> art/bg/start-240.png) | Start/loading background, village scene, EXACT 240x430 art px portrait (shown 2x) | `art/title.png` |
 | N-39 | DONE (received 2026-11-15, real art px ~23 src px = native 64x42; saved art/logo-150.png (ordered size, uneven 2.3x) + art/logo-64.png (native)) | Logo "Blobz" as true pixel art, EXACT 150x104 art px (shown 2x) | `art/logo.png` |
 | N-40 | DONE (received 2026-11-15, drawn on a 32 px grid not 16; art/icons/cottage-1-32.png native + cottage-1.png 16x16 lossy) | Village tent (cottage level 1) icon, EXACT 16x16 art px | `art/icons/cottage-1.png` (new) |
-| N-41 | TO DO (FIRST) | Berry food icon: small cluster of red berries with a leaf, EXACT 16x16 + 32x32 | `art/icons/res-berry-16.png`, `res-berry-32.png` |
+| N-41 | DONE (received 2026-11-16; 16: 15x16 at 16.0 src px/art px, 32: 30x32 at 15.25; flat 12-colour palette; art/icons/res-berry-16/32.png by scripts/slice_n41.py) | Berry food icon: small cluster of red berries with a leaf, EXACT 16x16 + 32x32 | `art/icons/res-berry-16.png`, `res-berry-32.png` |
 | N-34 | SUPERSEDED by 0x72 DungeonTileset II (2026-11-15, files kept). Was: DONE (received 2026-11-15; sliced to art/dungeon/door-{closed,open}-{32,48}.png by scripts/slice_grid_orders.py n34) | Dungeon room door for the Archero rooms, closed + open, 32x32 + 48x32 | `art/dungeon/door-*` |
 | N-34b | SUPERSEDED by 0x72 DungeonTileset II (2026-11-15, files kept). Was: DONE, REPLACED by N-34d (received 2026-11-15, unordered extra; sliced to art/dungeon/wall-{tl,t,tr,l,r,bl,br}.png 16x16 by scripts/room_walls.py; room test docs/art-review/n34-room-test.png; MISSING: inner corners; the plain bottom edge came with N-34c) | Dungeon room walls matching the N-34 door: top corners + top edge, left/right side, bottom corners | `art/dungeon/wall-*` |
 | N-34c | SUPERSEDED by 0x72 DungeonTileset II (2026-11-15, files kept). Was: DONE (received 2026-11-15, asked by Stefan; sliced by scripts/room_walls.py to art/dungeon/wall-b.png (plain bottom edge) + wall-entrance-{l,mid,r}.png, 16x16; in docs/art-review/n34-room-test.png) | Room entrance: bottom wall with an opening (wall, pillar, low threshold, pillar, wall), same set as N-34/N-34b | `art/dungeon/wall-b`, `wall-entrance-*` |
@@ -434,7 +434,7 @@ tileset (the canvas tent at the left, rows 120-160 of the sheet): https://raw.gi
 EXACT canvas: 16 x 16 art pixels (delivered 128 x 128), the tent filling the square, 1 px dark outline.
 ```
 
-### N-41 Berry food icon (do this FIRST)
+### N-41 Berry food icon (DONE)
 ```
 STYLE: exactly like your N-26 trees (same dark near-black outline, palette, 2-3 tone shading, pixel size): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n26-trees.png
 TRUE PIXEL ART: every art pixel is one flat colour, NO anti-aliasing, no gradients, no blur. Solid flat magenta #ff00ff
