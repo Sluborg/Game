@@ -207,7 +207,7 @@ def region_sheet(src, names, folder, n, xr=(0.0, 1.0), yr=(0.0, 1.0), anchor='ce
     return made
 
 
-def frame_row(src, yr, k, W, H, name, folder, single=False):
+def frame_row(src, yr, k, W, H, name, folder, single=False, names=None):
     """k animation frames (or one sprite) in equal columns of a horizontal band, each sampled on a W x H grid centred on
     its column (common centre), one pitch for the row; writes name-0..k-1.png + a strip name.png (or name.png if single)."""
     rgb, m = load(src)
@@ -259,6 +259,9 @@ def frame_row(src, yr, k, W, H, name, folder, single=False):
             best = (tot, gs, p)
     if single:
         return [(save(best[1][0], os.path.join(folder, f'{name}.png')), round(best[2], 2), W, H)]
+    if names:  # one file per cell, no strip (SINGLE: one-piece symbols, so a stray bit is the neighbour cell)
+        return [(save(largest_only(g) if nm in SINGLE else g, os.path.join(folder, f'{nm}.png')), round(best[2], 2), W, H)
+                for nm, g in zip(names, best[1])]
     for i, g in enumerate(best[1]):
         save(g, os.path.join(folder, f'{name}-{i}.png'))
     return [(save(np.concatenate(best[1], axis=1), os.path.join(folder, f'{name}.png')), round(best[2], 2), W * k, H)]
@@ -297,6 +300,40 @@ def n22():
     return made
 
 
+N23_SKILLS = [['rogue-rage', 'rogue-knockback', 'rogue-whirlwind', 'rogue-extraheart', 'rogue-lifesteal', 'rogue-power'],
+              ['healer-heal', 'healer-regen', 'healer-bubble', 'healer-revive', 'healer-holy', 'healer-cleanse'],
+              ['marksman-multishot', 'marksman-pierce', 'marksman-crit', 'marksman-speed', 'marksman-poison', 'marksman-trap'],
+              ['tank-block', 'tank-taunt', 'tank-armor', 'tank-charge', 'tank-stun', 'tank-guard']]
+
+
+def n23():
+    made = []
+    for r, ids in enumerate(N23_SKILLS):
+        made += frame_row('n23-skills.png', (r / 4, (r + 1) / 4), 6, 16, 16, '', os.path.join(ART, 'dungeon', 'skills'), names=ids)
+    made += frame_row('n23-items.png', (0.0, 1.0), 5, 16, 16, '', os.path.join(ART, 'dungeon', 'items'),
+                      names=['ring', 'helm', 'gloves', 'amulet', 'stone'])
+    return made
+
+
+def n24():
+    return frame_row('n24-dash.png', (0.0, 1.0), 1, 16, 16, 'dash-16', os.path.join(ART, 'icons', 'ui'), single=True)
+
+
+def n25():
+    return frame_row('n25-mouths.png', (0.0, 1.0), 5, 16, 16, '', os.path.join(ART, 'icons'),
+                     names=[f'mouth-{i + 1}' for i in range(5)])
+
+
+def n15b():
+    f = os.path.join(ART, 'meadow')  # small disc left, big disc right
+    return region_sheet('n15b-speed.png', ['speed'], f, 16, xr=(0.0, 0.45)) + region_sheet('n15b-speed.png', ['speed'], f, 32, xr=(0.45, 1.0))
+
+
+def n19b():
+    return two_size_sheet('n19b-rings.png', ['btn-round-normal', 'btn-round-pressed', 'btn-round-disabled'],
+                          os.path.join(ART, 'dungeon', 'ui'), n_small=24, n_big=18)
+
+
 N17 = ['new-game', 'join', 'shape', 'colour', 'eyes', 'mouth', 'hat', 'back', 'close', 'home', 'settings', 'dice',
        'pass', 'hammer', 'play', 'quill']
 
@@ -325,7 +362,37 @@ def n15():
                           anchor='bottom', open_r=0.35)
 
 
-def drop_edge_bits(g, max_px=12):
+SINGLE = {'healer-heal'}
+
+
+def largest_only(g):
+    """Keep the largest 8-connected piece (for one-piece symbols where any other bit leaked from a neighbour cell)."""
+    h, w = g.shape[:2]
+    seen = np.zeros((h, w), bool)
+    comps = []
+    for y0 in range(h):
+        for x0 in range(w):
+            if seen[y0, x0] or not g[y0, x0, 3]:
+                continue
+            comp, stack = [], [(y0, x0)]
+            seen[y0, x0] = True
+            while stack:
+                y, x = stack.pop()
+                comp.append((y, x))
+                for dy in (-1, 0, 1):
+                    for dx in (-1, 0, 1):
+                        ny, nx = y + dy, x + dx
+                        if 0 <= ny < h and 0 <= nx < w and not seen[ny, nx] and g[ny, nx, 3]:
+                            seen[ny, nx] = True
+                            stack.append((ny, nx))
+            comps.append(comp)
+    for comp in sorted(comps, key=len)[:-1]:
+        for y, x in comp:
+            g[y, x] = 0
+    return g
+
+
+def drop_edge_bits(g, max_px=12, sides=False):
     """Remove tiny pieces touching the top/bottom edge: bits of the neighbouring row's effect, not this frame."""
     h, w = g.shape[:2]
     seen = np.zeros((h, w), bool)
@@ -344,7 +411,8 @@ def drop_edge_bits(g, max_px=12):
                         if 0 <= ny < h and 0 <= nx < w and not seen[ny, nx] and g[ny, nx, 3]:
                             seen[ny, nx] = True
                             stack.append((ny, nx))
-            if len(comp) <= max_px and any(y <= 5 or y >= h - 6 for y, _ in comp):
+            edge = any(y <= 5 or y >= h - 6 for y, _ in comp) if not sides else any(x <= 1 or x >= w - 2 for _, x in comp)
+            if len(comp) <= max_px and edge:
                 for y, x in comp:
                     g[y, x] = 0
     return g
@@ -451,7 +519,7 @@ def main():
         made += [r[0] for r in res]
     big = [p for p in made if 'dungeon-end' in p]
     preview([p for p in made if not os.path.basename(p)[:-4][-2:] in ('-0', '-1', '-2', '-3') and p not in big],
-            os.path.join(REV, 'n16-n22-sliced.png' if any(x in which for x in ('n16', 'n17', 'n18', 'n19', 'n20', 'n21')) else 'n12-n15-sliced.png'))
+            os.path.join(REV, 'n23-n25-sliced.png' if 'n23' in which else 'n16-n22-sliced.png' if any(x in which for x in ('n16', 'n17', 'n18', 'n19', 'n20', 'n21')) else 'n12-n15-sliced.png'))
 
 
 if __name__ == '__main__':
