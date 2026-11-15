@@ -26,6 +26,9 @@ OWN = 'Own art (CC0)'
 CC0K = 'CC0 1.0 (Kenney)'
 # (glob on the path under public/, source, license, approved?) first match wins
 SOURCES = [
+    ('art/props/tree-[rpa]*.png', 'ChatGPT N-26 meadow trees, sliced by scripts/slice_grid_orders.py', GPT, True),
+    ('art/props/stump-*.png', 'ChatGPT N-26 stumps, sliced by scripts/slice_grid_orders.py', GPT, True),
+    ('art/props/rubble-*.png', 'ChatGPT N-26 rubble (stone parked), sliced by scripts/slice_grid_orders.py', GPT, True),
     ('art/dungeon/skills/*.png', 'ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py', GPT, True),
     ('art/dungeon/items/*.png', 'ChatGPT N-23 loot items, sliced by scripts/slice_grid_orders.py', GPT, True),
     ('art/icons/ui/dash-16.png', 'ChatGPT N-24 dash symbol, sliced by scripts/slice_grid_orders.py', GPT, True),

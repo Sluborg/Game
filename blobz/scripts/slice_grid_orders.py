@@ -20,10 +20,15 @@ REV = os.path.join(ROOT, 'docs', 'art-review')
 ART = os.path.join(ROOT, 'public', 'art')
 
 
+DROP_SHADOW = {'n26-trees.png'}
+
+
 def load(name):
     a = np.array(Image.open(os.path.join(REV, name)).convert('RGBA')).astype(float)
     r, g, b, al = a[:, :, 0], a[:, :, 1], a[:, :, 2], a[:, :, 3]
     magenta = (r > 140) & (b > 140) & (g < np.minimum(r, b) - 70)  # #ff00ff and its anti-aliased neighbours
+    if name in DROP_SHADOW:  # purple ground shadow (magenta-tinted, does not key): drop it, the game draws shadows
+        magenta |= (r - g > 25) & (b - g > 25)
     return a[:, :, :3], (al > 128) & ~magenta
 
 
@@ -177,7 +182,7 @@ def two_size_sheet(src, names, folder, n_small=16, n_big=32, gap=40, anchor='cen
     return made
 
 
-def region_sheet(src, names, folder, n, xr=(0.0, 1.0), yr=(0.0, 1.0), anchor='centre', open_r=0.3, gap=20, suffix=True):
+def region_sheet(src, names, folder, n, xr=(0.0, 1.0), yr=(0.0, 1.0), anchor='centre', open_r=0.3, gap=20, suffix=True, fit=False):
     """A block of the sheet (fractions xr, yr) holding len(names) sprites on one N x N grid, row-major in bands."""
     rgb, m = load(src)
     H, W = m.shape
@@ -193,7 +198,7 @@ def region_sheet(src, names, folder, n, xr=(0.0, 1.0), yr=(0.0, 1.0), anchor='ce
         pad = 6
         sl = (slice(max(0, y0 - pad), y1 + pad), slice(max(0, x0 - pad), x1 + pad))
         orgb, om = rgb[sl], m[sl]
-        p0 = outline_pitch(orgb, om)
+        p0 = (max(om.shape) - 12) / n * 1.02 if fit else outline_pitch(orgb, om)
         om = opening(om, int(p0 * open_r))
         best = sample(orgb, om, p0, (n, n)) or sample(orgb, om, max(om.shape) / n * 1.02, (n, n))
         crops.append((name, orgb, om, best[2]))
@@ -297,6 +302,21 @@ def n22():
         p = os.path.join(ART, out)
         im.save(p, optimize=True)  # full scene, already a sensible size (941x1672 / 1672x941, like victory.png)
         made.append((p, 0, im.width, im.height))
+    return made
+
+
+def n26():
+    f = os.path.join(ART, 'props')
+    return (frame_row('n26-trees.png', (0.0, 0.47), 3, 32, 48, '', f, names=['tree-round', 'tree-pine', 'tree-apple'])
+            + frame_row('n26-trees.png', (0.47, 0.72), 3, 16, 16, '', f, names=['stump-round', 'stump-pine', 'stump-apple'])
+            + frame_row('n26-trees.png', (0.72, 1.0), 2, 16, 16, '', f, names=['rubble-1', 'rubble-2']))
+
+
+def n23b():
+    f = os.path.join(ART, 'dungeon', 'skills')
+    made = region_sheet('n23b-snowflake.png', ['marksman-trap'], f, 16, xr=(0.0, 0.5), fit=True) + region_sheet('n23b-snowflake.png', ['marksman-trap'], f, 32, xr=(0.5, 1.0), fit=True)
+    import shutil
+    shutil.copyfile(os.path.join(f, 'marksman-trap-16.png'), os.path.join(f, 'marksman-trap.png'))  # the file the game loads
     return made
 
 
@@ -519,7 +539,7 @@ def main():
         made += [r[0] for r in res]
     big = [p for p in made if 'dungeon-end' in p]
     preview([p for p in made if not os.path.basename(p)[:-4][-2:] in ('-0', '-1', '-2', '-3') and p not in big],
-            os.path.join(REV, 'n23-n25-sliced.png' if 'n23' in which else 'n16-n22-sliced.png' if any(x in which for x in ('n16', 'n17', 'n18', 'n19', 'n20', 'n21')) else 'n12-n15-sliced.png'))
+            os.path.join(REV, 'n26-n23b-raw-preview.png' if 'n26' in which else 'n23-n25-sliced.png' if 'n23' in which else 'n16-n22-sliced.png' if any(x in which for x in ('n16', 'n17', 'n18', 'n19', 'n20', 'n21')) else 'n12-n15-sliced.png'))
 
 
 if __name__ == '__main__':

@@ -41,7 +41,7 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (N-26 is FIRST, then N-27 and N-23b). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
+ChatGPT works only on N-orders with status TO DO (N-27 is next). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
@@ -74,8 +74,8 @@ ChatGPT works only on N-orders with status TO DO (N-26 is FIRST, then N-27 and N
 | N-23 | DONE (received 2026-11-15) | Dungeon skill icons (24) + item icons (5), matching their effects (16x16) | `dungeon/skills/*`, `dungeon/items/*` |
 | N-24 | DONE (received 2026-11-15) | Dash symbol for the action button (16x16, free-standing) | `art/icons/ui/dash-*` |
 | N-25 | DONE (received 2026-11-15) | Designer mouth icons x5 (16x16) | `art/icons/mouth-*` |
-| N-23b | TO DO | Redo ONE skill icon: freeze volley (marksman-trap) as one big snowflake (16x16 + 32x32) | `dungeon/skills/marksman-trap.png` |
-| N-26 | TO DO (FIRST) | Meadow trees x3 matching Ninja Nature 96,128 (round, pine, autumn; 32x48) + matching stumps (16x16) | `art/props/tree-*`, `stump-*` |
+| N-23b | DONE (received 2026-11-15) | Redo ONE skill icon: freeze volley (marksman-trap) as one big snowflake (16x16 + 32x32) | `dungeon/skills/marksman-trap.png` |
+| N-26 | DONE (received 2026-11-15; older prompt: round, pine, apple + stumps + rubble) | Meadow trees x3 matching Ninja Nature 96,128 (round, pine, autumn; 32x48) + matching stumps (16x16) | `art/props/tree-*`, `stump-*` |
 | N-27 | TO DO | Wood resource icon: 2-3 stacked cut logs with end rings (16x16 + 32x32) | `art/icons/res-wood-*` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
