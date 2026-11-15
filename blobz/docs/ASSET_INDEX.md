@@ -11,13 +11,13 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
   image / CSS background or border image / canvas icon, or a WebGL texture bound at a Phaser draw call); CODE ONLY =
   referenced but never shown in the run (remove the reference and the file); UNUSED = no reference and never shown.
 
-**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 195 / IN GAME 27 / UNUSED 71.
+**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 195 / IN GAME 27 / UNUSED 75.
 
 **Claude-drawn still IN GAME** (0): none
 
 **Kenney still IN GAME** (0): none
 
-**Counts by source:** ChatGPT 242 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 17 (Ninja: 112 referenced by code). **Own files:** 293, 3 delete candidates.
+**Counts by source:** ChatGPT 246 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 17 (Ninja: 112 referenced by code). **Own files:** 297, 7 delete candidates.
 
 ## Own files (art, Kenney, app icons)
 
@@ -44,6 +44,10 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/dungeon/card-class-marksman.png` | 54x60 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:69 | keep |
 | `art/dungeon/card-class-rogue.png` | 55x57 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:69 | keep |
 | `art/dungeon/card-class-tank.png` | 53x59 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:69 | keep |
+| `art/dungeon/door-closed-32.png` | 32x32 | ChatGPT N-34 dungeon room door, sliced by scripts/slice_grid_orders.py n34 | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/door-closed-48.png` | 48x32 | ChatGPT N-34 dungeon room door, sliced by scripts/slice_grid_orders.py n34 | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/door-open-32.png` | 32x32 | ChatGPT N-34 dungeon room door, sliced by scripts/slice_grid_orders.py n34 | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/door-open-48.png` | 48x32 | ChatGPT N-34 dungeon room door, sliced by scripts/slice_grid_orders.py n34 | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
 | `art/dungeon/fx/hit-spark-0.png` | 32x32 | ChatGPT N-13 combat FX (round 2), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:142 | keep |
 | `art/dungeon/fx/hit-spark-1.png` | 32x32 | ChatGPT N-13 combat FX (round 2), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:142 | keep |
 | `art/dungeon/fx/hit-spark-2.png` | 32x32 | ChatGPT N-13 combat FX (round 2), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:142 | keep |
@@ -687,6 +691,10 @@ See `archive/README.md`.
 
 ## Delete candidates (UNUSED, Lead decides)
 
+- `art/dungeon/door-closed-32.png`
+- `art/dungeon/door-closed-48.png`
+- `art/dungeon/door-open-32.png`
+- `art/dungeon/door-open-48.png`
 - `art/props/fence-post.png`
 - `art/props/fence-rail-h.png`
 - `art/props/fence-rail-v.png`

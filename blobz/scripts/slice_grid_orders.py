@@ -366,6 +366,26 @@ def n33():
             + frame_row('n33-chest.png', (0.5, 1.0), 2, 32, 32, '', f, names=['chest-closed-32', 'chest-open-32']))
 
 
+def n34():
+    """Dungeon room door: closed + open at 32x32 (row 1) and 48x32 (row 2); floor line moved to the bottom row, purple
+    (magenta-blended) outline cells recoloured to the outline colour."""
+    f = os.path.join(ART, 'dungeon')
+    made = (frame_row('n34-door.png', (0.0, 0.5), 2, 32, 32, '', f, names=['door-closed-32', 'door-open-32'])
+            + frame_row('n34-door.png', (0.5, 1.0), 2, 48, 32, '', f, names=['door-closed-48', 'door-open-48']))
+    for path, *_ in made:  # frame_row centres vertically: drop the sprite onto the bottom row (the floor line)
+        a = np.array(Image.open(path).convert('RGBA'))
+        ys = np.where(a[:, :, 3].any(1))[0]
+        out = np.zeros_like(a)
+        out[a.shape[0] - (ys.max() + 1 - ys.min()):] = a[ys.min():ys.max() + 1]
+        c = out[:, :, :3].astype(int)  # outline cells blended with the magenta read purple: give them the outline colour
+        pur = (out[:, :, 3] > 0) & (c[:, :, 0] - c[:, :, 1] > 30) & (c[:, :, 2] - c[:, :, 1] > 30)
+        dark = (out[:, :, 3] > 0) & (c.sum(2) < 120) & ~pur
+        if pur.any() and dark.any():
+            out[pur, :3] = np.median(c[dark], axis=0).astype(np.uint8)
+        Image.fromarray(out).save(path)
+    return made
+
+
 N23_SKILLS = [['rogue-rage', 'rogue-knockback', 'rogue-whirlwind', 'rogue-extraheart', 'rogue-lifesteal', 'rogue-power'],
               ['healer-heal', 'healer-regen', 'healer-bubble', 'healer-revive', 'healer-holy', 'healer-cleanse'],
               ['marksman-multishot', 'marksman-pierce', 'marksman-crit', 'marksman-speed', 'marksman-poison', 'marksman-trap'],
@@ -585,7 +605,7 @@ def main():
         made += [r[0] for r in res]
     big = [p for p in made if 'dungeon-end' in p]
     preview([p for p in made if not os.path.basename(p)[:-4][-2:] in ('-0', '-1', '-2', '-3') and p not in big],
-            os.path.join(REV, 'n30-n33-raw-preview.png' if 'n30' in which else 'n27-n29-raw-preview.png' if 'n27' in which else 'n26-n23b-raw-preview.png' if ('n26' in which or 'n23b' in which) else 'n23-n25-sliced.png' if 'n23' in which else 'n16-n22-sliced.png' if any(x in which for x in ('n16', 'n17', 'n18', 'n19', 'n20', 'n21')) else 'n12-n15-sliced.png'))
+            os.path.join(REV, 'n34-sliced.png' if 'n34' in which else 'n30-n33-raw-preview.png' if 'n30' in which else 'n27-n29-raw-preview.png' if 'n27' in which else 'n26-n23b-raw-preview.png' if ('n26' in which or 'n23b' in which) else 'n23-n25-sliced.png' if 'n23' in which else 'n16-n22-sliced.png' if any(x in which for x in ('n16', 'n17', 'n18', 'n19', 'n20', 'n21')) else 'n12-n15-sliced.png'))
 
 
 if __name__ == '__main__':
