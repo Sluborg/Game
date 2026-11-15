@@ -1383,7 +1383,7 @@ button.big:not(.alt):active, button.big:not(.alt).down {
    turn. 46 px wide (20:17) so neighbours never touch; its bottom is the v3 feet line. */
 #lobby #lobby-list .seat.free .freeblob {
   display: flex; align-items: center; justify-content: center; gap: 5px; box-sizing: border-box;
-  width: min(46px, 80%); aspect-ratio: 20 / 17; border: 2px dashed var(--k-plum); background: transparent;
+  width: min(46px, 80%); aspect-ratio: 20 / 17; border: 2px dashed var(--k-plum); background: rgba(255, 255, 255, 0.1); /* v6: faint white fill */
   border-radius: 48% 48% 14% 14% / 62% 62% 20% 20%; padding-top: 4px; gap: 4px;
 }
 #lobby #lobby-list .seat.free .freeblob i {
