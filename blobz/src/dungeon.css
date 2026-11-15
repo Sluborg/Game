@@ -96,29 +96,29 @@
 /* ---------- round combat buttons: N-19 ring (30 px art in its 64 / 48 px file) + a free N-12 symbol ---------- */
 #attack {
   position: absolute; right: max(28px, calc(env(safe-area-inset-right) + 12px)); bottom: max(28px, calc(env(safe-area-inset-bottom) + 12px));
-  width: 96px; height: 96px; padding: 0; pointer-events: auto; touch-action: none; border: 0; border-image: none; border-radius: 50%;
+  width: 72px; height: 72px; padding: 0; pointer-events: auto; touch-action: none; border: 0; border-image: none; border-radius: 50%;
   display: flex; align-items: center; justify-content: center; image-rendering: pixelated; filter: none; box-shadow: none;
-  background: url('/art/dungeon/ui/btn-round-normal-64.png') center / 192px 192px no-repeat; --cd: 0; /* 3x: ring 90 px */
+  background: url('/art/dungeon/ui/btn-round-normal-24.png') center / 72px 72px no-repeat; --cd: 0; /* N-19b 24 px ring at 3x = 72 px */
 }
 #attack .icon { width: 48px; height: 48px; margin: 0; filter: none; position: relative; z-index: 1; image-rendering: pixelated; object-fit: contain; }
-#attack:active { background-image: url('/art/dungeon/ui/btn-round-pressed-64.png'); filter: none; transform: none; }
+#attack:active { background-image: url('/art/dungeon/ui/btn-round-pressed-24.png'); filter: none; transform: none; }
 #attack:active .icon { transform: translateY(3px); }
 #attack::after, #hud.dungeon #dash::after {
-  content: ''; position: absolute; inset: 9px; border-radius: 50%; pointer-events: none; z-index: 2;
+  content: ''; position: absolute; inset: 9px; border-radius: 50%; /* (the 24 px ring is 3 art px thick) */ pointer-events: none; z-index: 2;
   background: conic-gradient(transparent calc((1 - var(--cd)) * 360deg), #3f26318c 0);
 }
 #attack.cd .icon { filter: saturate(0.2) brightness(0.85); }
 #hud.dungeon #dash {
-  position: absolute; width: 64px; height: 64px; padding: 0; border: 0; border-image: none; border-radius: 50%; box-shadow: none; filter: none;
-  right: calc(max(28px, calc(env(safe-area-inset-right) + 12px)) + 96px); bottom: calc(max(28px, calc(env(safe-area-inset-bottom) + 12px)) + 80px);
+  position: absolute; width: 54px; height: 54px; padding: 0; border: 0; border-image: none; border-radius: 50%; box-shadow: none; filter: none;
+  right: calc(max(28px, calc(env(safe-area-inset-right) + 12px)) + 76px); bottom: calc(max(28px, calc(env(safe-area-inset-bottom) + 12px)) + 62px);
   display: flex; align-items: center; justify-content: center; image-rendering: pixelated;
-  background: url('/art/dungeon/ui/btn-round-normal-48.png') center / 96px 96px no-repeat; --cd: 0; /* 2x: ring 60 px */
+  background: url('/art/dungeon/ui/btn-round-normal-18.png') center / 54px 54px no-repeat; --cd: 0; /* N-19b 18 px ring at 3x = 54 px */
 }
 #hud.dungeon #dash::after { inset: 6px; }
 #hud.dungeon #dash img, #hud.dungeon #dash .icon { width: 32px; height: 32px; margin: 0; image-rendering: pixelated; object-fit: contain; position: relative; z-index: 1; }
-#hud.dungeon #dash:active { background-image: url('/art/dungeon/ui/btn-round-pressed-48.png'); transform: none; box-shadow: none; }
+#hud.dungeon #dash:active { background-image: url('/art/dungeon/ui/btn-round-pressed-18.png'); transform: none; box-shadow: none; }
 #hud.dungeon #dash:active img { transform: translateY(2px); }
-#hud.dungeon #dash.cd { filter: none; background-image: url('/art/dungeon/ui/btn-round-disabled-48.png'); }
+#hud.dungeon #dash.cd { filter: none; background-image: url('/art/dungeon/ui/btn-round-disabled-18.png'); }
 #hud.dungeon #dash.cd img { filter: saturate(0.2) brightness(0.85); }
 .dg-pips { position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%); display: flex; gap: 4px; z-index: 3; pointer-events: none; }
 .dg-pips i { width: 10px; height: 10px; border-radius: 50%; background: var(--dw-plum); box-shadow: 0 0 0 2px #fff3d6; }
@@ -287,8 +287,21 @@ body.dgflow #hud > :not(#hud-dg):not(#attack):not(#dash):not(#stick):not(#dg-ko)
 
 /* cards never cover a control (Lead): the loot card docks ABOVE both round buttons in portrait (big ring 96 px + the
    small one 80 px above it + 64 px + a gap); in landscape the level-up cards stay left of the buttons' column */
-#dg-loot { bottom: calc(max(28px, calc(env(safe-area-inset-bottom) + 12px)) + 80px + 64px + 16px); }
+#dg-loot { bottom: calc(max(28px, calc(env(safe-area-inset-bottom) + 12px)) + 62px + 54px + 16px); }
 @media (orientation: landscape) and (max-height: 500px) {
   #dg-loot { bottom: 8px; }
-  #dg-cards { right: calc(max(28px, calc(env(safe-area-inset-right) + 12px)) + 96px + 64px + 12px); width: min(calc(100vw - 524px), 420px); min-width: 300px; } /* clear of the loot card (left) too */
+  #dg-cards { right: calc(max(28px, calc(env(safe-area-inset-right) + 12px)) + 76px + 54px + 12px); width: min(calc(100vw - 490px), 420px); min-width: 300px; } /* clear of the loot card (left) too */
 }
+
+/* ---------- N-23: skills = a bold symbol in a round badge in the class colour with a gold rim; items = a drawn object
+   in a square wood cell (they must look clearly different) ---------- */
+.skcard .dgicon {
+  width: 48px; height: 48px; padding: 8px; box-sizing: content-box; border-radius: 50%;
+  background: var(--badge, #6f5546); border: 3px solid var(--dw-gold); box-shadow: 0 0 0 2px #8a5a12, inset 0 -4px 0 #0003;
+}
+.skcard[data-cls='rogue'] { --badge: #7a4fb0; }
+.skcard[data-cls='healer'] { --badge: #3f9a4a; }
+.skcard[data-cls='marksman'] { --badge: #2f7fb8; }
+.skcard[data-cls='tank'] { --badge: #b0503a; }
+.lootnew .dgicon, #dg-loot-items > .dgicon { border-radius: 0; }
+@media (orientation: landscape) and (max-height: 500px) { .skcard .dgicon { width: 36px; height: 36px; padding: 6px; } }

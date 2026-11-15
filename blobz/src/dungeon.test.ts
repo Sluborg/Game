@@ -3,12 +3,13 @@ import { KEYS } from './i18n';
 import {
   AIM_WARN, BITE_TIME, CLASS_MOVE_COOLDOWN, DUNGEON_TIMER_ENABLED, CLASS_WEAPONS, BITE_WARN, bossHp, BURST, BURST_DMG, BURST_GAP, BURST_SPREAD, CLASS_HP, CLASSES, DASH_TIME, DASH_WARN, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, floorDmg, actMul, GH, GW,
   HEAL_BOLT, heroMods, refresh, inSwing, isWall, ITEMS, itemOf, KO_SECONDS, LEVEL_XP, LOOT_SECONDS, makeFloor, makeGoo, newRun, POTION_HP, REGEN_EVERY,
-  skillIcon, skillOf, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
+  ITEM_ICON, skillIcon, skillOf, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
 } from './dungeon';
 import { cleanVillage, createState, DUNGEON_ENABLED, newVillage, villageOf, PICK_TIMER_ENABLED, ENTRANCE_R, entranceOf, makePuzzles, makeTrees, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
 
 /** Art's skill icons in the repo (vite glob, no node fs types needed). */
-const NA_ICONS = Object.keys(import.meta.glob('../public/assets/ninja-adventure/Ui/Skill Icon/**/*.png')).map((k) => k.replace('../public/', ''));
+/** ChatGPT N-23 skill + item icons (art/dungeon/skills, art/dungeon/items) */
+const N23 = Object.keys(import.meta.glob(['../public/art/dungeon/skills/*.png', '../public/art/dungeon/items/*.png'])).map((k) => k.replace('../public/', ''));
 const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 });
 type B = { id: string; x: number; y: number; vx: number; vy: number; dashT: number; lastDash: number };
 const body = (id: string, x: number, y: number): B => ({ id, x, y, vx: 0, vy: 0, dashT: 0, lastDash: 0 });
@@ -421,6 +422,13 @@ describe('dungeon', () => {
     expect(run1(p, pb, undefined, 0.7).fx.some((f) => f.t === 'shot')).toBe(true);
   });
 
+  it('every skill and item has its ChatGPT N-23 icon file (skills and items are different sets)', () => {
+    for (const sk of SKILLS) expect(N23).toContain(skillIcon(sk.id));
+    for (const it of ITEMS) expect(N23).toContain(ITEM_ICON[it.id]);
+    expect(SKILLS.every((sk) => skillIcon(sk.id).startsWith('art/dungeon/skills/'))).toBe(true);
+    expect(ITEMS.every((it) => ITEM_ICON[it.id].startsWith('art/dungeon/items/'))).toBe(true);
+  });
+
   it('marksman shoots only while standing still', () => {
     const d = quiet(newRun(14, { b: 'bow' }));
     const st = d.map.start;
@@ -647,7 +655,7 @@ describe('dungeon', () => {
     for (const c of ['rogue', 'healer', 'marksman', 'tank'] as const) {
       const ids = SKILLS.filter((k) => k.cls === c).map((k) => k.id);
       expect(ids).toHaveLength(6);
-      for (const id of ids) { expect(id.startsWith(c + '-')).toBe(true); expect(NA_ICONS).toContain(skillIcon(id)); }
+      for (const id of ids) { expect(id.startsWith(c + '-')).toBe(true); expect(N23).toContain(skillIcon(id)); }
     }
     for (const s of [...SKILLS, ...ITEMS]) {
       const lines = effectLines(s.mod);

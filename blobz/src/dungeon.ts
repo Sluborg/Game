@@ -29,13 +29,11 @@ const NA_SKILL: Record<string, string> = {
   'tank-block': 'Spell/DefenseUpgrade', 'tank-taunt': 'Job & Action/Sing', 'tank-armor': 'Items & Weapon/Armor', 'tank-charge': 'Spell/Cut',
   'tank-stun': 'Spell/BookThunder', 'tank-guard': 'Items & Weapon/Guard',
 };
-export const skillIcon = (id: string) => `assets/ninja-adventure/Ui/Skill Icon/${NA_SKILL[id] ?? 'Spell/Upgrade'}.png`;
-/** Ninja icons for loot items, the special button per weapon and the sidestep button. */
-const NAI = 'assets/ninja-adventure/';
-export const ITEM_ICON: Record<string, string> = {
-  ring: NAI + 'Ui/Skill Icon/Items & Weapon/Ring.png', helm: NAI + 'Ui/Skill Icon/Items & Weapon/Helmet.png', gloves: NAI + 'Ui/Skill Icon/Job & Action/Punch.png',
-  amulet: NAI + 'Ui/Skill Icon/Items & Weapon/Amulet.png', stone: NAI + 'Items/Resource/GemGreen.png',
-};
+/** ChatGPT N-23 skill icons (16 px, art/dungeon/skills/<id>.png); the Ninja picks above stay as the fallback for unknown ids. */
+export const skillIcon = (id: string) => (id in NA_SKILL ? `art/dungeon/skills/${id}.png` : `assets/ninja-adventure/Ui/Skill Icon/${NA_SKILL[id] ?? 'Spell/Upgrade'}.png`);
+/** (Ninja icons for the special button per weapon live in dungeonUi.ts.) */
+/** ChatGPT N-23 item icons: drawn objects (16 px), shown in a square wood cell. */
+export const ITEM_ICON: Record<string, string> = Object.fromEntries(['ring', 'helm', 'gloves', 'amulet', 'stone'].map((k) => [k, `art/dungeon/items/${k}.png`]));
 /** Health points per class (the HUD shows a bar). */
 export const CLASS_HP: Record<HeroClass, number> = { rogue: 100, healer: 100, marksman: 80, tank: 140 };
 export type Weapon = 'sword' | 'hammer' | 'spear' | 'staff' | 'bow' | 'shield' | 'dagger';
