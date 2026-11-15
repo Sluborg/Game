@@ -158,6 +158,7 @@ export class DungeonScene extends Phaser.Scene {
     img('na-walls', NA + 'Backgrounds/Tilesets/Interior/TilesetWallSimple.png');
     img('na-elem', NA + 'Backgrounds/Tilesets/TilesetElement.png');
     // rooms: the ChatGPT N-34 door (48x32, floor line on the bottom row), closed / open
+    for (const w of ['tl', 't', 'tr', 'l', 'r', 'bl', 'br', 'b', 'entrance-l', 'entrance-mid', 'entrance-r']) img('dgw-' + w, `art/dungeon/wall-${w}.png`); // rooms: ChatGPT N-34b/c wall set (16 px)
     img('dg-door-closed', 'art/dungeon/door-closed-48.png'); img('dg-door-open', 'art/dungeon/door-open-48.png');
     sheet('na-chest', NA + 'Items/Treasure/BigTreasureChest.png', 16, 14);
     sheet('na-coin', NA + 'Items/Treasure/Coin2.png', 10, 10);
@@ -260,8 +261,30 @@ export class DungeonScene extends Phaser.Scene {
       const rnd = () => { n = (n * 1103515245 + 12345) & 0x7fffffff; return n / 0x7fffffff; };
       g.fillStyle = '#141b1b';
       g.fillRect(0, 0, c.width, c.height);
+      // rooms: the N-34b wall set around the room (corners, edges) and the N-34c entrance opening in the bottom wall
+      // under the door; the floor stays the Ninja stone floor
+      const roomWall = (tx: number, ty: number): string | null => {
+        const W = fw(f) - 1, H = fh(f) - 1, mid = Math.floor(fw(f) / 2);
+        if (ty === 0) return tx === 0 ? 'tl' : tx === W ? 'tr' : 't';
+        if (ty === H) {
+          if (tx === 0) return 'bl';
+          if (tx === W) return 'br';
+          if (tx === mid - 2) return 'entrance-l';
+          if (tx === mid - 1 || tx === mid) return 'entrance-mid';
+          if (tx === mid + 1) return 'entrance-r';
+          return 'b';
+        }
+        return tx === 0 ? 'l' : tx === W ? 'r' : null;
+      };
       for (let ty = 0; ty < fh(f); ty++) for (let tx = 0; tx < fw(f); tx++) {
         if (!solid(tx, ty)) { put(fl, 192, 208, tx, ty, rnd() < 0.5); continue; }
+        if (rooms) {
+          const w = roomWall(tx, ty);
+          if (!w) continue;
+          if (w === 'entrance-mid') put(fl, 192, 208, tx, ty); // the opening shows floor under its threshold line
+          if (this.textures.exists('dgw-' + w)) g.drawImage(this.textures.get('dgw-' + w).getSourceImage() as HTMLImageElement, 0, 0, 16, 16, tx * TP, ty * TP, TP, TP);
+          continue;
+        }
         // a wall next to floor gets the frame piece facing that floor (edges first, then outer corners)
         const S = !solid(tx, ty + 1), N = !solid(tx, ty - 1), E = !solid(tx + 1, ty), W = !solid(tx - 1, ty);
         if (S) put(wl, 48, 96, tx, ty); // top edge of the room below
