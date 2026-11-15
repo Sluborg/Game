@@ -26,6 +26,13 @@ OWN = 'Own art (CC0)'
 CC0K = 'CC0 1.0 (Kenney)'
 # (glob on the path under public/, source, license, approved?) first match wins
 SOURCES = [
+    ('art/icons/ui/*.png', 'ChatGPT N-17 UI icons, sliced by scripts/slice_grid_orders.py', GPT, True),
+    ('art/icons/state/*.png', 'ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py', GPT, True),
+    ('art/props/berry-bush-[0-9]*.png', 'ChatGPT N-16 berry bush, sliced by scripts/slice_grid_orders.py', GPT, True),
+    ('art/props/berry-bush-picked-*.png', 'ChatGPT N-16 berry bush, sliced by scripts/slice_grid_orders.py', GPT, True),
+    ('art/dungeon/ui/*.png', 'ChatGPT N-19 / N-21 dungeon UI, sliced by scripts/slice_grid_orders.py', GPT, True),
+    ('art/lobby/*.png', 'ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py', GPT, True),
+    ('art/dungeon-end*.png', 'ChatGPT N-22 dungeon end screen', GPT, True),
     ('art/dungeon/weapons/[dwsc]*-[13][62].png', 'ChatGPT N-11 class weapons, sliced by scripts/slice_grid_orders.py', GPT, True),
     ('art/dungeon/icons/*.png', 'ChatGPT N-12 move/mode icons, sliced by scripts/slice_grid_orders.py', GPT, True),
     ('art/dungeon/fx/*.png', 'ChatGPT N-13 combat FX (round 2), sliced by scripts/slice_grid_orders.py', GPT, True),
