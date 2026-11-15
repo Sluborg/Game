@@ -1,0 +1,716 @@
+{
+ "Pixel 3x": [
+  {
+   "n": 1,
+   "name": "home.editBlob",
+   "f": "art/icons/ui/quill-16.png",
+   "src": "ChatGPT N-17",
+   "nat": [
+    16,
+    16
+   ],
+   "shown": [
+    48,
+    48
+   ],
+   "scale": 3.0,
+   "note": ""
+  },
+  {
+   "n": 3,
+   "name": "*.back (chevron)",
+   "f": "art/icons/ui/back-16.png",
+   "src": "ChatGPT N-17",
+   "nat": [
+    16,
+    16
+   ],
+   "shown": [
+    48,
+    48
+   ],
+   "scale": 3.0,
+   "note": ""
+  },
+  {
+   "n": 4,
+   "name": "designer.part.mouth (x5)",
+   "f": "art/icons/mouth-1.png",
+   "src": "ChatGPT N-25",
+   "nat": [
+    16,
+    16
+   ],
+   "shown": [
+    48,
+    48
+   ],
+   "scale": 3.0,
+   "note": "mouth-1..5"
+  },
+  {
+   "n": 5,
+   "name": "build.close",
+   "f": "art/icons/ui/close-16.png",
+   "src": "ChatGPT N-17",
+   "nat": [
+    16,
+    16
+   ],
+   "shown": [
+    48,
+    48
+   ],
+   "scale": 3.0,
+   "note": ""
+  },
+  {
+   "n": 6,
+   "name": "meadowHud.build",
+   "f": "art/icons/ui/hammer-16.png",
+   "src": "ChatGPT N-17",
+   "nat": [
+    16,
+    16
+   ],
+   "shown": [
+    48,
+    48
+   ],
+   "scale": 3.0,
+   "note": ""
+  },
+  {
+   "n": 7,
+   "name": "meadowEnd.menu",
+   "f": "art/icons/ui/home-16.png",
+   "src": "ChatGPT N-17",
+   "nat": [
+    16,
+    16
+   ],
+   "shown": [
+    48,
+    48
+   ],
+   "scale": 3.0,
+   "note": ""
+  },
+  {
+   "n": 8,
+   "name": "meadowHud.dash (symbol)",
+   "f": "art/icons/ui/dash-16.png",
+   "src": "ChatGPT N-24",
+   "nat": [
+    16,
+    16
+   ],
+   "shown": [
+    48,
+    48
+   ],
+   "scale": 3.0,
+   "note": ""
+  },
+  {
+   "n": 9,
+   "name": "meadowHud.dash (ring)",
+   "f": "art/dungeon/ui/btn-round-normal-24.png",
+   "src": "ChatGPT N-19b",
+   "nat": [
+    24,
+    24
+   ],
+   "shown": [
+    72,
+    72
+   ],
+   "scale": 3.0,
+   "note": "also dungeon #attack"
+  },
+  {
+   "n": 24,
+   "name": "build.card.picture well",
+   "f": "art/ninja/well.png",
+   "src": "Ninja crop",
+   "nat": [
+    16,
+    21
+   ],
+   "shown": [
+    48,
+    63
+   ],
+   "scale": 3.0,
+   "note": ""
+  },
+  {
+   "n": 36,
+   "name": "dungeonHud.special (weapon)",
+   "f": "art/dungeon/weapons/crossbow-16.png",
+   "src": "ChatGPT N-11",
+   "nat": [
+    16,
+    16
+   ],
+   "shown": [
+    48,
+    48
+   ],
+   "scale": 3.0,
+   "note": "dagger/shield too"
+  },
+  {
+   "n": 39,
+   "name": "dungeonHud.dash ring",
+   "f": "art/dungeon/ui/btn-round-normal-18.png",
+   "src": "ChatGPT N-19b",
+   "nat": [
+    18,
+    18
+   ],
+   "shown": [
+    54,
+    54
+   ],
+   "scale": 3.0,
+   "note": ""
+  },
+  {
+   "n": 42,
+   "name": "levelUp.skill",
+   "f": "art/dungeon/skills/healer-bubble.png",
+   "src": "ChatGPT N-23 skill symbols",
+   "nat": [
+    16,
+    16
+   ],
+   "shown": [
+    48,
+    48
+   ],
+   "scale": 3.0,
+   "note": ""
+  },
+  {
+   "n": 43,
+   "name": "bossStrip.emblem",
+   "f": "art/dungeon/ui/boss-emblem.png",
+   "src": "ChatGPT N-19 / N-21 dungeon UI",
+   "nat": [
+    16,
+    16
+   ],
+   "shown": [
+    48,
+    48
+   ],
+   "scale": 3.0,
+   "note": ""
+  }
+ ],
+ "Pixel 2x": [
+  {
+   "n": 2,
+   "name": "designer.optionTile.selected",
+   "f": "art/icons/state/tick-green-16.png",
+   "src": "ChatGPT N-18",
+   "nat": [
+    16,
+    16
+   ],
+   "shown": [
+    32,
+    32
+   ],
+   "scale": 2.0,
+   "note": ""
+  },
+  {
+   "n": 10,
+   "name": "build.card.state can",
+   "f": "art/icons/state/can-build-16.png",
+   "src": "ChatGPT N-18",
+   "nat": [
+    16,
+    16
+   ],
+   "shown": [
+    32,
+    32
+   ],
+   "scale": 2.0,
+   "note": ""
+  },
+  {
+   "n": 11,
+   "name": "build.card.state lock",
+   "f": "art/icons/state/lock-16.png",
+   "src": "ChatGPT N-18",
+   "nat": [
+    16,
+    16
+   ],
+   "shown": [
+    32,
+    32
+   ],
+   "scale": 2.0,
+   "note": ""
+  },
+  {
+   "n": 25,
+   "name": "build.card.picture storage / tower",
+   "f": "art/ninja/storage.png",
+   "src": "Ninja crop",
+   "nat": [
+    32,
+    32
+   ],
+   "shown": [
+    64,
+    64
+   ],
+   "scale": 2.0,
+   "note": "watchtower also 2x"
+  },
+  {
+   "n": 27,
+   "name": "meadow.token wood",
+   "f": "art/icons/res-wood-16.png",
+   "src": "ChatGPT N-27",
+   "nat": [
+    16,
+    16
+   ],
+   "shown": [
+    32,
+    32
+   ],
+   "scale": 2.0,
+   "note": ""
+  },
+  {
+   "n": 28,
+   "name": "meadow.token food",
+   "f": "assets/ninja-adventure/Items/Food/Meat.png",
+   "src": "Ninja Adventure (CC0)",
+   "nat": [
+    15,
+    15
+   ],
+   "shown": [
+    30,
+    30
+   ],
+   "scale": 2.0,
+   "note": ""
+  },
+  {
+   "n": 30,
+   "name": "meadow.power speed",
+   "f": "art/meadow/speed-32.png",
+   "src": "ChatGPT N-15b",
+   "nat": [
+    32,
+    32
+   ],
+   "shown": [
+    64,
+    64
+   ],
+   "scale": 2.0,
+   "note": ""
+  },
+  {
+   "n": 31,
+   "name": "meadow.power magnet",
+   "f": "assets/ninja-adventure/Ui/Skill Icon/Items & Weapon/Hook.png",
+   "src": "Ninja Adventure (CC0)",
+   "nat": [
+    24,
+    24
+   ],
+   "shown": [
+    48,
+    48
+   ],
+   "scale": 2.0,
+   "note": "+ code-drawn pink circle"
+  },
+  {
+   "n": 32,
+   "name": "meadow.tool axe / rake",
+   "f": "assets/ninja-adventure/Items/Tool/Axe.png",
+   "src": "Ninja Adventure (CC0)",
+   "nat": [
+    16,
+    16
+   ],
+   "shown": [
+    32,
+    32
+   ],
+   "scale": 2.0,
+   "note": "rake = Hoe.png"
+  },
+  {
+   "n": 33,
+   "name": "meadow.chips",
+   "f": "assets/ninja-adventure/FX/Particle/Wood.png",
+   "src": "Ninja Adventure (CC0)",
+   "nat": [
+    16,
+    16
+   ],
+   "shown": [
+    32,
+    32
+   ],
+   "scale": 2.0,
+   "note": "3-frame sheet"
+  },
+  {
+   "n": 37,
+   "name": "dungeonHud.special (Ninja skill)",
+   "f": "assets/ninja-adventure/Ui/Skill Icon/Spell/Cut.png",
+   "src": "Ninja Adventure (CC0)",
+   "nat": [
+    24,
+    24
+   ],
+   "shown": [
+    48,
+    48
+   ],
+   "scale": 2.0,
+   "note": "sword/hammer/staff..."
+  },
+  {
+   "n": 38,
+   "name": "dungeonHud.move",
+   "f": "art/dungeon/icons/dodge-16.png",
+   "src": "ChatGPT N-12",
+   "nat": [
+    16,
+    16
+   ],
+   "shown": [
+    32,
+    32
+   ],
+   "scale": 2.0,
+   "note": ""
+  }
+ ],
+ "Pixel 4x": [
+  {
+   "n": 12,
+   "name": "meadowEnd.stars",
+   "f": "art/gather/star.png",
+   "src": "ChatGPT N-10",
+   "nat": [
+    19,
+    17
+   ],
+   "shown": [
+    76,
+    68
+   ],
+   "scale": 4.0,
+   "note": ""
+  },
+  {
+   "n": 41,
+   "name": "loot.item",
+   "f": "art/dungeon/items/amulet.png",
+   "src": "ChatGPT N-23 loot",
+   "nat": [
+    16,
+    16
+   ],
+   "shown": [
+    64,
+    64
+   ],
+   "scale": 4.0,
+   "note": ""
+  }
+ ],
+ "Pixel 1x": [
+  {
+   "n": 14,
+   "name": "meadowHud.questStar",
+   "f": "art/gather/star-empty.png",
+   "src": "ChatGPT N-10",
+   "nat": [
+    19,
+    17
+   ],
+   "shown": [
+    19,
+    17
+   ],
+   "scale": 1.0,
+   "note": "filled: star.png"
+  },
+  {
+   "n": 21,
+   "name": "build.card.cost food",
+   "f": "art/ninja/res-berry.png",
+   "src": "Ninja crop",
+   "nat": [
+    15,
+    15
+   ],
+   "shown": [
+    15,
+    15
+   ],
+   "scale": 1.0,
+   "note": ""
+  },
+  {
+   "n": 26,
+   "name": "build.card.picture workshop / garden / cottage / bridge",
+   "f": "art/ninja/workshop.png",
+   "src": "Ninja crop",
+   "nat": [
+    48,
+    48
+   ],
+   "shown": [
+    48,
+    48
+   ],
+   "scale": 1.0,
+   "note": "1x"
+  },
+  {
+   "n": 29,
+   "name": "meadow.carry wood",
+   "f": "art/icons/res-wood-16.png",
+   "src": "ChatGPT N-27",
+   "nat": [
+    16,
+    16
+   ],
+   "shown": [
+    16,
+    16
+   ],
+   "scale": 1.0,
+   "note": "food 15 px at 1x too"
+  }
+ ],
+ "Pixel, uneven scale (odd ones out)": [
+  {
+   "n": 13,
+   "name": "meadowEnd.bar star",
+   "f": "art/gather/star.png",
+   "src": "ChatGPT N-10",
+   "nat": [
+    19,
+    17
+   ],
+   "shown": [
+    24,
+    22
+   ],
+   "scale": 1.26,
+   "note": ""
+  },
+  {
+   "n": 15,
+   "name": "meadowHud.quest.home",
+   "f": "art/ninja/hut.png",
+   "src": "Ninja crop",
+   "nat": [
+    47,
+    32
+   ],
+   "shown": [
+    32,
+    22
+   ],
+   "scale": 0.68,
+   "note": ""
+  },
+  {
+   "n": 16,
+   "name": "meadowHud.quest wood",
+   "f": "art/icons/res-wood-32.png",
+   "src": "ChatGPT N-27",
+   "nat": [
+    32,
+    32
+   ],
+   "shown": [
+    20,
+    20
+   ],
+   "scale": 0.62,
+   "note": ""
+  },
+  {
+   "n": 17,
+   "name": "meadowHud.bank wood",
+   "f": "art/icons/res-wood-32.png",
+   "src": "ChatGPT N-27",
+   "nat": [
+    32,
+    32
+   ],
+   "shown": [
+    17,
+    17
+   ],
+   "scale": 0.53,
+   "note": ""
+  },
+  {
+   "n": 18,
+   "name": "build.card.cost wood",
+   "f": "art/icons/res-wood-32.png",
+   "src": "ChatGPT N-27",
+   "nat": [
+    32,
+    32
+   ],
+   "shown": [
+    16,
+    16
+   ],
+   "scale": 0.5,
+   "note": ""
+  },
+  {
+   "n": 19,
+   "name": "meadowHud.quest food",
+   "f": "art/ninja/res-berry.png",
+   "src": "Ninja crop",
+   "nat": [
+    15,
+    15
+   ],
+   "shown": [
+    20,
+    20
+   ],
+   "scale": 1.33,
+   "note": ""
+  },
+  {
+   "n": 20,
+   "name": "meadowHud.bank food",
+   "f": "art/ninja/res-berry.png",
+   "src": "Ninja crop",
+   "nat": [
+    15,
+    15
+   ],
+   "shown": [
+    17,
+    17
+   ],
+   "scale": 1.13,
+   "note": ""
+  },
+  {
+   "n": 22,
+   "name": "meadowHud.edgeArrow res",
+   "f": "art/icons/res-wood-32.png",
+   "src": "ChatGPT N-27",
+   "nat": [
+    32,
+    32
+   ],
+   "shown": [
+    18,
+    18
+   ],
+   "scale": 0.56,
+   "note": "food the same, 18 px high"
+  },
+  {
+   "n": 23,
+   "name": "meadowHud.stick",
+   "f": "assets/ninja-adventure/Ui/Receptacle/Receptacle Sphere/BackgroundWood.png",
+   "src": "Ninja Adventure (CC0)",
+   "nat": [
+    32,
+    32
+   ],
+   "shown": [
+    120,
+    120
+   ],
+   "scale": 3.75,
+   "note": "knob ProgressYellow 22 px at 52"
+  },
+  {
+   "n": 34,
+   "name": "dungeonHud.hearts",
+   "f": "assets/ninja-adventure/Ui/Receptacle/IconHeart.png",
+   "src": "Ninja Adventure (CC0)",
+   "nat": [
+    14,
+    12
+   ],
+   "shown": [
+    24,
+    24
+   ],
+   "scale": 1.71,
+   "note": ""
+  },
+  {
+   "n": 35,
+   "name": "dungeonHud.gold",
+   "f": "assets/ninja-adventure/Items/Treasure/Coin2.png",
+   "src": "Ninja Adventure (CC0)",
+   "nat": [
+    40,
+    10
+   ],
+   "shown": [
+    24,
+    24
+   ],
+   "scale": 0.6,
+   "note": "whole 4-frame strip squeezed"
+  },
+  {
+   "n": 40,
+   "name": "dungeonHud.item slot",
+   "f": "art/dungeon/items/amulet.png",
+   "src": "ChatGPT N-23 loot",
+   "nat": [
+    16,
+    16
+   ],
+   "shown": [
+    24,
+    24
+   ],
+   "scale": 1.5,
+   "note": "in a 30 px wood cell"
+  },
+  {
+   "n": 44,
+   "name": "dungeonHud.cell",
+   "f": "assets/ninja-adventure/Ui/Theme/Theme Wood/inventory_cell.png",
+   "src": "Ninja Adventure (CC0)",
+   "nat": [
+    16,
+    16
+   ],
+   "shown": [
+    30,
+    30
+   ],
+   "scale": 1.88,
+   "note": ""
+  }
+ ]
+}
