@@ -38,16 +38,43 @@ sheet) comes after Stefan has seen this index.
   clean since 61145fb).
 - `F-THIN`: CSS 2 px solid `#c9a46a` (`--k-edge`), 4 px radius, parchment `#fbf2da`.
 
-## Loading
+## Official names
+
+Stefan's approved ids (2026-11-15). An element is named `<id>.<element>`, e.g. `home.newGame`, `meadowHud.dash`,
+`build.card`. Ordered with 10, 20, 30 so new ones can slot in between.
+
+| Kind | Order | Id | Section |
+|---|---|---|---|
+| Screen | 10 | loading | [10 loading](#10-loading) |
+| Screen | 20 | home | [20 home](#20-home) |
+| Screen | 30 | designer | [30 designer](#30-designer) |
+| Screen | 40 | lobby | [40 lobby](#40-lobby) |
+| Screen | 50 | join | [50 join](#50-join) |
+| Screen | 60 | meadow | [60 meadow](#60-meadow) (the world itself; its HUD is `meadowHud`) |
+| Screen | 70 | meadowEnd | [70 meadowEnd](#70-meadowend) |
+| Screen | 80 | dungeonEnter | [Dungeon (Code 2)](#dungeon-code-2) |
+| Screen | 90 | classPick | [Dungeon (Code 2)](#dungeon-code-2) |
+| Screen | 100 | dungeon | [Dungeon (Code 2)](#dungeon-code-2) |
+| Screen | 110 | dungeonEnd | [Dungeon (Code 2)](#dungeon-code-2) |
+| Screen | 120 | dungeonFail | [Dungeon (Code 2)](#dungeon-code-2) (only if it exists) |
+| Overlay | 10 | build | [overlay 10 build](#overlay-10-build) |
+| Overlay | 20 | levelUp | [Dungeon (Code 2)](#dungeon-code-2) |
+| Overlay | 30 | loot | [Dungeon (Code 2)](#dungeon-code-2) |
+| Overlay | 40 | bossStrip | [Dungeon (Code 2)](#dungeon-code-2) |
+| Overlay | 50 | toast | [overlay 50 toast](#overlay-50-toast) |
+| HUD | | meadowHud | [HUD meadowHud](#hud-meadowhud) |
+| HUD | | dungeonHud | [Dungeon (Code 2)](#dungeon-code-2) |
+
+## 10 loading
 
 | Name | What | Style system | Source | Created at | Status |
 |---|---|---|---|---|---|
 | loading.screen | full-screen background | ChatGPT | `#loading` bg `art/start-portrait.png` (N-2), sky `#45b2fc` | index.html:23, style.css:1187 | KIT-A |
-| loading.bar | progress bar frame | 9-slice | `.loadbar`, Ninja `Theme Wood/nine_path_bg.png` 2 fill / 6 px | index.html:25, style.css:1189 | DUP (other bar frames are F-THIN: hud.questBar, end.bar) |
-| loading.fill | progress bar fill | CSS | `#loadfill`, orange `#f08a3c` + inset shadow | index.html:25 | DUP (hud.questBar fill is the Ninja `slider_progress.png` image, end.bar fill is plain CSS) |
+| loading.bar | progress bar frame | 9-slice | `.loadbar`, Ninja `Theme Wood/nine_path_bg.png` 2 fill / 6 px | index.html:25, style.css:1189 | DUP (other bar frames are F-THIN: meadowHud.questBar, meadowEnd.bar) |
+| loading.fill | progress bar fill | CSS | `#loadfill`, orange `#f08a3c` + inset shadow | index.html:25 | DUP (meadowHud.questBar fill is the Ninja `slider_progress.png` image, meadowEnd.bar fill is plain CSS) |
 | loading.text | status line | CSS | `#loading-text`, Fredoka | index.html:26 | KIT-A |
 
-## Home
+## 20 home
 
 | Name | What | Style system | Source | Created at | Status |
 |---|---|---|---|---|---|
@@ -63,7 +90,7 @@ sheet) comes after Stefan has seen this index.
 | home.version | version text | CSS | `#version.version` | index.html:45, style.css:834 | KIT-A |
 | home.langToggle | segmented toggle (SV / EN) | CSS | `#lang-toggle.langtog`, active = plum fill, 6 px radius, 36x32 (under 48 px) | index.html:46, style.css:622 / 834 | OLD |
 
-## Designer
+## 30 designer
 
 | Name | What | Style system | Source | Created at | Status |
 |---|---|---|---|---|---|
@@ -85,19 +112,7 @@ sheet) comes after Stefan has seen this index.
 | designer.pagerDots | page dots | CSS | `#pg-dots > i`, 10 px dots, plum = current | main.ts:114 | KIT-A |
 | designer.done | primary button | 9-slice | `#btn-custom-done.big`, B-PRIMARY (check icon hidden) | index.html:69 | KIT-A |
 
-## Join
-
-| Name | What | Style system | Source | Created at | Status |
-|---|---|---|---|---|---|
-| join.panel | card | 9-slice | `#join.card`, F-PANEL | index.html:74 | KIT-A |
-| join.back | icon button | CSS + ChatGPT icon | `#btn-join-back.backbtn`, B-SECONDARY 56x56 + back-16 (N-17) | index.html:81, style.css:972 | KIT-A |
-| join.searching | animated picture | ChatGPT | `#lan-search.lansearch` bg `art/lobby/searching-blob.png` (N-20) | index.html:76, style.css:1153 | KIT-A |
-| join.status | status line | CSS | `#lan-status.help`, 17 px plum | index.html:77 | KIT-A |
-| join.gameRow | list row button (a found game) | CSS | `.lanrow`, 3 px green `#4caf3a` border, 80 px high, with `.lantext` / `.lansub` | main.ts:255, style.css:1155 / 1017 | DUP (a third button look: green-bordered card, close to build.card `.can`) |
-| join.rescan | secondary button | CSS | `#btn-rescan.big.alt`, B-SECONDARY | index.html:79 | KIT-A |
-| join.msg | message line | CSS | `#join-msg.msg` | index.html:80 | KIT-A |
-
-## Lobby
+## 40 lobby
 
 | Name | What | Style system | Source | Created at | Status |
 |---|---|---|---|---|---|
@@ -117,44 +132,72 @@ sheet) comes after Stefan has seen this index.
 | lobby.newVillageAsk | confirm box (overlay in the card) | CSS | `#newvillage-ask.ask`, red bold question, no frame | index.html:100, style.css:495 | OLD |
 | lobby.newVillageYes / No | secondary buttons | CSS | `#btn-newvillage-yes/no.chip`, B-SECONDARY | index.html:102 | KIT-A |
 
-## Meadow HUD
+## 50 join
+
+| Name | What | Style system | Source | Created at | Status |
+|---|---|---|---|---|---|
+| join.panel | card | 9-slice | `#join.card`, F-PANEL | index.html:74 | KIT-A |
+| join.back | icon button | CSS + ChatGPT icon | `#btn-join-back.backbtn`, B-SECONDARY 56x56 + back-16 (N-17) | index.html:81, style.css:972 | KIT-A |
+| join.searching | animated picture | ChatGPT | `#lan-search.lansearch` bg `art/lobby/searching-blob.png` (N-20) | index.html:76, style.css:1153 | KIT-A |
+| join.status | status line | CSS | `#lan-status.help`, 17 px plum | index.html:77 | KIT-A |
+| join.gameRow | list row button (a found game) | CSS | `.lanrow`, 3 px green `#4caf3a` border, 80 px high, with `.lantext` / `.lansub` | main.ts:255, style.css:1155 / 1017 | DUP (a third button look: green-bordered card, close to build.card `.can`) |
+| join.rescan | secondary button | CSS | `#btn-rescan.big.alt`, B-SECONDARY | index.html:79 | KIT-A |
+| join.msg | message line | CSS | `#join-msg.msg` | index.html:80 | KIT-A |
+
+## 60 meadow
+
+In-world UI drawn by Phaser (`src/game.ts`).
+
+
+| Name | What | Style system | Source | Created at | Status |
+|---|---|---|---|---|---|
+| meadow.nameplate | label under each blob | Code | Phaser text, Fredoka 11 px `#fff8e8`, always on top | game.ts:677 / 764 | KIT-A |
+| meadow.youArrow | marker over my blob | ChatGPT | `art/icons/state/you-arrow-16.png` (N-18) at 3x, bobbing | game.ts:269 / 766 | KIT-A |
+| meadow.floatGain | "+N" pop-up with resource icon | Code + Ninja | Phaser text Fredoka 26 / 24 `#ffe08a` + item icon | game.ts:1142 / 1187 | KIT-A |
+| meadow.pile | pile of items at home | Ninja | item icons | game.ts:967 | KIT-A |
+| meadow.plateBubble | "0/1" plate counter | Code | Phaser text bubble | game.ts:1084 | ARCH (puzzle pens) |
+
+## 70 meadowEnd
+
+| Name | What | Style system | Source | Created at | Status |
+|---|---|---|---|---|---|
+| meadowEnd.background | full-screen background | ChatGPT | `#end` bg `art/victory.png` (N-6) | style.css:38 / 1218 | KIT-A |
+| meadowEnd.panel | card | 9-slice | `#end .card`, F-PANEL | index.html:174, style.css:936 | KIT-A |
+| meadowEnd.stars | 3 stars | ChatGPT | `img.star`, `art/gather/star(-empty).png` (N-10), 76x68 | main.ts:609, style.css:1165 | KIT-A |
+| meadowEnd.team | team blobs | Code | `#end-team .blob` | index.html:176, style.css:1166 | KIT-A |
+| meadowEnd.bar | result bar per resource | CSS | `.endrows .qbar` F-THIN 18 px + plain CSS `.qfill` (gold / green) | style.css:1173-1175 | DUP (same job as meadowHud.questBar, different fill) |
+| meadowEnd.again | primary button | 9-slice | `#btn-again.big`, B-PRIMARY | index.html:180 | KIT-A |
+| meadowEnd.menu | secondary button with icon | CSS + ChatGPT icon | `#btn-menu.big.alt`, B-SECONDARY + `art/icons/ui/home-16.png` (N-17) | index.html:182 | KIT-A |
+| meadowEnd.wait | message line | CSS | `#end-wait.msg` | index.html:181 | KIT-A |
+| meadowEnd.mini | mini-game result | Ninja + ChatGPT | `#end-mini`, berry icon + stars | index.html:178 | ARCH (Bärregn) |
+
+## HUD meadowHud
 
 DOM layer over the game (`#hud`, index.html:108).
 
 | Name | What | Style system | Source | Created at | Status |
 |---|---|---|---|---|---|
-| hud.quest | HUD card | 9-slice | `#hud-quest`, F-PANEL | index.html:109, style.css:936 / 1041 | KIT-A |
-| hud.quest.home | icon | Ninja | `art/ninja/hut.png` (Ninja crop) | index.html:110 | KIT-A |
-| hud.quest.resIcon | icon | Ninja | `img.qicon`, `art/ninja/res-*.png` (Ninja crops, `src/resArt.ts`) | index.html:111 | KIT-A |
-| hud.questBar | progress bar | CSS + Ninja image fill | `.qbar` F-THIN 3 px radius; `.qfill` Ninja `Theme Wood/slider_progress.png` | index.html:111, style.css:1042 / 397 | DUP (fill differs from end.bar and loading.fill) |
-| hud.questStar | star | ChatGPT | `img.qstar`, `art/gather/star(-empty).png` (N-10), empty one tinted cream | index.html:111, style.css:1261 | KIT-A |
-| hud.questBuild | build goal row | ChatGPT + Ninja | `#q-build.qbuild`: building image + state badge | index.html:114, main.ts:487, style.css:484 / 641 | OLD (no kit A rule; hidden unless a build goal is active) |
-| hud.bank | HUD card (team store) | 9-slice | `#hud-bank`, F-PANEL + Ninja res icons | index.html:117, style.css:936 | KIT-A |
-| hud.edgeArrow | off-screen pointer | CSS | `.edge`, 46 px cream disc + 3 px plum ring (`box-shadow`); `.edge.home` orange | game.ts:918, style.css:488-492 | OLD |
-| hud.build | secondary button with icon | CSS + ChatGPT icon | `#btn-build.chip`, B-SECONDARY + `art/icons/ui/hammer-16.png` (N-17); `.can` = yellow glow | index.html:135, style.css:952 / 1037 | KIT-A |
-| hud.dash | round action button | ChatGPT + CSS | `#dash`: ring `art/dungeon/ui/btn-round-normal-24.png` (N-19b) at 72 px + plum disc + `art/icons/ui/dash-16.png` (N-24) | index.html:148, style.css:1300 | KIT-A (round-button family, shared with the dungeon `#attack`) |
-| hud.stick | thumbstick | Ninja | `#stick` / `#knob`, `Ui/Receptacle/Receptacle Sphere/BackgroundWood.png` + `ProgressYellow.png` | index.html:140, style.css:248 | OLD |
-| hud.hint | toast | CSS | `#hint`, plum `rgba(63,38,49,.9)` box, light text | index.html:149, style.css:162 / 259 / 334 | OLD |
-| hud.day | day bar | 9-slice + Ninja | `#hud-day`, `nine_path_bg.png` + slider + `Meteo/Sun.png` | index.html:116 | OLD + ARCH (day cycle) |
-| hud.mini | mini-game HUD | 9-slice | `#mini-hud`, F-PANEL; bar `nine_path_bg.png` + slider; timer CSS | index.html:124 | ARCH (Bärregn) |
-| hud.miniIntro | intro card | CSS | `#mini-intro`, 14 px radius cream + 4 px plum ring | index.html:130 | OLD + ARCH |
-| hud.miniSkip | secondary button | CSS | `#btn-skip-mini.chip`, B-SECONDARY | index.html:134 | KIT-A + ARCH |
+| meadowHud.quest | HUD card | 9-slice | `#hud-quest`, F-PANEL | index.html:109, style.css:936 / 1041 | KIT-A |
+| meadowHud.quest.home | icon | Ninja | `art/ninja/hut.png` (Ninja crop) | index.html:110 | KIT-A |
+| meadowHud.quest.resIcon | icon | Ninja | `img.qicon`, `art/ninja/res-*.png` (Ninja crops, `src/resArt.ts`) | index.html:111 | KIT-A |
+| meadowHud.questBar | progress bar | CSS + Ninja image fill | `.qbar` F-THIN 3 px radius; `.qfill` Ninja `Theme Wood/slider_progress.png` | index.html:111, style.css:1042 / 397 | DUP (fill differs from meadowEnd.bar and loading.fill) |
+| meadowHud.questStar | star | ChatGPT | `img.qstar`, `art/gather/star(-empty).png` (N-10), empty one tinted cream | index.html:111, style.css:1261 | KIT-A |
+| meadowHud.questBuild | build goal row | ChatGPT + Ninja | `#q-build.qbuild`: building image + state badge | index.html:114, main.ts:487, style.css:484 / 641 | OLD (no kit A rule; hidden unless a build goal is active) |
+| meadowHud.bank | HUD card (team store) | 9-slice | `#hud-bank`, F-PANEL + Ninja res icons | index.html:117, style.css:936 | KIT-A |
+| meadowHud.edgeArrow | off-screen pointer | CSS | `.edge`, 46 px cream disc + 3 px plum ring (`box-shadow`); `.edge.home` orange | game.ts:918, style.css:488-492 | OLD |
+| meadowHud.build | secondary button with icon | CSS + ChatGPT icon | `#btn-build.chip`, B-SECONDARY + `art/icons/ui/hammer-16.png` (N-17); `.can` = yellow glow | index.html:135, style.css:952 / 1037 | KIT-A |
+| meadowHud.dash | round action button | ChatGPT + CSS | `#dash`: ring `art/dungeon/ui/btn-round-normal-24.png` (N-19b) at 72 px + plum disc + `art/icons/ui/dash-16.png` (N-24) | index.html:148, style.css:1300 | KIT-A (round-button family, shared with the dungeon `#attack`) |
+| meadowHud.stick | thumbstick | Ninja | `#stick` / `#knob`, `Ui/Receptacle/Receptacle Sphere/BackgroundWood.png` + `ProgressYellow.png` | index.html:140, style.css:248 | OLD |
+| meadowHud.day | day bar | 9-slice + Ninja | `#hud-day`, `nine_path_bg.png` + slider + `Meteo/Sun.png` | index.html:116 | OLD + ARCH (day cycle) |
+| meadowHud.mini | mini-game HUD | 9-slice | `#mini-hud`, F-PANEL; bar `nine_path_bg.png` + slider; timer CSS | index.html:124 | ARCH (Bärregn) |
+| meadowHud.miniIntro | intro card | CSS | `#mini-intro`, 14 px radius cream + 4 px plum ring | index.html:130 | OLD + ARCH |
+| meadowHud.miniSkip | secondary button | CSS | `#btn-skip-mini.chip`, B-SECONDARY | index.html:134 | KIT-A + ARCH |
 
-### In-world UI (Phaser, `src/game.ts`)
-
-| Name | What | Style system | Source | Created at | Status |
-|---|---|---|---|---|---|
-| world.nameplate | label under each blob | Code | Phaser text, Fredoka 11 px `#fff8e8`, always on top | game.ts:677 / 764 | KIT-A |
-| world.youArrow | marker over my blob | ChatGPT | `art/icons/state/you-arrow-16.png` (N-18) at 3x, bobbing | game.ts:269 / 766 | KIT-A |
-| world.floatGain | "+N" pop-up with resource icon | Code + Ninja | Phaser text Fredoka 26 / 24 `#ffe08a` + item icon | game.ts:1142 / 1187 | KIT-A |
-| world.pile | pile of items at home | Ninja | item icons | game.ts:967 | KIT-A |
-| world.plateBubble | "0/1" plate counter | Code | Phaser text bubble | game.ts:1084 | ARCH (puzzle pens) |
-
-## Build menu
+## Overlay 10 build
 
 | Name | What | Style system | Source | Created at | Status |
 |---|---|---|---|---|---|
-| build.open | secondary button | CSS | = hud.build | index.html:135 | KIT-A |
+| build.open | secondary button | CSS | = meadowHud.build | index.html:135 | KIT-A |
 | build.panel | dialog card | 9-slice | `#build-panel`, F-PANEL | index.html:136, style.css:936 / 1034 | KIT-A |
 | build.title | heading | CSS | `.bphead b`, 24 px plum | index.html:137 | KIT-A |
 | build.close | square icon button | CSS + ChatGPT icon | `#btn-build-close.kclose`, B-SECONDARY 56x56 + `art/icons/ui/close-16.png` (N-17) | index.html:137, style.css:980 | KIT-A |
@@ -163,28 +206,21 @@ DOM layer over the game (`#hud`, index.html:108).
 | build.card.cost | cost strip | CSS + Ninja icons | `.bcost`, 2 px `#e4cf9f` top line; `.c.ok` / `.c.no` | main.ts:476, style.css:1077 | KIT-A |
 | build.card.state | badge | ChatGPT | `img.bstate`, `art/icons/state/can-build-16.png` / `lock-16.png` (N-18) at 2x | main.ts:415, style.css:1084 | KIT-A |
 
-## End screen
+## Overlay 50 toast
 
 | Name | What | Style system | Source | Created at | Status |
 |---|---|---|---|---|---|
-| end.background | full-screen background | ChatGPT | `#end` bg `art/victory.png` (N-6) | style.css:38 / 1218 | KIT-A |
-| end.panel | card | 9-slice | `#end .card`, F-PANEL | index.html:174, style.css:936 | KIT-A |
-| end.stars | 3 stars | ChatGPT | `img.star`, `art/gather/star(-empty).png` (N-10), 76x68 | main.ts:609, style.css:1165 | KIT-A |
-| end.team | team blobs | Code | `#end-team .blob` | index.html:176, style.css:1166 | KIT-A |
-| end.bar | result bar per resource | CSS | `.endrows .qbar` F-THIN 18 px + plain CSS `.qfill` (gold / green) | style.css:1173-1175 | DUP (same job as hud.questBar, different fill) |
-| end.again | primary button | 9-slice | `#btn-again.big`, B-PRIMARY | index.html:180 | KIT-A |
-| end.menu | secondary button with icon | CSS + ChatGPT icon | `#btn-menu.big.alt`, B-SECONDARY + `art/icons/ui/home-16.png` (N-17) | index.html:182 | KIT-A |
-| end.wait | message line | CSS | `#end-wait.msg` | index.html:181 | KIT-A |
-| end.mini | mini-game result | Ninja + ChatGPT | `#end-mini`, berry icon + stars | index.html:178 | ARCH (Bärregn) |
+| toast.hint | toast | CSS | `#hint`, plum `rgba(63,38,49,.9)` box, light text | index.html:149, style.css:162 / 259 / 334 | OLD |
 
 ## Dungeon (Code 2)
 
-Code 2 fills these sections: class pick (`#weapon-pick`, index.html:153), dungeon HUD (`#hud-dg`, `#dg-ko`, `#dg-cards`,
+Code 2 fills these ids: screens 80 dungeonEnter, 90 classPick, 100 dungeon, 110 dungeonEnd, 120 dungeonFail (if it
+exists), overlays 20 levelUp, 30 loot, 40 bossStrip, and the HUD dungeonHud. Elements today: class pick (`#weapon-pick`, index.html:153), dungeon HUD (`#hud-dg`, `#dg-ko`, `#dg-cards`,
 `#dg-loot`, `#dg-boss`, `#attack`), dungeon end (`#dg-end`, index.html:162) and the in-world dungeon UI
 (`src/dungeonScene.ts`, `src/dungeonUi.ts`, `src/dungeon.css`). From the meadow scan only, for orientation:
 - **Frames:** the dungeon cards use a dark-wood CSS frame (6 px `#2a1810` border + 2 px `#7a4b2a` ring).
 - **Buttons:** `#dg-roll` is B-PRIMARY with a darker shadow; `#dg-pass` is a cream CSS button with a different edge
-  (`#b88b55`). `#attack` uses the round ring (N-19b), like hud.dash.
+  (`#b88b55`). `#attack` uses the round ring (N-19b), like meadowHud.dash.
 
 ## Summary: distinct button/frame styles
 
@@ -195,27 +231,27 @@ counted.
 
 | Style | Looks like | System | Places | Where | Note for option A |
 |---|---|---|---|---|---|
-| B-PRIMARY | orange Ninja button, pixel edge | 9-slice | 4 | home.newGame, designer.done, lobby.start, end.again | becomes the orange CSS primary |
-| B-SECONDARY | "Slumpa": parchment, 2 px wood edge, 4 px radius, flush shadow | CSS | 15 | home.join, home.editBlob, designer.random, designer.pagerPrev/Next (2), join.back, join.rescan, lobby.back, lobby.newVillage, lobby.newVillageYes, lobby.newVillageNo, hud.build (= build.open), build.close, end.menu, hud.miniSkip (ARCH) | already the target style |
+| B-PRIMARY | orange Ninja button, pixel edge | 9-slice | 4 | home.newGame, designer.done, lobby.start, meadowEnd.again | becomes the orange CSS primary |
+| B-SECONDARY | "Slumpa": parchment, 2 px wood edge, 4 px radius, flush shadow | CSS | 15 | home.join, home.editBlob, designer.random, designer.pagerPrev/Next (2), join.back, join.rescan, lobby.back, lobby.newVillage, lobby.newVillageYes, lobby.newVillageNo, meadowHud.build (= build.open), build.close, meadowEnd.menu, meadowHud.miniSkip (ARCH) | already the target style |
 | Tab | joined tab, darker inactive | CSS | 1 (5 tabs) | designer.tab | kit A, matches the target family |
 | Selection tile | white tile, plum outline + green tick when chosen | CSS | 2 | designer.optionTile, designer.colorSwatch | kit A |
 | Build card | parchment card, green 3 px border when buildable | CSS | 1 | build.card | kit A |
 | Game row | green 3 px bordered row | CSS | 1 | join.gameRow | DUP of the build card "can" look |
 | Language pill | small plum-filled segment, 32 px high | CSS | 1 | home.langToggle | OLD, under 48 px |
 | Map card | Ninja `button_hover` 9-slice + plum ring | 9-slice | 1 | lobby.mapPick | OLD + ARCH |
-| Round ring | ChatGPT N-19b ring + plum disc + icon | ChatGPT | 1 (+1 dungeon) | hud.dash (+ `#attack`) | pixel art, stays (action button) |
+| Round ring | ChatGPT N-19b ring + plum disc + icon | ChatGPT | 1 (+1 dungeon) | meadowHud.dash (+ `#attack`) | pixel art, stays (action button) |
 
 **Frames, bars and toasts**
 
 | Style | Looks like | System | Places | Where | Note |
 |---|---|---|---|---|---|
-| F-PANEL | Ninja `nine_path_panel_3`, 6 px | 9-slice | 9 | home.playerCard, designer.panel, join.panel, lobby.panel, build.panel, end.panel, hud.quest, hud.bank, hud.mini (ARCH) | the kit A frame |
-| F-THIN | 2 px `#c9a46a` CSS line | CSS | 6 | designer.nameField, designer.optionsPanel, designer.tab, hud.questBar frame, end.bar frame, build.card (+ 1 px lobby.seat.name) | kit A inner frame |
-| Bar fill: Ninja image | `slider_progress.png` | Ninja | 3 | hud.questBar, hud.day (ARCH), hud.mini (ARCH) | DUP with the CSS fills |
-| Bar fill: CSS | flat colour | CSS | 2 | end.bar, loading.fill | DUP with the image fill |
-| F-BG | Ninja `nine_path_bg` 9-slice | 9-slice | 3 | loading.bar, hud.day (ARCH), hud.mini bar (ARCH) | DUP of F-THIN for bars |
-| Plum toast / disc | dark plum box or cream disc with plum ring | CSS | 4 | hud.hint, hud.edgeArrow, hud.miniIntro (ARCH), lobby.newVillageAsk (no frame) | OLD |
-| Thumbstick | Ninja receptacle sphere | Ninja | 1 | hud.stick | OLD, pixel art (stays as a world control) |
+| F-PANEL | Ninja `nine_path_panel_3`, 6 px | 9-slice | 9 | home.playerCard, designer.panel, join.panel, lobby.panel, build.panel, meadowEnd.panel, meadowHud.quest, meadowHud.bank, meadowHud.mini (ARCH) | the kit A frame |
+| F-THIN | 2 px `#c9a46a` CSS line | CSS | 6 | designer.nameField, designer.optionsPanel, designer.tab, meadowHud.questBar frame, meadowEnd.bar frame, build.card (+ 1 px lobby.seat.name) | kit A inner frame |
+| Bar fill: Ninja image | `slider_progress.png` | Ninja | 3 | meadowHud.questBar, meadowHud.day (ARCH), meadowHud.mini (ARCH) | DUP with the CSS fills |
+| Bar fill: CSS | flat colour | CSS | 2 | meadowEnd.bar, loading.fill | DUP with the image fill |
+| F-BG | Ninja `nine_path_bg` 9-slice | 9-slice | 3 | loading.bar, meadowHud.day (ARCH), meadowHud.mini bar (ARCH) | DUP of F-THIN for bars |
+| Plum toast / disc | dark plum box or cream disc with plum ring | CSS | 4 | toast.hint, meadowHud.edgeArrow, meadowHud.miniIntro (ARCH), lobby.newVillageAsk (no frame) | OLD |
+| Thumbstick | Ninja receptacle sphere | Ninja | 1 | meadowHud.stick | OLD, pixel art (stays as a world control) |
 
 **Bottom line**
 - **Buttons:** 9 looks today. B-SECONDARY (15 places) is already the option-A target; B-PRIMARY (4 places) is the only
