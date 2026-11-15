@@ -11,13 +11,13 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
   image / CSS background or border image / canvas icon, or a WebGL texture bound at a Phaser draw call); CODE ONLY =
   referenced but never shown in the run (remove the reference and the file); UNUSED = no reference and never shown.
 
-**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 195 / IN GAME 27 / UNUSED 86.
+**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 195 / IN GAME 27 / UNUSED 97.
 
 **Claude-drawn still IN GAME** (0): none
 
 **Kenney still IN GAME** (0): none
 
-**Counts by source:** ChatGPT 257 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 17 (Ninja: 112 referenced by code). **Own files:** 308, 18 delete candidates.
+**Counts by source:** ChatGPT 268 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 17 (Ninja: 112 referenced by code). **Own files:** 319, 29 delete candidates.
 
 ## Own files (art, Kenney, app icons)
 
@@ -92,6 +92,17 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/dungeon/items/stone.png` | 16x16 | ChatGPT N-23 loot items, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/ninjaArt.ts:9, src/style.css:1314, src/dungeon.ts:36 (+9) | keep |
 | `art/dungeon/potion.png` | 16x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | CODE ONLY | src/dungeon.ts:373, src/dungeon.ts:926, src/dungeonScene.ts:902 | replace (see OLD_ART_CHECKLIST) |
 | `art/dungeon/revive.png` | 48x20 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | CODE ONLY | src/dungeon.ts:371, src/dungeon.ts:583, src/dungeon.ts:625 (+2) | replace (see OLD_ART_CHECKLIST) |
+| `art/dungeon/sand-b.png` | 16x16 | ChatGPT N-35 sandstone room set (attempt 3), sliced by scripts/sand_room.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/sand-bl.png` | 16x16 | ChatGPT N-35 sandstone room set (attempt 3), sliced by scripts/sand_room.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/sand-br.png` | 16x16 | ChatGPT N-35 sandstone room set (attempt 3), sliced by scripts/sand_room.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/sand-door-closed.png` | 32x32 | ChatGPT N-35 sandstone room set (attempt 3), sliced by scripts/sand_room.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/sand-door-open.png` | 32x32 | ChatGPT N-35 sandstone room set (attempt 3), sliced by scripts/sand_room.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/sand-entrance.png` | 32x32 | ChatGPT N-35 sandstone room set (attempt 3), sliced by scripts/sand_room.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/sand-l.png` | 16x16 | ChatGPT N-35 sandstone room set (attempt 3), sliced by scripts/sand_room.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/sand-r.png` | 16x16 | ChatGPT N-35 sandstone room set (attempt 3), sliced by scripts/sand_room.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/sand-t.png` | 16x16 | ChatGPT N-35 sandstone room set (attempt 3), sliced by scripts/sand_room.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/sand-tl.png` | 16x16 | ChatGPT N-35 sandstone room set (attempt 3), sliced by scripts/sand_room.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/sand-tr.png` | 16x16 | ChatGPT N-35 sandstone room set (attempt 3), sliced by scripts/sand_room.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
 | `art/dungeon/skills/healer-bubble.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:25, src/dungeon.ts:33, src/dungeon.ts:122 | keep |
 | `art/dungeon/skills/healer-cleanse.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:26, src/dungeon.ts:33, src/dungeon.ts:125 | keep |
 | `art/dungeon/skills/healer-heal.png` | 16x16 | ChatGPT N-23 skill symbols, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:25, src/dungeon.ts:33, src/dungeon.ts:120 | keep |
@@ -706,6 +717,17 @@ See `archive/README.md`.
 - `art/dungeon/door-closed-48.png`
 - `art/dungeon/door-open-32.png`
 - `art/dungeon/door-open-48.png`
+- `art/dungeon/sand-b.png`
+- `art/dungeon/sand-bl.png`
+- `art/dungeon/sand-br.png`
+- `art/dungeon/sand-door-closed.png`
+- `art/dungeon/sand-door-open.png`
+- `art/dungeon/sand-entrance.png`
+- `art/dungeon/sand-l.png`
+- `art/dungeon/sand-r.png`
+- `art/dungeon/sand-t.png`
+- `art/dungeon/sand-tl.png`
+- `art/dungeon/sand-tr.png`
 - `art/dungeon/wall-b.png`
 - `art/dungeon/wall-bl.png`
 - `art/dungeon/wall-br.png`
