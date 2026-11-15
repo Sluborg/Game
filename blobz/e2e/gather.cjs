@@ -42,6 +42,11 @@ const tap = async (page) => { await page.locator('#dash').dispatchEvent('pointer
     for (let h = 0; h < 3; h++) {
       await tap(ada);
       if (h === 1 && shots) { await ada.waitForTimeout(230); await ada.screenshot({ path: `${shots}/a-chop-portrait.png` }); }
+      if (h === 1) {
+        await ada.waitForTimeout(120); // mid-swing: the axe is out
+        const covers = await ada.evaluate(() => Object.values(window.__blobzCovers || {}).flatMap((f) => f()));
+        ok(covers.length === 0, `mid-swing: no nameplate is covered by the tool or anything else (${covers.join(',') || 'none'})`);
+      }
       await ada.waitForTimeout(380); await beside(host, 1, tree);
     }
     await ada.waitForFunction(() => window.__blobzView.players[1].carry.includes('wood'), null, { timeout: 5000 });
@@ -71,6 +76,8 @@ const tap = async (page) => { await page.locator('#dash').dispatchEvent('pointer
     await bo.waitForFunction(() => { const v = window.__blobzView; return v.bank.wood >= 1 && v.bank.stone >= 1 && v.bank.berry >= 1; }, null, { timeout: 5000 });
     await ada.waitForFunction(() => document.getElementById('bank-wood').textContent !== '0', null, { timeout: 5000 });
     ok(true, 'bank counters show the delivery on a joiner');
+    const coversHome = await ada.evaluate(() => Object.values(window.__blobzCovers || {}).flatMap((f) => f()));
+    ok(coversHome.length === 0, `at home: no nameplate is covered by the base flag, the cottage or a tool (${coversHome.join(',') || 'none'})`);
 
     // finish the berry row: its star lights up
     await sim(host, (s) => { s.delivered.berry = s.quest.berry - 1; const p = s.players[1]; p.carry = ['berry']; p.x = 640; p.y = 480; });
