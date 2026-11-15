@@ -11,13 +11,13 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
   image / CSS background or border image / canvas icon, or a WebGL texture bound at a Phaser draw call); CODE ONLY =
   referenced but never shown in the run (remove the reference and the file); UNUSED = no reference and never shown.
 
-**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 199 / IN GAME 27 / UNUSED 93.
+**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 198 / IN GAME 27 / UNUSED 93.
 
 **Claude-drawn still IN GAME** (0): none
 
 **Kenney still IN GAME** (0): none
 
-**Counts by source:** 0x72 1 / ChatGPT 268 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 16 (Ninja: 112 referenced by code). **Own files:** 319, 29 delete candidates.
+**Counts by source:** 0x72 1 / ChatGPT 267 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 16 (Ninja: 112 referenced by code). **Own files:** 318, 29 delete candidates.
 
 ## Own files (art, Kenney, app icons)
 
@@ -29,8 +29,8 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/app-icon/icon-maskable-192.png` | 192x192 | ChatGPT N-7 app icon, resized by scripts/slice_n_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/app-icon/icon-maskable-512.png` | 512x512 | ChatGPT N-7 app icon, resized by scripts/slice_n_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/base/bridge.png` | 48x24 | Claude-drawn: scripts/base_art.py | Own art (CC0) | CODE ONLY | src/sim.ts:146, src/sim.ts:147, src/sim.ts:155 (+6) | replace (see OLD_ART_CHECKLIST) |
-| `art/base/btn-build.png` | 20x20 | Claude-drawn: scripts/base_art.py | Own art (CC0) | CODE ONLY | src/main.ts:439, src/main.ts:449, src/main.ts:492 (+1) | replace (see OLD_ART_CHECKLIST) |
-| `art/base/cottage-1.png` | 44x31 | Cut from ChatGPT loading art by scripts/cut_loading_house.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/sim.ts:878, src/main.ts:752 | replace (see OLD_ART_CHECKLIST) |
+| `art/base/btn-build.png` | 20x20 | Claude-drawn: scripts/base_art.py | Own art (CC0) | CODE ONLY | src/main.ts:442, src/main.ts:452, src/main.ts:495 (+1) | replace (see OLD_ART_CHECKLIST) |
+| `art/base/cottage-1.png` | 44x31 | Cut from ChatGPT loading art by scripts/cut_loading_house.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/sim.ts:878, src/main.ts:755 | replace (see OLD_ART_CHECKLIST) |
 | `art/base/garden.png` | 40x30 | Claude-drawn: scripts/base_art.py | Own art (CC0) | CODE ONLY | src/sim.ts:146, src/sim.ts:147, src/sim.ts:155 (+2) | replace (see OLD_ART_CHECKLIST) |
 | `art/base/storage.png` | 36x34 | Claude-drawn: scripts/base_art.py | Own art (CC0) | CODE ONLY | src/uikit2.ts:200, src/sim.ts:146, src/sim.ts:147 (+3) | replace (see OLD_ART_CHECKLIST) |
 | `art/base/watchtower.png` | 30x52 | Claude-drawn: scripts/base_art.py | Own art (CC0) | CODE ONLY | src/uikit2.ts:201, src/sim.ts:146, src/sim.ts:147 (+2) | replace (see OLD_ART_CHECKLIST) |
@@ -182,7 +182,7 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/fine/icons/magnet.png` | 30x30 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | CODE ONLY | src/sim.ts:54, src/sim.ts:815 | replace (see OLD_ART_CHECKLIST) |
 | `art/fine/icons/speed.png` | 32x32 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | CODE ONLY | src/sim.ts:54, src/sim.ts:746, src/sim.ts:815 (+2) | replace (see OLD_ART_CHECKLIST) |
 | `art/gather/star-empty.png` | 19x17 | ChatGPT N-10, sliced by scripts/slice_n_orders.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/ninjaArt.ts:19, src/style.css:1261, index.html:111 (+3) | keep |
-| `art/gather/star.png` | 19x17 | ChatGPT N-10, sliced by scripts/slice_n_orders.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/ninjaArt.ts:19, src/main.ts:606, src/main.ts:609 | keep |
+| `art/gather/star.png` | 19x17 | ChatGPT N-10, sliced by scripts/slice_n_orders.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/ninjaArt.ts:19, src/main.ts:609, src/main.ts:612 | keep |
 | `art/gather/sun.png` | 13x13 | Claude-drawn: scripts/gather_art.py | Own art (CC0) | CODE ONLY | index.html:116 | replace (see OLD_ART_CHECKLIST) |
 | `art/icons/back.png` | 13x9 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonUi.ts:77, src/uikit2.ts:42, index.html:81 (+1) | replace (see OLD_ART_CHECKLIST) |
 | `art/icons/check.png` | 19x16 | ChatGPT N-10, sliced by scripts/slice_n_orders.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/uikit.ts:11, src/ninjaArt.ts:18, src/style.css:306 (+2) | keep |
@@ -198,11 +198,11 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/icons/res-stone-32.png` | 32x32 | ChatGPT N-32 stone icon, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/icons/res-wood-16.png` | 16x16 | ChatGPT N-27 wood icon, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/resArt.ts:12 | keep |
 | `art/icons/res-wood-32.png` | 32x32 | ChatGPT N-27 wood icon, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/style.css:1366, src/resArt.ts:12, index.html:111 (+2) | keep |
-| `art/icons/state/can-build-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/ninjaArt.ts:16, src/uikit2.ts:16, src/main.ts:415 | keep |
+| `art/icons/state/can-build-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/ninjaArt.ts:16, src/uikit2.ts:16, src/main.ts:418 | keep |
 | `art/icons/state/can-build-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16 | keep |
-| `art/icons/state/done-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16, src/main.ts:415 | keep |
+| `art/icons/state/done-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16, src/main.ts:418 | keep |
 | `art/icons/state/done-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16 | keep |
-| `art/icons/state/lock-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/ninjaArt.ts:16, src/uikit2.ts:16, src/main.ts:415 | keep |
+| `art/icons/state/lock-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/ninjaArt.ts:16, src/uikit2.ts:16, src/main.ts:418 | keep |
 | `art/icons/state/lock-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16 | keep |
 | `art/icons/state/tick-gold-16.png` | 16x16 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16 | keep |
 | `art/icons/state/tick-gold-32.png` | 32x32 | ChatGPT N-18 state badges, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:16 | keep |
@@ -253,7 +253,6 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/lobby/searching-blob-2.png` | 32x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/lobby/searching-blob-3.png` | 32x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/lobby/searching-blob.png` | 128x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/style.css:1153 | keep |
-| `art/lobby/waiting-silhouette.png` | 20x20 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/main.ts:351 | keep |
 | `art/logo-A.png` | 634x407 | ChatGPT N-1 logo (A/B/old = earlier variants) | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/logo-B.png` | 653x442 | ChatGPT N-1 logo (A/B/old = earlier variants) | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/logo-old.png` | 680x279 | ChatGPT N-1 logo (A/B/old = earlier variants) | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
@@ -271,7 +270,7 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/mini/bg.png` | 941x1672 | ChatGPT N-9 Bärregn background | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/game.ts:283 | keep |
 | `art/ninja/bridge.png` | 64x46 | Ninja crop: Ninja Adventure rect cut by scripts/ninja_crops.py (Code) | CC0 1.0 (Ninja Adventure) | IN GAME | src/ninjaArt.ts:24, src/sim.ts:146, src/sim.ts:147 (+7) | keep |
 | `art/ninja/bush.png` | 32x32 | Ninja crop: Ninja Adventure rect cut by scripts/ninja_crops.py (Code) | CC0 1.0 (Ninja Adventure) | CODE ONLY (loaded, not shown) | src/ninjaArt.ts:24, index.html:92 | keep |
-| `art/ninja/cottage-1.png` | 42x39 | Ninja crop: Ninja Adventure rect cut by scripts/ninja_crops.py (Code) | CC0 1.0 (Ninja Adventure) | CODE ONLY (loaded, not shown) | src/ninjaArt.ts:24, src/sim.ts:878, src/main.ts:752 | keep |
+| `art/ninja/cottage-1.png` | 42x39 | Ninja crop: Ninja Adventure rect cut by scripts/ninja_crops.py (Code) | CC0 1.0 (Ninja Adventure) | CODE ONLY (loaded, not shown) | src/ninjaArt.ts:24, src/sim.ts:878, src/main.ts:755 | keep |
 | `art/ninja/cottage-2.png` | 64x48 | Ninja crop: Ninja Adventure rect cut by scripts/ninja_crops.py (Code) | CC0 1.0 (Ninja Adventure) | IN GAME | src/ninjaArt.ts:24, src/sim.ts:878 | keep |
 | `art/ninja/cottage-3.png` | 64x112 | Ninja crop: Ninja Adventure rect cut by scripts/ninja_crops.py (Code) | CC0 1.0 (Ninja Adventure) | IN GAME | src/ninjaArt.ts:24, src/sim.ts:878 | keep |
 | `art/ninja/flag.png` | 16x16 | Ninja crop: Ninja Adventure rect cut by scripts/ninja_crops.py (Code) | CC0 1.0 (Ninja Adventure) | IN GAME | src/ninjaArt.ts:20, src/ninjaArt.ts:24 | keep |
