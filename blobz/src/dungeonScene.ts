@@ -34,6 +34,7 @@ const WSCALE = 3; // 1 art px = 1 blob px (BLOB_SCALE): the weapons' pixels matc
  *  are in art/dungeon/weapons/ (README). The ChatGPT sprites there stay in the repo, unused. */
 const WIMG: Record<string, { src: string; w: number; h: number; px: number; py: number; up?: boolean }> = {
   sword: { src: NA + 'Items/Weapons/Sword/Sprite.png', w: 6, h: 17, px: 3, py: 14, up: true },
+  bigsword: { src: NA + 'Items/Weapons/BigSword/Sprite.png', w: 7, h: 16, px: 3, py: 13, up: true }, // the knight's sword (Stefan's pick #3), pivot at the grip
   sai: { src: NA + 'Items/Weapons/Sai/Sprite.png', w: 7, h: 13, px: 3.5, py: 11, up: true },
   dagger: { src: NA + 'Items/Weapons/Ninjaku/SpriteInHand.png', w: 3, h: 12, px: 1.5, py: 9.5, up: true }, // Stefan: a plain straight dagger
   hammer: { src: NA + 'Items/Weapons/Hammer/Sprite.png', w: 9, h: 16, px: 4.5, py: 14, up: true },
@@ -43,7 +44,7 @@ const WIMG: Record<string, { src: string; w: number; h: number; px: number; py: 
   crossbow: { src: 'art/dungeon/weapons/crossbow-16.png', w: 16, h: 16, px: 1, py: 7 }, // ChatGPT N-11
 };
 /** which sprite each weapon id draws (the Riddare, id 'shield', slashes with the sword) */
-const WART: Record<Weapon, string> = { sword: 'sword', shield: 'sword', dagger: 'dagger', hammer: 'hammer', staff: 'wand', spear: 'lance', bow: 'crossbow' };
+const WART: Record<Weapon, string> = { sword: 'sword', shield: 'bigsword', dagger: 'dagger', hammer: 'hammer', staff: 'wand', spear: 'lance', bow: 'crossbow' };
 const FONT = "'Fredoka', sans-serif"; // same as the meadow
 const DEBUG = new URLSearchParams(location.search).has('debug');
 const HITBOX = new URLSearchParams(location.search).has('hitbox'); // ?hitbox draws the sim's circles
