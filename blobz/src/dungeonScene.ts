@@ -224,7 +224,7 @@ export class DungeonScene extends Phaser.Scene {
     this.auraG = this.add.graphics().setDepth(-300);
     this.hitG = this.add.graphics().setDepth(9000);
     this.ringG = this.add.graphics().setDepth(4000);
-    this.doorG = this.add.graphics().setDepth(-790); // rooms: the gather ring at the open door (on the floor, under the blobz)
+    this.doorG = this.add.graphics().setDepth(-895); // rooms: the gather ring at the open door: on the floor, UNDER the door (-890) so the door hides its top, under the blobz
     this.bubble = this.add.text(0, 0, '', { fontFamily: FONT, fontSize: '22px', color: '#3f2631', fontStyle: 'bold', backgroundColor: '#fff7e6', padding: { x: 8, y: 2 } })
       .setOrigin(0.5, 1).setDepth(6000).setVisible(false);
     if (DEBUG) (window as unknown as { __dgScene?: Phaser.Scene }).__dgScene = this; // e2e: map + camera checks
