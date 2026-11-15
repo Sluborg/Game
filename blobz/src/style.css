@@ -1217,3 +1217,74 @@ input, #name {
 @media (orientation: landscape) {
   #end.screen { background: #6bc144 url('/art/victory.png') center 80% / cover no-repeat; }
 }
+
+/* build menu fix (Lead 2026-11-15): the N-18 badge sits on the card's frame corner, never on the building;
+   a 72 px art box so all 7 cards fit in portrait; the sheet leaves the bottom of the screen free */
+#build-panel { max-height: calc(100% - 210px); }
+#build-panel .bcard { overflow: visible; grid-template-rows: auto 76px auto auto; padding: 6px 4px; }
+#build-panel .bcard .bimg { height: 76px; }
+#build-panel .bcard .bstate, #build-panel .bcard .bimg .bstate { position: absolute; right: -10px; top: -10px; left: auto; width: 32px; height: 32px; z-index: 2; image-rendering: pixelated; }
+#build-panel .bcard .bname { min-height: 0; font-size: 15px; }
+#build-panel .bcard .beff { font-size: 14px; line-height: 1.15; }
+#build-panel .bcards { padding: 10px 8px 4px; gap: 12px 10px; }
+/* when it does scroll (small phones), a soft fade + arrow hint at the bottom */
+#build-panel.scrolls::after { content: ''; position: sticky; display: block; bottom: -8px; height: 28px; margin-top: -28px;
+  background: linear-gradient(transparent, var(--k-parch)); pointer-events: none; }
+@media (orientation: landscape) and (max-height: 520px) {
+  #build-panel { max-height: 96vh; }
+  #build-panel .bcard { grid-template-rows: auto 72px auto auto; }
+  #build-panel .bcard .bimg { height: 72px; }
+}
+/* badge on the bottom-right frame corner (free of the name and the cost); 64 px box so 3 rows fit in portrait */
+#build-panel .bcard .bstate { top: auto; bottom: -10px; right: -10px; }
+#build-panel { max-height: calc(100% - 128px); }
+#build-panel .bcard { grid-template-rows: auto 66px auto auto; }
+#build-panel .bcard .bimg { height: 66px; }
+@media (orientation: landscape) and (max-height: 520px) { #build-panel { max-height: 96vh; } }
+#build-panel .bcard .bcost { padding-right: 16px; padding-left: 4px; }
+
+/* lobby fix: free seats read as a free seat (light, semi-transparent dotted outline, gently bobbing), not grey rocks;
+   names sit above the platform edge */
+#lobby #lobby-list .seat.free img { opacity: 0.45; filter: brightness(1.25) contrast(0.7); animation: freeseat 2.4s ease-in-out infinite; outline: 2px dashed #a87e4699; outline-offset: -2px; border-radius: 50% 50% 8px 8px; }
+@keyframes freeseat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+#lobby #lobby-list { padding-bottom: 44px; }
+#lobby #lobby-list li.seat { margin-bottom: -6px; }
+#lobby #lobby-list .seat .seatname { background: var(--k-parch2); border: 1px solid var(--k-edge); border-radius: 4px; padding: 0 4px; line-height: 18px; }
+#lobby #lobby-list .seat.free img { margin-bottom: 22px; }
+
+/* Join fix: the status line is readable (16 px dark plum), the empty card hugs the searching blob */
+#join .help, #lan-status { font-size: 17px; color: var(--k-plum); font-weight: 600; }
+#menu #join.card { min-height: 0; width: auto; max-width: 360px; }
+#menu #join.card .lanlist:empty { display: none; }
+
+/* stars (fix): N-10 everywhere, gold when earned, a light cream outline while still open (was grey) */
+img[src$="star-empty.png"] { filter: sepia(0.6) saturate(0.6) brightness(1.75) contrast(0.85); opacity: 0.9; }
+
+/* meadow HUD (fix): the carried/bank pill keeps clear of the screen edge and of the quest bar */
+@media (orientation: portrait) {
+  #hud-bank { right: max(14px, env(safe-area-inset-right)) !important; top: calc(max(8px, env(safe-area-inset-top)) + 64px) !important; }
+}
+
+/* home (fix): one quiet menu zone. Portrait: the player card sits with the buttons at the bottom (not over the roof).
+   Landscape: logo, then the player card and the buttons side by side, all in the calm left half of the art. */
+#menu #home.home { grid-template-rows: auto 1fr auto auto auto; grid-template-areas: 'logo' '.' 'me' 'actions' 'foot'; gap: 12px; }
+#menu #home .me { align-self: end; }
+@media (orientation: landscape) {
+  #menu #home.home {
+    grid-template-columns: minmax(0, 220px) minmax(0, 260px) 1fr; grid-template-rows: auto 1fr auto;
+    grid-template-areas: 'logo logo .' 'me actions .' 'foot foot .'; align-items: center; justify-items: start; column-gap: 16px;
+  }
+  #menu #home .logo { justify-self: start; }
+  #menu #home .logo-img { width: 440px; max-width: 52vw; max-height: 30vh; object-fit: contain; object-position: left center; }
+  #menu #home .me { justify-self: stretch; align-self: center; }
+  #menu #home .actions { width: 260px; align-self: center; }
+  #menu #home .homefoot { justify-self: start; }
+}
+@media (orientation: landscape) {
+  #menu #home.home { grid-template-columns: 280px 1fr; grid-template-rows: auto auto auto 1fr auto; grid-template-areas: 'logo .' 'me .' 'actions .' '. .' 'foot .'; row-gap: 8px; align-items: start; }
+  #menu #home .logo-img { width: 260px; max-width: 280px; max-height: 26vh; }
+  #menu #home .me { flex-direction: row; justify-self: stretch; gap: 12px; padding: 4px 10px; }
+  #menu #home .me .blob, #menu #home .me .blob img { width: 60px; height: 60px; }
+  #menu #home .actions { width: 280px; gap: 8px; }
+  #menu #home .actions button.big { min-height: 52px; }
+}

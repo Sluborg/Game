@@ -415,16 +415,16 @@ const COST_ICON: Record<string, string> = { wood: NI.wood, stone: NI.stone, berr
 const STATE_ICON = { can: 'art/icons/state/can-build-16.png', lock: 'art/icons/state/lock-16.png', done: 'art/icons/state/done-16.png' }; // ChatGPT N-18
 const buildName = (k: BuildKind) => t(`build.name.${k}` as Key);
 /** Building picture box in the build cards (css px); pictures use the largest whole scale that fits. */
-const BIMG_BOX = 104;
+const BIMG_BOX = 64;
 function buildCard(kind: BuildKind | 'cottage'): HTMLButtonElement {
   const b = document.createElement('button');
   b.type = 'button'; b.className = 'bcard'; b.dataset.kind = kind;
   // PLAN step 3: name on top, the building in a fixed box (largest whole scale that fits), a short line, the cost strip
   // at the bottom; N-18 badge top-left: can-build / lock / done. No icon row.
-  b.innerHTML = '<b class="bname"></b><span class="bimg"><img alt="" /><img class="bstate" alt="" /></span><span class="beff"></span><span class="bcost"></span>';
+  b.innerHTML = '<b class="bname"></b><span class="bimg"><img alt="" /></span><span class="beff"></span><span class="bcost"></span><img class="bstate" alt="" />';
   const im = b.querySelector<HTMLImageElement>('.bimg img')!;
   im.onload = () => {
-    const box = matchMedia('(orientation: landscape) and (max-height: 520px)').matches ? 72 : BIMG_BOX;
+    const box = BIMG_BOX; // same box in both orientations so all 7 cards fit
     const fit = Math.min(box / im.naturalWidth, box / im.naturalHeight);
     const sc = fit >= 1 ? Math.floor(fit) : fit; // whole scales; only a picture taller than the box shrinks
     im.style.width = im.naturalWidth * sc + 'px'; im.style.height = im.naturalHeight * sc + 'px';
@@ -436,7 +436,10 @@ function setupBuildPanel() {
   const grid = $('build-cards');
   if (grid.childElementCount) return;
   grid.append(...[...BUILD_KINDS, 'cottage' as const].map(buildCard));
-  $('btn-build').onclick = () => { panelOpen = true; show('build-panel'); };
+  $('btn-build').onclick = () => {
+    panelOpen = true; show('build-panel');
+    requestAnimationFrame(() => { const p = $('build-panel'); p.classList.toggle('scrolls', p.scrollHeight > p.clientHeight + 2); });
+  };
   $('btn-build-close').onclick = () => { panelOpen = false; show('build-panel', false); };
 }
 function renderBuildPanel(v: View) {
