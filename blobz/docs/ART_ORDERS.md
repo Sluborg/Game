@@ -41,10 +41,11 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (next: none, queue empty). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
+ChatGPT works only on N-orders with status TO DO (next: N-34). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
+| N-34 | TO DO (FIRST) | Dungeon room door for the Archero rooms, closed + open, 32x32 + 48x32 | `art/dungeon/door-*` |
 | N-1 | DONE (C chosen) | Title header / logo in Ninja Adventure style | `art/logo.png` |
 | N-2 | DONE (portrait + landscape) | Start screen background | `art/title.png` |
 | N-3 | DONE | Loading screen (portrait + landscape approved) | `art/loading.png`, `art/loading-landscape.png` |
@@ -372,6 +373,25 @@ pixels at the base, NOT floating): 1 on EXACTLY a 32x32 grid, 2 another shape on
 EXACTLY a 48x32 grid.
 Row 2: under each boulder, its depleted rubble (a few small grey chips and pebbles) on EXACTLY a 16x16 grid, in the SAME
 grey palette as its boulder.
+```
+
+### N-34 Dungeon room door (do this FIRST)
+```
+STYLE: exactly like your N-26 trees (same dark near-black outline, 2-3 tone shading, pixel size): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n26-trees.png
+PALETTE: the stone colours of this dungeon tileset (dark blue-grey stone, warm brown wood): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/assets/ninja-adventure/Backgrounds/Tilesets/TilesetDungeon.png
+Solid flat magenta #ff00ff background, hard pixel edges, no glow, halo or shadow touching the magenta. Deliver at 8x
+nearest-neighbour, generous magenta space between sprites. Top-down 3/4 view like the game. No text, no labels.
+A DUNGEON ROOM DOOR set into the top edge of a dark stone wall (the wall the player walks up to at the top of a
+room): a stone arch frame with a heavy wooden door with iron bands. Two states:
+1 CLOSED: the wooden door shut inside the stone arch.
+2 OPEN: no door, a dark passage inside the arch with a faint warm light deep inside (a few lighter pixels, no glow
+  outside the arch).
+Each state in TWO sizes, each drawn natively at that size (NOT one scaled up):
+- EXACTLY 32x32 art pixels (door about 16 px wide inside the arch, wall stone filling the rest of the width)
+- EXACTLY 48x32 art pixels (wider: door about 24 px wide, more wall stone on both sides)
+Both sizes: 1 px dark outline at that scale, the wall stone runs to the left and right edge of the cell so it can sit
+on a stone wall row, the bottom row is the floor line.
+Layout: row 1 = 32x32 closed, 32x32 open; row 2 = 48x32 closed, 48x32 open. Magenta between all four.
 ```
 
 ### N-30 Puzzle set (ON HOLD: puzzles on hold 2026-11-15)
