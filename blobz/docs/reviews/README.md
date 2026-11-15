@@ -15,5 +15,9 @@ Lead have discussed and planned them together.
 - Pixel ladder: **world + HUD icons 3x, framed blob portraits exactly 6x**, nothing in between.
 - Dungeon: **dark-wood variant** of the same UI; brighter floor, torch light, colourful goo.
 - Loading: the dusk cave art is the **dungeon entry** screen, shown a couple of seconds for atmosphere even if
-  loading is done. (App-start loading: open, see below.)
+  loading is done. App-start loading uses the **sunny village art** (N-2) with logo + wood progress bar.
 - Polish wanted: living blobz, juice, blob-wipe transitions, friendly empty states.
+- Lobby/Join: **5 player slots** (6x blobz, waiting silhouettes), **searching blob** on Join with big blob cards,
+  **one back button style** (chevron chip top-left), **'Ny by' moved away** in secondary wood style.
+- Meadow HUD: **merge + bigger**: one row per resource (icon, bar toward goal, star), bigger icons and numbers.
+- Bärregn: **archived** (behind a flag, like the snow map). After the meadow round: straight to the end screen.
