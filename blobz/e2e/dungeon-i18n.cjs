@@ -2,6 +2,7 @@
 // leaks on the English dungeon screens (class/weapon cards, HUD, level-up cards, loot card, KO, summary)
 // and the Swedish phone stays Swedish.
 // Usage: npm run build && npx vite preview --port 4173 &  node e2e/dungeon-i18n.cjs [baseUrl] [shotDir]
+const EXIT_EN = 'You climbed out of the cave.';
 const { chromium } = require('playwright');
 const { LANDSCAPE, PORTRAIT, ok, sim } = require('./helpers.cjs');
 const base = process.argv[2] || 'http://localhost:4173/';
@@ -77,9 +78,9 @@ async function phone(browser, name, locale, size = PORTRAIT) {
     await noSwedish(en, 'KO banner');
 
     // summary
-    await sim(en, (s) => { s.dg.time = 0.05; });
+    await sim(en, (s) => { s.dg.done = 6; s.dg.why = 'exit'; }); // no clock any more: the run ends at the exit
     for (const p of [en, sv]) await p.waitForSelector('#dg-end:not(.hidden)', { timeout: 6000 });
-    ok((await en.textContent('#dg-end h2')).trim() === 'Dungeon done!' && (await en.textContent('#dg-end')).includes('Time ran out.'), 'EN summary ("Dungeon done!", "Time ran out.")');
+    ok((await en.textContent('#dg-end h2')).trim() === 'Dungeon done!' && (await en.textContent('#dg-end')).includes(EXIT_EN), `EN summary ("Dungeon done!", "${EXIT_EN}")`);
     ok((await sv.textContent('#dg-end h2')).trim() === 'Dungeon klar!', 'SV summary ("Dungeon klar!")');
     await noSwedish(en, 'summary');
     if (shots) await en.screenshot({ path: `${shots}/dg-i18n-end-en.png` });

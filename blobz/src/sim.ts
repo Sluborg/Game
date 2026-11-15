@@ -217,7 +217,9 @@ export function entranceOf(seed: number): { x: number; y: number } {
     && !(BUILDING_ENABLED && Object.values(BUILD_SPOTS).some((b) => Math.hypot(b.x - p.x, b.y - p.y) < 120));
   return spots.find(clear) ?? spots[0];
 }
-export const PICK_SECONDS = 20; // unpicked blobz get the sword after this
+export const PICK_SECONDS = 20; // unpicked blobz get the sword after this (only with the pick timer on)
+/** Stefan 2026-11-15 (Code 2 hook): no class-pick timer, the run starts when everyone has picked (docs/ARCHIVED.md). */
+export const PICK_TIMER_ENABLED = false;
 export type Mode = 'meadow' | 'pick' | 'dungeon';
 export const MODES: Mode[] = ['meadow', 'pick', 'dungeon'];
 
@@ -558,8 +560,8 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
   if (s.phase !== 'play') return;
   if (s.mode === 'pick') {
     // weapon cards on every phone; go down when all picked (or after PICK_SECONDS)
-    s.pickT -= dt;
-    if (s.players.every((p) => s.picks[p.id]) || s.pickT <= 0) enterDungeon(s);
+    if (PICK_TIMER_ENABLED) s.pickT -= dt;
+    if (s.players.every((p) => s.picks[p.id]) || (PICK_TIMER_ENABLED && s.pickT <= 0)) enterDungeon(s);
     return;
   }
   const inDungeon = s.mode === 'dungeon';
