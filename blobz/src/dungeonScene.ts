@@ -3,7 +3,8 @@
 // Also draws the dungeon entrance on the meadow (dungeonFrame is the one hook GameScene calls).
 import Phaser from 'phaser';
 import { blobCanvas, BLOB_FRAMES, BODY_CY, clampLook, facingFromVelocity, type Facing } from './blob';
-import { fw, fh, ft, makeRoom, roomCracks, ROOMS, MINIBOSS_ROOM, SPAWN_WARN, AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
+import { drawGatherRing } from './gatherRing';
+import { fw, fh, ft, inDoorway, makeRoom, roomCracks, ROOMS, MINIBOSS_ROOM, SPAWN_WARN, AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
 /** Weapons without Art's strip yet: a Kenney Tiny Dungeon tile in hand (bow: drawn in code). */
 import type { Session } from './game';
 import { sfx } from './sfx';
@@ -34,6 +35,7 @@ const WSCALE = 3; // 1 art px = 1 blob px (BLOB_SCALE): the weapons' pixels matc
  *  are in art/dungeon/weapons/ (README). The ChatGPT sprites there stay in the repo, unused. */
 const WIMG: Record<string, { src: string; w: number; h: number; px: number; py: number; up?: boolean }> = {
   sword: { src: NA + 'Items/Weapons/Sword/Sprite.png', w: 6, h: 17, px: 3, py: 14, up: true },
+  bigsword: { src: NA + 'Items/Weapons/BigSword/Sprite.png', w: 7, h: 16, px: 3, py: 13, up: true }, // the knight's sword (Stefan's pick #3), pivot at the grip
   sai: { src: NA + 'Items/Weapons/Sai/Sprite.png', w: 7, h: 13, px: 3.5, py: 11, up: true },
   dagger: { src: NA + 'Items/Weapons/Ninjaku/SpriteInHand.png', w: 3, h: 12, px: 1.5, py: 9.5, up: true }, // Stefan: a plain straight dagger
   hammer: { src: NA + 'Items/Weapons/Hammer/Sprite.png', w: 9, h: 16, px: 4.5, py: 14, up: true },
@@ -43,7 +45,7 @@ const WIMG: Record<string, { src: string; w: number; h: number; px: number; py: 
   crossbow: { src: 'art/dungeon/weapons/crossbow-16.png', w: 16, h: 16, px: 1, py: 7 }, // ChatGPT N-11
 };
 /** which sprite each weapon id draws (the Riddare, id 'shield', slashes with the sword) */
-const WART: Record<Weapon, string> = { sword: 'sword', shield: 'sword', dagger: 'dagger', hammer: 'hammer', staff: 'wand', spear: 'lance', bow: 'crossbow' };
+const WART: Record<Weapon, string> = { sword: 'sword', shield: 'bigsword', dagger: 'dagger', hammer: 'hammer', staff: 'wand', spear: 'lance', bow: 'crossbow' };
 const FONT = "'Fredoka', sans-serif"; // same as the meadow
 const DEBUG = new URLSearchParams(location.search).has('debug');
 const HITBOX = new URLSearchParams(location.search).has('hitbox'); // ?hitbox draws the sim's circles
@@ -122,6 +124,7 @@ export class DungeonScene extends Phaser.Scene {
   private spits = new Map<number, { s: Phaser.GameObjects.Sprite; o: Phaser.GameObjects.Sprite; px: number; py: number }>();
   private ringG!: Phaser.GameObjects.Graphics;
   private clsG!: Phaser.GameObjects.Graphics;
+  private doorG!: Phaser.GameObjects.Graphics;
   private auraG!: Phaser.GameObjects.Graphics;
   private hitG!: Phaser.GameObjects.Graphics;
   private bubble!: Phaser.GameObjects.Text;
@@ -217,6 +220,7 @@ export class DungeonScene extends Phaser.Scene {
     this.auraG = this.add.graphics().setDepth(-300);
     this.hitG = this.add.graphics().setDepth(9000);
     this.ringG = this.add.graphics().setDepth(4000);
+    this.doorG = this.add.graphics().setDepth(-790); // rooms: the gather ring at the open door (on the floor, under the blobz)
     this.clsG = this.add.graphics().setDepth(-800); // ?noweapons: class-colour rings on the ground under the blobz
     this.bubble = this.add.text(0, 0, '', { fontFamily: FONT, fontSize: '22px', color: '#3f2631', fontStyle: 'bold', backgroundColor: '#fff7e6', padding: { x: 8, y: 2 } })
       .setOrigin(0.5, 1).setDepth(6000).setVisible(false);
@@ -566,7 +570,11 @@ export class DungeonScene extends Phaser.Scene {
     // ---- stairs: progress ring + "2/3" bubble when someone stands on them ----
     this.bubble.setVisible(false);
     const alive = v.players.filter((p) => (d.heroes[p.id]?.ko ?? 0) <= 0);
-    const spots = [{ at: f.stairs, open: d.rooms ? roomOpen : d.floor < FLOORS || !bossAlive }, ...(d.floor === 1 ? [{ at: f.exit, open: true }] : [])];
+    // rooms: the open door gets Code's kit gather ring (one segment per standing blob, gold while inside the doorway,
+    // the 1.5 s count sweeps it); the old ring stays for the classic stairs and the way out
+    if (d.rooms && roomOpen) drawGatherRing(this.doorG, { x: f.stairs.x, y: 3.4 * ft(f), rx: 1.5 * ft(f), ry: 0.8 * ft(f), inside: alive.map((p) => inDoorway(f, p.x, p.y)), fill: Math.min(1, d.ready), now });
+    else this.doorG.clear();
+    const spots = [...(d.rooms ? [] : [{ at: f.stairs, open: d.floor < FLOORS || !bossAlive }]), ...(d.floor === 1 ? [{ at: f.exit, open: true }] : [])];
     for (const s of spots) {
       if (!s.open) continue;
       const on = alive.filter((p) => Math.hypot(p.x - s.at.x, p.y - s.at.y) < STAIRS_R).length;
