@@ -41,7 +41,7 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (N-15b, N-19b, N-23, N-24, N-25 and N-26 are TO DO now). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
+ChatGPT works only on N-orders with status TO DO (N-26 is TO DO now). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
@@ -69,11 +69,11 @@ ChatGPT works only on N-orders with status TO DO (N-15b, N-19b, N-23, N-24, N-25
 | N-20 | DONE (received 2026-11-15) | Lobby: waiting-blob silhouette, searching blob (4 frames), party platform (sizes in order) | `art/lobby/*` |
 | N-21 | DONE (received 2026-11-15) | Boss + danger UI: boss health strip frame, hazard ring pattern (sizes in order) | `dungeon/ui/*` |
 | N-22 | DONE (received 2026-11-15) | Dungeon end screen illustration: treasure haul, portrait 9:16 + landscape 16:9 | `art/dungeon-end*.png` |
-| N-15b | TO DO | Speed power-up redo: winged boot fully INSIDE its glow circle (16x16 + 32x32) | `art/meadow/speed-*` |
-| N-19b | TO DO | Round combat button rings in exact small sizes: 24x24 and 18x18 art px, normal + pressed + disabled | `dungeon/ui/btn-round-*` |
-| N-23 | TO DO | Dungeon skill icons (24) + item icons (5), matching their effects (16x16) | `dungeon/skills/*`, `dungeon/items/*` |
-| N-24 | TO DO | Dash symbol for the action button (16x16, free-standing) | `art/icons/ui/dash-*` |
-| N-25 | TO DO | Designer mouth icons x5 (16x16) | `art/icons/mouth-*` |
+| N-15b | DONE (received 2026-11-15) | Speed power-up redo: winged boot fully INSIDE its glow circle (16x16 + 32x32) | `art/meadow/speed-*` |
+| N-19b | DONE (received 2026-11-15) | Round combat button rings in exact small sizes: 24x24 and 18x18 art px, normal + pressed + disabled | `dungeon/ui/btn-round-*` |
+| N-23 | DONE (received 2026-11-15) | Dungeon skill icons (24) + item icons (5), matching their effects (16x16) | `dungeon/skills/*`, `dungeon/items/*` |
+| N-24 | DONE (received 2026-11-15) | Dash symbol for the action button (16x16, free-standing) | `art/icons/ui/dash-*` |
+| N-25 | DONE (received 2026-11-15) | Designer mouth icons x5 (16x16) | `art/icons/mouth-*` |
 | N-26 | TO DO | Meadow trees (3 kinds) + their chopped stumps + mined-out stone rubble | `art/props/tree-*`, `stump-*`, `rubble-*` |
 | D-1 | CANCELLED (Ninja Adventure chosen) | Direction test 1: small style probe (one tiny scene) | nothing, a test |
 | D-2 | CANCELLED (Ninja Adventure chosen) | Direction test 2: icon family probe (10 icons, one small sheet) | nothing, a test |
