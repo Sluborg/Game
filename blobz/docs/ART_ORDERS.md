@@ -517,7 +517,7 @@ TRUE PIXEL ART: every art pixel is one flat colour, NO anti-aliasing, no gradien
 background, hard pixel edges, no glow, halo or shadow touching the magenta. Deliver at EXACTLY 8x nearest-neighbour.
 No text, no labels.
 The FOOD resource icon: a small cluster of 3-5 shiny round red berries with one green leaf and a tiny stem, the same red
-berries as on our berry bush: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/art/props/berry-bush-32.png
+berries as on our berry bush: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/art/props/berry-bush-16.png
 It sits next to the wood icon (match its size and outline): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/art/icons/res-wood-32.png
 Draw it twice, each natively at its size (NOT one scaled up): EXACTLY 16x16 art px (left) and EXACTLY 32x32 art px
 (right), 1 px dark outline at each scale, generous magenta between them.

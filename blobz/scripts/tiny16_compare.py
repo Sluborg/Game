@@ -43,7 +43,7 @@ def main():
     fence = bb(native2x(Image.open(os.path.join(REV, 'tiny16-fence.png')).convert('RGBA')).crop((0, 48, 48, 80)))
     rnd = bb(Image.open(os.path.join(PROPS, 'tree-round.png')).convert('RGBA'))
     apple = bb(Image.open(os.path.join(PROPS, 'tree-apple.png')).convert('RGBA'))
-    bush = bb(Image.open(os.path.join(PROPS, 'berry-bush-32.png')).convert('RGBA'))
+    bush = bb(Image.open(os.path.join(PROPS, 'berry-bush-16.png')).convert('RGBA'))  # the 32 px bush was removed 2026-11-16
     blob = render([{'look': {'color': 0x5ec8ff, 'shape': 0, 'eyes': 0, 'mouth': 0, 'hat': 0}}])[0]
     blob = bb(blob)
     labels = []

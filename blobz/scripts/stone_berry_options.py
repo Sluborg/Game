@@ -91,10 +91,10 @@ def main():
         ('N-27 wood icon 32', img(I, 'res-wood-32.png'), 'icons/res-wood-32 (ref)')]
     sheet('STONE node options (game scale, 3x)', 'pick a node + its mined-out rubble; icons vs wood icon', stone, 'stone-options.png')
     F = os.path.join(NA, 'Items', 'Food')
-    bush = Image.open(os.path.join(P, 'berry-bush-32.png')).convert('RGBA').crop((8, 8, 24, 24))
+    bush = Image.open(os.path.join(P, 'berry-bush-16.png')).convert('RGBA')  # the 32 px bush was removed 2026-11-16
     berry = [('NOW: Meat', img(F, 'Meat.png'), 'Items/Food/Meat.png'),
              ('N-27 wood icon 16', img(I, 'res-wood-16.png'), 'icons/res-wood-16 (ref)'),
-             ('crop of N-16 bush', bush.crop(bush.getbbox()), 'berry-bush-32 8,8,16'),
+             ('N-16 bush 16', bush.crop(bush.getbbox()), 'props/berry-bush-16.png'),
              ('Honey', img(F, 'Honey.png'), 'Items/Food/Honey.png'),
              ('Nut', img(F, 'Nut.png'), 'Items/Food/Nut.png'),
              ('Seed big 1', img(F, 'SeedBig1.png'), 'Items/Food/SeedBig1'),
