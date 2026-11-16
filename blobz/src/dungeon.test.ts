@@ -3,7 +3,7 @@ import { KEYS } from './i18n';
 import {
   AIM_WARN, BITE_TIME, CLASS_MOVE_COOLDOWN, DUNGEON_TIMER_ENABLED, CLASS_WEAPONS, BITE_WARN, bossHp, BURST, BURST_DMG, BURST_GAP, BURST_SPREAD, CLASS_HP, CLASSES, DASH_TIME, DASH_WARN, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, floorDmg, actMul, GH, GW,
   HEAL_BOLT, heroMods, refresh, inSwing, isWall, ITEMS, itemOf, KO_SECONDS, LEVEL_XP, LOOT_SECONDS, makeFloor, makeGoo, newRun as newRunAny, POTION_HP, roomCracks, REGEN_EVERY,
-  ITEM_ICON, ITEM_SLOTS, lootReplaces, skillIcon, skillOf, unstick, inDoorway, roomTiles, roomGap, ROOM_TUNE, ROOM_STUB, ROOM_TRANS, ROOM_WALK_IN, roomSpecials, EARLY_ROOMS, ROOM_T, ROOMS_ENABLED, ROOMS, ROOM_W, MINIBOSS_ROOM, SPAWN_WARN, READY_SECONDS, makeRoom, roomType, roomClear, diffFloor, enterFloor, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
+  ITEM_ICON, ITEM_SLOTS, collideWalls, lootReplaces, skillIcon, skillOf, unstick, inDoorway, roomTiles, roomGap, ROOM_TUNE, ROOM_STUB, ROOM_TRANS, ROOM_WALK_IN, roomSpecials, EARLY_ROOMS, ROOM_T, ROOMS_ENABLED, ROOMS, ROOM_W, MINIBOSS_ROOM, SPAWN_WARN, READY_SECONDS, makeRoom, roomType, roomClear, diffFloor, enterFloor, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
 } from './dungeon';
 import { cleanVillage, createState, DUNGEON_ENABLED, newVillage, villageOf, PICK_TIMER_ENABLED, ENTRANCE_R, entranceOf, makePuzzles, makeTrees, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
 
@@ -666,6 +666,16 @@ describe('dungeon', () => {
       run1(d, bs, undefined, ROOM_WALK_IN);
       expect(bs.every((b, i) => b.y < y1[i] - 80)).toBe(true);
       expect(inDoorway(d.map, d.map.start.x, d.map.start.y)).toBe(false);
+    });
+    it('the floor under the thin side walls is walkable up to the 15 px wall strip (Stefan: it looked like floor)', () => {
+      const f = makeRoom(5, 1, 1), T = f.dt!, W = f.gw!, y = 20.5 * T;
+      expect(isWall(f, 0.6 * T, y)).toBe(false); // the edge column's floor
+      expect(isWall(f, 10, y)).toBe(true); // the wall strip itself
+      expect(isWall(f, W * T - 10, y)).toBe(true);
+      const o = { x: 0.2 * T, y, vx: -300, vy: 0 };
+      collideWalls(f, o, 14);
+      expect(o.x).toBe(15 + 14); // pressed against the strip, not a whole tile away
+      expect(o.vx).toBe(0);
     });
     it('an open loot card holds the door (it never follows the team into the next room)', () => {
       const d = newRun(27, { a: 'sword', b: 'bow' }, 1, true);

@@ -215,6 +215,7 @@ export interface Floor {
   floor: number;
   solid: Uint8Array; // gw*gh (default GW*GH), 1 = wall
   gw?: number; gh?: number; // grid size when not GW x GH (the tall Archero rooms)
+  inset?: number; // rooms: the side walls are only this thick (world px); the edge columns are floor up to them
   columns?: { x: number; y: number }[]; // rooms: 0x72 columns as cover (tile x, base row y; rows y-1..y are solid)
   walls?: { x: number; y: number }[]; // rooms: 0x72 brick wall tiles inside the room (each solid)
   dt?: number; // tile size in world px when not DT (rooms: 48 = the 0x72 16 px tiles at 3x)
@@ -266,6 +267,8 @@ export const roomClear = (d: DState) => !!d.rooms && (d.wave ?? 0) >= (d.map.wav
 export const ROOM_T = 48;
 /** rows of entrance hallway below the bottom wall (Stefan: arrive from a hallway, no bare black squares) */
 export const ROOM_STUB = 2;
+/** the 0x72 side wall strip (wall_edge_mid) is 5 art px = 15 world px thick */
+export const ROOM_INSET = 15;
 /** the room change (Stefan: it must feel like going FORWARD): slide up through the door + fade (s), then walk in from
  *  the new room's hallway (s) at WALK_SPEED */
 export const ROOM_TRANS = 0.7, ROOM_WALK_IN = 0.8, WALK_SPEED = 170;
@@ -300,6 +303,7 @@ export function makeRoom(seed: number, room: number, players = 1, dungeon = 1, t
   const solid = new Uint8Array(gw * gh).fill(1);
   for (let y = y0; y <= y1; y++) for (let x = 1; x <= rw; x++) solid[y * gw + x] = 0;
   for (let y = y1 + 1; y < gh; y++) for (const x of roomGap(gw)) solid[y * gw + x] = 0; // the entrance gap + the hallway below it
+  for (let y = y0; y <= y1; y++) { solid[y * gw] = 0; solid[y * gw + gw - 1] = 0; } // the floor under the thin 0x72 side walls is walkable (Stefan: it looked like floor); isWall keeps the 15 px wall strip
   const o: Room = { x: 1, y: y0, w: rw, h };
   const mx = (gw / 2) * T;
   const start = { x: mx, y: (y1 + 0.3) * T }; // in the entrance gap at the bottom (the camera starts there too)
@@ -350,7 +354,7 @@ export function makeRoom(seed: number, room: number, players = 1, dungeon = 1, t
     sp.x = (best[0] + 0.5) * T; sp.y = (best[1] + 0.5) * T;
   }
   const spawns: Floor['spawns'] = [];
-  return { floor: room, solid, rooms: [o], start, exit, stairs, chests, spawns, gw, gh, dt: T, waves, lines, columns, walls };
+  return { floor: room, solid, rooms: [o], start, exit, stairs, chests, spawns, gw, gh, dt: T, waves, lines, columns, walls, inset: ROOM_INSET };
 }
 
 /** rooms: which floor tiles show a crack (floor_2..8): 1-2 per 3x3 block (~11-20 % of the floor), random spots, never two
@@ -523,7 +527,7 @@ export const ft = (f: Floor) => f.dt ?? DT;
 export const fh = (f: Floor) => f.gh ?? GH;
 export const isWall = (f: Floor, x: number, y: number) => {
   const T = ft(f), tx = Math.floor(x / T), ty = Math.floor(y / T), w = fw(f);
-  return tx < 0 || ty < 0 || tx >= w || ty >= fh(f) || f.solid[ty * w + tx] === 1;
+  return tx < 0 || ty < 0 || tx >= w || ty >= fh(f) || f.solid[ty * w + tx] === 1 || (!!f.inset && (x < f.inset || x > w * T - f.inset));
 };
 
 /** Push a circle out of wall tiles (and stop its velocity into them). */
@@ -541,6 +545,10 @@ export function collideWalls(f: Floor, o: { x: number; y: number; vx: number; vy
     o.x += dx * (rad - d); o.y += dy * (rad - d);
     const vn = o.vx * dx + o.vy * dy;
     if (vn < 0) { o.vx -= vn * dx; o.vy -= vn * dy; }
+  }
+  if (f.inset) { // rooms: the thin side walls
+    const lo = f.inset + rad, hi = fw(f) * T - f.inset - rad;
+    if (o.x < lo) { o.x = lo; if (o.vx < 0) o.vx = 0; } else if (o.x > hi) { o.x = hi; if (o.vx > 0) o.vx = 0; }
   }
 }
 
