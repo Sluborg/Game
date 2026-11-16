@@ -141,7 +141,7 @@ export class ClientNet {
       const peer = new Peer({ debug: 0 });
       let done = false;
       const fail = (why: string) => { if (!done) { done = true; peer.destroy(); reject(why); } };
-      const timer = setTimeout(() => fail('timeout'), 15000);
+      const timer = setTimeout(() => fail('timeout'), 12000); // no link in 12 s: 'Kunde inte koppla upp' (main.ts)
       peer.on('error', (e) => fail((e as { type?: string }).type ?? 'unknown'));
       peer.on('open', () => {
         this.peer = peer;

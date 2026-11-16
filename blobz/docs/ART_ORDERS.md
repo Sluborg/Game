@@ -46,6 +46,8 @@ ChatGPT works only on N-orders with status TO DO (next: N-42). ChatGPT fills eve
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
 | N-42 | TO DO (FIRST) | Ranger class icon: bow with drawn string + nocked arrow, EXACT 16x16 + 32x32 | `art/dungeon/icons/bow-16.png`, `bow-32.png` |
+| N-43 | TO DO | 12 new blob hats/caps (hats only, no ears/horns), sizes L (max 11x5) + M (max 9x4) in 16x8 cells | `src/blob.ts` hat sprites (Art converts to the hat tables) |
+| N-44 | TO DO | Dungeon room props in 0x72 DungeonTileset II style: 2 barrels, standing + wall torch (2 flame frames each), 2 bone piles, skull decal, cobweb, puddle (16x32 cells) | `art/dungeon/props/*` |
 | N-37 | DONE (received 2026-11-15, not exact 8x: real art px ~10 src px, native ~214x29; sampled to 140x28 -> art/lobby/party-platform-140.png) | Lobby party platform, EXACT 140x28 art px (shown 2x) | `art/lobby/party-platform.png` |
 | N-38 | DONE (received 2026-11-15, 937x1678 = 3.9 src px per art px; 240x430 -> art/bg/start-240.png) | Start/loading background, village scene, EXACT 240x430 art px portrait (shown 2x) | `art/title.png` |
 | N-39 | DONE (received 2026-11-15, real art px ~23 src px = native 64x42; saved art/logo-150.png (ordered size, uneven 2.3x) + art/logo-64.png (native)) | Logo "Blobz" as true pixel art, EXACT 150x104 art px (shown 2x) | `art/logo.png` |
@@ -401,6 +403,60 @@ upright, slightly tilted is fine), the string drawn back with ONE arrow nocked a
 small fletching. Must read instantly as "bow" at 16 px.
 Draw it twice, each natively at its size (NOT one scaled up): EXACTLY 16x16 art px (left) and EXACTLY 32x32 art px
 (right), 1 px dark outline at each scale, filling the square like the reference icons, generous magenta between them.
+```
+
+### N-43 Blob hats and caps (12 new, hats only)
+```
+STYLE: exactly like your N-26 trees (same dark near-black outline, palette, 2-3 tone shading, pixel size): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n26-trees.png
+TRUE PIXEL ART: every art pixel is one flat colour, NO anti-aliasing, no gradients, no blur, no dithering. Solid flat
+magenta #ff00ff background, hard pixel edges, no glow or shadow touching the magenta. Deliver at EXACTLY 8x
+nearest-neighbour (every art pixel = an 8x8 block). No text, no labels, no blob, hats only.
+These are hats for our tiny blob characters. The current hats, worn, at game scale (for size and look):
+https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/hats-current.png
+HATS AND CAPS ONLY: no ears, no animal parts, no horns, no antennas, no halos.
+The blob's head is a small dome; the hat sits ON TOP of the head with its bottom row resting on the head's top outline.
+Keep it LOW PROFILE so the top of the blob's shiny highlight stays visible: the hat must not wrap down over the
+forehead or the sides of the head. 1 px dark outline around each hat.
+12 hats, in this order: 1 low baseball cap (bill pointing right), 2 beanie, 3 headband, 4 bandana (knot at the side),
+5 cowboy hat, 6 small top hat, 7 small crown, 8 sailor cap, 9 small chef toque, 10 small wizard hat, 11 cap worn
+sideways (bill pointing left), 12 flower crown (small flowers on a green ring).
+Each hat in TWO sizes, each drawn natively at its size (NOT one scaled):
+- L: at most 11 art px wide and 5 art px tall
+- M: at most 9 art px wide and 4 art px tall
+EXACT LAYOUT (so it can be cut automatically): a grid of 4 columns x 6 rows of cells, each cell EXACTLY 16 x 8 art px,
+with EXACTLY 4 art px of magenta between cells and around the edge. Rows 1, 3, 5 = the L versions of hats 1-4, 5-8,
+9-12; rows 2, 4, 6 = the M versions of the same hats right below them. In every cell the hat is centred horizontally
+and its bottom row is the cell's bottom row (anchor = bottom centre).
+Canvas: 4*16 + 5*4 = 84 x 6*8 + 7*4 = 76 art px, delivered EXACTLY 672 x 608.
+```
+
+### N-44 Dungeon room props (0x72 DungeonTileset II style)
+```
+STYLE AND PALETTE: match this 16x16 pixel dungeon tileset EXACTLY (same colours, dark outlines, shading, pixel size),
+the props must look like they belong to it: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/assets/0x72-dungeon-ii/0x72_DungeonTilesetII_v1.7.png
+How a room built from it looks (dark floor, light wall caps): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/room-0x72-ii.png
+Use only colours that already appear in that tileset (indexed palette, no new hues except the flame's yellow/orange).
+TRUE PIXEL ART: every art pixel is one flat colour, NO anti-aliasing, no gradients, no blur, no dithering. Solid flat
+magenta #ff00ff background, hard pixel edges, no glow or shadow touching the magenta. Deliver at EXACTLY 8x
+nearest-neighbour (every art pixel = an 8x8 block). No text, no labels. Top-down 3/4 view like the tileset.
+11 props, in this order:
+ 1 barrel A (wooden, dark iron bands), 16 px wide, about 14-16 px tall
+ 2 barrel B (a different barrel: e.g. tipped lid or darker wood), same size
+ 3 standing torch, flame frame 1 (iron stand on the floor, flame on top), 16 px wide, up to 32 px tall
+ 4 standing torch, flame frame 2 (same torch, flame shape changed for a 2-frame flicker)
+ 5 wall torch, flame frame 1 (bracket + torch for a wall face tile), fits 16x16
+ 6 wall torch, flame frame 2
+ 7 bone pile A (a few bones), fits 16x16
+ 8 bone pile B (different bones + a small skull), fits 16x16
+ 9 skull-and-bones floor decal (flat on the floor, crossed bones under a skull), fits 16x16
+10 cobweb for a room's top-left corner (fills the cell's top-left corner, thin grey strands), fits 16x16
+11 small water puddle on the floor (dark blue-grey water, a light glint), fits 16x16
+EXACT LAYOUT (so it can be cut automatically): a grid of 6 columns x 2 rows of cells, each cell EXACTLY 16 x 32 art
+px, with EXACTLY 4 art px of magenta between cells and around the edge. Row 1 = props 1-6, row 2 = props 7-11 (the
+12th cell stays empty magenta). In every cell the prop is centred horizontally and stands on the cell's bottom row
+(anchor = bottom centre); 16x16 props use only the bottom 16 rows of their cell, except the cobweb, which hangs in the
+TOP 16 rows of its cell from the top-left corner. Canvas: 6*16 + 7*4 = 124 x 2*32 + 3*4 = 76 art px, delivered
+EXACTLY 992 x 608.
 ```
 
 ### N-37 Lobby party platform (DONE)
