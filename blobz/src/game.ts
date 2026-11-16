@@ -295,8 +295,10 @@ export class GameScene extends Phaser.Scene {
       this.load.image(`tree-${v}`, `art/props/tree-${v}.png`);
       this.load.image(`stump-${v}`, `art/props/stump-${v}.png`);
     }
-    this.load.image('g-bush-berries', 'art/props/berry-bush-32.png');
-    this.load.image('g-bush-empty', 'art/props/berry-bush-picked-32.png'); // Bärregn backdrop (ChatGPT N-9): sunset sky over the berry field
+    // Stefan + Alea 2026-11-16 ("berry bushes are very large"): the 16 px cut of the same N-16 bush at the world's 3x
+    // density (48 px, was the 32 px cut = 96 px, as big as a tree); the berries stay clearly visible
+    this.load.image('g-bush-berries', 'art/props/berry-bush-16.png');
+    this.load.image('g-bush-empty', 'art/props/berry-bush-picked-16.png'); // Bärregn backdrop (ChatGPT N-9): sunset sky over the berry field
     if (this.s.biome === 'snow') { // archived snow map (SNOW_MAP_ENABLED): its own leftovers
       this.load.on('loaderror', () => { /* winter art not drawn yet: tinted stand-ins below */ });
       for (const n of WINTER) if (!(('w-' + n) in NINJA_CROPS)) this.load.image('w-' + n, `art/props-winter/${n}.png`);
