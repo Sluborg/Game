@@ -11,6 +11,9 @@ import type { BlobLook } from './blob';
 export const SLOT_PREFIX = 'blobz-v2-';
 export const SLOTS = 8;
 export const STUN = 'stun:stun.l.google.com:19302';
+/** Public STUN servers (no account, no credentials, only answer "your address is ..."): Google x3 + Cloudflare, so one
+ *  blocked or slow host does not leave the phone without a network code (Stefan 2026-11-16). */
+export const STUNS = [STUN, 'stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302', 'stun:stun.cloudflare.com:3478'];
 
 /** What a host tells a probing phone (`info?` -> `info`). */
 export interface RoomInfo { name: string; look: BlobLook; players: number; max: number; started: boolean; v: string }
@@ -71,15 +74,16 @@ export function publicIp(ms = 4000): Promise<string | null> {
     };
     const timer = window.setTimeout(done, ms);
     try {
-      pc = new RTCPeerConnection({ iceServers: [{ urls: [STUN, 'stun:stun1.l.google.com:19302'] }] });
+      pc = new RTCPeerConnection({ iceServers: [{ urls: STUNS }] });
       pc.createDataChannel('ns');
       pc.onicecandidate = (e) => {
         if (!e.candidate) { if (found.length) done(); return; } // gathering finished
         const ip = srflxAddress(e.candidate.candidate);
         if (!ip || found.includes(ip)) return;
         found.push(ip);
-        if (!ip.includes(':')) { done(); return; } // IPv4 is the best key, stop now
-        clearTimeout(settle); settle = window.setTimeout(done, 1500); // give IPv4 a moment to show up
+        // IPv4 is the best key: give the other STUN hosts a moment (several v4 -> the sorted first), then stop;
+        // IPv6 only so far: wait longer for an IPv4 to show up
+        clearTimeout(settle); settle = window.setTimeout(done, ip.includes(':') ? 1500 : 600);
       };
       pc.createOffer().then((o) => pc?.setLocalDescription(o)).catch(() => done());
     } catch { done(); }
@@ -87,16 +91,35 @@ export function publicIp(ms = 4000): Promise<string | null> {
 }
 
 let nsPromise: Promise<string | null> | null = null;
-/** Namespace hash for this Wi-Fi. A found hash is cached; a miss is retried on the next call.
+/** How the last network code was made (shown under ?debug): stun-v4 / stun-v6 (the /64 prefix) / none (no STUN
+ *  answer: "Kan inte avgöra nätverk") / override (?lan). */
+export const nsInfo = { ns: null as string | null, how: '' as 'stun-v4' | 'stun-v6' | 'none' | 'override' | '', at: 0 };
+/** Namespace hash for this Wi-Fi. Never stored: computed again whenever `fresh` is asked for (the join list and the
+ *  host lobby open) and after any network change (online / offline / connection change), so switching Wi-Fi <->
+ *  mobile data gives a new code (Stefan 2026-11-16: a code computed once at boot stayed stale for the whole page
+ *  life, so two phones on one Wi-Fi showed different codes). Calls while one lookup runs share it.
  *  `?lan=x` overrides the IP (tests, networks without UDP). */
-export function lanNamespace(): Promise<string | null> {
+export function lanNamespace(fresh = false): Promise<string | null> {
+  if (fresh && nsPromise && nsInfo.at) nsPromise = null; // a finished result is never reused for a fresh ask
   if (!nsPromise) {
     const override = new URLSearchParams(location.search).get('lan');
-    const p = (override ? Promise.resolve(override) : publicIp()).then((seed) => (seed ? hashNs(seed) : null));
+    nsInfo.at = 0;
+    const p = (override ? Promise.resolve(override) : publicIp()).then(async (seed) => {
+      const ns = seed ? await hashNs(seed) : null;
+      if (nsPromise === p) Object.assign(nsInfo, { ns, how: override ? 'override' : !seed ? 'none' : seed.includes(':') ? 'stun-v6' : 'stun-v4', at: Date.now() });
+      return ns;
+    });
     nsPromise = p;
     void p.then((ns) => { if (!ns && nsPromise === p) nsPromise = null; });
   }
   return nsPromise;
+}
+/** Forget the network code: the next lanNamespace() looks it up again. */
+export function forgetNamespace() { nsPromise = null; nsInfo.at = 0; }
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', forgetNamespace);
+  window.addEventListener('offline', forgetNamespace);
+  (navigator as Navigator & { connection?: EventTarget }).connection?.addEventListener?.('change', forgetNamespace);
 }
 
 /** Validate an untrusted info card from the network. */
@@ -125,6 +148,11 @@ export class Scanner {
   private rooms = new Map<number, FoundRoom>();
   /** Slots whose host the broker knows but whose WebRTC link is still connecting (phones can take 3-6 s). */
   pending = new Set<number>();
+  /** When each pending slot first went pending (ms): a host the broker knows but no WebRTC link ever opens to
+   *  (different networks / mobile CGNAT: ICE fails) would otherwise show "ansluter..." for ever (Stefan 2026-11-16). */
+  pendingSince = new Map<number, number>();
+  /** Last ICE state seen on a probe (debug line: new / checking / connected / failed). */
+  ice = '';
   private unavailable = new Set<string>();
   onUpdate: (rooms: FoundRoom[]) => void = () => {};
 
@@ -169,17 +197,19 @@ export class Scanner {
       this.unavailable.delete(peerId);
       const poll = setInterval(() => {
         if (settled) { clearInterval(poll); return; }
-        if (this.unavailable.has(peerId)) { clearInterval(poll); end(null); return; }
+        if (this.unavailable.has(peerId)) { clearInterval(poll); this.pendingSince.delete(slot); end(null); return; }
+        const st = (conn as DataConnection & { peerConnection?: RTCPeerConnection })?.peerConnection?.iceConnectionState;
+        if (st && st !== this.ice) { this.ice = st; this.onUpdate([...this.rooms.values()]); }
       }, 150);
       // no "unavailable" after 1.5 s: the broker knows this host, show "ansluter..." meanwhile
-      setTimeout(() => { if (!settled && !this.unavailable.has(peerId)) { this.pending.add(slot); this.onUpdate([...this.rooms.values()]); } }, 1500);
+      setTimeout(() => { if (!settled && !this.unavailable.has(peerId)) { this.pending.add(slot); if (!this.pendingSince.has(slot)) this.pendingSince.set(slot, Date.now()); this.onUpdate([...this.rooms.values()]); } }, 1500);
       try { conn = peer.connect(peerId, { reliable: true, serialization: 'json' }); } catch { end(null); return; }
       conn.on('open', () => conn.send({ t: 'info?' }));
       conn.on('data', (raw) => {
         const m = raw as { t?: string; info?: unknown };
         if (m?.t !== 'info') return;
         const info = cleanInfo(m.info, this.clamp);
-        this.pending.delete(slot);
+        this.pending.delete(slot); this.pendingSince.delete(slot);
         end(info ? { ...info, slot, peerId } : null);
       });
       conn.on('close', () => { this.pending.delete(slot); end(null); });
@@ -192,6 +222,7 @@ export class Scanner {
     if (this.peer?.disconnected && !this.peer.destroyed) this.peer.reconnect();
     const found = await Promise.all(Array.from({ length: SLOTS }, (_, i) => this.probe(i + 1)));
     found.forEach((r, i) => { if (!r) this.pending.delete(i + 1); });
+    this.onUpdate([...this.rooms.values()]); // re-check the stuck timer even when nothing changed
     if (this.stopped) return;
     found.forEach((r, i) => {
       const slot = i + 1;
