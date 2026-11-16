@@ -1383,7 +1383,7 @@ button.big:not(.alt):active, button.big:not(.alt).down {
    turn. 46 px wide (20:17) so neighbours never touch; its bottom is the v3 feet line. */
 #lobby #lobby-list .seat.free .freeblob {
   display: flex; align-items: center; justify-content: center; gap: 5px; box-sizing: border-box;
-  width: min(46px, 80%); aspect-ratio: 20 / 17; border: 2px dashed var(--k-plum); background: transparent;
+  width: min(46px, 80%); aspect-ratio: 20 / 17; border: 2px dashed var(--k-plum); background: rgba(255, 255, 255, 0.1); /* v6: faint white fill */
   border-radius: 48% 48% 14% 14% / 62% 62% 20% 20%; padding-top: 4px; gap: 4px;
 }
 #lobby #lobby-list .seat.free .freeblob i {
@@ -1441,3 +1441,30 @@ body.rotate-block #rotate b { background: var(--k-parch2); border: 2px solid var
 }
 #stick { width: 128px; height: 128px; }
 #knob { width: 44px; height: 44px; margin: -22px; }
+
+/* long names (Stefan 2026-11-15): a lobby name tag is at most its seat column wide (minus 3 px), so with 5 players
+   at 360 px no tag reaches its neighbour's; main.ts fitSeatNames shrinks it to 12 px before the ellipsis */
+#lobby #lobby-list .seat .seatname { max-width: calc(100% - 3px); }
+
+/* long game (Stefan 2026-11-15): a milestone toast (star + "Mål klart! Nytt mål") under the quest box, and the
+   host's "Spara och gå hem" chip at the bottom of the build panel (the meadow never ends by itself) */
+#goal-toast {
+  position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 124px); transform: translateX(-50%); z-index: 30;
+  display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: var(--k-parch2); color: var(--k-plum);
+  border: 2px solid var(--k-edge); border-radius: 6px; font: 700 18px var(--font); white-space: nowrap; pointer-events: none;
+  box-shadow: 0 3px 0 0 var(--k-shadow);
+}
+#goal-toast img { width: 38px; height: auto; image-rendering: pixelated; }
+#goal-toast.pop { animation: goalpop 0.45s ease-out both; }
+@keyframes goalpop { 0% { transform: translateX(-50%) scale(0.6); opacity: 0; } 70% { transform: translateX(-50%) scale(1.08); opacity: 1; } 100% { transform: translateX(-50%) scale(1); } }
+#build-panel #btn-gohome { display: flex; align-items: center; gap: 6px; margin: 10px auto 2px; }
+#build-panel #btn-gohome.hidden { display: none; }
+
+/* join by room code (Stefan 2026-11-16): a 4-letter field + "Joina med kod" under the Wi-Fi list; the host lobby
+   shows the code big enough to read across the table; the network code line goes amber when it is unknown */
+.codejoin { display: flex; gap: 8px; justify-content: center; align-items: center; margin: 10px 0 4px; }
+.codejoin input { width: 7.2em; text-align: center; font: 700 22px var(--font); letter-spacing: 0.18em; text-transform: uppercase; padding: 6px 8px; }
+#net-code { margin: 4px 0 0; opacity: 0.8; }
+#net-code.warn { color: #a8461f; opacity: 1; }
+#room-code { margin: 6px 0; font-size: 15px; color: var(--k-plum); }
+#room-code b { font-size: 22px; letter-spacing: 0.15em; }

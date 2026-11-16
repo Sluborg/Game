@@ -13,7 +13,7 @@ const base = process.argv[2] || 'http://localhost:4173/';
     const lan = 'e2e-rm-' + Math.random().toString(36).slice(2);
     const host = await phone(browser, 'Stefan', { width: 412, height: 915 }); // integer scale: a 412 px and a 360 px phone
     host.on('pageerror', (e) => errors.push('host: ' + e.message));
-    await host.goto(`${base}?lan=${lan}&debug&noweapons`); // rooms by default
+    await host.goto(`${base}?lan=${lan}&debug`); // rooms by default
     await host.click('#btn-host');
     await host.waitForSelector('#lobby:not(.hidden)', { timeout: 20000 });
     const ada = await phone(browser, 'Ada', { width: 360, height: 780 });
@@ -39,11 +39,10 @@ const base = process.argv[2] || 'http://localhost:4173/';
       const c = await p.evaluate(() => { const cam = window.__dgScene.cameras.main; return { zoom: cam.zoom, x: cam.worldView.x, w: cam.worldView.width }; });
       ok(c.zoom === 1 && Math.abs(c.x - (336 - w) / 2) < 1, `${w} px phone: exactly 3x (zoom ${c.zoom}), the room centred (view x ${c.x.toFixed(1)}, margin ${((w - 336) / 2).toFixed(0)} px each side)`);
     }
-    const st = await host.evaluate(() => { const s = window.__blobz.state, m = s.dg.map; return { ys: s.players.map((p) => p.y), floor: (m.gh - 2) * m.dt, cols: (m.columns ?? []).length }; });
+    const st = await host.evaluate(() => { const s = window.__blobz.state, m = s.dg.map; return { ys: s.players.map((p) => p.y), floor: (m.gh - 2 - 2) * m.dt /* last floor row: above the bottom wall + the 2-row hallway */, cols: (m.columns ?? []).length + (m.walls ?? []).length }; });
     ok(st.ys.every((y) => y >= st.floor - 20), `everyone starts in the entrance at the bottom (y ${st.ys.map(Math.round).join(', ')} >= ${st.floor - 20}), not held at the meadow's edge`);
-    ok(st.cols >= 2 && st.cols <= 3, `room 1 (arena) has ${st.cols} columns as cover`);
+    ok(st.cols >= 3, `room 1 has ${st.cols} cover tiles (walls + pillars from the room layout)`);
     ok((await ada.evaluate(() => window.__blobzView.dungeon.rooms)) === true, 'joiner follows into the rooms (snapshot)');
-    ok((await ada.evaluate(() => window.__blobzView.dungeon.noWeapons)) === true, "the host's ?noweapons reaches the joiner (snapshot)");
     await ada.waitForSelector('#dg-loading', { state: 'hidden', timeout: 8000 });
     await ada.waitForFunction(() => /Rum 1\/10/.test(document.getElementById('dg-floor').textContent), null, { timeout: 8000 });
     ok(true, `joiner HUD reads "${(await ada.textContent('#dg-floor')).trim()}"`);

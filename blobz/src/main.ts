@@ -1,5 +1,5 @@
 import { onViewport, watchViewport } from './viewport';
-import { intFit, snapAll } from './pixelScale';
+import { dpr, intFit, snapAll } from './pixelScale';
 import Phaser from 'phaser';
 import '@fontsource/fredoka/500.css';
 import '@fontsource/fredoka/600.css';
@@ -8,7 +8,7 @@ import { blobEl, clampLook, COLORS, EYES, HATS, MOUTHS, randomLook, SHAPES, type
 import { Controls } from './controls';
 import { dungeonUi, setPicker } from './dungeonUi'; // [dungeon hook]
 import { GameScene, type Session } from './game';
-import { ClientNet, HostNet, friendlyError, type ToClient } from './net';
+import { ClientNet, HostNet, friendlyError, PREFIX, type ToClient } from './net';
 import { MINI_SECONDS } from './mini';
 import { building, DATA_ICON, NI } from './ninjaArt';
 import { partTile } from './partArt';
@@ -16,10 +16,10 @@ import { alive, blobWipe } from './alive';
 /** Blob-wipe between screens in my own colour, carrying my blob (alive.ts). */
 const wipe = () => blobWipe(profile.look.color, profile.look);
 import { applyI18n, lang, lookName, setLang, t, type Key } from './i18n';
-import { lanNamespace, Scanner, type FoundRoom } from './discovery';
+import { lanNamespace, nsInfo, Scanner, type FoundRoom } from './discovery';
 import { sfx, unlockAudio } from './sfx';
 import {
-  addPlayer, affordable, atHome, BUILD_KINDS, COTTAGE_COST, COTTAGE_MAX, requestBuild, type BuildKind, BUILDING_ENABLED, DAY_CYCLE_ENABLED, STONE_ENABLED, finishMini, cleanBiome, type Biome, SNOW_MAP_ENABLED, BUILD_COST, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, pickWeapon, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
+  addPlayer, affordable, atHome, BUILD_KINDS, COTTAGE_COST, COTTAGE_MAX, requestBuild, endRound, LONG_GAME, type BuildKind, BUILDING_ENABLED, DAY_CYCLE_ENABLED, STONE_ENABLED, finishMini, cleanBiome, type Biome, SNOW_MAP_ENABLED, BUILD_COST, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, pickWeapon, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
   toolNode, viewFromSnapshot, viewFromState,
 } from './sim';
 import type { FxEvent, Input, PlayerInfo, Snapshot, State, View } from './sim';
@@ -225,8 +225,12 @@ function startScan() {
   $('lan-list').replaceChildren();
   show('lan-status');
   lanStatus(SEARCHING());
-  const tryNs = () => void lanNamespace().then((ns) => {
+  let first = true;
+  $('net-code').textContent = ''; // filled again by the fresh lookup below
+  const tryNs = () => void lanNamespace(first).then((ns) => {
+    first = false;
     if (gen !== scanGen) return; // left the panel meanwhile
+    showNetCode(ns);
     if (!ns) {
       // no public IP yet (strict NAT, no UDP): say so, keep trying in the background
       lanStatus(NOTHING(), true);
@@ -241,13 +245,34 @@ function startScan() {
   });
   tryNs();
 }
+const CONNECT_GIVE_UP = 12000;
+/** The network code (first 4 of the namespace hash) on the join screen and the start screen's version line, so two
+ *  phones can compare (Stefan 2026-11-16). ?debug adds how it was made (stun-v4 / stun-v6 / none / override). */
+const netCodeOf = (ns: string | null) => (ns ? ns.slice(0, 4).toUpperCase() : '?');
+function showNetCode(ns: string | null) {
+  const dbg = DEBUG ? ` [${nsInfo.how || '...'}]` : '';
+  $('net-code').textContent = (ns ? t('join.netCode', { code: netCodeOf(ns) }) : t('join.netUnknown')) + dbg;
+  $('net-code').classList.toggle('warn', !ns);
+  $('version').textContent = `${versionText()} (${netCodeOf(ns)})`;
+}
+function joinByCode() {
+  const code = ($('code-input') as HTMLInputElement).value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+  ($('code-input') as HTMLInputElement).value = code;
+  if (code.length !== 4) { $('join-msg').textContent = t('join.codeAria') + ': ABCD'; return; }
+  void joinGame(PREFIX + code);
+}
 function stopScan() { scanGen++; clearTimeout(retryTimer); scanner?.stop(); scanner = null; }
 function renderRooms(rooms: FoundRoom[]) {
   const connecting = scanner?.pending.size ?? 0;
+  // a host is known but no link opened for 12 s (other network / mobile data, ICE failed): say so instead of
+  // "ansluter..." for ever, with "Leta igen"; scanning goes on, so a link that opens later still shows its row
+  const stuck = !rooms.length && [...(scanner?.pendingSince.values() ?? [])].some((t0) => Date.now() - t0 > CONNECT_GIVE_UP);
   show('lan-status', rooms.length === 0);
   emptyRounds = rooms.length || connecting ? 0 : emptyRounds + 1;
   // ~10 s without a game: hint at the usual cause, still scanning
-  lanStatus(connecting && !rooms.length ? t('join.connectingFound') : emptyRounds >= 3 ? NOTHING() : SEARCHING(), emptyRounds >= 3 && !connecting);
+  const ice = DEBUG && scanner?.ice ? ` [ICE: ${scanner.ice}]` : '';
+  if (stuck) lanStatus(t('err.noLink') + ice, true);
+  else lanStatus((connecting && !rooms.length ? t('join.connectingFound') : emptyRounds >= 3 ? NOTHING() : SEARCHING()) + ice, emptyRounds >= 3 && !connecting);
   show('lan-search', rooms.length === 0);
   $('lan-list').replaceChildren(...rooms.map((r) => {
     const li = document.createElement('li');
@@ -315,7 +340,9 @@ document.querySelectorAll<HTMLButtonElement>('#lang-toggle button').forEach((b) 
 });
 renderLang();
 // Wi-Fi code next to the version: two phones must show the same code to find each other (a VPN changes it)
-void lanNamespace().then((ns) => { if (ns) $('version').textContent = `${versionText()} (${ns.slice(0, 4).toUpperCase()})`; });
+void lanNamespace().then((ns) => { if (ns) $('version').textContent = `${versionText()} (${netCodeOf(ns)})`; });
+$('btn-code-join').onclick = joinByCode;
+$('code-input').addEventListener('keydown', (e) => { if ((e as KeyboardEvent).key === 'Enter') joinByCode(); });
 $('version').title = __APP_COMMIT__;
 renderPicker();
 // First visit: pick your blob before anything else.
@@ -358,12 +385,22 @@ function renderLobby() {
     return s;
   });
   $('lobby-list').replaceChildren(...players, ...free);
+  requestAnimationFrame(fitSeatNames);
 }
+/** Long names (Stefan 2026-11-15): a lobby name tag never reaches its neighbour's. It is at most its seat column wide
+ *  (CSS max-width); a name that does not fit shrinks from 14 px down to 12 px, then ends in an ellipsis. */
+function fitSeatNames() {
+  for (const el of document.querySelectorAll<HTMLElement>('#lobby-list .seatname')) {
+    el.style.fontSize = '';
+    for (let fs = 13; el.scrollWidth > el.clientWidth && fs >= 12; fs--) el.style.fontSize = fs + 'px';
+  }
+}
+onViewport(fitSeatNames);
 
 function startScene(session: Session) {
   wipe();
   if (DEBUG) (window as unknown as { __blobzBiome?: string }).__blobzBiome = session.biome ?? 'meadow';
-  endShown = false; lastStars = 0;
+  endShown = false; lastStars = 0; goalsShown = 0;
   show('menu', false); show('lobby', false); show('end', false); show('hud');
   try { (navigator as Navigator & { wakeLock?: { request(t: string): Promise<unknown> } }).wakeLock?.request('screen').catch(() => {}); } catch { /* optional */ }
   if (!game) {
@@ -371,7 +408,8 @@ function startScene(session: Session) {
       type: Phaser.AUTO,
       parent: 'game',
       backgroundColor: '#2b6b3a',
-      scale: { mode: Phaser.Scale.RESIZE, width: window.innerWidth, height: window.innerHeight },
+      // device-pixel canvas (pixelScale.ts): game size = CSS size x dpr, shown at 1 / dpr; the viewport watcher keeps it
+      scale: { mode: Phaser.Scale.NONE, width: Math.round(window.innerWidth * dpr()), height: Math.round(window.innerHeight * dpr()), zoom: 1 / dpr() },
       render: { pixelArt: true, antialias: false, roundPixels: true },
       scene: [],
     });
@@ -379,7 +417,11 @@ function startScene(session: Session) {
     // every settled resize / rotation / return to the app: the canvas follows the viewport (and the camera via the
     // scale 'resize' event); a canvas left at an old size was the "half the screen green" bug
     const g = game;
-    onViewport((w, h) => { if (g.scale.width !== w || g.scale.height !== h) g.scale.resize(w, h); else g.scale.refresh(); });
+    onViewport((w, h) => {
+      const d = dpr(), gw = Math.round(w * d), gh = Math.round(h * d);
+      if (g.scale.width !== gw || g.scale.height !== gh) g.scale.resize(gw, gh);
+      if (Math.abs(g.scale.zoom - 1 / d) > 1e-6) g.scale.setZoom(1 / d); else g.scale.refresh();
+    });
   }
   loading(true, 0.1);
   loadPending = true;
@@ -419,6 +461,9 @@ let treesFor = { seed: -1, trees: [] as ReturnType<typeof makeTrees> };
 
 // ---------- build panel: the one place to build (hammer button when your blob is at home) ----------
 let sendBuild: (k: BuildKind | 'cottage') => void = () => {};
+/** Host only: end the meadow round by choice (LONG_GAME: it never ends by itself). */
+let hostEndRound: () => void = () => {};
+$('btn-gohome').onclick = () => hostEndRound();
 let panelOpen = false;
 const COST_ICON: Record<string, string> = { wood: NI.wood, stone: NI.stone, berry: NI.berry };
 const STATE_ICON = { can: 'art/icons/state/can-build-16.png', lock: 'art/icons/state/lock-16.png', done: 'art/icons/state/tick-green-16.png' }; // ChatGPT N-18 (built = the green tick, like the designer)
@@ -574,6 +619,8 @@ function renderMini(v: View) {
  *  runs create() synchronously inside scene.start(), before the once('create') hook exists; the first view
  *  is the reliable "ready" signal (the overlay otherwise stayed up and blocked every tap). */
 let loadPending = false;
+let goalToastT = 0;
+let goalsShown = 0; // milestones already toasted this round
 
 function onView(v: View) {
   if (loadPending) { loadPending = false; loading(false); }
@@ -581,6 +628,12 @@ function onView(v: View) {
   if (dungeonUi(v, session?.myId, controls, (id) => infos.get(id)?.name ?? '?')) return; // [dungeon hook, Code 2] pick cards / dungeon HUD
   renderQuestRows($('hud-quest'), v);
   renderBuildGoal(v);
+  show('btn-gohome', isHost && LONG_GAME && v.phase === 'play');
+  if (v.goal > goalsShown) { // a milestone (LONG_GAME): toast + star, the bars start on the next goal
+    goalsShown = v.goal; lastStars = 0; sfx.star();
+    const tt = $('goal-toast'); show('goal-toast'); tt.classList.remove('pop'); void tt.offsetWidth; tt.classList.add('pop');
+    clearTimeout(goalToastT); goalToastT = window.setTimeout(() => show('goal-toast', false), 2600);
+  }
   const st = starsFor(v.delivered, v.quest);
   if (st > lastStars) { sfx.star(); lastStars = st; }
   // day bar (archived, DAY_CYCLE_ENABLED): the sun rides left -> right; dusk in the last 20 s
@@ -612,8 +665,10 @@ function onView(v: View) {
       $('end-mini-n').textContent = String(v.miniResult.caught);
       $('end-mini-stars').replaceChildren(...[0, 1, 2].map((i) => { const im = new Image(); im.src = i < v.miniResult!.stars ? NI.star : NI.starEmpty; im.className = 'star'; im.alt = ''; return im; }));
     }
+    // long game: the end stars are the milestones reached (max 3), not the half-filled goal of the moment
+    const es = LONG_GAME ? Math.min(3, v.goal) : st;
     $('end-stars').replaceChildren(...[0, 1, 2].map((i) => {
-      const img = new Image(); img.src = i < st ? NI.star : NI.starEmpty; img.alt = ''; img.className = 'star' + (i < st ? ' on' : '');
+      const img = new Image(); img.src = i < es ? NI.star : NI.starEmpty; img.alt = ''; img.className = 'star' + (i < es ? ' on' : '');
       return img;
     }));
     // the team that did it: every blob, cheering (staggered hops)
@@ -622,7 +677,7 @@ function onView(v: View) {
     renderQuestRows($('end-rows'), v);
     show('btn-again', isHost); show('end-wait', !isHost);
     wipe(); show('end');
-    if (st) sfx.star();
+    if (es) sfx.star();
   }
 }
 
@@ -658,8 +713,11 @@ async function hostGame() {
   const LAN_OK = '';
   const advertise = async () => {
     if (net.peer.destroyed) return;
-    const ns = await lanNamespace();
+    const ns = await lanNamespace(true);
     const slot = ns ? await net.openSlot(ns) : 0;
+    // the room code: friends on another network (or a phone whose network code differs) type it on the join screen
+    $('room-code').innerHTML = t('lobby.roomCode', { code: net.code, net: netCodeOf(ns) }) + (DEBUG ? ` [${nsInfo.how}]` : '');
+    show('room-code');
     $('lobby-lan').innerHTML = slot ? LAN_OK : t('lobby.noWifi');
     $('lobby-lan').classList.toggle('warn', !slot);
     if (!slot) setTimeout(() => void advertise(), 5000);
@@ -693,6 +751,7 @@ async function hostGame() {
   net.onPick = (id, w) => { if (state) pickWeapon(state, id, w); }; // [dungeon hook]
   net.onBuild = (id, k) => { if (state) requestBuild(state, id, k as BuildKind | 'cottage'); };
   sendBuild = (k) => { if (state) requestBuild(state, myId, k); };
+  hostEndRound = () => { if (state) endRound(state); };
   setPicker((w) => { if (state) pickWeapon(state, myId, w); });
   net.onLeave = (id) => {
     infos.delete(id); inputs.delete(id);
@@ -823,7 +882,7 @@ async function joinGame(target: string, row?: HTMLButtonElement) {
     const why = String(e);
     const msg = why.startsWith('version:') ? t('err.version', { host: why.slice(8), me: __APP_VERSION__ })
       : why === 'full' ? t('err.full')
-      : why === 'timeout' ? t('err.timeout')
+      : why === 'timeout' ? t('err.noLink')
       : friendlyError(why);
     startScan(); // panel('join') would clear the message, so restart the list directly
     $('join-msg').textContent = msg;

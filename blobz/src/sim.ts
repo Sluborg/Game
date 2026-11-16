@@ -155,12 +155,30 @@ export const BUILD_RING = 180;
 const RING_ORDER: BuildKind[] = ['workshop', 'storage', 'garden', 'well', 'watchtower', 'bridge']; // 0, 60, ... 300 degrees
 /** Spots moved off the ring: the level-3 hall is 192 px wide at 3x (x 544-736) and hid the watchtower at 240 deg,
  *  so the tower stands further out to the upper left (Lead 2026-11-15). */
-const SPOT_OVERRIDE: Partial<Record<BuildKind, { x: number; y: number }>> = { watchtower: { x: 470, y: 318 } };
+/** Stefan 2026-11-15: no building may block the main paths or the space between the house, the portal and the spawn
+ *  row (storage and garden stood right beside it). Every spot keeps >= 1.5 blob widths (51 px) of free ground round its
+ *  base, clear of the house, the spawn row, the path down to the portal and the three cave entrances in use (west, east,
+ *  south), never stands in any of the four seeded water corners, never hides behind the house or a portal picture, and
+ *  stays >= 120 px from the cave candidates (entranceOf), so the cave is placed exactly as before. Found by a grid search
+ *  over every water corner / cave combination; sim.test.ts checks the result on 60 seeds. */
+const SPOT_OVERRIDE: Partial<Record<BuildKind, { x: number; y: number }>> = {
+  garden: { x: 640, y: 200 }, workshop: { x: 470, y: 350 }, storage: { x: 790, y: 350 },
+  watchtower: { x: 440, y: 680 }, well: { x: 830, y: 610 },
+};
 export const BUILD_SPOTS = Object.fromEntries(RING_ORDER.map((k, i) => {
   const a = (i * 60 * Math.PI) / 180;
   return [k, SPOT_OVERRIDE[k] ?? { x: Math.round(BASE.x + Math.cos(a) * BUILD_RING), y: Math.round(BASE.y + Math.sin(a) * BUILD_RING) }];
 })) as Record<BuildKind, { x: number; y: number }>;
 export const COTTAGE_PAD = { x: BASE.x, y: BASE.y + 124 };
+/** Every building's fixed plot (Stefan 2026-11-15: "new buildings come at weird places"): the rectangle its picture
+ *  covers on the ground, art [width, height] at 3x with the bottom at the spot's foot line. Shown as a ghost outline
+ *  before it is built (game.ts), and no tree, bush or item ever spawns on it (makeTrees, freeSpot). */
+const PLOT_ART: Record<Exclude<BuildKind, 'bridge'>, [number, number]> = { storage: [32, 32], workshop: [48, 48], well: [16, 21], watchtower: [24, 32], garden: [64, 42] };
+export function plotRect(k: Exclude<BuildKind, 'bridge'>): Rect {
+  const at = BUILD_SPOTS[k], [w, h] = PLOT_ART[k], f = at.y - BUILD_R + 4;
+  return { x0: at.x - w * 1.5, x1: at.x + w * 1.5, y0: f - h * 3, y1: f };
+}
+export const PLOT_KINDS = Object.keys(PLOT_ART) as Exclude<BuildKind, 'bridge'>[];
 export const COTTAGE_COST: Res[] = [res(20, 15, 10), res(40, 30, 20)].map(priced); // to level 2, to level 3
 export const COTTAGE_MAX = 3;
 /** First thing the bank pays for right now: a missing building (BUILD_KINDS order), else the next cottage level. */
@@ -236,7 +254,7 @@ export const DUNGEON_ENABLED = true;
 export const ENTRANCE_R = 60; // Stefan 2026-11-15: ~30% bigger (was 46) so 5 blobz fit without crowding
 /** The portal's gather ring: an ellipse (top-down 3/4 view) in front of the portal, below its two pillars, so all 5
  *  fit on open ground. The sim test and the drawn ring (gatherRing.ts, game.ts) use these same numbers. */
-export const ENTRANCE_RING = { dy: 20, rx: ENTRANCE_R, ry: Math.round(ENTRANCE_R * 0.6) };
+export const ENTRANCE_RING = { dy: 32, rx: ENTRANCE_R, ry: Math.round(ENTRANCE_R * 0.6) }; // in front of the solid base
 export const onEntrance = (e: { x: number; y: number }, x: number, y: number) =>
   ((x - e.x) / ENTRANCE_RING.rx) ** 2 + ((y - e.y - ENTRANCE_RING.dy) / ENTRANCE_RING.ry) ** 2 < 1;
 /** Where the cave entrance goes on this map: the first of four spots around the base (west, east, south,
@@ -285,6 +303,7 @@ export type FxEvent =
   | { t: 'gate'; x: number; y: number }
   | { t: 'build'; x: number; y: number; kind: BuildKind | 'cottage'; done: boolean }
   | { t: 'enter' } | { t: 'leave'; done: boolean }
+  | { t: 'goal'; n: number } // a milestone: every goal bar was full; the next goal has started
   | DFx
   | MiniFx
   | { t: 'minigame' } | { t: 'minidone'; caught: number; stars: number };
@@ -315,6 +334,7 @@ export interface State {
   gardenT: number;
   delivered: Res; // everything brought home this round (quest progress, never spent)
   quest: Res;
+  goal: number; // milestones reached this round (LONG_GAME)
   players: Player[];
   items: Item[];
   gems: Gem[];
@@ -336,6 +356,15 @@ export const MINI_ENABLED = false;
 /** Day cycle (sun bar + time limit) is ARCHIVED (Stefan 2026-11-15, docs/ARCHIVED.md): with it off the meadow has no
  *  time limit and the round ends when all three quest goals are filled, then Bärregn as before. Code kept. */
 export const DAY_CYCLE_ENABLED = false;
+/** Stefan 2026-11-15 ("victory happened unexpected; plan for long games"): the meadow never ends by itself. A full set
+ *  of goal bars is a milestone (fx 'goal': toast + star), the overflow carries over and the next, bigger goal starts;
+ *  the round ends only when the host chooses "Spara och gå hem" (endRound). false = the old automatic end screen. */
+export const LONG_GAME = true;
+/** Goal size per milestone: +50% of the base goal for every goal already reached. */
+export const goalTargets = (players: number, cottage: number, goal: number): Res => {
+  const q = questTargets(players, cottage);
+  return res(Math.ceil(q.wood * (1 + 0.5 * goal)), Math.ceil(q.stone * (1 + 0.5 * goal)), Math.ceil(q.berry * (1 + 0.5 * goal)));
+};
 import { dsnap, dungeonChoice, dview, newRun, READY_SECONDS, stepDungeon, WEAPONS, type DFx, type DSnap, type DState, type DView, type Weapon } from './dungeon';
 
 
@@ -356,6 +385,7 @@ export function makeTrees(seed: number): Tree[] {
     const y = 70 + r() * (WORLD_H - 130);
     if (nearBase(x, y, 90)) continue;
     if (spots.some((p) => Math.hypot(p.x - x, p.y - y) < 80)) continue;
+    if (BUILDING_ENABLED && PLOT_KINDS.some((k) => inRect(plotRect(k), x, y, 30))) continue; // plots stay clear
     if (zones.some((z) => inRect(z, x, y, 40))) continue;
     if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < 150)) continue; // spread out (declutter)
     const roll = r();
@@ -434,7 +464,7 @@ export function createState(infos: PlayerInfo[], seed: number, village: Village 
     phase: 'play', time: ROUND_SECONDS,
     mini: null, miniResult: null,
     seed, biome: cleanBiome(biome), ice: cleanBiome(biome) === 'snow' ? makeIce(seed) : [], entrance: entranceOf(seed), mode: 'meadow', entry: 0, picks: {}, pickT: 0, runs: 0, dg: null,
-    bank: { ...vil.bank }, dungeon: vil.dungeon ?? 1, delivered: res(), quest: questTargets(infos.length, vil.cottage),
+    bank: { ...vil.bank }, dungeon: vil.dungeon ?? 1, delivered: res(), quest: questTargets(infos.length, vil.cottage), goal: 0,
     builds: BUILD_KINDS.map((kind) => ({ kind, state: vil.builds[kind] ? 2 : 0, paid: res(), buy: 0, armed: true })),
     cottage: { level: vil.cottage, state: 0, paid: res(), buy: 0, armed: true }, water,
     builtNow: [], villageDirty: false, gardenT: GARDEN_EVERY,
@@ -477,6 +507,7 @@ function freeSpot(s: State, minBase = 60): { x: number; y: number } {
     if (s.trees.some((t) => Math.hypot(t.x - x, t.y - y) < 34)) continue;
     if (s.layout.some((l) => inRect(l.zone, x, y, 20))) continue;
     if ([...Object.values(BUILD_SPOTS), COTTAGE_PAD].some((p) => Math.hypot(p.x - x, p.y - y) < BUILD_R + 40)) continue;
+    if (BUILDING_ENABLED && PLOT_KINDS.some((k) => inRect(plotRect(k), x, y, 20))) continue;
     if (DUNGEON_ENABLED && Math.hypot(s.entrance.x - x, s.entrance.y - y) < ENTRANCE_R + 40) continue; // [dungeon hook]
     if (BUILDING_ENABLED && [s.water.area, ...s.water.water].some((r) => inRect(r, x, y, 30))) continue;
     return { x, y };
@@ -536,7 +567,7 @@ export function pickWeapon(s: State, id: string, w: string) {
 function enterDungeon(s: State) {
   for (const p of s.players) s.picks[p.id] ??= 'dagger'; // [dungeon hook] unpicked = Rogue with two daggers
   s.runs++;
-  s.dg = newRun(s.seed * 7919 + s.runs * 104729, s.picks, s.dungeon, undefined, undefined, narrowest(s)); // [dungeon hook] rooms as wide as the narrowest phone
+  s.dg = newRun(s.seed * 7919 + s.runs * 104729, s.picks, s.dungeon, undefined, narrowest(s)); // [dungeon hook] rooms as wide as the narrowest phone
   s.mode = 'dungeon';
   for (const p of s.players) { p.x = s.dg.map.start.x + (Math.random() - 0.5) * 30; p.y = s.dg.map.start.y + (Math.random() - 0.5) * 30; p.vx = 0; p.vy = 0; p.carry = []; }
   s.fx.push({ t: 'floor', floor: 1 });
@@ -828,6 +859,15 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
     }
   }
 
+  if (LONG_GAME && !DAY_CYCLE_ENABLED) {
+    if (questDone(s.delivered, s.quest)) { // a milestone, not the end
+      for (const k of RES) s.delivered[k] = Math.max(0, s.delivered[k] - s.quest[k]);
+      s.goal++;
+      s.quest = goalTargets(s.players.length, s.cottage.level, s.goal);
+      s.fx.push({ t: 'goal', n: s.goal });
+    }
+    return;
+  }
   const over = DAY_CYCLE_ENABLED ? s.time <= 0 : questDone(s.delivered, s.quest); // sunset, or the quest is complete
   if (over) { if (MINI_ENABLED && s.players.length) startMini(s); else s.phase = 'end'; }
 }
@@ -844,7 +884,7 @@ export function requestBuild(s: State, playerId: string, kind: BuildKind | 'cott
   for (const k of RES) s.bank[k] -= cost[k];
   if (kind === 'cottage') {
     s.cottage.level++;
-    s.quest = questTargets(s.players.length, s.cottage.level);
+    s.quest = goalTargets(s.players.length, s.cottage.level, s.goal);
   } else {
     const b = s.builds.find((x) => x.kind === kind);
     if (!b) return false;
@@ -858,6 +898,12 @@ export function requestBuild(s: State, playerId: string, kind: BuildKind | 'cott
 }
 /** "At home": on the cottage yard; the build panel (hammer button) is offered here. */
 export const HOME_R = 110;
+/** The host chooses to end the meadow round ("Spara och gå hem"): the end screen shows; the village is saved there. */
+export function endRound(s: State): boolean {
+  if (s.phase !== 'play' || s.mode !== 'meadow') return false;
+  s.phase = 'end'; s.villageDirty = true;
+  return true;
+}
 export const atHome = (x: number, y: number) => Math.hypot(x - BASE.x, y - BASE.y) < HOME_R;
 
 function stepBuilding(s: State, dt: number) {
@@ -882,22 +928,20 @@ export function villageOf(s: State): Village {
   };
 }
 
-/** Building footprints (Stefan 2026-11-15): the bottom third of each picture (Ninja art at 3x, 80% of its width) is
- *  solid, so blobz walk round the walls at ground level and still pass behind roofs (the world is y-sorted). Art sizes
- *  in art px, matching the crops in game.ts. The garden is flat soil plots (no walls) and the bridge is the river
- *  crossing, so neither is solid. */
+/** Building footprints (Stefan 2026-11-15, v2): the FULL width of each picture across its whole lower body (from the
+ *  ground line up to where the roof starts) is solid, so blobz cannot slip into a building from the sides; they only
+ *  pass behind it (north of the body), where the roof hides them and fades. [art width, body rows from the bottom] in
+ *  art px at 3x, matching the crops in game.ts (rows read off the pictures). The garden is flat soil plots (no walls)
+ *  and the bridge is the river crossing, so neither is solid. */
 const FOOT_ART: Record<string, [number, number]> = {
-  'cottage-1': [42, 39], 'cottage-2': [64, 48], 'cottage-3': [64, 112],
-  storage: [32, 32], workshop: [48, 48], well: [16, 21], watchtower: [24, 32],
+  'cottage-1': [42, 19], 'cottage-2': [64, 17], 'cottage-3': [64, 42],
+  storage: [32, 32], workshop: [48, 20], well: [16, 13], watchtower: [24, 18],
 };
-const footBox = (cx: number, footY: number, [w, h]: [number, number]): Rect =>
-  ({ x0: cx - w * 1.2, x1: cx + w * 1.2, y0: footY - h, y1: footY }); // 3x art: half of 80% width = 1.2 w, a third of 3h = h
-/** Portal (N-28, 64x48 at 3x, bottom at entrance.y + 30): the two stone pillars beside the doorway, art columns 0-22 and
- *  42-64, rows 30-41 (ground level). The doorway between them (and the steps in front) stays open. */
-const portalBoxes = (e: { x: number; y: number }): Rect[] => [
-  { x0: e.x - 90, x1: e.x - 33, y0: e.y - 24, y1: e.y + 9 },
-  { x0: e.x + 33, x1: e.x + 90, y0: e.y - 24, y1: e.y + 9 },
-];
+const footBox = (cx: number, footY: number, [w, rows]: [number, number]): Rect =>
+  ({ x0: cx - w * 1.5, x1: cx + w * 1.5, y0: footY - rows * 3, y1: footY });
+/** Portal (N-28, 64x48 at 3x, bottom at entrance.y + 30): its whole base is solid across the full width (art rows
+ *  13-41 = the mound and both pillars up to the arch), Stefan 2026-11-15; the gather ring lies in front of it. */
+const portalBoxes = (e: { x: number; y: number }): Rect[] => [{ x0: e.x - 96, x1: e.x + 96, y0: e.y - 48, y1: e.y + 6 }];
 export function solidBoxes(s: Pick<State, 'cottage' | 'builds' | 'entrance' | 'mode'>): Rect[] {
   const out: Rect[] = [footBox(BASE.x, BASE.y + 30, FOOT_ART['cottage-' + Math.max(1, Math.min(3, s.cottage.level))])];
   if (BUILDING_ENABLED) for (const k of BUILD_KINDS) {
@@ -931,6 +975,7 @@ export interface Snapshot {
   mn?: [number, number, [number, number, number], [number, number, number, number, number][], string[]]; // Bärregn: t, caught, goal, drops [id, bomb?, x, y, z], stunned ids
   mr?: [number, number]; // Bärregn result: caught, stars
   r: number[]; // bank w,s,b, delivered w,s,b, quest w,s,b
+  gl?: number; // milestones reached (LONG_GAME)
   n: string; // items left per node, one digit each
   p: [string, number, number, number, number, string, number, number, number, number?][]; // id,x,y,vx,vy,carry,boost,magnet,dashCd,shield
   i: [number, string, number, number][];
@@ -956,7 +1001,7 @@ export function snapshot(s: State): Snapshot {
     ph: s.phase, tm: r1(s.time),
     mn: s.mini ? [r1(s.mini.t), s.mini.caught, s.mini.goal, s.mini.drops.map((d) => [d.id, d.kind === 'bomb' ? 1 : 0, r1(d.x), r1(d.y), r1(d.z)]), Object.keys(s.mini.stun)] : undefined,
     mr: s.miniResult ? [s.miniResult.caught, s.miniResult.stars] : undefined,
-    r: [...resArr(s.bank), ...resArr(s.delivered), ...resArr(s.quest)],
+    r: [...resArr(s.bank), ...resArr(s.delivered), ...resArr(s.quest)], gl: s.goal,
     n: s.trees.map((t) => Math.max(0, Math.min(9, t.left))).join(''),
     p: s.players.map((p) => [p.id, r1(p.x), r1(p.y), r1(p.vx), r1(p.vy), p.carry.map((k) => KIND_CODE[k]).join(''), r1(p.boostT), r1(p.magnetT), r1(p.dashCd), p.shield]),
     i: s.items.map((i) => [i.id, KIND_CODE[i.kind], r1(i.x), r1(i.y)]),
@@ -978,6 +1023,7 @@ export interface View {
   mini: { t: number; caught: number; goal: [number, number, number]; drops: { id: number; kind: 'berry' | 'bomb'; x: number; y: number; z: number }[]; stunned: string[] } | null;
   miniResult: { caught: number; stars: number } | null;
   bank: Res; delivered: Res; quest: Res;
+  goal: number; // milestones reached this round (LONG_GAME)
   nodes: number[]; // items left per node (same order as makeTrees)
   players: { id: string; x: number; y: number; vx: number; vy: number; carry: ItemKind[]; boostT: number; magnetT: number; dashCd: number; shield: number }[];
   items: Item[]; gems: { id: number; x: number; y: number; holders: number }[]; powers: Power[];
@@ -994,7 +1040,7 @@ export function viewFromState(s: State): View {
     phase: s.phase, time: s.time,
     mini: s.mini ? { t: s.mini.t, caught: s.mini.caught, goal: s.mini.goal, drops: s.mini.drops, stunned: Object.keys(s.mini.stun) } : null,
     miniResult: s.miniResult,
-    bank: s.bank, delivered: s.delivered, quest: s.quest,
+    bank: s.bank, delivered: s.delivered, quest: s.quest, goal: s.goal,
     nodes: s.trees.map((t) => t.left),
     players: s.players.map((p) => ({ id: p.id, x: p.x, y: p.y, vx: p.vx, vy: p.vy, carry: p.carry, boostT: p.boostT, magnetT: p.magnetT, dashCd: p.dashCd, shield: p.shield })),
     items: s.items, gems: s.gems, powers: s.powers, puzzles: s.puzzles,
@@ -1009,7 +1055,7 @@ export function viewFromSnapshot(n: Snapshot): View {
     phase: n.ph, time: n.tm,
     mini: n.mn ? { t: n.mn[0], caught: n.mn[1], goal: n.mn[2], drops: n.mn[3].map(([id, b, x, y, z]) => ({ id, kind: b ? 'bomb' as const : 'berry' as const, x, y, z })), stunned: n.mn[4] } : null,
     miniResult: n.mr ? { caught: n.mr[0], stars: n.mr[1] } : null,
-    bank: arrRes(n.r, 0), delivered: arrRes(n.r, 3), quest: arrRes(n.r, 6),
+    bank: arrRes(n.r, 0), delivered: arrRes(n.r, 3), quest: arrRes(n.r, 6), goal: n.gl ?? 0,
     nodes: [...(n.n ?? '')].map(Number),
     players: n.p.map(([id, x, y, vx, vy, c, b, m, d, sh]) => ({ id, x, y, vx, vy, carry: c.split('').filter(Boolean).map((k) => CODE_KIND[k]), boostT: b, magnetT: m, dashCd: d, shield: sh ?? 0 })),
     items: n.i.map(([id, k, x, y]) => ({ id, kind: CODE_KIND[k], x, y })),

@@ -74,7 +74,7 @@ const openPanel = async (page) => { await page.waitForSelector('#btn-build:not(.
     if (shots) await bo.screenshot({ path: `${shots}/base-built-landscape.png` });
 
     // sunset, Bärregn skipped, then "Spela igen": the village + bank continue, the quest restarts
-    await sim(host, (s) => { s.villageDirty = true; s.delivered = { ...s.quest }; });
+    await sim(host, (s) => { s.villageDirty = true; s.phase = 'end'; }); // long game: the round ends only by choice (endRound)
     await host.waitForSelector('#end:not(.hidden)', { timeout: 5000 }); // Bärregn archived: straight to the end
     await host.click('#btn-again');
     await ada.waitForFunction(() => window.__blobzView.phase === 'play' && window.__blobzView.delivered.wood === 0, null, { timeout: 8000 });

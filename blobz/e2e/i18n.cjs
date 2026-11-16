@@ -86,7 +86,7 @@ async function phone(browser, name, locale, size = PORTRAIT) {
     await en.click('#btn-build-close');
 
     // end screen (Bärregn archived: the complete quest goes straight there)
-    await sim(en, (s) => { s.delivered = { ...s.quest }; });
+    await sim(en, (s) => { s.phase = 'end'; }); // long game: ended by choice (endRound)
     await en.waitForSelector('#end:not(.hidden)', { timeout: 6000 });
     await sv.waitForSelector('#end:not(.hidden)', { timeout: 6000 });
     ok((await en.textContent('#end-title')).trim() === 'Quest complete!', 'end screen in English');

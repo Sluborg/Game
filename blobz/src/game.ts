@@ -1,15 +1,15 @@
 // Phaser scene: renders a View (from the host sim or from network snapshots).
-import { snapZoom } from './pixelScale';
+import { dpr, snapZoom } from './pixelScale';
 import Phaser from 'phaser';
 import { blobCanvas, BLOB_FRAMES, BODY_CY, clampLook, facingFromVelocity, GRID_H, GRID_W, type Facing } from './blob';
 import { sfx } from './sfx';
 import { dungeonFrame } from './dungeonScene'; // [dungeon hook]
 import { BASE, GATE_W, makePuzzles, makeTrees, PLATE_R, rng, WORLD_H, WORLD_W } from './sim';
 import { isSolid, RES } from './sim';
-import { affordable, BUILDING_ENABLED, BUILD_KINDS, BUILD_R, BUILD_SPOTS, COTTAGE_PAD, makeWater, nodeRes } from './sim';
+import { affordable, BUILDING_ENABLED, BUILD_KINDS, BUILD_R, BUILD_SPOTS, COTTAGE_PAD, makeWater, nodeRes, plotRect, atHome } from './sim';
 import type { Biome, BuildKind } from './sim';
 import { DUNGEON_ENABLED, ENTRANCE_RING, entranceOf, ICE_RX, ICE_RY, makeIce, onEntrance, WATER_TILE } from './sim';
-import { drawGatherRing } from './gatherRing';
+import { drawGatherRing, GATHER_RING } from './gatherRing';
 import { autotileMask, waterTiles, type Shore } from './water';
 import { cavePath } from './cavePath';
 import { isImgArt, RES_ART } from './resArt';
@@ -158,6 +158,14 @@ function autoFrame(sh: Shore, bx: number, by: number, inner: Record<'inw' | 'ine
 }
 /** The organic dirt yard around the cottage and under buildings. false = plain grass everywhere ("no ground" test). */
 export const YARD_ENABLED = true;
+/** Nameplates (Stefan 2026-11-15, long names): at most NAME_MAX world px wide, so neighbours on the spawn row (48 px
+ *  apart) never overlap; a longer name is cut with an ellipsis ("WWWW…"). */
+const NAME_MAX = 46;
+function fitLabel(label: Phaser.GameObjects.Text, name: string) {
+  label.setText(name);
+  for (let n = name.length - 1; label.width > NAME_MAX && n > 0; n--) label.setText(name.slice(0, n) + '…');
+}
+const buildPanelOpen = () => typeof document !== 'undefined' && !document.getElementById('build-panel')?.classList.contains('hidden');
 const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.search).has('debug');
 const MAP_VIEW = DEBUG && new URLSearchParams(location.search).has('mapview');
 /** Below this speed (px/s) the face looks straight ahead. */
@@ -213,12 +221,13 @@ export class GameScene extends Phaser.Scene {
   private dB = 0;
   private miniCenterY = 0;
   private miniG?: Phaser.GameObjects.Graphics;
-  private yardImg?: Phaser.GameObjects.Image;
+  private groundImg?: Phaser.GameObjects.Image;
+  private groundKey = '';
   private yardKey = '';
   private miniDeco: Phaser.GameObjects.GameObject[] = [];
   private miniBg?: Phaser.GameObjects.Image;
   private drops = new Map<number, { item: Phaser.GameObjects.Image; mark: Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse }>();
-  private bgfx = new Map<BuildKind, { img: Phaser.GameObjects.Image; sh?: Phaser.GameObjects.Image; built: boolean }>();
+  private bgfx = new Map<BuildKind, { img: Phaser.GameObjects.Image; sh?: Phaser.GameObjects.Image; built: boolean; ghost?: Phaser.GameObjects.Container }>();
   private cottageImg!: Phaser.GameObjects.Image;
   private water!: ReturnType<typeof makeWater>;
   private nodes: { img: Phaser.GameObjects.Image; sh: Phaser.GameObjects.Image; kind: number; left: number; x: number; y: number; sc: number; fade: number; blossom: boolean; tree?: TreeVariant }[] = [];
@@ -393,6 +402,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
+    if (DEBUG) (window as unknown as { __blobzScene?: Phaser.Scene }).__blobzScene = this; // e2e: camera / pixel-scale checks
     if (!this.anims.exists('mini-ko')) this.anims.create({ key: 'mini-ko', frames: this.anims.generateFrameNumbers('mini-ko', { frames: [0] }), frameRate: 6, repeat: -1 });
     if (!this.anims.exists('plate-glow')) this.anims.create({ key: 'plate-glow', frames: this.anims.generateFrameNumbers('fx-plate-glow', { start: 0, end: 4 }), frameRate: 8, repeat: -1 });
     if (!this.anims.exists('mini-wave')) this.anims.create({ key: 'mini-wave', frames: this.anims.generateFrameNumbers('mini-wave', { start: 0, end: 8 }), frameRate: 18 });
@@ -429,12 +439,13 @@ export class GameScene extends Phaser.Scene {
       this.bakeNinjaMeadow(gc, r);
       this.textures.addCanvas(groundKey, gc)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
-    this.add.image(0, 0, groundKey).setOrigin(0).setScale(NINJA_SCALE).setDepth(-1000);
+    this.groundKey = groundKey;
+    this.groundImg = this.add.image(0, 0, groundKey).setOrigin(0).setScale(NINJA_SCALE).setDepth(-1000);
 
     // base: round dirt yard with the cottage in the middle + glowing drop-off ring
     // the yard: an organic patch of dirt (packed snow on the snow map) that grows with the cottage and spreads
     // under every building as it is built; redrawn in drawYard() when that changes
-    this.yardImg = undefined; this.yardKey = '';
+    this.yardKey = '';
     this.drawYard(1, []);
     this.baseG = this.add.graphics().setDepth(-900);
     this.add.ellipse(BASE.x, BASE.y + 26, 110, 26, 0x000000, 0.18).setDepth(-880);
@@ -541,9 +552,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private fitCamera() {
-    const w = this.scale.width, h = this.scale.height;
+    const d = dpr(), w = this.scale.width / d, h = this.scale.height / d; // CSS px (the game is device px, pixelScale.ts)
     if (MAP_VIEW) { // debug screenshots (?debug&mapview): the whole meadow on screen, camera centred, no follow
-      const z = Math.min(w / WORLD_W, h / WORLD_H);
+      const z = Math.min(w / WORLD_W, h / WORLD_H) * d;
       this.cameras.main.removeBounds(); this.cameras.main.setZoom(z); this.cameras.main.centerOn(WORLD_W / 2, WORLD_H / 2);
       return;
     }
@@ -551,7 +562,7 @@ export class GameScene extends Phaser.Scene {
       // Bärregn: the whole field on screen, below the mini HUD (~top 120 px) and above the buttons
       const top = 124, bottom = 24;
       const z = Math.min(w / (ARENA.x1 - ARENA.x0 + 40), (h - top - bottom) / (ARENA.y1 - ARENA.y0 + 30));
-      this.cameras.main.setZoom(z);
+      this.cameras.main.setZoom(z * d);
       this.miniCenterY = (ARENA.y0 + ARENA.y1) / 2 - (top - bottom) / 2 / z;
       this.cameras.main.removeBounds();
       this.cameras.main.centerOn((ARENA.x0 + ARENA.x1) / 2, this.miniCenterY);
@@ -563,7 +574,11 @@ export class GameScene extends Phaser.Scene {
     }
     this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
     // snapped so one art px (props are 3x) is a whole number of CSS px (device px once DPR_CANVAS is on): 3x on phones
-    const z = snapZoom(Math.max(0.55, Math.min(2.2, Math.min(Math.max(w, h) / 820, Math.min(w, h) / 430))));
+    let z = snapZoom(Math.max(0.55, Math.min(2.2, Math.min(Math.max(w, h) / 820, Math.min(w, h) / 430))));
+    // never so far out that the view is bigger than the meadow (Lead 2026-11-16: at DPR 2 on 390x844 rounding gave
+    // 5/6 zoom, a 1013 px tall view of the 960 px world and a ~44 px green strip): round UP to the next whole art step
+    const zMin = Math.max(w / WORLD_W, h / WORLD_H) * d; // device zoom that just covers the screen
+    if (z < zMin) z = Math.ceil(zMin * 3 - 1e-9) / 3;
     this.cameras.main.setZoom(z);
   }
 
@@ -684,7 +699,9 @@ export class GameScene extends Phaser.Scene {
       this.portalFade = fadeOne(this.portalImg);
     }
     // ---- dusk ----
-    this.dusk.setFillStyle(v.phase === 'end' ? 0x4a2a6a : 0xff7a2f, v.phase === 'end' ? 0.38 : v.time >= 20 ? 0 : 0.1 + Math.min(1, (20 - v.time) / 20) * 0.25);
+    const duskA = v.phase === 'end' ? 0.38 : v.time >= 20 ? 0 : 0.1 + Math.min(1, (20 - v.time) / 20) * 0.25;
+    // a see-through full-screen rectangle still costs a full-screen blend every frame (Lead 2026-11-16, perf): hide it
+    this.dusk.setFillStyle(v.phase === 'end' ? 0x4a2a6a : 0xff7a2f, duskA).setVisible(duskA > 0);
 
     // ---- Bärregn mini game ----
     this.drawMini(v);
@@ -751,7 +768,7 @@ export class GameScene extends Phaser.Scene {
       b.facing = b.swingT > 0 ? (b.faceLeft ? 'left' : 'right') : facingFromVelocity(p.vx, p.vy, FACE_DEAD, b.facing);
       b.body.setFlipX(b.facing === 'left');
       if (DEBUG) ((window as unknown as { __blobzFace?: Record<string, { facing: Facing; frame: number }> }).__blobzFace ??= {})[p.id] = { facing: b.facing, frame }; // e2e
-      if (b.label.text !== info.name) b.label.setText(info.name);
+      if (b.label.getData('name') !== info.name) fitLabel(b.label.setData('name', info.name), info.name);
       if (smooth) {
         b.x += (p.x + p.vx * 0.06 - b.x) * k; b.y += (p.y + p.vy * 0.06 - b.y) * k;
         b.vx = p.vx; b.vy = p.vy;
@@ -829,6 +846,7 @@ export class GameScene extends Phaser.Scene {
     // nameplate: always on top of the world (tools, props); no "you" arrow any more (Stefan 2026-11-15)
     b.label.setPosition(b.x, b.y + 14).setDepth(this.dB + 19990);
     if (DEBUG) ((window as unknown as { __blobzCovers?: Record<string, () => string[]> }).__blobzCovers ??= {})[p.id] = () => this.coversOf(b.label); // e2e
+    if (DEBUG) ((window as unknown as { __blobzLabels?: Record<string, () => { x: number; w: number; y: number; h: number; text: string }> }).__blobzLabels ??= {})[p.id] = () => { const r = b.label.getBounds(); return { x: r.x, y: r.y, w: r.width, h: r.height, text: b.label.text }; }; // e2e
 
     // carried items stack
     while (b.carry.length < p.carry.length) b.carry.push(this.add.image(0, 0, 'ic-log').setScale(1));
@@ -851,8 +869,25 @@ export class GameScene extends Phaser.Scene {
         ? this.add.image(w.bridge.x, w.bridge.y + 69, 'b-bridge').setScale(NINJA_SCALE).setOrigin(0.5, 1).setDepth(-930)
         : this.add.image(at.x, at.y - BUILD_R + 4, 'b-' + k).setScale(PROP_SCALE).setOrigin(0.5, 1).setDepth(at.y - BUILD_R + 4);
       const sh = k === 'bridge' ? undefined : this.shadow(at.x, at.y - BUILD_R + 2, img.displayWidth * 0.85, 24, 0.24).setDepth(at.y - BUILD_R + 3).setVisible(false);
-      this.bgfx.set(k, { img: img.setVisible(false), sh, built: false });
+      this.bgfx.set(k, { img: img.setVisible(false), sh, built: false, ghost: k === 'bridge' ? undefined : this.plotGhost(k) });
     }
+  }
+
+  /** The plot of a building not built yet (Stefan 2026-11-15): a faint dashed foundation on the ground where it will
+   *  stand (the picture's full width, its lower body deep) with the building's own picture small (1x) in the middle.
+   *  Shown while the build panel is open or your blob is near (drawBuilds). */
+  private plotGhost(k: Exclude<BuildKind, 'bridge'>) {
+    const r = plotRect(k);
+    const h = Math.min(r.y1 - r.y0, 66);
+    const x0 = r.x0, x1 = r.x1, y0 = r.y1 - h, y1 = r.y1;
+    const g = this.add.graphics();
+    g.fillStyle(GATHER_RING.track, 0.22).fillRect(x0, y0, x1 - x0, h);
+    g.fillStyle(GATHER_RING.plum, 0.6);
+    const hd = (y: number) => { for (let x = x0; x < x1; x += 15) g.fillRect(x, y - 1.5, Math.min(9, x1 - x), 3); }; // 9 px dashes, 6 px gaps
+    const vd = (x: number) => { for (let y = y0; y < y1; y += 15) g.fillRect(x - 1.5, y, 3, Math.min(9, y1 - y)); };
+    hd(y0); hd(y1); vd(x0); vd(x1);
+    const icon = this.add.image((x0 + x1) / 2, (y0 + y1) / 2, 'b-' + k).setScale(1).setAlpha(0.75);
+    return this.add.container(0, 0, [g, icon]).setDepth(-900).setAlpha(0).setVisible(false);
   }
 
   private drawBuilds(v: View, _now: number) {
@@ -866,6 +901,13 @@ export class GameScene extends Phaser.Scene {
       if (!g) continue;
       const on = b.state === 2;
       if (on !== g.built) { g.built = on; g.img.setVisible(on); g.sh?.setVisible(on); }
+      if (g.ghost) { // the plot ghost: build panel open, your blob on the home yard, or within 200 px of the spot
+        const at = BUILD_SPOTS[b.kind], me = this.blobs.get(this.s.myId);
+        const near = !!me && (Math.hypot(me.x - at.x, me.y - at.y) < 200 || atHome(me.x, me.y)); // on the yard: every plot
+        const want = !on && v.mode === 'meadow' && v.phase === 'play' && (buildPanelOpen() || near) ? 1 : 0;
+        const a = g.ghost.alpha + Math.sign(want - g.ghost.alpha) * Math.min(Math.abs(want - g.ghost.alpha), 0.08);
+        g.ghost.setAlpha(a).setVisible(a > 0.01);
+      }
     }
     this.drawYard(lvl, v.builds.filter((b) => b.state === 2 && b.kind !== 'bridge').map((b) => b.kind));
     this.drawArrows(v);
@@ -923,7 +965,9 @@ export class GameScene extends Phaser.Scene {
   /** Meadow yard + path in Ninja dirt tiles: the yard is a blob of tiles round the cottage (bigger per level) plus a
    *  patch under every built building, and a 2-tile path runs to the cave; autotiled with the dirt-on-grass block. */
   private drawNinjaDirt(level: number, built: BuildKind[]) {
-    const key = `ndirt-${this.s.biome ?? 'meadow'}-${this.s.seed}-${level}-${YARD_ENABLED ? [...built].sort().join(',') : 'off'}`;
+    // the yard is baked INTO the ground texture (Lead 2026-11-16, perf: one full-screen layer instead of two); rebaked
+    // only when a building is built or the cottage grows (the key changes)
+    const key = `${this.groundKey}+ndirt-${level}-${YARD_ENABLED ? [...built].sort().join(',') : 'off'}`;
     if (key === this.yardKey) return;
     if (!this.textures.exists(key)) {
       const T = WATER_TILE, mask = new Set<string>();
@@ -937,7 +981,9 @@ export class GameScene extends Phaser.Scene {
       };
       if (YARD_ENABLED) {
         blob(BASE.x, BASE.y + 6, 96 + 16 * level, 84 + 12 * level);
-        for (const k of built) { const at = BUILD_SPOTS[k]; blob(at.x, at.y - 30, 66, 52); }
+        // a patch at each building's foot line, as wide as its plot (Stefan 2026-11-15: the storage's patch sat hidden
+        // under its tall picture; the small well showed its own), so every built house stands on visible dirt
+        for (const k of built) { if (k === 'bridge') continue; const r = plotRect(k); blob((r.x0 + r.x1) / 2, r.y1 + 6, Math.max(66, (r.x1 - r.x0) / 2 + 48), 60); }
       }
       const routed = DUNGEON_ENABLED ? cavePath(this.s.seed) : new Set<string>();
       for (const k of routed) { const [tx, ty] = k.split(',').map(Number); add(tx, ty); }
@@ -958,11 +1004,14 @@ export class GameScene extends Phaser.Scene {
         const [sx, sy] = autoFrame(t.shore, 0, by, inner, t.shore === 'open2' ? pebble : [16, by + 16]);
         cx.drawImage(floor, sx, sy, 16, 16, t.tx * 16, t.ty * 16, 16, 16);
       }
-      this.textures.addCanvas(key, c)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
+      const baked = document.createElement('canvas'); baked.width = c.width; baked.height = c.height;
+      const bx = baked.getContext('2d')!;
+      bx.drawImage(this.textures.get(this.groundKey).getSourceImage() as HTMLCanvasElement, 0, 0);
+      bx.drawImage(c, 0, 0);
+      this.textures.addCanvas(key, baked)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
     const old = this.yardKey;
-    if (!this.yardImg) this.yardImg = this.add.image(0, 0, key).setOrigin(0).setScale(NINJA_SCALE).setDepth(-950);
-    else this.yardImg.setTexture(key);
+    this.groundImg?.setTexture(key);
     this.yardKey = key;
     if (old && old !== key && this.textures.exists(old)) this.textures.remove(old);
   }
@@ -979,7 +1028,7 @@ export class GameScene extends Phaser.Scene {
     const box = document.getElementById('edge-arrows');
     if (!box) return;
     const tower = v.builds.some((b) => b.kind === 'watchtower' && b.state === 2);
-    const cam = this.cameras.main, wv = cam.worldView;
+    const cam = this.cameras.main, wv = cam.worldView, cz = cam.zoom / dpr(); // CSS px per world px
     const onScreen = (p: { x: number; y: number }) => p.x > wv.x && p.x < wv.right && p.y > wv.y && p.y < wv.bottom;
     const goHome = BUILDING_ENABLED && v.phase === 'play' && v.mode === 'meadow' && !onScreen(BASE)
       && !!affordable(v.bank, v.builds, v.cottage?.level ?? 1);
@@ -990,9 +1039,9 @@ export class GameScene extends Phaser.Scene {
       const cx = wv.centerX, cy = wv.centerY;
       const ang = Math.atan2(t.y - cy, t.x - cx);
       // where the ray from the view centre leaves the view (inset), in screen pixels
-      const hw = wv.width / 2 - 40 / cam.zoom, hh = wv.height / 2 - 60 / cam.zoom;
+      const hw = wv.width / 2 - 40 / cz, hh = wv.height / 2 - 60 / cz;
       const sc = Math.min(Math.abs(hw / Math.cos(ang) || Infinity), Math.abs(hh / Math.sin(ang) || Infinity));
-      const sx = (cx + Math.cos(ang) * sc - wv.x) * cam.zoom, sy = (cy + Math.sin(ang) * sc - wv.y) * cam.zoom;
+      const sx = (cx + Math.cos(ang) * sc - wv.x) * cz, sy = (cy + Math.sin(ang) * sc - wv.y) * cz;
       el.style.display = 'flex';
       el.style.left = sx + 'px'; el.style.top = sy + 'px';
       (el.querySelector('.arr') as HTMLElement).style.transform = `rotate(${ang}rad)`;

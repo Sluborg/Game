@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BASE, createState, DAY_CYCLE_ENABLED, DUNGEON_ENABLED, STONE_ENABLED, finishMini, MINI_ENABLED, questTargets, step, type Input } from './sim';
+import { BASE, createState, DAY_CYCLE_ENABLED, DUNGEON_ENABLED, STONE_ENABLED, finishMini, MINI_ENABLED, questTargets, step, type Input, LONG_GAME, endRound, snapshot, viewFromSnapshot } from './sim';
 
 const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 });
 
@@ -50,7 +50,7 @@ describe('sim', () => {
     expect(s.phase).toBe('end');
   });
 
-  it.skipIf(DAY_CYCLE_ENABLED)('no day cycle: no time limit; a complete quest ends the round', () => {
+  it.skipIf(DAY_CYCLE_ENABLED || LONG_GAME)('no day cycle: no time limit; a complete quest ends the round', () => {
     const s = createState([P('a')], 4);
     const t = s.time;
     for (let i = 0; i < 600; i++) step(s, new Map(), 1 / 60);
@@ -63,6 +63,27 @@ describe('sim', () => {
     step(s, new Map(), 1 / 60);
     if (MINI_ENABLED) { expect(s.phase).toBe('mini'); finishMini(s); }
     expect(s.phase).toBe('end'); // Bärregn archived: straight to the end screen
+  });
+
+  it.skipIf(DAY_CYCLE_ENABLED || !LONG_GAME)('long game (Stefan 2026-11-15): a full quest is a milestone, not the end; the host ends it by choice', () => {
+    const s = createState([P('a')], 4);
+    const q0 = { ...s.quest };
+    s.delivered = { ...s.quest, wood: s.quest.wood - 1 };
+    step(s, new Map(), 1 / 60);
+    expect(s.goal).toBe(0); // two of three goals is not a milestone
+    s.delivered.wood = s.quest.wood + 2; // 2 over the goal
+    step(s, new Map(), 1 / 60);
+    expect(s.phase).toBe('play');
+    expect(s.goal).toBe(1);
+    expect(s.fx.some((f) => f.t === 'goal' && f.n === 1)).toBe(true);
+    expect(s.quest.wood).toBe(Math.ceil(q0.wood * 1.5)); // the next goal is bigger
+    expect(s.delivered.wood).toBe(2); // the overflow counts toward it
+    expect(viewFromSnapshot(snapshot(s)).goal).toBe(1); // every phone sees the milestone
+    for (let i = 0; i < 600; i++) step(s, new Map(), 1 / 60);
+    expect(s.phase).toBe('play'); // still no end by itself
+    expect(endRound(s)).toBe(true);
+    expect(s.phase).toBe('end');
+    expect(endRound(s)).toBe(false);
   });
 
   it('quest targets grow with team size', () => {
@@ -140,6 +161,46 @@ describe('building footprints + portal ring (Stefan 2026-11-15)', () => {
     for (const q of spots) {
       expect(onEntrance(e, q.x, q.y)).toBe(true);
       for (const box of solidBoxes(s)) expect(inBox(box, q.x, q.y)).toBe(false);
+    }
+  });
+});
+
+describe('build spots keep the paths free (Stefan 2026-11-15)', () => {
+  it('all built + cottage 3: no base in water, >= 51 px between bases, the spawn row, the path to the portal and the ring stay free', async () => {
+    const { solidBoxes, BUILD_SPOTS, BUILD_KINDS, BUILD_R, makeWater, spawnSpot, MAX_PLAYERS, ENTRANCE_RING, BUILDING_ENABLED } = await import('./sim');
+    if (!BUILDING_ENABLED) return;
+    type R = { x0: number; x1: number; y0: number; y1: number };
+    const gap = (a: R, b: R) => Math.max(0, Math.max(a.x0, b.x0) - Math.min(a.x1, b.x1), Math.max(a.y0, b.y0) - Math.min(a.y1, b.y1));
+    const hit = (a: R, b: R) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+    const garden = (() => { const g = BUILD_SPOTS.garden, f = g.y - BUILD_R + 4; return { x0: g.x - 96, x1: g.x + 96, y0: f - 126, y1: f }; })();
+    for (let seed = 1; seed <= 60; seed++) {
+      const s = createState([{ id: 'a', name: 'a', color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 }], seed);
+      s.cottage.level = 3;
+      for (const k of BUILD_KINDS) { const b = s.builds.find((x) => x.kind === k); if (b) b.state = 2; }
+      const boxes = [...solidBoxes(s), garden];
+      const w = makeWater(seed);
+      for (const b of boxes) for (const r of [w.area, ...w.water]) expect(hit(b, r), `seed ${seed}: a base in the water corner`).toBe(false);
+      for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++)
+        expect(gap(boxes[i], boxes[j]), `seed ${seed}: bases ${i} and ${j} too close`).toBeGreaterThanOrEqual(51);
+      const e = s.entrance;
+      const free: R[] = [
+        ...Array.from({ length: MAX_PLAYERS }, (_, i) => { const p = spawnSpot(i); return { x0: p.x - 17, x1: p.x + 17, y0: p.y - 17, y1: p.y + 17 }; }),
+        { x0: e.x - 40, x1: e.x + 40, y0: BASE.y + 30, y1: e.y - 48 }, // the path from the house down to the portal
+        { x0: e.x - ENTRANCE_RING.rx, x1: e.x + ENTRANCE_RING.rx, y0: e.y + ENTRANCE_RING.dy - ENTRANCE_RING.ry, y1: e.y + ENTRANCE_RING.dy + ENTRANCE_RING.ry },
+      ];
+      const others = boxes.filter((b) => !(b.y1 === BASE.y + 30 && Math.abs((b.x0 + b.x1) / 2 - BASE.x) < 1) && !(b.y1 === e.y + 6));
+      for (const b of others) for (const f of free) expect(gap(b, f), `seed ${seed}: a building blocks the spawn row / path / ring`).toBeGreaterThanOrEqual(51);
+    }
+  });
+});
+
+describe('building plots (Stefan 2026-11-15: fixed, visible, kept clear)', () => {
+  it('no tree, bush or rock ever spawns on a plot', async () => {
+    const { makeTrees, plotRect, PLOT_KINDS, BUILDING_ENABLED } = await import('./sim');
+    if (!BUILDING_ENABLED) return;
+    for (let seed = 1; seed <= 80; seed++) for (const t of makeTrees(seed)) for (const k of PLOT_KINDS) {
+      const r = plotRect(k);
+      expect(t.x > r.x0 - 20 && t.x < r.x1 + 20 && t.y > r.y0 - 20 && t.y < r.y1 + 20, `seed ${seed}: node on the ${k} plot`).toBe(false);
     }
   });
 });

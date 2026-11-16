@@ -79,6 +79,12 @@
         <p id="lan-status" class="help" aria-live="polite" data-i18n="join.searching">Letar efter spel på ditt Wi-Fi...</p>
         <ul id="lan-list" class="lanlist"></ul>
         <button id="btn-rescan" class="big alt hidden" type="button" data-i18n="join.rescan">Leta igen</button>
+        <!-- manual join (Stefan 2026-11-16): the host's room code, works across networks (no IP / Wi-Fi match needed) -->
+        <div id="code-join" class="codejoin">
+          <input id="code-input" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD" aria-label="Rumskod" data-i18n-aria="join.codeAria" />
+          <button id="btn-code-join" class="chip" type="button" data-i18n="join.codeJoin">Joina med kod</button>
+        </div>
+        <p id="net-code" class="help small"></p>
         <p id="join-msg" class="msg"></p>
         <button id="btn-join-back" class="backbtn" aria-label="Tillbaka" data-i18n-aria="join.back"><i data-icon="back"></i></button>
       </div>
@@ -96,6 +102,7 @@
         </div>
         <p id="lobby-village" class="tag small"></p>
         <p id="lobby-lan" class="tag small"></p>
+        <p id="room-code" class="roomcode hidden"></p>
         <button id="btn-start" class="big" data-i18n="lobby.start">Starta</button>
         <p id="lobby-wait" class="msg" data-i18n="lobby.waitHost">Väntar på att värden startar...</p>
         <button id="btn-newvillage" class="chip newvillage hidden" type="button"><span data-i18n="lobby.newVillage">Ny by</span></button>
@@ -138,7 +145,9 @@
       <div id="build-panel" class="hidden" role="dialog" aria-label="Bygg" data-i18n-aria="build.button">
         <div class="bphead"><b data-i18n="build.button">Bygg</b><button id="btn-build-close" class="kclose" type="button" aria-label="Stäng" data-i18n-aria="build.close"><img src="art/icons/ui/close-16.png" alt="" /></button></div>
         <div id="build-cards" class="bcards"></div>
+        <button id="btn-gohome" class="chip gohome hidden" type="button"><img src="art/icons/ui/home-16.png" alt="" class="kicon" /> <span data-i18n="hud.goHome">Spara och gå hem</span></button>
       </div>
+      <div id="goal-toast" class="hidden" role="status"><img src="art/gather/star.png" alt="" /><span data-i18n="hud.goal">Mål klart! Nytt mål</span></div>
       <div id="stick"><div id="knob"></div></div>
       <button id="attack" class="hidden" data-i18n-aria="dg.special"><img src="assets/ninja-adventure/Ui/Skill%20Icon/Spell/Cut.png" alt="" class="icon" id="attack-icon" /></button>
       <div id="hud-dg" class="hidden">

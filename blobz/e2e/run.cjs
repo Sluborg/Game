@@ -13,7 +13,7 @@ const SPEC_TIMEOUT = (Number(process.env.E2E_SPEC_TIMEOUT) || 300) * 1000;
 // longest first, so the slow ones do not end up alone at the tail
 const ALL = ['dungeon-map.cjs', 'dungeon-map-deep.cjs', 'dungeon-map-boss.cjs', 'blobfit-390.cjs', 'blobfit-360.cjs', 'blobfit-844.cjs', 'dungeon.cjs', 'gather.cjs', 'build.cjs', 'dungeon-weapons.cjs', 'lan-join.cjs', 'i18n.cjs',
   'dungeon-i18n.cjs', 'dungeon-solo.cjs', 'dungeon-layout.cjs', 'puzzles.cjs', 'designer.cjs', 'noread.cjs',
-  'face.cjs', 'snow.cjs', 'mini.cjs', 'dungeon-rooms.cjs', 'rotate.cjs'];
+  'face.cjs', 'snow.cjs', 'mini.cjs', 'dungeon-rooms.cjs', 'rotate.cjs', 'dpr.cjs', 'join-fail.cjs', 'join-code.cjs', 'dungeon-plates.cjs', 'dungeon-camera.cjs'];
 const only = (process.env.E2E_ONLY || '').split(',').map((s) => s.trim()).filter(Boolean);
 const scripts = only.length ? ALL.filter((s) => only.includes(s) || only.includes(s.replace('.cjs', ''))) : ALL;
 

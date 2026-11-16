@@ -86,3 +86,39 @@ fights **2-3 waves** in a room; when the last wave is gone the **door at the top
   don't push each other inside it.
 - Coins and potions lie still on the floor with a fixed foot shadow (no bob).
 - Screenshot: `docs/screenshots/dungeon-rooms/door-open-passage.png`.
+
+## No weapon sprites + pacing (Stefan's playtest 2026-11-15)
+- No weapon sprites anywhere (host + joiners). Attacks are FX from the blob: knight = Ninja `SlashCurved` in front,
+  rogue = Ninja `Cut`, marksman = arrow, healer = Ninja energy ball (red damage / green heal). Projectiles start at the
+  blob's edge (24 px body radius + 2 art px); monster shots start at the monster's edge (`ENEMY_R + 6`). The knight's
+  guard shows the Ninja blue shield barrier in front. `?noweapons` is gone (this is the default now).
+- Class marker: a 16 px icon before the name in each nameplate: crossbow (marksman; a bow icon is on order), heal plus
+  (healer), dagger (rogue), shield (knight). The class rings are gone.
+- Auto-aim: the nearest monster within reach, sticky (as before); no attack when none is in reach.
+- Level-ups gained in a room wait until the room is clear, then the cards show; the door only counts once everyone
+  picked.
+- Pacing table `ROOM_TUNE` (src/dungeon.ts), our own numbers:
+
+| Setting | Value | Meaning |
+|---|---|---|
+| specialFrac | 1/3 | at most this share of a wave shoots (eye) or dashes (bat / slime); the rest only chase and bump |
+| earlySpecials | 1 | rooms 1-3: at most one shooter or dasher per wave |
+| shootEvery | 2.5-3.5 s | between a shooter's bursts (random each time) |
+| aimWarn | 0.8 s | the shooter's aim line before it fires (every room) |
+| dashEvery | 4 s (+0-25 %) | a dasher's pause between dashes (its 0.6 s wind-up stays) |
+| ramp | 0.15 | room 10 attacks 15 % more often than room 1 (frequency, never projectile speed) |
+| dungeonStep | 0.1 | each later dungeon: intervals 10 % shorter (down to x0.75) |
+| spitSpeed | 0.7 | monster shots fly at 70 % speed in every room (same range) |
+- Screenshots: `docs/screenshots/dungeon-rooms/no-weapons.png`, `levelup-after-clear.png`.
+
+## Room layouts (Stefan 2026-11-15: more walls inside rooms)
+- `roomLayout` (src/dungeon.ts), seeded per room (host and joiners match): 3 templates + mixed (zigzag half-walls;
+  pillar rows + an off-centre 2x2 block; L-shapes + alcoves along the side walls), random mirror, +-1 row jitter.
+  Pieces: half-wall 3-5 tiles from a side wall, L (3 across + 2 down), pillar row (0x72 column every 3 tiles), 2x2 block,
+  alcove (a niche against the side wall). Bigger rooms get more (one piece per ~4.5 rows, at least 3); boss rooms only
+  1-2 pillar rows.
+- Rules (checked when placing, tested for every room size): every floor row keeps a free run of >= 2 tiles, the
+  entrance -> door path stays open (flood fill), nothing in the 2 rows under the door or the 3 arrival rows, spawn spots
+  inside cover move to open floor. Drawn as 0x72 wall faces (left / mid / right end) with the wall_top cap above,
+  depth-sorted with the blobz.
+- Screenshot: `docs/screenshots/dungeon-rooms/batch2/6-room-layouts.png` (3 generated rooms, zoomed out).
