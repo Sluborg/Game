@@ -25,7 +25,7 @@ const shots = process.argv[3] || '';
     ok((await p.textContent('#dg-loot')).includes('+30 hälsa'), 'the item card shows its effect (+30 hälsa)');
     if (shots) await p.screenshot({ path: `${shots}/dg-solo-loot-portrait.png` });
     await p.click('#dg-roll');
-    await p.waitForFunction(() => { const v = window.__blobzView.dungeon; return Object.values(v.heroes)[0].item === 'helm'; }, null, { timeout: 4000 });
+    await p.waitForFunction(() => { const v = window.__blobzView.dungeon; return Object.values(v.heroes)[0].items.includes('helm'); }, null, { timeout: 4000 });
     await p.waitForFunction(() => /\/110/.test(document.querySelector('#dg-hearts .hpnum')?.textContent ?? ''), null, { timeout: 4000 });
     ok(true, 'taken at once; max health 80 -> 110');
     // level-up cards: numbers on every card
@@ -34,7 +34,10 @@ const shots = process.argv[3] || '';
     await p.waitForFunction(() => window.__blobz.state.dg.level > 1, null, { timeout: 6000 });
     const early = await p.evaluate(() => { const d = window.__blobz.state.dg; return { open: !!document.querySelector('#dg-cards:not(.hidden)'), busy: d.enemies.length > 0 || (d.pending?.length ?? 0) > 0 || d.wave < d.map.waves.length }; });
     ok(!early.busy || !early.open, `level-up mid-room: the cards wait (${early.busy ? 'room busy, no cards' : 'room already clear'})`);
-    await sim(p, (s) => { s.dg.enemies = []; s.dg.pending = []; s.dg.wave = s.dg.map.waves.length; });
+    // the pulsing level-up button in the HUD shows the count; tapping it opens the cards mid-room
+    await p.waitForSelector('#dg-lvlup:not(.hidden)', { timeout: 6000 });
+    ok(Number(await p.textContent('#dg-lvlup b')) >= 1, `HUD level-up button shows ${await p.textContent('#dg-lvlup b')} unspent`);
+    await p.click('#dg-lvlup', { force: true }); // it pulses (never 'stable' for Playwright)
     await p.waitForSelector('#dg-cards:not(.hidden) .skcard', { timeout: 6000 });
     const fx = await p.$$eval('#dg-cards .skcard .skfx', (els) => els.map((e) => e.textContent));
     ok(fx.length === 3 && fx.every((t) => /\d/.test(t)), `every skill card shows a number (${fx.join(' | ')})`);

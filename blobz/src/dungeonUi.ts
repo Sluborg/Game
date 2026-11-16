@@ -4,7 +4,7 @@
 // Markup lives in index.html (#weapon-pick, #hud-dg, #dg-ko, #dg-end, #attack); main.ts calls dungeonUi().
 import './dungeon.css';
 import type { Controls } from './controls';
-import {
+import { ITEM_SLOTS, lootReplaces,
   DUNGEON_TIMER_ENABLED, ROOMS, skillIcon, ITEM_ICON, CLASS_WEAPONS, CLASSES, FLOORS, heroMods, itemOf, LEVEL_XP, LOOT_SECONDS, skillOf, specialOf,
   type DView, type HeroClass, type Weapon,
 } from './dungeon';
@@ -136,6 +136,19 @@ function renderHud(d: DView, myId: string) {
   $('dg-time').classList.toggle('hidden', !DUNGEON_TIMER_ENABLED); // no time limit underground (flag off)
   if (DUNGEON_TIMER_ENABLED) { setText($('dg-time'), fmt(d.time)); $('dg-time').classList.toggle('low', d.time <= 30); }
   bump($('dg-level'), String(d.level));
+  // the level-up button (Stefan 2026-11-15): unspent level-ups wait in a pulsing badge; tap = pick now (the cards
+  // also open by themselves when the room is clear)
+  let lb = document.getElementById('dg-lvlup') as HTMLButtonElement | null;
+  if (!lb) {
+    lb = document.createElement('button'); lb.id = 'dg-lvlup'; lb.type = 'button';
+    lb.innerHTML = '<span class="up" aria-hidden="true"></span><b></b>';
+    lb.onclick = () => { sfx.pick(); sendPick('skill:open'); };
+    $('dg-xp').append(lb);
+  }
+  const unspent = h && h.ko <= 0 && !h.offer.length ? h.pending : 0;
+  lb.classList.toggle('hidden', unspent <= 0);
+  lb.setAttribute('aria-label', t('dg.lvlUp', { n: unspent }));
+  setText(lb.querySelector('b')!, String(unspent));
   const lo = d.level >= 2 ? LEVEL_XP[d.level - 2] : 0, hi = LEVEL_XP[d.level - 1] ?? lo + 1;
   $('dg-xpfill').style.width = Math.round(Math.max(0, Math.min(1, (d.xp - lo) / Math.max(1, hi - lo))) * 100) + '%';
   // knocked out: countdown
@@ -174,15 +187,19 @@ function renderHud(d: DView, myId: string) {
       if (pips.dataset.n !== want) { pips.dataset.n = want; pips.replaceChildren(...[...Array(h.maxCharges).keys()].map((i) => { const p = document.createElement('i'); if (i < h.charges) p.className = 'on'; return p; })); }
     } else pips?.remove();
   }
-  // my loot item next to the gold
-  const key = h?.item ?? '';
+  // my loot items: a row of ITEM_SLOTS wood cells under the XP row (shown once I own one); empty cells stay empty
+  const key = (h?.items ?? []).join(',');
   const slot = $('dg-item');
   if (slot.dataset.k !== key) {
     slot.dataset.k = key;
-    const it = itemOf(key);
-    slot.replaceChildren(...(it ? [icon(encodeURI(ITEM_ICON[it.id]), it.icon, 2)] : []));
-    slot.title = it ? `${tItem(it.id)}: ${tEffects(it.mod)}` : '';
-    slot.classList.toggle('hidden', !it);
+    const its = (h?.items ?? []).map((i) => itemOf(i)).filter((i): i is NonNullable<typeof i> => !!i);
+    slot.replaceChildren(...[...Array(ITEM_SLOTS).keys()].map((k) => {
+      const cell = document.createElement('span'); cell.className = 'dgcell';
+      const it = its[k];
+      if (it) { cell.append(icon(encodeURI(ITEM_ICON[it.id]), it.icon, 2)); cell.title = `${tItem(it.id)}: ${tEffects(it.mod)}`; }
+      return cell;
+    }));
+    slot.classList.toggle('hidden', !its.length);
   }
 }
 
@@ -217,9 +234,11 @@ function renderLoot(d: DView, myId: string, nameOf: (id: string) => string) {
   const v = d.loot, last = d.lootLast;
   show('dg-loot', !!v || !!last);
   if (!v && !last) { lootKey = ''; return; }
-  const mine = itemOf(d.heroes[myId]?.item);
+  const myItems = d.heroes[myId]?.items ?? [];
   if (v) {
     const it = itemOf(v.item)!;
+    // what it does to MY slots: I have it already / a free slot / it replaces my oldest (only when all 3 are full)
+    const mine = myItems.includes(v.item) ? it : itemOf(lootReplaces(myItems, v.item));
     const key = 'v:' + v.item + ':' + (mine?.id ?? '');
     if (key !== lootKey) {
       lootKey = key;
@@ -287,7 +306,7 @@ function buildOverlays() {
   applyI18n(load);
   const item = document.createElement('span');
   item.id = 'dg-item'; item.className = 'hidden';
-  $('dg-row').append(item);
+  $('dg-xp').after(item); // its own row under the XP row
   void LOOT_SECONDS;
 }
 

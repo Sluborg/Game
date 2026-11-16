@@ -135,8 +135,8 @@ const gooAt = (host, i, kind, dx, dy) => sim(host, (s, a) => {
     ok((await ada.textContent('#dg-roll')).trim() === 'Rulla' && (await ada.textContent('#dg-pass')).trim() === 'Avstå' && (await ada.textContent('#dg-loot')).includes('+20% skada'), 'loot card: Rulla / Avstå, the item shows its effect (+20% skada)');
     if (shots) { await ada.screenshot({ path: `${shots}/dg-loot-portrait.png` }); await bo.screenshot({ path: `${shots}/dg-loot-landscape.png` }); }
     await host.click('#dg-roll'); await ada.click('#dg-pass'); await bo.click('#dg-pass');
-    await bo.waitForFunction((id) => !!window.__blobzView.dungeon.heroes[id].item, ids[0], { timeout: 5000 });
-    ok(true, `loot: Stefan rolled, the others passed -> Stefan wears ${(await dg(bo)).heroes[ids[0]].item}`);
+    await bo.waitForFunction((id) => window.__blobzView.dungeon.heroes[id].items.length > 0, ids[0], { timeout: 5000 });
+    ok(true, `loot: Stefan rolled, the others passed -> Stefan wears ${(await dg(bo)).heroes[ids[0]].items.join(', ')}`);
     await ada.waitForTimeout(400);
     if (shots) await ada.screenshot({ path: `${shots}/dg-loot-won-portrait.png` });
     await sim(host, (s) => { s.dg.lootQ = []; s.dg.loot = null; }); // a medium goo may have dropped another item
