@@ -3,7 +3,7 @@ import { KEYS } from './i18n';
 import {
   AIM_WARN, BITE_TIME, CLASS_MOVE_COOLDOWN, DUNGEON_TIMER_ENABLED, CLASS_WEAPONS, BITE_WARN, bossHp, BURST, BURST_DMG, BURST_GAP, BURST_SPREAD, CLASS_HP, CLASSES, DASH_TIME, DASH_WARN, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, floorDmg, actMul, GH, GW,
   HEAL_BOLT, heroMods, refresh, inSwing, isWall, ITEMS, itemOf, KO_SECONDS, LEVEL_XP, LOOT_SECONDS, makeFloor, makeGoo, newRun as newRunAny, POTION_HP, roomCracks, REGEN_EVERY,
-  ITEM_ICON, ITEM_SLOTS, lootReplaces, skillIcon, skillOf, unstick, inDoorway, roomTiles, roomGap, ROOM_TUNE, ROOM_STUB, roomSpecials, EARLY_ROOMS, ROOM_T, ROOMS_ENABLED, ROOMS, ROOM_W, MINIBOSS_ROOM, SPAWN_WARN, READY_SECONDS, makeRoom, roomType, roomClear, diffFloor, enterFloor, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
+  ITEM_ICON, ITEM_SLOTS, lootReplaces, skillIcon, skillOf, unstick, inDoorway, roomTiles, roomGap, ROOM_TUNE, ROOM_STUB, ROOM_TRANS, ROOM_WALK_IN, roomSpecials, EARLY_ROOMS, ROOM_T, ROOMS_ENABLED, ROOMS, ROOM_W, MINIBOSS_ROOM, SPAWN_WARN, READY_SECONDS, makeRoom, roomType, roomClear, diffFloor, enterFloor, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
 } from './dungeon';
 import { cleanVillage, createState, DUNGEON_ENABLED, newVillage, villageOf, PICK_TIMER_ENABLED, ENTRANCE_R, entranceOf, makePuzzles, makeTrees, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
 
@@ -505,7 +505,7 @@ describe('dungeon', () => {
       expect(dview(dsnap(d, 21))).toMatchObject({ rooms: true, wave: 2, waves: 2 });
       for (let room = 2; room <= ROOMS; room++) {
         b = [body('a', d.map.stairs.x, d.map.stairs.y), body('b', d.map.stairs.x + 10, d.map.stairs.y)];
-        run1(d, b, undefined, READY_SECONDS + 0.1);
+        run1(d, b, undefined, READY_SECONDS + ROOM_TRANS + 0.1); // the door counts, then everyone slides up through it
         expect(d.floor).toBe(room);
         b = bs();
         if (room === MINIBOSS_ROOM || room === ROOMS) {
@@ -649,8 +649,22 @@ describe('dungeon', () => {
       expect(bs.every((b) => inDoorway(d.map, b.x, b.y))).toBe(true);
       expect(Math.hypot(bs[1].x - bs[2].x, bs[1].y - bs[2].y)).toBeLessThan(10); // not pushed apart
       expect(d.ready).toBeGreaterThan(0.4);
-      run1(d, bs, undefined, READY_SECONDS);
+      for (let k = 0; k < 200 && !(d.trans ?? 0); k++) run1(d, bs); // until the door has counted
+      // forward, never back: the blobz slide UP through the door (no new room yet) ...
+      expect(d.trans).toBeGreaterThan(0);
+      const y0 = bs.map((b) => b.y);
+      run1(d, bs, undefined, ROOM_TRANS / 2);
+      expect(bs.every((b, i) => b.y < y0[i])).toBe(true);
+      expect(d.floor).toBe(1);
+      run1(d, bs, undefined, ROOM_TRANS / 2 + 0.05);
+      // ... then the next room: they start in its hallway below the bottom wall and walk in, still going up
       expect(d.floor).toBe(2);
+      const T2 = d.map.dt!, hall = (d.map.gh! - 1 - ROOM_STUB) * T2;
+      expect(bs.every((b) => b.y > hall)).toBe(true);
+      expect(dview(dsnap(d, 26)).walkIn).toBeGreaterThan(0);
+      const y1 = bs.map((b) => b.y);
+      run1(d, bs, undefined, ROOM_WALK_IN);
+      expect(bs.every((b, i) => b.y < y1[i] - 80)).toBe(true);
       expect(inDoorway(d.map, d.map.start.x, d.map.start.y)).toBe(false);
     });
     it('corridor: climbing past the line starts the next wave early; the difficulty spreads over the 10 rooms', () => {

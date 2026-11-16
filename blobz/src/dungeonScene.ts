@@ -6,7 +6,7 @@ import { blobCanvas, BLOB_FRAMES, BODY_CY, clampLook, facingFromVelocity, type F
 import { drawGatherRing } from './gatherRing';
 import { onViewport } from './viewport';
 import { dpr, snapZoom } from './pixelScale';
-import { fw, fh, ft, inDoorway, makeRoom, roomCracks, roomGap, ROOM_TUNE, ROOM_STUB, ROOMS, MINIBOSS_ROOM, SPAWN_WARN, AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
+import { fw, fh, ft, inDoorway, makeRoom, roomCracks, roomGap, ROOM_TUNE, ROOM_STUB, ROOM_TRANS, ROOMS, MINIBOSS_ROOM, SPAWN_WARN, AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
 /** Weapons without Art's strip yet: a Kenney Tiny Dungeon tile in hand (bow: drawn in code). */
 import type { Session } from './game';
 import { sfx } from './sfx';
@@ -238,7 +238,7 @@ export class DungeonScene extends Phaser.Scene {
     this.scale.on('resize', this.fitCamera, this); // Phaser resized the canvas
     // Code's shared viewport watcher (rotation, app switch, visual viewport; debounced): re-measure the camera and view
     const off = onViewport(() => this.fitCamera());
-    this.events.once('shutdown', () => { this.scale.off('resize', this.fitCamera, this); off(); });
+    this.events.once('shutdown', () => { this.scale.off('resize', this.fitCamera, this); off(); document.getElementById('dg-wipe')?.remove(); });
   }
 
   private fitCamera() {
@@ -256,7 +256,7 @@ export class DungeonScene extends Phaser.Scene {
     if (this.rooms) cam.setBackgroundColor('#181425'); // the margin = the room's own dark
     // jump straight to where the camera should be for the new size (the easing would start from the stale view)
     const me = this.s ? this.heroes.get(this.s.myId) : undefined;
-    if (me && this.map) {
+    if (me && this.map && !this.snapNext) { // (a new floor sets its own camera start; the blob graphics are still at the old place)
       const landscape = w > h;
       const x = this.rooms ? (fw(this.map) * ft(this.map)) / 2 : me.x - (landscape ? 70 / cam.zoom : 0);
       this.camTarget = { x, y: this.roomCamY(me.y) };
@@ -422,10 +422,11 @@ export class DungeonScene extends Phaser.Scene {
     const d = v?.dungeon;
     if (!v || !d) return;
     const fk = `${d.seed}-${d.floor}-${d.rooms ? 'r' + d.roomTiles : 'f'}`;
-    if (fk !== this.floorKey) { this.floorKey = fk; this.buildFloor(d.seed, d.floor, v.players.length, d.dungeon, d.rooms, d.roomTiles); this.fitCamera(); }
+    if (fk !== this.floorKey) { this.floorKey = fk; this.snapNext = true; this.buildFloor(d.seed, d.floor, v.players.length, d.dungeon, d.rooms, d.roomTiles); this.fitCamera(); }
     const f = this.map!;
     const now = this.time.now;
-    const smooth = this.s.role === 'client';
+    const smooth = this.s.role === 'client' && !this.snapNext; // a new floor / room: everything jumps to its new place
+    this.snapNext = false;
     const k = Math.min(1, dt * 14);
 
     // ---- chests ----
@@ -652,8 +653,26 @@ export class DungeonScene extends Phaser.Scene {
     // landscape: the HUD sits top-left, so the camera keeps my blob a little right of centre (the room to its left stays
     // visible instead of hiding monsters under the HUD)
     const landscape = this.scale.width > this.scale.height;
-    if (me) { const sh = this.cardShift(landscape); this.camTarget.x = this.rooms && this.map ? (fw(this.map) * ft(this.map)) / 2 : me.x - (landscape ? 70 / cam.zoom : 0); this.camTarget.y = sh ? me.y + sh / cam.zoom : this.roomCamY(me.y); } // rooms: x locked on the room, y follows my blob inside the room
+    const goingUp = d.rooms && (d.trans > 0 || d.walkIn > 0); // the room change: the camera only ever moves UP
+    if (me) { const sh = this.cardShift(landscape); this.camTarget.x = this.rooms && this.map ? (fw(this.map) * ft(this.map)) / 2 : me.x - (landscape ? 70 / cam.zoom : 0); const ty = sh ? me.y + sh / cam.zoom : this.roomCamY(me.y); this.camTarget.y = goingUp ? Math.min(this.camTarget.y, ty) : ty; } // rooms: x locked on the room, y follows my blob inside the room
+    this.wipe(d.rooms ? d.trans : 0, dt);
     cam.centerOn(cam.midPoint.x + (this.camTarget.x - cam.midPoint.x) * Math.min(1, dt * 6), cam.midPoint.y + (this.camTarget.y - cam.midPoint.y) * Math.min(1, dt * 6));
+  }
+
+  /** rooms: the room change fades to dark while everyone slides up through the door, then fades back in on the new
+   *  room's entrance (a DOM layer over the canvas, under the HUD) */
+  private wipeA = 0;
+  private snapNext = false;
+  private wipe(trans: number, dt: number) {
+    let el = document.getElementById('dg-wipe');
+    if (!el) {
+      el = document.createElement('div'); el.id = 'dg-wipe';
+      el.style.cssText = 'position:absolute;inset:0;background:#0b0812;pointer-events:none;opacity:0;z-index:1';
+      (document.getElementById('game') ?? document.body).append(el);
+    }
+    this.wipeA = trans > 0 ? Math.max(this.wipeA, Math.min(1, (ROOM_TRANS - trans) / (ROOM_TRANS * 0.8))) : Math.max(0, this.wipeA - dt / 0.35);
+    el.style.opacity = this.wipeA.toFixed(3);
+    if (DEBUG) (window as unknown as { __dgWipe?: number }).__dgWipe = this.wipeA;
   }
 
   /** rooms: the camera's y stays inside the room (at the entrance the blob sits low on the screen, the bottom wall shows) */
