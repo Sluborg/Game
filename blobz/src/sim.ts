@@ -31,7 +31,15 @@ export const nodeRes = (kind: number): ItemKind => (kind < 3 ? 'wood' : kind < 5
 export const NODE_HITS = [3, 3, 3, 3, 4, 2]; // hits per item
 export const NODE_YIELD = [3, 3, 3, 2, 4, 3]; // items before it is used up (stump / rubble / empty bush)
 export const NODE_REGROW = [25, 25, 25, 30, 40, 20]; // seconds until it is full again
-const TOOL_REACH = 26; // extra reach beyond touching
+const TOOL_REACH = 40; // extra reach beyond touching (was 26; Stefan 2026-11-16: hard to start chopping)
+/** Chop assist (Stefan + Alea 2026-11-16: "you are fast and overshoot"): with the stick let go next to a node that
+ *  still has resources, the blob brakes hard (ASSIST_DRAG) and, once nearly still, swings its tool by itself every
+ *  ASSIST_EVERY seconds while it has room to carry. The action button still works as before. */
+export const ASSIST_SPEED = 60;
+/** Unit tests of the button alone switch the assist off. */
+export const CHOP_ASSIST = { on: true };
+const ASSIST_DRAG = 7;
+const ASSIST_EVERY = 0.42;
 const TOOL_COOLDOWN = 0.28;
 const GEM_R = 22;
 const GEM_GRAB_R = 62;
@@ -193,6 +201,10 @@ export function affordable(bank: Res, builds: { kind: BuildKind; state: number }
  *  growing beside it) is off; flip GARDEN_FARM to bring it back. */
 export const WELL_REGROW = 1.5;
 export const COTTAGE3_SPEED = 1.1;
+/** How many things a blob carries: 3, +1 with the storage (Förråd), +1 from cottage level 2. The build cards and the
+ *  "built" toast show these numbers (Stefan + Alea 2026-11-16: the storage's effect was not understood). */
+export const carryMaxOf = (builds: { kind: BuildKind; state: number }[], cottageLevel: number) =>
+  CARRY_MAX + (built({ builds }, 'storage') ? 1 : 0) + (cottageLevel >= 2 ? 1 : 0);
 export const GARDEN_FARM = false;
 export const BUILD_R = 30; // stand this close to a spot to build
 /** state: 0 = empty spot, 2 = built (1 is unused: buildings are bought at once, like totems). */
@@ -652,7 +664,7 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
   // former totem effects now come from buildings: workshop boots (+10% speed), storage reach (+10 px pickup)
   const speedMul = (built(s, 'workshop') ? 1.1 : 1) * (s.cottage.level >= 3 ? COTTAGE3_SPEED : 1); // cottage 3: faster blobz
   const pickR = PICKUP_R + (built(s, 'storage') ? 10 : 0);
-  const carryMax = CARRY_MAX + (built(s, 'storage') ? 1 : 0) + (s.cottage.level >= 2 ? 1 : 0);
+  const carryMax = carryMaxOf(s.builds, s.cottage.level);
 
   // --- players: glide physics ---
   for (const p of s.players) {
@@ -684,6 +696,14 @@ export function step(s: State, inputs: Map<string, Input>, dt: number) {
         if (dx === 0 && dy === 0) dy = -1;
         p.vx += dx * DASH_IMPULSE; p.vy += dy * DASH_IMPULSE;
         p.dashCd = DASH_COOLDOWN; p.dashT = 0.3;
+      }
+    }
+    // chop assist: stick released next to a node -> stop there and work it (not in the dungeon)
+    if (CHOP_ASSIST.on && !inDungeon && il < 0.2 && s.phase === 'play') {
+      const node = toolNode(s.trees, (i) => s.trees[i].left, p.x, p.y);
+      if (node >= 0) {
+        const brake = Math.exp(-ASSIST_DRAG * dt); p.vx *= brake; p.vy *= brake;
+        if (Math.hypot(p.vx, p.vy) < ASSIST_SPEED && p.toolCd <= 0 && p.carry.length < carryMax) { hitNode(s, p, node); p.toolCd = ASSIST_EVERY; }
       }
     }
     clampSpeed(p, mul);

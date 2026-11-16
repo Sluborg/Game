@@ -1451,10 +1451,11 @@ body.rotate-block #rotate b { background: var(--k-parch2); border: 2px solid var
 #goal-toast {
   position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 124px); transform: translateX(-50%); z-index: 30;
   display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: var(--k-parch2); color: var(--k-plum);
-  border: 2px solid var(--k-edge); border-radius: 6px; font: 700 18px var(--font); white-space: nowrap; pointer-events: none;
+  border: 2px solid var(--k-edge); border-radius: 6px; font: 700 17px var(--font); pointer-events: none;
+  width: max-content; max-width: calc(100vw - 32px); box-sizing: border-box; line-height: 1.2;
   box-shadow: 0 3px 0 0 var(--k-shadow);
 }
-#goal-toast img { width: 38px; height: auto; image-rendering: pixelated; }
+#goal-toast img { height: 38px; width: auto; max-width: 64px; image-rendering: pixelated; }
 #goal-toast.pop { animation: goalpop 0.45s ease-out both; }
 @keyframes goalpop { 0% { transform: translateX(-50%) scale(0.6); opacity: 0; } 70% { transform: translateX(-50%) scale(1.08); opacity: 1; } 100% { transform: translateX(-50%) scale(1); } }
 #build-panel #btn-gohome { display: flex; align-items: center; gap: 6px; margin: 10px auto 2px; }

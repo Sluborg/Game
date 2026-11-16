@@ -204,3 +204,13 @@ describe('building plots (Stefan 2026-11-15: fixed, visible, kept clear)', () =>
     }
   });
 });
+
+describe('carry numbers for the build cards (Stefan + Alea 2026-11-16)', () => {
+  it('3 to start, +1 with the storage, +1 from cottage level 2', async () => {
+    const { carryMaxOf } = await import('./sim');
+    const b = (on: boolean) => [{ kind: 'storage' as const, state: on ? 2 : 0 }];
+    expect(carryMaxOf(b(false), 1)).toBe(3);
+    expect(carryMaxOf(b(true), 1)).toBe(4);
+    expect(carryMaxOf(b(true), 2)).toBe(5);
+  });
+});
