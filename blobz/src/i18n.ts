@@ -81,6 +81,8 @@ const sv = {
   'tool.rake': 'Räfsa',
   // building
   'build.button': 'Bygg',
+  'hud.goHome': 'Spara och gå hem',
+  'hud.goal': 'Mål klart! Nytt mål',
   'build.close': 'Stäng',
   'build.built': 'Byggd', // the green tick badge on the card marks it
   'build.done': 'Klar!',
@@ -309,6 +311,8 @@ const en: Record<Key, string> = {
   'tool.pickaxe': 'Pickaxe',
   'tool.rake': 'Rake',
   'build.button': 'Build',
+  'hud.goHome': 'Save and go home',
+  'hud.goal': 'Goal reached! New goal',
   'build.close': 'Close',
   'build.built': 'Built',
   'build.done': 'Done!',

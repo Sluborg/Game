@@ -61,7 +61,7 @@ describe.skipIf(!BUILDING_ENABLED)('base building (build panel at the cottage)',
       const w = createState([P('a')], 4);
       w.trees = [];
       if (shop) finish(w, 'workshop');
-      at(w, 0, 100, 300);
+      at(w, 0, 100, 560); // an open lane (the workshop now stands at 470,350)
       run(w, 2, new Map([['a', { x: 1, y: 0, dash: 0 }]]));
       return w.players[0].vx;
     };
