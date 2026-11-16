@@ -1257,7 +1257,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
   const open = d.rooms ? roomClear(d) : !last || !d.enemies.some((e) => e.kind === 2);
   const exitUp = d.floor === 1 && alive.length > 0 && alive.every((b) => Math.hypot(b.x - f.exit.x, b.y - f.exit.y) < STAIRS_R);
   if (d.rooms && open) { const w = fw(f), T = ft(f); for (let x = Math.floor(f.stairs.x / T - 1); x <= Math.floor((f.stairs.x + T - 1) / T); x++) f.solid[2 * w + x] = 0; } // the open doorway (under the 2-tile leaf) is walkable
-  const picking = !!d.rooms && Object.values(d.heroes).some((h) => h.offer.length > 0); // rooms: everyone picks their cards before the door counts
+  const picking = !!d.rooms && (Object.values(d.heroes).some((h) => h.offer.length > 0) || !!d.loot || d.lootQ.length > 0); // rooms: cards picked and loot decided before the door counts
   const onStairs = open && !picking && alive.length > 0 && alive.every((b) => (d.rooms ? inDoorway(f, b.x, b.y) : Math.hypot(b.x - f.stairs.x, b.y - f.stairs.y) < STAIRS_R));
   if (onStairs || exitUp) d.ready += dt; else d.ready = 0;
   if (d.ready >= READY_SECONDS) {

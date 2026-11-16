@@ -90,7 +90,7 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/dungeon/items/helm.png` | 16x16 | ChatGPT N-23 loot items, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:36, src/dungeon.ts:144 | keep |
 | `art/dungeon/items/ring.png` | 16x16 | ChatGPT N-23 loot items, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:36, src/dungeon.ts:143 | keep |
 | `art/dungeon/items/stone.png` | 16x16 | ChatGPT N-23 loot items, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/ninjaArt.ts:9, src/style.css:1314, src/dungeon.ts:36 (+10) | keep |
-| `art/dungeon/potion.png` | 16x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | CODE ONLY | src/dungeon.ts:632, src/dungeon.ts:1238, src/dungeonScene.ts:985 | replace (see OLD_ART_CHECKLIST) |
+| `art/dungeon/potion.png` | 16x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | CODE ONLY | src/dungeon.ts:632, src/dungeon.ts:1238, src/dungeonScene.ts:988 | replace (see OLD_ART_CHECKLIST) |
 | `art/dungeon/revive.png` | 48x20 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | CODE ONLY | src/dungeon.ts:630, src/dungeon.ts:856, src/dungeon.ts:919 (+2) | replace (see OLD_ART_CHECKLIST) |
 | `art/dungeon/sand-b.png` | 16x16 | ChatGPT N-35 sandstone room set (attempt 3), sliced by scripts/sand_room.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
 | `art/dungeon/sand-bl.png` | 16x16 | ChatGPT N-35 sandstone room set (attempt 3), sliced by scripts/sand_room.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
@@ -178,7 +178,7 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/fine/fx/plate-glow.png` | 42x32 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | CODE ONLY | src/game.ts:407, src/game.ts:1193 | replace (see OLD_ART_CHECKLIST) |
 | `art/fine/gather/chips-stone.png` | 64x24 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | UNUSED | UNUSED | delete |
 | `art/fine/gather/chips-wood.png` | 64x24 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | UNUSED | UNUSED | delete |
-| `art/fine/icons/chest.png` | 36x28 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | CODE ONLY | src/dungeon.ts:633, src/dungeon.ts:1245, src/dungeonScene.ts:937 | replace (see OLD_ART_CHECKLIST) |
+| `art/fine/icons/chest.png` | 36x28 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | CODE ONLY | src/dungeon.ts:633, src/dungeon.ts:1245, src/dungeonScene.ts:940 | replace (see OLD_ART_CHECKLIST) |
 | `art/fine/icons/magnet.png` | 30x30 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | CODE ONLY | src/sim.ts:54, src/sim.ts:858 | replace (see OLD_ART_CHECKLIST) |
 | `art/fine/icons/speed.png` | 32x32 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | CODE ONLY | src/sim.ts:54, src/sim.ts:789, src/sim.ts:858 (+2) | replace (see OLD_ART_CHECKLIST) |
 | `art/gather/star-empty.png` | 19x17 | ChatGPT N-10, sliced by scripts/slice_n_orders.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/ninjaArt.ts:19, src/style.css:1261, index.html:113 (+3) | keep |
