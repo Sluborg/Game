@@ -221,7 +221,8 @@ export class GameScene extends Phaser.Scene {
   private dB = 0;
   private miniCenterY = 0;
   private miniG?: Phaser.GameObjects.Graphics;
-  private yardImg?: Phaser.GameObjects.Image;
+  private groundImg?: Phaser.GameObjects.Image;
+  private groundKey = '';
   private yardKey = '';
   private miniDeco: Phaser.GameObjects.GameObject[] = [];
   private miniBg?: Phaser.GameObjects.Image;
@@ -438,12 +439,13 @@ export class GameScene extends Phaser.Scene {
       this.bakeNinjaMeadow(gc, r);
       this.textures.addCanvas(groundKey, gc)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
-    this.add.image(0, 0, groundKey).setOrigin(0).setScale(NINJA_SCALE).setDepth(-1000);
+    this.groundKey = groundKey;
+    this.groundImg = this.add.image(0, 0, groundKey).setOrigin(0).setScale(NINJA_SCALE).setDepth(-1000);
 
     // base: round dirt yard with the cottage in the middle + glowing drop-off ring
     // the yard: an organic patch of dirt (packed snow on the snow map) that grows with the cottage and spreads
     // under every building as it is built; redrawn in drawYard() when that changes
-    this.yardImg = undefined; this.yardKey = '';
+    this.yardKey = '';
     this.drawYard(1, []);
     this.baseG = this.add.graphics().setDepth(-900);
     this.add.ellipse(BASE.x, BASE.y + 26, 110, 26, 0x000000, 0.18).setDepth(-880);
@@ -572,7 +574,11 @@ export class GameScene extends Phaser.Scene {
     }
     this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
     // snapped so one art px (props are 3x) is a whole number of CSS px (device px once DPR_CANVAS is on): 3x on phones
-    const z = snapZoom(Math.max(0.55, Math.min(2.2, Math.min(Math.max(w, h) / 820, Math.min(w, h) / 430))));
+    let z = snapZoom(Math.max(0.55, Math.min(2.2, Math.min(Math.max(w, h) / 820, Math.min(w, h) / 430))));
+    // never so far out that the view is bigger than the meadow (Lead 2026-11-16: at DPR 2 on 390x844 rounding gave
+    // 5/6 zoom, a 1013 px tall view of the 960 px world and a ~44 px green strip): round UP to the next whole art step
+    const zMin = Math.max(w / WORLD_W, h / WORLD_H) * d; // device zoom that just covers the screen
+    if (z < zMin) z = Math.ceil(zMin * 3 - 1e-9) / 3;
     this.cameras.main.setZoom(z);
   }
 
@@ -693,7 +699,9 @@ export class GameScene extends Phaser.Scene {
       this.portalFade = fadeOne(this.portalImg);
     }
     // ---- dusk ----
-    this.dusk.setFillStyle(v.phase === 'end' ? 0x4a2a6a : 0xff7a2f, v.phase === 'end' ? 0.38 : v.time >= 20 ? 0 : 0.1 + Math.min(1, (20 - v.time) / 20) * 0.25);
+    const duskA = v.phase === 'end' ? 0.38 : v.time >= 20 ? 0 : 0.1 + Math.min(1, (20 - v.time) / 20) * 0.25;
+    // a see-through full-screen rectangle still costs a full-screen blend every frame (Lead 2026-11-16, perf): hide it
+    this.dusk.setFillStyle(v.phase === 'end' ? 0x4a2a6a : 0xff7a2f, duskA).setVisible(duskA > 0);
 
     // ---- Bärregn mini game ----
     this.drawMini(v);
@@ -957,7 +965,9 @@ export class GameScene extends Phaser.Scene {
   /** Meadow yard + path in Ninja dirt tiles: the yard is a blob of tiles round the cottage (bigger per level) plus a
    *  patch under every built building, and a 2-tile path runs to the cave; autotiled with the dirt-on-grass block. */
   private drawNinjaDirt(level: number, built: BuildKind[]) {
-    const key = `ndirt-${this.s.biome ?? 'meadow'}-${this.s.seed}-${level}-${YARD_ENABLED ? [...built].sort().join(',') : 'off'}`;
+    // the yard is baked INTO the ground texture (Lead 2026-11-16, perf: one full-screen layer instead of two); rebaked
+    // only when a building is built or the cottage grows (the key changes)
+    const key = `${this.groundKey}+ndirt-${level}-${YARD_ENABLED ? [...built].sort().join(',') : 'off'}`;
     if (key === this.yardKey) return;
     if (!this.textures.exists(key)) {
       const T = WATER_TILE, mask = new Set<string>();
@@ -994,11 +1004,14 @@ export class GameScene extends Phaser.Scene {
         const [sx, sy] = autoFrame(t.shore, 0, by, inner, t.shore === 'open2' ? pebble : [16, by + 16]);
         cx.drawImage(floor, sx, sy, 16, 16, t.tx * 16, t.ty * 16, 16, 16);
       }
-      this.textures.addCanvas(key, c)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
+      const baked = document.createElement('canvas'); baked.width = c.width; baked.height = c.height;
+      const bx = baked.getContext('2d')!;
+      bx.drawImage(this.textures.get(this.groundKey).getSourceImage() as HTMLCanvasElement, 0, 0);
+      bx.drawImage(c, 0, 0);
+      this.textures.addCanvas(key, baked)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
     const old = this.yardKey;
-    if (!this.yardImg) this.yardImg = this.add.image(0, 0, key).setOrigin(0).setScale(NINJA_SCALE).setDepth(-950);
-    else this.yardImg.setTexture(key);
+    this.groundImg?.setTexture(key);
     this.yardKey = key;
     if (old && old !== key && this.textures.exists(old)) this.textures.remove(old);
   }
