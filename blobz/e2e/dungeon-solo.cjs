@@ -28,6 +28,13 @@ const shots = process.argv[3] || '';
     await p.waitForFunction(() => { const v = window.__blobzView.dungeon; return Object.values(v.heroes)[0].items.includes('helm'); }, null, { timeout: 4000 });
     await p.waitForFunction(() => /\/110/.test(document.querySelector('#dg-hearts .hpnum')?.textContent ?? ''), null, { timeout: 4000 });
     ok(true, 'taken at once; max health 80 -> 110');
+    // full inventory (Alea): 3 items, a 4th item: the button says what it swaps out, and it works
+    await sim(p, (s) => { const h = Object.values(s.dg.heroes)[0]; h.items = ['helm', 'ring', 'gloves']; s.dg.lootLast = null; s.dg.lootQ.push('stone'); });
+    await p.waitForFunction(() => /Byt ut/.test(document.getElementById('dg-roll')?.textContent ?? ''), null, { timeout: 6000 });
+    ok(true, `full inventory: the button reads "${await p.textContent('#dg-roll')}"`);
+    await p.click('#dg-roll');
+    await p.waitForFunction(() => { const h = Object.values(window.__blobzView.dungeon.heroes)[0]; return h.items.join() === 'ring,gloves,stone'; }, null, { timeout: 6000 });
+    ok(true, 'swapped: helm out, stone in (ring, gloves, stone)');
     // level-up cards: numbers on every card
     await sim(p, (s) => { s.dg.lootQ = []; s.dg.loot = null; s.dg.lootLast = null; s.dg.xp = 4; const q = s.players[0]; s.dg.enemies.push({ id: s.dg.nextId++, kind: 0, x: q.x + 60, y: q.y, vx: 0, vy: 0, hp: 1, mx: 20, awake: true, stun: 9, slamT: 99, slam: null }); });
     // rooms: the cards wait for a clear room (Stefan 2026-11-15)

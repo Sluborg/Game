@@ -802,6 +802,26 @@ describe('dungeon', () => {
     expect(dview(dsnap(d, 16)).heroes.a.items).toEqual(['ring', 'gloves', 'amulet']);
   });
 
+  it('a full inventory (3 items) can take every other item type: alone and with friends; the oldest goes', () => {
+    for (const keep of ITEMS) {
+      const three = [keep.id, ...ITEMS.filter((i) => i.id !== keep.id).slice(0, 2).map((i) => i.id)];
+      for (const nu of ITEMS.filter((i) => !three.includes(i.id))) {
+        for (const friends of [false, true]) {
+          const d = quiet(newRun(17, friends ? { a: 'sword', b: 'bow' } : { a: 'sword' }));
+          const bs = [body('a', d.map.start.x, d.map.start.y), ...(friends ? [body('b', d.map.start.x + 40, d.map.start.y)] : [])];
+          d.heroes.a.items = [...three]; refresh(d.heroes.a);
+          d.lootQ.push(nu.id);
+          run1(d, bs);
+          expect(d.loot?.rolls.a).toBe(-1); // Alea may roll / take it
+          dungeonChoice(d, 'a', 'loot:roll');
+          if (friends) dungeonChoice(d, 'b', 'loot:pass');
+          run1(d, bs);
+          expect(d.heroes.a.items).toEqual([...three.slice(1), nu.id]);
+        }
+      }
+    }
+  });
+
   it('loot alone: "Använd" takes it at once (no dice); with friends: roll/pass, highest roll wears it', () => {
     const solo = quiet(newRun(15, { a: 'sword' }));
     solo.lootQ.push('ring');

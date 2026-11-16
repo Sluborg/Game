@@ -261,7 +261,9 @@ function renderLoot(d: DView, myId: string, nameOf: (id: string) => string) {
     show('dg-loot-btns', my === -1);
     // alone: no dice, just "Använd" / "Take"; with friends: "Rulla" / "Avstå"
     const solo = Object.keys(v.rolls).length <= 1;
-    setText($('dg-roll'), t(solo ? 'dg.take' : 'dg.roll'));
+    // a full inventory (all ITEM_SLOTS used): say exactly what happens (Alea: it was not clear the item can be taken)
+    const out = lootReplaces(myItems, v.item);
+    setText($('dg-roll'), out ? t(solo ? 'dg.swap' : 'dg.rollSwap', { item: tItem(out) }) : t(solo ? 'dg.take' : 'dg.roll'));
     const others = Object.entries(v.rolls).map(([id, r]) => `${nameOf(id)}: ${r === -1 ? '...' : r === 0 ? t('dg.passes') : r}`).join(' · ');
     // rooms: a clear room's door waits for this vote (and any queued one): say so, so nobody wonders why it won't open
     const doorWaits = d.rooms && d.wave >= d.waves && d.landing === 0 && d.enemies.length === 0;
