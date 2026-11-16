@@ -147,6 +147,7 @@ function renderHud(d: DView, myId: string) {
   }
   const unspent = h && h.ko <= 0 && !h.offer.length ? h.pending : 0;
   lb.classList.toggle('hidden', unspent <= 0);
+  if (unspent > 0) { const r = $('hud-dg').getBoundingClientRect(); lb.style.top = `${Math.round(r.bottom + 10)}px`; } // right under the HP panel, at the right edge
   lb.setAttribute('aria-label', t('dg.lvlUp', { n: unspent }));
   setText(lb.querySelector('b')!, String(unspent));
   const lo = d.level >= 2 ? LEVEL_XP[d.level - 2] : 0, hi = LEVEL_XP[d.level - 1] ?? lo + 1;
