@@ -262,7 +262,10 @@ function renderLoot(d: DView, myId: string, nameOf: (id: string) => string) {
     const solo = Object.keys(v.rolls).length <= 1;
     setText($('dg-roll'), t(solo ? 'dg.take' : 'dg.roll'));
     const others = Object.entries(v.rolls).map(([id, r]) => `${nameOf(id)}: ${r === -1 ? '...' : r === 0 ? t('dg.passes') : r}`).join(' · ');
-    setText($('dg-loot-msg'), Object.keys(v.rolls).length <= 1 ? '' : `${others} · ${Math.max(0, Math.ceil(v.t))} s`); // alone: no roll list
+    // rooms: a clear room's door waits for this vote (and any queued one): say so, so nobody wonders why it won't open
+    const doorWaits = d.rooms && d.wave >= d.waves && d.landing === 0 && d.enemies.length === 0;
+    const rolls = Object.keys(v.rolls).length <= 1 ? '' : `${others} · ${Math.max(0, Math.ceil(v.t))} s`; // alone: no roll list
+    setText($('dg-loot-msg'), doorWaits ? (rolls ? rolls + ' · ' : '') + t('dg.lootDoorWait') : rolls);
     setText($('dg-loot-title'), t('dg.lootTitle'));
   } else if (last) {
     const key = 'l:' + last.item + ':' + last.win;

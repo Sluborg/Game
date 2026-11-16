@@ -654,7 +654,7 @@ export class DungeonScene extends Phaser.Scene {
     // visible instead of hiding monsters under the HUD)
     const landscape = this.scale.width > this.scale.height;
     const goingUp = d.rooms && (d.trans > 0 || d.walkIn > 0); // the room change: the camera only ever moves UP
-    if (me) { const sh = this.cardShift(landscape); this.camTarget.x = this.rooms && this.map ? (fw(this.map) * ft(this.map)) / 2 : me.x - (landscape ? 70 / cam.zoom : 0); const ty = sh ? me.y + sh / cam.zoom : this.roomCamY(me.y); this.camTarget.y = goingUp ? Math.min(this.camTarget.y, ty) : ty; } // rooms: x locked on the room, y follows my blob inside the room; only while a card covers my blob may the view leave the room (the blob must stay visible)
+    if (me) { const sh = this.cardShift(landscape); this.camTarget.x = this.rooms && this.map ? (fw(this.map) * ft(this.map)) / 2 : me.x - (landscape ? 70 / cam.zoom : 0); const raw = sh ? me.y + sh / cam.zoom : me.y, ty = this.rooms && !landscape ? this.roomCamY(raw) : sh ? raw : this.roomCamY(raw); this.camTarget.y = goingUp ? Math.min(this.camTarget.y, ty) : ty; } // rooms: x locked on the room, y follows my blob; portrait: clamped to the room EVERY frame (a card shift too); landscape (parked) may shift past it so the blob stays visible beside a card
     this.wipe(d.rooms ? d.trans : 0, dt);
     cam.centerOn(cam.midPoint.x + (this.camTarget.x - cam.midPoint.x) * Math.min(1, dt * 6), cam.midPoint.y + (this.camTarget.y - cam.midPoint.y) * Math.min(1, dt * 6));
   }
