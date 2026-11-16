@@ -167,6 +167,8 @@ function fitLabel(label: Phaser.GameObjects.Text, name: string) {
   for (let n = name.length - 1; label.width > NAME_MAX && n > 0; n--) label.setText(name.slice(0, n) + '…');
 }
 const buildPanelOpen = () => typeof document !== 'undefined' && !document.getElementById('build-panel')?.classList.contains('hidden');
+/** The blob's glide frame (blob.ts frame 1) while moving. Off: it hid the chosen shape (Stefan + Alea 2026-11-16). */
+const GLIDE_FRAME = false;
 const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.search).has('debug');
 const MAP_VIEW = DEBUG && new URLSearchParams(location.search).has('mapview');
 /** Below this speed (px/s) the face looks straight ahead. */
@@ -751,7 +753,9 @@ export class GameScene extends Phaser.Scene {
         this.textures.addCanvas(`${lookKey}-${f}`, blobCanvas(look, 1, undefined, undefined, f));
         this.textures.get(`${lookKey}-${f}`).setFilter(Phaser.Textures.FilterMode.NEAREST);
       }
-      const frame = Math.hypot(p.vx, p.vy) >= FACE_DEAD ? 1 : 0;
+      // Stefan + Alea 2026-11-16: the glide frame (blob.ts frame 1: lower half 2 px wider, tall shapes one row lower)
+      // made every shape look the same when moving; the chosen shape (frame 0) is kept while gliding
+      const frame = GLIDE_FRAME && Math.hypot(p.vx, p.vy) >= FACE_DEAD ? 1 : 0;
       const texKey = `${lookKey}-${frame}`;
       const pixel = true;
       const baseScale = BLOB_SCALE;
@@ -820,12 +824,14 @@ export class GameScene extends Phaser.Scene {
     const color = this.s.infos().get(p.id)?.color ?? 0xffffff;
     for (const t of b.trail) this.trailG.fillStyle(color, t.a).fillCircle(t.x, t.y, 4 + t.a * 10);
 
-    const stretch = Math.min(0.18, sp / 1600);
+    // Stefan + Alea 2026-11-16 ("the shape does not matter, the blob goes wide as soon as it moves"): a subtle stretch
+    // only, max 5% wider / 3% lower at full speed (was 18% / 11%), so the chosen shape's silhouette stays readable
+    const stretch = Math.min(0.05, sp / 4800);
     b.shadow.setPosition(b.x, b.y + 12).setDepth(this.dB + b.y - 20);
     b.body.setPosition(b.x, b.y - 4 + hover).setDepth(this.dB + b.y);
     b.body.setScale(b.baseScale * (1 + stretch) / breath, b.baseScale * (1 - stretch * 0.6) * breath);
     this.drawTool(b, dt);
-    b.body.setRotation(Phaser.Math.Clamp(b.vx / 1400, -0.18, 0.18));
+    b.body.setRotation(0); // no lean (was up to 10 degrees): a rotated pixel sprite loses its clean pixel edges
 
     // eyes follow movement direction
     if (sp > 20) { b.look.x += (b.vx / sp - b.look.x) * 0.2; b.look.y += (b.vy / sp - b.look.y) * 0.2; }
