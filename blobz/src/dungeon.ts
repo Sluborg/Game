@@ -216,6 +216,7 @@ export interface Floor {
   solid: Uint8Array; // gw*gh (default GW*GH), 1 = wall
   gw?: number; gh?: number; // grid size when not GW x GH (the tall Archero rooms)
   columns?: { x: number; y: number }[]; // rooms: 0x72 columns as cover (tile x, base row y; rows y-1..y are solid)
+  walls?: { x: number; y: number }[]; // rooms: 0x72 brick wall tiles inside the room (each solid)
   dt?: number; // tile size in world px when not DT (rooms: 48 = the 0x72 16 px tiles at 3x)
   waves?: { kind: EnemyKind; x: number; y: number }[][]; // rooms mode: the waves of this room (spawned one after another)
   lines?: number[]; // rooms mode (corridor): wave k+1 also starts when a blob climbs above lines[k] (world y)
@@ -323,20 +324,12 @@ export function makeRoom(seed: number, room: number, players = 1, dungeon = 1, t
     waves = [wave(top + 2 * third, safe, n, 1, 0), wave(top + third, top + 2 * third, n, 1, 1), wave(top, top + third, n, crowd >= 2 ? 2 : 1, 1)];
     lines = [(top + 2 * third) * T, (top + third) * T]; // climbing above a line starts the next wave early
   } else waves = [[{ kind: 2, x: mx, y: (y0 + h * 0.3) * T }, ...wave(y0 + h * 0.4, safe, 2 + Math.min(3, extra), 0, 0)], wave(top, safe, n - 1, 1, 1)];
-  // cover: 2-3 0x72 columns in arena rooms (block shots and walking), never in the middle lane (entrance -> chest ->
-  // door) nor on a spawn spot
-  const columns: { x: number; y: number }[] = [];
-  if (type === 'arena') {
-    const want = 2 + (r() < 0.5 ? 1 : 0);
-    for (let tries = 0; columns.length < want && tries < 60; tries++) {
-      const cl = rw >= 6 ? 2 : 1, cx = r() < 0.5 ? cl : rw + 1 - cl, cy = top + 3 + Math.floor(r() * (safe - top - 5)); // cy = the column's base row (cy-1 is solid too)
-      if (columns.some((c) => Math.abs(c.y - cy) < 5)) continue;
-      columns.push({ x: cx, y: cy });
-      solid[cy * gw + cx] = 1; solid[(cy - 1) * gw + cx] = 1;
-    }
-    // spawn spots next to a column move into the middle lane (a monster never lands in or on a column)
-    for (const sp of waves.flat()) if (columns.some((c) => Math.abs(sp.x / T - (c.x + 0.5)) < 1.2 && sp.y / T > c.y - 2.2 && sp.y / T < c.y + 1.8)) sp.x = mx;
-  }
+  // cover (Stefan 2026-11-15): a seeded room layout of 0x72 pieces: half-walls, L-shapes, pillar rows, an off-centre
+  // block, alcoves along the side walls. Rules: the entrance -> door path stays open (flood fill), every row keeps a free
+  // run of >= 2 tiles (5 blobz get through), pieces sit >= 3 rows apart, never in the arrival rows or under the door.
+  const { columns, walls } = roomLayout(r, type, rw, gw, gh, solid, top, safe, start, stairs, T);
+  // spawn spots inside or right next to cover move to the nearest open floor (below, flood fill)
+  for (const sp of waves.flat()) { const tx = Math.floor(sp.x / T), ty = Math.floor(sp.y / T); if (solid[ty * gw + tx]) { sp.x = -1; sp.y = -1; } }
   // every spawn on floor the blobz can reach from the entrance (flood fill; anything else moves to the nearest reached tile)
   const seen = new Uint8Array(gw * gh), q = [[Math.floor(start.x / T), Math.floor(start.y / T)]];
   while (q.length) {
@@ -346,6 +339,7 @@ export function makeRoom(seed: number, room: number, players = 1, dungeon = 1, t
     q.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
   }
   for (const sp of waves.flat()) {
+    if (sp.x < 0) { sp.x = mx; sp.y = (top + 1 + r() * (safe - top - 1)) * T; } // was inside cover: retry in the middle
     const tx = Math.floor(sp.x / T), ty = Math.floor(sp.y / T);
     if (seen[ty * gw + tx]) continue;
     let best = [Math.floor(mx / T), ty], bd = Infinity;
@@ -353,7 +347,7 @@ export function makeRoom(seed: number, room: number, players = 1, dungeon = 1, t
     sp.x = (best[0] + 0.5) * T; sp.y = (best[1] + 0.5) * T;
   }
   const spawns: Floor['spawns'] = [];
-  return { floor: room, solid, rooms: [o], start, exit, stairs, chests, spawns, gw, gh, dt: T, waves, lines, columns };
+  return { floor: room, solid, rooms: [o], start, exit, stairs, chests, spawns, gw, gh, dt: T, waves, lines, columns, walls };
 }
 
 /** rooms: which floor tiles show a crack (floor_2..8): 1-2 per 3x3 block (~11-20 % of the floor), random spots, never two
@@ -374,6 +368,54 @@ export function roomCracks(f: Floor, seed: number): Set<number> {
     }
   }
   return out;
+}
+
+/** Rooms: the seeded cover layout (see makeRoom). Marks `solid` and returns the pillars (column art, 2 tiles solid) and
+ *  brick wall tiles (1 tile solid each). Templates: 0 zigzag half-walls, 1 pillar rows + a block, 2 L-shapes + alcoves,
+ *  3 mixed; the whole layout may be mirrored. The boss room only gets a pillar row or two (room to move). */
+export function roomLayout(r: () => number, type: RoomType, rw: number, gw: number, gh: number, solid: Uint8Array, top: number, safe: number,
+  start: { x: number; y: number }, door: { x: number; y: number }, T: number) {
+  const columns: { x: number; y: number }[] = [], walls: { x: number; y: number }[] = [];
+  const flip = r() < 0.5, X = (x: number) => (flip ? rw + 1 - x : x); // x in 1..rw (floor), mirrored
+  type Cell = [number, number, 'w' | 'p']; // x, y, wall / pillar base (a pillar also fills y-1)
+  const halfWall = (y: number, side: 0 | 1): Cell[] => { const len = 3 + Math.floor(r() * (Math.min(5, rw - 2) - 2)); return [...Array(len).keys()].map((k) => [side ? rw - k : 1 + k, y, 'w']); };
+  const lShape = (y: number, side: 0 | 1): Cell[] => { const e = side ? rw - 2 : 3; return [...halfWall(y, side).slice(0, 3), [e, y + 1, 'w'], [e, y + 2, 'w']]; };
+  const pillars = (y: number): Cell[] => { const out: Cell[] = []; for (let x = 2; x <= rw - 1; x += 3) out.push([x, y, 'p']); return out; };
+  const block = (y: number, side: 0 | 1): Cell[] => { const a = side ? rw - 2 : 2; return [[a, y, 'w'], [a + 1, y, 'w'], [a, y + 1, 'w'], [a + 1, y + 1, 'w']]; };
+  const alcove = (y: number, side: 0 | 1): Cell[] => { const s0 = side ? rw : 1, s1 = side ? rw - 1 : 2; return [[s0, y, 'w'], [s1, y, 'w'], [s1, y + 1, 'w'], [s1, y + 2, 'w']]; };
+  const side = (): 0 | 1 => (r() < 0.5 ? 0 : 1), z0 = side();
+  const T0 = (k: number, y: number) => halfWall(y, ((k + z0) % 2) as 0 | 1); // zigzag
+  const T1 = (k: number, y: number) => (k % 2 ? block(y, side()) : r() < 0.6 ? pillars(y) : halfWall(y, side()));
+  const T2 = (k: number, y: number) => (k % 2 ? alcove(y, side()) : lShape(y, side()));
+  const ALL = [T0, T1, T2];
+  const tpl = Math.floor(r() * 4);
+  const piece = (k: number, y: number) => (type === 'boss' ? pillars(y) : tpl < 3 ? ALL[tpl](k, y) : ALL[Math.floor(r() * 3)](k, (y)));
+  const y0 = top + 2, y1 = safe - 3, span = Math.max(0, y1 - y0);
+  const n = type === 'boss' ? Math.min(2, 1 + Math.floor(span / 12)) : Math.max(3, Math.floor(span / 4.5)); // bigger rooms get more
+  const at = (x: number, y: number) => y * gw + x;
+  const doorX = Math.floor(door.x / T), startT = [Math.floor(start.x / T), Math.floor(start.y / T)];
+  const reaches = () => {
+    const seen = new Uint8Array(gw * gh), q = [startT];
+    while (q.length) { const [x, y] = q.pop()!; if (x < 0 || y < 0 || x >= gw || y >= gh || seen[at(x, y)] || solid[at(x, y)]) continue; seen[at(x, y)] = 1; q.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]); }
+    return seen[at(doorX, Math.floor(door.y / T))] === 1;
+  };
+  const rowOk = (y: number) => { let run = 0, best = 0; for (let x = 1; x <= rw; x++) { run = solid[at(x, y)] ? 0 : run + 1; best = Math.max(best, run); } return best >= 2; };
+  for (let k = 0; k < n; k++) {
+    const y = Math.max(y0, Math.min(y1, Math.round(y0 + (n === 1 ? span / 2 : (span * k) / (n - 1)) + Math.floor(r() * 3) - 1))); // +-1 row
+    const base = piece(k, y);
+    // try the piece as it is, then mirrored; skip it if both would block the way or crowd a row
+    for (const mir of [false, true]) {
+      const cells = base.map(([x, yy, w]) => [mir ? rw + 1 - X(x) : X(x), yy, w] as Cell).filter(([x, yy]) => x >= 1 && x <= rw && yy >= y0 - 1 && yy <= y1 + 2);
+      const tiles = cells.flatMap(([x, yy, w]) => (w === 'p' ? [[x, yy], [x, yy - 1]] : [[x, yy]]));
+      if (tiles.some(([x, yy]) => solid[at(x, yy)] || solid[at(x, yy + 1)] && !tiles.some(([a, b]) => a === x && b === yy + 1))) continue;
+      for (const [x, yy] of tiles) solid[at(x, yy)] = 1;
+      const rows = [...new Set(tiles.map(([, yy]) => yy))];
+      if (!rows.every(rowOk) || !reaches()) { for (const [x, yy] of tiles) solid[at(x, yy)] = 0; continue; }
+      for (const [x, yy, w] of cells) (w === 'p' ? columns : walls).push({ x, y: yy });
+      break;
+    }
+  }
+  return { columns, walls };
 }
 
 /** rooms: start the next wave when the last one is gone (or a blob climbed past the corridor line); spawns land after

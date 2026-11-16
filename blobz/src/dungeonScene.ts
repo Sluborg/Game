@@ -390,6 +390,19 @@ export class DungeonScene extends Phaser.Scene {
       if (!this.textures.get('x72').has('column')) this.textures.get('x72').add('column', 0, 80, 80, 16, 48);
       for (const c of f.columns) this.mapObjs.push(this.add.image((c.x + 0.5) * ft(f), (c.y + 1) * ft(f), 'x72', 'column').setOrigin(0.5, 1).setScale(3).setDepth((c.y + 1) * ft(f) - 10));
     }
+    if (rooms && f.walls?.length) {
+      // brick cover: 0x72 wall face per tile (left / mid / right end by its neighbours) with the wall_top cap on the tile
+      // above when nothing is stacked on it; sprites sorted with the blobz (a blob behind the wall is hidden by it)
+      const tx = this.textures.get('x72');
+      for (const [k, x, y] of [['wt-l', 16, 0], ['wt-m', 32, 0], ['wt-r', 48, 0], ['wf-l', 16, 16], ['wf-m', 32, 16], ['wf-r', 48, 16]] as const) if (!tx.has(k)) tx.add(k, 0, x, y, 16, 16);
+      const has = new Set(f.walls.map((w) => `${w.x},${w.y}`)), T = ft(f);
+      for (const w of f.walls) {
+        const l = has.has(`${w.x - 1},${w.y}`), r = has.has(`${w.x + 1},${w.y}`), end = !l && !r ? 'm' : !l ? 'l' : !r ? 'r' : 'm';
+        const depth = (w.y + 1) * T - 12;
+        this.mapObjs.push(this.add.image((w.x + 0.5) * T, (w.y + 1) * T, 'x72', 'wf-' + end).setOrigin(0.5, 1).setScale(3).setDepth(depth));
+        if (!has.has(`${w.x},${w.y - 1}`)) this.mapObjs.push(this.add.image((w.x + 0.5) * T, w.y * T, 'x72', 'wt-' + end).setOrigin(0.5, 1).setScale(3).setDepth(depth));
+      }
+    }
     this.chests = f.chests.map((c) => this.add.image(c.x, c.y + 8, 'na-chest', 0).setScale(3).setOrigin(0.5, 1).setDepth(c.y));
     this.mapObjs.push(...this.chests);
     // a big floor banner

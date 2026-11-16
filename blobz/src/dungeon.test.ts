@@ -43,6 +43,8 @@ const goo = (d: DState, kind: EnemyKind, x: number, y: number, o: Partial<Enemy>
   return e;
 };
 const still = { stun: 999, slamT: 999, cd: 999 };
+/** rooms: remove the layout's cover (walls, pillars) so a test has open floor */
+const clearCover = (d: DState) => { const m = d.map, W = m.gw!; for (let y = 3; y < m.gh! - 1 - ROOM_STUB; y++) for (let x = 1; x < W - 1; x++) m.solid[y * W + x] = 0; m.walls = []; m.columns = []; };
 /** The middle of the floor's biggest room, a little left of centre: open space for monster attacks to the right. */
 const roomMid = (d: DState) => { const r = d.map.rooms.reduce((a, b) => (b.w * b.h > a.w * a.h ? b : a)); return { x: (r.x + r.w / 2) * DT - 70, y: (r.y + r.h / 2) * DT }; };
 
@@ -460,7 +462,8 @@ describe('dungeon', () => {
         // start in the last floor row, above the bottom wall's gap (the 3 middle tiles); every spawn reachable from it
         expect(Math.floor(f.start.y / T)).toBe(H - 2 - ROOM_STUB); // the last floor row, above the bottom wall and its hallway
         expect(roomGap(W)).toContain(Math.floor(f.start.x / T)); // right above the entrance gap
-        for (const c of f.columns ?? []) expect(Math.abs((c.x + 0.5) * T - f.start.x)).toBeGreaterThan(T); // never in the middle lane
+        // cover never closes a row: every floor row keeps a free run of >= 2 tiles (5 blobz get through)
+        for (let y = 3; y < H - 1 - ROOM_STUB; y++) { let run = 0, best = 0; for (let x = 1; x < W - 1; x++) { run = f.solid[y * W + x] ? 0 : run + 1; best = Math.max(best, run); } expect(best).toBeGreaterThanOrEqual(2); }
         const seen = new Uint8Array(W * H), q = [[Math.floor(f.start.x / T), Math.floor(f.start.y / T)]];
         while (q.length) { const [x, y] = q.pop()!; if (x < 0 || y < 0 || x >= W || y >= H || seen[y * W + x] || f.solid[y * W + x]) continue; seen[y * W + x] = 1; q.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]); }
         for (const w of f.waves!) for (const sp of w) expect(seen[Math.floor(sp.y / T) * W + Math.floor(sp.x / T)]).toBe(1);
@@ -517,22 +520,21 @@ describe('dungeon', () => {
       expect(d.done).toBeGreaterThan(0);
       expect(d.why).toBe('boss');
     });
-    it('playtest fixes: start in the entrance gap, max 1 shooter per wave in rooms 1-3, 2-3 columns as cover in arenas', () => {
+    it('room layouts (Stefan): seeded cover from 0x72 pieces in every room, pillars only in boss rooms; start in the entrance; max 1 shooter early', () => {
+      const looks = new Set<string>();
       for (const seed of [5, 9, 13]) for (let room = 1; room <= ROOMS; room++) {
         const f = makeRoom(seed, room, 2);
         expect(Math.floor(f.start.y / f.dt!)).toBe(f.gh! - 2 - ROOM_STUB); // the last floor row, right above the bottom wall's gap
         if (room <= EARLY_ROOMS) for (const w of f.waves!) expect(w.filter((sp) => sp.kind === 3).length).toBeLessThanOrEqual(1);
-        const cols = f.columns ?? [];
-        if (roomType(room) === 'arena') {
-          expect(cols.length).toBeGreaterThanOrEqual(2);
-          expect(cols.length).toBeLessThanOrEqual(3);
-        } else expect(cols.length).toBe(0);
-        for (const c of cols) {
-          expect(isWall(f, (c.x + 0.5) * ROOM_T, (c.y + 0.5) * ROOM_T)).toBe(true); // blocks walking and shots
-          expect(Math.abs((c.x + 0.5) * ROOM_T - f.start.x)).toBeGreaterThan(ROOM_T); // never in the middle lane
-          for (const w of f.waves!) for (const sp of w) expect(isWall(f, sp.x, sp.y)).toBe(false);
-        }
+        const cols = f.columns ?? [], walls = f.walls ?? [];
+        if (roomType(room) === 'boss') { expect(walls.length).toBe(0); expect(cols.length).toBeGreaterThanOrEqual(1); }
+        else expect(cols.length + walls.length).toBeGreaterThanOrEqual(3);
+        for (const c of [...cols, ...walls]) expect(isWall(f, (c.x + 0.5) * ROOM_T, (c.y + 0.5) * ROOM_T)).toBe(true); // blocks walking and shots
+        for (const w of f.waves!) for (const sp of w) expect(isWall(f, sp.x, sp.y)).toBe(false);
+        expect(JSON.stringify(makeRoom(seed, room, 2).walls)).toBe(JSON.stringify(walls)); // seeded: host and joiners match
+        looks.add(JSON.stringify(walls.map((w) => [w.x, w.y - f.gh!])));
       }
+      expect(looks.size).toBeGreaterThan(10); // plenty of different designs
     });
     it('playtest fixes: anything pushed into a wall or out of the room snaps back to the nearest floor tile', () => {
       const f = makeRoom(5, 1, 1), T = f.dt!;
@@ -551,7 +553,7 @@ describe('dungeon', () => {
     });
     it('playtest fixes: sticky auto-aim, early rooms aim slower, the jump back goes away from the target', () => {
       const d = quiet(newRun(24, { b: 'bow' }, 1, true));
-      enterFloor(d, 24, 4, 1); quiet(d); d.wave = 99;
+      enterFloor(d, 24, 4, 1); quiet(d); d.wave = 99; clearCover(d);
       const T = d.map.dt!, b = [body('b', 4.5 * T, 20 * T)];
       d.heroes.b.inv = 99;
       b[0].vx = 100; // walking: the crossbow holds fire (no knockback moving the monsters), the aim still updates

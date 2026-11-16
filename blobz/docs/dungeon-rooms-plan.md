@@ -110,3 +110,15 @@ fights **2-3 waves** in a room; when the last wave is gone the **door at the top
 | dungeonStep | 0.1 | each later dungeon: intervals 10 % shorter (down to x0.75) |
 | spitSpeed | 0.7 | monster shots fly at 70 % speed in every room (same range) |
 - Screenshots: `docs/screenshots/dungeon-rooms/no-weapons.png`, `levelup-after-clear.png`.
+
+## Room layouts (Stefan 2026-11-15: more walls inside rooms)
+- `roomLayout` (src/dungeon.ts), seeded per room (host and joiners match): 3 templates + mixed (zigzag half-walls;
+  pillar rows + an off-centre 2x2 block; L-shapes + alcoves along the side walls), random mirror, +-1 row jitter.
+  Pieces: half-wall 3-5 tiles from a side wall, L (3 across + 2 down), pillar row (0x72 column every 3 tiles), 2x2 block,
+  alcove (a niche against the side wall). Bigger rooms get more (one piece per ~4.5 rows, at least 3); boss rooms only
+  1-2 pillar rows.
+- Rules (checked when placing, tested for every room size): every floor row keeps a free run of >= 2 tiles, the
+  entrance -> door path stays open (flood fill), nothing in the 2 rows under the door or the 3 arrival rows, spawn spots
+  inside cover move to open floor. Drawn as 0x72 wall faces (left / mid / right end) with the wall_top cap above,
+  depth-sorted with the blobz.
+- Screenshot: `docs/screenshots/dungeon-rooms/batch2/6-room-layouts.png` (3 generated rooms, zoomed out).
