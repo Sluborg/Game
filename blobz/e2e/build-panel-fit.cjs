@@ -25,8 +25,12 @@ const base = process.argv[2] || 'http://localhost:4173/';
         const r = await p.evaluate(() => {
           const b = document.getElementById('btn-gohome').getBoundingClientRect(), pn = document.getElementById('build-panel').getBoundingClientRect();
           const top = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
-          return { b: [b.top, b.bottom], pn: [pn.top, pn.bottom], vh: innerHeight, onTop: !!top?.closest('#btn-gohome') };
+          const el = document.getElementById('build-panel');
+          return { b: [b.top, b.bottom], pn: [pn.top, pn.bottom], vh: innerHeight, onTop: !!top?.closest('#btn-gohome'), sh: el.scrollHeight, ch: el.clientHeight, hint: el.classList.contains('scrolls') && !el.classList.contains('atend') };
         });
+        // 390x844 and up fit without scrolling; smaller screens scroll and show the hint (Lead 2026-11-16)
+        if (h >= 844) ok(r.sh <= r.ch + 2, `DPR ${d}, ${w}x${h}: the whole panel fits, no scrolling (${r.sh} <= ${r.ch})`);
+        else if (r.sh > r.ch + 2) ok(r.hint, `DPR ${d}, ${w}x${h}: scrolls (${r.sh} > ${r.ch}) and shows the scroll hint`);
         ok(r.b[0] >= 0 && r.b[1] <= r.vh && r.b[0] >= r.pn[0] && r.b[1] <= r.pn[1] + 0.5 && r.onTop,
           `DPR ${d}, ${w}x${h}: "Spara och gå hem" fully on screen and in the panel (button ${r.b.map(Math.round).join('-')}, panel ${r.pn.map(Math.round).join('-')}, screen ${r.vh})`);
       }

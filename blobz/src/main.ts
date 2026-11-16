@@ -487,14 +487,22 @@ function buildCard(kind: BuildKind | 'cottage'): HTMLButtonElement {
   b.onclick = () => { if (!b.disabled) { b.classList.remove('tap'); void b.offsetWidth; b.classList.add('tap'); sendBuild(kind); } };
   return b;
 }
+function markPanelScroll() {
+  const p = $('build-panel');
+  p.classList.toggle('scrolls', p.scrollHeight > p.clientHeight + 2);
+  p.classList.toggle('atend', p.scrollTop + p.clientHeight >= p.scrollHeight - 2);
+}
 function setupBuildPanel() {
   const grid = $('build-cards');
   if (grid.childElementCount) return;
   grid.append(...[...BUILD_KINDS, 'cottage' as const].map(buildCard));
   $('btn-build').onclick = () => {
     panelOpen = true; show('build-panel');
-    requestAnimationFrame(() => { const p = $('build-panel'); p.classList.toggle('scrolls', p.scrollHeight > p.clientHeight + 2); });
+    requestAnimationFrame(markPanelScroll);
   };
+  // the scroll hint (fade + arrow) shows while more cards wait below
+  $('build-panel').addEventListener('scroll', markPanelScroll, { passive: true });
+  onViewport(markPanelScroll);
   $('btn-build-close').onclick = () => { panelOpen = false; show('build-panel', false); };
 }
 /** A building's effect in words, with the real numbers where it has them (carry 3 -> 4). */
