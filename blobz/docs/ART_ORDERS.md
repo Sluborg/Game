@@ -46,6 +46,7 @@ ChatGPT works only on N-orders with status TO DO (next: N-42). ChatGPT fills eve
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
 | N-42 | TO DO (FIRST) | Ranger class icon: bow with drawn string + nocked arrow, EXACT 16x16 + 32x32 | `art/dungeon/icons/bow-16.png`, `bow-32.png` |
+| N-43 | TO DO | 12 new blob hats/caps (hats only, no ears/horns), sizes L (max 11x5) + M (max 9x4) in 16x8 cells | `src/blob.ts` hat sprites (Art converts to the hat tables) |
 | N-37 | DONE (received 2026-11-15, not exact 8x: real art px ~10 src px, native ~214x29; sampled to 140x28 -> art/lobby/party-platform-140.png) | Lobby party platform, EXACT 140x28 art px (shown 2x) | `art/lobby/party-platform.png` |
 | N-38 | DONE (received 2026-11-15, 937x1678 = 3.9 src px per art px; 240x430 -> art/bg/start-240.png) | Start/loading background, village scene, EXACT 240x430 art px portrait (shown 2x) | `art/title.png` |
 | N-39 | DONE (received 2026-11-15, real art px ~23 src px = native 64x42; saved art/logo-150.png (ordered size, uneven 2.3x) + art/logo-64.png (native)) | Logo "Blobz" as true pixel art, EXACT 150x104 art px (shown 2x) | `art/logo.png` |
@@ -401,6 +402,31 @@ upright, slightly tilted is fine), the string drawn back with ONE arrow nocked a
 small fletching. Must read instantly as "bow" at 16 px.
 Draw it twice, each natively at its size (NOT one scaled up): EXACTLY 16x16 art px (left) and EXACTLY 32x32 art px
 (right), 1 px dark outline at each scale, filling the square like the reference icons, generous magenta between them.
+```
+
+### N-43 Blob hats and caps (12 new, hats only)
+```
+STYLE: exactly like your N-26 trees (same dark near-black outline, palette, 2-3 tone shading, pixel size): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n26-trees.png
+TRUE PIXEL ART: every art pixel is one flat colour, NO anti-aliasing, no gradients, no blur, no dithering. Solid flat
+magenta #ff00ff background, hard pixel edges, no glow or shadow touching the magenta. Deliver at EXACTLY 8x
+nearest-neighbour (every art pixel = an 8x8 block). No text, no labels, no blob, hats only.
+These are hats for our tiny blob characters. The current hats, worn, at game scale (for size and look):
+https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/hats-current.png
+HATS AND CAPS ONLY: no ears, no animal parts, no horns, no antennas, no halos.
+The blob's head is a small dome; the hat sits ON TOP of the head with its bottom row resting on the head's top outline.
+Keep it LOW PROFILE so the top of the blob's shiny highlight stays visible: the hat must not wrap down over the
+forehead or the sides of the head. 1 px dark outline around each hat.
+12 hats, in this order: 1 low baseball cap (bill pointing right), 2 beanie, 3 headband, 4 bandana (knot at the side),
+5 cowboy hat, 6 small top hat, 7 small crown, 8 sailor cap, 9 small chef toque, 10 small wizard hat, 11 cap worn
+sideways (bill pointing left), 12 flower crown (small flowers on a green ring).
+Each hat in TWO sizes, each drawn natively at its size (NOT one scaled):
+- L: at most 11 art px wide and 5 art px tall
+- M: at most 9 art px wide and 4 art px tall
+EXACT LAYOUT (so it can be cut automatically): a grid of 4 columns x 6 rows of cells, each cell EXACTLY 16 x 8 art px,
+with EXACTLY 4 art px of magenta between cells and around the edge. Rows 1, 3, 5 = the L versions of hats 1-4, 5-8,
+9-12; rows 2, 4, 6 = the M versions of the same hats right below them. In every cell the hat is centred horizontally
+and its bottom row is the cell's bottom row (anchor = bottom centre).
+Canvas: 4*16 + 5*4 = 84 x 6*8 + 7*4 = 76 art px, delivered EXACTLY 672 x 608.
 ```
 
 ### N-37 Lobby party platform (DONE)
