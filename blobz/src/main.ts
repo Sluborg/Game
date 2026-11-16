@@ -19,7 +19,7 @@ import { applyI18n, lang, lookName, setLang, t, type Key } from './i18n';
 import { lanNamespace, nsInfo, Scanner, type FoundRoom } from './discovery';
 import { sfx, unlockAudio } from './sfx';
 import {
-  addPlayer, affordable, atHome, BUILD_KINDS, COTTAGE_COST, COTTAGE_MAX, requestBuild, endRound, LONG_GAME, type BuildKind, BUILDING_ENABLED, DAY_CYCLE_ENABLED, STONE_ENABLED, finishMini, cleanBiome, type Biome, SNOW_MAP_ENABLED, BUILD_COST, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, pickWeapon, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
+  addPlayer, affordable, atHome, BUILD_KINDS, COTTAGE_COST, COTTAGE_MAX, requestBuild, endRound, LONG_GAME, carryMaxOf, type BuildKind, BUILDING_ENABLED, DAY_CYCLE_ENABLED, STONE_ENABLED, finishMini, cleanBiome, type Biome, SNOW_MAP_ENABLED, BUILD_COST, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, pickWeapon, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
   toolNode, viewFromSnapshot, viewFromState,
 } from './sim';
 import type { FxEvent, Input, PlayerInfo, Snapshot, State, View } from './sim';
@@ -400,7 +400,7 @@ onViewport(fitSeatNames);
 function startScene(session: Session) {
   wipe();
   if (DEBUG) (window as unknown as { __blobzBiome?: string }).__blobzBiome = session.biome ?? 'meadow';
-  endShown = false; lastStars = 0; goalsShown = 0;
+  endShown = false; lastStars = 0; goalsShown = 0; builtSeen = '';
   show('menu', false); show('lobby', false); show('end', false); show('hud');
   try { (navigator as Navigator & { wakeLock?: { request(t: string): Promise<unknown> } }).wakeLock?.request('screen').catch(() => {}); } catch { /* optional */ }
   if (!game) {
@@ -495,6 +495,34 @@ function setupBuildPanel() {
   };
   $('btn-build-close').onclick = () => { panelOpen = false; show('build-panel', false); };
 }
+/** A building's effect in words, with the real numbers where it has them (carry 3 -> 4). */
+function effText(kind: BuildKind | 'cottage', v: View) {
+  const lvl = v.cottage?.level ?? 1, now = carryMaxOf(v.builds, lvl);
+  if (kind === 'cottage') return lvl < COTTAGE_MAX ? t(`build.eff.cottage${lvl + 1}` as Key, { now, to: now + 1 }) : t('build.done');
+  const done = v.builds.find((b) => b.kind === kind)?.state === 2;
+  return t(`build.eff.${kind}` as Key, { now: done ? now - 1 : now, to: done ? now : now + 1 });
+}
+/** Built-this-round tracking for the "X byggd! <effect>" toast. */
+let builtSeen = '';
+function toastBuilt(v: View) {
+  const now = [...v.builds.filter((b) => b.state === 2).map((b) => b.kind), `c${v.cottage?.level ?? 1}`].join(',');
+  if (now === builtSeen) return;
+  const before = builtSeen; builtSeen = now;
+  if (!before) return; // first view of the round: what is already standing is no news
+  const fresh = v.builds.find((b) => b.state === 2 && !before.split(',').includes(b.kind));
+  const cot = !before.split(',').includes(`c${v.cottage?.level ?? 1}`);
+  if (!fresh && !cot) return;
+  const name = fresh ? buildName(fresh.kind) : t('build.cottage', { lvl: v.cottage.level }).replace('\n', ' ');
+  const eff = fresh ? effText(fresh.kind, v) : t(`build.eff.cottage${v.cottage.level}` as Key, { now: carryMaxOf(v.builds, v.cottage.level) - 1, to: carryMaxOf(v.builds, v.cottage.level) });
+  showToast(t('build.built.toast', { name, eff }), building(fresh ? fresh.kind : `cottage-${v.cottage.level}`));
+}
+/** The toast under the quest box (milestones, buildings): a picture + one line, gone after 2.6 s. */
+function showToast(text: string, img: string) {
+  const tt = $('goal-toast');
+  tt.querySelector('img')!.setAttribute('src', img); tt.querySelector('span')!.textContent = text;
+  show('goal-toast'); tt.classList.remove('pop'); void tt.offsetWidth; tt.classList.add('pop');
+  clearTimeout(goalToastT); goalToastT = window.setTimeout(() => show('goal-toast', false), 2600);
+}
 function renderBuildPanel(v: View) {
   const me = v.players.find((p) => p.id === session?.myId);
   const home = BUILDING_ENABLED && v.phase === 'play' && v.mode === 'meadow' && !!me && atHome(me.x, me.y);
@@ -510,7 +538,7 @@ function renderBuildPanel(v: View) {
     const cost = isCot ? (lvl >= COTTAGE_MAX ? null : COTTAGE_COST[lvl - 1]) : BUILD_COST[kind];
     const name = isCot ? t('build.cottage', { lvl: Math.min(COTTAGE_MAX, lvl + 1) }) : buildName(kind);
     const img = isCot ? building(`cottage-${Math.min(3, lvl + (lvl >= COTTAGE_MAX ? 0 : 1))}`) : building(kind);
-    const eff = isCot ? (lvl < COTTAGE_MAX ? t(`build.eff.cottage${lvl + 1}` as Key) : t('build.done')) : t(`build.eff.${kind}` as Key);
+    const eff = effText(kind, v);
     const can = !built && !!cost && canAfford(v.bank, cost);
     const key = `${built}|${can}|${name}|${cost ? RES.map((k) => cost[k] + ':' + (v.bank[k] >= cost[k] ? 1 : 0)).join(',') : ''}`;
     if (card.dataset.key === key) return;
@@ -628,11 +656,11 @@ function onView(v: View) {
   if (dungeonUi(v, session?.myId, controls, (id) => infos.get(id)?.name ?? '?')) return; // [dungeon hook, Code 2] pick cards / dungeon HUD
   renderQuestRows($('hud-quest'), v);
   renderBuildGoal(v);
+  toastBuilt(v);
   show('btn-gohome', isHost && LONG_GAME && v.phase === 'play');
   if (v.goal > goalsShown) { // a milestone (LONG_GAME): toast + star, the bars start on the next goal
     goalsShown = v.goal; lastStars = 0; sfx.star();
-    const tt = $('goal-toast'); show('goal-toast'); tt.classList.remove('pop'); void tt.offsetWidth; tt.classList.add('pop');
-    clearTimeout(goalToastT); goalToastT = window.setTimeout(() => show('goal-toast', false), 2600);
+    showToast(t('hud.goal'), NI.star);
   }
   const st = starsFor(v.delivered, v.quest);
   if (st > lastStars) { sfx.star(); lastStars = st; }

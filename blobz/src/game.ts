@@ -16,6 +16,7 @@ import { isImgArt, RES_ART } from './resArt';
 import { ARENA, BOMB_R, DROP_HEIGHT } from './mini';
 import type { PuzzleLayout, Res, Tool } from './sim';
 import type { FxEvent, Input, ItemKind, PlayerInfo, View } from './sim';
+import { t } from './i18n';
 
 export interface Session {
   role: 'host' | 'client';
@@ -227,7 +228,7 @@ export class GameScene extends Phaser.Scene {
   private miniDeco: Phaser.GameObjects.GameObject[] = [];
   private miniBg?: Phaser.GameObjects.Image;
   private drops = new Map<number, { item: Phaser.GameObjects.Image; mark: Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse }>();
-  private bgfx = new Map<BuildKind, { img: Phaser.GameObjects.Image; sh?: Phaser.GameObjects.Image; built: boolean; ghost?: Phaser.GameObjects.Container }>();
+  private bgfx = new Map<BuildKind, { img: Phaser.GameObjects.Image; sh?: Phaser.GameObjects.Image; built: boolean; ghost?: Phaser.GameObjects.Container; badge?: Phaser.GameObjects.Text }>();
   private cottageImg!: Phaser.GameObjects.Image;
   private water!: ReturnType<typeof makeWater>;
   private nodes: { img: Phaser.GameObjects.Image; sh: Phaser.GameObjects.Image; kind: number; left: number; x: number; y: number; sc: number; fade: number; blossom: boolean; tree?: TreeVariant }[] = [];
@@ -871,7 +872,9 @@ export class GameScene extends Phaser.Scene {
         ? this.add.image(w.bridge.x, w.bridge.y + 69, 'b-bridge').setScale(NINJA_SCALE).setOrigin(0.5, 1).setDepth(-930)
         : this.add.image(at.x, at.y - BUILD_R + 4, 'b-' + k).setScale(PROP_SCALE).setOrigin(0.5, 1).setDepth(at.y - BUILD_R + 4);
       const sh = k === 'bridge' ? undefined : this.shadow(at.x, at.y - BUILD_R + 2, img.displayWidth * 0.85, 24, 0.24).setDepth(at.y - BUILD_R + 3).setVisible(false);
-      this.bgfx.set(k, { img: img.setVisible(false), sh, built: false, ghost: k === 'bridge' ? undefined : this.plotGhost(k) });
+      // the storage's effect on the building itself (Stefan + Alea 2026-11-16: nobody understood what it gives)
+      const badge = k === 'storage' ? this.add.text(at.x, at.y - BUILD_R + 8, t('build.badge.storage'), { fontFamily: "'Fredoka', sans-serif", fontSize: '11px', color: '#fff8e8', fontStyle: '600', stroke: '#4a2f1c', strokeThickness: 3, resolution: 3 }).setOrigin(0.5, 0).setDepth(at.y - BUILD_R + 5).setVisible(false) : undefined;
+      this.bgfx.set(k, { img: img.setVisible(false), sh, built: false, ghost: k === 'bridge' ? undefined : this.plotGhost(k), badge });
     }
   }
 
@@ -902,7 +905,7 @@ export class GameScene extends Phaser.Scene {
       const g = this.bgfx.get(b.kind);
       if (!g) continue;
       const on = b.state === 2;
-      if (on !== g.built) { g.built = on; g.img.setVisible(on); g.sh?.setVisible(on); }
+      if (on !== g.built) { g.built = on; g.img.setVisible(on); g.sh?.setVisible(on); g.badge?.setVisible(on); }
       if (g.ghost) { // the plot ghost: build panel open, your blob on the home yard, or within 200 px of the spot
         const at = BUILD_SPOTS[b.kind], me = this.blobs.get(this.s.myId);
         const near = !!me && (Math.hypot(me.x - at.x, me.y - at.y) < 200 || atHome(me.x, me.y)); // on the yard: every plot
