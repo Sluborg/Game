@@ -241,13 +241,19 @@ function startScan() {
   });
   tryNs();
 }
+const CONNECT_GIVE_UP = 12000;
 function stopScan() { scanGen++; clearTimeout(retryTimer); scanner?.stop(); scanner = null; }
 function renderRooms(rooms: FoundRoom[]) {
   const connecting = scanner?.pending.size ?? 0;
+  // a host is known but no link opened for 12 s (other network / mobile data, ICE failed): say so instead of
+  // "ansluter..." for ever, with "Leta igen"; scanning goes on, so a link that opens later still shows its row
+  const stuck = !rooms.length && [...(scanner?.pendingSince.values() ?? [])].some((t0) => Date.now() - t0 > CONNECT_GIVE_UP);
   show('lan-status', rooms.length === 0);
   emptyRounds = rooms.length || connecting ? 0 : emptyRounds + 1;
   // ~10 s without a game: hint at the usual cause, still scanning
-  lanStatus(connecting && !rooms.length ? t('join.connectingFound') : emptyRounds >= 3 ? NOTHING() : SEARCHING(), emptyRounds >= 3 && !connecting);
+  const ice = DEBUG && scanner?.ice ? ` [ICE: ${scanner.ice}]` : '';
+  if (stuck) lanStatus(t('err.noLink') + ice, true);
+  else lanStatus((connecting && !rooms.length ? t('join.connectingFound') : emptyRounds >= 3 ? NOTHING() : SEARCHING()) + ice, emptyRounds >= 3 && !connecting);
   show('lan-search', rooms.length === 0);
   $('lan-list').replaceChildren(...rooms.map((r) => {
     const li = document.createElement('li');
@@ -852,7 +858,7 @@ async function joinGame(target: string, row?: HTMLButtonElement) {
     const why = String(e);
     const msg = why.startsWith('version:') ? t('err.version', { host: why.slice(8), me: __APP_VERSION__ })
       : why === 'full' ? t('err.full')
-      : why === 'timeout' ? t('err.timeout')
+      : why === 'timeout' ? t('err.noLink')
       : friendlyError(why);
     startScan(); // panel('join') would clear the message, so restart the list directly
     $('join-msg').textContent = msg;

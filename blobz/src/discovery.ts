@@ -125,6 +125,11 @@ export class Scanner {
   private rooms = new Map<number, FoundRoom>();
   /** Slots whose host the broker knows but whose WebRTC link is still connecting (phones can take 3-6 s). */
   pending = new Set<number>();
+  /** When each pending slot first went pending (ms): a host the broker knows but no WebRTC link ever opens to
+   *  (different networks / mobile CGNAT: ICE fails) would otherwise show "ansluter..." for ever (Stefan 2026-11-16). */
+  pendingSince = new Map<number, number>();
+  /** Last ICE state seen on a probe (debug line: new / checking / connected / failed). */
+  ice = '';
   private unavailable = new Set<string>();
   onUpdate: (rooms: FoundRoom[]) => void = () => {};
 
@@ -169,17 +174,19 @@ export class Scanner {
       this.unavailable.delete(peerId);
       const poll = setInterval(() => {
         if (settled) { clearInterval(poll); return; }
-        if (this.unavailable.has(peerId)) { clearInterval(poll); end(null); return; }
+        if (this.unavailable.has(peerId)) { clearInterval(poll); this.pendingSince.delete(slot); end(null); return; }
+        const st = (conn as DataConnection & { peerConnection?: RTCPeerConnection })?.peerConnection?.iceConnectionState;
+        if (st && st !== this.ice) { this.ice = st; this.onUpdate([...this.rooms.values()]); }
       }, 150);
       // no "unavailable" after 1.5 s: the broker knows this host, show "ansluter..." meanwhile
-      setTimeout(() => { if (!settled && !this.unavailable.has(peerId)) { this.pending.add(slot); this.onUpdate([...this.rooms.values()]); } }, 1500);
+      setTimeout(() => { if (!settled && !this.unavailable.has(peerId)) { this.pending.add(slot); if (!this.pendingSince.has(slot)) this.pendingSince.set(slot, Date.now()); this.onUpdate([...this.rooms.values()]); } }, 1500);
       try { conn = peer.connect(peerId, { reliable: true, serialization: 'json' }); } catch { end(null); return; }
       conn.on('open', () => conn.send({ t: 'info?' }));
       conn.on('data', (raw) => {
         const m = raw as { t?: string; info?: unknown };
         if (m?.t !== 'info') return;
         const info = cleanInfo(m.info, this.clamp);
-        this.pending.delete(slot);
+        this.pending.delete(slot); this.pendingSince.delete(slot);
         end(info ? { ...info, slot, peerId } : null);
       });
       conn.on('close', () => { this.pending.delete(slot); end(null); });
@@ -192,6 +199,7 @@ export class Scanner {
     if (this.peer?.disconnected && !this.peer.destroyed) this.peer.reconnect();
     const found = await Promise.all(Array.from({ length: SLOTS }, (_, i) => this.probe(i + 1)));
     found.forEach((r, i) => { if (!r) this.pending.delete(i + 1); });
+    this.onUpdate([...this.rooms.values()]); // re-check the stuck timer even when nothing changed
     if (this.stopped) return;
     found.forEach((r, i) => {
       const slot = i + 1;
