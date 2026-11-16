@@ -691,6 +691,19 @@ describe('dungeon', () => {
       expect(d.spit.length).toBeGreaterThanOrEqual(ROOM_BOSS.ring);
       expect(makeRoom(3, 8, 1).waves![0].length).toBeGreaterThan(makeRoom(3, 1, 1).waves![0].length);
     });
+    it('monsters find their way around walls (flow field), they no longer push into the wall toward the blob', () => {
+      const d = newRun(29, { a: 'sword' }, 1, true); clearCover(d);
+      d.wave = 99; d.pending = []; d.enemies = [];
+      const m = d.map, T = m.dt!, W = m.gw!;
+      // a wall across the room at row 8, open only at the far right tile
+      for (let x = 1; x < W - 2; x++) m.solid[8 * W + x] = 1;
+      const a = [body('a', 2.5 * T, 11.5 * T)];
+      d.heroes.a.inv = 999; d.heroes.a.atkCd = 1e9;
+      const e = goo(d, 1, 2.5 * T, 5.5 * T, { awake: true, calm: true, cd: 999 });
+      run1(d, a, undefined, 10); // (a slime is slow)
+      expect(e.y).toBeGreaterThan(9 * T); // it went round the wall's open end
+      expect(Math.hypot(e.x - a[0].x, e.y - a[0].y)).toBeLessThan(2 * T);
+    });
     it('an open loot card holds the door (it never follows the team into the next room)', () => {
       const d = newRun(27, { a: 'sword', b: 'bow' }, 1, true);
       d.wave = 99; d.pending = []; d.enemies = []; d.lootQ.push('helm');

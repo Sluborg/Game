@@ -1004,6 +1004,54 @@ function stepAct(d: DState, e: Enemy, tgt: Body | null, dt: number, fx: DFx[]) {
   }
 }
 
+/** Monster navigation (Stefan: they ran into walls): a flow field per blob = BFS distance (in tiles) from that blob
+ *  over the floor grid, rebuilt every FLOW_EVERY s (at most 5 small BFS per rebuild, whatever the number of monsters).
+ *  A monster follows the field of the blob it targets (so the knight's taunt still pulls). */
+const FLOW_EVERY = 0.3;
+const flows = new WeakMap<DState, { by: Map<string, Int32Array>; t: number; map: Floor }>();
+function flowTick(d: DState, alive: Body[], dt: number) {
+  const f = d.map, W = fw(f), H = fh(f), T = ft(f);
+  const fl = flows.get(d);
+  if (fl && fl.map === f && (fl.t -= dt) > 0) return;
+  const by = new Map<string, Int32Array>();
+  for (const b of alive) {
+    const dist = (fl?.map === f ? fl.by.get(b.id) : undefined) ?? new Int32Array(W * H);
+    dist.fill(-1);
+    const tx = Math.floor(b.x / T), ty = Math.floor(b.y / T);
+    if (tx < 0 || ty < 0 || tx >= W || ty >= H) continue;
+    const q = [ty * W + tx]; dist[q[0]] = 0;
+    for (let i = 0; i < q.length; i++) {
+      const c = q[i], x = c % W, y = (c - x) / W;
+      for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
+        if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+        const n = ny * W + nx;
+        if (dist[n] >= 0 || f.solid[n] || (f.inset && (nx === 0 || nx === W - 1))) continue; // (the thin-wall edge columns are too narrow for monsters)
+        dist[n] = dist[c] + 1; q.push(n);
+      }
+    }
+    by.set(b.id, dist);
+  }
+  flows.set(d, { by, t: FLOW_EVERY, map: f });
+}
+/** The centre of the neighbouring tile one step closer to blob `id` (8 ways, no cutting wall corners), or null. */
+export function flowStep(d: DState, x: number, y: number, id: string): { x: number; y: number } | null {
+  const fl = flows.get(d), dist = fl?.map === d.map ? fl.by.get(id) : undefined;
+  if (!dist) return null;
+  const f = d.map, W = fw(f), H = fh(f), T = ft(f), tx = Math.floor(x / T), ty = Math.floor(y / T);
+  const here = tx >= 0 && ty >= 0 && tx < W && ty < H ? dist[ty * W + tx] : -1;
+  let best: [number, number] | null = null, bd = here < 0 ? Infinity : here;
+  for (let oy = -1; oy <= 1; oy++) for (let ox = -1; ox <= 1; ox++) {
+    if (!ox && !oy) continue;
+    const nx = tx + ox, ny = ty + oy;
+    if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+    const v = dist[ny * W + nx];
+    if (v < 0 || v >= bd) continue;
+    if (ox && oy && (f.solid[ty * W + nx] || f.solid[ny * W + tx])) continue; // no corner cutting
+    bd = v; best = [nx, ny];
+  }
+  return best ? { x: (best[0] + 0.5) * T, y: (best[1] + 0.5) * T } : null;
+}
+
 /** One dungeon tick after the players have moved (sim.ts moves them with the usual glide physics).
  *  `atk` = each blob's special-button counter (Input.atk). */
 export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>, seed: number, dt: number, fx: DFx[]): 'stay' | 'out' {
@@ -1110,6 +1158,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
   }
   // standing blobz: not knocked out and not busy with the level-up cards (goo ignore those, stairs don't wait for them)
   const alive = bodies.filter((b) => (d.heroes[b.id]?.ko ?? 0) <= 0 && !d.heroes[b.id]?.offer.length);
+  if (d.enemies.length) flowTick(d, alive, dt); // monster navigation around walls
   // dead enemies: coins (+ sometimes a potion; the boss drops rare loot) + XP
   for (let i = d.enemies.length - 1; i >= 0; i--) {
     const e = d.enemies[i];
@@ -1161,7 +1210,10 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
       if (e.stun <= 0) stepAct(d, e, tgt, dt, fx);
       else { e.vx *= Math.exp(-5 * dt); e.vy *= Math.exp(-5 * dt); }
     } else if (e.stun <= 0 && tgt) {
-      const dx = tgt.x - e.x, dy = tgt.y - e.y, dl = Math.hypot(dx, dy) || 1;
+      let dx = tgt.x - e.x, dy = tgt.y - e.y;
+      // around walls: no clear line to the blob -> follow the flow field (BFS from every blob) to the next tile
+      if (!lineOfSight(f, e.x, e.y, tgt.x, tgt.y)) { const st = flowStep(d, e.x, e.y, tgt.id); if (st) { dx = st.x - e.x; dy = st.y - e.y; } }
+      const dl = Math.hypot(dx, dy) || 1;
       let spd = ENEMY_SPEED[e.kind] * (e.slam ? 0.2 : 1) * (angry ? 1.6 : 1);
       // spitters hold at 150-230 px: back off when close, close in when far
       let dir = 1;
