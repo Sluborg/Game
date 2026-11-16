@@ -6,7 +6,7 @@ import { blobCanvas, BLOB_FRAMES, BODY_CY, clampLook, facingFromVelocity, type F
 import { drawGatherRing } from './gatherRing';
 import { onViewport } from './viewport';
 import { dpr, snapZoom } from './pixelScale';
-import { fw, fh, ft, inDoorway, makeRoom, roomCracks, roomGap, ROOM_TUNE, ROOM_STUB, ROOM_TRANS, ROOMS, MINIBOSS_ROOM, SPAWN_WARN, AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
+import { fw, fh, ft, inDoorway, makeRoom, roomTheme, roomCracks, roomGap, ROOM_TUNE, ROOM_STUB, ROOM_TRANS, ROOMS, MINIBOSS_ROOM, SPAWN_WARN, AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
 /** Weapons without Art's strip yet: a Kenney Tiny Dungeon tile in hand (bow: drawn in code). */
 import type { Session } from './game';
 import { sfx } from './sfx';
@@ -26,6 +26,8 @@ function fitPlate(t: Phaser.GameObjects.Text, name: string) {
 }
 /** the wand's glow / bolt colours: damage red, heal green */
 const MODE_COL = [0xff4a3a, 0x5fe36a];
+/** room theme tints (stone, moss, ember): multiplied onto the 0x72 room art */
+const THEME_TINT = [0xffffff, 0xc4dcae, 0xf4c4a2];
 const NA = 'assets/ninja-adventure/';
 /** Weapon sprites (kept loaded for the hidden sprite object; never shown since 2026-11-15). Ninja Adventure's own weapons (Items/Weapons/<Name>/Sprite.png) point UP
  *  with the grip at the bottom (`up`); Art's Ninja-style shield (pivot = centre) and crossbow (points right, pivot = butt)
@@ -155,7 +157,7 @@ export class DungeonScene extends Phaser.Scene {
     sheet('dg-fx-block', NA + 'FX/Magic/Shield/SpriteSheetBlue.png', 24, 26);
     img('dg-arrow', NA + 'FX/Projectile/Arrow.png');
     // attacks without weapon sprites (Stefan 2026-11-15): Ninja slash (knight), cut (rogue), energy ball (healer)
-    sheet('fx-slash', NA + 'FX/Attack/SlashCurved/SpriteSheet.png', 32, 32);
+    sheet('fx-slash', NA + 'FX/Attack/SlashDoubleCurved/SpriteSheet.png', 32, 32); // the knight: a double arc (Stefan: the single one was weak)
     sheet('fx-cut', NA + 'FX/Attack/Cut/SpriteSheet.png', 32, 32);
     sheet('fx-magic', NA + 'FX/Projectile/EnergyBall.png', 16, 16);
     // class markers in the nameplate (16 px): bow (crossbow until a bow icon exists), heal plus, dagger, shield
@@ -304,7 +306,7 @@ export class DungeonScene extends Phaser.Scene {
       if (tx === g0 - 1) put(48, 152, tx, ty); // wall_edge_mid_right: the hallway's left wall
       else if (tx === g1 + 1) put(32, 152, tx, ty); // wall_edge_mid_left: the hallway's right wall
     }
-    put(16, 32, 1, 2); put(32, 32, W - 2, 2); // wall_banner_red, wall_banner_blue
+    // (the banners are sprites: placed beside the door frame, never under it: see buildFloor)
     this.textures.addCanvas(key, c)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
     // the door: frame left / right (16x32) around the leaf (32x32), frame top (32x16) above it = 64x48
     for (const [k, lx] of [['x72-door-closed', 32], ['x72-door-open', 80]] as const) {
@@ -381,6 +383,14 @@ export class DungeonScene extends Phaser.Scene {
       ? this.add.image(f.stairs.x, 3 * ft(f), 'x72-door-closed').setOrigin(0.5, 1).setScale(3).setDepth(-890)
       : this.add.image(f.stairs.x, f.stairs.y, floor < FLOORS ? 'na-stairs-down' : 'na-stairs-up').setScale(3).setDepth(-900);
     this.mapObjs.push(this.stairs);
+    if (rooms) {
+      // two 0x72 banners on the top wall, just outside the door frame (in a 7-tile room the frame covers tiles 1 and 5)
+      const tx = this.textures.get('x72'), T = ft(f), half = 96; // the door is 64 art px = 192 world px wide
+      for (const [k, x, y] of [['ban-r', 16, 32], ['ban-b', 32, 32], ['ban-g', 16, 48], ['ban-y', 32, 48]] as const) if (!tx.has(k)) tx.add(k, 0, x, y, 16, 16);
+      const theme = roomTheme(floor), bans = ([['ban-r', 'ban-b'], ['ban-g', 'ban-b'], ['ban-y', 'ban-r']] as const)[theme];
+      const lx = Math.min(1.5 * T, f.stairs.x - half - T / 2), rx = Math.max((fw(f) - 1.5) * T, f.stairs.x + half + T / 2);
+      for (const [x, k] of [[lx, bans[0]], [rx, bans[1]]] as const) this.mapObjs.push(this.add.image(Math.round(x), 3 * T, 'x72', k).setOrigin(0.5, 1).setScale(3).setDepth(-885));
+    }
     if (floor === 1 && rooms) {
       // rooms: the way out of the dungeon = 0x72 floor_stairs (80,192) in the bottom-left corner
       if (!this.textures.exists('x72-stairs')) { const cv = document.createElement('canvas'); cv.width = cv.height = 16; cv.getContext('2d')!.drawImage(this.textures.get('x72').getSourceImage() as HTMLImageElement, 80, 192, 16, 16, 0, 0, 16, 16); this.textures.addCanvas('x72-stairs', cv)!.setFilter(Phaser.Textures.FilterMode.NEAREST); }
@@ -396,11 +406,31 @@ export class DungeonScene extends Phaser.Scene {
       const tx = this.textures.get('x72');
       for (const [k, x, y] of [['wt-l', 16, 0], ['wt-m', 32, 0], ['wt-r', 48, 0], ['wf-l', 16, 16], ['wf-m', 32, 16], ['wf-r', 48, 16]] as const) if (!tx.has(k)) tx.add(k, 0, x, y, 16, 16);
       const has = new Set(f.walls.map((w) => `${w.x},${w.y}`)), T = ft(f);
+      for (const [k, x, y] of [['wo-top', 0, 136], ['wo-mid', 0, 152], ['wo-front', 0, 168]] as const) if (!tx.has(k)) tx.add(k, 0, x, y, 16, 16);
       for (const w of f.walls) {
+        if (f.thin?.has(w.y * fw(f) + w.x)) {
+          // a thin vertical wall: the 0x72 wall_outer strip (art x 11-15) moved to the tile's middle (art x 6-10), its
+          // cap on the tile above at the top end, its brick front at the bottom end
+          const up = has.has(`${w.x},${w.y - 1}`), down = has.has(`${w.x},${w.y + 1}`), x0 = w.x * T - 15, depth = (w.y + 1) * T - 12;
+          this.mapObjs.push(this.add.image(x0, (w.y + 1) * T, 'x72', down ? 'wo-mid' : 'wo-front').setOrigin(0, 1).setScale(3).setDepth(depth));
+          if (!up) this.mapObjs.push(this.add.image(x0, w.y * T, 'x72', 'wo-top').setOrigin(0, 1).setScale(3).setDepth(depth));
+          continue;
+        }
         const l = has.has(`${w.x - 1},${w.y}`), r = has.has(`${w.x + 1},${w.y}`), end = !l && !r ? 'm' : !l ? 'l' : !r ? 'r' : 'm';
         const depth = (w.y + 1) * T - 12;
         this.mapObjs.push(this.add.image((w.x + 0.5) * T, (w.y + 1) * T, 'x72', 'wf-' + end).setOrigin(0.5, 1).setScale(3).setDepth(depth));
         if (!has.has(`${w.x},${w.y - 1}`)) this.mapObjs.push(this.add.image((w.x + 0.5) * T, w.y * T, 'x72', 'wt-' + end).setOrigin(0.5, 1).setScale(3).setDepth(depth));
+      }
+    }
+    if (rooms) {
+      // floor props (0x72 crate / skull / hole), then the theme tint on the room's own art (not the banners)
+      const tx = this.textures.get('x72'), T = ft(f);
+      for (const [k, x, y, w, h] of [['p-crate', 288, 408, 16, 24], ['p-skull', 288, 432, 16, 16], ['p-hole', 96, 144, 16, 16]] as const) if (!tx.has(k)) tx.add(k, 0, x, y, w, h);
+      for (const pr of f.props ?? []) this.mapObjs.push(this.add.image((pr.x + 0.5) * T, (pr.y + 1) * T, 'x72', 'p-' + pr.k).setOrigin(0.5, 1).setScale(3).setDepth(pr.k === 'hole' ? -950 : (pr.y + 1) * T - 14));
+      const tint = THEME_TINT[roomTheme(floor)];
+      if (tint !== 0xffffff) for (const o of [...this.mapObjs, this.stairs]) {
+        const im = o as Phaser.GameObjects.Image;
+        if (im.setTint && !(im.frame?.name ?? '').startsWith('ban-')) im.setTint(tint);
       }
     }
     this.chests = f.chests.map((c) => this.add.image(c.x, c.y + 8, 'na-chest', 0).setScale(3).setOrigin(0.5, 1).setDepth(c.y));
@@ -590,7 +620,13 @@ export class DungeonScene extends Phaser.Scene {
       // friends' health: the Ninja mini life bar (green, red when low)
       if (!b.hb) b.hb = this.lifeBar();
       const hfr = h ? h.hp / Math.max(1, h.maxHp) : 1;
-      this.setBar(b.hb, !!h && !ko && p.id !== this.s.myId, b.x, b.y - 46, 2, hfr, hfr <= 0.3 ? undefined : 0x7dff8a);
+      this.setBar(b.hb, false, b.x, b.y - 46, 2, hfr); // (the Ninja mini bar read as a faded dark red: drawn below instead)
+      if (h && !ko && p.id !== this.s.myId) {
+        // a friend's health in the style of my own HUD bar: bright red fill with a light top line, dark frame, 40x8 px
+        const w = 40, x0 = Math.round(b.x - w / 2), y0 = Math.round(b.y - 50), fill = Math.max(0, Math.round((w - 4) * hfr));
+        this.ringG.fillStyle(0x140b07, 1).fillRect(x0, y0, w, 8);
+        if (fill > 0) { this.ringG.fillStyle(0xe0394c, 1).fillRect(x0 + 2, y0 + 2, fill, 4).fillStyle(0xff6b7d, 1).fillRect(x0 + 2, y0 + 2, fill, 1); }
+      }
       if (h && !ko && h.wallT > 0) {
         // the wall's reach on the ground + Art's dome over it (rises, then holds on the last frame)
         const r = specialOf(h.cls, h.weapon).r * heroMods(h).spR;
@@ -647,6 +683,26 @@ export class DungeonScene extends Phaser.Scene {
     // ---- fx ----
     for (const fx of this.s.drainFx()) this.playFx(fx as DFx);
 
+    // ---- rooms: an arrow at the screen edge toward the nearest monster when none is on screen (no searching) ----
+    {
+      const cam0 = this.cameras.main, vw = cam0.worldView, mine = this.heroes.get(this.s.myId);
+      const live = d.enemies.filter((e) => e.hp > 0);
+      const seen = live.some((e) => vw.contains(e.x, e.y));
+      if (d.rooms && mine && live.length && !seen) {
+        const t = live.reduce((a, e) => (Math.hypot(e.x - mine.x, e.y - mine.y) < Math.hypot(a.x - mine.x, a.y - mine.y) ? e : a));
+        // the free view: below the HUD panel, inside the side margins
+        const hud = document.getElementById('hud-dg')?.getBoundingClientRect(), m = 34 / cam0.zoom;
+        const top = vw.y + (hud && hud.height ? (hud.bottom * (this.scale.height / window.innerHeight)) / cam0.zoom : 0) + m, bot = vw.bottom - m;
+        const cx = vw.centerX, cy = (top + bot) / 2, a = Math.atan2(t.y - cy, t.x - cx);
+        const kx = Math.cos(a), ky = Math.sin(a), sx = (vw.width / 2 - m) / Math.max(1e-6, Math.abs(kx)), sy = ((bot - top) / 2) / Math.max(1e-6, Math.abs(ky));
+        const k = Math.min(sx, sy), x = cx + kx * k, y = cy + ky * k, r = 24 / cam0.zoom;
+        const pts = [0, 2.3, -2.3].map((da) => ({ x: x + Math.cos(a + da) * r, y: y + Math.sin(a + da) * r }));
+        const pulse = 0.75 + 0.25 * Math.sin(now / 140);
+        this.ringG.fillStyle(HOSTILE.orange, pulse).fillTriangle(pts[0].x, pts[0].y, pts[1].x, pts[1].y, pts[2].x, pts[2].y)
+          .lineStyle(3 / cam0.zoom, HOSTILE.outline, 1).strokeTriangle(pts[0].x, pts[0].y, pts[1].x, pts[1].y, pts[2].x, pts[2].y);
+        if (DEBUG) (window as unknown as { __dgArrow?: number }).__dgArrow = a;
+      } else if (DEBUG) (window as unknown as { __dgArrow?: number }).__dgArrow = undefined;
+    }
     // ---- camera follows my blob ----
     const me = this.heroes.get(this.s.myId);
     const cam = this.cameras.main;
@@ -716,11 +772,16 @@ export class DungeonScene extends Phaser.Scene {
     b.spin = Math.max(0, b.spin - dt);
     b.weapon.setVisible(false); b.weapon2?.setVisible(false); b.glow?.setVisible(false); b.wshadow?.setVisible(false);
     const show = !ko && guard && w === 'shield';
+    b.barrier?.setVisible(false);
     if (show) {
-      if (!b.barrier) b.barrier = this.add.sprite(0, 0, 'dg-fx-block', 0).setScale(2).play({ key: 'dg-block', repeat: -1 });
+      // the knight's guard (Stefan: the round shield looked like a ball on the side): a flat glowing arc in front of the
+      // blob, across the aim (last target, else the way it faces)
       const a = b.lastSwing !== undefined && this.time.now - b.lastSwing < 1500 ? b.swingA : b.facing === 'left' ? Math.PI : 0;
-      b.barrier.setVisible(true).setPosition(b.body.x + Math.cos(a) * 30, b.body.y + Math.sin(a) * 22).setDepth(b.y + (Math.sin(a) < -0.3 ? -1 : 3));
-    } else b.barrier?.setVisible(false);
+      const cx = b.body.x, cy = b.body.y, r = 34, half = 0.85, pulse = 0.8 + 0.2 * Math.sin(this.time.now / 90);
+      this.ringG.lineStyle(10, 0x5ec8ff, 0.35 * pulse).beginPath().arc(cx, cy, r, a - half, a + half).strokePath();
+      this.ringG.lineStyle(5, 0x8fe3ff, 0.95).beginPath().arc(cx, cy, r, a - half, a + half).strokePath();
+      this.ringG.lineStyle(2, 0xffffff, 0.9 * pulse).beginPath().arc(cx, cy, r - 3, a - half * 0.8, a + half * 0.8).strokePath();
+    }
     if (DEBUG) ((window as unknown as { __dgWeapon?: Record<string, unknown> }).__dgWeapon ??= {})[b.id] = { sprite: b.weapon.visible || !!b.weapon2?.visible, barrier: show };
   }
 
@@ -862,12 +923,27 @@ export class DungeonScene extends Phaser.Scene {
         // melee attacks are FX in front of the blob (no weapon sprite): knight = curved slash, rogue = quick cut;
         // ranged attacks are their projectile ('shot')
         const k = f.w === 'shield' || f.w === 'sword' || f.w === 'hammer' ? 'fx-slash' : f.w === 'dagger' || f.w === 'spear' ? 'fx-cut' : null;
-        if (b && k) {
-          const r = k === 'fx-slash' ? 30 : 26;
-          const fxs = this.add.sprite(Math.round(b.x + Math.cos(f.a) * r), Math.round(b.y - 6 + Math.sin(f.a) * r), k, 0).setScale(2).setRotation(f.a).setDepth(b.y + 5);
+        if (b && k === 'fx-slash') {
+          // the knight: a big bright double arc (3x, additive) and a white flash where it lands
+          const r = 34, cx = Math.round(b.x + Math.cos(f.a) * r), cy = Math.round(b.y - 6 + Math.sin(f.a) * r);
+          const fxs = this.add.sprite(cx, cy, k, 0).setScale(3).setRotation(f.a).setDepth(b.y + 5).setBlendMode(Phaser.BlendModes.ADD);
           fxs.play(k).once('animationcomplete', () => fxs.destroy());
-          if (DEBUG) { const c = ((window as unknown as { __dgAtkFx?: Record<string, number> }).__dgAtkFx ??= {}); c[k] = (c[k] ?? 0) + 1; }
+          this.nfx('n13-hit-spark', Math.round(b.x + Math.cos(f.a) * 48), Math.round(b.y - 6 + Math.sin(f.a) * 48), 3); // a heavy hit spark where it lands
+        } else if (b && k) {
+          // the rogue: a quick thrust streak (3 steps out from the blob's edge, then gone): a white core in a warm glow
+          const g = this.add.graphics().setDepth(b.y + 5), x0 = b.x + Math.cos(f.a) * 22, y0 = b.y - 6 + Math.sin(f.a) * 22;
+          let step = 0;
+          const draw = () => {
+            g.clear();
+            if (step > 3) { g.destroy(); return; }
+            const L = [14, 30, 42, 42][step], al = step === 3 ? 0.45 : 1, ex = x0 + Math.cos(f.a) * L, ey = y0 + Math.sin(f.a) * L;
+            g.lineStyle(9, 0xffd27a, 0.55 * al).lineBetween(x0, y0, ex, ey).lineStyle(4, 0xffffff, al).lineBetween(x0, y0, ex, ey);
+            step++;
+            this.time.delayedCall(34, draw);
+          };
+          draw();
         }
+        if (b && k && DEBUG) { const c = ((window as unknown as { __dgAtkFx?: Record<string, number> }).__dgAtkFx ??= {}); c[k] = (c[k] ?? 0) + 1; }
         sfx.tool(f.w === 'hammer' || f.w === 'shield' ? 'axe' : f.w === 'spear' ? 'rake' : 'pickaxe', false);
         break;
       }
