@@ -55,7 +55,22 @@ export function snapAll(root: ParentNode = document) {
  *      (drawn at artScale world px) is a whole number of device px, returned already multiplied by dpr()
  *    - converts camera / world positions to CSS px with  cam.zoom / dpr()  (e.g. DOM markers over the game). */
 export const DPR_CANVAS = true;
-export const dpr = () => (DPR_CANVAS ? window.devicePixelRatio || 1 : 1);
+/** Highest canvas resolution factor (Lead 2026-11-15). 3 = no cap on any phone today. Set lower (e.g. 2) if the
+ *  dungeon stutters: a phone above the cap renders at floor(DPR_MAX) device px per CSS px (whole numbers, so the
+ *  integer art scale holds; the browser then stretches the canvas the last bit, slightly soft). */
+export const DPR_MAX = 3;
+/** Phone testing: ?dpr=1|2|2.625 (clamped 1..3) replaces the device's ratio, read once at boot. */
+const DPR_URL = (() => {
+  if (typeof location === 'undefined') return null;
+  const v = parseFloat(new URLSearchParams(location.search).get('dpr') ?? '');
+  return Number.isFinite(v) ? Math.max(1, Math.min(3, v)) : null;
+})();
+/** The canvas resolution factor: device px per CSS px the game renders at (1 while DPR_CANVAS is off). */
+export const dpr = () => {
+  if (!DPR_CANVAS) return 1;
+  const d = DPR_URL ?? (window.devicePixelRatio || 1);
+  return d > DPR_MAX ? Math.max(1, Math.floor(DPR_MAX)) : d;
+};
 /** Meadow camera zoom snapped so one art px (drawn at artScale) is a whole number of device px (or CSS px while
  *  DPR_CANVAS is off): zoom = max(1, round(artScale * raw * d)) / (artScale * d), d = dpr(). */
 export const snapZoom = (raw: number, artScale = 3) => { const d = dpr(); return (Math.max(1, Math.round(artScale * raw * d)) / (artScale * d)) * d; };
