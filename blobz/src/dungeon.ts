@@ -46,14 +46,14 @@ export const CLASS_WEAPONS: Record<HeroClass, Weapon[]> = { rogue: ['dagger'], h
 export const classOf = (w: Weapon): HeroClass => CLASSES.find((c) => CLASS_WEAPONS[c].includes(w)) ?? 'rogue';
 /** Auto-attack: reach (px from the blob centre to the goo's edge), half-arc (radians, PI = all around),
  *  damage (goo hit points), seconds between attacks, knockback; ranged = a bolt at the nearest goo in sight. */
-export const WEAPON_STATS: Record<Weapon, { reach: number; arc: number; dmg: number; cd: number; kb: number; ranged?: boolean }> = {
+export const WEAPON_STATS: Record<Weapon, { reach: number; arc: number; dmg: number; cd: number; kb: number; ranged?: boolean; crit?: number }> = {
   sword: { reach: 56, arc: 1.0, dmg: 12, cd: 0.4, kb: 160 }, // fast, medium reach
   hammer: { reach: 58, arc: Math.PI, dmg: 26, cd: 0.9, kb: 380 }, // slow, hits all around, big knockback
   spear: { reach: 96, arc: 0.3, dmg: 14, cd: 0.55, kb: 200 }, // long and narrow
   staff: { reach: 170, arc: 0, dmg: 8, cd: 0.6, kb: 80, ranged: true }, // the healer's wand: bolts (damage or heal mode)
   bow: { reach: 200, arc: 0, dmg: 7, cd: 0.6, kb: 90, ranged: true }, // crossbow: safe at range, so clearly less damage than melee (~42% of the sword)
   shield: { reach: 56, arc: 1.0, dmg: 10, cd: 0.5, kb: 280 }, // the Riddare: a heavier, slower sword slash with big knockback (id stays 'shield')
-  dagger: { reach: 44, arc: 1.2, dmg: 7, cd: 0.25, kb: 80 }, // the rogue's two daggers: very fast, short (Stefan: rogue runs too easy, 8 -> 7)
+  dagger: { reach: 44, arc: 1.2, dmg: 7, cd: 0.25, kb: 80, crit: 0.12 }, // the rogue's two daggers: very fast, short (Stefan: rogue runs too easy, 8 -> 7; Lead: 1 in 8 stabs crits so she still feels sharp)
 };
 export type SpecialKind = 'spin' | 'slam' | 'lunge' | 'heal' | 'wall' | 'volley';
 export interface SpecialDef { kind: SpecialKind; cd: number; r: number; dmg: number; kb: number; stun: number }
@@ -963,7 +963,7 @@ function autoAttack(d: DState, h: Hero, b: Body, m: Mods, fx: DFx[], bodies: Bod
   face(h, b, t.x, t.y);
   h.atkCd = st.cd * m.rate; h.swing = Math.min(0.3, h.atkCd * 0.8);
   fx.push({ t: 'swing', id: b.id, w: h.weapon, a: Math.atan2(h.fy, h.fx) });
-  const dmg = Math.round(st.dmg * m.dmg * (m.crit > 0 && Math.random() < m.crit ? 2 : 1));
+  const crit = m.crit + (st.crit ?? 0), dmg = Math.round(st.dmg * m.dmg * (crit > 0 && Math.random() < crit ? 2 : 1));
   const kb = st.kb * m.kb;
   if (st.ranged) {
     fx.push({ t: 'shot', x: b.x, y: b.y, tx: t.x, ty: t.y, ...(h.weapon === 'staff' ? { k: 0 } : {}) });

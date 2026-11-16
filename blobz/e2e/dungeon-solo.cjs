@@ -44,6 +44,11 @@ const shots = process.argv[3] || '';
     // the pulsing level-up button in the HUD shows the count; tapping it opens the cards mid-room
     await p.waitForSelector('#dg-lvlup:not(.hidden)', { timeout: 6000 });
     ok(Number(await p.textContent('#dg-lvlup b')) >= 1, `HUD level-up button shows ${await p.textContent('#dg-lvlup b')} unspent`);
+    const leak = await p.evaluate(() => { const b = document.getElementById('dg-lvlup'), r = b.getBoundingClientRect();
+      b.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: 77, clientX: r.x + 5, clientY: r.y + 5 }));
+      const shown = document.getElementById('stick').style.display === 'block';
+      window.dispatchEvent(new PointerEvent('pointerup', { pointerId: 77 })); return shown; });
+    ok(!leak, 'a touch on the level-up button does not start the thumbstick');
     await p.click('#dg-lvlup', { force: true }); // it pulses (never 'stable' for Playwright)
     await p.waitForSelector('#dg-cards:not(.hidden) .skcard', { timeout: 6000 });
     const fx = await p.$$eval('#dg-cards .skcard .skfx', (els) => els.map((e) => e.textContent));
