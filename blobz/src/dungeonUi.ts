@@ -143,6 +143,7 @@ function renderHud(d: DView, myId: string) {
     lb = document.createElement('button'); lb.id = 'dg-lvlup'; lb.type = 'button';
     lb.innerHTML = '<span class="up" aria-hidden="true"></span><b></b>';
     lb.onclick = () => { sfx.pick(); sendPick('skill:open'); };
+    lb.addEventListener('pointerdown', (e) => e.stopPropagation()); // a tap on the button never starts the floating thumbstick
     $('dg-xp').append(lb);
   }
   const unspent = h && h.ko <= 0 && !h.offer.length ? h.pending : 0;
