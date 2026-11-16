@@ -572,7 +572,11 @@ export class GameScene extends Phaser.Scene {
     }
     this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H);
     // snapped so one art px (props are 3x) is a whole number of CSS px (device px once DPR_CANVAS is on): 3x on phones
-    const z = snapZoom(Math.max(0.55, Math.min(2.2, Math.min(Math.max(w, h) / 820, Math.min(w, h) / 430))));
+    let z = snapZoom(Math.max(0.55, Math.min(2.2, Math.min(Math.max(w, h) / 820, Math.min(w, h) / 430))));
+    // never so far out that the view is bigger than the meadow (Lead 2026-11-16: at DPR 2 on 390x844 rounding gave
+    // 5/6 zoom, a 1013 px tall view of the 960 px world and a ~44 px green strip): round UP to the next whole art step
+    const zMin = Math.max(w / WORLD_W, h / WORLD_H) * d; // device zoom that just covers the screen
+    if (z < zMin) z = Math.ceil(zMin * 3 - 1e-9) / 3;
     this.cameras.main.setZoom(z);
   }
 
