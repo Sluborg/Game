@@ -606,7 +606,13 @@ export class DungeonScene extends Phaser.Scene {
       // friends' health: the Ninja mini life bar (green, red when low)
       if (!b.hb) b.hb = this.lifeBar();
       const hfr = h ? h.hp / Math.max(1, h.maxHp) : 1;
-      this.setBar(b.hb, !!h && !ko && p.id !== this.s.myId, b.x, b.y - 46, 2, hfr, hfr <= 0.3 ? undefined : 0x7dff8a);
+      this.setBar(b.hb, false, b.x, b.y - 46, 2, hfr); // (the Ninja mini bar read as a faded dark red: drawn below instead)
+      if (h && !ko && p.id !== this.s.myId) {
+        // a friend's health in the style of my own HUD bar: bright red fill with a light top line, dark frame, 40x8 px
+        const w = 40, x0 = Math.round(b.x - w / 2), y0 = Math.round(b.y - 50), fill = Math.max(0, Math.round((w - 4) * hfr));
+        this.ringG.fillStyle(0x140b07, 1).fillRect(x0, y0, w, 8);
+        if (fill > 0) { this.ringG.fillStyle(0xe0394c, 1).fillRect(x0 + 2, y0 + 2, fill, 4).fillStyle(0xff6b7d, 1).fillRect(x0 + 2, y0 + 2, fill, 1); }
+      }
       if (h && !ko && h.wallT > 0) {
         // the wall's reach on the ground + Art's dome over it (rises, then holds on the last frame)
         const r = specialOf(h.cls, h.weapon).r * heroMods(h).spR;
