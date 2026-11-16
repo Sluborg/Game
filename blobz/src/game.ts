@@ -697,7 +697,9 @@ export class GameScene extends Phaser.Scene {
       this.portalFade = fadeOne(this.portalImg);
     }
     // ---- dusk ----
-    this.dusk.setFillStyle(v.phase === 'end' ? 0x4a2a6a : 0xff7a2f, v.phase === 'end' ? 0.38 : v.time >= 20 ? 0 : 0.1 + Math.min(1, (20 - v.time) / 20) * 0.25);
+    const duskA = v.phase === 'end' ? 0.38 : v.time >= 20 ? 0 : 0.1 + Math.min(1, (20 - v.time) / 20) * 0.25;
+    // a see-through full-screen rectangle still costs a full-screen blend every frame (Lead 2026-11-16, perf): hide it
+    this.dusk.setFillStyle(v.phase === 'end' ? 0x4a2a6a : 0xff7a2f, duskA).setVisible(duskA > 0);
 
     // ---- Bärregn mini game ----
     this.drawMini(v);
