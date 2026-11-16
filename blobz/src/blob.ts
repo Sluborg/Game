@@ -39,6 +39,11 @@ export const BLOB_FRAMES = 2;
 export const BODY_CY = 13 / 20;
 
 const INK = '#141b1b'; // Ninja Adventure outline
+/** A colour half way to white (the shine on a hat). Takes '#rrggbb' or 'rgb(r,g,b)'. */
+function lighten(c: string): string {
+  const v = c.startsWith('#') ? [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16)) : (c.match(/\d+/g) ?? ['255', '255', '255']).slice(0, 3).map(Number);
+  return `rgb(${v.map((x) => Math.round(x + (255 - x) * 0.5)).join(',')})`;
+}
 const PAL: Record<string, string> = {
   K: INK, W: '#f0f6f8', P: '#e26880', R: '#e63946', r: '#aa1e2d', Y: '#ffc93c', y: '#d2961e', G: '#62c458', g: '#3e8c42',
   B: '#3f78dc', b: '#2850a0', S: '#78808c', s: '#464c58', V: '#8c5ac8', v: '#5f3796', C: '#fff7e6', T: '#c0c8d4', t: '#8a94a4',
@@ -64,7 +69,9 @@ type Sprite = { rows: string[]; ax: number; ay: number };
 const sp = (rows: string[], ax: number, ay = 0): Sprite => ({ rows, ax, ay });
 /** Eyes: anchor = centre column, top row. */
 const EYE_SPRITES: Sprite[] = [
-  sp(['WW.WW', 'WK.WK'], 2), // Prick
+  // Prick: a dark eye with one white spark (Stefan + Alea 2026-11-16: the old white 2x2 with one black pixel read as
+  // "only a white dot", most of all next to the shine under a cap)
+  sp(['WK.WK', 'KK.KK'], 2), // Prick
   sp(['WW.WW', 'WK.WK', 'WK.WK'], 2), // Stora
   sp(['.K..K.', 'K.KK.K'], 3), // Glada
   sp(['KK.KK'], 2), // Sömniga
@@ -127,6 +134,9 @@ export interface BodyLayout {
   rows: number[]; mask: Set<number>; top: number; bottom: number;
   eye: [number, number]; mouth: [number, number]; headW: number; earY: number;
 }
+
+/** The 3-pixel shine on the head's back (left) side: two on the second row, one below. */
+export const glintKeys = (L: BodyLayout) => { const gy = L.top + 1, gx = CX - (L.rows[1] >> 1) + 1; return [key(gx, gy), key(gx + 1, gy), key(gx, gy + 1)]; };
 
 /** Body mask + anchors for a shape and frame. Exported for tests. */
 export function bodyLayout(shape: number, frame = 0): BodyLayout {
@@ -383,8 +393,8 @@ export function blobGrid(look: BlobLook, classHat?: number, face?: Face, frame =
     px.set(k, edge ? dark : base);
   }
   for (const k of outlineOf(mask)) px.set(k, INK);
-  const gy = L.top + 1, gx = CX - (L.rows[1] >> 1) + 1; // glint on the back (left) side
-  for (const [x, y] of [[gx, gy], [gx + 1, gy], [gx, gy + 1]]) if (mask.has(key(x, y))) px.set(key(x, y), white);
+  const glint = glintKeys(L).filter((k) => mask.has(k)); // glint on the back (left) side
+  for (const k of glint) px.set(k, white);
   // class hoods / helmets wrap the head above the eyes
   if (classHat !== undefined) gear(px, L, classHat);
   // face
@@ -392,6 +402,7 @@ export function blobGrid(look: BlobLook, classHat?: number, face?: Face, frame =
   for (const [k, c] of spritePx(EYE_SPRITES[look.eyes] ?? EYE_SPRITES[0], L.eye[0], L.eye[1])) if (inBody(k)) px.set(k, c);
   for (const [k, c] of spritePx(MOUTH_SPRITES[look.mouth] ?? MOUTH_SPRITES[0], L.mouth[0], L.mouth[1])) if (inBody(k)) px.set(k, c);
   // hats
+  const beforeHat = new Map(px);
   if (classic) {
     const crown = classicCrown(L);
     for (const k of outlineOf(new Set(crown.keys()))) if (!L.mask.has(k)) px.set(k, INK);
@@ -446,6 +457,15 @@ export function blobGrid(look: BlobLook, classHat?: number, face?: Face, frame =
     const all = new Map(parts.flatMap((p) => [...p]).filter(([k]) => !L.mask.has(k))); // grows out of, never into, the head
     for (const k of outlineOf(new Set(all.keys()))) if (!L.mask.has(k)) px.set(k, INK);
     for (const [k, c] of all) px.set(k, c);
+  }
+  // the shine under a hat (Stefan + Alea 2026-11-16: "only a white dot under the cap"): a hat that covers part of the
+  // 3-pixel glint left a lone white pixel next to the eyes. Then the rest goes back to body colour and the hat gets the
+  // shine instead: its top-left fill pixel, half way to white.
+  if (glint.some((k) => px.get(k) !== white)) {
+    for (const k of glint) if (px.get(k) === white) px.set(k, base);
+    const hatFill = [...px.keys()].filter((k) => px.get(k) !== beforeHat.get(k) && px.get(k) !== INK && px.get(k) !== white);
+    const top = hatFill.sort((a, b) => Math.floor(a / GRID_W) - Math.floor(b / GRID_W) || a - b)[0];
+    if (top !== undefined) px.set(top, lighten(px.get(top)!));
   }
   const g: (string | null)[][] = Array.from({ length: GRID_H }, () => Array<string | null>(GRID_W).fill(null));
   for (const [k, c] of px) {
