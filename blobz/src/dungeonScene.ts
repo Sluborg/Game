@@ -647,6 +647,26 @@ export class DungeonScene extends Phaser.Scene {
     // ---- fx ----
     for (const fx of this.s.drainFx()) this.playFx(fx as DFx);
 
+    // ---- rooms: an arrow at the screen edge toward the nearest monster when none is on screen (no searching) ----
+    {
+      const cam0 = this.cameras.main, vw = cam0.worldView, mine = this.heroes.get(this.s.myId);
+      const live = d.enemies.filter((e) => e.hp > 0);
+      const seen = live.some((e) => vw.contains(e.x, e.y));
+      if (d.rooms && mine && live.length && !seen) {
+        const t = live.reduce((a, e) => (Math.hypot(e.x - mine.x, e.y - mine.y) < Math.hypot(a.x - mine.x, a.y - mine.y) ? e : a));
+        // the free view: below the HUD panel, inside the side margins
+        const hud = document.getElementById('hud-dg')?.getBoundingClientRect(), m = 34 / cam0.zoom;
+        const top = vw.y + (hud && hud.height ? (hud.bottom * (this.scale.height / window.innerHeight)) / cam0.zoom : 0) + m, bot = vw.bottom - m;
+        const cx = vw.centerX, cy = (top + bot) / 2, a = Math.atan2(t.y - cy, t.x - cx);
+        const kx = Math.cos(a), ky = Math.sin(a), sx = (vw.width / 2 - m) / Math.max(1e-6, Math.abs(kx)), sy = ((bot - top) / 2) / Math.max(1e-6, Math.abs(ky));
+        const k = Math.min(sx, sy), x = cx + kx * k, y = cy + ky * k, r = 24 / cam0.zoom;
+        const pts = [0, 2.3, -2.3].map((da) => ({ x: x + Math.cos(a + da) * r, y: y + Math.sin(a + da) * r }));
+        const pulse = 0.75 + 0.25 * Math.sin(now / 140);
+        this.ringG.fillStyle(HOSTILE.orange, pulse).fillTriangle(pts[0].x, pts[0].y, pts[1].x, pts[1].y, pts[2].x, pts[2].y)
+          .lineStyle(3 / cam0.zoom, HOSTILE.outline, 1).strokeTriangle(pts[0].x, pts[0].y, pts[1].x, pts[1].y, pts[2].x, pts[2].y);
+        if (DEBUG) (window as unknown as { __dgArrow?: number }).__dgArrow = a;
+      } else if (DEBUG) (window as unknown as { __dgArrow?: number }).__dgArrow = undefined;
+    }
     // ---- camera follows my blob ----
     const me = this.heroes.get(this.s.myId);
     const cam = this.cameras.main;

@@ -301,7 +301,7 @@ export function makeRoom(seed: number, room: number, players = 1, dungeon = 1, t
   const r = rng(seed * 89 + room * 157 + 7);
   const T = ROOM_T;
   const type = roomType(room);
-  const h = (type === 'arena' ? 27 : type === 'corridor' ? 36 : 31) + Math.max(0, Math.min(5, players) - 2);
+  const h = Math.min(15, (type === 'arena' ? 12 : type === 'corridor' ? 14 : 13) + Math.max(0, Math.min(5, players) - 2)); // 12-14 rows (Stefan: tall rooms meant searching for monsters), +1 per blob over 2, max 15
   const gw = rw + 2, gh = 3 + h + 1 + ROOM_STUB, y0 = 3, y1 = 3 + h - 1; // floor rows y0..y1, then the bottom wall, then the hallway stub
   const solid = new Uint8Array(gw * gh).fill(1);
   for (let y = y0; y <= y1; y++) for (let x = 1; x <= rw; x++) solid[y * gw + x] = 0;
@@ -316,7 +316,7 @@ export function makeRoom(seed: number, room: number, players = 1, dungeon = 1, t
   const crowd = crowdOf(dungeon, 1 + ((room - 1) * (FLOORS - 1)) / (ROOMS - 1));
   const extra = Math.max(0, Math.min(5, players) - 1);
   const band = (a: number, b: number) => ({ x: (1.4 + r() * (rw - 1.8)) * T, y: (a + r() * (b - a)) * T });
-  const top = y0 + 1, safe = y1 - 4; // never spawn in the arrival area at the bottom
+  const top = y0 + 1, safe = y1 - 3; // never spawn in the arrival area at the bottom
   const wave = (a: number, b: number, n: number, mediums: number, spitters: number) => {
     const out: { kind: EnemyKind; x: number; y: number }[] = [];
     for (let k = 0; k < n; k++) out.push({ kind: 0, ...band(a, b) });
@@ -400,7 +400,7 @@ export function roomLayout(r: () => number, type: RoomType, rw: number, gw: numb
   const ALL = [T0, T1, T2];
   const tpl = Math.floor(r() * 4);
   const piece = (k: number, y: number) => (type === 'boss' ? pillars(y) : tpl < 3 ? ALL[tpl](k, y) : ALL[Math.floor(r() * 3)](k, (y)));
-  const y0 = top + 2, y1 = safe - 3, span = Math.max(0, y1 - y0);
+  const y0 = top + 1, y1 = safe - 1, span = Math.max(0, y1 - y0);
   const n = type === 'boss' ? Math.min(2, 1 + Math.floor(span / 12)) : Math.max(3, Math.floor(span / 4.5)); // bigger rooms get more
   const at = (x: number, y: number) => y * gw + x;
   const doorX = Math.floor(door.x / T), startT = [Math.floor(start.x / T), Math.floor(start.y / T)];
@@ -458,6 +458,9 @@ function stepWaves(d: DState, alive: Body[], dt: number, fx: DFx[]) {
     // never land on a blob: slide the spot away from anyone within 80 px
     let { x, y } = sp;
     for (const b of alive) if (Math.hypot(b.x - x, b.y - y) < 80) y = Math.max(4 * ft(d.map), b.y - 120);
+    // near the team: never more than 8 rows from the closest blob (no searching the room for the last monster)
+    const near = alive.reduce((m, b) => Math.min(m, Math.abs(b.y - y)), Infinity), far = 8 * ft(d.map);
+    if (near > far && alive.length) { const c = alive.reduce((a, b) => (Math.abs(b.y - y) < Math.abs(a.y - y) ? b : a)); y = c.y + Math.sign(y - c.y) * far; }
     { const o = { x, y, vx: 0, vy: 0 }; unstick(d.map, o); x = o.x; y = o.y; } // never in a wall / column
     d.pending.push({ kind: sp.kind, x, y, t: SPAWN_WARN, calm: sp.kind <= 1 && !dashers.has(i) });
     fx.push({ t: 'spawn', x, y });

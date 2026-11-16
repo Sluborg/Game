@@ -475,8 +475,8 @@ describe('dungeon', () => {
         const f = makeRoom(5, room, 1);
         expect(f.gw).toBe(ROOM_W + 2);
         expect(f.gw! * f.dt!).toBe(432); // 0x72 tiles at 3x: the screen width
-        expect((f.gh! - 4) * f.dt!).toBeGreaterThanOrEqual(1.35 * 930); // ~1.4+ screens of floor
-        expect(f.start.y).toBeGreaterThan(f.stairs.y + 20 * f.dt!);
+        const rows = f.gh! - 4 - ROOM_STUB; expect(rows).toBeGreaterThanOrEqual(12); expect(rows).toBeLessThanOrEqual(15); // 12-15 floor rows: about one screen (Stefan)
+        expect(f.start.y).toBeGreaterThan(f.stairs.y + 9 * f.dt!);
         expect(isWall(f, f.start.x, f.start.y)).toBe(false);
         expect(isWall(f, f.stairs.x, f.stairs.y)).toBe(false);
         expect(f.waves!.length).toBeGreaterThanOrEqual(2);
@@ -492,6 +492,7 @@ describe('dungeon', () => {
       expect(d.rooms).toBe(true);
       const bs = () => [body('a', d.map.start.x, d.map.start.y), body('b', d.map.start.x + 30, d.map.start.y)];
       let b = bs();
+      for (const h of Object.values(d.heroes)) h.atkCd = 1e9; // (the rooms are short now: nobody kills a monster while we count)
       expect(d.enemies.length).toBe(0); // a calm arrival
       const fx = run1(d, b, undefined, 1.3).fx;
       expect(fx.some((f) => f.t === 'spawn')).toBe(true);
@@ -668,7 +669,7 @@ describe('dungeon', () => {
       expect(inDoorway(d.map, d.map.start.x, d.map.start.y)).toBe(false);
     });
     it('the floor under the thin side walls is walkable up to the 15 px wall strip (Stefan: it looked like floor)', () => {
-      const f = makeRoom(5, 1, 1), T = f.dt!, W = f.gw!, y = 20.5 * T;
+      const f = makeRoom(5, 1, 1), T = f.dt!, W = f.gw!, y = 10.5 * T;
       expect(isWall(f, 0.6 * T, y)).toBe(false); // the edge column's floor
       expect(isWall(f, 10, y)).toBe(true); // the wall strip itself
       expect(isWall(f, W * T - 10, y)).toBe(true);
