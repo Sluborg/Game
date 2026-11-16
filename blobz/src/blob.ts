@@ -11,6 +11,9 @@ export interface BlobLook { color: number; shape: number; eyes: number; mouth: n
 export const COLORS = [
   0x5ec8ff, 0xff6b8b, 0x7ddc5a, 0xffc93c, 0xb18cff, 0xff9248,
   0x4fe0c3, 0xf2f2f2, 0xe63946, 0x3d6bff, 0xc08850, 0x9aa0b4,
+  // +8 (Stefan + Alea 2026-11-16: more colours), same flat style: lime, peach, lavender, magenta, forest, navy,
+  // charcoal, pale sky
+  0xc6e84a, 0xffb58a, 0xd6b8ff, 0xe04bd0, 0x2f8f4e, 0x2a3a8c, 0x4a4a58, 0x9bdcff,
 ];
 export const SHAPES = ['Kupol', 'Boll', 'Lång', 'Platt', 'Päron', 'Kub'];
 export const EYES = ['Prick', 'Stora', 'Glada', 'Sömniga', 'Blink', 'Prickögon hög'];
@@ -19,6 +22,11 @@ export const HATS = ['Ingen', 'Keps', 'Krona', 'Grodd', 'Mössa', 'Trollkarl', '
   'Kattöron', 'Enhörning', 'Kaninöron', 'Djävulshorn', 'Antenn', 'Gloria', 'Drottningkrona'];
 /** Dungeon class gear, worn instead of the skin hat (blobGrid's `classHat`). */
 export const CLASS_HATS = ['Prästluva', 'Fjädermössa', 'Riddarhjälm'];
+/** Ears and ear-like items, no longer offered (Stefan + Alea 2026-11-16: "no more ears"). They keep their index so old
+ *  saves still parse; clampLook turns them into 'Ingen' and the designer does not show them. */
+export const HIDDEN_HATS = ['Lurar', 'Kattöron', 'Kaninöron', 'Djävulshorn', 'Antenn'];
+/** Hat indices the designer and Slumpa offer. */
+export const HAT_CHOICES = HATS.map((_, i) => i).filter((i) => !HIDDEN_HATS.includes(HATS[i]));
 
 /** Frame 20x20: the body (up to 16 wide incl. outline) centred at x = 10 with a 2 px margin on each side for muffs,
  *  ears and brims, and 2 extra rows of hat room on top. */
@@ -498,11 +506,12 @@ export function clampLook(l: Partial<BlobLook>): BlobLook {
   const pick = (v: unknown, n: number) => Math.max(0, Math.min(n - 1, Math.floor(Number(v)) || 0));
   return {
     color: COLORS.includes(Number(l.color)) ? Number(l.color) : COLORS[0],
-    shape: pick(l.shape, SHAPES.length), eyes: pick(l.eyes, EYES.length), mouth: pick(l.mouth, MOUTHS.length), hat: pick(l.hat, HATS.length),
+    shape: pick(l.shape, SHAPES.length), eyes: pick(l.eyes, EYES.length), mouth: pick(l.mouth, MOUTHS.length),
+    hat: HAT_CHOICES.includes(pick(l.hat, HATS.length)) ? pick(l.hat, HATS.length) : 0,
   };
 }
 
 export function randomLook(): BlobLook {
   const r = (n: number) => Math.floor(Math.random() * n);
-  return { color: COLORS[r(COLORS.length)], shape: r(SHAPES.length), eyes: r(EYES.length), mouth: r(MOUTHS.length), hat: r(HATS.length) };
+  return { color: COLORS[r(COLORS.length)], shape: r(SHAPES.length), eyes: r(EYES.length), mouth: r(MOUTHS.length), hat: HAT_CHOICES[r(HAT_CHOICES.length)] };
 }
