@@ -1458,7 +1458,10 @@ body.rotate-block #rotate b { background: var(--k-parch2); border: 2px solid var
 #goal-toast img { height: 38px; width: auto; max-width: 64px; image-rendering: pixelated; }
 #goal-toast.pop { animation: goalpop 0.45s ease-out both; }
 @keyframes goalpop { 0% { transform: translateX(-50%) scale(0.6); opacity: 0; } 70% { transform: translateX(-50%) scale(1.08); opacity: 1; } 100% { transform: translateX(-50%) scale(1); } }
-#build-panel #btn-gohome { display: flex; align-items: center; gap: 6px; margin: 10px auto 2px; }
+/* the host's "Spara och gå hem" is a sticky footer of the panel (Lead 2026-11-16: it was cut off at the screen bottom
+   on 390x844 and fully hidden on 360x640): always visible, the cards scroll above it */
+#build-panel #btn-gohome { display: flex; align-items: center; gap: 6px; margin: 10px auto 0; position: sticky; bottom: 0; z-index: 2;
+  box-shadow: 0 0 0 6px var(--k-parch), 0 -10px 12px 2px var(--k-parch); }
 #build-panel #btn-gohome.hidden { display: none; }
 
 /* join by room code (Stefan 2026-11-16): a 4-letter field + "Joina med kod" under the Wi-Fi list; the host lobby
