@@ -396,7 +396,16 @@ export class DungeonScene extends Phaser.Scene {
       const tx = this.textures.get('x72');
       for (const [k, x, y] of [['wt-l', 16, 0], ['wt-m', 32, 0], ['wt-r', 48, 0], ['wf-l', 16, 16], ['wf-m', 32, 16], ['wf-r', 48, 16]] as const) if (!tx.has(k)) tx.add(k, 0, x, y, 16, 16);
       const has = new Set(f.walls.map((w) => `${w.x},${w.y}`)), T = ft(f);
+      for (const [k, x, y] of [['wo-top', 0, 136], ['wo-mid', 0, 152], ['wo-front', 0, 168]] as const) if (!tx.has(k)) tx.add(k, 0, x, y, 16, 16);
       for (const w of f.walls) {
+        if (f.thin?.has(w.y * fw(f) + w.x)) {
+          // a thin vertical wall: the 0x72 wall_outer strip (art x 11-15) moved to the tile's middle (art x 6-10), its
+          // cap on the tile above at the top end, its brick front at the bottom end
+          const up = has.has(`${w.x},${w.y - 1}`), down = has.has(`${w.x},${w.y + 1}`), x0 = w.x * T - 15, depth = (w.y + 1) * T - 12;
+          this.mapObjs.push(this.add.image(x0, (w.y + 1) * T, 'x72', down ? 'wo-mid' : 'wo-front').setOrigin(0, 1).setScale(3).setDepth(depth));
+          if (!up) this.mapObjs.push(this.add.image(x0, w.y * T, 'x72', 'wo-top').setOrigin(0, 1).setScale(3).setDepth(depth));
+          continue;
+        }
         const l = has.has(`${w.x - 1},${w.y}`), r = has.has(`${w.x + 1},${w.y}`), end = !l && !r ? 'm' : !l ? 'l' : !r ? 'r' : 'm';
         const depth = (w.y + 1) * T - 12;
         this.mapObjs.push(this.add.image((w.x + 0.5) * T, (w.y + 1) * T, 'x72', 'wf-' + end).setOrigin(0.5, 1).setScale(3).setDepth(depth));

@@ -217,6 +217,7 @@ export interface Floor {
   floor: number;
   solid: Uint8Array; // gw*gh (default GW*GH), 1 = wall
   gw?: number; gh?: number; // grid size when not GW x GH (the tall Archero rooms)
+  thin?: Set<number>; // rooms: thin vertical wall tiles (tile index): only a 15 px strip in the tile's middle is wall (THIN_X)
   inset?: number; // rooms: the side walls are only this thick (world px); the edge columns are floor up to them
   columns?: { x: number; y: number }[]; // rooms: 0x72 columns as cover (tile x, base row y; rows y-1..y are solid)
   walls?: { x: number; y: number }[]; // rooms: 0x72 brick wall tiles inside the room (each solid)
@@ -337,7 +338,7 @@ export function makeRoom(seed: number, room: number, players = 1, dungeon = 1, t
   // cover (Stefan 2026-11-15): a seeded room layout of 0x72 pieces: half-walls, L-shapes, pillar rows, an off-centre
   // block, alcoves along the side walls. Rules: the entrance -> door path stays open (flood fill), every row keeps a free
   // run of >= 2 tiles (5 blobz get through), pieces sit >= 3 rows apart, never in the arrival rows or under the door.
-  const { columns, walls } = roomLayout(r, type, rw, gw, gh, solid, top, safe, start, stairs, T);
+  const { columns, walls, thin } = roomLayout(r, type, rw, gw, gh, solid, top, safe, start, stairs, T);
   // spawn spots inside or right next to cover move to the nearest open floor (below, flood fill)
   for (const sp of waves.flat()) { const tx = Math.floor(sp.x / T), ty = Math.floor(sp.y / T); if (solid[ty * gw + tx]) { sp.x = -1; sp.y = -1; } }
   // every spawn on floor the blobz can reach from the entrance (flood fill; anything else moves to the nearest reached tile)
@@ -357,7 +358,7 @@ export function makeRoom(seed: number, room: number, players = 1, dungeon = 1, t
     sp.x = (best[0] + 0.5) * T; sp.y = (best[1] + 0.5) * T;
   }
   const spawns: Floor['spawns'] = [];
-  return { floor: room, solid, rooms: [o], start, exit, stairs, chests, spawns, gw, gh, dt: T, waves, lines, columns, walls, inset: ROOM_INSET };
+  return { floor: room, solid, rooms: [o], start, exit, stairs, chests, spawns, gw, gh, dt: T, waves, lines, columns, walls, thin, inset: ROOM_INSET };
 }
 
 /** rooms: which floor tiles show a crack (floor_2..8): 1-2 per 3x3 block (~11-20 % of the floor), random spots, never two
@@ -425,7 +426,10 @@ export function roomLayout(r: () => number, type: RoomType, rw: number, gw: numb
       break;
     }
   }
-  return { columns, walls };
+  // vertical runs (a wall tile with a wall above or below and none beside it) are thin 0x72 strips, not brick blocks
+  const has = new Set(walls.map((w) => `${w.x},${w.y}`)), thin = new Set<number>();
+  for (const w of walls) if (!has.has(`${w.x - 1},${w.y}`) && !has.has(`${w.x + 1},${w.y}`) && (has.has(`${w.x},${w.y - 1}`) || has.has(`${w.x},${w.y + 1}`))) thin.add(w.y * gw + w.x);
+  return { columns, walls, thin };
 }
 
 /** rooms: start the next wave when the last one is gone (or a blob climbed past the corridor line); spawns land after
@@ -533,8 +537,13 @@ export const ft = (f: Floor) => f.dt ?? DT;
 export const fh = (f: Floor) => f.gh ?? GH;
 export const isWall = (f: Floor, x: number, y: number) => {
   const T = ft(f), tx = Math.floor(x / T), ty = Math.floor(y / T), w = fw(f);
-  return tx < 0 || ty < 0 || tx >= w || ty >= fh(f) || f.solid[ty * w + tx] === 1 || (!!f.inset && (x < f.inset || x > w * T - f.inset));
+  if (tx < 0 || ty < 0 || tx >= w || ty >= fh(f)) return true;
+  const i = ty * w + tx;
+  if (f.solid[i] === 1) { if (!f.thin?.has(i)) return true; const lx = x - tx * T; return lx >= THIN_X[0] && lx <= THIN_X[1]; }
+  return !!f.inset && (x < f.inset || x > w * T - f.inset);
 };
+/** a thin vertical wall's strip inside its tile (world px): the 0x72 wall_edge strip (5 art px) moved 6 art px in */
+export const THIN_X = [18, 33] as const;
 
 /** Push a circle out of wall tiles (and stop its velocity into them). */
 export function collideWalls(f: Floor, o: { x: number; y: number; vx: number; vy: number }, rad: number) {
@@ -543,7 +552,8 @@ export function collideWalls(f: Floor, o: { x: number; y: number; vx: number; vy
   const ty0 = Math.floor((o.y - rad) / T), ty1 = Math.floor((o.y + rad) / T);
   for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) {
     if (!(tx < 0 || ty < 0 || tx >= fw(f) || ty >= fh(f) || f.solid[ty * fw(f) + tx])) continue;
-    const qx = Math.max(tx * T, Math.min(o.x, (tx + 1) * T)), qy = Math.max(ty * T, Math.min(o.y, (ty + 1) * T));
+    const thin = f.thin?.has(ty * fw(f) + tx), x0 = tx * T + (thin ? THIN_X[0] : 0), x1 = thin ? tx * T + THIN_X[1] : (tx + 1) * T;
+    const qx = Math.max(x0, Math.min(o.x, x1)), qy = Math.max(ty * T, Math.min(o.y, (ty + 1) * T));
     let dx = o.x - qx, dy = o.y - qy;
     const d = Math.hypot(dx, dy);
     if (d >= rad) continue;

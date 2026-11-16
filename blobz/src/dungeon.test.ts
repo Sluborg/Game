@@ -704,6 +704,20 @@ describe('dungeon', () => {
       expect(e.y).toBeGreaterThan(9 * T); // it went round the wall's open end
       expect(Math.hypot(e.x - a[0].x, e.y - a[0].y)).toBeLessThan(2 * T);
     });
+    it('vertical wall runs are thin 0x72 strips (wall only in the middle 15 px of the tile), horizontal runs stay full', () => {
+      let seen = 0;
+      for (const seed of [5, 9, 13, 21]) for (let room = 1; room <= ROOMS; room++) {
+        const f = makeRoom(seed, room, 2), T = f.dt!, W = f.gw!;
+        for (const i of f.thin ?? []) {
+          seen++;
+          const x = i % W, y = Math.floor(i / W), cy = (y + 0.5) * T;
+          expect(isWall(f, x * T + 25, cy)).toBe(true); // the strip
+          expect(isWall(f, x * T + 5, cy)).toBe(false); // beside it
+          expect(f.walls!.some((w) => w.y * W + w.x === i && !f.walls!.some((o) => o.y === w.y && Math.abs(o.x - w.x) === 1))).toBe(true);
+        }
+      }
+      expect(seen).toBeGreaterThan(5);
+    });
     it('an open loot card holds the door (it never follows the team into the next room)', () => {
       const d = newRun(27, { a: 'sword', b: 'bow' }, 1, true);
       d.wave = 99; d.pending = []; d.enemies = []; d.lootQ.push('helm');
