@@ -304,7 +304,7 @@ export class DungeonScene extends Phaser.Scene {
       if (tx === g0 - 1) put(48, 152, tx, ty); // wall_edge_mid_right: the hallway's left wall
       else if (tx === g1 + 1) put(32, 152, tx, ty); // wall_edge_mid_left: the hallway's right wall
     }
-    put(16, 32, 1, 2); put(32, 32, W - 2, 2); // wall_banner_red, wall_banner_blue
+    // (the banners are sprites: placed beside the door frame, never under it: see buildFloor)
     this.textures.addCanvas(key, c)!.setFilter(Phaser.Textures.FilterMode.NEAREST);
     // the door: frame left / right (16x32) around the leaf (32x32), frame top (32x16) above it = 64x48
     for (const [k, lx] of [['x72-door-closed', 32], ['x72-door-open', 80]] as const) {
@@ -381,6 +381,13 @@ export class DungeonScene extends Phaser.Scene {
       ? this.add.image(f.stairs.x, 3 * ft(f), 'x72-door-closed').setOrigin(0.5, 1).setScale(3).setDepth(-890)
       : this.add.image(f.stairs.x, f.stairs.y, floor < FLOORS ? 'na-stairs-down' : 'na-stairs-up').setScale(3).setDepth(-900);
     this.mapObjs.push(this.stairs);
+    if (rooms) {
+      // two 0x72 banners on the top wall, just outside the door frame (in a 7-tile room the frame covers tiles 1 and 5)
+      const tx = this.textures.get('x72'), T = ft(f), half = 96; // the door is 64 art px = 192 world px wide
+      for (const [k, x, y] of [['ban-r', 16, 32], ['ban-b', 32, 32]] as const) if (!tx.has(k)) tx.add(k, 0, x, y, 16, 16);
+      const lx = Math.min(1.5 * T, f.stairs.x - half - T / 2), rx = Math.max((fw(f) - 1.5) * T, f.stairs.x + half + T / 2);
+      for (const [x, k] of [[lx, 'ban-r'], [rx, 'ban-b']] as const) this.mapObjs.push(this.add.image(Math.round(x), 3 * T, 'x72', k).setOrigin(0.5, 1).setScale(3).setDepth(-885));
+    }
     if (floor === 1 && rooms) {
       // rooms: the way out of the dungeon = 0x72 floor_stairs (80,192) in the bottom-left corner
       if (!this.textures.exists('x72-stairs')) { const cv = document.createElement('canvas'); cv.width = cv.height = 16; cv.getContext('2d')!.drawImage(this.textures.get('x72').getSourceImage() as HTMLImageElement, 80, 192, 16, 16, 0, 0, 16, 16); this.textures.addCanvas('x72-stairs', cv)!.setFilter(Phaser.Textures.FilterMode.NEAREST); }
