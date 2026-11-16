@@ -155,7 +155,7 @@ export class DungeonScene extends Phaser.Scene {
     sheet('dg-fx-block', NA + 'FX/Magic/Shield/SpriteSheetBlue.png', 24, 26);
     img('dg-arrow', NA + 'FX/Projectile/Arrow.png');
     // attacks without weapon sprites (Stefan 2026-11-15): Ninja slash (knight), cut (rogue), energy ball (healer)
-    sheet('fx-slash', NA + 'FX/Attack/SlashCurved/SpriteSheet.png', 32, 32);
+    sheet('fx-slash', NA + 'FX/Attack/SlashDoubleCurved/SpriteSheet.png', 32, 32); // the knight: a double arc (Stefan: the single one was weak)
     sheet('fx-cut', NA + 'FX/Attack/Cut/SpriteSheet.png', 32, 32);
     sheet('fx-magic', NA + 'FX/Projectile/EnergyBall.png', 16, 16);
     // class markers in the nameplate (16 px): bow (crossbow until a bow icon exists), heal plus, dagger, shield
@@ -758,11 +758,16 @@ export class DungeonScene extends Phaser.Scene {
     b.spin = Math.max(0, b.spin - dt);
     b.weapon.setVisible(false); b.weapon2?.setVisible(false); b.glow?.setVisible(false); b.wshadow?.setVisible(false);
     const show = !ko && guard && w === 'shield';
+    b.barrier?.setVisible(false);
     if (show) {
-      if (!b.barrier) b.barrier = this.add.sprite(0, 0, 'dg-fx-block', 0).setScale(2).play({ key: 'dg-block', repeat: -1 });
+      // the knight's guard (Stefan: the round shield looked like a ball on the side): a flat glowing arc in front of the
+      // blob, across the aim (last target, else the way it faces)
       const a = b.lastSwing !== undefined && this.time.now - b.lastSwing < 1500 ? b.swingA : b.facing === 'left' ? Math.PI : 0;
-      b.barrier.setVisible(true).setPosition(b.body.x + Math.cos(a) * 30, b.body.y + Math.sin(a) * 22).setDepth(b.y + (Math.sin(a) < -0.3 ? -1 : 3));
-    } else b.barrier?.setVisible(false);
+      const cx = b.body.x, cy = b.body.y, r = 34, half = 0.85, pulse = 0.8 + 0.2 * Math.sin(this.time.now / 90);
+      this.ringG.lineStyle(10, 0x5ec8ff, 0.35 * pulse).beginPath().arc(cx, cy, r, a - half, a + half).strokePath();
+      this.ringG.lineStyle(5, 0x8fe3ff, 0.95).beginPath().arc(cx, cy, r, a - half, a + half).strokePath();
+      this.ringG.lineStyle(2, 0xffffff, 0.9 * pulse).beginPath().arc(cx, cy, r - 3, a - half * 0.8, a + half * 0.8).strokePath();
+    }
     if (DEBUG) ((window as unknown as { __dgWeapon?: Record<string, unknown> }).__dgWeapon ??= {})[b.id] = { sprite: b.weapon.visible || !!b.weapon2?.visible, barrier: show };
   }
 
@@ -904,12 +909,27 @@ export class DungeonScene extends Phaser.Scene {
         // melee attacks are FX in front of the blob (no weapon sprite): knight = curved slash, rogue = quick cut;
         // ranged attacks are their projectile ('shot')
         const k = f.w === 'shield' || f.w === 'sword' || f.w === 'hammer' ? 'fx-slash' : f.w === 'dagger' || f.w === 'spear' ? 'fx-cut' : null;
-        if (b && k) {
-          const r = k === 'fx-slash' ? 30 : 26;
-          const fxs = this.add.sprite(Math.round(b.x + Math.cos(f.a) * r), Math.round(b.y - 6 + Math.sin(f.a) * r), k, 0).setScale(2).setRotation(f.a).setDepth(b.y + 5);
+        if (b && k === 'fx-slash') {
+          // the knight: a big bright double arc (3x, additive) and a white flash where it lands
+          const r = 34, cx = Math.round(b.x + Math.cos(f.a) * r), cy = Math.round(b.y - 6 + Math.sin(f.a) * r);
+          const fxs = this.add.sprite(cx, cy, k, 0).setScale(3).setRotation(f.a).setDepth(b.y + 5).setBlendMode(Phaser.BlendModes.ADD);
           fxs.play(k).once('animationcomplete', () => fxs.destroy());
-          if (DEBUG) { const c = ((window as unknown as { __dgAtkFx?: Record<string, number> }).__dgAtkFx ??= {}); c[k] = (c[k] ?? 0) + 1; }
+          this.nfx('n13-hit-spark', Math.round(b.x + Math.cos(f.a) * 48), Math.round(b.y - 6 + Math.sin(f.a) * 48), 3); // a heavy hit spark where it lands
+        } else if (b && k) {
+          // the rogue: a quick thrust streak (3 steps out from the blob's edge, then gone): a white core in a warm glow
+          const g = this.add.graphics().setDepth(b.y + 5), x0 = b.x + Math.cos(f.a) * 22, y0 = b.y - 6 + Math.sin(f.a) * 22;
+          let step = 0;
+          const draw = () => {
+            g.clear();
+            if (step > 3) { g.destroy(); return; }
+            const L = [14, 30, 42, 42][step], al = step === 3 ? 0.45 : 1, ex = x0 + Math.cos(f.a) * L, ey = y0 + Math.sin(f.a) * L;
+            g.lineStyle(9, 0xffd27a, 0.55 * al).lineBetween(x0, y0, ex, ey).lineStyle(4, 0xffffff, al).lineBetween(x0, y0, ex, ey);
+            step++;
+            this.time.delayedCall(34, draw);
+          };
+          draw();
         }
+        if (b && k && DEBUG) { const c = ((window as unknown as { __dgAtkFx?: Record<string, number> }).__dgAtkFx ??= {}); c[k] = (c[k] ?? 0) + 1; }
         sfx.tool(f.w === 'hammer' || f.w === 'shield' ? 'axe' : f.w === 'spear' ? 'rake' : 'pickaxe', false);
         break;
       }
