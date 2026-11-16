@@ -4,7 +4,7 @@ import Phaser from 'phaser';
 import '@fontsource/fredoka/500.css';
 import '@fontsource/fredoka/600.css';
 import '@fontsource/fredoka/700.css';
-import { blobEl, clampLook, COLORS, EYES, HATS, MOUTHS, randomLook, SHAPES, type BlobLook } from './blob';
+import { blobEl, clampLook, COLORS, EYES, HAT_CHOICES, HATS, MOUTHS, randomLook, SHAPES, type BlobLook } from './blob';
 import { Controls } from './controls';
 import { dungeonUi, setPicker } from './dungeonUi'; // [dungeon hook]
 import { GameScene, type Session } from './game';
@@ -72,6 +72,8 @@ let part: Part = PARTS.includes(store.get('tab') as Part) ? (store.get('tab') as
 let boing = false; // squash-bounce the live preview on the next render (after a change)
 let slide: '' | 'from-left' | 'from-right' = '';
 const PART_OPTS: Record<Exclude<Part, 'color'>, string[]> = { shape: SHAPES, eyes: EYES, mouth: MOUTHS, hat: HATS };
+/** The option indices the designer shows for a part (hats: no ears, HAT_CHOICES). */
+const shownOpts = (key: Exclude<Part, 'color'>) => (key === 'hat' ? HAT_CHOICES : PART_OPTS[key].map((_, i) => i));
 
 function renderPicker() {
   $('preview').replaceChildren(alive(blobEl(profile.look), profile.look));
@@ -98,8 +100,8 @@ function renderPicker() {
     }));
   } else {
     const key = part;
-    all = PART_OPTS[key].map((svLabel, i) => {
-      const label = lookName(key, i, svLabel);
+    all = shownOpts(key).map((i) => {
+      const label = lookName(key, i, PART_OPTS[key][i]);
       const b = document.createElement('button');
       b.className = 'opt' + (profile.look[key] === i ? ' on' : '');
       b.append(partTile(profile.look, key, i)); // only the item (eyes alone, hat alone...), shape = neutral face
@@ -122,11 +124,11 @@ const pageSize = () => (matchMedia('(orientation: landscape) and (max-height: 52
 let page = 0;
 /** The page that holds the chosen option of the current part. */
 function chosenPage() {
-  const i = part === 'color' ? COLORS.indexOf(profile.look.color) : profile.look[part];
+  const i = part === 'color' ? COLORS.indexOf(profile.look.color) : shownOpts(part).indexOf(profile.look[part]);
   return Math.floor(Math.max(0, i) / pageSize());
 }
 function turnPage(d: number) {
-  const n = part === 'color' ? COLORS.length : PART_OPTS[part].length;
+  const n = part === 'color' ? COLORS.length : shownOpts(part).length;
   const next = page + d;
   if (next < 0 || next * pageSize() >= n) return false;
   page = next; renderPicker();
