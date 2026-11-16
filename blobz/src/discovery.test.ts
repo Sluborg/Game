@@ -51,3 +51,16 @@ describe('network key', () => {
     expect(pickSeed([])).toBeNull();
   });
 });
+
+describe('network code is the same for every phone on one network (Stefan 2026-11-16)', () => {
+  it('order-free, IPv4 first, IPv6 by its /64, whichever STUN host answered first', () => {
+    const a = pickSeed(['2001:db8:aa:bb:1111::1', '198.51.100.9', '203.0.113.7']);
+    const b = pickSeed(['203.0.113.7', '198.51.100.9']);
+    expect(a).toBe('198.51.100.9'); // the sorted-first public IPv4, whatever order the candidates came in
+    expect(b).toBe(a);
+    // two phones on one IPv6-only Wi-Fi: different addresses, one /64 -> one code
+    expect(pickSeed(['2001:db8:aa:bb:1111::1'])).toBe(pickSeed(['2001:db8:aa:bb:9999:8888:7777:6666']));
+    // a phone that also sees IPv4 uses it, never its IPv6 (dual stack: both phones agree on the IPv4)
+    expect(pickSeed(['2001:db8:aa:bb::1', '203.0.113.7'])).toBe(pickSeed(['203.0.113.7']));
+  });
+});

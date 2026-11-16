@@ -8,7 +8,7 @@ import { blobEl, clampLook, COLORS, EYES, HATS, MOUTHS, randomLook, SHAPES, type
 import { Controls } from './controls';
 import { dungeonUi, setPicker } from './dungeonUi'; // [dungeon hook]
 import { GameScene, type Session } from './game';
-import { ClientNet, HostNet, friendlyError, type ToClient } from './net';
+import { ClientNet, HostNet, friendlyError, PREFIX, type ToClient } from './net';
 import { MINI_SECONDS } from './mini';
 import { building, DATA_ICON, NI } from './ninjaArt';
 import { partTile } from './partArt';
@@ -16,7 +16,7 @@ import { alive, blobWipe } from './alive';
 /** Blob-wipe between screens in my own colour, carrying my blob (alive.ts). */
 const wipe = () => blobWipe(profile.look.color, profile.look);
 import { applyI18n, lang, lookName, setLang, t, type Key } from './i18n';
-import { lanNamespace, Scanner, type FoundRoom } from './discovery';
+import { lanNamespace, nsInfo, Scanner, type FoundRoom } from './discovery';
 import { sfx, unlockAudio } from './sfx';
 import {
   addPlayer, affordable, atHome, BUILD_KINDS, COTTAGE_COST, COTTAGE_MAX, requestBuild, endRound, LONG_GAME, type BuildKind, BUILDING_ENABLED, DAY_CYCLE_ENABLED, STONE_ENABLED, finishMini, cleanBiome, type Biome, SNOW_MAP_ENABLED, BUILD_COST, canAfford, cleanVillage, createState, makeTrees, villageOf, MAX_PLAYERS, nodeTool, pickWeapon, removePlayer, RES, ROUND_SECONDS, snapshot, starsFor, step,
@@ -225,8 +225,12 @@ function startScan() {
   $('lan-list').replaceChildren();
   show('lan-status');
   lanStatus(SEARCHING());
-  const tryNs = () => void lanNamespace().then((ns) => {
+  let first = true;
+  $('net-code').textContent = ''; // filled again by the fresh lookup below
+  const tryNs = () => void lanNamespace(first).then((ns) => {
+    first = false;
     if (gen !== scanGen) return; // left the panel meanwhile
+    showNetCode(ns);
     if (!ns) {
       // no public IP yet (strict NAT, no UDP): say so, keep trying in the background
       lanStatus(NOTHING(), true);
@@ -242,6 +246,21 @@ function startScan() {
   tryNs();
 }
 const CONNECT_GIVE_UP = 12000;
+/** The network code (first 4 of the namespace hash) on the join screen and the start screen's version line, so two
+ *  phones can compare (Stefan 2026-11-16). ?debug adds how it was made (stun-v4 / stun-v6 / none / override). */
+const netCodeOf = (ns: string | null) => (ns ? ns.slice(0, 4).toUpperCase() : '?');
+function showNetCode(ns: string | null) {
+  const dbg = DEBUG ? ` [${nsInfo.how || '...'}]` : '';
+  $('net-code').textContent = (ns ? t('join.netCode', { code: netCodeOf(ns) }) : t('join.netUnknown')) + dbg;
+  $('net-code').classList.toggle('warn', !ns);
+  $('version').textContent = `${versionText()} (${netCodeOf(ns)})`;
+}
+function joinByCode() {
+  const code = ($('code-input') as HTMLInputElement).value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+  ($('code-input') as HTMLInputElement).value = code;
+  if (code.length !== 4) { $('join-msg').textContent = t('join.codeAria') + ': ABCD'; return; }
+  void joinGame(PREFIX + code);
+}
 function stopScan() { scanGen++; clearTimeout(retryTimer); scanner?.stop(); scanner = null; }
 function renderRooms(rooms: FoundRoom[]) {
   const connecting = scanner?.pending.size ?? 0;
@@ -321,7 +340,9 @@ document.querySelectorAll<HTMLButtonElement>('#lang-toggle button').forEach((b) 
 });
 renderLang();
 // Wi-Fi code next to the version: two phones must show the same code to find each other (a VPN changes it)
-void lanNamespace().then((ns) => { if (ns) $('version').textContent = `${versionText()} (${ns.slice(0, 4).toUpperCase()})`; });
+void lanNamespace().then((ns) => { if (ns) $('version').textContent = `${versionText()} (${netCodeOf(ns)})`; });
+$('btn-code-join').onclick = joinByCode;
+$('code-input').addEventListener('keydown', (e) => { if ((e as KeyboardEvent).key === 'Enter') joinByCode(); });
 $('version').title = __APP_COMMIT__;
 renderPicker();
 // First visit: pick your blob before anything else.
@@ -692,8 +713,11 @@ async function hostGame() {
   const LAN_OK = '';
   const advertise = async () => {
     if (net.peer.destroyed) return;
-    const ns = await lanNamespace();
+    const ns = await lanNamespace(true);
     const slot = ns ? await net.openSlot(ns) : 0;
+    // the room code: friends on another network (or a phone whose network code differs) type it on the join screen
+    $('room-code').innerHTML = t('lobby.roomCode', { code: net.code, net: netCodeOf(ns) }) + (DEBUG ? ` [${nsInfo.how}]` : '');
+    show('room-code');
     $('lobby-lan').innerHTML = slot ? LAN_OK : t('lobby.noWifi');
     $('lobby-lan').classList.toggle('warn', !slot);
     if (!slot) setTimeout(() => void advertise(), 5000);
