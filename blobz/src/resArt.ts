@@ -11,7 +11,7 @@ export const isImgArt = (a: ResArt): a is { world: string; hud: string } => 'wor
 export const RES_ART: Record<'wood' | 'stone' | 'berry', ResArt> = {
   wood: { world: 'art/icons/res-wood-16.png', hud: 'art/icons/res-wood-16.png' }, // ChatGPT N-27 log (Stefan 2026-11-15); was the Ninja crop tileset_camp.png 0,0 32x16
   stone: { file: 'Backgrounds/Tilesets/TilesetNature.png', x: 288, y: 144, w: 16, h: 16 }, // rock, grey small
-  berry: { file: 'Items/Food/Meat.png', x: 0, y: 0, w: 15, h: 15 }, // food
+  berry: { world: 'art/icons/res-berry-16.png', hud: 'art/icons/res-berry-16.png' }, // ChatGPT N-41 berries (Stefan + Alea 2026-11-16: no more meat); was the Ninja Meat.png crop
 };
 
 /** HUD picture for a resource (cut by scripts/ninja_crops.py from RES_ART). */

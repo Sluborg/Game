@@ -16,6 +16,7 @@ import { isImgArt, RES_ART } from './resArt';
 import { ARENA, BOMB_R, DROP_HEIGHT } from './mini';
 import type { PuzzleLayout, Res, Tool } from './sim';
 import type { FxEvent, Input, ItemKind, PlayerInfo, View } from './sim';
+import { t } from './i18n';
 
 export interface Session {
   role: 'host' | 'client';
@@ -166,6 +167,8 @@ function fitLabel(label: Phaser.GameObjects.Text, name: string) {
   for (let n = name.length - 1; label.width > NAME_MAX && n > 0; n--) label.setText(name.slice(0, n) + '…');
 }
 const buildPanelOpen = () => typeof document !== 'undefined' && !document.getElementById('build-panel')?.classList.contains('hidden');
+/** The blob's glide frame (blob.ts frame 1) while moving. Off: it hid the chosen shape (Stefan + Alea 2026-11-16). */
+const GLIDE_FRAME = false;
 const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.search).has('debug');
 const MAP_VIEW = DEBUG && new URLSearchParams(location.search).has('mapview');
 /** Below this speed (px/s) the face looks straight ahead. */
@@ -227,7 +230,7 @@ export class GameScene extends Phaser.Scene {
   private miniDeco: Phaser.GameObjects.GameObject[] = [];
   private miniBg?: Phaser.GameObjects.Image;
   private drops = new Map<number, { item: Phaser.GameObjects.Image; mark: Phaser.GameObjects.Image | Phaser.GameObjects.Ellipse }>();
-  private bgfx = new Map<BuildKind, { img: Phaser.GameObjects.Image; sh?: Phaser.GameObjects.Image; built: boolean; ghost?: Phaser.GameObjects.Container }>();
+  private bgfx = new Map<BuildKind, { img: Phaser.GameObjects.Image; sh?: Phaser.GameObjects.Image; built: boolean; ghost?: Phaser.GameObjects.Container; badge?: Phaser.GameObjects.Text }>();
   private cottageImg!: Phaser.GameObjects.Image;
   private water!: ReturnType<typeof makeWater>;
   private nodes: { img: Phaser.GameObjects.Image; sh: Phaser.GameObjects.Image; kind: number; left: number; x: number; y: number; sc: number; fade: number; blossom: boolean; tree?: TreeVariant }[] = [];
@@ -295,8 +298,10 @@ export class GameScene extends Phaser.Scene {
       this.load.image(`tree-${v}`, `art/props/tree-${v}.png`);
       this.load.image(`stump-${v}`, `art/props/stump-${v}.png`);
     }
-    this.load.image('g-bush-berries', 'art/props/berry-bush-32.png');
-    this.load.image('g-bush-empty', 'art/props/berry-bush-picked-32.png'); // Bärregn backdrop (ChatGPT N-9): sunset sky over the berry field
+    // Stefan + Alea 2026-11-16 ("berry bushes are very large"): the 16 px cut of the same N-16 bush at the world's 3x
+    // density (48 px, was the 32 px cut = 96 px, as big as a tree); the berries stay clearly visible
+    this.load.image('g-bush-berries', 'art/props/berry-bush-16.png');
+    this.load.image('g-bush-empty', 'art/props/berry-bush-picked-16.png'); // Bärregn backdrop (ChatGPT N-9): sunset sky over the berry field
     if (this.s.biome === 'snow') { // archived snow map (SNOW_MAP_ENABLED): its own leftovers
       this.load.on('loaderror', () => { /* winter art not drawn yet: tinted stand-ins below */ });
       for (const n of WINTER) if (!(('w-' + n) in NINJA_CROPS)) this.load.image('w-' + n, `art/props-winter/${n}.png`);
@@ -748,7 +753,9 @@ export class GameScene extends Phaser.Scene {
         this.textures.addCanvas(`${lookKey}-${f}`, blobCanvas(look, 1, undefined, undefined, f));
         this.textures.get(`${lookKey}-${f}`).setFilter(Phaser.Textures.FilterMode.NEAREST);
       }
-      const frame = Math.hypot(p.vx, p.vy) >= FACE_DEAD ? 1 : 0;
+      // Stefan + Alea 2026-11-16: the glide frame (blob.ts frame 1: lower half 2 px wider, tall shapes one row lower)
+      // made every shape look the same when moving; the chosen shape (frame 0) is kept while gliding
+      const frame = GLIDE_FRAME && Math.hypot(p.vx, p.vy) >= FACE_DEAD ? 1 : 0;
       const texKey = `${lookKey}-${frame}`;
       const pixel = true;
       const baseScale = BLOB_SCALE;
@@ -817,12 +824,14 @@ export class GameScene extends Phaser.Scene {
     const color = this.s.infos().get(p.id)?.color ?? 0xffffff;
     for (const t of b.trail) this.trailG.fillStyle(color, t.a).fillCircle(t.x, t.y, 4 + t.a * 10);
 
-    const stretch = Math.min(0.18, sp / 1600);
+    // Stefan + Alea 2026-11-16 ("the shape does not matter, the blob goes wide as soon as it moves"): a subtle stretch
+    // only, max 5% wider / 3% lower at full speed (was 18% / 11%), so the chosen shape's silhouette stays readable
+    const stretch = Math.min(0.05, sp / 4800);
     b.shadow.setPosition(b.x, b.y + 12).setDepth(this.dB + b.y - 20);
     b.body.setPosition(b.x, b.y - 4 + hover).setDepth(this.dB + b.y);
     b.body.setScale(b.baseScale * (1 + stretch) / breath, b.baseScale * (1 - stretch * 0.6) * breath);
     this.drawTool(b, dt);
-    b.body.setRotation(Phaser.Math.Clamp(b.vx / 1400, -0.18, 0.18));
+    b.body.setRotation(0); // no lean (was up to 10 degrees): a rotated pixel sprite loses its clean pixel edges
 
     // eyes follow movement direction
     if (sp > 20) { b.look.x += (b.vx / sp - b.look.x) * 0.2; b.look.y += (b.vy / sp - b.look.y) * 0.2; }
@@ -869,7 +878,9 @@ export class GameScene extends Phaser.Scene {
         ? this.add.image(w.bridge.x, w.bridge.y + 69, 'b-bridge').setScale(NINJA_SCALE).setOrigin(0.5, 1).setDepth(-930)
         : this.add.image(at.x, at.y - BUILD_R + 4, 'b-' + k).setScale(PROP_SCALE).setOrigin(0.5, 1).setDepth(at.y - BUILD_R + 4);
       const sh = k === 'bridge' ? undefined : this.shadow(at.x, at.y - BUILD_R + 2, img.displayWidth * 0.85, 24, 0.24).setDepth(at.y - BUILD_R + 3).setVisible(false);
-      this.bgfx.set(k, { img: img.setVisible(false), sh, built: false, ghost: k === 'bridge' ? undefined : this.plotGhost(k) });
+      // the storage's effect on the building itself (Stefan + Alea 2026-11-16: nobody understood what it gives)
+      const badge = k === 'storage' ? this.add.text(at.x, at.y - BUILD_R + 8, t('build.badge.storage'), { fontFamily: "'Fredoka', sans-serif", fontSize: '11px', color: '#fff8e8', fontStyle: '600', stroke: '#4a2f1c', strokeThickness: 3, resolution: 3 }).setOrigin(0.5, 0).setDepth(at.y - BUILD_R + 5).setVisible(false) : undefined;
+      this.bgfx.set(k, { img: img.setVisible(false), sh, built: false, ghost: k === 'bridge' ? undefined : this.plotGhost(k), badge });
     }
   }
 
@@ -900,7 +911,7 @@ export class GameScene extends Phaser.Scene {
       const g = this.bgfx.get(b.kind);
       if (!g) continue;
       const on = b.state === 2;
-      if (on !== g.built) { g.built = on; g.img.setVisible(on); g.sh?.setVisible(on); }
+      if (on !== g.built) { g.built = on; g.img.setVisible(on); g.sh?.setVisible(on); g.badge?.setVisible(on); }
       if (g.ghost) { // the plot ghost: build panel open, your blob on the home yard, or within 200 px of the spot
         const at = BUILD_SPOTS[b.kind], me = this.blobs.get(this.s.myId);
         const near = !!me && (Math.hypot(me.x - at.x, me.y - at.y) < 200 || atHome(me.x, me.y)); // on the yard: every plot

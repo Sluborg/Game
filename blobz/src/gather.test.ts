@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   BASE, createState, STONE_ENABLED, makeTrees, NODE_HITS, NODE_REGROW, NODE_YIELD, nodeTool, OBSTACLE_R, snapshot, starsFor, step,
-  toolNode, viewFromSnapshot, questTargets, makeWater, type Input, type State,
+  toolNode, viewFromSnapshot, questTargets, makeWater, type Input, type State, CHOP_ASSIST, ASSIST_SPEED,
 } from './sim';
 
 const P = (id: string) => ({ id, name: id, color: 0x5ec8ff, shape: 0, eyes: 0, mouth: 0, hat: 0 });
@@ -22,6 +22,9 @@ const reset = (s: State) => { s.items = []; s.players.forEach((p) => { p.carry =
 const nodeOf = (s: State, kind: (k: number) => boolean) => s.trees.findIndex((t) => kind(t.kind));
 
 describe('gathering with tools', () => {
+  // these count button presses exactly: the chop assist (idle next to a node) is tested on its own below
+  beforeAll(() => { CHOP_ASSIST.on = false; });
+  afterAll(() => { CHOP_ASSIST.on = true; });
   it('no items spawn on their own: the map starts empty and stays empty without tools', () => {
     const s = createState([P('a')], 1);
     expect(s.items).toHaveLength(0);
@@ -124,5 +127,26 @@ describe('gathering with tools', () => {
     expect(v.nodes).toHaveLength(s.trees.length);
     expect(v.delivered).toEqual(s.delivered);
     expect(v.quest).toEqual(s.quest);
+  });
+});
+
+describe('chop assist (Stefan + Alea 2026-11-16: hard to start chopping, you overshoot)', () => {
+  it('gliding past a tree and letting go of the stick: the blob stops at it and chops by itself', () => {
+    const s = createState([P('a')], 3);
+    const i = s.trees.findIndex((t, j) => t.kind < 3 && s.trees.every((o, k) => k === j || Math.hypot(o.x - t.x, o.y - t.y) > 110));
+    const t = s.trees[i], p = s.players[0];
+    p.x = t.x + OBSTACLE_R[t.kind] + 30; p.y = t.y; p.vx = 200; p.vy = 0; // gliding away at speed, stick let go
+    for (let k = 0; k < 10; k++) step(s, new Map([['a', { x: 0, y: 0, dash: 0 }]]), 1 / 60);
+    expect(Math.hypot(p.vx, p.vy)).toBeLessThan(ASSIST_SPEED * 2.5); // braked hard, did not sail off
+    for (let k = 0; k < 6 * 60; k++) step(s, new Map([['a', { x: 0, y: 0, dash: 0 }]]), 1 / 60);
+    expect(Math.hypot(p.x - t.x, p.y - t.y)).toBeLessThan(OBSTACLE_R[t.kind] + 17 + 40); // stopped in reach of the tree
+    expect(got(s).filter((k) => k === 'wood').length).toBeGreaterThanOrEqual(2); // chopped wood without a button
+  });
+  it('holding the stick (walking past) never auto-chops', () => {
+    const s = createState([P('a')], 3);
+    const i = s.trees.findIndex((t) => t.kind < 3);
+    const t = s.trees[i], p = s.players[0];
+    for (let k = 0; k < 120; k++) { p.x = t.x + OBSTACLE_R[t.kind] + 20; p.y = t.y; step(s, new Map([['a', { x: 0, y: 1, dash: 0 }]]), 1 / 60); }
+    expect(s.trees[i].hits + (3 - s.trees[i].left) * 3).toBe(0);
   });
 });

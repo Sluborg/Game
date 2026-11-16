@@ -18,9 +18,9 @@ const base = process.argv[2] || 'http://localhost:4173/';
       window.__hold = null;
       setInterval(() => { const h = window.__hold; if (h) Object.assign(window.__blobz.state.players[1], { x: 640, y: 680, vx: h[0], vy: h[1] }); }, 5);
     });
-    // blobz v2: mirrored (flipX) when facing left, frame 1 while gliding; facing is kept while still or going straight up/down
-    for (const [name, vx, vy, facing, frame] of [['still', 0, 0, 'right', 0], ['east', 150, 0, 'right', 1], ['north (keeps right)', 0, -150, 'right', 1],
-      ['west', -150, 0, 'left', 1], ['south (keeps left)', 0, 150, 'left', 1], ['slow drift (keeps left, idle)', 20, 0, 'left', 0], ['south-east', 110, 110, 'right', 1]]) {
+    // blobz v2: mirrored (flipX) when facing left; the glide frame is off (Stefan 2026-11-16: it hid the shape), frame 0 always; facing is kept while still or going straight up/down
+    for (const [name, vx, vy, facing, frame] of [['still', 0, 0, 'right', 0], ['east', 150, 0, 'right', 0], ['north (keeps right)', 0, -150, 'right', 0],
+      ['west', -150, 0, 'left', 0], ['south (keeps left)', 0, 150, 'left', 0], ['slow drift (keeps left, idle)', 20, 0, 'left', 0], ['south-east', 110, 110, 'right', 0]]) {
       await host.evaluate((h) => { window.__hold = h; }, [vx, vy]);
       const same = (f) => f && f.facing === facing && f.frame === frame;
       await ada.waitForFunction(([id, fa, fr]) => { const f = window.__blobzFace?.[id]; return f && f.facing === fa && f.frame === fr; }, [adaId, facing, frame], { timeout: 4000 }).catch(() => {});
