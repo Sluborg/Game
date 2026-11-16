@@ -667,6 +667,20 @@ describe('dungeon', () => {
       expect(bs.every((b, i) => b.y < y1[i] - 80)).toBe(true);
       expect(inDoorway(d.map, d.map.start.x, d.map.start.y)).toBe(false);
     });
+    it('an open loot card holds the door (it never follows the team into the next room)', () => {
+      const d = newRun(27, { a: 'sword', b: 'bow' }, 1, true);
+      d.wave = 99; d.pending = []; d.enemies = []; d.lootQ.push('helm');
+      const sx = d.map.stairs.x, T = d.map.dt!, bs = [body('a', sx - 10, 2.6 * T), body('b', sx + 10, 2.6 * T)];
+      run1(d, bs, undefined, READY_SECONDS + 0.5);
+      expect(d.loot).not.toBeNull();
+      expect(d.ready).toBe(0);
+      expect(d.trans ?? 0).toBe(0);
+      dungeonChoice(d, 'a', 'loot:roll'); dungeonChoice(d, 'b', 'loot:pass');
+      run1(d, bs, undefined, 0.1);
+      d.lootLast = null;
+      for (let k = 0; k < 300 && !(d.trans ?? 0); k++) run1(d, bs);
+      expect(d.trans).toBeGreaterThan(0); // decided: now the door counts
+    });
     it('corridor: climbing past the line starts the next wave early; the difficulty spreads over the 10 rooms', () => {
       const d = newRun(22, { a: 'sword' }, 1, true);
       enterFloor(d, 22, 2, 1);

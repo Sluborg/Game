@@ -422,7 +422,7 @@ export class DungeonScene extends Phaser.Scene {
     const d = v?.dungeon;
     if (!v || !d) return;
     const fk = `${d.seed}-${d.floor}-${d.rooms ? 'r' + d.roomTiles : 'f'}`;
-    if (fk !== this.floorKey) { this.floorKey = fk; this.snapNext = true; this.buildFloor(d.seed, d.floor, v.players.length, d.dungeon, d.rooms, d.roomTiles); this.fitCamera(); }
+    if (fk !== this.floorKey) { this.floorKey = fk; this.snapNext = true; if (d.rooms && this.wipeA > 0.5) { this.wipeA = 1; this.wipeHold = 0.2; } this.buildFloor(d.seed, d.floor, v.players.length, d.dungeon, d.rooms, d.roomTiles); this.fitCamera(); } // rooms: the cut happens under a fully dark screen
     const f = this.map!;
     const now = this.time.now;
     const smooth = this.s.role === 'client' && !this.snapNext; // a new floor / room: everything jumps to its new place
@@ -654,7 +654,7 @@ export class DungeonScene extends Phaser.Scene {
     // visible instead of hiding monsters under the HUD)
     const landscape = this.scale.width > this.scale.height;
     const goingUp = d.rooms && (d.trans > 0 || d.walkIn > 0); // the room change: the camera only ever moves UP
-    if (me) { const sh = this.cardShift(landscape); this.camTarget.x = this.rooms && this.map ? (fw(this.map) * ft(this.map)) / 2 : me.x - (landscape ? 70 / cam.zoom : 0); const ty = sh ? me.y + sh / cam.zoom : this.roomCamY(me.y); this.camTarget.y = goingUp ? Math.min(this.camTarget.y, ty) : ty; } // rooms: x locked on the room, y follows my blob inside the room
+    if (me) { const sh = this.cardShift(landscape); this.camTarget.x = this.rooms && this.map ? (fw(this.map) * ft(this.map)) / 2 : me.x - (landscape ? 70 / cam.zoom : 0); const ty = sh ? me.y + sh / cam.zoom : this.roomCamY(me.y); this.camTarget.y = goingUp ? Math.min(this.camTarget.y, ty) : ty; } // rooms: x locked on the room, y follows my blob inside the room; only while a card covers my blob may the view leave the room (the blob must stay visible)
     this.wipe(d.rooms ? d.trans : 0, dt);
     cam.centerOn(cam.midPoint.x + (this.camTarget.x - cam.midPoint.x) * Math.min(1, dt * 6), cam.midPoint.y + (this.camTarget.y - cam.midPoint.y) * Math.min(1, dt * 6));
   }
@@ -663,6 +663,7 @@ export class DungeonScene extends Phaser.Scene {
    *  room's entrance (a DOM layer over the canvas, under the HUD) */
   private wipeA = 0;
   private snapNext = false;
+  private wipeHold = 0;
   private wipe(trans: number, dt: number) {
     let el = document.getElementById('dg-wipe');
     if (!el) {
@@ -670,7 +671,9 @@ export class DungeonScene extends Phaser.Scene {
       el.style.cssText = 'position:absolute;inset:0;background:#0b0812;pointer-events:none;opacity:0;z-index:1';
       (document.getElementById('game') ?? document.body).append(el);
     }
-    this.wipeA = trans > 0 ? Math.max(this.wipeA, Math.min(1, (ROOM_TRANS - trans) / (ROOM_TRANS * 0.8))) : Math.max(0, this.wipeA - dt / 0.35);
+    if (trans > 0) this.wipeA = Math.max(this.wipeA, Math.min(1, (ROOM_TRANS - trans) / (ROOM_TRANS * 0.7)));
+    else if (this.wipeHold > 0) this.wipeHold -= dt; // stay fully dark a moment after the cut
+    else this.wipeA = Math.max(0, this.wipeA - dt / 0.35);
     el.style.opacity = this.wipeA.toFixed(3);
     if (DEBUG) (window as unknown as { __dgWipe?: number }).__dgWipe = this.wipeA;
   }
