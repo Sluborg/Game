@@ -6,7 +6,7 @@ import { blobCanvas, BLOB_FRAMES, BODY_CY, clampLook, facingFromVelocity, type F
 import { drawGatherRing } from './gatherRing';
 import { onViewport } from './viewport';
 import { dpr, snapZoom } from './pixelScale';
-import { fw, fh, ft, inDoorway, makeRoom, roomCracks, roomGap, ROOM_TUNE, ROOM_STUB, ROOM_TRANS, ROOMS, MINIBOSS_ROOM, SPAWN_WARN, AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
+import { fw, fh, ft, inDoorway, makeRoom, roomTheme, roomCracks, roomGap, ROOM_TUNE, ROOM_STUB, ROOM_TRANS, ROOMS, MINIBOSS_ROOM, SPAWN_WARN, AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
 /** Weapons without Art's strip yet: a Kenney Tiny Dungeon tile in hand (bow: drawn in code). */
 import type { Session } from './game';
 import { sfx } from './sfx';
@@ -26,6 +26,8 @@ function fitPlate(t: Phaser.GameObjects.Text, name: string) {
 }
 /** the wand's glow / bolt colours: damage red, heal green */
 const MODE_COL = [0xff4a3a, 0x5fe36a];
+/** room theme tints (stone, moss, ember): multiplied onto the 0x72 room art */
+const THEME_TINT = [0xffffff, 0xc4dcae, 0xf4c4a2];
 const NA = 'assets/ninja-adventure/';
 /** Weapon sprites (kept loaded for the hidden sprite object; never shown since 2026-11-15). Ninja Adventure's own weapons (Items/Weapons/<Name>/Sprite.png) point UP
  *  with the grip at the bottom (`up`); Art's Ninja-style shield (pivot = centre) and crossbow (points right, pivot = butt)
@@ -384,9 +386,10 @@ export class DungeonScene extends Phaser.Scene {
     if (rooms) {
       // two 0x72 banners on the top wall, just outside the door frame (in a 7-tile room the frame covers tiles 1 and 5)
       const tx = this.textures.get('x72'), T = ft(f), half = 96; // the door is 64 art px = 192 world px wide
-      for (const [k, x, y] of [['ban-r', 16, 32], ['ban-b', 32, 32]] as const) if (!tx.has(k)) tx.add(k, 0, x, y, 16, 16);
+      for (const [k, x, y] of [['ban-r', 16, 32], ['ban-b', 32, 32], ['ban-g', 16, 48], ['ban-y', 32, 48]] as const) if (!tx.has(k)) tx.add(k, 0, x, y, 16, 16);
+      const theme = roomTheme(floor), bans = ([['ban-r', 'ban-b'], ['ban-g', 'ban-b'], ['ban-y', 'ban-r']] as const)[theme];
       const lx = Math.min(1.5 * T, f.stairs.x - half - T / 2), rx = Math.max((fw(f) - 1.5) * T, f.stairs.x + half + T / 2);
-      for (const [x, k] of [[lx, 'ban-r'], [rx, 'ban-b']] as const) this.mapObjs.push(this.add.image(Math.round(x), 3 * T, 'x72', k).setOrigin(0.5, 1).setScale(3).setDepth(-885));
+      for (const [x, k] of [[lx, bans[0]], [rx, bans[1]]] as const) this.mapObjs.push(this.add.image(Math.round(x), 3 * T, 'x72', k).setOrigin(0.5, 1).setScale(3).setDepth(-885));
     }
     if (floor === 1 && rooms) {
       // rooms: the way out of the dungeon = 0x72 floor_stairs (80,192) in the bottom-left corner
@@ -417,6 +420,17 @@ export class DungeonScene extends Phaser.Scene {
         const depth = (w.y + 1) * T - 12;
         this.mapObjs.push(this.add.image((w.x + 0.5) * T, (w.y + 1) * T, 'x72', 'wf-' + end).setOrigin(0.5, 1).setScale(3).setDepth(depth));
         if (!has.has(`${w.x},${w.y - 1}`)) this.mapObjs.push(this.add.image((w.x + 0.5) * T, w.y * T, 'x72', 'wt-' + end).setOrigin(0.5, 1).setScale(3).setDepth(depth));
+      }
+    }
+    if (rooms) {
+      // floor props (0x72 crate / skull / hole), then the theme tint on the room's own art (not the banners)
+      const tx = this.textures.get('x72'), T = ft(f);
+      for (const [k, x, y, w, h] of [['p-crate', 288, 408, 16, 24], ['p-skull', 288, 432, 16, 16], ['p-hole', 96, 144, 16, 16]] as const) if (!tx.has(k)) tx.add(k, 0, x, y, w, h);
+      for (const pr of f.props ?? []) this.mapObjs.push(this.add.image((pr.x + 0.5) * T, (pr.y + 1) * T, 'x72', 'p-' + pr.k).setOrigin(0.5, 1).setScale(3).setDepth(pr.k === 'hole' ? -950 : (pr.y + 1) * T - 14));
+      const tint = THEME_TINT[roomTheme(floor)];
+      if (tint !== 0xffffff) for (const o of [...this.mapObjs, this.stairs]) {
+        const im = o as Phaser.GameObjects.Image;
+        if (im.setTint && !(im.frame?.name ?? '').startsWith('ban-')) im.setTint(tint);
       }
     }
     this.chests = f.chests.map((c) => this.add.image(c.x, c.y + 8, 'na-chest', 0).setScale(3).setOrigin(0.5, 1).setDepth(c.y));

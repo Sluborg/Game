@@ -217,6 +217,7 @@ export interface Floor {
   floor: number;
   solid: Uint8Array; // gw*gh (default GW*GH), 1 = wall
   gw?: number; gh?: number; // grid size when not GW x GH (the tall Archero rooms)
+  props?: { x: number; y: number; k: 'crate' | 'skull' | 'hole' }[]; // rooms: decorative floor props (tile), never solid
   thin?: Set<number>; // rooms: thin vertical wall tiles (tile index): only a 15 px strip in the tile's middle is wall (THIN_X)
   inset?: number; // rooms: the side walls are only this thick (world px); the edge columns are floor up to them
   columns?: { x: number; y: number }[]; // rooms: 0x72 columns as cover (tile x, base row y; rows y-1..y are solid)
@@ -272,6 +273,10 @@ export const ROOM_T = 48;
 export const ROOM_STUB = 2;
 /** the 0x72 side wall strip (wall_edge_mid) is 5 art px = 15 world px thick */
 export const ROOM_INSET = 15;
+/** room themes (Stefan: the dungeon felt repetitive): rooms 1-3 stone, 4-6 moss, 7-10 ember; a tint + banner colours +
+ *  floor props from the 0x72 sheet (crate, skull, hole), purely decorative */
+export const ROOM_THEMES = ['stone', 'moss', 'ember'] as const;
+export const roomTheme = (room: number) => (room <= 3 ? 0 : room <= 6 ? 1 : 2);
 /** the room change (Stefan: it must feel like going FORWARD): slide up through the door + fade (s), then walk in from
  *  the new room's hallway (s) at WALK_SPEED */
 export const ROOM_TRANS = 0.7, ROOM_WALK_IN = 0.8, WALK_SPEED = 170;
@@ -357,8 +362,15 @@ export function makeRoom(seed: number, room: number, players = 1, dungeon = 1, t
     for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) if (seen[y * gw + x] && Math.hypot(x - tx, y - ty) < bd) { bd = Math.hypot(x - tx, y - ty); best = [x, y]; }
     sp.x = (best[0] + 0.5) * T; sp.y = (best[1] + 0.5) * T;
   }
+  // 2-4 decorative props on open floor, off the middle lane (under the door / over the entrance gap) and the arrival rows
+  const props: NonNullable<Floor['props']> = [], lane = roomGap(gw), kinds = ['crate', 'skull', 'hole'] as const;
+  for (let tries = 0, want = 2 + Math.floor(r() * 3); props.length < want && tries < 40; tries++) {
+    const x = 1 + Math.floor(r() * rw), y = top + Math.floor(r() * Math.max(1, safe - top));
+    if (lane.includes(x) || solid[y * gw + x] || props.some((p) => Math.abs(p.x - x) + Math.abs(p.y - y) < 3)) continue;
+    props.push({ x, y, k: kinds[Math.floor(r() * kinds.length)] });
+  }
   const spawns: Floor['spawns'] = [];
-  return { floor: room, solid, rooms: [o], start, exit, stairs, chests, spawns, gw, gh, dt: T, waves, lines, columns, walls, thin, inset: ROOM_INSET };
+  return { floor: room, solid, rooms: [o], start, exit, stairs, chests, spawns, gw, gh, dt: T, waves, lines, columns, walls, thin, inset: ROOM_INSET, props };
 }
 
 /** rooms: which floor tiles show a crack (floor_2..8): 1-2 per 3x3 block (~11-20 % of the floor), random spots, never two
