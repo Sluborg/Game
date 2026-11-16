@@ -137,7 +137,7 @@ export const SKILLS: SkillDef[] = [
   { id: 'tank-guard', cls: 'tank', icon: 65, mod: { rate: 0.85 } }, // sword 15% faster
 ];
 export const skillOf = (id: string) => SKILLS.find((k) => k.id === id);
-/** Rare loot (boss, chests): one item slot per blob, each with one clear effect. */
+/** Rare loot (boss, chests): ITEM_SLOTS (3) item slots per blob, each item with one clear effect. */
 export interface ItemDef { id: string; icon: number; mod: Partial<Mods> }
 export const ITEMS: ItemDef[] = [
   { id: 'ring', icon: 113, mod: { dmg: 1.2 } },
@@ -533,7 +533,7 @@ export interface Hero {
   lunge: number[]; // goo ids already hit by the current lunge
   dodge: number; lastDash: number; // sidestep invulnerability, last dash counter
   kx: number; ky: number; // where a knocked-out blob lies
-  skills: string[]; item: string | null; // level-up picks, the one loot item
+  skills: string[]; items: string[]; // level-up picks, loot items (up to ITEM_SLOTS)
   offer: string[]; offerT: number; pending: number; // 1-of-3 cards on screen (no timer), level-ups still to pick
   zx: number; zy: number; picking: boolean; // frozen + safe while the cards are open
   shield: number; wallT: number; regenT: number; kills: number; // healer shield charges, tank wall, regen clock, own kills
@@ -595,6 +595,10 @@ export type DFx =
   | { t: 'slam'; x: number; y: number };
 
 export const STAIRS_R = 40;
+/** loot item slots per blob (Stefan 2026-11-15: 3); a new item replaces the oldest only when all are full */
+export const ITEM_SLOTS = 3;
+/** which of my items a new one would replace (null = a free slot, or I already have it) */
+export const lootReplaces = (items: string[], item: string) => (items.includes(item) || items.length < ITEM_SLOTS ? null : items[0]);
 /** lifesteal heals at most this much health a second (a nice-to-have, not a full heal) */
 export const LIFESTEAL_CAP = 3;
 /** rooms: the open doorway = the leaf's tiles in the wall face + 1 floor tile below (gathering there counts; blobz
@@ -606,14 +610,13 @@ const CHEST_XP = 2;
 const COIN_R = 28;
 const COIN_MAGNET = 70; // coins slide to a blob this close (easier for small thumbs)
 
-export function heroMods(h: Pick<Hero, 'skills' | 'item'>): Mods {
+export function heroMods(h: Pick<Hero, 'skills' | 'items'>): Mods {
   const m: Mods = { ...NO_MODS };
   const add = (mod: Partial<Mods>) => {
     for (const [k, v] of Object.entries(mod) as [keyof Mods, number][]) m[k] = MULT.includes(k) ? m[k] * v : m[k] + v;
   };
   for (const s of h.skills) { const d = skillOf(s); if (d) add(d.mod); }
-  const it = itemOf(h.item);
-  if (it) add(it.mod);
+  for (const i of h.items) { const it = itemOf(i); if (it) add(it.mod); }
   return m;
 }
 /** Max health follows class + skills + item; gained max health is filled, lost max health cut. */
@@ -630,7 +633,7 @@ export function newHero(weapon: Weapon, maxHp?: number): Hero {
   return {
     cls, hp: max, maxHp: max, ko: 0, inv: 0, weapon, fx: 0, fy: 1, aim: 0, atkCd: 0, swing: 0,
     spCd: 0, spT: 0, lastAtk: -1, lunge: [], dodge: 0, lastDash: -1, kx: 0, ky: 0,
-    skills: [], item: null, offer: [], offerT: 0, pending: 0, zx: 0, zy: 0, picking: false, shield: 0, wallT: 0, regenT: 0, kills: 0, mode: 0, held: 0, guard: false, mvCd: 0, charges: cls === 'rogue' ? ROGUE_CHARGES : 1, side: 1, chargeT: 0, phase: 0,
+    skills: [], items: [], offer: [], offerT: 0, pending: 0, zx: 0, zy: 0, picking: false, shield: 0, wallT: 0, regenT: 0, kills: 0, mode: 0, held: 0, guard: false, mvCd: 0, charges: cls === 'rogue' ? ROGUE_CHARGES : 1, side: 1, chargeT: 0, phase: 0,
   };
 }
 
@@ -1228,7 +1231,7 @@ function stepLoot(d: DState, dt: number, fx: DFx[]) {
   if (!d.loot && d.lootQ.length && !d.lootLast) {
     // a player who already wears that item passes automatically (one item slot; items have no tiers)
     const item = d.lootQ.shift()!;
-    d.loot = { item, t: LOOT_SECONDS, rolls: Object.fromEntries(Object.keys(d.heroes).map((id) => [id, d.heroes[id].item === item ? 0 : -1])) };
+    d.loot = { item, t: LOOT_SECONDS, rolls: Object.fromEntries(Object.keys(d.heroes).map((id) => [id, d.heroes[id].items.includes(item) ? 0 : -1])) };
   }
   const v = d.loot;
   if (!v) return;
@@ -1238,7 +1241,7 @@ function stepLoot(d: DState, dt: number, fx: DFx[]) {
   if (v.t > 0 && ids.some((id) => v.rolls[id] === -1)) return;
   let win: string | null = null, roll = 0;
   for (const id of ids) if ((v.rolls[id] ?? 0) > roll) { roll = v.rolls[id]; win = id; }
-  if (win) { const h = d.heroes[win]; h.item = v.item; refresh(h); }
+  if (win) { const h = d.heroes[win]; if (!h.items.includes(v.item)) { if (h.items.length >= ITEM_SLOTS) h.items.shift(); h.items.push(v.item); } refresh(h); } // a 4th item replaces the oldest
   fx.push({ t: 'loot', item: v.item, win, roll });
   d.lootLast = { item: v.item, win, roll, t: 2.5 };
   d.loot = null;
@@ -1284,7 +1287,7 @@ export interface DSnap {
 }
 export interface DHeroView {
   cls: HeroClass; hp: number; maxHp: number; ko: number; weapon: Weapon; face: number; swing: number; spCd: number; spMax: number; spT: number; dodge: boolean; inv: boolean;
-  mode: number; guard: boolean; phase: boolean; mvCd: number; mvMax: number; charges: number; maxCharges: number; shield: number; wallT: number; item: string | null; skills: string[]; offer: string[]; offerT: number; pending: number;
+  mode: number; guard: boolean; phase: boolean; mvCd: number; mvMax: number; charges: number; maxCharges: number; shield: number; wallT: number; items: string[]; skills: string[]; offer: string[]; offerT: number; pending: number;
 }
 export interface DView {
   seed: number; floor: number; dungeon: number; rooms: boolean; roomTiles: number; wave: number; waves: number; landing: number; gold: number; xp: number; level: number; kills: number; ready: number; done: number; time: number; why: EndWhy; bossMax: number;
@@ -1307,7 +1310,7 @@ export function dsnap(d: DState, seed: number): DSnap {
     op: d.opened.map((o) => (o ? '1' : '0')).join(''),
     h: Object.entries(d.heroes).map(([id, h]): HeroTuple => [id, Math.ceil(h.hp), h.maxHp, r1(h.ko), WEAPONS.indexOf(h.weapon), Math.round(Math.atan2(h.fy, h.fx) * 100),
       Math.round(h.swing * 100), Math.ceil(h.spCd * 10), Math.round(h.spT * 100), (h.dodge > 0 ? 1 : 0) | (h.inv > 0 ? 2 : 0) | (h.mode ? 4 : 0) | (h.guard ? 8 : 0) | (h.phase > 0 ? 16 : 0),
-      h.shield, Math.ceil(h.wallT * 10), h.item ?? '', h.skills.join(','), h.offer.join(','), Math.ceil(h.offerT), Math.ceil(h.mvCd * 10), h.charges, h.pending]),
+      h.shield, Math.ceil(h.wallT * 10), h.items.join(','), h.skills.join(','), h.offer.join(','), Math.ceil(h.offerT), Math.ceil(h.mvCd * 10), h.charges, h.pending]),
     lt: d.loot ? [d.loot.item, Math.ceil(d.loot.t), Object.entries(d.loot.rolls)] : null,
     ll: d.lootLast ? [d.lootLast.item, d.lootLast.win ?? '', d.lootLast.roll] : null,
   };
@@ -1325,8 +1328,8 @@ export function dview(n: DSnap): DView {
       return [id, {
         cls, hp, maxHp, ko, weapon, face: face / 100, swing: swing / 100,
         spCd: (cd ?? 0) / 10, spMax: specialOf(cls, weapon).cd, spT: (spT ?? 0) / 100, dodge: !!((fl ?? 0) & 1), inv: !!((fl ?? 0) & 2), mode: (fl ?? 0) & 4 ? 1 : 0, guard: !!((fl ?? 0) & 8), phase: !!((fl ?? 0) & 16),
-        shield: sh ?? 0, wallT: (wl ?? 0) / 10, item: it || null, skills: list(sk), offer: list(of), offerT: ot ?? 0, pending: pd ?? 0,
-        mvCd: (mv ?? 0) / 10, mvMax: CLASS_MOVE_COOLDOWN[cls] * (itemOf(it || null)?.mod.mvCd ?? 1), charges: ch ?? 1, maxCharges: cls === 'rogue' ? ROGUE_CHARGES : 1,
+        shield: sh ?? 0, wallT: (wl ?? 0) / 10, items: list(it), skills: list(sk), offer: list(of), offerT: ot ?? 0, pending: pd ?? 0,
+        mvCd: (mv ?? 0) / 10, mvMax: CLASS_MOVE_COOLDOWN[cls] * list(it).reduce((k, i) => k * (itemOf(i)?.mod.mvCd ?? 1), 1), charges: ch ?? 1, maxCharges: cls === 'rogue' ? ROGUE_CHARGES : 1,
       }];
     })),
     loot: n.lt ? { item: n.lt[0], t: n.lt[1], rolls: Object.fromEntries(n.lt[2]) } : null,

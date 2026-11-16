@@ -3,7 +3,7 @@ import { KEYS } from './i18n';
 import {
   AIM_WARN, BITE_TIME, CLASS_MOVE_COOLDOWN, DUNGEON_TIMER_ENABLED, CLASS_WEAPONS, BITE_WARN, bossHp, BURST, BURST_DMG, BURST_GAP, BURST_SPREAD, CLASS_HP, CLASSES, DASH_TIME, DASH_WARN, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, floorDmg, actMul, GH, GW,
   HEAL_BOLT, heroMods, refresh, inSwing, isWall, ITEMS, itemOf, KO_SECONDS, LEVEL_XP, LOOT_SECONDS, makeFloor, makeGoo, newRun as newRunAny, POTION_HP, roomCracks, REGEN_EVERY,
-  ITEM_ICON, skillIcon, skillOf, unstick, inDoorway, roomTiles, roomGap, ROOM_TUNE, ROOM_STUB, roomSpecials, EARLY_ROOMS, ROOM_T, ROOMS_ENABLED, ROOMS, ROOM_W, MINIBOSS_ROOM, SPAWN_WARN, READY_SECONDS, makeRoom, roomType, roomClear, diffFloor, enterFloor, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
+  ITEM_ICON, ITEM_SLOTS, lootReplaces, skillIcon, skillOf, unstick, inDoorway, roomTiles, roomGap, ROOM_TUNE, ROOM_STUB, roomSpecials, EARLY_ROOMS, ROOM_T, ROOMS_ENABLED, ROOMS, ROOM_W, MINIBOSS_ROOM, SPAWN_WARN, READY_SECONDS, makeRoom, roomType, roomClear, diffFloor, enterFloor, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
 } from './dungeon';
 import { cleanVillage, createState, DUNGEON_ENABLED, newVillage, villageOf, PICK_TIMER_ENABLED, ENTRANCE_R, entranceOf, makePuzzles, makeTrees, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
 
@@ -694,7 +694,7 @@ describe('dungeon', () => {
   it('loot: 20 s to roll; a player who already wears the item passes automatically', () => {
     expect(LOOT_SECONDS).toBe(20);
     const d = quiet(newRun(15, { a: 'sword', b: 'bow' }));
-    d.heroes.b.item = 'helm';
+    d.heroes.b.items = ['helm'];
     d.lootQ.push('helm');
     const bs = [body('a', d.map.start.x, d.map.start.y), body('b', d.map.start.x + 40, d.map.start.y)];
     run1(d, bs);
@@ -702,7 +702,23 @@ describe('dungeon', () => {
     expect(d.loot!.rolls.a).toBe(-1);
     dungeonChoice(d, 'a', 'loot:roll');
     run1(d, bs);
-    expect(d.heroes.a.item).toBe('helm');
+    expect(d.heroes.a.items).toEqual(['helm']);
+  });
+
+  it('items: 3 slots; a 4th item replaces the oldest (only then "Byter ut din")', () => {
+    expect(ITEM_SLOTS).toBe(3);
+    const d = quiet(newRun(16, { a: 'sword' }));
+    const sa = [body('a', d.map.start.x, d.map.start.y)];
+    const take = (it: string) => { d.lootLast = null; d.lootQ.push(it); run1(d, sa); dungeonChoice(d, 'a', 'loot:roll'); run1(d, sa); };
+    expect(lootReplaces([], 'helm')).toBeNull();
+    for (const it of ['helm', 'ring', 'gloves']) take(it);
+    expect(d.heroes.a.items).toEqual(['helm', 'ring', 'gloves']);
+    expect(heroMods(d.heroes.a).hp).toBe(ITEMS.filter((i) => ['helm', 'ring', 'gloves'].includes(i.id)).reduce((k, i) => k + ((i.mod as Mods).hp ?? 0), 0)); // all three count
+    expect(lootReplaces(d.heroes.a.items, 'amulet')).toBe('helm');
+    expect(lootReplaces(d.heroes.a.items, 'ring')).toBeNull(); // already have it
+    take('amulet');
+    expect(d.heroes.a.items).toEqual(['ring', 'gloves', 'amulet']);
+    expect(dview(dsnap(d, 16)).heroes.a.items).toEqual(['ring', 'gloves', 'amulet']);
   });
 
   it('loot alone: "Använd" takes it at once (no dice); with friends: roll/pass, highest roll wears it', () => {
@@ -712,7 +728,7 @@ describe('dungeon', () => {
     run1(solo, sa);
     dungeonChoice(solo, 'a', 'loot:roll');
     const sf = run1(solo, sa).fx;
-    expect(solo.heroes.a.item).toBe('ring');
+    expect(solo.heroes.a.items).toEqual(['ring']);
     expect(sf.some((f) => f.t === 'loot' && f.win === 'a' && f.roll === 100)).toBe(true);
     const d = quiet(newRun(15, { a: 'sword', b: 'bow' }));
     d.lootQ.push('helm');
@@ -722,11 +738,11 @@ describe('dungeon', () => {
     dungeonChoice(d, 'a', 'loot:roll');
     dungeonChoice(d, 'b', 'loot:pass');
     run1(d, bs);
-    expect(d.heroes.a.item).toBe('helm');
+    expect(d.heroes.a.items).toEqual(['helm']);
     expect(d.heroes.a.maxHp).toBe(CLASS_HP.rogue + 30);
     d.lootLast = null; d.lootQ.push('ring');
     run1(d, bs, undefined, LOOT_SECONDS + 0.5);
-    expect(d.heroes.b.item).toBeNull();
+    expect(d.heroes.b.items).toEqual([]);
     // potion: health for every blob
     d.heroes.a.hp = 20; d.heroes.b.hp = 10;
     d.coins.push({ id: 99, x: bs[0].x, y: bs[0].y, v: 0, k: 1 });
@@ -764,10 +780,10 @@ describe('dungeon', () => {
     const w = WEAPON_OF[cls];
     const run = (mod: Partial<Mods>) => {
       const d = quiet(newRun(31, { a: w }));
-      d.heroes.a.skills = []; d.heroes.a.item = null;
+      d.heroes.a.skills = []; d.heroes.a.items = [];
       // apply via a fake skill entry: push the real skill id that holds this mod
       const sk = SKILLS.find((k) => k.cls === cls && (k.mod as Record<string, number>)[key] === val) ?? ITEMS.find((i) => (i.mod as Record<string, number>)[key] === val);
-      if (Object.keys(mod).length && sk) { if ('cls' in sk) d.heroes.a.skills = [sk.id]; else d.heroes.a.item = sk.id; }
+      if (Object.keys(mod).length && sk) { if ('cls' in sk) d.heroes.a.skills = [sk.id]; else d.heroes.a.items = [sk.id]; }
       refresh(d.heroes.a);
       const st = d.map.start, a = body('a', st.x, st.y);
       d.heroes.a.inv = 99;

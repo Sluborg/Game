@@ -25,7 +25,7 @@ const shots = process.argv[3] || '';
     ok((await p.textContent('#dg-loot')).includes('+30 hälsa'), 'the item card shows its effect (+30 hälsa)');
     if (shots) await p.screenshot({ path: `${shots}/dg-solo-loot-portrait.png` });
     await p.click('#dg-roll');
-    await p.waitForFunction(() => { const v = window.__blobzView.dungeon; return Object.values(v.heroes)[0].item === 'helm'; }, null, { timeout: 4000 });
+    await p.waitForFunction(() => { const v = window.__blobzView.dungeon; return Object.values(v.heroes)[0].items.includes('helm'); }, null, { timeout: 4000 });
     await p.waitForFunction(() => /\/110/.test(document.querySelector('#dg-hearts .hpnum')?.textContent ?? ''), null, { timeout: 4000 });
     ok(true, 'taken at once; max health 80 -> 110');
     // level-up cards: numbers on every card
