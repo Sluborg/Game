@@ -53,7 +53,7 @@ export const WEAPON_STATS: Record<Weapon, { reach: number; arc: number; dmg: num
   staff: { reach: 170, arc: 0, dmg: 8, cd: 0.6, kb: 80, ranged: true }, // the healer's wand: bolts (damage or heal mode)
   bow: { reach: 200, arc: 0, dmg: 7, cd: 0.6, kb: 90, ranged: true }, // crossbow: safe at range, so clearly less damage than melee (~42% of the sword)
   shield: { reach: 56, arc: 1.0, dmg: 10, cd: 0.5, kb: 280 }, // the Riddare: a heavier, slower sword slash with big knockback (id stays 'shield')
-  dagger: { reach: 44, arc: 1.2, dmg: 8, cd: 0.25, kb: 80 }, // the rogue's two daggers: very fast, short
+  dagger: { reach: 44, arc: 1.2, dmg: 7, cd: 0.25, kb: 80 }, // the rogue's two daggers: very fast, short (Stefan: rogue runs too easy, 8 -> 7)
 };
 export type SpecialKind = 'spin' | 'slam' | 'lunge' | 'heal' | 'wall' | 'volley';
 export interface SpecialDef { kind: SpecialKind; cd: number; r: number; dmg: number; kb: number; stun: number }
@@ -196,6 +196,8 @@ export const SLAM_EVERY_2 = 2.5;
 export const SLAM_WARN = 1.1; // red ring on the ground before it lands
 export const SLAM_R = 72;
 export const SLAM_DMG = 25;
+/** rooms: the bosses are tougher (Stefan: too easy): health / slam damage, a ring of 6 shots in phase 1, faster slams in phase 2 */
+export const ROOM_BOSS = { hp: 1.4, dmg: 1.25, ringEvery: 5, ring: 6, slamEvery2: 1.9 };
 export const KO_SECONDS = 5;
 export const RUN_SECONDS = 300; // a run ends (back to the meadow) after 5 minutes at the latest (only with the timer on)
 /** Stefan 2026-11-15: no time limit underground (docs/ARCHIVED.md). The clock is hidden and never ends a run. */
@@ -278,12 +280,13 @@ export const EARLY_ROOMS = 3;
  *  docs/dungeon-rooms-plan.md). "Specials" = shooters (eye) + dashers (bat / slime); every other monster only chases
  *  and bumps. The ramp makes attacks more frequent over the 10 rooms (never faster projectiles). */
 export const ROOM_TUNE = {
-  specialFrac: 1 / 3, // at most this share of a wave shoots or dashes ...
+  specialFrac: 1 / 3, // at most this share of a wave shoots or dashes (lateFrac from room lateRoom) ...
+  lateFrac: 0.4, lateRoom: 6,
   earlySpecials: 1, // ... and in rooms 1..EARLY_ROOMS at most 1 per wave
   shootEvery: [2.5, 3.5] as const, // seconds between a shooter's bursts (random per burst)
   aimWarn: 0.8, // the shooter's aim line before it fires
   dashEvery: 4, // a dasher dashes at most this often (+0-25 % random)
-  ramp: 0.15, // room 10 attacks this much more often than room 1 (intervals x 0.85)
+  ramp: 0.25, // room 10 attacks this much more often than room 1 (intervals x 0.75)
   dungeonStep: 0.1, // each later dungeon: intervals 10 % shorter (down to x 0.75)
   spitSpeed: 0.7, // monster shots fly at 70 % of SPIT_SPEED in every room (same range)
 };
@@ -292,7 +295,7 @@ const roomPace = (d: DState) => (1 - ROOM_TUNE.ramp * (Math.min(ROOMS, Math.max(
 /** rooms: seconds until this monster's next attack */
 const roomEvery = (d: DState, kind: EnemyKind) => roomPace(d) * (kind === 3 ? ROOM_TUNE.shootEvery[0] + Math.random() * (ROOM_TUNE.shootEvery[1] - ROOM_TUNE.shootEvery[0]) : ROOM_TUNE.dashEvery * (1 + Math.random() * 0.25));
 /** rooms: how many shooters + dashers one wave of `n` monsters may have */
-export const roomSpecials = (room: number, n: number) => (room <= EARLY_ROOMS ? ROOM_TUNE.earlySpecials : Math.max(1, Math.floor(n * ROOM_TUNE.specialFrac)));
+export const roomSpecials = (room: number, n: number) => (room <= EARLY_ROOMS ? ROOM_TUNE.earlySpecials : Math.max(1, Math.floor(n * (room >= ROOM_TUNE.lateRoom ? ROOM_TUNE.lateFrac : ROOM_TUNE.specialFrac))));
 export function makeRoom(seed: number, room: number, players = 1, dungeon = 1, tiles = ROOM_W + 2): Floor {
   const rw = Math.max(5, Math.min(ROOM_W, tiles - 2)); // floor tiles between the side walls
   const r = rng(seed * 89 + room * 157 + 7);
@@ -321,7 +324,7 @@ export function makeRoom(seed: number, room: number, players = 1, dungeon = 1, t
     for (let k = 0; k < Math.min(spitters, roomSpecials(room, n + mediums + spitters)); k++) out.push({ kind: 3, ...band(a, Math.min(b, a + (b - a) / 2)) });
     return out;
   };
-  const n = 2 + crowd + Math.min(3, extra);
+  const n = 2 + crowd + Math.min(3, extra) + (room >= 7 ? 2 : room >= 4 ? 1 : 0); // later rooms: more monsters per wave (Stefan: too easy)
   let waves: Floor['waves'] = [];
   let lines: number[] | undefined;
   const midY = (top + safe) / 2;
@@ -449,7 +452,7 @@ function stepWaves(d: DState, alive: Body[], dt: number, fx: DFx[]) {
   d.wave = w + 1; d.waveT = WAVE_GAP;
   // at most ROOM_TUNE.specialFrac of the wave shoots or dashes (rooms 1-3: one): shooters count first, the remaining
   // slots go to random bats / slimes, every other monster only chases
-  const wv = waves[w], slots = Math.max(0, roomSpecials(d.floor, wv.length) - wv.filter((sp) => sp.kind === 3).length);
+  const wv = waves[w], slots = Math.max(0, roomSpecials(d.floor, wv.filter((sp) => sp.kind !== 2).length) - wv.filter((sp) => sp.kind === 3).length); // (the boss is not counted)
   const dashers = new Set(wv.map((_, i) => i).filter((i) => wv[i].kind <= 1).sort(() => Math.random() - 0.5).slice(0, slots));
   for (const [i, sp] of wv.entries()) {
     // never land on a blob: slide the spot away from anyone within 80 px
@@ -705,7 +708,7 @@ export function enterFloor(d: Omit<DState, 'map'> & { map?: Floor }, seed: numbe
   const map = out.rooms ? makeRoom(seed, floor, players, out.dungeon, out.rw) : makeFloor(seed, floor, players, out.dungeon);
   out.floor = floor; out.map = map; out.ready = 0; out.players = players;
   if (out.rooms) { out.wave = 0; out.waveT = ROOM_FIRST_WAVE; out.pending = []; }
-  out.bossMax = bossHp(players, out.dungeon);
+  out.bossMax = Math.round(bossHp(players, out.dungeon) * (out.rooms ? ROOM_BOSS.hp : 1));
   out.enemies = map.spawns.map((sp) => Object.assign(makeGoo(out, sp.kind, sp.x, sp.y), sp.calm ? { calm: true } : {}));
   out.coins = []; out.spit = [];
   out.opened = map.chests.map(() => false);
@@ -1173,7 +1176,7 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
           e.x = e.slam.x; e.y = e.slam.y; e.vx = 0; e.vy = 0;
           collideWalls(f, e, ENEMY_R[e.kind]); unstick(f, e);
           fx.push({ t: 'slam', x: e.slam.x, y: e.slam.y });
-          for (const b of alive) if (Math.hypot(b.x - e.slam.x, b.y - e.slam.y) < SLAM_R + BLOB_R) hurt(d, b, e.slam.x, e.slam.y, SLAM_DMG * dmgMul, fx, bodies);
+          for (const b of alive) if (Math.hypot(b.x - e.slam.x, b.y - e.slam.y) < SLAM_R + BLOB_R) hurt(d, b, e.slam.x, e.slam.y, SLAM_DMG * dmgMul * (d.rooms ? ROOM_BOSS.dmg : 1), fx, bodies);
           if (angry) {
             // phase 2: a ring of spit and two small goo from every slam
             for (let k = 0; k < 8; k++) { const ak = (k / 8) * Math.PI * 2, r0 = ENEMY_R[e.kind] + 6; spitAt(d, e.x + Math.cos(ak) * r0, e.y + Math.sin(ak) * r0, ak, fx); } // from the boss's edge
@@ -1182,8 +1185,13 @@ export function stepDungeon(d: DState, bodies: Body[], atk: Map<string, number>,
           e.slam = null;
         }
       } else if ((e.slamT -= dt) <= 0 && tgt) {
-        e.slamT = angry ? SLAM_EVERY_2 : SLAM_EVERY;
+        e.slamT = angry ? (d.rooms ? ROOM_BOSS.slamEvery2 : SLAM_EVERY_2) : SLAM_EVERY;
         e.slam = { x: tgt.x, y: tgt.y, t: SLAM_WARN };
+      }
+      // rooms, phase 1: a ring of shots now and then (more to dodge than one slam)
+      if (d.rooms && !angry && !e.slam && tgt && (e.cd = (e.cd ?? ROOM_BOSS.ringEvery) - dt) <= 0) {
+        e.cd = ROOM_BOSS.ringEvery;
+        for (let k = 0; k < ROOM_BOSS.ring; k++) { const ak = (k / ROOM_BOSS.ring) * Math.PI * 2 + Math.random() * 0.5, r0 = ENEMY_R[e.kind] + 6; spitAt(d, e.x + Math.cos(ak) * r0, e.y + Math.sin(ak) * r0, ak, fx); }
       }
       if (angry && !e.p2) { e.p2 = true; fx.push({ t: 'phase2', x: e.x, y: e.y }); } // once: the boss turns red
     }

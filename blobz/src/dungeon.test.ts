@@ -3,7 +3,7 @@ import { KEYS } from './i18n';
 import {
   AIM_WARN, BITE_TIME, CLASS_MOVE_COOLDOWN, DUNGEON_TIMER_ENABLED, CLASS_WEAPONS, BITE_WARN, bossHp, BURST, BURST_DMG, BURST_GAP, BURST_SPREAD, CLASS_HP, CLASSES, DASH_TIME, DASH_WARN, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, floorDmg, actMul, GH, GW,
   HEAL_BOLT, heroMods, refresh, inSwing, isWall, ITEMS, itemOf, KO_SECONDS, LEVEL_XP, LOOT_SECONDS, makeFloor, makeGoo, newRun as newRunAny, POTION_HP, roomCracks, REGEN_EVERY,
-  ITEM_ICON, ITEM_SLOTS, collideWalls, lootReplaces, skillIcon, skillOf, unstick, inDoorway, roomTiles, roomGap, ROOM_TUNE, ROOM_STUB, ROOM_TRANS, ROOM_WALK_IN, roomSpecials, EARLY_ROOMS, ROOM_T, ROOMS_ENABLED, ROOMS, ROOM_W, MINIBOSS_ROOM, SPAWN_WARN, READY_SECONDS, makeRoom, roomType, roomClear, diffFloor, enterFloor, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
+  ITEM_ICON, ITEM_SLOTS, collideWalls, ROOM_BOSS, lootReplaces, skillIcon, skillOf, unstick, inDoorway, roomTiles, roomGap, ROOM_TUNE, ROOM_STUB, ROOM_TRANS, ROOM_WALK_IN, roomSpecials, EARLY_ROOMS, ROOM_T, ROOMS_ENABLED, ROOMS, ROOM_W, MINIBOSS_ROOM, SPAWN_WARN, READY_SECONDS, makeRoom, roomType, roomClear, diffFloor, enterFloor, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
 } from './dungeon';
 import { cleanVillage, createState, DUNGEON_ENABLED, newVillage, villageOf, PICK_TIMER_ENABLED, ENTRANCE_R, entranceOf, makePuzzles, makeTrees, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
 
@@ -611,7 +611,7 @@ describe('dungeon', () => {
         const d = newRun(30 + room, { a: 'sword', b: 'bow', c: 'staff' }, 2, true);
         if (room > 1) { enterFloor(d, 30 + room, room, 3); }
         const T = d.map.dt!, bs = [body('a', 2 * T, d.map.start.y), body('b', 3 * T, d.map.start.y), body('c', 4 * T, d.map.start.y)];
-        for (const h of Object.values(d.heroes)) h.inv = 999;
+        for (const h of Object.values(d.heroes)) { h.inv = 999; h.atkCd = 1e9; } // nobody kills a monster before we count
         run1(d, bs, undefined, 1.2 + SPAWN_WARN + 0.1);
         const alive = d.enemies.filter((e) => e.kind !== 2);
         const specials = alive.filter((e) => e.kind === 3 || !e.calm).length;
@@ -676,6 +676,19 @@ describe('dungeon', () => {
       collideWalls(f, o, 14);
       expect(o.x).toBe(15 + 14); // pressed against the strip, not a whole tile away
       expect(o.vx).toBe(0);
+    });
+    it('tougher rooms (Stefan: too easy): boss health x1.4, a ring of shots in phase 1, more monsters later', () => {
+      const d = newRun(28, { a: 'sword' }, 1, true);
+      enterFloor(d, 28, ROOMS, 1); clearCover(d);
+      expect(d.bossMax).toBe(Math.round(bossHp(1, 1) * ROOM_BOSS.hp));
+      const T = d.map.dt!, a = [body('a', 4 * T, 18 * T)];
+      d.heroes.a.inv = 999; d.heroes.a.atkCd = 1e9;
+      run1(d, a, undefined, 2.2);
+      const boss = d.enemies.find((e) => e.kind === 2)!;
+      boss.slamT = 99; boss.cd = 0.05; d.spit = [];
+      run1(d, a, undefined, 0.2);
+      expect(d.spit.length).toBeGreaterThanOrEqual(ROOM_BOSS.ring);
+      expect(makeRoom(3, 8, 1).waves![0].length).toBeGreaterThan(makeRoom(3, 1, 1).waves![0].length);
     });
     it('an open loot card holds the door (it never follows the team into the next room)', () => {
       const d = newRun(27, { a: 'sword', b: 'bow' }, 1, true);
