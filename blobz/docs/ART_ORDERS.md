@@ -46,7 +46,7 @@ ChatGPT works only on N-orders with status TO DO (next: N-42). ChatGPT fills eve
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
 | N-42 | TO DO (FIRST) | Ranger class icon: bow with drawn string + nocked arrow, EXACT 16x16 + 32x32 | `art/dungeon/icons/bow-16.png`, `bow-32.png` |
-| N-43 | TO DO | 12 new blob hats/caps (hats only, no ears/horns), sizes L (max 11x5) + M (max 9x4) in 16x8 cells | `src/blob.ts` hat sprites (Art converts to the hat tables) |
+| N-43 | TO DO | 12 new blob hats/caps (hats only, no ears/horns), 3 sizes S (max 8x4) / M (max 10x5) / L (max 14x6) in 16x8 cells | `src/blob.ts` hat sprites (Art converts to the hat tables) |
 | N-44 | TO DO | Dungeon room props in 0x72 DungeonTileset II style: 2 barrels, standing + wall torch (2 flame frames each), 2 bone piles, skull decal, cobweb, puddle (16x32 cells) | `art/dungeon/props/*` |
 | N-37 | DONE (received 2026-11-15, not exact 8x: real art px ~10 src px, native ~214x29; sampled to 140x28 -> art/lobby/party-platform-140.png) | Lobby party platform, EXACT 140x28 art px (shown 2x) | `art/lobby/party-platform.png` |
 | N-38 | DONE (received 2026-11-15, 937x1678 = 3.9 src px per art px; 240x430 -> art/bg/start-240.png) | Start/loading background, village scene, EXACT 240x430 art px portrait (shown 2x) | `art/title.png` |
@@ -420,14 +420,16 @@ forehead or the sides of the head. 1 px dark outline around each hat.
 12 hats, in this order: 1 low baseball cap (bill pointing right), 2 beanie, 3 headband, 4 bandana (knot at the side),
 5 cowboy hat, 6 small top hat, 7 small crown, 8 sailor cap, 9 small chef toque, 10 small wizard hat, 11 cap worn
 sideways (bill pointing left), 12 flower crown (small flowers on a green ring).
-Each hat in TWO sizes, each drawn natively at its size (NOT one scaled):
-- L: at most 11 art px wide and 5 art px tall
-- M: at most 9 art px wide and 4 art px tall
-EXACT LAYOUT (so it can be cut automatically): a grid of 4 columns x 6 rows of cells, each cell EXACTLY 16 x 8 art px,
-with EXACTLY 4 art px of magenta between cells and around the edge. Rows 1, 3, 5 = the L versions of hats 1-4, 5-8,
-9-12; rows 2, 4, 6 = the M versions of the same hats right below them. In every cell the hat is centred horizontally
-and its bottom row is the cell's bottom row (anchor = bottom centre).
-Canvas: 4*16 + 5*4 = 84 x 6*8 + 7*4 = 76 art px, delivered EXACTLY 672 x 608.
+Each hat in THREE sizes (the game has three head widths: 6, 8 and 12 art px), each drawn natively at its size (NOT
+one scaled from another):
+- L (head 12 px wide): 12-14 art px wide, at most 6 art px tall
+- M (head 8 px wide): 8-10 art px wide, at most 5 art px tall
+- S (head 6 px wide): 6-8 art px wide, at most 4 art px tall
+EXACT LAYOUT (so it can be cut automatically): a grid of 4 columns x 9 rows of cells, each cell EXACTLY 16 x 8 art px,
+with EXACTLY 4 art px of magenta between cells and around the edge. Hats 1-4 use rows 1-3 (row 1 = L, row 2 = M,
+row 3 = S), hats 5-8 rows 4-6 (L, M, S), hats 9-12 rows 7-9 (L, M, S); each hat's three sizes are in the same column.
+In every cell the hat is centred horizontally and its bottom row is the cell's bottom row (anchor = bottom centre).
+Canvas: 4*16 + 5*4 = 84 x 9*8 + 10*4 = 112 art px, delivered EXACTLY 672 x 896.
 ```
 
 ### N-44 Dungeon room props (0x72 DungeonTileset II style)
