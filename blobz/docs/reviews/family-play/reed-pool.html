@@ -114,8 +114,13 @@ function showSetup() {
 ['bridge', 'bank'].forEach(id => el(id).onclick = () => {
   if (phase !== 'caught') return;
   bed = id; phase = 'ready'; el('travel').value = 0;
-  try { localStorage.setItem(storageKey, bed); } catch {}
-  announce('Det blommar! Vill du prova den andra bryggan? Ni kan byta roller.');
+  let message = 'Det blommar! Vill du prova den andra bryggan? Ni kan byta roller.';
+  try {
+    localStorage.setItem(storageKey, bed);
+  } catch {
+    message = 'Det blommar! Du kan leka vidare. Det gick inte att spara den här gången.';
+  }
+  announce(message);
   el('launch').focus();
 });
 showSetup();
