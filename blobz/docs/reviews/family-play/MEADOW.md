@@ -58,3 +58,5 @@ Open [reed-pool.html](reed-pool.html) locally in a browser. The standalone, shar
 **Clay-bank checkpoint · 18 November 2026.** The [clay-bank handoff](CLAY-BANK.md) includes the four-shot outcome table, a tabletop rehearsal, an animated ramp and host/save acceptance cases. Clay remains a design study pending voluntary replay at the reed pool. The next independent resource design is the glowcap hollow, where carrying and setting down light should reveal a route a partner can follow.
 
 **Glowcap checkpoint · 18 November 2026.** The [glowcap-hollow handoff](GLOWCAP-HOLLOW.md) turns the existing [shared-screen study](glowcap.html) into a host-authoritative carry-and-scout activity. Its persistent reward is a picnic clearing and shortcut. The loose cap remains an activity prop, outside the ordinary resource inventory.
+
+**Progression checkpoint · 18 November 2026.** The [meadow progression spine](PROGRESSION.md) defines reed seedpods, soft clay and glow spores as capability discoveries with distinct verbs, cottage trophies and cross-resource return projects. They stay outside the ordinary resource bank and growing quest bars.
