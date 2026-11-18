@@ -41,6 +41,8 @@ After the picnic discovery, the family chooses one visible project for the next 
 
 Choosing a project changes the next expedition. It does not consume the discovery tokens. Completing one leaves the other two available for later sessions. Do not present all three before the picnic, when the family has no memory of the ingredients.
 
+Prototype [Lantern stepping stones](RETURN-PROJECTS.md) first. Its [shared-screen rehearsal](lantern-path.html) combines the two clearest learned verbs, leaves a shortcut after every correct step and can be completed solo without changing its rules.
+
 ## What tiering up changes
 
 - **Tier 0** offers gathering, a carry chest and the broken crossing.

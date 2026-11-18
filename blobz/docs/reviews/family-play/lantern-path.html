@@ -1,0 +1,19 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Blobz · Lantern path study</title><style>
+:root{background:#191923;color:#fff7e6;font:17px/1.4 system-ui;--panel:#292b39;--edge:#707789}*{box-sizing:border-box}body{margin:auto;max-width:38rem;padding:1rem}h1{font-size:1.7rem}.panel{padding:.8rem;margin:.7rem 0;background:var(--panel);border:1px solid var(--edge);border-radius:.7rem}
+button{min-height:46px;margin:.25rem;padding:.55rem;font:inherit;color:inherit;background:#3b4353;border:1px solid #8992a7;border-radius:.45rem}button:disabled{opacity:.45}.roles{display:grid;gap:.7rem}@media(min-width:32rem){.roles{grid-template-columns:1fr 1fr}}
+.gaps{display:flex;gap:.7rem;justify-content:center}.gap{width:64px;height:64px;display:grid;place-items:center;background:#46362f;border:3px solid #3f2631;border-radius:50%;font-size:2rem}.fired{background:#ffc93c;color:#3f2631;box-shadow:0 0 0 4px #fff7e6}.status{min-height:3.2rem}output{display:block;padding:.55rem;background:#20222d;min-height:3rem}
+</style><h1>Lantern stepping stones</h1><p>One player reveals the next clay shape. The other shapes the cup. Swap jobs after finishing the path.</p>
+<div class="gaps"><div id="gap0" class="gap">?</div><div id="gap1" class="gap">?</div></div>
+<div class="roles"><section class="panel"><h2>Light keeper</h2><button id="reveal">Place Glowcap</button><output id="clue">The bowl is dark.</output></section>
+<section class="panel"><h2>Clay shaper</h2><button id="round">Shape round ●</button><button id="point">Shape pointed ◆</button><output id="result">Wait for the light.</output></section></div>
+<p id="status" class="status" aria-live="polite">Light the first bowl.</p><button id="again" hidden>Build another pattern</button>
+<script>
+const $=id=>document.getElementById(id),patterns=["rr","rp","pr","pp"];let route="",stage=0,revealed=false,last="",complete=false;
+try{complete=localStorage.getItem("blobz-lantern-path-v1")==="lit"}catch{}
+function start(){const choices=patterns.filter(p=>p!==last);route=choices[Math.floor(Math.random()*choices.length)];last=route;stage=0;revealed=false;$("again").hidden=true;$("status").textContent=complete?"The evening shortcut is saved. Build a practice pattern.":"Light the first bowl.";draw()}
+function draw(){for(let i=0;i<2;i++){const g=$("gap"+i);g.className="gap"+(i<stage?" fired":"");g.textContent=i<stage?(route[i]==="r"?"●":"◆"):"?"}$("reveal").disabled=revealed||stage>=2;$("round").disabled=!revealed||stage>=2;$("point").disabled=!revealed||stage>=2}
+$("reveal").onclick=()=>{revealed=true;$("clue").textContent=route[stage]==="r"?"The light shows a round cup ●.":"The light shows a pointed cup ◆.";$("result").textContent="Shape the cup to match.";draw()};
+function shape(value){if(!revealed||stage>=2)return;if(route[stage]!==value){$("result").textContent="The cup slumps and stays soft. Reshape it.";$("status").textContent="The light keeper keeps the symbol visible.";return}stage++;revealed=false;$("result").textContent="The cup fires into a glowing step!";if(stage===2){complete=true;$("status").textContent="The lit shortcut reaches the picnic clearing.";try{localStorage.setItem("blobz-lantern-path-v1","lit")}catch{$("status").textContent+=" It will last only for this visit."}$("again").hidden=false}else{$("status").textContent="Swap jobs and move together to bowl 2.";$("clue").textContent="Carry the Glowcap forward."}draw()}
+$("round").onclick=()=>shape("r");$("point").onclick=()=>shape("p");$("again").onclick=start;start();
+</script></html>
