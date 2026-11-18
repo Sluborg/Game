@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reed pool · Blobz design test</title>
+<style>
+* { box-sizing: border-box }
+body { margin: auto; max-width: 28rem; padding: 1rem; background: #faf7e9; color: #263e34; font: 1rem/1.4 system-ui,sans-serif }
+h1 { margin: 0; font-size: 1.8rem }
+h2 { margin: 0; font-size: 1.15rem }
+section { margin: .7rem 0; padding: .8rem; border: 1px solid #8d9d83; border-radius: .6rem }
+button { padding: .6rem .9rem; margin: .35rem .25rem 0 0; min-height: 44px; font: inherit; border-radius: .45rem; border: 1px solid #446451; color: #193729; background: #fffdf5 }
+button[aria-pressed=true] { color: white; background: #31583e }
+button:disabled { opacity: .5 }
+p { margin: .35rem 0 }
+progress { width: 100%; accent-color: #25735e }
+</style>
+<h1>Reed pool</h1>
+<p>Launch from the reeds. Flip the gate to send the seedpod to a waiting catcher. Share the controls or play both jobs.</p>
+<section><h2>Upstream</h2><button id="launch">Launch raft</button></section>
+<section><h2>At the fork</h2><p id="route"></p><button id="flip">Turn gate</button></section>
+<section><h2>Downstream</h2><p>Choose where to wait.</p>
+<button id="willow">Willow dock</button><button id="pebble">Pebble dock</button></section>
+<progress id="travel" max="100" value="0" aria-label="Distance travelled"></progress>
+<p id="status" role="status"></p>
+<section id="garden"><h2>Flower bed</h2><p id="flower"></p>
+<div id="plant"><button id="bridge">Plant by the bridge</button><button id="bank">Plant by the bank</button></div></section>
+<script>
+const el = id => document.getElementById(id);
+const docks = ['Willow', 'Pebble'];
+const storageKey = 'reed-pool-design.flower';
+let bed = '';
+try {
+  const saved = localStorage.getItem(storageKey);
+  if (['bridge', 'bank'].includes(saved)) bed = saved;
+} catch {}
+let phase = 'ready', gate = 0, catcher = 1, destination = 0, started = 0;
+const forkMs = 2500, dockMs = 5000;
+
+function draw() {
+  el('flip').disabled = !['ready', 'approach', 'eddy'].includes(phase);
+  el('launch').disabled = !['ready', 'eddy'].includes(phase);
+  el('launch').textContent = phase === 'eddy' ? 'Relaunch from eddy' : 'Launch raft';
+  el('route').textContent = 'Gate points to ' + docks[gate] + ' dock.';
+  ['willow', 'pebble'].forEach((id, i) => el(id).setAttribute('aria-pressed', String(i === catcher)));
+  el('plant').hidden = phase !== 'caught';
+  el('flower').textContent = bed ? 'A bounce flower grows by the ' + bed + '.' : 'An empty patch by each path.';
+}
+function announce(message) { el('status').textContent = message; draw(); }
+function advance(now) {
+  const elapsed = now - started;
+  if (phase === 'approach' && elapsed >= forkMs) {
+    destination = gate;
+    phase = 'drift';
+    announce('Past the fork! The pod is drifting to ' + docks[destination] + '.');
+  }
+  if (phase === 'drift' && elapsed >= dockMs) {
+    phase = catcher === destination ? 'caught' : 'eddy';
+    announce(phase === 'caught' ? 'Caught! The catcher chooses a flower bed.' : 'The pod circles in an eddy. Move the catcher or turn the gate and relaunch.');
+  }
+  el('travel').value = Math.min(100, elapsed * 100 / dockMs);
+}
+function tick(now) {
+  advance(now);
+  if (['approach', 'drift'].includes(phase)) requestAnimationFrame(tick);
+}
+function sync() { if (['approach', 'drift'].includes(phase)) advance(performance.now()); }
+el('launch').onclick = () => {
+  phase = 'approach'; started = performance.now(); el('travel').value = 0;
+  announce('Raft away! The gate can still turn.'); requestAnimationFrame(tick);
+};
+el('flip').onclick = () => {
+  sync();
+  if (el('flip').disabled) return;
+  gate = 1 - gate; draw();
+};
+['willow', 'pebble'].forEach((id, i) => el(id).onclick = () => { sync(); catcher = i; draw(); });
+['bridge', 'bank'].forEach(id => el(id).onclick = () => {
+  bed = id; phase = 'ready'; el('travel').value = 0;
+  try { localStorage.setItem(storageKey, bed); } catch {}
+  announce('Bloom! Swap jobs and try the other current. The next seed can move your flower.');
+});
+announce('The catcher starts at Pebble. The gate points to Willow.');
+</script>
+</html>
