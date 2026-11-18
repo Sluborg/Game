@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blobz · Rogue card study</title>
+<style>
+:root{color-scheme:dark;background:#19151e;color:#fff7e6;font:16px/1.5 system-ui;--edge:#59445f;--panel:#282032;--accent:#e6c2ff}
+*{box-sizing:border-box}
+body{margin:0}
+main{max-width:58rem;margin:auto;padding:clamp(1rem,4vw,2.6rem)}
+header p,small,.muted{color:#dbcbdf}
+h1,h2,p{margin-top:0}
+h1{font-size:clamp(2rem,7vw,3.6rem);line-height:1.02;margin-bottom:1rem}
+h2{font-size:1.2rem;margin-bottom:.6rem}
+.eyebrow{font-weight:750;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);font-size:.75rem}
+.panel{padding:1rem;background:var(--panel);border:1px solid var(--edge);border-radius:1rem}
+.layout{display:grid;gap:1rem;align-items:start}
+@media(min-width:720px){.layout{grid-template-columns:1fr 1.15fr}}
+.controls,.cards{display:flex;flex-wrap:wrap;gap:.5rem}
+.controls{margin:.75rem 0}
+button{font:inherit;color:inherit;border:1px solid var(--edge);background:#342843;border-radius:.6rem;min-height:44px;padding:.4rem .7rem;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+button[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:#4f3468}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid #ffc93c;outline-offset:3px}
+.cards button{flex:1 1 6rem;display:grid;justify-items:center;align-content:start;gap:.3rem;min-height:7rem;padding:.6rem .35rem}
+.icon{width:48px;height:48px;image-rendering:pixelated;background:#ff00ff}
+[data-size="36"] .icon{width:36px;height:36px}
+canvas.arena{width:100%;height:auto;display:block;background:#211929;border:1px solid var(--edge);border-radius:.5rem;image-rendering:pixelated}
+.status{min-height:3em;margin:.55rem 0;color:#f4ddff}
+.notes{margin-top:1rem}
+label[for=notes]{display:block;margin:.8rem 0 .35rem;font-weight:700}
+textarea{width:100%;background:#1e1828;color:inherit;border:1px solid var(--edge);border-radius:.5rem;font:inherit;padding:.65rem;resize:vertical}
+legend{padding:0 .35rem}
+fieldset{border:1px solid var(--edge);margin:1rem 0 0;border-radius:.5rem;padding:.6rem}
+.key{display:flex;flex-wrap:wrap;gap:.85rem;font-weight:650;font-size:.85rem;margin:.5rem 0}
+.key span::before{content:"";display:inline-block;background:var(--chip);width:.75rem;height:.75rem;margin-right:.35rem}
+</style>
+</head>
+<body>
+<main>
+<header>
+<p class="eyebrow">Blobz dungeon · family play study</p>
+<h1>Give the Tank some room</h1>
+<p>Two goo are crowding your friend. A third waits farther out. Pick a Rogue card, then try Dagger whirl.</p>
+</header>
+<div class="layout">
+<section class="panel" aria-labelledby="cards-title">
+<h2 id="cards-title">Choose a card</h2>
+<p class="muted">Start with the labels covered. Point to a card and say what you think it will change.</p>
+<div class="controls">
+<button id="labels" aria-pressed="false">Show labels</button>
+<button id="size" aria-pressed="false">36 px view</button>
+<button id="preview">Play icon frames</button>
+</div>
+<div class="cards" data-size="48">
+<button id="a" aria-label="Card A" aria-pressed="false"><canvas class="icon" width="24" height="24" aria-hidden="true"></canvas><strong>Card A</strong><small hidden></small></button>
+<button id="b" aria-label="Card B" aria-pressed="false"><canvas class="icon" width="24" height="24" aria-hidden="true"></canvas><strong>Card B</strong><small hidden></small></button>
+</div>
+<fieldset>
+<legend>Replay the same room</legend>
+<div class="controls">
+<button id="base" aria-pressed="true">No upgrade</button>
+<button id="swap">Swap card positions</button>
+</div>
+</fieldset>
+</section>
+<section class="panel" aria-labelledby="room-title">
+<h2 id="room-title">Try the whirl</h2>
+<canvas id="arena" class="arena" width="256" height="216" aria-label="Encounter with the Rogue, the Tank and three goo">Use Dagger whirl to compare the number of enemies hit and their knockback.</canvas>
+<div class="key" aria-hidden="true"><span style="--chip:#b18cff">Rogue</span><span style="--chip:#ff8a3d">Tank</span><span style="--chip:#6cbf45">Goo</span></div>
+<p id="result" class="status" aria-live="polite">Room ready. Choose a card or try the baseline.</p>
+<div class="controls">
+<button id="cast">Dagger whirl</button>
+<button id="reset">Reset room</button>
+</div>
+</section>
+</div>
+<section class="panel notes" aria-labelledby="test-title">
+<h2 id="test-title">Family playtest</h2>
+<ol>
+<li>At 48 px, ask each player which still icon they would pick to reach the far goo. Ask them to explain their choice in their own words.</li>
+<li>Reveal the names and try both cards in the room. Ask what changed for the Tank and which choice they would make again.</li>
+<li>Swap positions, cover the labels and repeat at 36 px. Play the icon frames once after the first prediction. Record any answer that changes.</li>
+</ol>
+<label for="notes">Player’s exact words and observed choice</label>
+<textarea id="notes" rows="3" placeholder="Example prompt: What happened when you used it?" autocomplete="off"></textarea>
+<details>
+<summary>Mechanics and study simplifications</summary>
+<p>One Bigger whirl card raises the 72 world-pixel radius to 93.6. One Harder push card raises knockback from 200 to 300 and also applies to basic hits in the game. Each whirl hit still does 22 damage and stuns for 0.6 seconds. The game's whirl checks distance to the edge of each enemy.</p>
+<p>The room holds starting positions fixed between casts. The arrows and travel distances illustrate relative knockback. Enemy AI, damage, cooldowns and collision physics are outside this study.</p>
+<p><a href="SKILL-CARDS.md">Skill cards handoff</a> · <a href="../../../src/dungeon.ts">Dungeon mechanics</a></p>
+</details>
+</section>
+</main>
+<script>
+"use strict";
+const byId = (id) => document.getElementById(id);
+const plum = "#3f2631";
+const art = {
+  whirl: { name: "Bigger whirl", sv: "Större virvel", radius: 93.6, push: 200 },
+  push: { name: "Harder push", sv: "Hårdare knuff", radius: 72, push: 300 },
+  base: { name: "No upgrade", radius: 72, push: 200 }
+};
+const cards = [byId("a"), byId("b")];
+const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+let order = ["whirl", "push"];
+let selected = "base";
+let showLabels = false;
+let small = false;
+let iconTimer = 0;
+let animation = 0;
+const result = byId("result");
+const ctx = byId("arena").getContext("2d");
+const rogue = { x: 107, y: 126 };
+const tank = { x: 161, y: 103 };
+const goos = [{ x: 136, y: 93 }, { x: 167, y: 124 }, { x: 181, y: 73 }];
+const gooRadius = 7;
+
+function rect(c, x, y, w, h, color) {
+  c.fillStyle = color;
+  c.fillRect(Math.round(x), Math.round(y), w, h);
+}
+
+function pixelLine(c, points, color, width = 1) {
+  for (let n = 1; n < points.length; n++) {
+    const [x, y] = points[n - 1];
+    const [a, b] = points[n];
+    const steps = Math.max(Math.abs(a - x), Math.abs(b - y), 1);
+    for (let i = 0; i <= steps; i++) rect(c, x + (a - x) * i / steps, y + (b - y) * i / steps, width, width, color);
+  }
+}
+
+function blob(c, x, y, color, shade, kind) {
+  rect(c, x - 5, y - 6, 11, 13, plum);
+  rect(c, x - 7, y - 3, 15, 9, plum);
+  rect(c, x - 4, y - 5, 9, 11, color);
+  rect(c, x - 6, y - 2, 13, 7, color);
+  rect(c, x - 4, y + 4, 9, 2, shade);
+  if (kind === "rogue" || kind === "tank") rect(c, x - 5, y - 3, 11, 2, shade);
+  rect(c, x - 3, y, 2, 2, "#fff7e6");
+  rect(c, x + 2, y, 2, 2, "#fff7e6");
+  rect(c, x - 2, y + 1, 1, 1, plum);
+  rect(c, x + 3, y + 1, 1, 1, plum);
+}
+
+function drawIcon(index, frame) {
+  const c = cards[index].querySelector("canvas").getContext("2d");
+  rect(c, 0, 0, 24, 24, "#ff00ff");
+  if (order[index] === "whirl") {
+    const top = frame % 2 ? 3 : 5;
+    const ring = [[2,14],[2,11],[6,top+2],[12,top],[18,top+2],[21,10],[21,14],[16,18],[8,19],[4,17]];
+    pixelLine(c, ring, plum, 3);
+    pixelLine(c, ring.map(([x,y]) => [x+1,y+1]), "#fff7e6");
+    rect(c, 4, 15, 3, 2, "#ffc93c");
+    rect(c, 5, 13, 2, 2, "#ffc93c");
+    rect(c, 9, 9, 7, 6, plum);
+    rect(c, 8, 11, 9, 4, "#b18cff");
+    rect(c, 10, 11, 2, 2, "#fff7e6");
+    rect(c, 14, 11, 2, 2, "#fff7e6");
+    return;
+  }
+  pixelLine(c, [[2,17],[10,9]], plum, 3);
+  pixelLine(c, [[5,15],[10,10]], "#fff7e6");
+  pixelLine(c, [[3,13],[6,16]], "#ffc93c");
+  rect(c, 1, 17, 3, 3, plum);
+  const x = frame % 2 ? 17 : 15;
+  rect(c, x, 8, 7, 7, plum);
+  rect(c, x - 1, 10, 9, 4, plum);
+  rect(c, x, 10, 7, 4, "#6cbf45");
+  rect(c, x + 2, 10, 1, 2, "#fff7e6");
+  rect(c, x + 5, 10, 1, 2, "#fff7e6");
+  pixelLine(c, [[10,17],[19,17],[17,15]], plum, 2);
+  pixelLine(c, [[11,17],[19,17],[17,19]], "#ffc93c");
+}
+
+function refreshCards() {
+  clearInterval(iconTimer);
+  cards.forEach((button, i) => {
+    const key = order[i];
+    const title = showLabels ? art[key].name : "Card " + "AB"[i];
+    button.querySelector("strong").textContent = title;
+    const translation = button.querySelector("small");
+    translation.hidden = !showLabels;
+    translation.textContent = showLabels ? art[key].sv : "";
+    button.setAttribute("aria-label", title);
+    button.setAttribute("aria-pressed", String(selected === key));
+    drawIcon(i, 0);
+  });
+  byId("base").setAttribute("aria-pressed", String(selected === "base"));
+}
+
+function reach(goo, radius) {
+  return Math.hypot(goo.x - rogue.x, goo.y - rogue.y) - gooRadius <= radius;
+}
+
+function circle(x, y, radius, color, dashed) {
+  ctx.strokeStyle = color;
+  ctx.setLineDash(dashed ? [3, 3] : []);
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawRoom(progress = 0, fired = false) {
+  rect(ctx, 0, 0, 256, 216, "#231b2d");
+  for (let y = 0; y < 216; y += 16) {
+    for (let x = 0; x < 256; x += 16) {
+      rect(ctx, x + ((y / 16) % 2) * 3, y, 1, 1, "#6a516f");
+    }
+  }
+  if (fired) {
+    circle(rogue.x, rogue.y, 72, "#987aa6", true);
+    circle(rogue.x, rogue.y, art[selected].radius, "#e3c7fd", false);
+  }
+  blob(ctx, tank.x, tank.y, "#ff8a3d", "#b65129", "tank");
+  blob(ctx, rogue.x, rogue.y, "#b18cff", "#7050a4", "rogue");
+  for (const goo of goos) {
+    const hit = fired && reach(goo, art[selected].radius);
+    const distance = hit ? art[selected].push * 0.18 * progress : 0;
+    const angle = Math.atan2(goo.y - rogue.y, goo.x - rogue.x);
+    const x = goo.x + Math.cos(angle) * distance;
+    const y = goo.y + Math.sin(angle) * distance;
+    if (hit) {
+      const a = Math.round(x), b = Math.round(y);
+      pixelLine(ctx, [[goo.x, goo.y], [a, b]], "#ffc93c");
+      rect(ctx, goo.x - 1, goo.y - 1, 3, 3, "#ffc93c");
+    }
+    blob(ctx, x, y, "#6cbf45", "#377a42", "goo");
+    if (hit) rect(ctx, x + 6, y - 9, 2, 2, "#ffc93c");
+  }
+}
+
+function reset(message) {
+  cancelAnimationFrame(animation);
+  byId("cast").disabled = false;
+  drawRoom();
+  result.textContent = message;
+}
+
+cards.forEach((button, i) => button.addEventListener("click", () => {
+  selected = order[i];
+  refreshCards();
+  reset("Card " + "AB"[i] + " selected. Try Dagger whirl.");
+}));
+byId("base").addEventListener("click", () => {
+  selected = "base";
+  refreshCards();
+  reset("Baseline selected. Try Dagger whirl.");
+});
+byId("labels").addEventListener("click", (event) => {
+  showLabels = !showLabels;
+  event.currentTarget.setAttribute("aria-pressed", String(showLabels));
+  event.currentTarget.textContent = showLabels ? "Hide labels" : "Show labels";
+  refreshCards();
+});
+byId("size").addEventListener("click", (event) => {
+  small = !small;
+  event.currentTarget.setAttribute("aria-pressed", String(small));
+  event.currentTarget.textContent = small ? "48 px view" : "36 px view";
+  document.querySelector(".cards").dataset.size = small ? "36" : "48";
+});
+byId("swap").addEventListener("click", () => {
+  order.reverse();
+  selected = "base";
+  refreshCards();
+  reset("Card positions swapped. Choose again.");
+});
+byId("preview").addEventListener("click", () => {
+  clearInterval(iconTimer);
+  let frame = 1;
+  cards.forEach((_, i) => drawIcon(i, frame));
+  if (reduced.matches) return;
+  iconTimer = setInterval(() => {
+    frame = (frame + 1) % 2;
+    cards.forEach((_, i) => drawIcon(i, frame));
+    if (frame === 0) clearInterval(iconTimer);
+  }, 300);
+});
+byId("reset").addEventListener("click", () => reset("Room reset. Try the same card again or choose another."));
+byId("cast").addEventListener("click", () => {
+  byId("cast").disabled = true;
+  result.textContent = "Whirl!";
+  const upgrade = art[selected];
+  const hit = goos.filter((goo) => reach(goo, upgrade.radius)).length;
+  const outcome = selected === "push" ? "The two close goo travel farther, clearing more space by the Tank."
+    : selected === "whirl" ? "The wider ring also catches the far goo."
+    : "The far goo stays outside the ring.";
+  const start = performance.now();
+  function step(now) {
+    const progress = reduced.matches ? 1 : Math.min(1, (now - start) / 380);
+    drawRoom(progress, true);
+    if (progress < 1) {
+      animation = requestAnimationFrame(step);
+      return;
+    }
+    result.textContent = hit + " of 3 goo hit. " + outcome;
+    byId("cast").disabled = false;
+  }
+  animation = requestAnimationFrame(step);
+});
+refreshCards();
+drawRoom();
+</script>
+</body>
+</html>
