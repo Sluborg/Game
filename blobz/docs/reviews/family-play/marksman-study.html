@@ -1,0 +1,27 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Blobz · Marksman card study</title><style>
+:root{background:#171a23;color:#fff7e6;font:16px/1.4 system-ui;--panel:#282d3a;--edge:#747d91}*{box-sizing:border-box}body{margin:auto;max-width:45rem;padding:1rem}h1{font-size:1.8rem}
+.panel{background:var(--panel);border:1px solid var(--edge);border-radius:.7rem;padding:.8rem;margin:.8rem 0}.cards,.actions{display:flex;gap:.4rem;flex-wrap:wrap}
+button{min-height:44px;margin:.2rem;padding:.55rem;font:inherit;color:inherit;background:#394455;border:1px solid #8792a8;border-radius:.45rem}button[aria-pressed=true]{outline:3px solid #ffc93c;background:#325e78}button:disabled{opacity:.45}
+.cards button{flex:1;min-width:8rem}.icon{display:block;width:48px;height:48px;margin:auto;image-rendering:pixelated;background:#ff00ff}.room{position:relative;height:13rem;background:#212838;border:1px solid var(--edge)}
+.blob{position:absolute;width:30px;height:24px;border:3px solid #3f2631;border-radius:50%;background:#6cbf45}.mark{position:absolute;color:#ffc93c;font-size:1.5rem;font-weight:900}.status{min-height:3rem}small{display:block;color:#ddd}textarea{width:100%;min-height:5rem;background:#1c202b;color:inherit}
+</style><h1>Line them up or spread them out</h1><p>Two goo stand in one lane. Five stand apart for Volley. Choose which Marksman card helps each shot.</p>
+<section class="panel"><div class="cards"><button id="pierce-card"><canvas class="icon" width="24" height="24"></canvas><b>Card A</b><small hidden>Pierce · Genomträngande pil</small></button><button id="targets-card"><canvas class="icon" width="24" height="24"></canvas><b>Card B</b><small hidden>Two more targets · Två mål till</small></button></div>
+<div class="actions"><button id="labels">Show labels</button><button id="frames">Play icon frames</button><button id="swap">Swap positions</button></div></section>
+<section class="panel"><div id="room" class="room"></div><p id="status" class="status" aria-live="polite">Pick a card, then try both shot types.</p><div class="actions"><button id="basic" disabled>Fire basic bolt</button><button id="volley" disabled>Fire Volley</button><button id="reset">Reset room</button></div></section>
+<section class="panel"><h2>Family test</h2><ol><li>With labels covered, ask which card they want when enemies stand behind each other.</li><li>Fire both shot types with each card. Ask whether extra Volley targets meant extra hits on one boss.</li><li>Swap card positions, play the icon frames once and repeat.</li></ol>
+<textarea aria-label="Player's exact words"></textarea><details><summary>Study rules</summary><p>Pierce lets a basic bolt continue through one additional enemy. Two more targets raises Volley from three to five separate targets. It does not add repeated Volley hits to one enemy. Damage, cooldowns and enemy movement are omitted.</p></details></section>
+<script>
+const $=id=>document.getElementById(id),cards=[$("pierce-card"),$("targets-card")],magenta="#ff00ff",plum="#3f2631";let order=["pierce","targets"],choice="",frame=0,timer;
+function r(c,x,y,w,h,col){c.fillStyle=col;c.fillRect(x,y,w,h)}function icon(canvas,k,f=0){const c=canvas.getContext("2d");r(c,0,0,24,24,magenta);
+ if(k==="pierce"){r(c,2+f,10,17,4,plum);r(c,4+f,11,14,2,"#fff7e6");r(c,17+f,8,5,8,plum);r(c,18+f,10,3,4,"#ffc93c");r(c,8,5,3,3,"#6cbf45");r(c,13,17,3,3,"#6cbf45")}
+ else{for(const y of [4,10,16]){r(c,3+f,y,13,3,plum);r(c,5+f,y+1,10,1,"#fff7e6");r(c,15+f,y-1,4,5,plum)}r(c,20,4,2,2,"#6cbf45");r(c,20,10,2,2,"#6cbf45");r(c,20,16,2,2,"#6cbf45")}}
+function cardsDraw(){cards.forEach((b,i)=>{const k=order[i];icon(b.querySelector("canvas"),k,frame);b.setAttribute("aria-pressed",String(choice===k));b.querySelector("b").textContent=b.querySelector("small").hidden?"Card "+String.fromCharCode(65+i):(k==="pierce"?"Pierce":"Two more targets")})}
+function room(hits=[]){$("room").replaceChildren();const pts=[[22,43],[54,43],[124,24],[170,58],[112,120],[185,128],[45,145]];pts.forEach((p,i)=>{const e=document.createElement("i");e.className="blob";e.style.left=p[0]+"px";e.style.top=p[1]+"px";$("room").append(e);if(hits.includes(i)){const m=document.createElement("b");m.className="mark";m.textContent="✦";m.style.left=p[0]+8+"px";m.style.top=p[1]-8+"px";$("room").append(m)}})}
+function draw(){cardsDraw();$("basic").disabled=!choice;$("volley").disabled=!choice}
+cards.forEach((b,i)=>b.onclick=()=>{choice=order[i];draw()});$("labels").onclick=()=>{cards.forEach(b=>b.querySelector("small").hidden=!b.querySelector("small").hidden);draw()};$("swap").onclick=()=>{order.reverse();draw()};
+$("frames").onclick=()=>{clearInterval(timer);let n=0;timer=setInterval(()=>{frame=(frame+1)%2;cardsDraw();if(++n===4)clearInterval(timer)},180)};
+$("basic").onclick=()=>{const hits=choice==="pierce"?[0,1]:[0];room(hits);$("status").textContent="Basic bolt hits "+hits.length+(choice==="pierce"?" enemies in one line.":" enemy and stops.")};
+$("volley").onclick=()=>{const n=choice==="targets"?5:3;room([2,3,4,5,6].slice(0,n));$("status").textContent="Volley selects "+n+" separate targets. Each receives one bolt."};
+$("reset").onclick=()=>{room();$("status").textContent="Pick a card, then try both shot types."};room();draw();
+</script></html>

@@ -84,3 +84,9 @@ Run both cards with labels covered, swap their positions, and play the authored 
 Open [tank-study.html](tank-study.html). It compares Safe charge with Stun in a fixed lane where a front goo ends the charge early and a ranged goo has already fired. Safe charge adds 0.4 seconds of dodge state, which can outlast the early collision. Stun adds 0.6 seconds to the sword’s normal 0.25-second stun.
 
 Run both cards with labels covered and swap their positions. The study asks whether the family predicts protection from the first card and longer enemy control from the second. It fixes one incoming shot at 20 damage and reduces continuous movement to steps. Real projectile timing, charge distance and whether Safe charge adds noticeable protection in ordinary rooms remain open.
+
+## Playable Marksman comparison · 18 November 2026
+
+Open [marksman-study.html](marksman-study.html). It puts two goo in one lane and five other goo apart. Pierce lets the basic bolt hit two enemies in line. Two more targets leaves the basic bolt unchanged and raises Volley from three to five separate targets.
+
+Run both shot buttons with each label hidden. Ask directly whether the Volley card would add hits against one boss. The study makes target count explicit while omitting damage, cooldowns and moving enemies. Real positioning and whether a teammate can deliberately line up two enemies remain open.
