@@ -9,14 +9,16 @@ body { margin:auto;max-width:38rem;padding:1rem;background:#211e29;color:#fff5d8
 h1 { font-size:1.6rem;margin:0 }
 fieldset { border:1px solid #817d85;border-radius:.5rem;margin:.8rem 0;padding:.6rem }
 button { font:inherit;font-weight:650;background:#efe1b3;color:#312738;border:0;border-radius:.4rem;padding:.65rem;margin:.2rem;min-height:46px }
+button:focus-visible { outline:3px solid #91e5ff;outline-offset:2px }
+button[aria-pressed=true] { background:#a7e5ca }
 button:disabled { opacity:.55 }
 output { display:block;min-height:3rem;padding:.6rem;background:#393541 }
 </style>
 <h1>Lysgläntan</h1>
-<p>En skalbagge försvann vid vägskälet. En av er sköter lyssvampen. Den andra letar efter spår. Spelar du själv kan du göra båda.</p>
+<p>Hitta skalbaggen! En lyser med svampen. Den andra väljer stig. Spelar du själv gör du båda.</p>
 <fieldset><legend>Lyssvampen</legend><button data-light="root">Ställ vid roten</button><button data-light="rock">Ställ vid stenen</button><output id="clue"></output></fieldset>
 <fieldset><legend>Stigfinnaren</legend><button data-path="arch">Följ bågen</button><button data-path="fork">Följ klykan</button><button id="search">Sök under lövet</button><output id="trail" aria-live="polite"></output></fieldset>
-<button id="again" hidden>Byt roller och leta igen</button>
+<button id="again" hidden>Leta igen</button>
 <script>
 const landmarks = ['root','rock'];
 const symbols = ['arch','fork'];
@@ -35,12 +37,17 @@ function start() {
   stage = 0;
   light = null;
   again.hidden = true;
-  trail.textContent = picnic ? 'Picknickplatsen finns kvar. Vart har skalbaggen gått idag?' : 'En fjäder ligger vid roten. Var börjar spåret?';
+  trail.textContent = picnic ? 'Picknickplatsen finns kvar. Lys vid roten och leta efter nya spår.' : 'Börja vid roten. Ställ svampen där och titta efter spår.';
   draw();
 }
 function draw() {
   const revealed = light === landmarks[stage];
-  clue.textContent = light === null ? 'Svampen lyser i handen.' : 'Svampen står vid '+names[light]+'. '+(stage < 2 && revealed ? 'Tassavtrycken leder mot '+names[route[stage]]+'.' : 'Inga färska spår syns här.');
+  clue.textContent = light === null ? 'Svampen lyser i handen.' : 'Svampen står vid '+names[light]+'. '+(stage < 2 && revealed ? 'De små spåren leder mot '+names[route[stage]]+'.' : 'Inga färska spår syns här.');
+  if (stage >= 2) clue.textContent = stage === 2 ? 'Spåret slutar vid lövet.' : 'Svampen lyser över picknickplatsen.';
+  document.querySelectorAll('[data-light]').forEach(button => {
+    button.disabled = stage >= 2;
+    button.setAttribute('aria-pressed', String(light === button.dataset.light));
+  });
   search.disabled = stage !== 2;
   document.querySelectorAll('[data-path]').forEach(button => button.disabled = stage >= 2);
 }
@@ -49,12 +56,13 @@ function follow(path) {
   if (light !== landmarks[stage]) {
     trail.textContent = 'Här är mörkt. Kan du lysa vid '+names[landmarks[stage]]+'?';
   } else if (path !== route[stage]) {
-    trail.textContent = 'Stigen slutar vid en stubbe. Du är tillbaka där spåret delade sig.';
+    trail.textContent = 'Stigen slutar vid en stubbe. Prova den andra stigen.';
   } else {
     stage++;
-    trail.textContent = stage === 1 ? 'Vid stenen delar sig spåret igen. Var ska vi lysa nu?' : 'Ett stort löv rör sig. Någon gömmer sig där!';
+    trail.textContent = stage === 1 ? 'Vid stenen delar sig spåret igen. Var ska vi lysa nu?' : 'Ett stort löv rör sig. Sök under lövet!';
   }
   draw();
+  if (stage === 2) search.focus();
 }
 document.querySelectorAll('[data-light]').forEach(button => button.onclick = () => {light = button.dataset.light; draw();});
 document.querySelectorAll('[data-path]').forEach(button => button.onclick = () => follow(button.dataset.path));
@@ -63,11 +71,15 @@ search.onclick = () => {
   stage = 3;
   picnic = true;
   try { localStorage.setItem('blobz-glowcap-study-v1','picnic'); } catch {}
-  trail.textContent = 'Skalbaggen rullar fram ett bär! Ni har hittat gläntans picknickplats.';
+  trail.textContent = 'Skalbaggen rullar fram ett bär! Picknickplatsen är hittad! Vill ni byta roller och leta igen?';
   again.hidden = false;
   draw();
+  again.focus();
 };
-again.onclick = start;
+again.onclick = () => {
+  start();
+  document.querySelector('[data-light="root"]').focus();
+};
 start();
 </script>
 </html>
