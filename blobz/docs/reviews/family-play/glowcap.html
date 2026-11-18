@@ -59,12 +59,19 @@ function follow(path) {
     trail.textContent = 'Stigen slutar vid en stubbe. Prova den andra stigen.';
   } else {
     stage++;
+    if (stage === 1) document.querySelector('[data-light="rock"]').focus();
     trail.textContent = stage === 1 ? 'Vid stenen delar sig spåret igen. Var ska vi lysa nu?' : 'Ett stort löv rör sig. Sök under lövet!';
   }
   draw();
   if (stage === 2) search.focus();
 }
-document.querySelectorAll('[data-light]').forEach(button => button.onclick = () => {light = button.dataset.light; draw();});
+document.querySelectorAll('[data-light]').forEach(button => button.onclick = () => {
+  light = button.dataset.light;
+  trail.textContent = light === landmarks[stage]
+    ? 'Nu syns spåren! Följ den stig som svampen lyser upp.'
+    : 'Lys vid ' + names[landmarks[stage]] + ' och leta där.';
+  draw();
+});
 document.querySelectorAll('[data-path]').forEach(button => button.onclick = () => follow(button.dataset.path));
 search.onclick = () => {
   if (stage !== 2) return;
