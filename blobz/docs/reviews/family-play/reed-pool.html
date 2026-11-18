@@ -36,6 +36,7 @@ try {
   if (['bridge', 'bank'].includes(saved)) bed = saved;
 } catch {}
 let phase = 'ready', gate = 0, catcher = 1, destination = 0, started = 0;
+let hiddenAt = null;
 const forkMs = 2500, dockMs = 5000;
 
 function draw() {
@@ -62,14 +63,30 @@ function advance(now) {
   }
   el('travel').value = Math.min(100, elapsed * 100 / dockMs);
 }
+let frame;
 function tick(now) {
+  if (hiddenAt !== null) return;
   advance(now);
-  if (['approach', 'drift'].includes(phase)) requestAnimationFrame(tick);
+  if (['approach', 'drift'].includes(phase)) frame = requestAnimationFrame(tick);
 }
-function sync() { if (['approach', 'drift'].includes(phase)) advance(performance.now()); }
+function sync() {
+  if (hiddenAt === null && ['approach', 'drift'].includes(phase)) advance(performance.now());
+}
+document.addEventListener('visibilitychange', () => {
+  const now = performance.now();
+  if (document.hidden && hiddenAt === null && ['approach', 'drift'].includes(phase)) {
+    advance(now);
+    cancelAnimationFrame(frame);
+    if (phase === 'approach' || phase === 'drift') hiddenAt = now;
+  } else if (!document.hidden && hiddenAt !== null) {
+    started += now - hiddenAt;
+    hiddenAt = null;
+    frame = requestAnimationFrame(tick);
+  }
+});
 el('launch').onclick = () => {
   phase = 'approach'; started = performance.now(); el('travel').value = 0;
-  announce('Flotten är på väg! Du kan fortfarande vrida grinden.'); requestAnimationFrame(tick);
+  announce('Flotten är på väg! Du kan fortfarande vrida grinden.'); frame = requestAnimationFrame(tick);
 };
 el('flip').onclick = () => {
   sync();
