@@ -77,8 +77,12 @@ search.onclick = () => {
   if (stage !== 2) return;
   stage = 3;
   picnic = true;
-  try { localStorage.setItem('blobz-glowcap-study-v1','picnic'); } catch {}
   trail.textContent = 'Skalbaggen rullar fram ett bär! Picknickplatsen är hittad! Vill ni byta roller och leta igen?';
+  try {
+    localStorage.setItem('blobz-glowcap-study-v1','picnic');
+  } catch {
+    trail.textContent += ' Det gick inte att spara den här gången.';
+  }
   again.hidden = false;
   draw();
   again.focus();
