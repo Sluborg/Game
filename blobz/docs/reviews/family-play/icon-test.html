@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blobz – ikontest</title>
+<style>
+  :root { color-scheme: light; font: 100%/1.5 system-ui, sans-serif; color: #3f2631; background: #f5ead6; }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; }
+  main { max-width: 36rem; margin: auto; padding: 1rem; }
+  h1, h2 { line-height: 1.15; margin: 0 0 .5rem; }
+  p { margin: 0 0 1rem; }
+  .panel { background: #fff9ec; border: 2px solid #dbc39a; border-radius: .65rem; padding: 1rem; }
+  .row { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; }
+  .preview { justify-content: space-around; min-height: calc(var(--art-size) + 2 * var(--pad) + 10px); margin-bottom: .75rem; }
+  #badge { display: grid; place-items: center; box-sizing: content-box; padding: var(--pad); border: 3px solid #e3a520; border-radius: 50%; box-shadow: 0 0 0 2px #8a5a12, inset 0 -4px 0 #0003; }
+  #test { --art-size: 48px; --pad: 8px; }
+  #test.compact { --art-size: 36px; --pad: 6px; }
+  #sprite { width: var(--art-size); height: var(--art-size); image-rendering: pixelated; }
+  label { display: block; font-weight: 650; }
+  textarea, select, button { font: inherit; color: inherit; }
+  textarea { display: block; width: 100%; min-height: 4.5rem; resize: vertical; background: #fff; margin: .25rem 0 .75rem; border: 1px solid #9b806b; border-radius: .3rem; padding: .5rem; }
+  select, button { min-height: 44px; padding: .4rem .75rem; border: 1px solid #89644b; border-radius: .35rem; background: #fff4df; }
+  button { font-weight: 650; cursor: pointer; }
+  button.primary { background: #3f2631; color: #fff9ec; }
+  button:disabled { opacity: .55; cursor: default; }
+  :focus-visible { outline: 3px solid #285385; outline-offset: 2px; }
+  .intro-actions { align-items: end; }
+  #answer-key { padding-inline-start: 1.5rem; }
+  #answer-key li { margin-bottom: .75rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Blobz – ikontest</h1>
+  <p id="loading" role="status">Läser in bilderna …</p>
+  <section id="intro" class="panel" hidden>
+    <p>Du får se fyra ikoner från spelet. Vad tror du händer om du väljer varje ikon? Svara med egna ord. Om du är osäker kan du skriva ”Vet inte”.</p>
+    <p>Testa en spelare i taget. Låt spelaren svara själv eller skriv ner svaret ordagrant.</p>
+    <div class="row intro-actions">
+      <div>
+        <label for="size">Ikonstorlek</label>
+        <select id="size">
+          <option value="48">48 px – stående</option>
+          <option value="36">36 px – kompakt liggande</option>
+        </select>
+      </div>
+      <button id="start" class="primary">Börja testet</button>
+    </div>
+  </section>
+  <section id="test" class="panel" hidden>
+    <h2 id="step" tabindex="-1"></h2>
+    <div class="row preview">
+      <div id="badge" role="img" aria-label="Ikon att tolka">
+        <canvas id="sprite" aria-hidden="true"></canvas>
+      </div>
+      <button id="play" hidden>Spela rörelsen</button>
+    </div>
+    <form id="response">
+      <label id="prompt" for="guess"></label>
+      <textarea id="guess" maxlength="400" autocomplete="off"></textarea>
+      <div class="row">
+        <button id="next" class="primary" type="submit">Spara första svaret</button>
+        <button id="unchanged" type="button" hidden>Samma svar</button>
+      </div>
+    </form>
+  </section>
+  <section id="result" class="panel" hidden>
+    <h2 id="done" tabindex="-1">Dina svar är klara</h2>
+    <label for="report">Svarsblad</label>
+    <textarea id="report" rows="7" readonly></textarea>
+    <div class="row">
+      <button id="copy">Kopiera svaren</button>
+      <button id="restart">Ny spelare</button>
+      <span id="copy-status" role="status"></span>
+    </div>
+    <details>
+      <summary>Visa facit</summary>
+      <ol id="answer-key"></ol>
+      <p>Låt spelaren prova effekten i spelet. Fråga sedan: ”Vad hände när du använde den?” Skriv ner vad spelaren säger.</p>
+    </details>
+  </section>
+</main>
+<script>
+  // Original PNGs, embedded so the test also works as a single offline file.
+  // art/marksman-target-study.png (64px cells); art/impact-recovery.png (24px cells).
+  const sources = {
+    marksman: 'iVBORw0KGgoAAAANSUhEUgAAAQAAAACACAMAAADTa0c4AAAAkFBMVEX/AP/8+s770aT89q74XNP4qbH89JL5mdX33G0vBTA5B0RIBUpCBDok4pgi2pZhCmYilZcjDSYc15Yjr5gWAhahD6Hb3tv4+/YZ45aj3cUoOFNb0KnDF8QuL00tXWAnrqQp6aUZsZYslnZaUGqkYir6zh8ck5Ud2qTSolIgpqNZJSHBeS3loiBdUId2TC/XQbXlWJAHAAALkElEQVR42u1cDZeiOg9G8StgKy0o1RHUUVFHnf3//+5NijqOKwjl7ux77+mzZ8+eZXiSNJTQZpI6joWFhYWFhYWFhYWFhYWFhYWFhYWFhcU/glbbcTtN+B3H7f5+udty2r0qfLf3lE+XK/Ebw3X6jRS5TucZv9tzqol1nac3olN+ZvxOVUOLMMA/zxzgVJRboH/gtH9m/NrWZpOtX8Tv9yq9W93nL0sHZ1G3Cr85eoOG/AL/VRu/fl2e86vRgfDtguf7UInpPzBvfK8aH2/0n16GSnxUA0/4vu97w2pjx5sBGOfsayAjDzheCcRLEzSVsQcbPA/kN4GFowePPbnxoj98qR88YIjod7783apCjIFPYqY4l1c5Pp/G+H/OghcW+LNJ/IY3InV+J9BTE83nLybBKGFxruj7CDyp9TOWlvPnoPBGhFzc3zjylnHMtNhKHhiqGM1QXCmWywF9gQbAV6UWCBx/PGWPN37x5WxU+gDpRp478P4y+9IvSvmXGxVn74/6GZkln9B9ASLSt4k7MTR8ckB0FaBHVeIAgWIEQBRP8UGxBwcstUMJ5Q7wURHPNV3oaFskYE36GdlU/gDIcpq6CueK96AfrVIcTYyiufNNyGiz3W7RdE9M8igHfIkPUZIcpZ+Yv2TIR7fiH7koeAQeStkCxBOZeyrLblqGu6X2iZJchWUeALVsqQsuIxUodQ/D/LHi392hxAOwe3u78hdwUyQUm16uig+UF8E0hjH9pNVyXbcFg8Fgv98f95PJBLQZqAjQi6CkdoBHLgUKIkspfzfAbWkIFHM8oowoy/wkTb9eV4qoCoOTQkueO6DvtidaSBzrf9xeL/zQ1u0HV7FeGEL4TP/Fina77SLP1TTXRT7KclFirOXSv/gHtLzuZNK/RQOcASd0Cn48zkK7hQL2EpiSQkqejvILOyGZIgcUzQBxOp22HqwTCLkMgiALbhooAit0qxKMl88AnChLodQSbq+Q2B63HyI7JwKNACm/R7ffZhDy6dGhIumNb5dxKodAojGqb0+nIazP0ReLPtt6ULeQrx3A0QwlM7IXVhSU8H2AnQyLDBC0cEhTwbIMPxaBvHsF0AHoTXyJgKPAkjgMkgag+FLgjTkdbROCzcTSk2iDLNafj5QsJwcu8ZM9urtMDsAfSQpTONjyb8kwoW8mvXFyEdB3Y+iFeWDjMsxESRgGHAEGO4mvjgySLwckK4yn9H2Xi0yUzAA/WLCljoGo+WvVAoIMoghA+kuMHyYrVE7Bmy8OXzEAUtRPEVTKLKmymIIwxJdNrnAi5999vMDx/6vseqGEuUImPqcgg2+XSd4qzLKg7DM2hkW4wBuRncHoka+lBl4J34FA34iGZsE3/WTVit5MGDuvgXM5yPRrDPlyBi8cyBtoVrmAOTJzKtw/KeRn2YX/QnOibwzSbzeSQRrZi7UkGUoCHhSh2MNFfbWlIFxxXbhRiMzxQoD/yMwxul0elfPhJqDg8gv9Q9CrEbzv24O60l8v5S0sLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCws/iYal593qIL8X4ym5edN+X8dg06n0RAGyP53TwF8iA1r/XtmDqTSr7RSadFz+DBrxNf6q9WJ/xH7QRd5ypWpBJBS14iCYQcR6Ud+U/3clD/kcTx5XSRdYj/yyYXlRc6l+nWZbBP9vKBKupKAa5m0NDPAo+pnrhRnZgY01r+8Vo8bOpBPL1XicuUZ8Sc4halK0WgKjUFS0Ta9BCb6Rw6sxXuY258ZecDnnKUJo7JpIwFDVJ3MpPKYER/OkVinCVeo/1CTP4ePAcBmMoE0SyHLzBxAAxDAuNjJV70iz0cgce4lTAlWlw9iMICPyXTNhGBM1H8Aw81229tsziILlcrYyswBsFIqTDnVyZvNAKnU+zvGYMZrPsHP7Xaw/1yfZ8jHhyDrORAXzu7H5rSFhbcM0YZM8kPljqlv8EPq1OFqcYCoKme0Xt+aT3xdZs3k4jCrMYB2p+N+nk7bkYCVpA4SGQbV9VP7QavXh9MpGsGC6drpVWmVegkgWIQhldlWfYCw92ASr693w2Kx0FW+tSZAr+X+Op4+kDI8hCGVWNfgd1xa8vWcucj1hwcMANnBJIYTfB+o9tav5j8xwJl73Jy/rPUBRIUa3zu03B7t3KK8qhh8ahiozncfFvzURSh+rEi4jaHreAKnxmx9QMdtsuBv0q9O0L4yp3ednhttT5sqFfnP0bDZtiHGDsSTxJzfd3t9J/qTc63b8Am3y/gw2H4cP9emocJp48v3p1vT3cqdz0X84qxSRMFLgOGOgU52+AEMGh9KUMjvtsXxtDV/eX8IbTpWoJEHnKdnB3Q7ritOUeGXZgzp+3uDpIRPOYl0aMwffek3OvxgqPWDV8jHD293XGzeCNgbbWmF2WLS8ZOl5r8bemAokI/rOdMnAO9L2g+qwrWk2y+NrnOxzHupuTAKkb54i2PqG5ae0Wp0nPMpJWDEp45+nVOQzzverqHboxAIT5q6xoFOqlTd0o+pN8y5a4+kpExcofX+EVoOrqn8XRxPded03ZSCbj4bwy7Xz9iqdIFGbdUgYvGbl/AF2L3qnb+i0+mM99vtSYj4qmw+w70IdY3iJAgqLxE7HfowUTe6J/hS6ZZ6Visz2ck7zwEm4o3OtMBNkUyfPN9Ov+3GLddtRfv9frO5NJB/cwDOfmrKXXNZ5MJul7rQ0dHUvQ3UiX7EaQcXB+BmkLqiE/liAP0u9X671O2Ncu4MooSM4unrrE6XJOQN4z2SpSVMJ1OBIvhMyrTwO4cO/8DtJ4h1NH/8Wd5Ir1LxagD5DBidEELc2rPH6ADqnZ9Beef3o5xOhAYJOAvBqe1cJSDrZIVQAHWenwDWIqVe+Ajtf3/atnn5MACdI/EsTFArusAYvpaHQ4WF0ghXw/cxgGYAHRwgU+TXeYnz9lFwPEmHD6gU+bWzSmiJBxI/YJSXkUHBDOi5pSssfxFiBOUsDDKjMAxhSCFA8w3ouKUP87xwEMDchL/SadGdLNGPLig+I2iEEkLdO10nqXNnAGSUU8moI9qELyBcLHRLtdnvd8ALKSmDEgr5HaflfmLALPixD4kQSWK8VaaUBokw5g8TyokY8wHIeDo+pfieDkT49RpVF/qfA4bczWAjDFM5TTMx/w/wxAf9FsE4mUW7jF9/exBNAev1xPg16Ltuj5KCJoG6Cn6iOmCEMMueX3zQa/nbgXlGtDRl1XOaVXj0GqaTquAXLt/aFEvNo2mvKLXUbVYhg6tkp2eaTPGq/laATlM67gcncb6/Nva9OvvgAUaT74/6wq+SMu4/eU/mvpfnQsxGj7tb3MikVZO9QpzEZzv+eg18zed1so24jek7/eiyl9L8WZ4OquKDh4M4fS/R+pHfMSkSmoPEzThuR9ZVpzU4w/P59quhOTB9vuCu3iqOdnLbraBsDOqnM9wSr3IIoGj8q52/h5RNeUMH7BJhFkKoQmOqi3yqx7aR98inEw5rJZzbDhzbg70HdD7ehE61qlVi08FNcR+2OPMpG6JPkjMukWF0wB9tRow2ImQA1+kMVXMdi3vh4+YYx6k+CbBmNqjTxS8SJVR8WMdLpU8YNCyRURM6iJCpCrmAZxiyqU7FqPoVIvpXoufpecWVPp+sbomMOJ32g6OY5FVmZhUqGEIYV0KwZYMSGSkSblpiQzmKNBGaXz8heNpuNvvJOppJBoyHZltJqvEROP+ZDMyKpDhDB0jk163xyfkS9aMQdICB/sgBiscpJWTM9DvDRagPwmPqEBglQ1I6S1GxJT+YzSA6CE/nQ4PMTP+SQgDqX5i9AvlBdKvFwTCbQx6UOzoe7zAzC6IrAuUzDPWv0P4dJVTM9FOl74GSMQvDbARAcDjk5+AZ8tfIz4KDMf98yCqc41cqotkxdJeD7Iw3iX6u35g/bKjfwsLCwsLCwuI/iP8BbcX/8NQH078AAAAASUVORK5CYII=',
+    impact: 'iVBORw0KGgoAAAANSUhEUgAAAGAAAAAwCAIAAABhdOiYAAAGnUlEQVR4nO2YfWgTZxzHvy1GO4LdZoSBwjYRTtEVk+LazrpViwXJ2YI9MPlDkVGEjTmKkjmhYKkgtLU4/KM4HDJd/0kdoVC9oXToxLarL7SOoNSw4hRaJpi6qqnWTLM/fvHJk8vd5V7S6mh/HOFenudzv+/3eb3kJZDAXGhHPn8hCtLrymO6w7K0lEGiIHW0LrTpkShIr8Vleq/Wq+1Iy+cRAOx7RISZsYn5Uhrw1Xc1a5WxIy1pkBwJ7dj3GMCOfY/XF7msyeNTsVDdwuvIl/qu5rJyz0DfkGoxm9JSQ4yBqje5LHvEUmnZI+h3e5tB7pSVe9YuK6Q7V9o65UhItbAdaXmKVUwUpPVFrt5wVO6pEau6tV6pnzqA9UWu6k0uAB95V4pV3SxRszStVzB3rt95BGCgb0jHIFbLgrR5ims5EhIhyT01/cGQ3COJVRJMCqPCIiQAveGo7F0p99QAEKu6ybuc2KRwx2BiFqSp9CBC0OU6v0Ttb60r8ahDJxz1Xc3U1NaADFsa8O3eXsG7k7X7ZOZjUFq+4lqOhNiIANAfDDXUxZGjLdLaZYVl5Z76rubSgM/s9ESFLbsDq9KUPYhlQ5WR3vKWpyQApQEfgN3bKwBcv/PIlDZqfLGq27I7PMqctAQSqodXqO1rqfYKtedvRqKTf5+/GWk63ukVapUl77dqERQ0r1DbdLyz6XgnAfWYGXUTd0/2tVQn7p6kfFjFrHXtS1PvQXzj8+uFzRmEAcHNsvoNqDpxlAZ81rpzZiaqaYiCxODKVYyPZOk2GiO04/AAII8sRDoQRCsr9+gA5UhIrJIa6pKX/cFQQx0O2XMnI5OUNLFNUpD1DOJjoG9IFWRh5WbJ8b7wjcbfBNCyR/j2uwg/ceRko8Amx0xpfDG9IcazFOPi6Nb97Gmutn+ZL6Xd5plfo73hKICGuniu3GGvQMaQP7p1/+mDD5z+S1RGucyrhhwJUWsP9A3RCgKgsXKssXLs9MEHuUpXkXpH68LecJTckSMhORLKlTuxYAWdEC1TGstBFCRDPQjpm4X6ruajW/c3Vo6t3jCfOW0qv20HFiukioIkXy7De9+A++gFsGPf42nqoey9pw8+2HZgMV2SNPZUjoSyG0TWNFaOAVi9YT4AwsmXy2IXz2ZKNZgWy4A/5wt0tC6cVncydeGVNGp7kqZnUCxY4fRfEgWJKCVNtalHF8+y86RfJndrlEfThSVaPVF12s4e9w9TNzSSAM0Pzo1b2P3YxbPOjVv4hjc6SZMM/ubN3543XVgCq9aAc1z8dMAsJyfBkmHSyB28Umd0iPGjlFxnXZEopnLK9JrBYcmmq198Qicl3/9uti6vjiXG56P5qcF/IrBtuFeofRL8TPHUwk6failoM3/oq6Mji0Eqn0W5TvE1GmQkH6PL/KwNQxvF2RxzBmWJ2WXQVPyp2Sqm5yC3w8Nf3ogb+sP8TeAwdxY43jLOMWeQ2+G5duXhi8IauhzvP+Ote8eCNjucqfhTptAsh69rNB/jS+Aah/v54AdP//z63+eD7Bj96cM1DreppdQap2OkL7f5MKA+x9wc9KKwxvH+5wBWuPx0Z9G6alMEy5zty9flNh8eqMMxPUkzxP8u3A4PO/RL8hqN/uXK4nY0yH5txgqX3wiH16M1v9yOBnVoRAgMtx9+mQ9gKjzi9nlUUUxd/N6PdMdcDxrvP8NfMorZIA7To8Wh1g4MtyduHUvcOvasM6BofD4fXpUCcmWyn7kDYEHR8uiRXTxKR5fpVeyXE/+w8amzauivvkY4JOzne0NMGIDxc4OuvT+wkgY5geF2ADwHwFR4pMDXRoV1ONOyD1LkpFBlkGNEWFYOQRQExomNTrDEtDjKOShr3ll3K5ktv2hzcRS73HvThr0+R0cYgOiRFC1rPgwSK97pHDzFn/ChxUkZpJjJAIyfG3Tv9RhJgocEhtsV4wLAos3Fz5YGtKZG1SBCrHgnAB1h0x1Jg1QHPKmKjU4oGl8/FMJSJ6MT6DTnkSJsusOqm+LMw6tmL/nrj7xVX8UKJp2Dp/JWfQngScGkc/AUMMJ3acvZOJe+HRudKDCOSK9OQROHSYZKGOckexA1e+LWMSdAJwCclhKaCo8sKFquuAPAAgcAj2LJvHv12oxx5mlRLCeEdI94i41zbsSH3D7PS797PN1WIuQHbxjszvY5yWXe7fC89LsflnyseGw2IS2UBQ4yllQWZmcxO5zUPkjnC2UmE3rTYu5P+ywxu/5ytRBzBmWJ/wAfV4QTg3zQ7QAAAABJRU5ErkJggg=='
+  };
+  const cards = [
+    { source: 'marksman', row: 0, cell: 64, color: '#2f7fb8', time: [220, 220, 220, 220],
+      name: 'Genomträngande skott', effect: 'Ett vanligt skott går igenom den första fienden och kan träffa en till.' },
+    { source: 'marksman', row: 1, cell: 64, color: '#2f7fb8', time: [220, 220, 220, 220],
+      name: 'Två extra mål', effect: 'Salvan kan träffa två fiender till. Pilarna går till olika mål.' },
+    { source: 'impact', row: 0, cell: 24, color: '#b0503a', time: [650, 190, 220, 480],
+      name: 'Hårdare träffar', effect: 'Du gör 30 procent mer skada.' },
+    { source: 'impact', row: 1, cell: 24, color: '#3f9a4a', time: [650, 190, 220, 480],
+      name: 'Vänner kvicknar till snabbare', effect: 'En fallen vän reser sig automatiskt efter tre sekunder i stället för fem om helaren står upp när vännen faller.' }
+  ];
+  const el = Object.fromEntries([...document.querySelectorAll('[id]')].map(node => [node.id, node]));
+  const context = el.sprite.getContext('2d');
+  const frames = new Map();
+  let order, answers, index, phase, size, playing, hasPlayed;
+
+  async function prepareFrames() {
+    const images = Object.fromEntries(await Promise.all(Object.entries(sources).map(async ([key, data]) => {
+      const image = new Image();
+      image.src = 'data:image/png;base64,' + data;
+      await image.decode();
+      return [key, image];
+    })));
+    for (const card of cards) {
+      const row = [];
+      for (let column = 0; column < card.time.length; column++) {
+        const frame = document.createElement('canvas');
+        frame.width = frame.height = card.cell;
+        const pixels = frame.getContext('2d', { willReadFrequently: true });
+        pixels.drawImage(images[card.source], column * card.cell, card.row * card.cell, card.cell, card.cell,
+          0, 0, card.cell, card.cell);
+        const data = pixels.getImageData(0, 0, card.cell, card.cell);
+        for (let i = 0; i < data.data.length; i += 4) {
+          if (data.data[i] === 255 && data.data[i + 1] === 0 && data.data[i + 2] === 255) data.data[i + 3] = 0;
+        }
+        pixels.putImageData(data, 0, 0);
+        row.push(frame);
+      }
+      frames.set(card, row);
+    }
+  }
+
+  function shuffle(items) {
+    const shuffled = [...items];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+
+  function draw(frame) {
+    context.clearRect(0, 0, size, size);
+    context.imageSmoothingEnabled = false;
+    context.drawImage(frames.get(order[index])[frame], 0, 0, size, size);
+  }
+
+  function showCard() {
+    const card = order[index];
+    const afterMotion = phase === 'motion';
+    el.step.textContent = afterMotion ? `Med rörelse · ${index + 1} av ${order.length}` : `Ikon ${index + 1} av ${order.length}`;
+    el.badge.style.backgroundColor = card.color;
+    draw(0);
+    hasPlayed = false;
+    el.play.hidden = !afterMotion;
+    el.play.disabled = false;
+    el.play.textContent = 'Spela rörelsen';
+    el.prompt.textContent = afterMotion ? 'Vad tror du nu? Skriv också vad som fick dig att ändra dig.' : 'Vad tror du händer om du väljer den här ikonen?';
+    el.guess.value = '';
+    el.guess.required = !afterMotion;
+    el.guess.disabled = afterMotion;
+    el.next.textContent = afterMotion ? 'Spara nytt svar' : 'Spara första svaret';
+    el.next.disabled = afterMotion;
+    el.unchanged.hidden = !afterMotion;
+    el.unchanged.disabled = afterMotion;
+    el.step.focus();
+  }
+
+  function begin() {
+    size = Number(el.size.value);
+    order = shuffle(cards);
+    answers = order.map(() => ({}));
+    index = 0;
+    phase = 'still';
+    el.sprite.width = el.sprite.height = size;
+    el.test.classList.toggle('compact', size === 36);
+    el.intro.hidden = true;
+    el.test.hidden = false;
+    showCard();
+  }
+
+  async function playOnce() {
+    if (playing || hasPlayed) return;
+    playing = true;
+    el.play.disabled = true;
+    el.play.textContent = 'Spelar …';
+    const { time } = order[index];
+    for (let frame = 0; frame < time.length; frame++) {
+      draw(frame);
+      await new Promise(resolve => setTimeout(resolve, time[frame]));
+    }
+    draw(0);
+    playing = false;
+    hasPlayed = true;
+    el.play.textContent = 'Rörelsen visad';
+    el.guess.disabled = el.next.disabled = el.unchanged.disabled = false;
+    el.guess.focus({ preventScroll: true });
+  }
+
+  function finish() {
+    el.test.hidden = true;
+    el.result.hidden = false;
+    el.report.value = [
+      `Blobz – ikontest, ${size} px`,
+      ...order.map((card, i) => `${i + 1}. ${card.name}\nStillbild: ${answers[i].still}\nEfter rörelse: ${answers[i].motion}`)
+    ].join('\n\n');
+    el["answer-key"].replaceChildren(...order.map(card => {
+      const item = document.createElement('li');
+      const name = document.createElement('strong');
+      name.textContent = card.name;
+      item.append(name, document.createElement('br'), card.effect);
+      return item;
+    }));
+    el.done.focus();
+  }
+
+  function save(answer) {
+    answers[index][phase] = answer;
+    index++;
+    if (index === order.length) {
+      if (phase === 'motion') {
+        finish();
+        return;
+      }
+      phase = 'motion';
+      index = 0;
+    }
+    showCard();
+  }
+
+  el.start.addEventListener('click', begin);
+  el.play.addEventListener('click', playOnce);
+  el.response.addEventListener('submit', event => {
+    event.preventDefault();
+    if (phase === 'motion' && !hasPlayed) return;
+    const text = el.guess.value.trim();
+    if (!text) {
+      el.guess.focus();
+      return;
+    }
+    save(text);
+  });
+  el.unchanged.addEventListener('click', () => save('Samma svar'));
+  el.copy.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(el.report.value);
+      el['copy-status'].textContent = 'Kopierat.';
+    } catch {
+      el.report.select();
+      el['copy-status'].textContent = 'Svaren är markerade. Kopiera dem härifrån.';
+    }
+  });
+  el.restart.addEventListener('click', () => {
+    el.result.hidden = true;
+    el.result.querySelector('details').open = false;
+    el.report.value = el['copy-status'].textContent = '';
+    el["answer-key"].replaceChildren();
+    el.intro.hidden = false;
+    el.start.focus();
+  });
+
+  if (matchMedia('(orientation: landscape) and (max-height: 500px)').matches) el.size.value = '36';
+  prepareFrames().then(() => {
+    el.loading.hidden = true;
+    el.intro.hidden = false;
+  }).catch(() => {
+    el.loading.textContent = 'Bilderna kunde inte läsas in. Prova att öppna filen igen.';
+  });
+</script>
+</body>
+</html>
