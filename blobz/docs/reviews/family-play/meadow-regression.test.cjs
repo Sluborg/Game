@@ -57,6 +57,8 @@ function openPage(name, saved = new Map()) {
       button.focus();
       button.onclick();
     },
+    elapseWithoutFrame(ms) { now += ms; },
+    frameCount: () => frames.size,
     advance(ms) {
       now += ms;
       const pending = [...frames.values()];
@@ -129,3 +131,56 @@ test('reed pool: miss, set up solo retry, reload an unfinished trip', () => {
   game.advance(5000);
   assert.equal(game.get('plant').hidden, false);
 });
+
+test('reed pool: late dock choice keeps the miss visible and retry owns one timer', () => {
+  const game = openPage('reed-pool');
+  game.activate('launch');
+  game.elapseWithoutFrame(5000);
+  game.activate('willow');
+  assert.match(game.get('status').textContent, /snurrar tillbaka/);
+  assert.equal(game.get('plant').hidden, true);
+  assert.equal(game.get('willow').attributes['aria-pressed'], 'true');
+  game.activate('launch');
+  assert.equal(game.frameCount(), 1);
+  game.advance(5000);
+  assert.equal(game.get('plant').hidden, false);
+});
+
+test('reed pool: planting between frames keeps the next trip at the start', () => {
+  const game = openPage('reed-pool');
+  game.activate('willow');
+  game.activate('launch');
+  game.elapseWithoutFrame(5000);
+  game.activate('pebble');
+  assert.equal(game.get('plant').hidden, false);
+  game.activate('bridge');
+  game.advance(16);
+  assert.equal(game.get('travel').value, 0);
+});
+
+for (const prototype of ['glowcap', 'reed-pool']) {
+  test(prototype + ': a failed save explains what will survive a reload', () => {
+    const saved = new Map();
+    saved.set = () => { throw new Error('storage unavailable'); };
+    const game = openPage(prototype, saved);
+    if (prototype === 'glowcap') {
+      for (const lamp of ['root', 'rock']) {
+        game.activate(lamp);
+        game.activate(game.get('clue').textContent.includes('bågen') ? 'arch' : 'fork');
+      }
+      game.activate('search');
+      assert.match(game.get('trail').textContent, /gick inte att spara/);
+      game.activate('again');
+      assert.match(game.get('trail').textContent, /Picknickplatsen finns kvar/);
+      assert.doesNotMatch(openPage(prototype, saved).get('trail').textContent, /Picknickplatsen finns kvar/);
+    } else {
+      game.activate('willow');
+      game.activate('launch');
+      game.advance(5000);
+      game.activate('bridge');
+      assert.match(game.get('status').textContent, /gick inte att spara/);
+      assert.match(game.get('flower').textContent, /bron/);
+      assert.doesNotMatch(openPage(prototype, saved).get('flower').textContent, /bron/);
+    }
+  });
+}
