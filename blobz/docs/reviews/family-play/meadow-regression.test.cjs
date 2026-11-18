@@ -198,3 +198,25 @@ test('reed pool: the catcher can tell when to move and when to stay', () => {
   game.advance(2500);
   assert.equal(game.get('plant').hidden, false);
 });
+
+test('discovery recaps identify the reward and leave replay to the players', () => {
+  for (const [bed, place] of [['bridge', /bron/], ['bank', /stranden/]]) {
+    const pool = openPage('reed-pool');
+    pool.activate('willow');
+    pool.activate('launch');
+    pool.advance(5000);
+    pool.activate(bed);
+    assert.match(pool.get('status').textContent, place);
+    assert.doesNotMatch(pool.get('status').textContent, /andra bryggan|byta roller/i);
+    assert.equal(pool.get('launch').disabled, false);
+  }
+  const hollow = openPage('glowcap');
+  for (const lamp of ['root', 'rock']) {
+    hollow.activate(lamp);
+    hollow.activate(hollow.get('clue').textContent.includes('bågen') ? 'arch' : 'fork');
+  }
+  hollow.activate('search');
+  assert.match(hollow.get('trail').textContent, /picknickplats/i);
+  assert.doesNotMatch(hollow.get('trail').textContent, /byta roller|leta igen/i);
+  assert.equal(hollow.get('again').hidden, false);
+});

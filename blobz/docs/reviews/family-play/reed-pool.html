@@ -119,11 +119,11 @@ function showSetup() {
 ['bridge', 'bank'].forEach(id => el(id).onclick = () => {
   if (phase !== 'caught') return;
   bed = id; phase = 'ready'; el('travel').value = 0;
-  let message = 'Det blommar! Vill du prova den andra bryggan? Ni kan byta roller.';
+  let message = bed === 'bridge' ? 'Din studsblomma slog ut vid bron!' : 'Din studsblomma slog ut vid stranden!';
   try {
     localStorage.setItem(storageKey, bed);
   } catch {
-    message = 'Det blommar! Du kan leka vidare. Det gick inte att spara den här gången.';
+    message += ' Det gick inte att spara den här gången.';
   }
   announce(message);
   el('launch').focus();
