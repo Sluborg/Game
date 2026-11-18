@@ -74,16 +74,31 @@ el('launch').onclick = () => {
 el('flip').onclick = () => {
   sync();
   if (el('flip').disabled) return;
-  gate = 1 - gate; draw();
+  gate = 1 - gate;
+  showSetup();
 };
-['willow', 'pebble'].forEach((id, i) => el(id).onclick = () => { sync(); if (phase === 'caught') return; catcher = i; draw(); });
+function showSetup() {
+  if (phase === 'ready' || phase === 'eddy') {
+    announce(catcher === gate
+      ? 'Fångaren väntar vid ' + docks[catcher] + '. Släpp flotten!'
+      : 'Fångaren väntar vid ' + docks[catcher] + '. Vrid grinden dit eller välj ' + docks[gate] + '.');
+  } else {
+    draw();
+  }
+}
+['willow', 'pebble'].forEach((id, i) => el(id).onclick = () => {
+  sync();
+  if (phase === 'caught') return;
+  catcher = i;
+  showSetup();
+});
 ['bridge', 'bank'].forEach(id => el(id).onclick = () => {
   if (phase !== 'caught') return;
   bed = id; phase = 'ready'; el('travel').value = 0;
   try { localStorage.setItem(storageKey, bed); } catch {}
-  el('launch').focus();
   announce('Det blommar! Vill du prova den andra bryggan? Ni kan byta roller.');
+  el('launch').focus();
 });
-announce('Fångaren står vid Stenbryggan. Vrid grinden dit eller välj Pilbryggan.');
+showSetup();
 </script>
 </html>
