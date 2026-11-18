@@ -57,3 +57,18 @@ Draw only the three misleading cards first, plus Pierce as a visual foil for the
 Present each pair at real card size with the label covered. Ask “Which would you pick here?” Show the room and let the player point. Then reveal the label, play the encounter and ask “What happened when you used it?” Record the mistaken prediction verbatim. If both players predict five hits against one boss, redraw the Volley icon before expanding the set.
 
 Acceptance for Claude: verify every final label in Swedish and English against the active input or stat modifier. Check the card adjacent to its closest lookalike on a phone. Account for players who see only frame one. Leave the other twenty images until these four can be distinguished in play.
+
+## Checkpoint · Tank damage and Healer recovery · 18 November 2026
+
+![Sword impact on the left and ally recovery on the right](art/impact-recovery.gif)
+
+[Native frame sheet](art/impact-recovery.png). Each row contains four 24 × 24 cells, read left to right. The top row is Tank, the bottom row Healer. Frame one is the still card. On selection, play the four frames once. The GIF loops for review. Key out exactly RGB(255, 0, 255) before putting a cell over its class badge.
+
+| Card ID | Suggested label in English / Swedish | What to look for |
+|---|---|---|
+| `tank-charge` | Heavier hits / Hårdare träffar | One sword lands a heavy blow. The card gives a 1.3× damage multiplier. Hold the impact pose so the loop reads as force rather than faster attacks. |
+| `healer-revive` | Friends get up sooner / Vänner kvicknar till snabbare | A clock ticks as a flattened ally gets up. One copy held by a standing Healer when the ally falls shortens automatic recovery from five seconds to three. An aimed healing bolt already revives on contact. |
+
+**Phone test for Claude.** Show the still frame at 48 CSS px inside the existing badge, then at 36 px in short landscape. Cover the label and ask each player separately, “What changes when you pick this?” Write down their first answer. If they predict a faster swing, a stronger shield, or a healing spell they must aim, show the animation once and ask what changed their mind. A correction after playback identifies a still frame that needs another pass. Source sizes come from [dungeon.css](../../../src/dungeon.css) and the effects from [dungeon.ts](../../../src/dungeon.ts).
+
+The four priority card studies now cover Pierce, Volley, Tank damage and Healer recovery. Family recognition on a phone remains open. For the next independent meadow deliverable, develop the clay-bank discovery and its two ramp outcomes using the reed-pool replay criterion in [MEADOW.md](MEADOW.md).
