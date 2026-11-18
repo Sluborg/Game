@@ -184,3 +184,17 @@ for (const prototype of ['glowcap', 'reed-pool']) {
     }
   });
 }
+
+test('reed pool: the catcher can tell when to move and when to stay', () => {
+  const game = openPage('reed-pool');
+  game.activate('launch');
+  game.advance(2500);
+  assert.match(game.get('status').textContent, /Välj Pilbryggan/);
+  game.activate('willow');
+  assert.match(game.get('status').textContent, /Stanna vid Pilbryggan/);
+  game.activate('pebble');
+  assert.match(game.get('status').textContent, /Välj Pilbryggan/);
+  game.activate('willow');
+  game.advance(2500);
+  assert.equal(game.get('plant').hidden, false);
+});

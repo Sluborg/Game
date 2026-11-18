@@ -50,12 +50,16 @@ function draw() {
   el('flower').textContent = bed ? (bed === 'bridge' ? 'En studsblomma växer vid bron.' : 'En studsblomma växer vid stranden.') : 'Här kan ditt frö bli en blomma.';
 }
 function announce(message) { el('status').textContent = message; draw(); }
+function showLanding() {
+  const action = catcher === destination ? 'Stanna vid ' : 'Välj ';
+  announce('Förbi grinden! ' + action + docks[destination] + '.');
+}
 function advance(now) {
   const elapsed = now - started;
   if (phase === 'approach' && elapsed >= forkMs) {
     destination = gate;
     phase = 'drift';
-    announce('Förbi grinden! Möt fröet vid ' + docks[destination] + '.');
+    showLanding();
   }
   if (phase === 'drift' && elapsed >= dockMs) {
     cancelAnimationFrame(frame);
@@ -109,7 +113,8 @@ function showSetup() {
   sync();
   if (phase === 'caught') return;
   catcher = i;
-  showSetup();
+  if (phase === 'drift') showLanding();
+  else showSetup();
 });
 ['bridge', 'bank'].forEach(id => el(id).onclick = () => {
   if (phase !== 'caught') return;
