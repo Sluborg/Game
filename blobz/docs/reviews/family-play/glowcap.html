@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="sv">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lysgläntan · Blobz</title>
+<style>
+* { box-sizing:border-box }
+body { margin:auto;max-width:38rem;padding:1rem;background:#211e29;color:#fff5d8;font:1.1rem/1.4 system-ui }
+h1 { font-size:1.6rem;margin:0 }
+fieldset { border:1px solid #817d85;border-radius:.5rem;margin:.8rem 0;padding:.6rem }
+button { font:inherit;font-weight:650;background:#efe1b3;color:#312738;border:0;border-radius:.4rem;padding:.65rem;margin:.2rem;min-height:46px }
+button:disabled { opacity:.55 }
+output { display:block;min-height:3rem;padding:.6rem;background:#393541 }
+</style>
+<h1>Lysgläntan</h1>
+<p>En skalbagge försvann vid vägskälet. En av er sköter lyssvampen. Den andra letar efter spår. Spelar du själv kan du göra båda.</p>
+<fieldset><legend>Lyssvampen</legend><button data-light="root">Ställ vid roten</button><button data-light="rock">Ställ vid stenen</button><output id="clue"></output></fieldset>
+<fieldset><legend>Stigfinnaren</legend><button data-path="arch">Följ bågen</button><button data-path="fork">Följ klykan</button><button id="search">Sök under lövet</button><output id="trail" aria-live="polite"></output></fieldset>
+<button id="again" hidden>Byt roller och leta igen</button>
+<script>
+const landmarks = ['root','rock'];
+const symbols = ['arch','fork'];
+const names = {root:'roten',rock:'stenen',arch:'bågen',fork:'klykan'};
+let stage, light, route, previous;
+let picnic = false;
+try { picnic = localStorage.getItem('blobz-glowcap-study-v1') === 'picnic'; } catch {}
+const clue = document.querySelector('#clue');
+const trail = document.querySelector('#trail');
+const search = document.querySelector('#search');
+const again = document.querySelector('#again');
+function start() {
+  const choices = ['00','01','10','11'].filter(pair => pair !== previous);
+  previous = choices[Math.floor(Math.random()*choices.length)];
+  route = [...previous].map(index => symbols[Number(index)]);
+  stage = 0;
+  light = null;
+  again.hidden = true;
+  trail.textContent = picnic ? 'Picknickplatsen finns kvar. Vart har skalbaggen gått idag?' : 'En fjäder ligger vid roten. Var börjar spåret?';
+  draw();
+}
+function draw() {
+  const revealed = light === landmarks[stage];
+  clue.textContent = light === null ? 'Svampen lyser i handen.' : 'Svampen står vid '+names[light]+'. '+(stage < 2 && revealed ? 'Tassavtrycken leder mot '+names[route[stage]]+'.' : 'Inga färska spår syns här.');
+  search.disabled = stage !== 2;
+  document.querySelectorAll('[data-path]').forEach(button => button.disabled = stage >= 2);
+}
+function follow(path) {
+  if (stage >= 2) return;
+  if (light !== landmarks[stage]) {
+    trail.textContent = 'Här är mörkt. Kan du lysa vid '+names[landmarks[stage]]+'?';
+  } else if (path !== route[stage]) {
+    trail.textContent = 'Stigen slutar vid en stubbe. Du är tillbaka där spåret delade sig.';
+  } else {
+    stage++;
+    trail.textContent = stage === 1 ? 'Vid stenen delar sig spåret igen. Var ska vi lysa nu?' : 'Ett stort löv rör sig. Någon gömmer sig där!';
+  }
+  draw();
+}
+document.querySelectorAll('[data-light]').forEach(button => button.onclick = () => {light = button.dataset.light; draw();});
+document.querySelectorAll('[data-path]').forEach(button => button.onclick = () => follow(button.dataset.path));
+search.onclick = () => {
+  if (stage !== 2) return;
+  stage = 3;
+  picnic = true;
+  try { localStorage.setItem('blobz-glowcap-study-v1','picnic'); } catch {}
+  trail.textContent = 'Skalbaggen rullar fram ett bär! Ni har hittat gläntans picknickplats.';
+  again.hidden = false;
+  draw();
+};
+again.onclick = start;
+start();
+</script>
+</html>
