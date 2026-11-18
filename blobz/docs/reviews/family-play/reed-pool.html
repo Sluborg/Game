@@ -58,6 +58,7 @@ function advance(now) {
     announce('Förbi grinden! Möt fröet vid ' + docks[destination] + '.');
   }
   if (phase === 'drift' && elapsed >= dockMs) {
+    cancelAnimationFrame(frame);
     phase = catcher === destination ? 'caught' : 'eddy';
     announce(phase === 'caught' ? 'Du fångade fröet! Välj var blomman ska växa.' : 'Fröet snurrar tillbaka! Välj ' + docks[gate] + ' och släpp flotten igen.');
   }
@@ -96,9 +97,10 @@ el('flip').onclick = () => {
 };
 function showSetup() {
   if (phase === 'ready' || phase === 'eddy') {
-    announce(catcher === gate
+    const hint = catcher === gate
       ? 'Fångaren väntar vid ' + docks[catcher] + '. Släpp flotten!'
-      : 'Fångaren väntar vid ' + docks[catcher] + '. Vrid grinden dit eller välj ' + docks[gate] + '.');
+      : 'Fångaren väntar vid ' + docks[catcher] + '. Vrid grinden dit eller välj ' + docks[gate] + '.';
+    announce(phase === 'eddy' ? 'Fröet snurrar tillbaka! ' + hint : hint);
   } else {
     draw();
   }
