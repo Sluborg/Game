@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="en">
+<html lang="sv">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Reed pool · Blobz design test</title>
+<title>Vassdammen · Blobz</title>
 <style>
 * { box-sizing: border-box }
 body { margin: auto; max-width: 28rem; padding: 1rem; background: #faf7e9; color: #263e34; font: 1rem/1.4 system-ui,sans-serif }
@@ -11,23 +11,24 @@ h2 { margin: 0; font-size: 1.15rem }
 section { margin: .7rem 0; padding: .8rem; border: 1px solid #8d9d83; border-radius: .6rem }
 button { padding: .6rem .9rem; margin: .35rem .25rem 0 0; min-height: 44px; font: inherit; border-radius: .45rem; border: 1px solid #446451; color: #193729; background: #fffdf5 }
 button[aria-pressed=true] { color: white; background: #31583e }
+button:focus-visible { outline: 3px solid #245997; outline-offset: 2px }
 button:disabled { opacity: .5 }
 p { margin: .35rem 0 }
 progress { width: 100%; accent-color: #25735e }
 </style>
-<h1>Reed pool</h1>
-<p>Launch from the reeds. Flip the gate to send the seedpod to a waiting catcher. Share the controls or play both jobs.</p>
-<section><h2>Upstream</h2><button id="launch">Launch raft</button></section>
-<section><h2>At the fork</h2><p id="route"></p><button id="flip">Turn gate</button></section>
-<section><h2>Downstream</h2><p>Choose where to wait.</p>
-<button id="willow">Willow dock</button><button id="pebble">Pebble dock</button></section>
-<progress id="travel" max="100" value="0" aria-label="Distance travelled"></progress>
+<h1>Vassdammen</h1>
+<p>Fånga fröet! En släpper flotten. Den andra vrider grinden och väntar vid en brygga. Spelar du själv? Välj grind och brygga innan du släpper flotten.</p>
+<section><h2>Vid vassen</h2><button id="launch">Släpp flotten</button></section>
+<section><h2>Grinden</h2><p id="route"></p><button id="flip">Vrid grinden</button></section>
+<section><h2>Fångaren</h2><p>Välj bryggan där du vill fånga fröet.</p>
+<button id="willow">Pilbryggan</button><button id="pebble">Stenbryggan</button></section>
+<progress id="travel" max="100" value="0" aria-label="Flottens färd"></progress>
 <p id="status" role="status"></p>
-<section id="garden"><h2>Flower bed</h2><p id="flower"></p>
-<div id="plant"><button id="bridge">Plant by the bridge</button><button id="bank">Plant by the bank</button></div></section>
+<section id="garden"><h2>Blomlandet</h2><p id="flower"></p>
+<div id="plant"><button id="bridge">Plantera vid bron</button><button id="bank">Plantera vid stranden</button></div></section>
 <script>
 const el = id => document.getElementById(id);
-const docks = ['Willow', 'Pebble'];
+const docks = ['Pilbryggan', 'Stenbryggan'];
 const storageKey = 'reed-pool-design.flower';
 let bed = '';
 try {
@@ -40,11 +41,12 @@ const forkMs = 2500, dockMs = 5000;
 function draw() {
   el('flip').disabled = !['ready', 'approach', 'eddy'].includes(phase);
   el('launch').disabled = !['ready', 'eddy'].includes(phase);
-  el('launch').textContent = phase === 'eddy' ? 'Relaunch from eddy' : 'Launch raft';
-  el('route').textContent = 'Gate points to ' + docks[gate] + ' dock.';
+  el('launch').textContent = phase === 'eddy' ? 'Släpp flotten igen' : 'Släpp flotten';
+  el('route').textContent = 'Vattnet leder till ' + docks[gate] + '.';
   ['willow', 'pebble'].forEach((id, i) => el(id).setAttribute('aria-pressed', String(i === catcher)));
+  for (const id of ['willow', 'pebble']) el(id).disabled = phase === 'caught';
   el('plant').hidden = phase !== 'caught';
-  el('flower').textContent = bed ? 'A bounce flower grows by the ' + bed + '.' : 'An empty patch by each path.';
+  el('flower').textContent = bed ? (bed === 'bridge' ? 'En studsblomma växer vid bron.' : 'En studsblomma växer vid stranden.') : 'Här kan ditt frö bli en blomma.';
 }
 function announce(message) { el('status').textContent = message; draw(); }
 function advance(now) {
@@ -52,11 +54,11 @@ function advance(now) {
   if (phase === 'approach' && elapsed >= forkMs) {
     destination = gate;
     phase = 'drift';
-    announce('Past the fork! The pod is drifting to ' + docks[destination] + '.');
+    announce('Förbi grinden! Möt fröet vid ' + docks[destination] + '.');
   }
   if (phase === 'drift' && elapsed >= dockMs) {
     phase = catcher === destination ? 'caught' : 'eddy';
-    announce(phase === 'caught' ? 'Caught! The catcher chooses a flower bed.' : 'The pod circles in an eddy. Move the catcher or turn the gate and relaunch.');
+    announce(phase === 'caught' ? 'Du fångade fröet! Välj var blomman ska växa.' : 'Fröet snurrar tillbaka! Välj ' + docks[gate] + ' och släpp flotten igen.');
   }
   el('travel').value = Math.min(100, elapsed * 100 / dockMs);
 }
@@ -67,19 +69,21 @@ function tick(now) {
 function sync() { if (['approach', 'drift'].includes(phase)) advance(performance.now()); }
 el('launch').onclick = () => {
   phase = 'approach'; started = performance.now(); el('travel').value = 0;
-  announce('Raft away! The gate can still turn.'); requestAnimationFrame(tick);
+  announce('Flotten är på väg! Du kan fortfarande vrida grinden.'); requestAnimationFrame(tick);
 };
 el('flip').onclick = () => {
   sync();
   if (el('flip').disabled) return;
   gate = 1 - gate; draw();
 };
-['willow', 'pebble'].forEach((id, i) => el(id).onclick = () => { sync(); catcher = i; draw(); });
+['willow', 'pebble'].forEach((id, i) => el(id).onclick = () => { sync(); if (phase === 'caught') return; catcher = i; draw(); });
 ['bridge', 'bank'].forEach(id => el(id).onclick = () => {
+  if (phase !== 'caught') return;
   bed = id; phase = 'ready'; el('travel').value = 0;
   try { localStorage.setItem(storageKey, bed); } catch {}
-  announce('Bloom! Swap jobs and try the other current. The next seed can move your flower.');
+  el('launch').focus();
+  announce('Det blommar! Vill du prova den andra bryggan? Ni kan byta roller.');
 });
-announce('The catcher starts at Pebble. The gate points to Willow.');
+announce('Fångaren står vid Stenbryggan. Vrid grinden dit eller välj Pilbryggan.');
 </script>
 </html>
