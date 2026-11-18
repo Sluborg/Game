@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Blobz · Healer card study</title>
+<style>
+:root{background:#181923;color:#fff7e6;font:16px/1.4 system-ui;--panel:#282b38;--edge:#626979}
+*{box-sizing:border-box}body{margin:auto;max-width:44rem;padding:1rem}h1{font-size:1.8rem;margin:.2rem 0}h2{font-size:1.1rem}
+.panel{background:var(--panel);border:1px solid var(--edge);border-radius:.7rem;padding:.8rem;margin:.8rem 0}
+button{min-height:44px;margin:.25rem;padding:.55rem;font:inherit;color:inherit;background:#394050;border:1px solid #828ba0;border-radius:.45rem}
+button[aria-pressed=true]{outline:3px solid #ffc93c;background:#4c5f56}button:disabled{opacity:.45}
+.cards,.actions{display:flex;gap:.45rem;flex-wrap:wrap}.cards button{flex:1;min-width:8rem}.icon{display:block;width:48px;height:48px;margin:auto;image-rendering:pixelated;background:#ff00ff}
+.arena{position:relative;height:12rem;overflow:hidden;background:#202534;border:1px solid var(--edge);border-radius:.5rem}
+.blob,.goo,.bolt{position:absolute;image-rendering:pixelated}.blob{width:42px;height:32px;border:4px solid #3f2631;border-radius:50% 50% 38% 38%;bottom:38px}
+#friend{left:16%;background:#3fa9f5}#healer{left:43%;background:#6cbf45}.goo{right:10%;bottom:42px;width:36px;height:28px;background:#b18cff;border:4px solid #3f2631;border-radius:50%}
+.eye{position:absolute;top:8px;width:7px;height:8px;background:#fff7e6}.eye:first-child{left:8px}.eye:last-child{right:8px}
+.bubble{box-shadow:0 0 0 5px #91e5ff}.bolt{width:10px;height:6px;background:#e63946;border:2px solid #3f2631;right:28%;bottom:54px}
+.bar{height:10px;background:#4b303a;margin:.35rem 0}.bar i{display:block;height:100%;background:#6cbf45}.status{min-height:3rem}
+small{display:block;color:#d8d9df}textarea{width:100%;min-height:5rem;background:#1d202b;color:inherit;border:1px solid var(--edge)}
+</style>
+<h1>Protect a friend, then clear the threat</h1>
+<p>Choose one Healer card. Heal the hurt friend before the red bolt lands, then switch to attack mode and hit the goo.</p>
+<section class="panel">
+<h2>Choose without labels first</h2>
+<div class="cards">
+<button id="bubble-card"><canvas class="icon" width="24" height="24"></canvas><b>Card A</b><small hidden>Shield bubble · Skyddsbubbla</small></button>
+<button id="wand-card"><canvas class="icon" width="24" height="24"></canvas><b>Card B</b><small hidden>Stronger wand · Starkare trollstav</small></button>
+</div>
+<div class="actions"><button id="labels">Show labels</button><button id="preview">Play icon frames</button><button id="swap">Swap positions</button></div>
+</section>
+<section class="panel">
+<div class="arena"><div id="friend" class="blob"><i class="eye"></i><i class="eye"></i></div><div id="healer" class="blob"><i class="eye"></i><i class="eye"></i></div><div class="goo"><i class="eye"></i><i class="eye"></i></div><div id="bolt" class="bolt"></div></div>
+<p>Friend health</p><div class="bar"><i id="friend-hp"></i></div>
+<p>Goo health</p><div class="bar"><i id="goo-hp"></i></div>
+<p id="status" class="status" aria-live="polite">Pick a card, then start the room.</p>
+<div class="actions"><button id="start" disabled>Start room</button><button id="heal" disabled>Heal mode bolt</button><button id="attack" disabled>Attack mode bolt</button><button id="reset">Reset</button></div>
+</section>
+<section class="panel"><h2>What to record</h2>
+<ol><li>With labels hidden, ask what each card changes.</li><li>Try the same sequence with both cards. Ask what the teammate received and what changed against the goo.</li><li>Play the icon frames once. Record whether that changes the prediction.</li></ol>
+<textarea aria-label="Player's exact words"></textarea>
+<details><summary>Study rules</summary><p>The friend starts at 60/100 HP. A heal bolt restores 10. Shield bubble also grants one hit block. Stronger wand leaves healing at 10 and raises the attack bolt from 8 to 11 after rounding, matching the current 1.4× modifier. Timing and movement are reduced to buttons so this study isolates the card promise.</p></details></section>
+<script>
+const $=id=>document.getElementById(id),cards=[$("bubble-card"),$("wand-card")];let order=["bubble","wand"],choice="",phase=0,friend=60,goo=30,shield=false,frame=0,timer;
+const plum="#3f2631",magenta="#ff00ff";
+function rect(c,x,y,w,h,color){c.fillStyle=color;c.fillRect(x,y,w,h)}
+function icon(canvas,kind,f=0){const c=canvas.getContext("2d");rect(c,0,0,24,24,magenta);
+ if(kind==="bubble"){rect(c,4,4,16,16,plum);rect(c,5,5,14,14,"#91e5ff");rect(c,7,7,10,10,"#3fa9f5");rect(c,9,9,6,5,"#fff7e6");rect(c,10,11,4,5,"#ff6b8b");if(f%2)rect(c,3,8,2,3,"#fff7e6")}
+ else{rect(c,3,18,6,3,plum);rect(c,6,6,4,14,plum);rect(c,8,4,8,5,plum);rect(c,9,5,6,3,"#fff7e6");rect(c,14+f,8-f,4,4,plum);rect(c,15+f,9-f,2,2,"#ffc93c")}}
+function drawCards(){cards.forEach((b,i)=>{const k=order[i];icon(b.querySelector("canvas"),k,frame);b.setAttribute("aria-pressed",String(choice===k));b.querySelector("b").textContent=b.querySelector("small").hidden?"Card "+String.fromCharCode(65+i):(k==="bubble"?"Shield bubble":"Stronger wand")})}
+function draw(){drawCards();$("friend-hp").style.width=friend+"%";$("goo-hp").style.width=(goo/30*100)+"%";$("friend").classList.toggle("bubble",shield);$("start").disabled=!choice||phase!==0;$("heal").disabled=phase!==1;$("attack").disabled=phase!==2;$("bolt").hidden=phase!==1}
+cards.forEach((b,i)=>b.onclick=()=>{choice=order[i];draw()});
+$("labels").onclick=()=>{cards.forEach(b=>b.querySelector("small").hidden=!b.querySelector("small").hidden);draw()};
+$("swap").onclick=()=>{order.reverse();draw()};
+$("preview").onclick=()=>{clearInterval(timer);let n=0;timer=setInterval(()=>{frame=(frame+1)%2;drawCards();if(++n===4)clearInterval(timer)},180)};
+$("start").onclick=()=>{phase=1;$("status").textContent="The red bolt is coming. Heal your friend.";draw()};
+$("heal").onclick=()=>{friend=Math.min(100,friend+10);shield=choice==="bubble";if(shield){$("status").textContent="The bubble pops and blocks the incoming hit. Switch to attack mode."}else{friend-=20;$("status").textContent="The heal lands, then the red bolt deals 20. Switch to attack mode."}phase=2;draw()};
+$("attack").onclick=()=>{const dmg=choice==="wand"?11:8;goo=Math.max(0,goo-dmg);phase=3;$("status").textContent="Attack bolt deals "+dmg+". Replay with the other card to compare.";draw()};
+$("reset").onclick=()=>{phase=0;friend=60;goo=30;shield=false;$("status").textContent="Pick a card, then start the room.";draw()};draw();
+</script>
+</html>

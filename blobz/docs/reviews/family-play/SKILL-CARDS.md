@@ -72,3 +72,9 @@ Acceptance for Claude: verify every final label in Swedish and English against t
 **Phone test for Claude.** Show the still frame at 48 CSS px inside the existing badge, then at 36 px in short landscape. Cover the label and ask each player separately, “What changes when you pick this?” Write down their first answer. If they predict a faster swing, a stronger shield, or a healing spell they must aim, show the animation once and ask what changed their mind. A correction after playback identifies a still frame that needs another pass. Source sizes come from [dungeon.css](../../../src/dungeon.css) and the effects from [dungeon.ts](../../../src/dungeon.ts).
 
 The four priority card studies now cover Pierce, Volley, Tank damage and Healer recovery. Family recognition on a phone remains open. For the next independent meadow deliverable, develop the clay-bank discovery and its two ramp outcomes using the reed-pool replay criterion in [MEADOW.md](MEADOW.md).
+
+## Playable Healer comparison · 18 November 2026
+
+Open [healer-study.html](healer-study.html). It compares the current Shield bubble and Stronger wand modifiers in one short sequence: heal a friend before an incoming bolt, then switch modes and attack the goo. The study preserves the current numbers. A heal bolt restores 10, the bubble blocks one hit, and the 1.4× wand modifier raises an 8-damage attack bolt to 11 after rounding.
+
+Run both cards with labels covered, swap their positions, and play the authored icon frames only after the first prediction. The useful observation is whether players describe protection versus attack strength before seeing the result. Movement, targeting and cooldowns are intentionally removed. Phone touch, timing under combat pressure and whether a solo Healer values the ally-dependent bubble remain open.
