@@ -1,0 +1,39 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Blobz · Tank card study</title>
+<style>
+:root{background:#171a22;color:#fff7e6;font:16px/1.4 system-ui;--panel:#292d38;--edge:#72798a}*{box-sizing:border-box}
+body{margin:auto;max-width:44rem;padding:1rem}h1{font-size:1.8rem;margin:.2rem 0}.panel{padding:.8rem;margin:.8rem 0;background:var(--panel);border:1px solid var(--edge);border-radius:.7rem}
+button{min-height:44px;margin:.25rem;padding:.55rem;font:inherit;color:inherit;background:#3b4352;border:1px solid #8790a3;border-radius:.45rem}
+button[aria-pressed=true]{outline:3px solid #ffc93c;background:#69483f}button:disabled{opacity:.45}.cards,.actions{display:flex;gap:.4rem;flex-wrap:wrap}.cards button{flex:1;min-width:8rem}
+.icon{display:block;width:48px;height:48px;margin:auto;image-rendering:pixelated;background:#ff00ff}.lane{position:relative;height:9rem;background:#222735;overflow:hidden;border:1px solid var(--edge)}
+.unit,.shot{position:absolute;border:3px solid #3f2631}.unit{width:34px;height:28px;border-radius:50%;bottom:28px}.tank{left:12%;background:#ff8a3d}.front{left:46%;background:#6cbf45}.ranged{right:8%;background:#b18cff}
+.shot{width:10px;height:7px;right:22%;bottom:40px;background:#e63946}.safe{box-shadow:0 0 0 5px #91e5ff}.stunned{filter:brightness(.65);transform:rotate(-8deg)}
+.bar{height:10px;background:#4c3038}.bar i{display:block;height:100%;background:#6cbf45}.status{min-height:3rem}small{display:block;color:#ddd}textarea{width:100%;min-height:5rem;background:#1d2029;color:inherit}
+</style>
+<h1>Reach the ranged goo</h1><p>A front goo stops the charge early. A red shot is already coming from behind it. Choose what the Tank should improve.</p>
+<section class="panel"><div class="cards">
+<button id="safe-card"><canvas class="icon" width="24" height="24"></canvas><b>Card A</b><small hidden>Safe charge · Skyddad rusning</small></button>
+<button id="stun-card"><canvas class="icon" width="24" height="24"></canvas><b>Card B</b><small hidden>Stun · Bedöva</small></button>
+</div><div class="actions"><button id="labels">Show labels</button><button id="frames">Play icon frames</button><button id="swap">Swap positions</button></div></section>
+<section class="panel"><div class="lane"><div id="tank" class="unit tank"></div><div class="unit front"></div><div id="ranged" class="unit ranged"></div><div id="shot" class="shot"></div></div>
+<p>Tank health</p><div class="bar"><i id="hp"></i></div><p id="status" class="status" aria-live="polite">Pick a card and start the same lane.</p>
+<div class="actions"><button id="start" disabled>Start lane</button><button id="charge" disabled>Shield charge</button><button id="swing" disabled>Sword hit</button><button id="wait" disabled>Wait for goo</button><button id="reset">Reset</button></div></section>
+<section class="panel"><h2>Family test</h2><ol><li>Cover the labels and ask which card helps against the red shot.</li><li>Run Safe charge. The early collision ends the rush, while its brief protection catches the shot.</li><li>Run Stun. The shot lands, then the sword holds the ranged goo for 0.85 s instead of 0.25 s.</li></ol>
+<textarea aria-label="Player's exact words"></textarea><details><summary>Study boundary</summary><p>The study separates the two current modifiers. Safe charge adds 0.4 seconds of dodge state. Stun adds 0.6 seconds to the sword’s base 0.25-second stun. Positions, one 20-damage shot and the early collision are fixed. The full game controls movement, charge collision and projectile timing continuously.</p></details></section>
+<script>
+const $=id=>document.getElementById(id),cards=[$("safe-card"),$("stun-card")],magenta="#ff00ff",plum="#3f2631";let order=["safe","stun"],choice="",phase=0,hp=100,frame=0,timer;
+function r(c,x,y,w,h,col){c.fillStyle=col;c.fillRect(x,y,w,h)}
+function icon(canvas,k,f=0){const c=canvas.getContext("2d");r(c,0,0,24,24,magenta);
+ if(k==="safe"){r(c,3,5,14,14,plum);r(c,5,6,10,11,"#a39fa8");r(c,7,8,6,7,"#3fa9f5");r(c,16+f,10,5,3,plum);r(c,17+f,11,3,1,"#e63946")}
+ else{r(c,3,13,14,6,plum);r(c,5,14,10,3,"#a39fa8");r(c,16,5,5,5,plum);r(c,17,6,3,3,"#91e5ff");r(c,18-f,2,2,3,"#ffc93c")}}
+function drawCards(){cards.forEach((b,i)=>{const k=order[i];icon(b.querySelector("canvas"),k,frame);b.setAttribute("aria-pressed",String(choice===k));b.querySelector("b").textContent=b.querySelector("small").hidden?"Card "+String.fromCharCode(65+i):(k==="safe"?"Safe charge":"Stun")})}
+function draw(){drawCards();$("hp").style.width=hp+"%";$("start").disabled=!choice||phase!==0;$("charge").disabled=phase!==1;$("swing").disabled=phase!==2;$("wait").disabled=phase!==3;$("shot").hidden=phase===0||phase>=3;$("tank").classList.toggle("safe",choice==="safe"&&phase===2);$("ranged").classList.toggle("stunned",choice==="stun"&&phase===3)}
+cards.forEach((b,i)=>b.onclick=()=>{choice=order[i];draw()});
+$("labels").onclick=()=>{cards.forEach(b=>b.querySelector("small").hidden=!b.querySelector("small").hidden);draw()};
+$("swap").onclick=()=>{order.reverse();draw()};$("frames").onclick=()=>{clearInterval(timer);let n=0;timer=setInterval(()=>{frame=(frame+1)%2;drawCards();if(++n===4)clearInterval(timer)},180)};
+$("start").onclick=()=>{phase=1;$("status").textContent="The front goo is close. Charge before the shot arrives.";draw()};
+$("charge").onclick=()=>{phase=2;$("status").textContent="The front goo stops the charge early. The red shot reaches the Tank.";draw()};
+$("swing").onclick=()=>{if(choice!=="safe")hp-=20;phase=3;$("status").textContent=choice==="safe"?"Protection blocks the shot. Sword hit uses the normal 0.25 s stun.":"The shot deals 20. Sword hit stuns the ranged goo for 0.85 s.";draw()};
+$("wait").onclick=()=>{phase=4;$("status").textContent=choice==="stun"?"The ranged goo stays stopped 0.6 s longer.":"The ranged goo resumes after the normal stun.";draw()};
+$("reset").onclick=()=>{phase=0;hp=100;$("status").textContent="Pick a card and start the same lane.";draw()};draw();
+</script></html>

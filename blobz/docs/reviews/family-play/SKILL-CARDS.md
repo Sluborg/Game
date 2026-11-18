@@ -78,3 +78,9 @@ The four priority card studies now cover Pierce, Volley, Tank damage and Healer 
 Open [healer-study.html](healer-study.html). It compares the current Shield bubble and Stronger wand modifiers in one short sequence: heal a friend before an incoming bolt, then switch modes and attack the goo. The study preserves the current numbers. A heal bolt restores 10, the bubble blocks one hit, and the 1.4× wand modifier raises an 8-damage attack bolt to 11 after rounding.
 
 Run both cards with labels covered, swap their positions, and play the authored icon frames only after the first prediction. The useful observation is whether players describe protection versus attack strength before seeing the result. Movement, targeting and cooldowns are intentionally removed. Phone touch, timing under combat pressure and whether a solo Healer values the ally-dependent bubble remain open.
+
+## Playable Tank comparison · 18 November 2026
+
+Open [tank-study.html](tank-study.html). It compares Safe charge with Stun in a fixed lane where a front goo ends the charge early and a ranged goo has already fired. Safe charge adds 0.4 seconds of dodge state, which can outlast the early collision. Stun adds 0.6 seconds to the sword’s normal 0.25-second stun.
+
+Run both cards with labels covered and swap their positions. The study asks whether the family predicts protection from the first card and longer enemy control from the second. It fixes one incoming shot at 20 damage and reduces continuous movement to steps. Real projectile timing, charge distance and whether Safe charge adds noticeable protection in ordinary rooms remain open.

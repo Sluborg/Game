@@ -1,0 +1,9 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),test=require('node:test'),vm=require('node:vm');
+class E{constructor(){this.disabled=false;this.hidden=false;this.style={};this.textContent='';this.attributes={};this.children={};this.classList={toggle:(n,v)=>this.attributes[n]=v}}setAttribute(n,v){this.attributes[n]=v}querySelector(s){return this.children[s]}}
+const canvas=()=>{const e=new E;e.getContext=()=>({fillStyle:'',fillRect(){}});return e};
+function open(){const ids=['safe-card','stun-card','labels','frames','swap','tank','ranged','hp','status','start','charge','swing','wait','reset','shot'],e=Object.fromEntries(ids.map(id=>[id,new E]));
+for(const id of ['safe-card','stun-card']){e[id].children.canvas=canvas();e[id].children.b=new E;e[id].children.small=new E;e[id].children.small.hidden=true}
+const html=fs.readFileSync(__dirname+'/tank-study.html','utf8'),src=html.match(/<script>([\s\S]*?)<\/script>/)[1];vm.runInNewContext(src,{document:{getElementById:id=>e[id]},clearInterval(){},setInterval(){return 1}});return{e,click:id=>e[id].onclick()}}
+test('safe charge protects after the early collision',()=>{const s=open();s.click('safe-card');s.click('start');s.click('charge');s.click('swing');assert.equal(s.e.hp.style.width,'100%');assert.match(s.e.status.textContent,/blocks/)});
+test('stun takes the shot and holds the ranged goo longer',()=>{const s=open();s.click('stun-card');s.click('start');s.click('charge');s.click('swing');assert.equal(s.e.hp.style.width,'80%');assert.match(s.e.status.textContent,/0.85/);s.click('wait');assert.equal(s.e.ranged.attributes.stunned,false);assert.match(s.e.status.textContent,/0.6 s longer/)});
+test('reset restores the lane',()=>{const s=open();s.click('stun-card');s.click('start');s.click('charge');s.click('swing');s.click('reset');assert.equal(s.e.hp.style.width,'100%');assert.equal(s.e.charge.disabled,true)});
