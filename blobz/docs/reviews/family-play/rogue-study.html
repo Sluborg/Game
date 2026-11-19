@@ -81,15 +81,16 @@ fieldset{border:1px solid var(--edge);margin:1rem 0 0;border-radius:.5rem;paddin
 <h2 id="test-title">Family playtest</h2>
 <ol>
 <li>At 48 px, ask each player which still icon they would pick to reach the far goo. Ask them to explain their choice in their own words.</li>
-<li>Reveal the names and try both cards in the room. Ask what changed for the Tank and which choice they would make again.</li>
-<li>Swap positions, cover the labels and repeat at 36 px. Play the icon frames once after the first prediction. Record any answer that changes.</li>
+<li>Try the predicted card once with labels still covered. Record what changed for the Tank before revealing either name.</li>
+<li>Reveal the names, then swap positions, cover the labels and repeat at 36 px. Play the icon frames once after the first prediction. Record any answer that changes.</li>
 </ol>
 <label for="notes">Player’s exact words and observed choice</label>
 <textarea id="notes" rows="3" placeholder="Example prompt: What happened when you used it?" autocomplete="off"></textarea>
 <details>
 <summary>Mechanics and study simplifications</summary>
-<p>One Bigger whirl card raises the 72 world-pixel radius to 93.6. One Harder push card raises knockback from 200 to 300 and also applies to basic hits in the game. Each whirl hit still does 22 damage and stuns for 0.6 seconds. The game's whirl checks distance to the edge of each enemy.</p>
-<p>The room holds starting positions fixed between casts. The arrows and travel distances illustrate relative knockback. Enemy AI, damage, cooldowns and collision physics are outside this study.</p>
+<p>One Bigger whirl card raises the 72 world-pixel radius to 93.6. One Harder push card raises knockback from 200 to 300 and also raises basic-dagger knockback from 80 to 120. Each whirl hit still does 22 damage and stuns for 0.6 seconds. These are small goo with the game's 16-pixel collision radius; a hit occurs when the goo's edge touches the effect radius.</p>
+<p>Each press is one isolated cast. The live special has a five-second cooldown; Reset restores the fixed comparison immediately. The arrows and travel distances illustrate relative knockback. Enemy AI, walls and goo-to-goo collisions are outside this study.</p>
+<p><a href="art/rogue-choice.gif">Authored two-frame icon preview</a> · <a href="art/rogue-choice.png">native 24 px frames</a></p>
 <p><a href="SKILL-CARDS.md">Skill cards handoff</a> · <a href="../../../src/dungeon.ts">Dungeon mechanics</a></p>
 </details>
 </section>
@@ -116,7 +117,7 @@ const ctx = byId("arena").getContext("2d");
 const rogue = { x: 107, y: 126 };
 const tank = { x: 161, y: 103 };
 const goos = [{ x: 136, y: 93 }, { x: 167, y: 124 }, { x: 181, y: 73 }];
-const gooRadius = 7;
+const gooRadius = 16;
 
 function rect(c, x, y, w, h, color) {
   c.fillStyle = color;
@@ -297,7 +298,7 @@ byId("cast").addEventListener("click", () => {
       return;
     }
     result.textContent = hit + " of 3 goo hit. " + outcome;
-    byId("cast").disabled = false;
+    result.textContent += " Reset the room for another isolated cast.";
   }
   animation = requestAnimationFrame(step);
 });

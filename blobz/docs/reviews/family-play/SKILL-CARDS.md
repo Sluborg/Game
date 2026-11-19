@@ -90,3 +90,15 @@ Run both cards with labels covered and swap their positions. The study asks whet
 Open [marksman-study.html](marksman-study.html). It puts two goo in one lane and five other goo apart. Pierce lets the basic bolt hit two enemies in line. Two more targets leaves the basic bolt unchanged and raises Volley from three to five separate targets.
 
 Run both shot buttons with each label hidden. Ask directly whether the Volley card would add hits against one boss. The study makes target count explicit while omitting damage, cooldowns and moving enemies. Real positioning and whether a teammate can deliberately line up two enemies remain open.
+
+## Playable Rogue comparison · 19 November 2026
+
+![Bigger whirl beside Harder push](art/rogue-choice.gif)
+
+Open [rogue-study.html](rogue-study.html). It completes the four-class comparison set with one question the Rogue can answer immediately: reach the third goo, or push the two close goo farther away from the Tank. Bigger whirl raises the special radius from 72 to 93.6 world pixels. Harder push raises the whirl's knockback from 200 to 300 and basic-dagger knockback from 80 to 120; it does not enlarge the whirl.
+
+The [native sheet](art/rogue-choice.png) contains two authored 24 × 24 frames per choice. Row one is Bigger whirl and row two is Harder push. Frame one must carry the card meaning by itself; the second frame only clarifies radius or travel. Key out exactly RGB(255, 0, 255), and use nearest-neighbour scaling.
+
+The rehearsal uses the game's 16-pixel small-goo collision radius and treats each press as one isolated cast. The live special still has a five-second cooldown. Start with labels covered, cast once, record what each player thinks changed, then reveal the names. Swap card positions and repeat at 36 px. Regression coverage fixes the intended outcomes at three hits for Bigger whirl and two farther pushes for Harder push.
+
+All four class comparisons now have deterministic studies and regression coverage. Recognition at actual phone size, touch comfort, live enemy motion, walls and a child/adult playtest remain open; no result should be promoted into the live game before that evidence exists.
