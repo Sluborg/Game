@@ -70,7 +70,7 @@ Extend the village save with optional validated discovery state. Preserve existi
 | Glow | unseen, revealed, picnic found plus route index | Cap at last named socket; no carried or half-followed trail |
 | Project | none, one chosen ID, completed IDs | Rebuild its silhouette or permanent result |
 
-At session end, recap the newest visible change first. “Flower by the bridge” or “Seed bell ringing” replaces empty stars. Under it, show one picture of the next clue. If storage is unavailable, keep play running and say that the discovery will last for this visit.
+At session end, use the [session recap handoff and rehearsal](SESSION-RECAP.md): recap the newest visible change first. “Flower by the bridge” or “Seed bell ringing” replaces empty stars. Under it, show one picture of the next clue. If storage is unavailable, keep play running and say that the discovery will last for this visit.
 
 The host owns discovery, activity and project state. Snapshots include active phases for late joiners. Saves contain settled landmarks and named sockets, never world coordinates, in-flight objects or carrier IDs. Reconstruct positions from the fresh seed and reserve every landmark footprint before ordinary nodes are generated.
 
