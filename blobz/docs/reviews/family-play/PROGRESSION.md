@@ -51,7 +51,7 @@ The third return project, [Seed Sail](SEED-SAIL.md), has a [shared-screen rehear
 
 ## What tiering up changes
 
-- **Tier 0** offers gathering, a carry chest and the broken crossing.
+- **Tier 0** offers gathering, the [first shared carry chest](CARRY-CHEST.md) and the broken crossing.
 - **Tier 1** adds routes that move without a blob. The family predicts where cargo will go.
 - **Tier 2** adds a world object whose shape changes an outcome. The family plans a shot.
 - **Tier 3** adds information visible only near a movable light. The family communicates a route.
