@@ -6,7 +6,7 @@ Design handoff, 18 November 2026. Checked against the class, input and card defi
 
 1. **Marksman.** The existing More arrows upgrade selects two extra Volley targets. An image of five arrows hitting one boss would promise a boss damage upgrade. Rename it **Two more targets**. Put one bolt in each of three distinct slime silhouettes. Reserve a fan of projectiles for an actual spread shot. This supersedes the Fan Shot art recommendation for the current card in DIRECTIONS.md.
 2. **Tank.** Stronger shield raises damage globally. Rename it **Heavier hits** and draw the sword landing hard. Keep a shield icon for an effect that changes what guard does. The player should be able to guess which button to try after choosing a card.
-3. **Healer.** Faster revive shortens the team's automatic recovery while the Healer is standing. The aimed heal bolt already revives instantly. Call the card **Friends get up sooner**. Draw a fallen ally getting back up beside a clock. Save the heart-in-bubble icon for a bolt that actually shields someone.
+3. **Healer.** Faster revive shortens the team's automatic recovery while the Healer is standing. The auto-targeted heal-mode bolt already revives instantly. Call the card **Friends get up sooner**. Draw a fallen ally getting back up beside a clock. Save the heart-in-bubble icon for a bolt that actually shields someone.
 
 ## Make each family's first upgrade a decision they can try in the next room
 
@@ -67,7 +67,7 @@ Acceptance for Claude: verify every final label in Swedish and English against t
 | Card ID | Suggested label in English / Swedish | What to look for |
 |---|---|---|
 | `tank-charge` | Heavier hits / Hårdare träffar | One sword lands a heavy blow. The card gives a 1.3× damage multiplier. Hold the impact pose so the loop reads as force rather than faster attacks. |
-| `healer-revive` | Friends get up sooner / Vänner kvicknar till snabbare | A clock ticks as a flattened ally gets up. One copy held by a standing Healer when the ally falls shortens automatic recovery from five seconds to three. An aimed healing bolt already revives on contact. |
+| `healer-revive` | Friends get up sooner / Vänner kvicknar till snabbare | A clock ticks as a flattened ally gets up. One copy held by a standing Healer when the ally falls shortens automatic recovery from five seconds to three. An auto-targeted heal-mode bolt already revives on contact. |
 
 **Phone test for Claude.** Show the still frame at 48 CSS px inside the existing badge, then at 36 px in short landscape. Cover the label and ask each player separately, “What changes when you pick this?” Write down their first answer. If they predict a faster swing, a stronger shield, or a healing spell they must aim, show the animation once and ask what changed their mind. A correction after playback identifies a still frame that needs another pass. Source sizes come from [dungeon.css](../../../src/dungeon.css) and the effects from [dungeon.ts](../../../src/dungeon.ts).
 
@@ -84,6 +84,8 @@ Run both cards with labels covered, swap their positions, and play the authored 
 Open [tank-study.html](tank-study.html). It compares Safe charge with Stun in a fixed lane where a front goo ends the charge early and a ranged goo has already fired. Safe charge adds 0.4 seconds of dodge state, which can outlast the early collision. Stun adds 0.6 seconds to the sword’s normal 0.25-second stun.
 
 Run both cards with labels covered and swap their positions. The study asks whether the family predicts protection from the first card and longer enemy control from the second. It fixes one incoming shot at 20 damage and reduces continuous movement to steps. Real projectile timing, charge distance and whether Safe charge adds noticeable protection in ordinary rooms remain open.
+
+The separate [rescue-credit handoff](RESCUE-CREDIT.md) and [two-view rehearsal](rescue-credit.html) cover the Healer's existing instant auto-targeted heal-mode rescue. They keep it distinct from the **Friends get up sooner** card, which only shortens passive recovery.
 
 ## Playable Marksman comparison · 18 November 2026
 
