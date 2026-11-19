@@ -45,6 +45,8 @@ Choosing a project changes the next expedition. It does not consume the discover
 
 Prototype [Lantern stepping stones](RETURN-PROJECTS.md) first. Its [shared-screen rehearsal](lantern-path.html) combines the two clearest learned verbs, leaves a shortcut after every correct step and can be completed solo without changing its rules.
 
+The second return project, [Beetle Berry Run](BEETLE-BERRY-RUN.md), now has a [deterministic shared-screen rehearsal](beetle-run.html). It combines chute direction with clay height across two persistent delivery targets.
+
 ## What tiering up changes
 
 - **Tier 0** offers gathering, a carry chest and the broken crossing.
