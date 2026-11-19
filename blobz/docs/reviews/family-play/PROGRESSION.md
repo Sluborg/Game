@@ -45,7 +45,9 @@ Choosing a project changes the next expedition. It does not consume the discover
 
 Prototype [Lantern stepping stones](RETURN-PROJECTS.md) first. Its [shared-screen rehearsal](lantern-path.html) combines the two clearest learned verbs, leaves a shortcut after every correct step and can be completed solo without changing its rules.
 
-The second return project, [Beetle Berry Run](BEETLE-BERRY-RUN.md), now has a [deterministic shared-screen rehearsal](beetle-run.html). It combines chute direction with clay height across two persistent delivery targets.
+The second return project, [Beetle Berry Run](BEETLE-BERRY-RUN.md), now has a [deterministic shared-screen rehearsal](beetle-run.html). It combines chute direction with clay height to bring one persistent beetle visitor home.
+
+The third return project, [Seed Sail](SEED-SAIL.md), has a [shared-screen rehearsal](seed-sail.html) where Glow reveals destination-specific wind and Reed trims the airborne sail before a marked bend. The first landing the family explicitly plants becomes its permanent flower shortcut.
 
 ## What tiering up changes
 
