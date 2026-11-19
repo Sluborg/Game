@@ -38,3 +38,9 @@ For the first family phone test, keep both targets visible and let the adult wai
 ## Sprite handoff
 
 The [native strip](art/clay-ramp.png) contains four 24 × 16 cells, left to right. The end cells are the persistent low and high shapes. Play the middle cells on reshape and reverse them to flatten the clay. Face the lip toward the targets when mirroring the bank. Key out exact RGB(255, 0, 255) and scale with nearest-neighbour sampling. The preview holds each end shape so the change in launch angle is visible.
+
+## Playable study checkpoint · 19 November 2026
+
+Open [Shape the jump](clay-bank.html) on one screen. Let one person choose the clay shape and the other release the stone. Before the second shot ask each where it will land. After the first discovery, give them time to decide whether to try for the other landmark and swap jobs. The buttons stand in for walking to the two stations. The scene uses the accepted four-frame clay strip.
+
+The [regression](clay-bank.test.cjs) drives the page handlers through both untouched releases, all four shaped shots, both discovery orders, repeat hits, reload and attempted input during flight. Local storage keeps the shape and discoveries when available. The timings are study values. A Chromium screenshot attempt failed at startup, so phone layout, touch feel and family recognition remain unverified. The gate for live implementation remains voluntary replay at the reed pool.

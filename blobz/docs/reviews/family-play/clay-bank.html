@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clay bank · Shape the jump</title>
+<style>
+*{box-sizing:border-box}body{margin:auto;padding:12px;max-width:720px;background:#262433;color:#fff5dc;font:1rem/1.4 system-ui}h1,p{margin:.4em 0}canvas{width:100%;image-rendering:pixelated;background:#ff00ff}section{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}button{font:inherit;padding:10px;border-radius:7px;border:2px solid #74677c;background:#fff1cf;color:#302436}button:disabled{opacity:.55}button:focus-visible{outline:3px solid #6adbd9}
+</style>
+<h1>Shape the jump</h1><p>One player shapes the clay. The other picks a groove. Where will the stone land? Take both jobs to play solo.</p>
+<canvas width="200" height="90" aria-label="Clay ramp, hanging bell, ditch, balancing log and a tuft of leaves"></canvas>
+<section aria-label="Sculptor"><button id="shape">Press clay flat</button></section>
+<section aria-label="Roller"><button id="near">Release near</button><button id="far">Release far</button></section>
+<p id="status" role="status">The stone rests in the near groove.</p><p id="landmarks"></p>
+<script>
+const canvas=document.querySelector('canvas'), ctx=canvas.getContext('2d');
+const strip=new Image(); strip.src='art/clay-ramp.png';
+const shapeButton=document.querySelector('#shape'), statusLine=document.querySelector('#status');
+const releases=['near','far'].map(id=>document.getElementById(id));
+const paths={ untouched:[97,75,5,'The unshaped bank drops the stone into the ditch.'],
+  nearLow:[124,75,12,'Splash! The stone fell short of the log.'],
+  nearHigh:[112,28,23,'Ding! The seed bell scatters a trail of spores.'],
+  farLow:[149,61,15,'Knock! The log tips across the walking gap.'],
+  farHigh:[182,59,52,'Rustle! The stone cleared the bell and landed in the tuft.'] };
+const key='blobz-study-clay-bank-v1';
+let saved={}; try{saved=JSON.parse(localStorage.getItem(key))||{}}catch{}
+let shape=['Low','High'].includes(saved.shape)?saved.shape:'', log=saved.log===true, bell=saved.bell===true;
+let shot=null, mark=null, morph=null;
+function sync(){
+  shapeButton.textContent=shape==='Low'?'Pinch clay high':'Press clay flat';
+  for(const button of [shapeButton,...releases]) button.disabled=!!shot;
+  document.querySelector('#landmarks').textContent='Clay: '+(shape||'untouched')+' · Log: '+(log?'crossing open':'upright')+' · Bell: '+(bell?'spore trail visible':'quiet');
+}
+function save(){try{localStorage.setItem(key,JSON.stringify({shape,log,bell}))}catch{}}
+shapeButton.onclick=()=>{if(shot)return;const previous=shape;shape=shape==='Low'?'High':'Low';morph=previous?performance.now():null;save();sync()};
+for(const button of releases) button.onclick=()=>{
+  if(shot)return;
+  const groove=button.id, path=shape?groove+shape:'untouched';
+  shot={start:performance.now(),groove,path,landed:false};mark=null;
+  statusLine.textContent='Rolling from the '+groove+' groove…';sync();
+};
+function block(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),w,h)}
+function draw(now){
+  block(0,0,200,90,'#ff00ff');
+  block(0,62,90,5,'#735646');block(90,78,57,4,'#735646');block(147,62,53,5,'#735646');
+  block(13,61,8,2,'#ffe697');block(50,61,8,2,'#ffe697');
+  block(111,6,1,16,'#513e47');block(109,22,6,6,'#ffc84e');block(107,27,10,2,'#774825');
+  if(log)block(122,62,31,5,'#88512f');else block(148,39,6,24,'#88512f');
+  for(let i=0;i<4;i++)block(177+i*3,55+(i%2)*2,2,7,'#356c41');
+  if(bell)for(let i=0;i<6;i++)block(118+i*5,47+i%3,2,2,'#fff1bd');
+  if(shape && strip.complete && strip.naturalWidth){
+    const step=morph===null?3:Math.max(0,Math.min(3,Math.floor((now-morph)/95)));
+    const frame=shape==='High'?step:3-step;
+    ctx.drawImage(strip,frame*24,0,24,16,67,46,24,16);
+  }else block(72,59,17,3,'#bf764a');
+  ctx.font='8px system-ui';ctx.fillStyle='#302436';
+  ctx.fillText('Far',10,72);ctx.fillText('Near',45,72);ctx.fillText('Bell',118,26);ctx.fillText('Log',150,37);
+  let x=54,y=58;
+  if(shot){
+    const elapsed=now-shot.start, origin=shot.groove==='near'?54:17;
+    const [tx,ty,lift,message]=paths[shot.path];
+    if(elapsed<550){const t=elapsed/550;x=origin+(85-origin)*t;y=58-3*t}
+    else if(elapsed<1500){const t=(elapsed-550)/950;x=85+(tx-85)*t;y=55+(ty-55)*t-4*lift*t*(1-t)}
+    else{
+      if(!shot.landed){shot.landed=true;mark=[tx,ty];if(shot.path==='farLow')log=true;if(shot.path==='nearHigh')bell=true;statusLine.textContent=message;save();sync()}
+      const t=Math.min(1,Math.max(0,(elapsed-1850)/1000));
+      x=tx+(54-tx)*t;y=ty+(58-ty)*t+12*Math.sin(Math.PI*t);
+      if(t===1){shot=null;sync()}
+    }
+  }
+  if(mark)block(mark[0]-3,mark[1]+2,7,2,'#fff1bd');
+  block(x-2,y-2,5,5,'#44435b');block(x-1,y-2,3,2,'#d5d4c8');
+  requestAnimationFrame(draw);
+}
+sync();requestAnimationFrame(draw);
+</script></html>
