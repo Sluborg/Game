@@ -14,6 +14,8 @@ These resources are capability tokens. The first meaningful use records the disc
 
 The cottage display fills left to right in discovery order. Touching an object pulses the related landmark at the edge of the screen and shows one action picture. A guest may use every discovery the host has. A guest’s own village is unchanged.
 
+The [cottage display handoff](COTTAGE-DISPLAY.md) and [phone-first study](cottage-display.html) cover the return recap, shelf persistence and the first choice among cross-resource projects.
+
 ![Reed seedpod, soft clay and glow spore changing into their discovered states](art/discovery-tokens.gif)
 
 The [native token strip](art/discovery-tokens.png) contains six 24 × 24 cells. Each pair shows before and after discovery for reed, clay and glow. Use the odd cells as cottage-display icons. The GIF is a sequential review preview rather than an in-game timeline. Key out exact RGB(255, 0, 255) and scale with nearest-neighbour sampling.

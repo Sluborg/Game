@@ -27,7 +27,7 @@ The first path contains two gaps so both players can perform each job once. On l
 - Resolve reveal and reshape through the same contextual-action selector used by Reed, Clay and Glow. One fresh press performs one state change. Held-tool repeat, auto-gather and dash cannot consume the same press.
 - Reserve both approach sides of every cup, the walking landing and the completed shortcut before seeded nodes are generated. Mirror named sockets from the selected water-corner layout. Sweep all four corner orientations and a reseed within one orientation.
 - A disconnected light keeper drops the cap at the current viewing bowl. Any player may continue. Simultaneous shape presses resolve once in stable player-ID order. A late joiner sees the current clue and already fired cups.
-- Mark each fired cup dirty so partial progress survives. Surface pending, saved and unavailable states. Completing the third cup records the project before the celebration starts.
+- Mark each fired cup dirty so partial progress survives. Surface pending, saved and unavailable states. Completing the second cup records the project before the celebration starts.
 
 ## Acceptance
 

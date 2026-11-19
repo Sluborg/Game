@@ -36,7 +36,10 @@ async function run(browser, touch) {
   try {
     await context.route('**/*', route => {
       const filename = new URL(route.request().url()).pathname.slice(1);
-      if (!['glowcap.html', 'reed-pool.html'].includes(filename)) return route.abort();
+      if (filename === 'art/discovery-tokens.png') {
+        return route.fulfill({ path: join(__dirname, filename), contentType: 'image/png' });
+      }
+      if (!['glowcap.html', 'reed-pool.html', 'cottage-display.html'].includes(filename)) return route.abort();
       return route.fulfill({ path: join(__dirname, filename), contentType: 'text/html' });
     });
     const page = await context.newPage();
@@ -81,6 +84,20 @@ async function run(browser, touch) {
     assert.match(await page.locator('#flower').innerText(), /stranden/);
     await page.reload();
     assert.match(await page.locator('#flower').innerText(), /stranden/);
+
+    await page.goto('http://meadow.invalid/cottage-display.html');
+    await checkTargets(page);
+    await act('Plant flower');
+    assert.match(await page.locator('#recap').innerText(), /Clay tracks/);
+    await act('Ring seed bell');
+    await act('Find picnic');
+    await checkTargets(page);
+    await act('Lantern stepping stones Clay + Glow');
+    assert.match(await page.locator('#project-status').innerText(), /Pinned: Lantern/);
+    await page.reload();
+    assert.equal(await page.locator('#clay').getAttribute('aria-pressed'), 'true');
+    assert.equal(await page.locator('#glow').getAttribute('aria-pressed'), 'true');
+    assert.match(await page.locator('#recap').innerText(), /Picnic clearing/);
     assert.deepEqual(errors, []);
     console.log(touch ? 'Touch emulation passed (360px)' : 'Keyboard passed (390px)');
   } finally {
