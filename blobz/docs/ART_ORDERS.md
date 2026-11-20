@@ -46,7 +46,7 @@ ChatGPT works only on N-orders with status TO DO (next: N-42). ChatGPT fills eve
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
 | N-42 | TO DO (FIRST) | Ranger class icon: bow with drawn string + nocked arrow, EXACT 16x16 + 32x32 | `art/dungeon/icons/bow-16.png`, `bow-32.png` |
-| N-43 | TO DO | 12 new blob hats/caps (hats only, no ears/horns), 3 sizes S (max 8x4) / M (max 10x5) / L (max 14x6) in 16x8 cells | `src/blob.ts` hat sprites (Art converts to the hat tables) |
+| N-43 | HyperAgent (2026-11-20: made by Stefan's HyperAgent agents per docs/HYPERAGENT_BRIEF.md, ChatGPT skips it) | 12 new blob hats/caps (hats only, no ears/horns), 3 sizes S (max 8x4) / M (max 10x5) / L (max 14x6) in 16x8 cells | `src/blob.ts` hat sprites (Art converts to the hat tables) |
 | N-44 | TO DO | Dungeon room props in 0x72 DungeonTileset II style: 2 barrels, standing + wall torch (2 flame frames each), 2 bone piles, skull decal, cobweb, puddle (16x32 cells) | `art/dungeon/props/*` |
 | N-37 | DONE (received 2026-11-15, not exact 8x: real art px ~10 src px, native ~214x29; sampled to 140x28 -> art/lobby/party-platform-140.png) | Lobby party platform, EXACT 140x28 art px (shown 2x) | `art/lobby/party-platform.png` |
 | N-38 | DONE (received 2026-11-15, 937x1678 = 3.9 src px per art px; 240x430 -> art/bg/start-240.png) | Start/loading background, village scene, EXACT 240x430 art px portrait (shown 2x) | `art/title.png` |
@@ -405,7 +405,7 @@ Draw it twice, each natively at its size (NOT one scaled up): EXACTLY 16x16 art 
 (right), 1 px dark outline at each scale, filling the square like the reference icons, generous magenta between them.
 ```
 
-### N-43 Blob hats and caps (12 new, hats only)
+### N-43 Blob hats and caps (12 new, hats only) (HyperAgent, ChatGPT: skip)
 ```
 STYLE: exactly like your N-26 trees (same dark near-black outline, palette, 2-3 tone shading, pixel size): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n26-trees.png
 TRUE PIXEL ART: every art pixel is one flat colour, NO anti-aliasing, no gradients, no blur, no dithering. Solid flat
