@@ -240,7 +240,7 @@ export class DungeonScene extends Phaser.Scene {
     this.scale.on('resize', this.fitCamera, this); // Phaser resized the canvas
     // Code's shared viewport watcher (rotation, app switch, visual viewport; debounced): re-measure the camera and view
     const off = onViewport(() => this.fitCamera());
-    this.events.once('shutdown', () => { this.scale.off('resize', this.fitCamera, this); off(); document.getElementById('dg-wipe')?.remove(); });
+    this.events.once('shutdown', () => { this.scale.off('resize', this.fitCamera, this); off(); document.getElementById('dg-wipe')?.remove(); document.getElementById('dg-boss-intro')?.remove(); });
   }
 
   private fitCamera() {
@@ -436,9 +436,10 @@ export class DungeonScene extends Phaser.Scene {
     this.chests = f.chests.map((c) => this.add.image(c.x, c.y + 8, 'na-chest', 0).setScale(3).setOrigin(0.5, 1).setDepth(c.y));
     this.mapObjs.push(...this.chests);
     // a big floor banner
-    const banner = this.add.text(f.start.x, f.start.y - 90, rooms ? t(floor === ROOMS ? 'dg.roomBoss' : floor === MINIBOSS_ROOM ? 'dg.roomMini' : 'dg.roomBanner', { d: dungeon, n: floor }) : t(floor === FLOORS ? 'dg.floorBoss' : 'dg.floorBanner', { d: dungeon, n: floor }), { fontFamily: FONT, fontSize: '34px', color: '#ffe08a', fontStyle: 'bold', stroke: '#3f2631', strokeThickness: 7 })
+    if (rooms && floor === ROOMS) this.bossIntro(); // the last room: a wooden plank with the boss portrait slides in (DOM, never blocks touches)
+    const banner = rooms && floor === ROOMS ? null : this.add.text(f.start.x, f.start.y - 90, rooms ? t(floor === ROOMS ? 'dg.roomBoss' : floor === MINIBOSS_ROOM ? 'dg.roomMini' : 'dg.roomBanner', { d: dungeon, n: floor }) : t(floor === FLOORS ? 'dg.floorBoss' : 'dg.floorBanner', { d: dungeon, n: floor }), { fontFamily: FONT, fontSize: '34px', color: '#ffe08a', fontStyle: 'bold', stroke: '#3f2631', strokeThickness: 7 })
       .setOrigin(0.5).setDepth(7000);
-    this.tweens.add({ targets: banner, y: banner.y - 30, alpha: 0, delay: 1400, duration: 900, onComplete: () => banner.destroy() });
+    if (banner) this.tweens.add({ targets: banner, y: banner.y - 30, alpha: 0, delay: 1400, duration: 900, onComplete: () => banner.destroy() });
     // the camera jumps to the arrival point
     this.camTarget = { x: f.start.x, y: this.roomCamY(f.start.y) };
     this.cameras.main.centerOn(this.camTarget.x, this.camTarget.y);
@@ -717,6 +718,17 @@ export class DungeonScene extends Phaser.Scene {
 
   /** rooms: the room change fades to dark while everyone slides up through the door, then fades back in on the new
    *  room's entrance (a DOM layer over the canvas, under the HUD) */
+  /** N-14 boss intro: the 103x28 plank at exactly 3x with the 31x29 portrait on its left end; ~1.5 s, pointer-events none (never blocks input),
+   *  sits at 40 % of the height: below the HUD plate and the level-up button, clear of the thumbstick and the special button */
+  private bossIntro() {
+    document.getElementById('dg-boss-intro')?.remove();
+    const host = document.getElementById('game') ?? document.body, w = host.clientWidth || innerWidth, h = host.clientHeight || innerHeight, k = 3;
+    const el = document.createElement('div'); el.id = 'dg-boss-intro';
+    el.style.left = `${Math.max(0, Math.round((w - 103 * k) / 2))}px`; el.style.top = `${Math.round(h * 0.4)}px`;
+    el.innerHTML = `<img class="plank" src="art/dungeon/boss-banner.png" alt=""><img class="face" src="art/dungeon/boss-portrait.png" alt=""><span>${t('dg.bossName')}</span>`;
+    el.addEventListener('animationend', () => el.remove());
+    host.append(el);
+  }
   private wipeA = 0;
   private snapNext = false;
   private wipeHold = 0;
