@@ -2,6 +2,9 @@
 
 Copy-paste ready. Read it all once; the tables are the contract. Questions go to Stefan; Art (Claude) slices, Code wires.
 
+**HyperAgent contact:** Deliver to branch `hyperagent/<name>`, folder `docs/art-review/hyperagent/<date>-<what>/`, tell Stefan the
+branch name; Art picks it up. (If you cannot reach GitHub, Stefan relays the files and Art records them with your README.)
+
 ## 1. Game and style (5 lines)
 - **Blobz:** a co-op phone party game. Each player is a small round blob that glides (never rolls); skins = colour,
   shape, eyes, mouth, hat. Kids 8+ and adults. Top-down 3/4 view. Blobz have **no hands, arms or legs**.
