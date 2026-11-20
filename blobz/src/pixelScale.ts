@@ -24,6 +24,7 @@ export function snapImg(img: HTMLImageElement, boxW: number, boxH = boxW, art?: 
 
 /** Whole-pixel rules for the DOM pixel art: [selector, box width, box height, art size if not the natural size]. */
 const SNAP: [string, number, number, [number, number]?][] = [
+  ['#menu #home .logo-img', 316, 230], // N-39 logo: whole device px per art px (about 300 css, 2x), fits 360 px wide phones
   ['#hud-quest .qicon', 20, 20], ['#hud-quest .qstar', 20, 20], ['#hud-quest .qtitle img', 32, 22],
   ['#hud-quest .qbimg', 40, 28], ['#hud-quest .qbico', 24, 24],
   ['#hud-bank img', 20, 20], ['#edge-arrows .edge img', 20, 20], // Lead 2026-11-16: every UI resource icon in one 20 css box

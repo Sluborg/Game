@@ -86,7 +86,7 @@ input:focus { outline: none; box-shadow: var(--o4), inset 0 4px 0 0 #e9dfc9, 0 0
 /* ---------- home ---------- */
 .logo { margin: 0; display: flex; justify-content: center; align-items: flex-end; }
 .logo-text { font: 700 56px 'Fredoka', sans-serif; color: #fff8e8; -webkit-text-stroke: 2px #4a2f1c; letter-spacing: 2px; }
-.logo-img { display: block; width: 90%; max-width: 300px; height: auto; margin: -4px auto 0; image-rendering: auto; }
+.logo-img { display: block; width: 90%; max-width: 300px; height: auto; margin: -4px auto 0; image-rendering: pixelated; }
 .me {
   display: flex; align-items: center; gap: 12px; width: calc(100% - 8px); margin: 4px; padding: 8px 14px 10px 10px;
   background: #fff; border: 0; cursor: pointer; color: var(--ink); text-align: left;

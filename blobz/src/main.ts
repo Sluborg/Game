@@ -192,9 +192,9 @@ const icon = (name: string, cls = '') => { const i = new Image(); i.src = DATA_I
 document.querySelectorAll<HTMLElement>('[data-icon]').forEach((el) => el.replaceWith(icon(el.dataset.icon!)));
 function renderIcons() {
   const logo = $('logo');
-  // AI-generated logo (public/art/logo.png); plain text if it fails to load
+  // N-39 logo (approved 2026-11-16, 150x104 art px, public/art/logo-150.png); plain text if it fails to load
   const img = new Image();
-  img.src = 'art/logo.png'; img.alt = 'Blobz'; img.className = 'logo-img';
+  img.src = 'art/logo-150.png'; img.alt = 'Blobz'; img.className = 'logo-img';
   img.onerror = () => { const t = document.createElement('span'); t.className = 'logo-text'; t.textContent = 'BLOBZ'; logo.replaceChildren(t); };
   logo.replaceChildren(img);
 }

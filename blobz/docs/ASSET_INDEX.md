@@ -11,13 +11,13 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
   image / CSS background or border image / canvas icon, or a WebGL texture bound at a Phaser draw call); CODE ONLY =
   referenced but never shown in the run (remove the reference and the file); UNUSED = no reference and never shown.
 
-**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 197 / IN GAME 27 / UNUSED 99.
+**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 198 / IN GAME 27 / UNUSED 98.
 
 **Claude-drawn still IN GAME** (0): none
 
 **Kenney still IN GAME** (0): none
 
-**Counts by source:** 0x72 1 / ChatGPT 272 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 16 (Ninja: 110 referenced by code). **Own files:** 323, 37 delete candidates.
+**Counts by source:** 0x72 1 / ChatGPT 272 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 16 (Ninja: 110 referenced by code). **Own files:** 323, 36 delete candidates.
 
 ## Own files (art, Kenney, app icons)
 
@@ -258,12 +258,12 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/lobby/searching-blob-2.png` | 32x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/lobby/searching-blob-3.png` | 32x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/lobby/searching-blob.png` | 128x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/style.css:1153 | keep |
-| `art/logo-150.png` | 150x104 | ChatGPT N-39 pixel logo (ordered 150x104), sliced by scripts/slice_n37_n40.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/logo-150.png` | 150x104 | ChatGPT N-39 pixel logo (ordered 150x104), sliced by scripts/slice_n37_n40.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/main.ts:195, src/main.ts:197 | replace (see OLD_ART_CHECKLIST) |
 | `art/logo-64.png` | 64x42 | ChatGPT N-39 pixel logo (native 64x42), sliced by scripts/slice_n37_n40.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
 | `art/logo-A.png` | 634x407 | ChatGPT N-1 logo (A/B/old = earlier variants) | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/logo-B.png` | 653x442 | ChatGPT N-1 logo (A/B/old = earlier variants) | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/logo-old.png` | 680x279 | ChatGPT N-1 logo (A/B/old = earlier variants) | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/logo.png` | 672x464 | ChatGPT N-1 logo (A/B/old = earlier variants) | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/style.css:806, src/style.css:1270, src/main.ts:194 (+3) | keep |
+| `art/logo.png` | 672x464 | ChatGPT N-1 logo (A/B/old = earlier variants) | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/style.css:806, src/style.css:1270, src/main.ts:194 (+1) | keep |
 | `art/meadow/build-marker-16.png` | 16x16 | ChatGPT N-15 meadow extras, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/meadow/build-marker-32.png` | 32x32 | ChatGPT N-15 meadow extras, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/meadow/home-flag-16.png` | 16x16 | ChatGPT N-15 meadow extras, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
@@ -747,7 +747,6 @@ See `archive/README.md`.
 - `art/icons/cottage-1-32.png`
 - `art/icons/res-berry-32.png`
 - `art/lobby/party-platform-140.png`
-- `art/logo-150.png`
 - `art/logo-64.png`
 - `art/props/fence-post.png`
 - `art/props/fence-rail-h.png`
