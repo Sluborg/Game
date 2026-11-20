@@ -2,6 +2,17 @@
 
 Reviewed 17 November 2026, live v057b, source f1be3f3. Audience: one nine-year-old and one adult sharing a session. See [art and implementation directions](DIRECTIONS.md).
 
+## Claude handoff · 20 November 2026
+
+| Decision | Study to open | Evidence to collect before integration |
+|---|---|---|
+| Does a second raft trip feel worth taking? | [Reed pool](reed-pool.html) and [meadow build plan](MEADOW.md) | After the first flower, stay quiet. Record who initiates the next launch and whether the partners swap jobs. |
+| Can the family distinguish all three resources by what they do? | [Clay bank](clay-bank.html), [glowcap hollow](glowcap.html) and [cottage display](cottage-display.html), in [discovery order](PROGRESSION.md) | Ask each player to point to a trophy and show the partner what it lets them do. Record their first prediction. |
+| Do class choices read at phone size? | [Blind icon test](icon-test.html) and [four class comparisons](SKILL-CARDS.md) | Capture each player's first guess before revealing the card. Try the chosen action in its class study. Use the corrected Marksman, Tank and Healer meanings in the card handoff. |
+| Does the healer hood leave each face readable? | [Six real body shapes](art/CLASS_HAT_FIT.md) and [narrow hood on tall and pear bodies](art/narrow-hood-fit.md) | Compare the two fits at game size during glide. The other class hats have authored animation in the atlas; the six-shape fit study covers the healer hood. |
+
+**Checkpoint.** The design and art studies are ready for family testing. All 54 local regression tests passed. Every PNG and every decoded GIF frame in the review art directory contains the exact magenta key, and every GIF contains distinct frames. On two physical phones, check joining first. If joining fails, record the message on each phone. The standalone studies can still be rehearsed together on one screen. Touch comfort, child recognition and voluntary replay await observation.
+
 ## A. Verdict
 
 I would expect the pair to ask for another dungeon run sooner than another village session. Choosing extra arrows and then freezing the volley gave me a reason to try the next room. In the village I delivered two loads of wood, built Storage, saved, and got three empty stars. The building survived. The results screen missed the accomplishment I cared about.
