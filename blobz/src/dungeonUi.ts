@@ -143,10 +143,12 @@ function renderHud(d: DView, myId: string) {
     lb = document.createElement('button'); lb.id = 'dg-lvlup'; lb.type = 'button';
     lb.innerHTML = '<span class="up" aria-hidden="true"></span><b></b>';
     lb.onclick = () => { sfx.pick(); sendPick('skill:open'); };
+    lb.addEventListener('pointerdown', (e) => e.stopPropagation()); // a tap on the button never starts the floating thumbstick
     $('dg-xp').append(lb);
   }
   const unspent = h && h.ko <= 0 && !h.offer.length ? h.pending : 0;
   lb.classList.toggle('hidden', unspent <= 0);
+  if (unspent > 0) { const r = $('hud-dg').getBoundingClientRect(); lb.style.top = `${Math.round(r.bottom + 10)}px`; } // right under the HP panel, at the right edge
   lb.setAttribute('aria-label', t('dg.lvlUp', { n: unspent }));
   setText(lb.querySelector('b')!, String(unspent));
   const lo = d.level >= 2 ? LEVEL_XP[d.level - 2] : 0, hi = LEVEL_XP[d.level - 1] ?? lo + 1;
@@ -260,7 +262,9 @@ function renderLoot(d: DView, myId: string, nameOf: (id: string) => string) {
     show('dg-loot-btns', my === -1);
     // alone: no dice, just "Använd" / "Take"; with friends: "Rulla" / "Avstå"
     const solo = Object.keys(v.rolls).length <= 1;
-    setText($('dg-roll'), t(solo ? 'dg.take' : 'dg.roll'));
+    // a full inventory (all ITEM_SLOTS used): say exactly what happens (Alea: it was not clear the item can be taken)
+    const out = lootReplaces(myItems, v.item);
+    setText($('dg-roll'), out ? t(solo ? 'dg.swap' : 'dg.rollSwap', { item: tItem(out) }) : t(solo ? 'dg.take' : 'dg.roll'));
     const others = Object.entries(v.rolls).map(([id, r]) => `${nameOf(id)}: ${r === -1 ? '...' : r === 0 ? t('dg.passes') : r}`).join(' · ');
     // rooms: a clear room's door waits for this vote (and any queued one): say so, so nobody wonders why it won't open
     const doorWaits = d.rooms && d.wave >= d.waves && d.landing === 0 && d.enemies.length === 0;

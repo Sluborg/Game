@@ -3,7 +3,7 @@ import { KEYS } from './i18n';
 import {
   AIM_WARN, BITE_TIME, CLASS_MOVE_COOLDOWN, DUNGEON_TIMER_ENABLED, CLASS_WEAPONS, BITE_WARN, bossHp, BURST, BURST_DMG, BURST_GAP, BURST_SPREAD, CLASS_HP, CLASSES, DASH_TIME, DASH_WARN, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, floorDmg, actMul, GH, GW,
   HEAL_BOLT, heroMods, refresh, inSwing, isWall, ITEMS, itemOf, KO_SECONDS, LEVEL_XP, LOOT_SECONDS, makeFloor, makeGoo, newRun as newRunAny, POTION_HP, roomCracks, REGEN_EVERY,
-  ITEM_ICON, ITEM_SLOTS, lootReplaces, skillIcon, skillOf, unstick, inDoorway, roomTiles, roomGap, ROOM_TUNE, ROOM_STUB, ROOM_TRANS, ROOM_WALK_IN, roomSpecials, EARLY_ROOMS, ROOM_T, ROOMS_ENABLED, ROOMS, ROOM_W, MINIBOSS_ROOM, SPAWN_WARN, READY_SECONDS, makeRoom, roomType, roomClear, diffFloor, enterFloor, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
+  ITEM_ICON, ITEM_SLOTS, collideWalls, ROOM_BOSS, lootReplaces, skillIcon, skillOf, unstick, inDoorway, roomTiles, roomGap, ROOM_TUNE, ROOM_STUB, ROOM_TRANS, ROOM_WALK_IN, roomSpecials, EARLY_ROOMS, ROOM_T, ROOMS_ENABLED, ROOMS, ROOM_W, MINIBOSS_ROOM, SPAWN_WARN, READY_SECONDS, makeRoom, roomType, roomClear, diffFloor, enterFloor, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
 } from './dungeon';
 import { cleanVillage, createState, DUNGEON_ENABLED, newVillage, villageOf, PICK_TIMER_ENABLED, ENTRANCE_R, entranceOf, makePuzzles, makeTrees, pickWeapon, snapshot, step, viewFromSnapshot, type Input } from './sim';
 
@@ -475,8 +475,8 @@ describe('dungeon', () => {
         const f = makeRoom(5, room, 1);
         expect(f.gw).toBe(ROOM_W + 2);
         expect(f.gw! * f.dt!).toBe(432); // 0x72 tiles at 3x: the screen width
-        expect((f.gh! - 4) * f.dt!).toBeGreaterThanOrEqual(1.35 * 930); // ~1.4+ screens of floor
-        expect(f.start.y).toBeGreaterThan(f.stairs.y + 20 * f.dt!);
+        const rows = f.gh! - 4 - ROOM_STUB; expect(rows).toBeGreaterThanOrEqual(12); expect(rows).toBeLessThanOrEqual(15); // 12-15 floor rows: about one screen (Stefan)
+        expect(f.start.y).toBeGreaterThan(f.stairs.y + 9 * f.dt!);
         expect(isWall(f, f.start.x, f.start.y)).toBe(false);
         expect(isWall(f, f.stairs.x, f.stairs.y)).toBe(false);
         expect(f.waves!.length).toBeGreaterThanOrEqual(2);
@@ -492,6 +492,7 @@ describe('dungeon', () => {
       expect(d.rooms).toBe(true);
       const bs = () => [body('a', d.map.start.x, d.map.start.y), body('b', d.map.start.x + 30, d.map.start.y)];
       let b = bs();
+      for (const h of Object.values(d.heroes)) h.atkCd = 1e9; // (the rooms are short now: nobody kills a monster while we count)
       expect(d.enemies.length).toBe(0); // a calm arrival
       const fx = run1(d, b, undefined, 1.3).fx;
       expect(fx.some((f) => f.t === 'spawn')).toBe(true);
@@ -611,7 +612,7 @@ describe('dungeon', () => {
         const d = newRun(30 + room, { a: 'sword', b: 'bow', c: 'staff' }, 2, true);
         if (room > 1) { enterFloor(d, 30 + room, room, 3); }
         const T = d.map.dt!, bs = [body('a', 2 * T, d.map.start.y), body('b', 3 * T, d.map.start.y), body('c', 4 * T, d.map.start.y)];
-        for (const h of Object.values(d.heroes)) h.inv = 999;
+        for (const h of Object.values(d.heroes)) { h.inv = 999; h.atkCd = 1e9; } // nobody kills a monster before we count
         run1(d, bs, undefined, 1.2 + SPAWN_WARN + 0.1);
         const alive = d.enemies.filter((e) => e.kind !== 2);
         const specials = alive.filter((e) => e.kind === 3 || !e.calm).length;
@@ -666,6 +667,56 @@ describe('dungeon', () => {
       run1(d, bs, undefined, ROOM_WALK_IN);
       expect(bs.every((b, i) => b.y < y1[i] - 80)).toBe(true);
       expect(inDoorway(d.map, d.map.start.x, d.map.start.y)).toBe(false);
+    });
+    it('the floor under the thin side walls is walkable up to the 15 px wall strip (Stefan: it looked like floor)', () => {
+      const f = makeRoom(5, 1, 1), T = f.dt!, W = f.gw!, y = 10.5 * T;
+      expect(isWall(f, 0.6 * T, y)).toBe(false); // the edge column's floor
+      expect(isWall(f, 10, y)).toBe(true); // the wall strip itself
+      expect(isWall(f, W * T - 10, y)).toBe(true);
+      const o = { x: 0.2 * T, y, vx: -300, vy: 0 };
+      collideWalls(f, o, 14);
+      expect(o.x).toBe(15 + 14); // pressed against the strip, not a whole tile away
+      expect(o.vx).toBe(0);
+    });
+    it('tougher rooms (Stefan: too easy): boss health x1.4, a ring of shots in phase 1, more monsters later', () => {
+      const d = newRun(28, { a: 'sword' }, 1, true);
+      enterFloor(d, 28, ROOMS, 1); clearCover(d);
+      expect(d.bossMax).toBe(Math.round(bossHp(1, 1) * ROOM_BOSS.hp));
+      const T = d.map.dt!, a = [body('a', 4 * T, 18 * T)];
+      d.heroes.a.inv = 999; d.heroes.a.atkCd = 1e9;
+      run1(d, a, undefined, 2.2);
+      const boss = d.enemies.find((e) => e.kind === 2)!;
+      boss.slamT = 99; boss.cd = 0.05; d.spit = [];
+      run1(d, a, undefined, 0.2);
+      expect(d.spit.length).toBeGreaterThanOrEqual(ROOM_BOSS.ring);
+      expect(makeRoom(3, 8, 1).waves![0].length).toBeGreaterThan(makeRoom(3, 1, 1).waves![0].length);
+    });
+    it('monsters find their way around walls (flow field), they no longer push into the wall toward the blob', () => {
+      const d = newRun(29, { a: 'sword' }, 1, true); clearCover(d);
+      d.wave = 99; d.pending = []; d.enemies = [];
+      const m = d.map, T = m.dt!, W = m.gw!;
+      // a wall across the room at row 8, open only at the far right tile
+      for (let x = 1; x < W - 2; x++) m.solid[8 * W + x] = 1;
+      const a = [body('a', 2.5 * T, 11.5 * T)];
+      d.heroes.a.inv = 999; d.heroes.a.atkCd = 1e9;
+      const e = goo(d, 1, 2.5 * T, 5.5 * T, { awake: true, calm: true, cd: 999 });
+      run1(d, a, undefined, 10); // (a slime is slow)
+      expect(e.y).toBeGreaterThan(9 * T); // it went round the wall's open end
+      expect(Math.hypot(e.x - a[0].x, e.y - a[0].y)).toBeLessThan(2 * T);
+    });
+    it('vertical wall runs are thin 0x72 strips (wall only in the middle 15 px of the tile), horizontal runs stay full', () => {
+      let seen = 0;
+      for (const seed of [5, 9, 13, 21]) for (let room = 1; room <= ROOMS; room++) {
+        const f = makeRoom(seed, room, 2), T = f.dt!, W = f.gw!;
+        for (const i of f.thin ?? []) {
+          seen++;
+          const x = i % W, y = Math.floor(i / W), cy = (y + 0.5) * T;
+          expect(isWall(f, x * T + 25, cy)).toBe(true); // the strip
+          expect(isWall(f, x * T + 5, cy)).toBe(false); // beside it
+          expect(f.walls!.some((w) => w.y * W + w.x === i && !f.walls!.some((o) => o.y === w.y && Math.abs(o.x - w.x) === 1))).toBe(true);
+        }
+      }
+      expect(seen).toBeGreaterThan(5);
     });
     it('an open loot card holds the door (it never follows the team into the next room)', () => {
       const d = newRun(27, { a: 'sword', b: 'bow' }, 1, true);
@@ -749,6 +800,26 @@ describe('dungeon', () => {
     take('amulet');
     expect(d.heroes.a.items).toEqual(['ring', 'gloves', 'amulet']);
     expect(dview(dsnap(d, 16)).heroes.a.items).toEqual(['ring', 'gloves', 'amulet']);
+  });
+
+  it('a full inventory (3 items) can take every other item type: alone and with friends; the oldest goes', () => {
+    for (const keep of ITEMS) {
+      const three = [keep.id, ...ITEMS.filter((i) => i.id !== keep.id).slice(0, 2).map((i) => i.id)];
+      for (const nu of ITEMS.filter((i) => !three.includes(i.id))) {
+        for (const friends of [false, true]) {
+          const d = quiet(newRun(17, friends ? { a: 'sword', b: 'bow' } : { a: 'sword' }));
+          const bs = [body('a', d.map.start.x, d.map.start.y), ...(friends ? [body('b', d.map.start.x + 40, d.map.start.y)] : [])];
+          d.heroes.a.items = [...three]; refresh(d.heroes.a);
+          d.lootQ.push(nu.id);
+          run1(d, bs);
+          expect(d.loot?.rolls.a).toBe(-1); // Alea may roll / take it
+          dungeonChoice(d, 'a', 'loot:roll');
+          if (friends) dungeonChoice(d, 'b', 'loot:pass');
+          run1(d, bs);
+          expect(d.heroes.a.items).toEqual([...three.slice(1), nu.id]);
+        }
+      }
+    }
   });
 
   it('loot alone: "Använd" takes it at once (no dice); with friends: roll/pass, highest roll wears it', () => {

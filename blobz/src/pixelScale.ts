@@ -26,9 +26,9 @@ export function snapImg(img: HTMLImageElement, boxW: number, boxH = boxW, art?: 
 const SNAP: [string, number, number, [number, number]?][] = [
   ['#hud-quest .qicon', 20, 20], ['#hud-quest .qstar', 20, 20], ['#hud-quest .qtitle img', 32, 22],
   ['#hud-quest .qbimg', 40, 28], ['#hud-quest .qbico', 24, 24],
-  ['#hud-bank img', 18, 18], ['#edge-arrows .edge img', 18, 18],
-  ['#build-panel .bcost .c img', 16, 16],
-  ['#end .endrows .qicon', 16, 16], ['#end .endrows .qstar', 22, 22], ['#end .stars .star', 76, 68],
+  ['#hud-bank img', 20, 20], ['#edge-arrows .edge img', 20, 20], // Lead 2026-11-16: every UI resource icon in one 20 css box
+  ['#build-panel .bcost .c img', 20, 20],
+  ['#end .endrows .qicon', 20, 20], ['#end .endrows .qstar', 22, 22], ['#end .stars .star', 76, 68],
   ['#btn-build .kicon', 48, 48], ['#btn-menu .kicon', 48, 48], ['.backbtn .icon', 48, 48], ['.kclose img', 48, 48],
   ['.pgbtn img', 48, 48], ['#dash img', 48, 48],
   ['#preview .blob img', 60, 60, [20, 20]], ['#preview2 .blob img', 120, 120, [20, 20]],
