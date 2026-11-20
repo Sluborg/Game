@@ -17,7 +17,7 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 
 **Kenney still IN GAME** (0): none
 
-**Counts by source:** 0x72 1 / ChatGPT 272 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 16 (Ninja: 110 referenced by code). **Own files:** 323, 35 delete candidates.
+**Counts by source:** 0x72 1 / ChatGPT 272 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 16 (Ninja: 110 referenced by code). **Own files:** 323, 34 delete candidates.
 
 ## Own files (art, Kenney, app icons)
 
@@ -251,8 +251,8 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/loading-portrait.png` | 941x1672 | ChatGPT N-3 loading screen | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeon.css:250, src/style.css:721 | keep |
 | `art/loading.png` | 470x836 | ChatGPT N-3 loading screen | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY (loaded, not shown) | src/style.css:463, src/style.css:470, src/main.ts:33 (+1) | keep |
 | `art/lobby.png` | 992x1586 | ChatGPT order 60 (lobby) | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/style.css:267, src/i18n.ts:5, src/i18n.ts:48 (+54) | replace (see OLD_ART_CHECKLIST) |
-| `art/lobby/party-platform-140.png` | 140x28 | ChatGPT N-37 lobby platform, sliced by scripts/slice_n37_n40.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
-| `art/lobby/party-platform.png` | 160x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/style.css:1133 | keep |
+| `art/lobby/party-platform-140.png` | 140x28 | ChatGPT N-37 lobby platform, sliced by scripts/slice_n37_n40.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/style.css:1133 | replace (see OLD_ART_CHECKLIST) |
+| `art/lobby/party-platform.png` | 160x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/lobby/searching-blob-0.png` | 32x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/lobby/searching-blob-1.png` | 32x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/lobby/searching-blob-2.png` | 32x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
@@ -745,7 +745,6 @@ See `archive/README.md`.
 - `art/fine/gather/chips-wood.png`
 - `art/icons/cottage-1-32.png`
 - `art/icons/res-berry-32.png`
-- `art/lobby/party-platform-140.png`
 - `art/logo-64.png`
 - `art/props/fence-post.png`
 - `art/props/fence-rail-h.png`

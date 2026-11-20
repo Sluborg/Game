@@ -1130,7 +1130,7 @@ input, #name {
 #lobby #lobby-list {
   list-style: none; margin: 8px auto 0; padding: 0 10px 34px; width: 320px; max-width: 100%;
   display: flex; flex-direction: row; justify-content: space-between; align-items: flex-end; gap: 0;
-  background: url('/art/lobby/party-platform.png') center bottom / 320px 64px no-repeat; image-rendering: pixelated;
+  background: url('/art/lobby/party-platform-140.png') center bottom / 320px 64px no-repeat; image-rendering: pixelated;
 }
 #lobby #lobby-list .seat, #lobby #lobby-list li.seat {
   border: 0 !important; background: none !important; padding: 0 !important; min-height: 0; width: 60px;
@@ -1400,7 +1400,7 @@ button.big:not(.alt):active, button.big:not(.alt).down {
    y = 19; feet at y = 19 - 13/3 = 14.67, i.e. 17.33 art rows above the picture's bottom. The list is exactly as wide as
    its containing block, so a percentage padding (17.33 / 160 of the width) puts the feet there at any phone width. */
 #lobby #lobby-list {
-  width: 100%; max-width: none; box-sizing: border-box; padding-bottom: 11.458%; /* v5b (Stefan: 1 art px up): 18.33 / 160 */
+  width: 100%; max-width: none; box-sizing: border-box; padding-bottom: 10.95%; /* N-37 (140x28), re-measured: see below */
   background-size: 100% auto; background-origin: border-box; background-clip: border-box; background-position: center bottom;
 }
 
@@ -1480,3 +1480,10 @@ body.rotate-block #rotate b { background: var(--k-parch2); border: 2px solid var
   border: 9px solid transparent; border-top: 10px solid var(--k-plum); border-bottom: 0; animation: hintbob 1.2s ease-in-out infinite; }
 @keyframes hintbob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
 #build-panel.atend::after { opacity: 0; }
+
+/* lobby platform N-37 (Stefan 5/5, party-platform-140.png, 140x28 art px, same 5:1 shape as the old 160x32): measured at
+   the centre column: top outline row 0, deck rows 1-19 (19 rows, four plank lines), dark front edge row 20, front face
+   21-26, bottom outline 27. The feet stay at 1/3 of the deck height above the front edge (20 - 19/3 = 13.67 from the top
+   = 14.33 rows above the picture's bottom) plus the 1 art px up of v5b: 15.33 / 140 = 10.95% of the list width. The five
+   seat columns (10, 30, 50, 70, 90% of the width) all stand inside the ellipse at that row (outer deck rows 4-18 at
+   10 / 90%), and the dashed free seats share the same feet line. */
