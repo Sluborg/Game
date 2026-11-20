@@ -1226,7 +1226,7 @@ input, #name {
 #build-panel .bcard .bstate, #build-panel .bcard .bimg .bstate { position: absolute; right: -10px; top: -10px; left: auto; width: 32px; height: 32px; z-index: 2; image-rendering: pixelated; }
 #build-panel .bcard .bname { min-height: 0; font-size: 15px; }
 #build-panel .bcard .beff { font-size: 14px; line-height: 1.15; }
-#build-panel .bcards { padding: 10px 8px 4px; gap: 12px 10px; }
+#build-panel .bcards { padding: 4px 8px 2px; gap: 8px 10px; } /* Lead 2026-11-16: trimmed ~24 px so 390x844 fits unscrolled */
 /* when it does scroll (small phones), a soft fade + arrow hint at the bottom */
 #build-panel.scrolls::after { content: ''; position: sticky; display: block; bottom: -8px; height: 28px; margin-top: -28px;
   background: linear-gradient(transparent, var(--k-parch)); pointer-events: none; }
@@ -1460,7 +1460,7 @@ body.rotate-block #rotate b { background: var(--k-parch2); border: 2px solid var
 @keyframes goalpop { 0% { transform: translateX(-50%) scale(0.6); opacity: 0; } 70% { transform: translateX(-50%) scale(1.08); opacity: 1; } 100% { transform: translateX(-50%) scale(1); } }
 /* the host's "Spara och gå hem" is a sticky footer of the panel (Lead 2026-11-16: it was cut off at the screen bottom
    on 390x844 and fully hidden on 360x640): always visible, the cards scroll above it */
-#build-panel #btn-gohome { display: flex; align-items: center; gap: 6px; margin: 10px auto 0; position: sticky; bottom: 0; z-index: 2;
+#build-panel #btn-gohome { display: flex; align-items: center; gap: 6px; margin: 6px auto 0; position: sticky; bottom: 0; z-index: 2;
   box-shadow: 0 0 0 6px var(--k-parch), 0 -10px 12px 2px var(--k-parch); }
 #build-panel #btn-gohome.hidden { display: none; }
 
@@ -1472,3 +1472,11 @@ body.rotate-block #rotate b { background: var(--k-parch2); border: 2px solid var
 #net-code.warn { color: #a8461f; opacity: 1; }
 #room-code { margin: 6px 0; font-size: 15px; color: var(--k-plum); }
 #room-code b { font-size: 22px; letter-spacing: 0.15em; }
+
+/* build panel: tighter header, and while more cards wait below a small plum arrow sits on the sticky footer
+   (Lead 2026-11-16: visible scroll hint on small phones); gone once scrolled to the end */
+#build-panel .bphead { margin-bottom: 4px; }
+#build-panel.scrolls:not(.atend) #btn-gohome::before { content: ''; position: absolute; left: 50%; top: -16px; margin-left: -9px;
+  border: 9px solid transparent; border-top: 10px solid var(--k-plum); border-bottom: 0; animation: hintbob 1.2s ease-in-out infinite; }
+@keyframes hintbob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
+#build-panel.atend::after { opacity: 0; }
