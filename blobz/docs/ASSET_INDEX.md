@@ -11,13 +11,13 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
   image / CSS background or border image / canvas icon, or a WebGL texture bound at a Phaser draw call); CODE ONLY =
   referenced but never shown in the run (remove the reference and the file); UNUSED = no reference and never shown.
 
-**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 198 / IN GAME 27 / UNUSED 98.
+**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 199 / IN GAME 27 / UNUSED 97.
 
 **Claude-drawn still IN GAME** (0): none
 
 **Kenney still IN GAME** (0): none
 
-**Counts by source:** 0x72 1 / ChatGPT 272 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 16 (Ninja: 110 referenced by code). **Own files:** 323, 36 delete candidates.
+**Counts by source:** 0x72 1 / ChatGPT 272 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 16 (Ninja: 110 referenced by code). **Own files:** 323, 35 delete candidates.
 
 ## Own files (art, Kenney, app icons)
 
@@ -36,7 +36,7 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/base/watchtower.png` | 30x52 | Claude-drawn: scripts/base_art.py | Own art (CC0) | CODE ONLY | src/uikit2.ts:201, src/sim.ts:154, src/sim.ts:155 (+2) | replace (see OLD_ART_CHECKLIST) |
 | `art/base/well.png` | 28x36 | Claude-drawn: scripts/base_art.py | Own art (CC0) | CODE ONLY | src/sim.ts:154, src/sim.ts:155, src/sim.ts:163 (+1) | replace (see OLD_ART_CHECKLIST) |
 | `art/base/workshop.png` | 44x38 | Claude-drawn: scripts/base_art.py | Own art (CC0) | CODE ONLY | src/sim.ts:154, src/sim.ts:155, src/sim.ts:163 (+2) | replace (see OLD_ART_CHECKLIST) |
-| `art/bg/start-240.png` | 240x430 | ChatGPT N-38 start background, sliced by scripts/slice_n37_n40.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/bg/start-240.png` | 240x430 | ChatGPT N-38 start background, sliced by scripts/slice_n37_n40.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/style.css:704, src/style.css:847, src/style.css:1187 | replace (see OLD_ART_CHECKLIST) |
 | `art/dungeon-end-landscape.png` | 1672x941 | ChatGPT N-22 dungeon end screen | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:260 | keep |
 | `art/dungeon-end.png` | 941x1672 | ChatGPT N-22 dungeon end screen | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:258 | keep |
 | `art/dungeon/boss-banner.png` | 103x28 | ChatGPT N-14 boss intro, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
@@ -342,7 +342,7 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/props/tree-apple.png` | 32x48 | ChatGPT N-26 meadow trees, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:298 | keep |
 | `art/props/tree-pine.png` | 32x48 | ChatGPT N-26 meadow trees, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:298 | keep |
 | `art/props/tree-round.png` | 32x48 | ChatGPT N-26 meadow trees, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:298 | keep |
-| `art/start-portrait.png` | 941x1672 | ChatGPT N-2 start screen, portrait | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/style.css:704, src/style.css:847, src/style.css:1187 | keep |
+| `art/start-portrait.png` | 941x1672 | ChatGPT N-2 start screen, portrait | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/title.png` | 1672x941 | ChatGPT N-2 start screen, landscape | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/style.css:36, src/style.css:848, src/style.css:1188 (+1) | keep |
 | `art/victory.png` | 941x1672 | ChatGPT N-6 end screen | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/style.css:38, src/style.css:1218 | keep |
 | `assets/0x72-dungeon-ii/0x72_DungeonTilesetII_v1.7.png` | 512x512 | 0x72 16x16 DungeonTileset II v1.7 sheet (frames in tile_list_v1.7.txt), chosen for the Archero rooms 2026-11-15 | CC0 1.0 (0x72) | CODE ONLY | src/dungeonScene.ts:171 | keep |
@@ -715,7 +715,6 @@ See `archive/README.md`.
 
 ## Delete candidates (UNUSED, Lead decides)
 
-- `art/bg/start-240.png`
 - `art/dungeon/door-closed-32.png`
 - `art/dungeon/door-closed-48.png`
 - `art/dungeon/door-open-32.png`

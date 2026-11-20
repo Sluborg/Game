@@ -1,5 +1,5 @@
 import { onViewport, watchViewport } from './viewport';
-import { dpr, intFit, snapAll } from './pixelScale';
+import { dpr, intFit, setBgScale, snapAll } from './pixelScale';
 import Phaser from 'phaser';
 import '@fontsource/fredoka/500.css';
 import '@fontsource/fredoka/600.css';
@@ -949,6 +949,7 @@ const roundSecs = Math.max(0, Math.min(600, Number(new URLSearchParams(location.
 watchViewport();
 // whole-device-pixel sizing of the DOM pixel art (pixelScale.ts SNAP rules): on every layout change and a light poll
 onViewport(() => snapAll());
+setBgScale(); onViewport(setBgScale); // N-38 background: whole device px per art px
 setInterval(() => snapAll(), 300);
 onViewport(() => {
   if (!document.body.classList.contains('rotate-block')) return;

@@ -48,6 +48,16 @@ export function snapAll(root: ParentNode = document) {
   }
 }
 
+/** The start / loading / lobby background (N-38, 240x430 art px, portrait): the smallest WHOLE number of device px per art
+ *  px that still covers the screen (k = ceil(max(W/240, H/430))), so no art pixel is ever split, anchored at the bottom
+ *  centre (the sides and top are cropped). Sets --bgsize on <html> as "Wpx Hpx" in CSS px; CSS reads var(--bgsize, cover). */
+export const BG_ART = { w: 240, h: 430 };
+export function setBgScale() {
+  const d = window.devicePixelRatio || 1, w = window.innerWidth, h = window.innerHeight;
+  const k = Math.max(1, Math.ceil(Math.max((w * d) / BG_ART.w, (h * d) / BG_ART.h) - 1e-6));
+  document.documentElement.style.setProperty('--bgsize', `${(BG_ART.w * k) / d}px ${(BG_ART.h * k) / d}px`);
+}
+
 /** Phaser canvas at DEVICE resolution (Lead 2026-11-15: Code owns it; one helper for the meadow and Code 2's dungeon).
  *  The game size is CSS size x dpr() (main.ts, viewport.ts) and Phaser shows it shrunk by 1 / dpr(), so one game px is
  *  one device px. A scene therefore:

@@ -701,7 +701,7 @@ body { font-weight: 500; } /* Fredoka (Stefan's pick on the board) */
 /* start screen in portrait (ChatGPT N-2, Stefan 4/5): the village at the bottom, the empty sky holds the card.
    Landscape keeps title.png until the landscape version arrives. */
 @media (orientation: portrait) {
-  #menu.screen { background: #45b2fc url('/art/start-portrait.png') center bottom / cover no-repeat; }
+  #menu.screen { background: #45b2fc url('/art/bg/start-240.png') center bottom / var(--bgsize, cover) no-repeat; image-rendering: pixelated; }
 }
 /* portrait start: a compact card that stays in the sky so the village in the art shows below */
 @media (orientation: portrait) {
@@ -844,7 +844,7 @@ input {
 }
 
 /* lobby: the same N-2 village art as the start screen (portrait art upright, title.png in landscape) */
-#lobby.screen { background: #45b2fc url('/art/start-portrait.png') center bottom / cover no-repeat; }
+#lobby.screen { background: #45b2fc url('/art/bg/start-240.png') center bottom / var(--bgsize, cover) no-repeat; image-rendering: pixelated; }
 @media (orientation: landscape) { #lobby.screen { background: #9ccd38 url('/art/title.png') center 70% / cover no-repeat; } }
 
 /* loading (Stefan): logo + bar lower than the notch: top at ~13% in portrait, in the upper calm area in landscape */
@@ -1184,7 +1184,7 @@ input, #name {
 
 /* ---------- app-start loading (PLAN step 3): the sunny village (N-2), logo + a wooden progress bar.
    The dusk cave art (loading-*.png) is kept for the dungeon entry. ---------- */
-#loading { background: #45b2fc url('/art/start-portrait.png') center bottom / cover no-repeat; }
+#loading { background: #45b2fc url('/art/bg/start-240.png') center bottom / var(--bgsize, cover) no-repeat; image-rendering: pixelated; } /* N-38 (Stefan 5/5): whole device px per art px, see setBgScale */
 @media (orientation: landscape) { #loading { background: #9ccd38 url('/art/title.png') center 70% / cover no-repeat; } #loading::after { content: none; } }
 .loadbar {
   width: 82%; height: 36px; padding: 3px; box-shadow: none; background: none; border: 6px solid; box-sizing: border-box;
