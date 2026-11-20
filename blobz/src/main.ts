@@ -853,7 +853,7 @@ async function hostGame() {
     try { localStorage.removeItem('blobz.village'); } catch { /* private mode */ }
     show('newvillage-ask', false); show('btn-newvillage');
     // a fresh little cottage with a sparkle = "new village"
-    const fresh = [building('cottage-1'), NI.sparkle].map((src, i) => { const im = new Image(); im.src = src; im.alt = ''; im.className = i ? 'vb' : 'vcot'; return im; });
+    const fresh = ['art/icons/cottage-1-32.png', NI.sparkle].map((src, i) => { const im = new Image(); im.src = src; im.alt = ''; im.className = i ? 'vb' : 'vcot'; return im; });
     $('lobby-village').replaceChildren(...fresh);
     $('lobby-village').setAttribute('aria-label', t('lobby.newVillageDone'));
   };
