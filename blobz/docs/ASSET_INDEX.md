@@ -11,13 +11,13 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
   image / CSS background or border image / canvas icon, or a WebGL texture bound at a Phaser draw call); CODE ONLY =
   referenced but never shown in the run (remove the reference and the file); UNUSED = no reference and never shown.
 
-**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 196 / IN GAME 27 / UNUSED 95.
+**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 197 / IN GAME 27 / UNUSED 99.
 
 **Claude-drawn still IN GAME** (0): none
 
 **Kenney still IN GAME** (0): none
 
-**Counts by source:** 0x72 1 / ChatGPT 267 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 16 (Ninja: 110 referenced by code). **Own files:** 318, 31 delete candidates.
+**Counts by source:** 0x72 1 / ChatGPT 272 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 16 (Ninja: 110 referenced by code). **Own files:** 323, 37 delete candidates.
 
 ## Own files (art, Kenney, app icons)
 
@@ -36,6 +36,7 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/base/watchtower.png` | 30x52 | Claude-drawn: scripts/base_art.py | Own art (CC0) | CODE ONLY | src/uikit2.ts:201, src/sim.ts:154, src/sim.ts:155 (+2) | replace (see OLD_ART_CHECKLIST) |
 | `art/base/well.png` | 28x36 | Claude-drawn: scripts/base_art.py | Own art (CC0) | CODE ONLY | src/sim.ts:154, src/sim.ts:155, src/sim.ts:163 (+1) | replace (see OLD_ART_CHECKLIST) |
 | `art/base/workshop.png` | 44x38 | Claude-drawn: scripts/base_art.py | Own art (CC0) | CODE ONLY | src/sim.ts:154, src/sim.ts:155, src/sim.ts:163 (+2) | replace (see OLD_ART_CHECKLIST) |
+| `art/bg/start-240.png` | 240x430 | ChatGPT N-38 start background, sliced by scripts/slice_n37_n40.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
 | `art/dungeon-end-landscape.png` | 1672x941 | ChatGPT N-22 dungeon end screen | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:260 | keep |
 | `art/dungeon-end.png` | 941x1672 | ChatGPT N-22 dungeon end screen | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:258 | keep |
 | `art/dungeon/boss-banner.png` | 103x28 | ChatGPT N-14 boss intro, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
@@ -186,6 +187,8 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/gather/sun.png` | 13x13 | Claude-drawn: scripts/gather_art.py | Own art (CC0) | CODE ONLY | index.html:125 | replace (see OLD_ART_CHECKLIST) |
 | `art/icons/back.png` | 13x9 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonUi.ts:77, src/uikit2.ts:42, index.html:89 (+1) | replace (see OLD_ART_CHECKLIST) |
 | `art/icons/check.png` | 19x16 | ChatGPT N-10, sliced by scripts/slice_n_orders.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/uikit.ts:11, src/ninjaArt.ts:18, src/style.css:306 (+2) | keep |
+| `art/icons/cottage-1-32.png` | 32x32 | ChatGPT N-40 tent icon, sliced by scripts/slice_n37_n40.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/icons/cottage-1.png` | 16x16 | ChatGPT N-40 tent icon, sliced by scripts/slice_n37_n40.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/sim.ts:957, src/main.ts:856 | replace (see OLD_ART_CHECKLIST) |
 | `art/icons/dash-arrow.png` | 14x10 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/ninjaArt.ts:39, index.html:159 | replace (see OLD_ART_CHECKLIST) |
 | `art/icons/dash.png` | 19x14 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonUi.ts:176, src/controls.ts:20, src/dungeonDemo.ts:43 (+7) | replace (see OLD_ART_CHECKLIST) |
 | `art/icons/dice.png` | 12x12 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/uikit2.ts:20, index.html:57 | replace (see OLD_ART_CHECKLIST) |
@@ -194,7 +197,8 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/icons/mouth-3.png` | 16x16 | ChatGPT N-25 mouths, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/partArt.ts:49 | keep |
 | `art/icons/mouth-4.png` | 16x16 | ChatGPT N-25 mouths, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/partArt.ts:49 | keep |
 | `art/icons/mouth-5.png` | 16x16 | ChatGPT N-25 mouths, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/partArt.ts:49 | keep |
-| `art/icons/res-berry-16.png` | 16x16 | ChatGPT order 20 (icons), sliced by scripts/slice_sheet.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/resArt.ts:14, index.html:122, index.html:126 (+5) | replace (see OLD_ART_CHECKLIST) |
+| `art/icons/res-berry-16.png` | 16x16 | ChatGPT N-41 berry food icon, sliced by scripts/slice_n41.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/resArt.ts:14, index.html:122, index.html:126 (+5) | replace (see OLD_ART_CHECKLIST) |
+| `art/icons/res-berry-32.png` | 32x32 | ChatGPT N-41 berry food icon, sliced by scripts/slice_n41.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
 | `art/icons/res-stone-16.png` | 16x16 | ChatGPT N-32 stone icon, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/icons/res-stone-32.png` | 32x32 | ChatGPT N-32 stone icon, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/icons/res-wood-16.png` | 16x16 | ChatGPT N-27 wood icon, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/resArt.ts:12, index.html:120, index.html:126 (+1) | keep |
@@ -247,12 +251,15 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/loading-portrait.png` | 941x1672 | ChatGPT N-3 loading screen | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeon.css:250, src/style.css:721 | keep |
 | `art/loading.png` | 470x836 | ChatGPT N-3 loading screen | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY (loaded, not shown) | src/style.css:463, src/style.css:470, src/main.ts:33 (+1) | keep |
 | `art/lobby.png` | 992x1586 | ChatGPT order 60 (lobby) | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/style.css:267, src/i18n.ts:5, src/i18n.ts:48 (+54) | replace (see OLD_ART_CHECKLIST) |
+| `art/lobby/party-platform-140.png` | 140x28 | ChatGPT N-37 lobby platform, sliced by scripts/slice_n37_n40.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
 | `art/lobby/party-platform.png` | 160x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/style.css:1133 | keep |
 | `art/lobby/searching-blob-0.png` | 32x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/lobby/searching-blob-1.png` | 32x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/lobby/searching-blob-2.png` | 32x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/lobby/searching-blob-3.png` | 32x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/lobby/searching-blob.png` | 128x32 | ChatGPT N-20 lobby, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/style.css:1153 | keep |
+| `art/logo-150.png` | 150x104 | ChatGPT N-39 pixel logo (ordered 150x104), sliced by scripts/slice_n37_n40.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/logo-64.png` | 64x42 | ChatGPT N-39 pixel logo (native 64x42), sliced by scripts/slice_n37_n40.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
 | `art/logo-A.png` | 634x407 | ChatGPT N-1 logo (A/B/old = earlier variants) | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/logo-B.png` | 653x442 | ChatGPT N-1 logo (A/B/old = earlier variants) | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/logo-old.png` | 680x279 | ChatGPT N-1 logo (A/B/old = earlier variants) | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
@@ -299,11 +306,9 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/props-winter/tree-snow-round.png` | 21x21 | Claude-drawn: scripts/winter_props.py | Own art (CC0) | CODE ONLY (loaded, not shown) | src/game.ts:55, src/game.ts:307, index.html:101 | replace (see OLD_ART_CHECKLIST) |
 | `art/props-winter/tree-snow-small.png` | 10x15 | Kenney Tiny Ski cut by scripts/winter_props.py | CC0 1.0 (Kenney) | CODE ONLY | src/game.ts:55, src/game.ts:307 | replace (see OLD_ART_CHECKLIST) |
 | `art/props/berry-bush-16.png` | 16x16 | ChatGPT N-16 berry bush, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:303 | keep |
-| `art/props/berry-bush-32.png` | 32x32 | ChatGPT N-16 berry bush, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/berry-bush-ninja-s.png` | 16x16 | Claude-drawn: scripts/berry_bush.py (berries on a Ninja bush) | Own art (CC0) | UNUSED | UNUSED | replace (Stefan dislikes; Code uses a Ninja bush + Ninja berry) |
 | `art/props/berry-bush-ninja.png` | 32x32 | Claude-drawn: scripts/berry_bush.py (berries on a Ninja bush) | Own art (CC0) | UNUSED | UNUSED | replace (Stefan dislikes; Code uses a Ninja bush + Ninja berry) |
 | `art/props/berry-bush-picked-16.png` | 16x16 | ChatGPT N-16 berry bush, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/game.ts:304 | keep |
-| `art/props/berry-bush-picked-32.png` | 32x32 | ChatGPT N-16 berry bush, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/boulder-1.png` | 32x32 | ChatGPT N-29 boulders + rubble (stone parked), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/boulder-2.png` | 32x32 | ChatGPT N-29 boulders + rubble (stone parked), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/props/boulder-3.png` | 48x32 | ChatGPT N-29 boulders + rubble (stone parked), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
@@ -710,6 +715,7 @@ See `archive/README.md`.
 
 ## Delete candidates (UNUSED, Lead decides)
 
+- `art/bg/start-240.png`
 - `art/dungeon/door-closed-32.png`
 - `art/dungeon/door-closed-48.png`
 - `art/dungeon/door-open-32.png`
@@ -738,6 +744,11 @@ See `archive/README.md`.
 - `art/dungeon/wall-tr.png`
 - `art/fine/gather/chips-stone.png`
 - `art/fine/gather/chips-wood.png`
+- `art/icons/cottage-1-32.png`
+- `art/icons/res-berry-32.png`
+- `art/lobby/party-platform-140.png`
+- `art/logo-150.png`
+- `art/logo-64.png`
 - `art/props/fence-post.png`
 - `art/props/fence-rail-h.png`
 - `art/props/fence-rail-v.png`

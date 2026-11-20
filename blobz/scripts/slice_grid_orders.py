@@ -274,7 +274,12 @@ def frame_row(src, yr, k, W, H, name, folder, single=False, names=None, xr=(0.0,
 
 
 def n16():
-    return two_size_sheet('n16-berry-bush.png', ['berry-bush', 'berry-bush-picked'], os.path.join(ART, 'props'), anchor='bottom', fit=True)
+    made = two_size_sheet('n16-berry-bush.png', ['berry-bush', 'berry-bush-picked'], os.path.join(ART, 'props'), anchor='bottom', fit=True)
+    keep = [r for r in made if not r[0].endswith('-32.png')]  # only the 16 px bushes are used (32 px removed 2026-11-16)
+    for r in made:
+        if r not in keep and os.path.exists(r[0]):
+            os.remove(r[0])
+    return keep
 
 
 def n19():
