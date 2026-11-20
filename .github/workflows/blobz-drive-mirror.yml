@@ -1,0 +1,35 @@
+name: Mirror Blobz to Google Drive
+on:
+  push:
+    branches: ['claude/mobile-game-5-players-8qthjq']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: blobz-google-drive
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: claude/mobile-game-5-players-8qthjq
+          persist-credentials: false
+      - name: Install rclone
+        run: sudo apt-get update -qq && sudo apt-get install -y rclone
+      - name: Sync game files into the dedicated mirror folder
+        env:
+          RCLONE_CONFIG_BLOBZ_TYPE: drive
+          RCLONE_CONFIG_BLOBZ_TOKEN: ${{ secrets.BLOBZ_DRIVE_TOKEN }}
+          RCLONE_CONFIG_BLOBZ_ROOT_FOLDER_ID: ${{ vars.BLOBZ_DRIVE_FOLDER_ID }}
+        run: |
+          set -eu
+          : "${RCLONE_CONFIG_BLOBZ_TOKEN:?Set BLOBZ_DRIVE_TOKEN in Actions secrets}"
+          : "${RCLONE_CONFIG_BLOBZ_ROOT_FOLDER_ID:?Set BLOBZ_DRIVE_FOLDER_ID in Actions variables}"
+          test -f blobz/docs/ART_ORDERS.md
+          rclone sync blobz blobz: --checksum --create-empty-src-dirs --drive-use-trash
+          rclone check blobz blobz:
