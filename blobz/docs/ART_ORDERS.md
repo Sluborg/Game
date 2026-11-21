@@ -41,13 +41,13 @@ Make ONE image per reply and wait for "next".
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
-ChatGPT works only on N-orders with status TO DO (next: N-42). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
+ChatGPT works only on N-orders with status TO DO (next: none, queue empty). ChatGPT fills every gap we notice, so keep making the TO DO orders.**
 
 | Id | Status | Order | Replaces (Art slices into) |
 |---|---|---|---|
-| N-42 | TO DO (FIRST) | Ranger class icon: bow with drawn string + nocked arrow, EXACT 16x16 + 32x32 | `art/dungeon/icons/bow-16.png`, `bow-32.png` |
+| N-42 | DONE (received 2026-11-21 from Stefan: one sheet 1774x887, two bows; neither is a native 16/32 grid (real art px 17 / 14 src px = ~30x36 / ~42x50 art px, soft); bow-16 and bow-32 are both reductions of the LEFT bow by scripts/slice_n42.py (2.25x / 1.1x); candidates docs/art-review/n42-bow-candidates.png) | Ranger class icon: bow with drawn string + nocked arrow, EXACT 16x16 + 32x32 | `art/dungeon/icons/bow-16.png`, `bow-32.png` |
 | N-43 | HyperAgent (2026-11-20: made by Stefan's HyperAgent agents per docs/HYPERAGENT_BRIEF.md, ChatGPT skips it) | 12 new blob hats/caps (hats only, no ears/horns), 3 sizes S (max 8x4) / M (max 10x5) / L (max 14x6) in 16x8 cells | `src/blob.ts` hat sprites (Art converts to the hat tables) |
-| N-44 | TO DO | Dungeon room props in 0x72 DungeonTileset II style: 2 barrels, standing + wall torch (2 flame frames each), 2 bone piles, skull decal, cobweb, puddle (16x32 cells) | `art/dungeon/props/*` |
+| N-44 | DONE (received 2026-11-21 from Stefan, 1599x984 not the ordered 992x608; real art px ~12 src px = native 16 px props; sliced by scripts/slice_n44.py to art/dungeon/props/*.png in 16x32 cells; the 2nd torch flame frames are taller (stand 32 rows) ) | Dungeon room props in 0x72 DungeonTileset II style: 2 barrels, standing + wall torch (2 flame frames each), 2 bone piles, skull decal, cobweb, puddle (16x32 cells) | `art/dungeon/props/*` |
 | N-37 | DONE (received 2026-11-15, not exact 8x: real art px ~10 src px, native ~214x29; sampled to 140x28 -> art/lobby/party-platform-140.png) | Lobby party platform, EXACT 140x28 art px (shown 2x) | `art/lobby/party-platform.png` |
 | N-38 | DONE (received 2026-11-15, 937x1678 = 3.9 src px per art px; 240x430 -> art/bg/start-240.png) | Start/loading background, village scene, EXACT 240x430 art px portrait (shown 2x) | `art/title.png` |
 | N-39 | DONE (received 2026-11-15, real art px ~23 src px = native 64x42; saved art/logo-150.png (ordered size, uneven 2.3x) + art/logo-64.png (native)) | Logo "Blobz" as true pixel art, EXACT 150x104 art px (shown 2x) | `art/logo.png` |
@@ -388,7 +388,7 @@ Row 2: under each boulder, its depleted rubble (a few small grey chips and pebbl
 grey palette as its boulder.
 ```
 
-### N-42 Ranger class icon: bow (do this FIRST)
+### N-42 Ranger class icon: bow (DONE)
 ```
 STYLE: exactly like your N-26 trees (same dark near-black outline, palette, 2-3 tone shading, pixel size): https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/docs/art-review/n26-trees.png
 SAME FAMILY as these small class icons (outline thickness, palette, shading, how full the square is):
@@ -432,7 +432,7 @@ In every cell the hat is centred horizontally and its bottom row is the cell's b
 Canvas: 4*16 + 5*4 = 84 x 9*8 + 10*4 = 112 art px, delivered EXACTLY 672 x 896.
 ```
 
-### N-44 Dungeon room props (0x72 DungeonTileset II style)
+### N-44 Dungeon room props (0x72 DungeonTileset II style) (DONE)
 ```
 STYLE AND PALETTE: match this 16x16 pixel dungeon tileset EXACTLY (same colours, dark outlines, shading, pixel size),
 the props must look like they belong to it: https://raw.githubusercontent.com/sluborg/Game/claude/mobile-game-5-players-8qthjq/blobz/public/assets/0x72-dungeon-ii/0x72_DungeonTilesetII_v1.7.png

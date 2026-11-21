@@ -11,13 +11,13 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
   image / CSS background or border image / canvas icon, or a WebGL texture bound at a Phaser draw call); CODE ONLY =
   referenced but never shown in the run (remove the reference and the file); UNUSED = no reference and never shown.
 
-**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 197 / IN GAME 27 / UNUSED 99.
+**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 197 / IN GAME 27 / UNUSED 112.
 
 **Claude-drawn still IN GAME** (0): none
 
 **Kenney still IN GAME** (0): none
 
-**Counts by source:** 0x72 1 / ChatGPT 272 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 16 (Ninja: 110 referenced by code). **Own files:** 323, 37 delete candidates.
+**Counts by source:** 0x72 1 / ChatGPT 285 / Claude-drawn 29 / Kenney 5 / Ninja 2037 / Ninja crop 16 (Ninja: 110 referenced by code). **Own files:** 336, 50 delete candidates.
 
 ## Own files (art, Kenney, app icons)
 
@@ -74,6 +74,8 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/dungeon/fx/slam-warning-2.png` | 32x32 | ChatGPT N-13 combat FX (round 2), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:148 | keep |
 | `art/dungeon/fx/slam-warning-3.png` | 32x32 | ChatGPT N-13 combat FX (round 2), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:148 | keep |
 | `art/dungeon/fx/slam-warning.png` | 128x32 | ChatGPT N-13 combat FX (round 2), sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:148, src/dungeonScene.ts:219 | keep |
+| `art/dungeon/icons/bow-16.png` | 16x16 | ChatGPT N-42 ranger bow (reduction of the left bow), scripts/slice_n42.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/icons/bow-32.png` | 32x32 | ChatGPT N-42 ranger bow (reduction of the left bow), scripts/slice_n42.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
 | `art/dungeon/icons/damage-mode-16.png` | 16x16 | ChatGPT N-12 move/mode icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonUi.ts:42 | keep |
 | `art/dungeon/icons/damage-mode-32.png` | 32x32 | ChatGPT N-12 move/mode icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
 | `art/dungeon/icons/dodge-16.png` | 16x16 | ChatGPT N-12 move/mode icons, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonUi.ts:40 | keep |
@@ -92,6 +94,17 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/dungeon/items/ring.png` | 16x16 | ChatGPT N-23 loot items, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:36, src/dungeon.ts:143 | keep |
 | `art/dungeon/items/stone.png` | 16x16 | ChatGPT N-23 loot items, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/ninjaArt.ts:9, src/style.css:1314, src/dungeon.ts:36 (+11) | keep |
 | `art/dungeon/potion.png` | 16x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | CODE ONLY | src/dungeon.ts:668, src/dungeon.ts:1331, src/dungeonScene.ts:1064 | replace (see OLD_ART_CHECKLIST) |
+| `art/dungeon/props/barrel-a.png` | 16x32 | ChatGPT N-44 dungeon room props, sliced by scripts/slice_n44.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/props/barrel-b.png` | 16x32 | ChatGPT N-44 dungeon room props, sliced by scripts/slice_n44.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/props/bones-a.png` | 16x32 | ChatGPT N-44 dungeon room props, sliced by scripts/slice_n44.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/props/bones-b.png` | 16x32 | ChatGPT N-44 dungeon room props, sliced by scripts/slice_n44.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/props/cobweb.png` | 16x32 | ChatGPT N-44 dungeon room props, sliced by scripts/slice_n44.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/props/puddle.png` | 16x32 | ChatGPT N-44 dungeon room props, sliced by scripts/slice_n44.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/props/skull-decal.png` | 16x32 | ChatGPT N-44 dungeon room props, sliced by scripts/slice_n44.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/props/torch-stand-0.png` | 16x32 | ChatGPT N-44 dungeon room props, sliced by scripts/slice_n44.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/props/torch-stand-1.png` | 16x32 | ChatGPT N-44 dungeon room props, sliced by scripts/slice_n44.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/props/torch-wall-0.png` | 16x32 | ChatGPT N-44 dungeon room props, sliced by scripts/slice_n44.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
+| `art/dungeon/props/torch-wall-1.png` | 16x32 | ChatGPT N-44 dungeon room props, sliced by scripts/slice_n44.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
 | `art/dungeon/revive.png` | 48x20 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | CODE ONLY | src/dungeon.ts:666, src/dungeon.ts:892, src/dungeon.ts:955 (+2) | replace (see OLD_ART_CHECKLIST) |
 | `art/dungeon/sand-b.png` | 16x16 | ChatGPT N-35 sandstone room set (attempt 3), sliced by scripts/sand_room.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
 | `art/dungeon/sand-bl.png` | 16x16 | ChatGPT N-35 sandstone room set (attempt 3), sliced by scripts/sand_room.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
@@ -720,6 +733,19 @@ See `archive/README.md`.
 - `art/dungeon/door-closed-48.png`
 - `art/dungeon/door-open-32.png`
 - `art/dungeon/door-open-48.png`
+- `art/dungeon/icons/bow-16.png`
+- `art/dungeon/icons/bow-32.png`
+- `art/dungeon/props/barrel-a.png`
+- `art/dungeon/props/barrel-b.png`
+- `art/dungeon/props/bones-a.png`
+- `art/dungeon/props/bones-b.png`
+- `art/dungeon/props/cobweb.png`
+- `art/dungeon/props/puddle.png`
+- `art/dungeon/props/skull-decal.png`
+- `art/dungeon/props/torch-stand-0.png`
+- `art/dungeon/props/torch-stand-1.png`
+- `art/dungeon/props/torch-wall-0.png`
+- `art/dungeon/props/torch-wall-1.png`
 - `art/dungeon/sand-b.png`
 - `art/dungeon/sand-bl.png`
 - `art/dungeon/sand-br.png`
