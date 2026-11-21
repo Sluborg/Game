@@ -41,6 +41,21 @@ const base = process.argv[2] || 'http://localhost:4173/';
       }
       await ctx.close();
     }
+    // the start background keeps its scale when Android's address bar changes the height (Lead 2026-11-21)
+    {
+      const ctx = await browser.newContext({ locale: 'sv-SE', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2.625 });
+      const p = await ctx.newPage();
+      await p.goto(`${base}?lan=e2e-bg-${Math.random().toString(36).slice(2)}&debug`);
+      await p.waitForSelector('#loading.hidden', { state: 'attached', timeout: 15000 });
+      const bg = () => p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--bgsize').trim());
+      const a = await bg();
+      ok(/^\d/.test(a), `start background size is set (${a})`);
+      await p.setViewportSize({ width: 390, height: 790 }); await p.waitForTimeout(500);
+      ok((await bg()) === a, `844 -> 790 (address bar shown): the background scale stays (${await bg()})`);
+      await p.setViewportSize({ width: 390, height: 844 }); await p.waitForTimeout(500);
+      ok((await bg()) === a, '790 -> 844 (bar hidden): it stays too');
+      await ctx.close();
+    }
     console.log('ALL PASSED');
   } finally {
     await browser.close();
