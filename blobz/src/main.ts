@@ -402,7 +402,7 @@ onViewport(fitSeatNames);
 function startScene(session: Session) {
   wipe();
   if (DEBUG) (window as unknown as { __blobzBiome?: string }).__blobzBiome = session.biome ?? 'meadow';
-  endShown = false; lastStars = 0; goalsShown = 0; builtSeen = '';
+  endShown = false; lastStars = 0; goalsShown = 0;
   show('menu', false); show('lobby', false); show('end', false); show('hud');
   try { (navigator as Navigator & { wakeLock?: { request(t: string): Promise<unknown> } }).wakeLock?.request('screen').catch(() => {}); } catch { /* optional */ }
   if (!game) {
@@ -512,20 +512,18 @@ function effText(kind: BuildKind | 'cottage', v: View) {
   const done = v.builds.find((b) => b.kind === kind)?.state === 2;
   return t(`build.eff.${kind}` as Key, { now: done ? now - 1 : now, to: done ? now : now + 1 });
 }
-/** Built-this-round tracking for the "X byggd! <effect>" toast. */
-let builtSeen = '';
-function toastBuilt(v: View) {
-  const now = [...v.builds.filter((b) => b.state === 2).map((b) => b.kind), `c${v.cottage?.level ?? 1}`].join(',');
-  if (now === builtSeen) return;
-  const before = builtSeen; builtSeen = now;
-  if (!before) return; // first view of the round: what is already standing is no news
-  const fresh = v.builds.find((b) => b.state === 2 && !before.split(',').includes(b.kind));
-  const cot = !before.split(',').includes(`c${v.cottage?.level ?? 1}`);
-  if (!fresh && !cot) return;
-  const name = fresh ? buildName(fresh.kind) : t('build.cottage', { lvl: v.cottage.level }).replace('\n', ' ');
-  const eff = fresh ? effText(fresh.kind, v) : t(`build.eff.cottage${v.cottage.level}` as Key, { now: carryMaxOf(v.builds, v.cottage.level) - 1, to: carryMaxOf(v.builds, v.cottage.level) });
-  showToast(t('build.built.toast', { name, eff }), building(fresh ? fresh.kind : `cottage-${v.cottage.level}`));
-}
+/** The "X byggd! <effekt>" toast (Lead 2026-11-21): shown when the finished building LANDS, not at the purchase (the scaffold
+ *  stands for about a second first). The scene tells us with a 'blobz:built' event from its build fx, so it is the same
+ *  moment on the host and on every joiner. The numbers come from the latest view. */
+let lastView: View | null = null;
+window.addEventListener('blobz:built', (e) => {
+  const v = lastView, kind = (e as CustomEvent<string>).detail as BuildKind | 'cottage';
+  if (!v || !kind) return;
+  if (kind === 'cottage') {
+    const lvl = v.cottage.level, now = carryMaxOf(v.builds, lvl);
+    showToast(t('build.built.toast', { name: t('build.cottage', { lvl }).replace('\n', ' '), eff: t(`build.eff.cottage${lvl}` as Key, { now: now - 1, to: now }) }), building(`cottage-${lvl}`));
+  } else showToast(t('build.built.toast', { name: buildName(kind), eff: effText(kind, v) }), building(kind));
+});
 /** The toast under the quest box (milestones, buildings): a picture + one line, gone after 2.6 s. */
 function showToast(text: string, img: string) {
   const tt = $('goal-toast');
@@ -666,7 +664,7 @@ function onView(v: View) {
   if (dungeonUi(v, session?.myId, controls, (id) => infos.get(id)?.name ?? '?')) return; // [dungeon hook, Code 2] pick cards / dungeon HUD
   renderQuestRows($('hud-quest'), v);
   renderBuildGoal(v);
-  toastBuilt(v);
+  lastView = v;
   show('btn-gohome', isHost && LONG_GAME && v.phase === 'play');
   if (v.goal > goalsShown) { // a milestone (LONG_GAME): toast + star, the bars start on the next goal
     goalsShown = v.goal; lastStars = 0; sfx.star();

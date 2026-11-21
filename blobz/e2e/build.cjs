@@ -38,6 +38,11 @@ const openPanel = async (page) => { await page.waitForSelector('#btn-build:not(.
     ok(v.bank.wood === 1 && v.builtNow.includes('storage'), 'tap the card: Förråd built on every phone, bank 7 -> 1');
     await ada.waitForFunction(() => document.querySelector('#build-cards .bcard[data-kind="storage"]').classList.contains('built'), null, { timeout: 3000 });
     ok(true, 'the card now says "Byggd"');
+    // the effect toast appears when the building lands (after the scaffold), on every phone alike (Lead 2026-11-21)
+    for (const [name, pg] of [['Ada', ada], ['Bo', bo], ['host', host]]) {
+      await pg.waitForFunction(() => /Förråd byggd!/.test(document.getElementById('goal-toast')?.textContent ?? '') && !document.getElementById('goal-toast').classList.contains('hidden'), null, { timeout: 15000 });
+      ok(true, `${name} sees the "Förråd byggd! ..." toast`);
+    }
     await ada.click('#btn-build-close');
     await ada.waitForSelector('#q-build:not(.hidden)', { timeout: 3000 });
     await ada.waitForFunction(() => document.getElementById('q-build').getAttribute('aria-label') === 'Byggt: Förråd', null, { timeout: 3000 });
