@@ -166,6 +166,7 @@ function fitLabel(label: Phaser.GameObjects.Text, name: string) {
   label.setText(name);
   for (let n = name.length - 1; label.width > NAME_MAX && n > 0; n--) label.setText(name.slice(0, n) + '…');
 }
+const CONSTRUCT_MS = 1100; // how long the scaffold stands on a plot
 const buildPanelOpen = () => typeof document !== 'undefined' && !document.getElementById('build-panel')?.classList.contains('hidden');
 /** The blob's glide frame (blob.ts frame 1) while moving. Off: it hid the chosen shape (Stefan + Alea 2026-11-16). */
 const GLIDE_FRAME = false;
@@ -294,6 +295,8 @@ export class GameScene extends Phaser.Scene {
     this.load.image('mini-bg', 'art/mini/bg.png');
     // berry bush ChatGPT N-16 (full / picked), 32 px art at 3x
     this.load.image('b-cottage-1', 'art/icons/cottage-1-32.png'); // N-40 tent (Stefan 5/5): level 1, 32 px art at the world's 3x
+    this.load.image('pw-magnet-32', 'art/meadow/magnet-32.png'); // ChatGPT N-15 magnet power-up (32 px art)
+    this.load.image('site-32', 'art/props/site-32.png'); this.load.image('site-48', 'art/props/site-48.png'); // ChatGPT N-31 build site
     this.load.image('pw-speed-32', 'art/meadow/speed-32.png'); // ChatGPT N-15b speed power-up (32 px art)
     for (const v of ['round', 'pine', 'apple']) { // ChatGPT N-26 trees + matching stumps
       this.load.image(`tree-${v}`, `art/props/tree-${v}.png`);
@@ -732,7 +735,7 @@ export class GameScene extends Phaser.Scene {
         const sh = (fy: number) => this.add.ellipse(0, fy, 44, 12, 0x000000, 0.22);
         c = w.kind === 'speed'
           ? this.add.container(w.x, w.y, [sh(30), this.add.image(0, 0, 'pw-speed-32').setScale(2)]) // N-15b 32 px art, 64 world px
-          : this.add.container(w.x, w.y, [sh(32), this.add.circle(0, 0, 32, 0xff6b8b, 0.4).setStrokeStyle(3, 0xffffff, 0.9), this.add.image(0, -1, 'ic-magnet').setScale(2)]);
+          : this.add.container(w.x, w.y, [sh(30), this.add.image(0, 0, 'pw-magnet-32').setScale(2)]); // N-15 magnet, same disc style and size as the boot
         this.powers.set(w.id, c);
       }
       c.setPosition(w.x, w.y).setDepth(w.y); // power-ups rest on the ground too: no bob (Stefan 2026-11-15)
@@ -900,6 +903,43 @@ export class GameScene extends Phaser.Scene {
     hd(y0); hd(y1); vd(x0); vd(x1);
     const icon = this.add.image((x0 + x1) / 2, (y0 + y1) / 2, 'b-' + k).setScale(1).setAlpha(0.75);
     return this.add.container(0, 0, [g, icon]).setDepth(-900).setAlpha(0).setVisible(false);
+  }
+
+  /** Construction (N-31): the scaffold stands on the plot for CONSTRUCT_MS, jolts like hammering and kicks up dust, then
+   *  `done` runs (the building drops in). Visual only. */
+  private construct(kind: BuildKind, done: () => void) {
+    const r = plotRect(kind as Exclude<BuildKind, 'bridge'>), at = BUILD_SPOTS[kind];
+    const big = kind === 'workshop' || kind === 'garden'; // site-48 for the wide plots, site-32 for the rest, both at the world's 3x
+    const foot = at.y - BUILD_R + 4;
+    const site = this.add.image((r.x0 + r.x1) / 2, foot, big ? 'site-48' : 'site-32').setScale(PROP_SCALE).setOrigin(0.5, 1).setDepth(foot);
+    const shadow = this.shadow((r.x0 + r.x1) / 2, foot - 2, site.displayWidth * 0.8, 20, 0.22).setDepth(foot - 1);
+    sfx.power();
+    let n = 0;
+    const hit = this.time.addEvent({ delay: 220, loop: true, callback: () => {
+      n++;
+      this.tweens.add({ targets: site, y: foot + 3, scaleY: PROP_SCALE * 0.97, duration: 55, yoyo: true });
+      if (n % 2) this.puff(site.x + (n % 4 === 1 ? -22 : 22), foot - 2, n % 4 === 1 ? -50 : 50, -26, 4);
+    } });
+    this.time.delayedCall(CONSTRUCT_MS, () => { hit.remove(); site.destroy(); shadow.destroy(); done(); });
+  }
+
+  /** The finished building drops in from above, lands with a bounce, dust flies. */
+  private dropIn(f: Extract<FxEvent, { t: 'build' }>, g: { img: Phaser.GameObjects.Image; sh?: Phaser.GameObjects.Image; built: boolean; badge?: Phaser.GameObjects.Text } | null, img: Phaser.GameObjects.Image | undefined) {
+    sfx.star();
+    if (g) { g.built = true; g.img.setVisible(true); g.sh?.setVisible(true); g.badge?.setVisible(true); }
+    if (img) {
+      const y0 = img.y;
+      img.setY(y0 - 90).setAlpha(0);
+      this.tweens.add({ targets: img, alpha: 1, duration: 120 });
+      this.tweens.add({
+        targets: img, y: y0, duration: 560, ease: 'Bounce.Out',
+        onComplete: () => { for (let i = 0; i < 3; i++) this.time.delayedCall(i * 60, () => this.puff(f.x + (i - 1) * 26, f.y + 6, (i - 1) * 70, -30, 7)); this.cameras.main.shake(90, 0.003); },
+      });
+    } else for (let i = 0; i < 3; i++) this.time.delayedCall(i * 90, () => this.puff(f.x + (i - 1) * 22, f.y + 6, (i - 1) * 60, -40, 6));
+    const fx = this.add.sprite(f.x, f.y - 6, 'fx-levelup').setScale(2).setDepth(4500);
+    fx.play('levelup');
+    fx.once('animationcomplete', () => fx.destroy());
+    this.cameras.main.shake(120, 0.003);
   }
 
   private drawBuilds(v: View, _now: number) {
@@ -1325,25 +1365,13 @@ export class GameScene extends Phaser.Scene {
         this.time.delayedCall(1000, () => { follow.remove(); st.destroy(); blink.remove(); b.body.setAlpha(1); });
       }
     } else if (f.t === 'build') {
-      // the new building pops up at its spot with a dust cloud (the cottage: on the base)
-      sfx.power(); sfx.star();
-      const g = f.kind === 'cottage' ? null : this.bgfx.get(f.kind);
+      // a building under construction (N-31 scaffold on its plot for about a second, hammering), then it drops in with a
+      // dust cloud; the cottage and the bridge have no plot and drop in at once (Lead 2026-11-21: visual only, the sim buys at once)
+      const g = f.kind === 'cottage' ? null : this.bgfx.get(f.kind) ?? null;
       const img = f.kind === 'cottage' ? this.cottageImg : g?.img;
-      if (g) { g.built = true; g.img.setVisible(true); g.sh?.setVisible(true); }
-      // juice (PLAN step 5): the building drops in from above, lands with a bounce, then the dust flies
-      if (img) {
-        const y0 = img.y;
-        img.setY(y0 - 90).setAlpha(0);
-        this.tweens.add({ targets: img, alpha: 1, duration: 120 });
-        this.tweens.add({
-          targets: img, y: y0, duration: 560, ease: 'Bounce.Out',
-          onComplete: () => { for (let i = 0; i < 3; i++) this.time.delayedCall(i * 60, () => this.puff(f.x + (i - 1) * 26, f.y + 6, (i - 1) * 70, -30, 7)); this.cameras.main.shake(90, 0.003); },
-        });
-      } else for (let i = 0; i < 3; i++) this.time.delayedCall(i * 90, () => this.puff(f.x + (i - 1) * 22, f.y + 6, (i - 1) * 60, -40, 6));
-      const fx = this.add.sprite(f.x, f.y - 6, 'fx-levelup').setScale(2).setDepth(4500);
-      fx.play('levelup');
-      fx.once('animationcomplete', () => fx.destroy());
-      this.cameras.main.shake(120, 0.003);
+      if (g) { g.built = true; g.img.setVisible(false); g.sh?.setVisible(false); g.badge?.setVisible(false); } // hidden until the scaffold is down
+      if (g && f.kind !== 'bridge') this.construct(f.kind as BuildKind, () => this.dropIn(f, g, img));
+      else this.dropIn(f, g, img);
     } else if (f.t === 'gate') {
       sfx.star();
       this.burst(f.x, f.y, 0xffe08a, 12);

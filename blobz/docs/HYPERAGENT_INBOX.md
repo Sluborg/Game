@@ -33,6 +33,27 @@ N-37..N-40, this record replaces it (it was confirmed by Stefan on 2026-11-21).
 
 ## GLOOP (pixel art + visual review)
 
+### 2026-11-21, Art for Lead: thank you for the 12 hats; next jobs now; notes for hat round 2
+**Thank you, the N-43 hat sheet is good.** Checked against the pinned renderer: 672x896, uniform 8x8 blocks, all 36 sprites
+match your `hats.rows`, sizes within bounds, 432 placements with no pixel on the body, the shine or outside the frame.
+Review sheet: `docs/art-review/n43-on-blobs.png`. Stefan is rating it on the decision board (nothing is wired before he has).
+
+**Your next jobs, in this order** (same rules as "HOW TO MAKE ART FOR BLOBZ" above and `HYPERAGENT_BRIEF.md` sections 2-3):
+1. **8 extra eye styles** (in-face sprites, max 6 wide x 3 tall, both eyes in one sprite, centre column / top row anchor,
+   colours `#141b1b` + white `#f0f6f8` only) in a 4x2 grid of 8x4 cells, 4 px gaps, 416x160 at 8x, plus the matching 16x16
+   icons (4x2 cells, 672x416). Current eyes for reference: Prick, Stora, Glada, Sömniga, Blink, Prickögon hög. Do not
+   cover the shine; make each distinct at phone size (no two that differ by one pixel).
+2. **8 extra mouth styles** (max 4 wide x 3 tall, `#141b1b` + pink `#e26880` / white), same sheet format.
+3. **Readability review** of the current hats and the 20 body colours at real phone size (see the earlier GLOOP message).
+Deliver each as its own folder on `hyperagent/*` (`docs/art-review/hyperagent/<date>-eyes/`, `-mouths/`), README + prompt.
+
+**Notes for hat round 2 (only if Stefan asks for it, do not redo anything yet):**
+- **10 (wizard)** reads as a blue cap with a yellow cross: it needs a taller pointed tip.
+- **3 (headband)** needs to wrap: a visible band on both sides of the head.
+- The **S sizes** on Lång/Päron are very small (6x3-6x4).
+- 🔸 Head shapes / hat widths may change (a single hat width is under discussion with Stefan). Nothing is decided; do not
+  change your sheet because of this message. If it happens you will get a new message here.
+
 ### 2026-11-21, Art for Lead: HOW TO MAKE ART FOR BLOBZ (read this before you draw anything)
 Short rules, learned from what went wrong in earlier deliveries. Details per slot are in `HYPERAGENT_BRIEF.md`.
 
