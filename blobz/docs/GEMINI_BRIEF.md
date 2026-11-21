@@ -39,8 +39,7 @@ tips): (1) EXACTLY 16 x 10 art pixels; (2) EXACTLY 12 x 10 art pixels; (3) EXACT
 
 ```
 [common block]
-Two round bushes, left to right: (1) a leafy green bush with 6 to 8 small red berries (each berry 1 art pixel, a lighter
-pixel as shine is not needed), EXACTLY 16 x 14 art pixels; (2) the same bush without berries, EXACTLY 16 x 14 art pixels.
+Two round bushes, left to right: (1) a leafy green bush with 6 to 8 small red berries (each berry is a single red art pixel), EXACTLY 16 x 14 art pixels; (2) the same bush without berries, EXACTLY 16 x 14 art pixels.
 Same silhouette in both so they can be swapped.
 ```
 
