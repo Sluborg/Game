@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { KEYS } from './i18n';
 import {
+  PROP_KINDS,
   AIM_WARN, BITE_TIME, CLASS_MOVE_COOLDOWN, DUNGEON_TIMER_ENABLED, CLASS_WEAPONS, BITE_WARN, bossHp, BURST, BURST_DMG, BURST_GAP, BURST_SPREAD, CLASS_HP, CLASSES, DASH_TIME, DASH_WARN, DONE_SECONDS, dsnap, DT, dungeonChoice, dview, effectLines, ENEMY_HP, ENEMY_R, ENEMY_TOUCH, FLOORS, floorHp, floorDmg, actMul, GH, GW,
   HEAL_BOLT, heroMods, refresh, inSwing, isWall, ITEMS, itemOf, KO_SECONDS, LEVEL_XP, LOOT_SECONDS, makeFloor, makeGoo, newRun as newRunAny, POTION_HP, roomCracks, REGEN_EVERY,
   ITEM_ICON, ITEM_SLOTS, collideWalls, ROOM_BOSS, lootReplaces, skillIcon, skillOf, unstick, inDoorway, roomTiles, roomGap, ROOM_TUNE, ROOM_STUB, ROOM_TRANS, ROOM_WALK_IN, roomSpecials, EARLY_ROOMS, ROOM_T, ROOMS_ENABLED, ROOMS, ROOM_W, MINIBOSS_ROOM, SPAWN_WARN, READY_SECONDS, makeRoom, roomType, roomClear, diffFloor, enterFloor, SKILLS, SLAM_DMG, SPIT_DMG, stepDungeon, WEAPON_STATS, WEAPONS, type DFx, type DState, type EnemyKind, type Enemy, type Mods,
@@ -483,6 +484,19 @@ describe('dungeon', () => {
         for (const w of f.waves!) for (const sp of w) expect(isWall(f, sp.x, sp.y)).toBe(false);
       }
       expect(makeRoom(5, 1, 5).gh!).toBe(makeRoom(5, 1, 1).gh! + 3);
+      // N-44 props: 3-5 a room, at most 2 barrels, never on solid tiles, under the door or in the arrival rows, all valid kinds
+      for (let seed = 1; seed <= 40; seed++) for (const room of [1, 4, 7, 10]) {
+        const f = makeRoom(seed, room, 2), lane = roomGap(f.gw!);
+        const props = f.props!;
+        expect(props.length).toBeGreaterThanOrEqual(1);
+        expect(props.length).toBeLessThanOrEqual(5);
+        expect(props.filter((p) => p.k.startsWith('barrel')).length).toBeLessThanOrEqual(2);
+        for (const p of props) {
+          expect(PROP_KINDS).toContain(p.k);
+          expect(f.solid[p.y * f.gw! + p.x]).toBeFalsy();
+          expect(lane).not.toContain(p.x);
+        }
+      }
       expect(roomType(MINIBOSS_ROOM)).toBe('boss');
       expect(roomType(ROOMS)).toBe('boss');
       expect(makeRoom(5, 3, 5).waves![0].length).toBeGreaterThan(makeRoom(5, 3, 1).waves![0].length); // +1 per extra blob

@@ -217,7 +217,7 @@ export interface Floor {
   floor: number;
   solid: Uint8Array; // gw*gh (default GW*GH), 1 = wall
   gw?: number; gh?: number; // grid size when not GW x GH (the tall Archero rooms)
-  props?: { x: number; y: number; k: 'crate' | 'skull' | 'hole' }[]; // rooms: decorative floor props (tile), never solid
+  props?: { x: number; y: number; k: PropKind }[]; // rooms: decorative floor props (tile), never solid
   thin?: Set<number>; // rooms: thin vertical wall tiles (tile index): only a 15 px strip in the tile's middle is wall (THIN_X)
   inset?: number; // rooms: the side walls are only this thick (world px); the edge columns are floor up to them
   columns?: { x: number; y: number }[]; // rooms: 0x72 columns as cover (tile x, base row y; rows y-1..y are solid)
@@ -275,6 +275,10 @@ export const ROOM_STUB = 2;
 export const ROOM_INSET = 15;
 /** room themes (Stefan: the dungeon felt repetitive): rooms 1-3 stone, 4-6 moss, 7-10 ember; a tint + banner colours +
  *  floor props from the 0x72 sheet (crate, skull, hole), purely decorative */
+/** decorative floor props: 0x72 crate / skull / hole + ChatGPT N-44 barrels (standing, max 2 a room) and flat decals */
+export const PROP_KINDS = ['crate', 'skull', 'hole', 'barrel-a', 'barrel-b', 'bones-a', 'bones-b', 'skull-decal', 'puddle'] as const;
+export type PropKind = (typeof PROP_KINDS)[number];
+export const PROP_DECALS: readonly PropKind[] = ['hole', 'bones-a', 'bones-b', 'skull-decal', 'puddle'];
 export const ROOM_THEMES = ['stone', 'moss', 'ember'] as const;
 export const roomTheme = (room: number) => (room <= 3 ? 0 : room <= 6 ? 1 : 2);
 /** the room change (Stefan: it must feel like going FORWARD): slide up through the door + fade (s), then walk in from
@@ -363,11 +367,13 @@ export function makeRoom(seed: number, room: number, players = 1, dungeon = 1, t
     sp.x = (best[0] + 0.5) * T; sp.y = (best[1] + 0.5) * T;
   }
   // 2-4 decorative props on open floor, off the middle lane (under the door / over the entrance gap) and the arrival rows
-  const props: NonNullable<Floor['props']> = [], lane = roomGap(gw), kinds = ['crate', 'skull', 'hole'] as const;
-  for (let tries = 0, want = 2 + Math.floor(r() * 3); props.length < want && tries < 40; tries++) {
+  const props: NonNullable<Floor['props']> = [], lane = roomGap(gw), kinds = PROP_KINDS;
+  for (let tries = 0, want = 3 + Math.floor(r() * 3); props.length < want && tries < 40; tries++) {
     const x = 1 + Math.floor(r() * rw), y = top + Math.floor(r() * Math.max(1, safe - top));
     if (lane.includes(x) || solid[y * gw + x] || props.some((p) => Math.abs(p.x - x) + Math.abs(p.y - y) < 3)) continue;
-    props.push({ x, y, k: kinds[Math.floor(r() * kinds.length)] });
+    const k = kinds[Math.floor(r() * kinds.length)];
+    if (k.startsWith('barrel') && props.filter((q) => q.k.startsWith('barrel')).length >= 2) continue;
+    props.push({ x, y, k });
   }
   const spawns: Floor['spawns'] = [];
   return { floor: room, solid, rooms: [o], start, exit, stairs, chests, spawns, gw, gh, dt: T, waves, lines, columns, walls, thin, inset: ROOM_INSET, props };

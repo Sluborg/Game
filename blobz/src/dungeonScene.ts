@@ -6,7 +6,7 @@ import { blobCanvas, BLOB_FRAMES, BODY_CY, clampLook, facingFromVelocity, type F
 import { drawGatherRing } from './gatherRing';
 import { onViewport } from './viewport';
 import { dpr, snapZoom } from './pixelScale';
-import { fw, fh, ft, inDoorway, makeRoom, roomTheme, roomCracks, roomGap, ROOM_TUNE, ROOM_STUB, ROOM_TRANS, ROOMS, MINIBOSS_ROOM, SPAWN_WARN, AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
+import { fw, fh, ft, inDoorway, makeRoom, roomTheme, roomCracks, roomGap, ROOM_TUNE, ROOM_STUB, ROOM_TRANS, ROOMS, PROP_DECALS, MINIBOSS_ROOM, SPAWN_WARN, AIM_WARN, BITE_WARN, DASH_SPEED, DASH_TIME, DASH_WARN, DT, ENEMY_R, GOO_ART, GOO_SCALE, isWall, SLAM_WARN, WEAPON_STATS, FLOORS, heroMods, makeFloor, skillOf, itemOf, SLAM_R, specialOf, STAIRS_R, type DFx, type Floor, type HeroClass, type Weapon } from './dungeon';
 /** Weapons without Art's strip yet: a Kenney Tiny Dungeon tile in hand (bow: drawn in code). */
 import type { Session } from './game';
 import { sfx } from './sfx';
@@ -116,6 +116,7 @@ export class DungeonScene extends Phaser.Scene {
   private map: Floor | null = null;
   private rooms = false; // Archero rooms mode (the camera keeps x on the room's middle)
   private mapObjs: Phaser.GameObjects.GameObject[] = [];
+  private torches: Phaser.GameObjects.Image[] = []; // N-44 wall torches: two flame frames at ~6 fps, anchored at the foot
   private chests: Phaser.GameObjects.Image[] = [];
   private stairs!: Phaser.GameObjects.Image;
   private heroes = new Map<string, HeroGfx>();
@@ -162,6 +163,7 @@ export class DungeonScene extends Phaser.Scene {
     sheet('fx-magic', NA + 'FX/Projectile/EnergyBall.png', 16, 16);
     // class markers in the nameplate (16 px): bow (N-42), heal plus, dagger, shield
     for (const [c, u] of [['marksman', 'art/dungeon/icons/bow-16.png'], ['healer', 'art/dungeon/icons/heal-mode-16.png'], ['rogue', 'art/dungeon/weapons/dagger-16.png'], ['tank', 'art/dungeon/weapons/shield-16.png']]) img('cls-' + c, u);
+    for (const n of ['barrel-a', 'barrel-b', 'bones-a', 'bones-b', 'skull-decal', 'puddle', 'cobweb', 'torch-wall-0', 'torch-wall-1']) img('pr-' + n, `art/dungeon/props/${n}.png`); // ChatGPT N-44, 16x32 cells with the foot at the bottom
     sheet('dg-sparkle', NA + 'FX/Magic/Circle/SpriteSheetSpark.png', 32, 32);
     for (const [k, m] of Object.entries(WIMG)) img('w-' + k, m.src);
     // Ninja Adventure dungeon art (docs/ART_MAP.md section 12 + loot): floor, walls, stairs, chest, coins, potion, bars
@@ -327,8 +329,8 @@ export class DungeonScene extends Phaser.Scene {
 
   /** Bake the floor into one canvas (no tile seams at fractional zoom), slightly darker than the meadow. */
   private buildFloor(seed: number, floor: number, players: number, dungeon = 1, rooms = false, tiles = 9) {
-    for (const o of this.mapObjs) o.destroy();
-    this.mapObjs = []; this.chests = [];
+    for (const o of [...this.mapObjs, ...this.torches]) o.destroy();
+    this.mapObjs = []; this.chests = []; this.torches = [];
     // rooms mode (Archero): one tall screen-wide room instead of the floor maze; the same baking below
     const f = rooms ? makeRoom(seed, floor, players, dungeon, tiles) : makeFloor(seed, floor, players);
     this.map = f;
@@ -426,7 +428,19 @@ export class DungeonScene extends Phaser.Scene {
       // floor props (0x72 crate / skull / hole), then the theme tint on the room's own art (not the banners)
       const tx = this.textures.get('x72'), T = ft(f);
       for (const [k, x, y, w, h] of [['p-crate', 288, 408, 16, 24], ['p-skull', 288, 432, 16, 16], ['p-hole', 96, 144, 16, 16]] as const) if (!tx.has(k)) tx.add(k, 0, x, y, w, h);
-      for (const pr of f.props ?? []) this.mapObjs.push(this.add.image((pr.x + 0.5) * T, (pr.y + 1) * T, 'x72', 'p-' + pr.k).setOrigin(0.5, 1).setScale(3).setDepth(pr.k === 'hole' ? -950 : (pr.y + 1) * T - 14));
+      for (const pr of f.props ?? []) {
+        const n9 = ['barrel-a', 'barrel-b', 'bones-a', 'bones-b', 'skull-decal', 'puddle'].includes(pr.k); // N-44 pieces are single images, the 0x72 ones frames of the sheet
+        const o = n9 ? this.add.image((pr.x + 0.5) * T, (pr.y + 1) * T, 'pr-' + pr.k) : this.add.image((pr.x + 0.5) * T, (pr.y + 1) * T, 'x72', 'p-' + pr.k);
+        this.mapObjs.push(o.setOrigin(0.5, 1).setScale(3).setDepth(PROP_DECALS.includes(pr.k) ? -950 : (pr.y + 1) * T - 14));
+      }
+      // a cobweb in one top corner (left / right by the room number), flat on the wall/floor seam
+      const cw = this.add.image(floor % 2 ? 0 : fw(f) * T, 3 * T, 'pr-cobweb').setOrigin(floor % 2 ? 0 : 1, 0).setScale(3).setFlipX(floor % 2 === 0).setDepth(-940);
+      this.mapObjs.push(cw);
+      this.torches = [];
+      if (roomTheme(floor) > 0) { // moss + ember: two wall torches between the banners and the door (never tinted: a flame stays bright)
+        const half2 = 58, lx2 = Math.min(1.5 * T, f.stairs.x - 96 - T / 2), rx2 = Math.max((fw(f) - 1.5) * T, f.stairs.x + 96 + T / 2);
+        for (const x of [(lx2 + T / 2 + (f.stairs.x - half2)) / 2, (rx2 - T / 2 + (f.stairs.x + half2)) / 2]) this.torches.push(this.add.image(Math.round(x), 3 * T - 14, 'pr-torch-wall-0').setOrigin(0.5, 1).setScale(3).setDepth(-884));
+      }
       const tint = THEME_TINT[roomTheme(floor)];
       if (tint !== 0xffffff) for (const o of [...this.mapObjs, this.stairs]) {
         const im = o as Phaser.GameObjects.Image;
@@ -456,6 +470,7 @@ export class DungeonScene extends Phaser.Scene {
     if (fk !== this.floorKey) { this.floorKey = fk; this.snapNext = true; if (d.rooms && this.wipeA > 0.5) { this.wipeA = 1; this.wipeHold = 0.2; } this.buildFloor(d.seed, d.floor, v.players.length, d.dungeon, d.rooms, d.roomTiles); this.fitCamera(); } // rooms: the cut happens under a fully dark screen
     const f = this.map!;
     const now = this.time.now;
+    if (this.torches.length) { const fr = Math.floor(now / 166) % 2; for (const t of this.torches) t.setTexture('pr-torch-wall-' + fr); }
     const smooth = this.s.role === 'client' && !this.snapNext; // a new floor / room: everything jumps to its new place
     this.snapNext = false;
     const k = Math.min(1, dt * 14);
