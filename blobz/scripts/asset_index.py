@@ -35,6 +35,8 @@ SOURCES = [
     ('art/logo-64.png', 'ChatGPT N-39 pixel logo (native 64x42), sliced by scripts/slice_n37_n40.py', GPT, False),
     ('art/icons/cottage-1*.png', 'ChatGPT N-40 tent icon, sliced by scripts/slice_n37_n40.py', GPT, False),
     ('art/icons/res-berry-*.png', 'ChatGPT N-41 berry food icon, sliced by scripts/slice_n41.py', GPT, False),
+    ('art/dungeon/icons/bow-*.png', 'ChatGPT N-42 ranger bow (reduction of the left bow), scripts/slice_n42.py', GPT, False),
+    ('art/dungeon/props/*.png', 'ChatGPT N-44 dungeon room props, sliced by scripts/slice_n44.py', GPT, False),
     ('art/props/plate-*.png', 'ChatGPT N-30 pressure plate, sliced by scripts/slice_grid_orders.py', GPT, True),
     ('art/props/fence-*.png', 'ChatGPT N-30b fence 3-piece set, sliced by scripts/fence_pieces.py (pen v4 rating pending; N-S: post every tile, rail-v centre strip on top)', GPT, False),
     ('art/props/gate-*.png', 'ChatGPT N-30 gate + posts, sliced by scripts/slice_grid_orders.py', GPT, True),

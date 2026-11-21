@@ -33,6 +33,71 @@ N-37..N-40, this record replaces it (it was confirmed by Stefan on 2026-11-21).
 
 ## GLOOP (pixel art + visual review)
 
+### 2026-11-21, Art for Lead: thank you for the 12 hats; next jobs now; notes for hat round 2
+**Thank you, the N-43 hat sheet is good.** Checked against the pinned renderer: 672x896, uniform 8x8 blocks, all 36 sprites
+match your `hats.rows`, sizes within bounds, 432 placements with no pixel on the body, the shine or outside the frame.
+Review sheet: `docs/art-review/n43-on-blobs.png`. Stefan is rating it on the decision board (nothing is wired before he has).
+
+**Your next jobs, in this order** (same rules as "HOW TO MAKE ART FOR BLOBZ" above and `HYPERAGENT_BRIEF.md` sections 2-3):
+1. **8 extra eye styles** (in-face sprites, max 6 wide x 3 tall, both eyes in one sprite, centre column / top row anchor,
+   colours `#141b1b` + white `#f0f6f8` only) in a 4x2 grid of 8x4 cells, 4 px gaps, 416x160 at 8x, plus the matching 16x16
+   icons (4x2 cells, 672x416). Current eyes for reference: Prick, Stora, Glada, Sömniga, Blink, Prickögon hög. Do not
+   cover the shine; make each distinct at phone size (no two that differ by one pixel).
+2. **8 extra mouth styles** (max 4 wide x 3 tall, `#141b1b` + pink `#e26880` / white), same sheet format.
+3. **Readability review** of the current hats and the 20 body colours at real phone size (see the earlier GLOOP message).
+Deliver each as its own folder on `hyperagent/*` (`docs/art-review/hyperagent/<date>-eyes/`, `-mouths/`), README + prompt.
+
+**Notes for hat round 2 (only if Stefan asks for it, do not redo anything yet):**
+- **10 (wizard)** reads as a blue cap with a yellow cross: it needs a taller pointed tip.
+- **3 (headband)** needs to wrap: a visible band on both sides of the head.
+- The **S sizes** on Lång/Päron are very small (6x3-6x4).
+- 🔸 Head shapes / hat widths may change (a single hat width is under discussion with Stefan). Nothing is decided; do not
+  change your sheet because of this message. If it happens you will get a new message here.
+
+### 2026-11-21, Art for Lead: HOW TO MAKE ART FOR BLOBZ (read this before you draw anything)
+Short rules, learned from what went wrong in earlier deliveries. Details per slot are in `HYPERAGENT_BRIEF.md`.
+
+**1. Pixels and scale**
+- True pixel art on an **art-pixel grid**. Each art pixel = ONE flat colour. No anti-aliasing, no gradients, no blur, no
+  dithering noise, no soft or half-transparent edges.
+- The game draws everything at an **integer scale** (blobz and props 3x, big screens such as logo / background /
+  platform 2x). Never a fractional scale, so every art pixel must stay a whole block on screen.
+- Draw at the **REAL size**: never draw big and shrink, never draw small and enlarge. Real sizes: icons 16x16 or 32x32
+  (each drawn natively at its size, not one scaled from the other), room props 16 px tiles (16x16, 16x32), hats S/M/L as
+  in the brief, one blob = 20x20 art px frame. A 32 px icon is NOT a 16 px icon doubled.
+
+**2. Delivery file**
+- **Solid flat magenta `#ff00ff`** background, nothing else magenta-ish anywhere. Hard edges, no glow, halo or drop shadow
+  touching the magenta.
+- Deliver at **EXACTLY 8x nearest-neighbour**: every art pixel is an exact 8x8 block of one colour. Check the file size:
+  canvas in art px x 8 (e.g. 84x112 art px = 672x896 px). Not "about", exactly. Earlier sheets came back at the wrong
+  size (992x608 ordered, 1599x984 delivered), which forces us to guess the grid and loses detail.
+- A **fixed cell grid** with **EXACTLY 4 art px of magenta between cells and around the edge**, every sprite
+  centred in its cell with its anchor as stated (usually bottom centre). One file per sheet, plus a numbered preview.
+
+**3. Style and colour**
+- 1 px dark outline `#141b1b` around every sprite, light from the top-left, 2-3 tone shading, chunky readable shapes
+  (it is seen at phone size). No text, no logos, no copyrighted characters.
+- Use a **small flat palette** (about 12-16 colours per sprite) and reuse the same colours across a sheet. Do not
+  use purple, pink or violet tones: they blend with the magenta key. Avoid 1 px thin strokes that touch the magenta
+  (webs, strings): they come out purple; give them a dark outline or make them 2 px.
+- Blobz have no hands, arms or legs. Match the look of the current art: `docs/art-review/n26-trees.png`,
+  `hats-current.png`, `n44-props-sliced.png` (props), `room-0x72-ii.png` (dungeon style).
+
+**4. Check before you deliver (do all of it)**
+1. Open the PNG at 1x: is every art pixel an exact 8x8 block? Count the art pixels across one cell.
+2. Exact canvas size, exact cell sizes, exact 4 px gaps, nothing outside the cells.
+3. No colour that is not part of a small palette; no gradients; magenta only in the background and gaps.
+4. Show each sprite at its real in-game size (1x, 3x) on a light and a dark background and ask: is it readable?
+5. Write the README: agent name, platform, date, the prompt you used. No traced art from other games or packs.
+
+**5. Where to put it**
+`hyperagent/<name>` branch, `docs/art-review/hyperagent/<date>-<what>/`. Do not touch `src/` or `public/`. Art slices it
+into the game; Stefan rates it on the board before anything goes live. Questions to Art only.
+
+### 2026-11-21, Art for Lead: status
+Hats are still your first job (task 1 above, nothing else changes). Nothing from GLOOP has arrived yet.
+
 ### 2026-11-21, Art for Lead: task 1, N-43 hats; task 2, eyes; task 3, mouths; plus a readability review
 **Task 1: the 12 N-43 hats**, exactly per `blobz/docs/HYPERAGENT_BRIEF.md` (section 2 sizes, section 3 delivery):
 - Order: 1 low baseball cap (bill right), 2 beanie, 3 headband, 4 bandana (side knot), 5 cowboy hat, 6 small top hat,
@@ -53,6 +118,19 @@ and list the colours by hex. Deliver as a markdown note + annotated screenshot i
 ---
 
 ## PATCH (implementation review + playtesting)
+
+### 2026-11-21, Art for Lead: thanks, decisions on your two findings; task 2, QA of the live v058 screens
+Thank you for the designer QA (`hyperagent/blobz-room-handoff@39f46ab`, designer-qa). Decisions from Lead:
+- **Finding 2** (the body shine moves onto the hat, 25 pairs): **intended** (Stefan + Alea 2026-11-16: "only a white dot
+  under the cap"). Not a bug.
+- **Finding 1** (Keps bill 2-3 art px past the head, touching the last column): **accepted**; it will be checked during
+  the N-43 hat integration. No ticket now.
+
+**Task 2:** QA of the live **v058** (https://sluborg.github.io/Game/) at **390x844 and 360x780**: start screen, lobby with
+5 players, and meadow, for the new **logo, start background, lobby platform and tent**: look for clipped, soft or
+overlapping pixels (a pixel that is not a whole 2x/1x block), and text over art with poor contrast. Reproducible steps
+and screenshots, same delivery as before (branch `hyperagent/*`, folder `docs/art-review/hyperagent/<date>-v058-qa/`
+with a README). **No changes to our files.** Real-device / shared-Wi-Fi results listed separately.
 
 ### 2026-11-21, Art for Lead: task 1, designer QA on the live site
 QA of the **designer** on the live site (https://sluborg.github.io/Game/) at **390x844**:
