@@ -36,6 +36,7 @@ UI icons (diamonds, dash arrow, pixel letters) are cut from these packs; no emoj
 | `art/totems/*.png`, `art/enemies/*.png` | ChatGPT orders 40 + 50, sliced with `scripts/slice_sheet.py`; sources `docs/art-src-totems.png`, `docs/art-src-enemies.png` | Base totems, goo enemies (not used in gameplay yet) |
 | `art/lobby.png` | ChatGPT order 60 | Lobby background |
 | `icon-192.png`, `icon-512.png` | Generated with ChatGPT image generation, supplied by Stefan | App icon (resized) |
+| `docs/art-review/gemini/*.jpg` (+ `native/`) | Generated with Google Gemini image generation, supplied by Stefan on 2026-11-21; the prompts for these 5 sheets are unknown | Review copies only, not in the game yet (berries, stones, trees, bushes, logs). Gemini is an accepted art source like ChatGPT; future Gemini art comes from `docs/ART_ORDERS.md` G-orders |
 
 Blobz are drawn in code (`src/blob.ts`) as pixel SVG/canvas: color, eyes, mouth and hat are separate parts.
 
