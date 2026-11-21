@@ -33,6 +33,47 @@ N-37..N-40, this record replaces it (it was confirmed by Stefan on 2026-11-21).
 
 ## GLOOP (pixel art + visual review)
 
+### 2026-11-21, Art for Lead: HOW TO MAKE ART FOR BLOBZ (read this before you draw anything)
+Short rules, learned from what went wrong in earlier deliveries. Details per slot are in `HYPERAGENT_BRIEF.md`.
+
+**1. Pixels and scale**
+- True pixel art on an **art-pixel grid**. Each art pixel = ONE flat colour. No anti-aliasing, no gradients, no blur, no
+  dithering noise, no soft or half-transparent edges.
+- The game draws everything at an **integer scale** (blobz and props 3x, big screens such as logo / background /
+  platform 2x). Never a fractional scale, so every art pixel must stay a whole block on screen.
+- Draw at the **REAL size**: never draw big and shrink, never draw small and enlarge. Real sizes: icons 16x16 or 32x32
+  (each drawn natively at its size, not one scaled from the other), room props 16 px tiles (16x16, 16x32), hats S/M/L as
+  in the brief, one blob = 20x20 art px frame. A 32 px icon is NOT a 16 px icon doubled.
+
+**2. Delivery file**
+- **Solid flat magenta `#ff00ff`** background, nothing else magenta-ish anywhere. Hard edges, no glow, halo or drop shadow
+  touching the magenta.
+- Deliver at **EXACTLY 8x nearest-neighbour**: every art pixel is an exact 8x8 block of one colour. Check the file size:
+  canvas in art px x 8 (e.g. 84x112 art px = 672x896 px). Not "about", exactly. Earlier sheets came back at the wrong
+  size (992x608 ordered, 1599x984 delivered), which forces us to guess the grid and loses detail.
+- A **fixed cell grid** with **EXACTLY 4 art px of magenta between cells and around the edge**, every sprite
+  centred in its cell with its anchor as stated (usually bottom centre). One file per sheet, plus a numbered preview.
+
+**3. Style and colour**
+- 1 px dark outline `#141b1b` around every sprite, light from the top-left, 2-3 tone shading, chunky readable shapes
+  (it is seen at phone size). No text, no logos, no copyrighted characters.
+- Use a **small flat palette** (about 12-16 colours per sprite) and reuse the same colours across a sheet. Do not
+  use purple, pink or violet tones: they blend with the magenta key. Avoid 1 px thin strokes that touch the magenta
+  (webs, strings): they come out purple; give them a dark outline or make them 2 px.
+- Blobz have no hands, arms or legs. Match the look of the current art: `docs/art-review/n26-trees.png`,
+  `hats-current.png`, `n44-props-sliced.png` (props), `room-0x72-ii.png` (dungeon style).
+
+**4. Check before you deliver (do all of it)**
+1. Open the PNG at 1x: is every art pixel an exact 8x8 block? Count the art pixels across one cell.
+2. Exact canvas size, exact cell sizes, exact 4 px gaps, nothing outside the cells.
+3. No colour that is not part of a small palette; no gradients; magenta only in the background and gaps.
+4. Show each sprite at its real in-game size (1x, 3x) on a light and a dark background and ask: is it readable?
+5. Write the README: agent name, platform, date, the prompt you used. No traced art from other games or packs.
+
+**5. Where to put it**
+`hyperagent/<name>` branch, `docs/art-review/hyperagent/<date>-<what>/`. Do not touch `src/` or `public/`. Art slices it
+into the game; Stefan rates it on the board before anything goes live. Questions to Art only.
+
 ### 2026-11-21, Art for Lead: status
 Hats are still your first job (task 1 above, nothing else changes). Nothing from GLOOP has arrived yet.
 
