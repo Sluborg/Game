@@ -1,25 +1,31 @@
-# Blobz art directions for Gemini, v2 (2026-11-21)
+# Blobz art directions for Gemini, v3 (2026-11-21)
 
-Supersedes `GEMINI_ART_DIRECTIONS.md` (v1). This file is self-contained: no links needed. Written by Claude (Art) for Stefan.
+Supersedes v1 and v2 (`GEMINI_ART_DIRECTIONS.md`, `GEMINI_ART_DIRECTIONS_v2.md`). This file is self-contained: no links needed. Written by Claude (Art) for Stefan.
 Gemini makes the art for everything the game uses, one BATCH at a time. Stefan says "next" and Gemini does the next batch.
 
 ## What was wrong in v1 (fixed below)
 1. v1 said "16x16 / 32x32 art-pixel grid" but never said how big one art pixel is. Gemini picked its own pixel size, so trees
-   came out 44x54 (game needs 30x34), logs 60x56 (game needs 16x13), bushes 46x44 (game needs 16x14). v2 fixes the grid in
+   came out 44x54 (game needs 30x34), logs 60x56 (game needs 16x13), bushes 46x44 (game needs 16x14). v3 fixes the grid in
    pixels: see "Grid" below, and every object now has its EXACT size in art pixels.
 2. v1 said "dark plum outline" for the blobz. The outline is near-black #141b1b (plum #3f2631 is only a menu frame colour).
-3. v1 never asked for PNG. The first Gemini sheets were JPEG (noise, purple fringes at the magenta). v2 requires PNG.
+3. v1 never asked for PNG. The first Gemini sheets were JPEG (noise, purple fringes at the magenta). v3 requires PNG.
 4. v1's bush order asked for a 32 px bush that the game does not use, and "autumn tree" where the game uses an apple tree.
 5. v1 had no list of what is approved and what must be redone. v2 has the status board and a batch plan.
 
-## How Gemini works (read this whole file at the start of the chat, and again when Stefan writes "next")
-1. ONE image per reply. Work through the orders of the CURRENT batch that have status TO DO and are not made yet in this chat.
-2. Start each reply with one line: "Order <id> - <N> TO DO orders left in this batch after this one."
-3. End each reply with one line: "<id> done. Next TO DO: <id or 'batch done'>. Type next."
-4. "next" = do the next batch: every TO DO order of that batch, one image per reply, then stop. "redo" = make the same order
-   again with Stefan's fixes. "redo <id>" = redo only that order.
-5. Deliver every image as PNG, as large as you can, exactly as drawn: no resampling, no JPEG, no watermark.
-6. No text, letters, numbers or captions inside images. If you cannot make an exact size, say so in the reply, do not guess.
+## What "next" means (read this file again, top to bottom, every time Stefan writes "next")
+1. Read these updated instructions (this whole file), then the Batch orders further down.
+2. Make the CURRENT batch: every order marked TO DO, ONE image per reply, in order. After the last order, stop.
+3. Start each reply with one line: "FILE: <exact filename from the order>" then "Order <id> - <N> TO DO orders left in this batch after this one."
+4. End each reply with: "<id> done. Next TO DO: <id or 'batch done'>. Type next."
+5. "redo" = same order again with Stefan's fixes. "redo <id>" = only that order.
+6. Deliver every image as PNG, as large as you can, exactly as drawn: no resampling, no JPEG, no watermark.
+7. No text, letters, numbers or captions inside images. If you cannot make an exact size, say so, do not guess.
+
+## File names (IMPORTANT)
+- Each order below has a FILE name (e.g. g1-trees-stumps.png). Try to save/export the image under exactly that name.
+- If you cannot set the download name (chat downloads usually come out as image.png), write the exact name on the first line of the reply: "FILE: g1-trees-stumps.png". Stefan then renames the download to that name before putting it in the Drive folder "Gemini Blobz".
+- A redo gets a suffix: g1-trees-stumps-r2.png, -r3.png. Never reuse a name for a different image.
+- Lowercase, no spaces, .png only.
 
 ## Grid (the fix): put this at the start of every order
 ```
@@ -69,6 +75,7 @@ Anything Stefan marks "redo" with a comment goes into the next batch. Anything h
 ## Batch 1 orders
 
 ### G-1 Trees and stumps (TO DO)
+FILE: g1-trees-stumps.png
 ```
 [Grid block above]
 Apply the style block.
@@ -80,6 +87,7 @@ tips): (1) EXACTLY 16 x 10 art pixels; (2) EXACTLY 12 x 10 art pixels; (3) EXACT
 ```
 
 ### G-2 Berry bushes (TO DO)
+FILE: g2-berry-bushes.png
 ```
 [Grid block above]
 Apply the style block.
@@ -89,6 +97,7 @@ art pixel), EXACTLY 16 x 14 art pixels; (2) the same bush picked clean (no berri
 ```
 
 ### G-3 Log icons (TO DO)
+FILE: g3-log-icons.png
 ```
 [Grid block above]
 Apply the style block.
@@ -98,5 +107,5 @@ nothing else: no branch, no leaves), left to right: (1) EXACTLY 16 x 13 art pixe
 ```
 
 ## After delivery (for Stefan, not for Gemini)
-Save each image as the ORIGINAL PNG (no screenshot, no crop) and bring it to Claude. Claude measures the real pixel size,
+Save each image as the ORIGINAL PNG (no screenshot, no crop), named as in the FILE line, into the Drive folder "Gemini Blobz" (under dev art). Claude reads them from there. Claude measures the real pixel size,
 slices it, compares it with the current art at game scale, and writes the verdict here: APPROVED / REDO. Then say "next".
