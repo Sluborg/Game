@@ -342,3 +342,12 @@ body.dgflow #hud > :not(#hud-dg):not(#attack):not(#dash):not(#stick):not(#dg-ko)
 #hud.dungeon #dash { background-image: radial-gradient(circle, #3b2416 0 14px, transparent 15px), url('/art/dungeon/ui/btn-round-normal-18.png'); background-size: auto, 54px 54px; }
 #hud.dungeon #dash:active { background-image: radial-gradient(circle, #2a1810 0 14px, transparent 15px), url('/art/dungeon/ui/btn-round-pressed-18.png'); }
 #hud.dungeon #dash.cd { background-image: radial-gradient(circle, #3b2416 0 14px, transparent 15px), url('/art/dungeon/ui/btn-round-disabled-18.png'); }
+
+/* N-14 boss intro banner: plank 103x28 + portrait 31x29 at exactly 3x, slides in after the room wipe, ~1.5 s, never takes touches */
+#dg-boss-intro { position: absolute; width: 309px; height: 84px; z-index: 3; pointer-events: none; animation: dgBossIntro 1.7s steps(14, end) 0.5s both; }
+#dg-boss-intro img { position: absolute; image-rendering: pixelated; }
+#dg-boss-intro .plank { left: 0; top: 0; width: 309px; height: 84px; }
+#dg-boss-intro .face { left: 12px; top: -3px; width: 93px; height: 87px; }
+#dg-boss-intro span { position: absolute; left: 108px; right: 18px; top: 0; height: 84px; display: flex; align-items: center; justify-content: center; text-align: center;
+  font: 800 22px/1 var(--font); color: #ffe08a; -webkit-text-stroke: 4px #3f2631; paint-order: stroke fill; text-shadow: 0 3px 0 #3f2631; }
+@keyframes dgBossIntro { 0% { transform: translateX(-110vw); } 16% { transform: translateX(0); } 84% { transform: translateX(0); opacity: 1; } 100% { transform: translateX(0); opacity: 0; } }

@@ -11,7 +11,7 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
   image / CSS background or border image / canvas icon, or a WebGL texture bound at a Phaser draw call); CODE ONLY =
   referenced but never shown in the run (remove the reference and the file); UNUSED = no reference and never shown.
 
-**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 203 / IN GAME 27 / UNUSED 93.
+**Runtime run:** 2026-11-15, e2e all 16 scripts passed. **Own files:** CODE ONLY 205 / IN GAME 27 / UNUSED 91.
 
 **Claude-drawn still IN GAME** (0): none
 
@@ -39,8 +39,8 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/bg/start-240.png` | 240x430 | ChatGPT N-38 start background, sliced by scripts/slice_n37_n40.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/style.css:704, src/style.css:847, src/style.css:1187 | replace (see OLD_ART_CHECKLIST) |
 | `art/dungeon-end-landscape.png` | 1672x941 | ChatGPT N-22 dungeon end screen | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:260 | keep |
 | `art/dungeon-end.png` | 941x1672 | ChatGPT N-22 dungeon end screen | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.css:258 | keep |
-| `art/dungeon/boss-banner.png` | 103x28 | ChatGPT N-14 boss intro, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
-| `art/dungeon/boss-portrait.png` | 31x29 | ChatGPT N-14 boss intro, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | keep (approved ChatGPT, not wired yet) |
+| `art/dungeon/boss-banner.png` | 103x28 | ChatGPT N-14 boss intro, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:728 | keep |
+| `art/dungeon/boss-portrait.png` | 31x29 | ChatGPT N-14 boss intro, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeonScene.ts:728 | keep |
 | `art/dungeon/card-class-healer.png` | 55x61 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:69 | keep |
 | `art/dungeon/card-class-marksman.png` | 54x60 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:69 | keep |
 | `art/dungeon/card-class-rogue.png` | 55x57 | ChatGPT N-5 class cards, sliced by scripts/slice_cards.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/dungeonUi.ts:69 | keep |
@@ -91,7 +91,7 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/dungeon/items/helm.png` | 16x16 | ChatGPT N-23 loot items, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:36, src/dungeon.ts:144 | keep |
 | `art/dungeon/items/ring.png` | 16x16 | ChatGPT N-23 loot items, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/dungeon.ts:36, src/dungeon.ts:143 | keep |
 | `art/dungeon/items/stone.png` | 16x16 | ChatGPT N-23 loot items, sliced by scripts/slice_grid_orders.py | ChatGPT image generation for this project (supplied by Stefan) | CODE ONLY | src/ninjaArt.ts:9, src/style.css:1314, src/dungeon.ts:36 (+11) | keep |
-| `art/dungeon/potion.png` | 16x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | CODE ONLY | src/dungeon.ts:668, src/dungeon.ts:1331, src/dungeonScene.ts:1064 | replace (see OLD_ART_CHECKLIST) |
+| `art/dungeon/potion.png` | 16x16 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | CODE ONLY | src/dungeon.ts:668, src/dungeon.ts:1331, src/dungeonScene.ts:1076 | replace (see OLD_ART_CHECKLIST) |
 | `art/dungeon/revive.png` | 48x20 | Claude-drawn: scripts/dungeon_art.py | Own art (CC0) | CODE ONLY | src/dungeon.ts:666, src/dungeon.ts:892, src/dungeon.ts:955 (+2) | replace (see OLD_ART_CHECKLIST) |
 | `art/dungeon/sand-b.png` | 16x16 | ChatGPT N-35 sandstone room set (attempt 3), sliced by scripts/sand_room.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
 | `art/dungeon/sand-bl.png` | 16x16 | ChatGPT N-35 sandstone room set (attempt 3), sliced by scripts/sand_room.py | ChatGPT image generation for this project (supplied by Stefan) | UNUSED | UNUSED | delete |
@@ -179,7 +179,7 @@ fails if an image under `public/` is missing here. Licenses: `public/assets/LICE
 | `art/fine/fx/plate-glow.png` | 42x32 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | CODE ONLY | src/game.ts:416, src/game.ts:1245 | replace (see OLD_ART_CHECKLIST) |
 | `art/fine/gather/chips-stone.png` | 64x24 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | UNUSED | UNUSED | delete |
 | `art/fine/gather/chips-wood.png` | 64x24 | Claude-drawn: scripts/fine_art.py | Own art (CC0) | UNUSED | UNUSED | delete |
-| `art/fine/icons/chest.png` | 36x28 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | CODE ONLY | src/dungeon.ts:669, src/dungeon.ts:1338, src/dungeonScene.ts:1016 | replace (see OLD_ART_CHECKLIST) |
+| `art/fine/icons/chest.png` | 36x28 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | CODE ONLY | src/dungeon.ts:669, src/dungeon.ts:1338, src/dungeonScene.ts:1028 | replace (see OLD_ART_CHECKLIST) |
 | `art/fine/icons/magnet.png` | 30x30 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | CODE ONLY | src/sim.ts:62, src/sim.ts:878 | replace (see OLD_ART_CHECKLIST) |
 | `art/fine/icons/speed.png` | 32x32 | Claude-drawn: scripts/hint_icons.py / fine_art.py | Own art (CC0) | CODE ONLY | src/sim.ts:62, src/sim.ts:809, src/sim.ts:878 (+2) | replace (see OLD_ART_CHECKLIST) |
 | `art/gather/star-empty.png` | 19x17 | ChatGPT N-10, sliced by scripts/slice_n_orders.py | ChatGPT image generation for this project (supplied by Stefan) | IN GAME | src/ninjaArt.ts:19, src/style.css:1261, index.html:120 (+3) | keep |
