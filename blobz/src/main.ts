@@ -1,5 +1,5 @@
 import { onViewport, watchViewport } from './viewport';
-import { dpr, intFit, snapAll } from './pixelScale';
+import { dpr, intFit, setBgScale, snapAll } from './pixelScale';
 import Phaser from 'phaser';
 import '@fontsource/fredoka/500.css';
 import '@fontsource/fredoka/600.css';
@@ -192,9 +192,9 @@ const icon = (name: string, cls = '') => { const i = new Image(); i.src = DATA_I
 document.querySelectorAll<HTMLElement>('[data-icon]').forEach((el) => el.replaceWith(icon(el.dataset.icon!)));
 function renderIcons() {
   const logo = $('logo');
-  // AI-generated logo (public/art/logo.png); plain text if it fails to load
+  // N-39 logo (approved 2026-11-16, 150x104 art px, public/art/logo-150.png); plain text if it fails to load
   const img = new Image();
-  img.src = 'art/logo.png'; img.alt = 'Blobz'; img.className = 'logo-img';
+  img.src = 'art/logo-150.png'; img.alt = 'Blobz'; img.className = 'logo-img';
   img.onerror = () => { const t = document.createElement('span'); t.className = 'logo-text'; t.textContent = 'BLOBZ'; logo.replaceChildren(t); };
   logo.replaceChildren(img);
 }
@@ -853,7 +853,7 @@ async function hostGame() {
     try { localStorage.removeItem('blobz.village'); } catch { /* private mode */ }
     show('newvillage-ask', false); show('btn-newvillage');
     // a fresh little cottage with a sparkle = "new village"
-    const fresh = [building('cottage-1'), NI.sparkle].map((src, i) => { const im = new Image(); im.src = src; im.alt = ''; im.className = i ? 'vb' : 'vcot'; return im; });
+    const fresh = ['art/icons/cottage-1-32.png', NI.sparkle].map((src, i) => { const im = new Image(); im.src = src; im.alt = ''; im.className = i ? 'vb' : 'vcot'; return im; });
     $('lobby-village').replaceChildren(...fresh);
     $('lobby-village').setAttribute('aria-label', t('lobby.newVillageDone'));
   };
@@ -949,6 +949,7 @@ const roundSecs = Math.max(0, Math.min(600, Number(new URLSearchParams(location.
 watchViewport();
 // whole-device-pixel sizing of the DOM pixel art (pixelScale.ts SNAP rules): on every layout change and a light poll
 onViewport(() => snapAll());
+setBgScale(); onViewport(setBgScale); // N-38 background: whole device px per art px
 setInterval(() => snapAll(), 300);
 onViewport(() => {
   if (!document.body.classList.contains('rotate-block')) return;

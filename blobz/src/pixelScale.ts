@@ -24,7 +24,8 @@ export function snapImg(img: HTMLImageElement, boxW: number, boxH = boxW, art?: 
 
 /** Whole-pixel rules for the DOM pixel art: [selector, box width, box height, art size if not the natural size]. */
 const SNAP: [string, number, number, [number, number]?][] = [
-  ['#hud-quest .qicon', 20, 20], ['#hud-quest .qstar', 20, 20], ['#hud-quest .qtitle img', 32, 22],
+  ['#menu #home .logo-img', 316, 230], // N-39 logo: whole device px per art px (about 300 css, 2x), fits 360 px wide phones
+  ['#hud-quest .qicon', 20, 20], ['#hud-quest .qstar', 20, 20], ['#hud-quest .qtitle img', 24, 24],
   ['#hud-quest .qbimg', 40, 28], ['#hud-quest .qbico', 24, 24],
   ['#hud-bank img', 20, 20], ['#edge-arrows .edge img', 20, 20], // Lead 2026-11-16: every UI resource icon in one 20 css box
   ['#build-panel .bcost .c img', 20, 20],
@@ -45,6 +46,16 @@ export function snapAll(root: ParentNode = document) {
       snapImg(img, bw, bh, art);
     });
   }
+}
+
+/** The start / loading / lobby background (N-38, 240x430 art px, portrait): the smallest WHOLE number of device px per art
+ *  px that still covers the screen (k = ceil(max(W/240, H/430))), so no art pixel is ever split, anchored at the bottom
+ *  centre (the sides and top are cropped). Sets --bgsize on <html> as "Wpx Hpx" in CSS px; CSS reads var(--bgsize, cover). */
+export const BG_ART = { w: 240, h: 430 };
+export function setBgScale() {
+  const d = window.devicePixelRatio || 1, w = window.innerWidth, h = window.innerHeight;
+  const k = Math.max(1, Math.ceil(Math.max((w * d) / BG_ART.w, (h * d) / BG_ART.h) - 1e-6));
+  document.documentElement.style.setProperty('--bgsize', `${(BG_ART.w * k) / d}px ${(BG_ART.h * k) / d}px`);
 }
 
 /** Phaser canvas at DEVICE resolution (Lead 2026-11-15: Code owns it; one helper for the meadow and Code 2's dungeon).

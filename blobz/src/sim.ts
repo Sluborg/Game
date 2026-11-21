@@ -954,7 +954,8 @@ export function villageOf(s: State): Village {
  *  art px at 3x, matching the crops in game.ts (rows read off the pictures). The garden is flat soil plots (no walls)
  *  and the bridge is the river crossing, so neither is solid. */
 const FOOT_ART: Record<string, [number, number]> = {
-  'cottage-1': [42, 19], 'cottage-2': [64, 17], 'cottage-3': [64, 42],
+  // N-40 tent (level 1): 32 px art, widest 30 px, walls and roof edge down 12 rows
+  'cottage-1': [30, 12], 'cottage-2': [64, 17], 'cottage-3': [64, 42],
   storage: [32, 32], workshop: [48, 20], well: [16, 13], watchtower: [24, 18],
 };
 const footBox = (cx: number, footY: number, [w, rows]: [number, number]): Rect =>
