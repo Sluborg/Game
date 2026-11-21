@@ -25,11 +25,11 @@ jobs:
         env:
           RCLONE_CONFIG_BLOBZ_TYPE: drive
           RCLONE_CONFIG_BLOBZ_TOKEN: ${{ secrets.BLOBZ_DRIVE_TOKEN }}
-          RCLONE_CONFIG_BLOBZ_ROOT_FOLDER_ID: ${{ vars.BLOBZ_DRIVE_FOLDER_ID }}
+          RCLONE_CONFIG_BLOBZ_ROOT_FOLDER_ID: ${{ secrets.BLOBZ_DRIVE_FOLDER_ID || vars.BLOBZ_DRIVE_FOLDER_ID }}
         run: |
           set -eu
           : "${RCLONE_CONFIG_BLOBZ_TOKEN:?Set BLOBZ_DRIVE_TOKEN in Actions secrets}"
-          : "${RCLONE_CONFIG_BLOBZ_ROOT_FOLDER_ID:?Set BLOBZ_DRIVE_FOLDER_ID in Actions variables}"
+          : "${RCLONE_CONFIG_BLOBZ_ROOT_FOLDER_ID:?Set BLOBZ_DRIVE_FOLDER_ID in Actions secrets or variables}"
           test -f blobz/docs/ART_ORDERS.md
           rclone sync blobz blobz: --checksum --create-empty-src-dirs --drive-use-trash
           rclone check blobz blobz:
