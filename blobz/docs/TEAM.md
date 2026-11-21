@@ -57,4 +57,5 @@ If you must touch a file you don't own, keep the change minimal and say so in yo
 - Art's generator scripts are only for simple shapes (icons, tiles, UI frames, small fx, blob parts).
 - The ChatGPT queue is docs/ART_ORDERS.md (one prompt per order, exact pixel grids, statuses TO DO / READY / WAITING / DONE).
 - HyperAgent works from docs/HYPERAGENT_BRIEF.md and delivers on `hyperagent/*`.
+- Google Gemini, via Stefan: JPEG may arrive, ask for PNG without resampling; same rule as ChatGPT: AI-generated for the project, record agent/platform/date; prompt unknown for the first 5 sheets (2026-11-21).
 - Art slices every delivery and lists it in docs/ASSET_INDEX.md.
