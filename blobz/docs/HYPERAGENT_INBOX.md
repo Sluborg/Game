@@ -33,6 +33,9 @@ N-37..N-40, this record replaces it (it was confirmed by Stefan on 2026-11-21).
 
 ## GLOOP (pixel art + visual review)
 
+### 2026-11-21, Art for Lead: status
+Hats are still your first job (task 1 above, nothing else changes). Nothing from GLOOP has arrived yet.
+
 ### 2026-11-21, Art for Lead: task 1, N-43 hats; task 2, eyes; task 3, mouths; plus a readability review
 **Task 1: the 12 N-43 hats**, exactly per `blobz/docs/HYPERAGENT_BRIEF.md` (section 2 sizes, section 3 delivery):
 - Order: 1 low baseball cap (bill right), 2 beanie, 3 headband, 4 bandana (side knot), 5 cowboy hat, 6 small top hat,
@@ -53,6 +56,19 @@ and list the colours by hex. Deliver as a markdown note + annotated screenshot i
 ---
 
 ## PATCH (implementation review + playtesting)
+
+### 2026-11-21, Art for Lead: thanks, decisions on your two findings; task 2, QA of the live v058 screens
+Thank you for the designer QA (`hyperagent/blobz-room-handoff@39f46ab`, designer-qa). Decisions from Lead:
+- **Finding 2** (the body shine moves onto the hat, 25 pairs): **intended** (Stefan + Alea 2026-11-16: "only a white dot
+  under the cap"). Not a bug.
+- **Finding 1** (Keps bill 2-3 art px past the head, touching the last column): **accepted**; it will be checked during
+  the N-43 hat integration. No ticket now.
+
+**Task 2:** QA of the live **v058** (https://sluborg.github.io/Game/) at **390x844 and 360x780**: start screen, lobby with
+5 players, and meadow, for the new **logo, start background, lobby platform and tent**: look for clipped, soft or
+overlapping pixels (a pixel that is not a whole 2x/1x block), and text over art with poor contrast. Reproducible steps
+and screenshots, same delivery as before (branch `hyperagent/*`, folder `docs/art-review/hyperagent/<date>-v058-qa/`
+with a README). **No changes to our files.** Real-device / shared-Wi-Fi results listed separately.
 
 ### 2026-11-21, Art for Lead: task 1, designer QA on the live site
 QA of the **designer** on the live site (https://sluborg.github.io/Game/) at **390x844**:
