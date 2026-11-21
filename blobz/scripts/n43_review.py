@@ -125,6 +125,31 @@ def main():
                         im.putpixel((10 - ax + xx, L['top'] - 1 - ay + yy), (*[int(PAL[c][i:i + 2], 16) for i in (1, 3, 5)], 255))
             img.alpha_composite(im.resize((20 * S, 20 * S), Image.NEAREST), (70 + s * 62, y))
     img.save(os.path.join(ROOT, 'docs', 'art-review', 'n43-on-blobs.png'))
+    # "one hat width" preview: only Kupol + Boll (head 8 px), every hat in size M only, 4x, 4 colours each
+    cols = [0x5ec8ff, 0xff6b8b, 0x7ddc5a, 0xffc93c]
+    base2 = render([{'look': {'color': cols[j], 'shape': sh, 'eyes': e, 'mouth': 0, 'hat': 0}, 'frame': 0}
+                    for j, (sh, e) in enumerate(((0, 0), (1, 2), (0, 5), (1, 1)))])
+    S4 = 4
+    two = Image.new('RGBA', (6 * 86 + 10, 30 + 2 * 90 + 14), (240, 240, 235, 255))
+    d2 = ImageDraw.Draw(two)
+    d2.text((6, 4), 'One hat width: Kupol + Boll, size M only (4x)', fill='black', font_size=13)
+    for h in range(12):
+        c, r = h % 6, h // 6
+        for j in range(2):
+            im = base2[(h + j) % 4].copy()
+            sh = 0 if (h + j) % 2 == 0 else 1
+            im = base2[[0, 1, 2, 3][(h + j) % 4]].copy()
+            L = LAY[(0 if (h + j) % 4 in (0, 2) else 1, 0)]
+            rows = HATS[h][1]
+            ax, ay = len(rows[0]) // 2, len(rows) - 1
+            for yy, r2 in enumerate(rows):
+                for xx, c2 in enumerate(r2):
+                    if c2 != '.':
+                        im.putpixel((10 - ax + xx, L['top'] - 1 - ay + yy), (*[int(PAL[c2][i:i + 2], 16) for i in (1, 3, 5)], 255))
+            two.alpha_composite(im.resize((20 * S4, 20 * S4), Image.NEAREST), (6 + c * 86 + j * 0, 30 + r * 90 + j * 0)) if j == 0 else None
+        d2.text((6 + c * 86, 30 + r * 90 + 82), f'{h + 1} {NAMES[h][:9]}'.translate(str.maketrans('åäöÅÄÖ', 'aaoAAO')), fill='#444', font_size=9)
+    two = two.crop((0, 0, 6 * 86 + 10, 30 + 2 * 90 + 14))
+    two.save(os.path.join(ROOT, 'docs', 'art-review', 'n43-one-width.png'))
     print('RESULT', 'ALL CHECKS PASS' if ok else 'PROBLEMS FOUND', img.size)
 
 
