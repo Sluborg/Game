@@ -160,8 +160,8 @@ export class DungeonScene extends Phaser.Scene {
     sheet('fx-slash', NA + 'FX/Attack/SlashDoubleCurved/SpriteSheet.png', 32, 32); // the knight: a double arc (Stefan: the single one was weak)
     sheet('fx-cut', NA + 'FX/Attack/Cut/SpriteSheet.png', 32, 32);
     sheet('fx-magic', NA + 'FX/Projectile/EnergyBall.png', 16, 16);
-    // class markers in the nameplate (16 px): bow (crossbow until a bow icon exists), heal plus, dagger, shield
-    for (const [c, u] of [['marksman', 'art/dungeon/weapons/crossbow-16.png'], ['healer', 'art/dungeon/icons/heal-mode-16.png'], ['rogue', 'art/dungeon/weapons/dagger-16.png'], ['tank', 'art/dungeon/weapons/shield-16.png']]) img('cls-' + c, u);
+    // class markers in the nameplate (16 px): bow (N-42), heal plus, dagger, shield
+    for (const [c, u] of [['marksman', 'art/dungeon/icons/bow-16.png'], ['healer', 'art/dungeon/icons/heal-mode-16.png'], ['rogue', 'art/dungeon/weapons/dagger-16.png'], ['tank', 'art/dungeon/weapons/shield-16.png']]) img('cls-' + c, u);
     sheet('dg-sparkle', NA + 'FX/Magic/Circle/SpriteSheetSpark.png', 32, 32);
     for (const [k, m] of Object.entries(WIMG)) img('w-' + k, m.src);
     // Ninja Adventure dungeon art (docs/ART_MAP.md section 12 + loot): floor, walls, stairs, chest, coins, potion, bars
