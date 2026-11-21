@@ -1,0 +1,17 @@
+// N-43 hats from HyperAgent GLOOP (hyperagent/blobz-n43-hats), already outlined overlays: place at (10, bodyLayout(shape, frame).top - 1),
+// anchor = (floor(width / 2), height - 1); do NOT run them through the fitted-cap path or add another outline. Order: S, M, L.
+// NOT wired. Code decides names/preset indices. Codes are PART_TABLES.palette keys.
+const N43_HATS: Record<string, Sprite[]> = {
+  'Basebollkeps': [sp(['.KKK...', '.KRrK..', 'KKRRrKK', '.KKKKK.'], 3, 3), sp(['..KKKK...', '.KRRrrK..', 'KRRRRrKKK', 'KrKKKKrrK', '.KKKKKK..'], 4, 4), sp(['...KKKKKK....', '..KRRRRrrK...', '.KRRRRRrrrK..', 'KRRRRRRrrrKKK', 'KrKKKKKKKrrrK', '.KKKKKKKKKK..'], 6, 5)], // 1
+  'Stickad mössa': [sp(['..KK..', '.KGBK.', 'KGBgbK', 'KKKKKK'], 3, 3), sp(['...KK...', '..KGGK..', '.KGBGgK.', 'KBGbGBgK', '.KKKKKK.'], 4, 4), sp(['....KKKK....', '..KKGGggKK..', '.KGGgGGGggK.', 'KGGgGGgGGggK', 'KgbgbgbgbgbK', '.KKKKKKKKKK.'], 6, 5)], // 2
+  'Pannband': [sp(['KKKKKK', 'KYCBBK', 'KKKKKK'], 3, 2), sp(['.KKKKKK.', 'KBYCYBbK', '.KKKKKK.'], 4, 2), sp(['.KKKKKKKKKK.', 'KBBCYCBBBbbK', 'KbbBYBbbbbbK', '.KKKKKKKKKK.'], 6, 3)], // 3
+  'Bandana': [sp(['.KKKK...', 'KBBCbKK.', 'KBBbKbBK', '.KKKKKK.'], 4, 3), sp(['.KKKKKK...', 'KBBBBCbKK.', 'KBBBbCbKbK', 'KbbbKKKbKK', '..KKKKKK..'], 5, 4), sp(['..KKKKKKKK....', '.KBBBBBBbbK...', 'KBBCBBBBbbKKK.', 'KBBBCBbbKbbBbK', 'KbbbKKKKKKbKKK', '..KKKKKKKKK...'], 7, 5)], // 4
+  'Cowboyhatt': [sp(['..KKK..', '.KCCyK.', 'KCCyyyK', '.KKKKK.'], 3, 3), sp(['...KKKK...', '..KCYyyK..', '.KCCYyyyK.', 'KCYyyyyyyK', '..KKKKKK..'], 5, 4), sp(['....KKKKKK....', '...KCCYYyyK...', '..KCCCYYyyyK..', 'K.KCCYYYYyyK.K', 'KCCYYYYyyyyyyK', '..KKKKKKKKKK..'], 7, 5)], // 5
+  'Cylinderhatt': [sp(['.KKKK.', '.KBTK.', 'KBbbBK', 'KKKKKK'], 3, 3), sp(['..KKKK..', '..KSBK..', '..KSSK..', 'KSYySSsK', '.KKKKKK.'], 4, 4), sp(['..KKKKKKKK..', '..KSSSSssK..', '..KTSSSssK..', '..KYyyyyyK..', 'KSsssssssssK', '.KKKKKKKKKK.'], 6, 5)], // 6
+  'Juvelkrona': [sp(['K.K..K', 'KYKKYK', 'KYYRyK', 'KKKKKK'], 3, 3), sp(['K..KK..K', 'KYKYyKYK', 'KYYYYYyK', 'KYYBYyyK', '.KKKKKK.'], 4, 4), sp(['K....KK....K', 'KY..KYYK..YK', 'KYYKYYYYKYYK', 'KYYRYYYYRyyK', 'KyYYYYBYYYyK', '.KKKKKKKKKK.'], 6, 5)], // 7
+  'Sjömössa': [sp(['.KKKK.', 'KCCCTK', 'KBCtbK', 'KKKKKK'], 3, 3), sp(['..KKKK..', '.KCCCtK.', 'KCCCCttK', 'KBBYBbbK', '.KKKKKK.'], 4, 4), sp(['...KKKKKK...', '.KKCCCCCTKK.', 'KCCCCCCCCTtK', 'KCCCCCCCCttK', 'KBBBBYBBbbbK', '.KKKKKKKKKK.'], 6, 5)], // 8
+  'Kockmössa': [sp(['.KKKK.', 'KWWWTK', '.KCtK.', '.KKKK.'], 3, 3), sp(['..KK.KK.', '.KWKWKTK', 'KWWWWWtK', '.KCCCtK.', '.KKKKKK.'], 4, 4), sp(['...KK.KK....', '.KKWWKWTKK..', 'KWWWWWWWWTtK', 'KWWWWWWWWTtK', '.KCCCCCCCtK.', '.KKKKKKKKKK.'], 6, 5)], // 9
+  'Stjärntrollkarl': [sp(['..KK...', '.KBbK..', 'KBYbbKK', 'KKKKKK.'], 3, 3), sp(['...KK....', '..KBK....', '.KBYbK...', 'KBYybbbKK', '.KKKKKK..'], 4, 4), sp(['.....KK......', '....KBbK.....', '...KBYbbK....', '..KBYYYbbK...', '.KBBBYbbbbKK.', '.KKKKKKKKKK..'], 6, 5)], // 10
+  'Bakåtvänd keps': [sp(['...KKK.', '..KgGGK', 'KggKgGK', 'KKKKKK.'], 3, 3), sp(['...KKKKK.', '..KgGGGGK', '.KgGbGGGK', 'KggKKgggK', '.KKKKKK..'], 4, 4), sp(['.....KKKKKK..', '....KgGGGGGK.', '...KgGGbGGGGK', '..KgGGGGGGGGK', 'KgggKKKgggggK', '.KKKKKKKKKK..'], 6, 5)], // 11
+  'Blomsterkrans': [sp(['.KK.K.', 'KRCKRK', 'KgGGgK', '.KKKK.'], 3, 3), sp(['.KK..KK.', 'KRCKKCYK', 'KRGYGGRK', 'KgGGgGgK', '.KKKKKK.'], 4, 4), sp(['.KK..KK..KK.', 'KRCKKYYKKCRK', 'KCYRGYCGRYCK', 'KGGGGGGGGGgK', 'KgGGgGGgGGgK', '.KKKKKKKKKK.'], 6, 5)], // 12
+};
