@@ -33,6 +33,7 @@ ROWS = [[6, 8, 10, 12, 12, 14, 14, 14, 14, 14, 14, 12], [4, 8, 10, 12, 12, 12, 1
         [4, 6, 6, 8, 8, 10, 12, 12, 14, 14, 14, 12], [10, 12, 12, 12, 12, 12, 12, 12, 12, 12, 10]]
 NAMES = ['Kupol', 'Boll', 'Lang', 'Platt', 'Paron', 'Kub']
 WIDTHS = (8, 10, 12)
+ALL = (0, 8, 10, 12)  # 0 = the original shape (no cut), for the per-shape picture
 COL = [0x5ec8ff, 0xff6b8b, 0x7ddc5a, 0xffc93c, 0xb18cff, 0xff9248]
 S, CW = 3, 62
 
@@ -45,9 +46,9 @@ def cut(rows, w):
     return None
 
 
-def build():
+def build(widths=WIDTHS):
     tabs, index = [], []
-    for w in WIDTHS:
+    for w in widths:
         for s, rows in enumerate(ROWS):
             c = cut(rows, w)
             index.append((w, s, c is not None))
@@ -109,5 +110,33 @@ def main():
         print(w, [(NAMES[s], tabs[wi * 6 + s][0], len(tabs[wi * 6 + s])) if index[wi * 6 + s][2] else (NAMES[s], None) for s in range(6)])
 
 
+def by_shape():
+    """One row per shape: original, then pure cuts at 8, 10, 12 (nothing morphed), cap on the cut. docs/art-review/head-cut-by-shape.png"""
+    r, index, tabs = build(ALL)
+    CWS = 70
+    img = Image.new('RGBA', (4 * CWS + 12, 50 + 6 * (20 * S + 14)), (240, 240, 235, 255))
+    d = ImageDraw.Draw(img)
+    d.text((6, 4), 'Bara kapat, inget morphat (3x), per form', fill='black', font_size=14)
+    d.text((6, 22), 'kolumner: original, kapad vid 8, vid 10, vid 12', fill='#666', font_size=10)
+    d.text((6, 34), '9 och 11 finns inte (jamna rader): 9=10, 11=12', fill='#a00', font_size=9)
+    for wi, w in enumerate(ALL):
+        for s in range(6):
+            k = wi * 6 + s
+            y = 50 + s * (20 * S + 14)
+            im = to_img(r['grids'][k])
+            ok = index[k][2]
+            if ok and w:
+                put(im, HATS[1][1 if tabs[k][0] <= 10 else 2], r['lay'][k]['top'])
+            if ok:
+                img.alpha_composite(im.resize((20 * S, 20 * S), Image.NEAREST), (6 + wi * CWS, y))
+            label = ('original' if not w else f'{w}: topp {tabs[k][0]}') if ok else f'{w}: nej'
+            d.text((6 + wi * CWS, y + 20 * S), label, fill='#444' if ok else '#a00', font_size=9)
+            if wi == 0:
+                d.text((2, y + 2), NAMES[s], fill='#a00', font_size=9)
+    img.save(os.path.join(ROOT, 'docs', 'art-review', 'head-cut-by-shape.png'))
+    print('head-cut-by-shape.png', img.size)
+
+
 if __name__ == '__main__':
     main()
+    by_shape()
