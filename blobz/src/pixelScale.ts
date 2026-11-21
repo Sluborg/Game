@@ -52,10 +52,25 @@ export function snapAll(root: ParentNode = document) {
  *  px that still covers the screen (k = ceil(max(W/240, H/430))), so no art pixel is ever split, anchored at the bottom
  *  centre (the sides and top are cropped). Sets --bgsize on <html> as "Wpx Hpx" in CSS px; CSS reads var(--bgsize, cover). */
 export const BG_ART = { w: 240, h: 430 };
+/** What setBgScale remembers between calls: the width and orientation it was computed for, the tallest viewport seen
+ *  since, and the scale k (device px per art px). */
+export interface BgState { w: number; landscape: boolean; hmax: number; k: number }
+/** The next background scale (Lead 2026-11-21): it must not jump when Android's address bar slides in and out and the
+ *  viewport height changes by 50-100 px. k is computed from the width and the TALLEST height seen at that width, and is
+ *  only recomputed from scratch when the width or the orientation changes. So 844 -> 790 (bar shown) keeps k, a keyboard
+ *  that shrinks the viewport keeps k, and 790 -> 844 raises it at most once (the art must still cover the screen). */
+export function nextBgScale(prev: BgState | null, w: number, h: number, d: number): BgState {
+  const landscape = w > h;
+  const fresh = !prev || prev.w !== w || prev.landscape !== landscape;
+  const hmax = fresh ? h : Math.max(prev.hmax, h);
+  const k = Math.max(1, Math.ceil(Math.max((w * d) / BG_ART.w, (hmax * d) / BG_ART.h) - 1e-6));
+  return { w, landscape, hmax, k };
+}
+let bgState: BgState | null = null;
 export function setBgScale() {
-  const d = window.devicePixelRatio || 1, w = window.innerWidth, h = window.innerHeight;
-  const k = Math.max(1, Math.ceil(Math.max((w * d) / BG_ART.w, (h * d) / BG_ART.h) - 1e-6));
-  document.documentElement.style.setProperty('--bgsize', `${(BG_ART.w * k) / d}px ${(BG_ART.h * k) / d}px`);
+  const d = window.devicePixelRatio || 1;
+  bgState = nextBgScale(bgState, window.innerWidth, window.innerHeight, d);
+  document.documentElement.style.setProperty('--bgsize', `${(BG_ART.w * bgState.k) / d}px ${(BG_ART.h * bgState.k) / d}px`);
 }
 
 /** Phaser canvas at DEVICE resolution (Lead 2026-11-15: Code owns it; one helper for the meadow and Code 2's dungeon).

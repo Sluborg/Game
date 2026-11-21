@@ -926,6 +926,7 @@ export class GameScene extends Phaser.Scene {
   /** The finished building drops in from above, lands with a bounce, dust flies. */
   private dropIn(f: Extract<FxEvent, { t: 'build' }>, g: { img: Phaser.GameObjects.Image; sh?: Phaser.GameObjects.Image; built: boolean; badge?: Phaser.GameObjects.Text } | null, img: Phaser.GameObjects.Image | undefined) {
     sfx.star();
+    window.dispatchEvent(new CustomEvent('blobz:built', { detail: f.kind })); // main.ts shows the effect toast now
     if (g) { g.built = true; g.img.setVisible(true); g.sh?.setVisible(true); g.badge?.setVisible(true); }
     if (img) {
       const y0 = img.y;
