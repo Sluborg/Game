@@ -38,6 +38,12 @@ left-to-right then top-to-bottom, at least 32 px empty space between objects, no
 Make ONE image per reply and wait for "next".
 ```
 
+## Meadow batch for Claude Art — ON HOLD
+
+Collect approved meadow briefs here until Stefan chooses to order a batch. Astra adds each newly agreed brief here when processing Nano's replies. Art can review these at its next queue check. Keep them out of active generation until batch release.
+
+**1. Runaway hen — design approved by Astra and Nano.** One sheet, one row, three equally sized cells showing the same small round hen. Left to right: calm rightward step with folded wings; braking mid-step with weight back, head lifted and beak pointing diagonally up-right; startled hop with wings spread and feet tucked. Match the existing meadow's Ninja Adventure art, slight top-down view. Consistent body scale, palette and pixel size. Allow horizontal mirroring. Center each pose, at least 32 px clear space between sprites. Flat #FF00FF, crisp edges, no ground shadows, hen only. [Approved brief and decision log](https://docs.google.com/document/d/1aOIdOawEq_r7i1sURXAn5W711v5pVhcdIzf1oWGzDB4/edit).
+
 ## Queue
 
 **2026-11-14: Stefan chose the Ninja Adventure pack (CC0) as the main art. The old D-/A-orders are CANCELLED.
