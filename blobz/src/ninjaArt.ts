@@ -17,7 +17,7 @@ export const NI = {
   sparkle: N('Ui/Emote/emote29.png'), feather: N('Items/Resource/feather.png'),
   check: 'art/icons/check.png', // ChatGPT N-10 (approved)
   star: 'art/gather/star.png', starEmpty: 'art/gather/star-empty.png', // ChatGPT N-10 (approved)
-  hut: 'art/ninja/hut.png', flag: 'art/ninja/flag.png',
+  hut: 'art/icons/cottage-1.png', // N-40 tent (16 px native) flag: 'art/ninja/flag.png',
 } as const;
 
 /** Building pictures for the build cards, the quest goal and the lobby village row (same crops as the game). */

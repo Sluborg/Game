@@ -119,7 +119,7 @@ const NINJA_CROPS: Record<string, Crop | Crop[]> = {
   ...resCrops(),
   // the base: cottage levels 1-3 and the six buildings
   // cottage levels (OLD_ART_CHECKLIST): 1 tent, 2 orange house, 3 the big hall (two crops stacked, NINJA_VSTACK)
-  'b-cottage-1': ['n-house', 3, 120, 42, 39], 'b-cottage-2': ['n-house', 0, 0, 64, 48],
+  'b-cottage-2': ['n-house', 0, 0, 64, 48], // level 1 is the N-40 tent (loaded in preload)
   'b-storage': ['n-house', 304, 224, 32, 32], 'b-workshop': ['n-house', 304, 304, 48, 48], 
   'b-well': ['n-element', 112, 27, 16, 21], 'b-watchtower': ['n-towers', 4, 0, 24, 32], 'b-bridge': ['n-house', 144, 240, 64, 46],
   // snow map
@@ -293,6 +293,7 @@ export class GameScene extends Phaser.Scene {
     sheet('mini-ko', 'Ui/Emote/emote3.png', 14, 13);
     this.load.image('mini-bg', 'art/mini/bg.png');
     // berry bush ChatGPT N-16 (full / picked), 32 px art at 3x
+    this.load.image('b-cottage-1', 'art/icons/cottage-1-32.png'); // N-40 tent (Stefan 5/5): level 1, 32 px art at the world's 3x
     this.load.image('pw-speed-32', 'art/meadow/speed-32.png'); // ChatGPT N-15b speed power-up (32 px art)
     for (const v of ['round', 'pine', 'apple']) { // ChatGPT N-26 trees + matching stumps
       this.load.image(`tree-${v}`, `art/props/tree-${v}.png`);
@@ -455,7 +456,7 @@ export class GameScene extends Phaser.Scene {
     this.baseG = this.add.graphics().setDepth(-900);
     this.add.ellipse(BASE.x, BASE.y + 26, 110, 26, 0x000000, 0.18).setDepth(-880);
     // cottage (Art's base set, level 1-3), integer scale 2, anchored bottom centre
-    this.shadow(BASE.x, BASE.y + 30, 150, 27, 0.24).setDepth(BASE.y - 41);
+    this.shadow(BASE.x, BASE.y + 30, 118, 24, 0.24).setDepth(BASE.y - 41);
     this.cottageImg = this.add.image(BASE.x, BASE.y + 30, this.s.biome === 'snow' ? 'w-igloo' : 'b-cottage-1').setScale(PROP_SCALE).setOrigin(0.5, 1).setDepth(BASE.y - 40);
     // the water corner (an L of water around a seeded corner; the bridge opens it)
     const water = makeWater(this.s.seed);
